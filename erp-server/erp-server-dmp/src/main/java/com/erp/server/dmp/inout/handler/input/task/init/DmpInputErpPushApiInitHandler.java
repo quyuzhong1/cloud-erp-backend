@@ -67,7 +67,7 @@ public class DmpInputErpPushApiInitHandler extends DmpInputInitHandler{
 						.list();
 			} catch (Exception e) {
 				Throwable cause = e.getCause();
-				if(cause instanceof ClientException && i < 6) {
+				if(cause instanceof ClientException && i < 9) {
 					try {Thread.sleep(10000);} catch (InterruptedException e1) {}
 				}else {
 					throw e;

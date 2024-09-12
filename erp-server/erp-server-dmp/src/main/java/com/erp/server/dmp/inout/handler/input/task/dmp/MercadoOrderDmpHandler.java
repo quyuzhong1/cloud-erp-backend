@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
@@ -10,13 +11,21 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoInfoService;
+import com.erp.server.dmp.service.DmpSoReceiverService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -32,6 +41,12 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class MercadoOrderDmpHandler extends MercadoDmpHandler {
+    @Resource
+    private DmpSoInfoService dmpSoInfoService;
+    @Resource
+    private DmpSoReceiverService dmpSoReceiverService;
+    @Resource
+    private DmpSoDetailService dmpSoDetailService;
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -52,6 +67,30 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
         List<DmpInputTaskEntity> parentTaskEntityList = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, parentTaskId).list();
         if (CollectionUtil.isEmpty(parentTaskEntityList)) {
             return;
+        }
+
+        Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
+        if (CollUtil.isNotEmpty(keySet)) {
+            List<String> orderIdList = new ArrayList<>();
+            for (List<Map<String, Object>> key : keySet) {
+                orderIdList.addAll(key.stream().map(f -> f.get("fid").toString()).collect(Collectors.toList()));
+            }
+
+            List<DmpSoInfoEntity> soInfoEntityList = dmpSoInfoService.lambdaQuery()
+                    .in(DmpSoInfoEntity::getThirdCode, orderIdList)
+                    .in(DmpSoInfoEntity::getSourceSystem, Arrays.asList(DmpBasicSystemCodeEnum.KINGDEE.getCode(), DmpBasicSystemCodeEnum.MABANG.getCode()))
+                    .select(DmpSoInfoEntity::getId)
+                    .list();
+            if (CollUtil.isNotEmpty(soInfoEntityList)) {
+                List<String> ids = soInfoEntityList.stream().map(DmpSoInfoEntity::getId).collect(Collectors.toList());
+                dmpSoInfoService.removeByIds(ids);
+                dmpSoReceiverService.lambdaUpdate()
+                        .in(DmpSoReceiverEntity::getMainId, ids)
+                        .remove();
+                dmpSoDetailService.lambdaUpdate()
+                        .in(DmpSoDetailEntity::getMainId, ids)
+                        .remove();
+            }
         }
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {

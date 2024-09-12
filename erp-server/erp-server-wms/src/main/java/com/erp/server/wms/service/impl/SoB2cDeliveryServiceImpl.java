@@ -1876,6 +1876,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
         dto.setType(StockOutTransferTypeEnum.B2C.getCode());
         dto.setReceiveCountry(receiverList.get(0).getCountry());
+        dto.setFromWarehouse(soB2cDeliveryDetailList.get(0).getWarehouseId());
         CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(soB2cDeliveryDetailList.get(0).getWarehouseId(),dto));
         if (resultDTO.getIsTransit()) {
             //生成直接调拨单
@@ -2033,7 +2034,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         baseApproveParamDTO.setIds(Arrays.asList(id));
         baseApproveParamDTO.setType(ApproveType.PASS);
         TransferInfoEntity transferInfoEntity = transferInfoService.getById(id);
-        transferInfoService.approve(transferInfoEntity,ApproveType.PASS,"", null,Boolean.TRUE);
+        transferInfoService.approve(transferInfoEntity,ApproveType.PASS,"", null,Boolean.TRUE, Boolean.FALSE);
     }
 
     /**

@@ -91,7 +91,7 @@ public class ShopInfoController extends BaseController {
     public ApiResult<?> add(@RequestBody @Validated ShopDTO.AddDTO dto) {
         List<ShopInfoEntity> list = shopInfoService.add(dto);
         for (ShopInfoEntity shop : list) {
-            saveCustom(shop);
+            shopInfoService.saveCustom(shop);
         }
         return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
@@ -138,29 +138,8 @@ public class ShopInfoController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
         ShopInfoEntity shopInfoEntity = shopInfoService.updateShop(dto);
         //如果没有选客户，就进行绑定
-        saveCustom(shopInfoEntity);
+        shopInfoService.saveCustom(shopInfoEntity);
         return null != shopInfoEntity ? success() : failure();
-    }
-
-    /**
-     * 如果没有选客户，就进行绑定
-     */
-    private void saveCustom(ShopInfoEntity shopInfoEntity) {
-        if (StringUtils.isBlank(shopInfoEntity.getCustomerId())) {
-            //店铺客户信息--如果存在则直接绑定原始的，不存在就创建并提交审核
-            CustomerInfoEntity customerInfoEntity = shopInfoService.autoCreateShopCustomer(shopInfoEntity.getId());
-            if (Objects.nonNull(customerInfoEntity)) {
-                ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
-                if (Objects.isNull( approveStatus)||!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus.getStatus())) {
-                    List<String> ids = Arrays.asList(customerInfoEntity.getId());
-                    //提交
-                    Boolean submitResult = customerInfoService.submit(ids);
-                    if (submitResult) {
-                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -478,7 +457,7 @@ public class ShopInfoController extends BaseController {
     public ApiResult<?> addIntenal(@RequestBody @Validated ShopDTO.AddInternalDTO dto) {
         List<ShopInfoEntity> list = shopInfoService.addIntenal(dto);
         for (ShopInfoEntity shop : list) {
-            saveCustom(shop);
+            shopInfoService.saveCustom(shop);
         }
         return !CollectionUtils.isEmpty(list) ? success() : failure();
     }
@@ -499,7 +478,7 @@ public class ShopInfoController extends BaseController {
     public ApiResult<?> updateInternal(@RequestBody @Validated ShopDTO.UpdateInternalDTO dto) {
         ShopInfoEntity shopInfoEntity = shopInfoService.updateInternalShop(dto);
         //如果没有选客户，就进行绑定
-        saveCustom(shopInfoEntity);
+        shopInfoService.saveCustom(shopInfoEntity);
         return null != shopInfoEntity ? success() : failure();
     }
 

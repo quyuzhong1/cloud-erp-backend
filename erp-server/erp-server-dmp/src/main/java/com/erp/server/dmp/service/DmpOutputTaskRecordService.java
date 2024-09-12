@@ -84,6 +84,15 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     Boolean addOutputBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto);
 
     /**
+     * 取消黑名单
+     * @Author Luo_WG
+     * @Date 2024/9/11 19:21
+     * @param id
+     * @return java.lang.Boolean
+     **/
+    BatchResultDTO cancelOutputBlack(String id);
+
+    /**
      * 导出Excel数据解析
      * @Author Luo_WG
      * @Date 2024/9/5 17:39
@@ -100,4 +109,5 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return java.lang.Boolean
      **/
     Boolean batchSync(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList);
+
 }
