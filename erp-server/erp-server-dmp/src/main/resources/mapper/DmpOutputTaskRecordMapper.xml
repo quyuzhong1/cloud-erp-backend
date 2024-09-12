@@ -65,7 +65,7 @@
             FROM dmp_cfg_output_black b
             WHERE b.is_deleted = FALSE
             AND b.field_value = t.source_code
-        AND t.main_id = b.main_id
+            AND t.main_id = b.main_id
         )
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
