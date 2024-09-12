@@ -12,7 +12,6 @@ import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -85,18 +84,19 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         //店铺
         List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
         //日志
+        StringBuffer msg = new StringBuffer();
+        msg.append( StrUtil.format("本地发FBA：<br>"));
         for (CfgRuleLogisticsEntity logisticsEntity : list) {
-            StringBuffer msg = new StringBuffer();
-            String parentMsg = StrUtil.format("本地发FBA:物流方式【{}】、物流时效【{}】、发货频率【{}】",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
+            String parentMsg = StrUtil.format("物流方式【{}】、物流时效【{}】、发货频率【{}】<br>",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
             msg.append(parentMsg);
             List<CfgRuleLogisticsDetailDTO.UpdateDTO> detailList = logisticsEntity.getDetailList();
             for (CfgRuleLogisticsDetailDTO.UpdateDTO updateDTO : detailList) {
                 String shopNames = CollectionUtils.isEmpty(shopInfoList) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
-                String childMsg = StrUtil.format("区域【{}】、店铺【{}】、时效【{}】", updateDTO.getArea(), shopNames, logisticsEntity.getLogisticsCycleDays());
+                String childMsg = StrUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(),StrUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, logisticsEntity.getLogisticsCycleDays());
                 msg.append(childMsg);
             }
-            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "设置规则");
         }
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "备货");
         return Boolean.TRUE;
     }
 

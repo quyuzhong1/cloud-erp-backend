@@ -71,6 +71,11 @@ public class OperateLogEntity extends BaseEntity<OperateLogEntity> {
     @TableField("pid")
     private String pid;
 
+    /**
+     * 唯一键
+     */
+    @TableField("unique_key")
+    private String uniqueKey;
 
     public static final String MODULE_TYPE = "module_type";
 

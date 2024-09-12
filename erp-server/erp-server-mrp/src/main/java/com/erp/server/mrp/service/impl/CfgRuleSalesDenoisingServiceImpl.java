@@ -1,20 +1,24 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
+import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesDenoisingMapper;
 import com.erp.server.mrp.service.CfgRuleSalesDenoisingService;
-import com.erp.server.mrp.service.CfgRuleStockUpService;
+import com.erp.server.mrp.service.CfgRuleSalesQtyService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -45,7 +49,7 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
     private OperateLogService operateLogService;
 
     @Autowired
-    private CfgRuleStockUpService cfgRuleStockUpService;
+    private CfgRuleSalesQtyService cfgRuleSalesQtyService;
 
     /**
     * 修改
@@ -58,10 +62,11 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         }
 
         List<CfgRuleSalesDenoisingEntity> list = BeanMapperUtils.copyList(CfgRuleSalesDenoisingEntity.class, salesDenoisingList);
+
+        //原去噪信息
+        List<CfgRuleSalesDenoisingEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
         //自定义更新无需删除
         if (!isCustom) {
-            //原去噪信息
-            List<CfgRuleSalesDenoisingEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -71,19 +76,26 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
         }
+        //销量信息
+        CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyService.getById(salesQtyId);
+        if (ObjectUtil.isEmpty(salesQtyEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（销量）");
+        }
 
         // 数据处理
-        handleData(list,salesQtyId);
+        handleData(list,oldList,salesQtyId,isCustom);
         log.info("编辑 开始修改销量去噪信息数据，id：【{}】", salesQtyId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("销量去噪信息保存失败");
         }
+        StringBuffer msg = new StringBuffer();
+        msg.append( StrUtil.format("{}_销量去噪：<br>", CfgRuleStockingRatioTypeEnum.getName(salesQtyEntity.getType())));
         //日志
         for (CfgRuleSalesDenoisingEntity denoisingEntity : list) {
-            String dateStr = StrUtil.format("{}_{}", denoisingEntity.getStartDate(), denoisingEntity.getEndDate());
-            String msg = StrUtil.format("销量去噪:序号【{}】、名称【{}】、时间段【{}】、去噪类型【{}，{}】", denoisingEntity.getIndex(), denoisingEntity.getName(),dateStr,CfgRuleSalesDenoisingDenoisingTypeEnum.getName(denoisingEntity.getDenoisingType()),denoisingEntity.getEffectiveValue());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), salesQtyId, "设置规则");
+            String dateStr = StrUtil.format("{}~{}", denoisingEntity.getStartDate(), denoisingEntity.getEndDate());
+            msg.append(StrUtil.format("•序号【{}】、名称【{}】、时间段【{}】、去噪类型【{}，{}】<br>", denoisingEntity.getIndex(), denoisingEntity.getName(),dateStr,CfgRuleSalesDenoisingDenoisingTypeEnum.getName(denoisingEntity.getDenoisingType()),denoisingEntity.getEffectiveValue()));
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), salesQtyId, "销量");
         }
         return Boolean.TRUE;
     }
@@ -128,24 +140,27 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleSalesDenoisingEntity> list,String salesQtyId) {
+    private void handleData(List<CfgRuleSalesDenoisingEntity> list,List<CfgRuleSalesDenoisingEntity> oldList,String salesQtyId,Boolean isCustom) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<CfgRuleSalesDenoisingEntity> oldSalesDenoisingList = this.listBySalesQtyIdList(Arrays.asList(salesQtyId));
-        //最大排序
-        Integer maxIndex = oldSalesDenoisingList.stream().max(Comparator.comparingInt(CfgRuleSalesDenoisingEntity::getIndex)).map(CfgRuleSalesDenoisingEntity::getIndex).orElse(MathUtil.ZERO);
-
+        //排序
+        Integer maxIndex = MathUtil.ZERO;
+        if (isCustom) {
+            maxIndex = oldList.stream().max(Comparator.comparingInt(CfgRuleSalesDenoisingEntity::getIndex)).map(CfgRuleSalesDenoisingEntity::getIndex).orElse(MathUtil.ZERO);
+        }
         for (CfgRuleSalesDenoisingEntity denoisingEntity : list) {
-            //主键id赋值
-            String id = oldSalesDenoisingList.stream().filter(obj -> StrUtil.equals(obj.getName(), denoisingEntity.getName())).map(CfgRuleSalesDenoisingEntity::getId).findFirst().orElse("");
-            if (StrUtil.isNotBlank(id)) {
-                denoisingEntity.setId(id);
-            } else {
-                //排序
-                denoisingEntity.setIndex(maxIndex + 1);
-            }
+            //销量数据
             denoisingEntity.setSalesQtyId(salesQtyId);
+            //排序
+            denoisingEntity.setIndex(maxIndex + 1);
+            //主键id赋值
+            CfgRuleSalesDenoisingEntity entity = oldList.stream().filter(obj -> StrUtil.equals(obj.getName(), denoisingEntity.getName())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(entity)) {
+                denoisingEntity.setId(entity.getId());
+                //自定义添加的需要保持原有序号
+                denoisingEntity.setIndex(isCustom ? entity.getIndex() : denoisingEntity.getIndex());
+            }
 
             boolean isCompare = (StrUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode())
                     || StrUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode()))

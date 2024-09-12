@@ -27,7 +27,8 @@
         select
         ol.module_type,
         ol.business_id,
-        ol.create_time,
+        ol.unique_key,
+        max(ol.create_time) as createTime,
         max(ol.create_user_name) as create_user_name,
         array_to_string(array_agg(DISTINCT ol.operation),',') as operation,
         array_to_string(array_agg(DISTINCT ol.content),',') as content
@@ -46,8 +47,8 @@
                 </foreach>
             </if>
         </where>
-        group by ol.module_type,ol.business_id,ol.create_time
-        order by ol.create_time desc
+        group by ol.module_type,ol.business_id,ol.unique_key
+        order by ol.unique_key desc
     </select>
 
 </mapper>

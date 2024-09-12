@@ -24,9 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -52,10 +50,11 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             stockingRatioList = Collections.EMPTY_LIST;
         }
         List<CfgRuleStockingRatioEntity> list = BeanMapperUtils.copyList(CfgRuleStockingRatioEntity.class, stockingRatioList);
+
+        //原物流信息
+        List<CfgRuleStockingRatioEntity> oldList = listByStockUpIdListAndType(Arrays.asList(stockUpId),type);
         //自定义更新无需删除
         if (!isCustom) {
-            //原物流信息
-            List<CfgRuleStockingRatioEntity> oldList = listByStockUpIdListAndType(Arrays.asList(stockUpId),type);
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -67,19 +66,35 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list,stockUpId,type);
+        handleData(list,oldList,stockUpId,type,isCustom);
         log.info("编辑 开始修改备货系数（规则设置）数据，id：【{}】",stockUpId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("备货系数（规则设置）保存失败");
         }
         //日志
-        for (CfgRuleStockingRatioEntity ratioEntity : list) {
-            String ratioType = ratioEntity.getType();
-            String msg = StrUtil.format("【{}】_动态备货系数,序号【{}】、名称【{}】、时间段【{}】、备货系数【{}】", CfgRuleStockingRatioTypeEnum.getName(ratioType), ratioEntity.getIndex(),ratioEntity.getName(),ratioEntity.getStartDate().toString().concat(ratioEntity.getEndDate().toString()),ratioEntity.getStockingRatio());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "设置规则");
-        }
+        addOperateLog(list,stockUpId);
         return Boolean.TRUE;
+    }
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/9/12 11:13
+     * @param list
+     * @param stockUpId
+     */
+    private void addOperateLog (List<CfgRuleStockingRatioEntity> list,String stockUpId) {
+        Map<String, List<CfgRuleStockingRatioEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getType()));
+        //日志
+        for (Map.Entry<String, List<CfgRuleStockingRatioEntity>> entry : map.entrySet()) {
+            List<CfgRuleStockingRatioEntity> value = entry.getValue();
+            StringBuffer msg = new StringBuffer();
+            msg.append(StrUtil.format("{}_动态备货系数：<br>",CfgRuleStockingRatioTypeEnum.getName(value.get(0).getType())));
+            for (CfgRuleStockingRatioEntity ratioEntity : value) {
+                msg.append(StrUtil.format("•序号【{}】、名称【{}】、时间段【{}】、备货系数【{}】<br>", ratioEntity.getIndex(),ratioEntity.getName(),StrUtil.format("{}~{}",ratioEntity.getStartDate(),ratioEntity.getEndDate()),ratioEntity.getStockingRatio()));
+            }
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "备货");
+        }
     }
 
     @Override
@@ -141,7 +156,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleStockingRatioEntity> list,String stockUpId,String type) {
+    private void handleData(List<CfgRuleStockingRatioEntity> list,List<CfgRuleStockingRatioEntity> oldList,String stockUpId,String type,Boolean isCustom) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -149,14 +164,21 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         if (StrUtil.isNotBlank(names)) {
             throw new ServiceException("备货系数名称【{}】唯一不能添加重复数据",names);
         }
-        List<String> nameList = list.stream().map(CfgRuleStockingRatioEntity::getName).distinct().collect(Collectors.toList());
-        List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = listByNameListAndType(nameList, type);
-
+        //排序
+        Integer maxIndex = MathUtil.ZERO;
+        if (isCustom) {
+             maxIndex = oldList.stream().max(Comparator.comparingInt(CfgRuleStockingRatioEntity::getIndex)).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
+        }
         for (CfgRuleStockingRatioEntity stockingRatioEntity : list) {
+            //排序
+            stockingRatioEntity.setIndex(maxIndex + 1);
+
             //存在相同名称时则赋值id
-            CfgRuleStockingRatioEntity entity = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getName(), stockingRatioEntity.getName())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(entity) && !StrUtil.equals(stockingRatioEntity.getId(),entity.getId())) {
+            CfgRuleStockingRatioEntity entity = oldList.stream().filter(obj -> StrUtil.equals(obj.getName(), stockingRatioEntity.getName())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(entity)) {
                 stockingRatioEntity.setId(entity.getId());
+                //自定义添加的需要保持原有序号
+                stockingRatioEntity.setIndex(isCustom ? entity.getIndex() : stockingRatioEntity.getIndex());
             }
             //主表id
             stockingRatioEntity.setStockUpId(stockUpId);
@@ -166,6 +188,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             List<LocalDate> dateList = stockingRatioEntity.getDateList();
             stockingRatioEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             stockingRatioEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
+            maxIndex ++;
         }
     }
 

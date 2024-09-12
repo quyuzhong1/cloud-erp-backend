@@ -15,6 +15,7 @@ import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
+import com.erp.model.mrp.enums.CfgRulePercentEnum;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
@@ -32,9 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -64,10 +63,11 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             salesFormulaList = Collections.EMPTY_LIST;
         }
         List<CfgRuleSalesFormulaEntity> list = BeanMapperUtils.copyList(CfgRuleSalesFormulaEntity.class, salesFormulaList);
+
+        //原物流信息
+        List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
         //自定义更新无需删除
         if (!isCustom) {
-            //原物流信息
-            List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -83,19 +83,40 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（销量）");
         }
         // 数据处理
-        handleData(list,salesQtyId);
+        handleData(list,oldList,salesQtyId,isCustom);
         log.info("编辑 开始修改销量公式（规则设置）数据，id：【{}】", salesQtyId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("销量公式（规则设置）保存失败");
         }
-        //日志
-        for (CfgRuleSalesFormulaEntity formulaEntity : list) {
-            String type = formulaEntity.getType();
-            String msg = StrUtil.format("{}_{}日销量:序号【{}】、名称【{}】、时间段【{}】", CfgRuleStockingRatioTypeEnum.getName(salesQtyEntity.getType()),CfgRuleSalesFormulaTypeEnum.getName(type) ,formulaEntity.getIndex(),formulaEntity.getName(),StrUtil.format("{}_{}",formulaEntity.getStartDate(),formulaEntity.getEndDate()));
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), salesQtyId, "设置规则");
-        }
+        addOperateLog(list,salesQtyEntity);
         return Boolean.TRUE;
+    }
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/9/12 10:26
+     * @param list
+     * @param salesQtyEntity
+     */
+    private void addOperateLog (List<CfgRuleSalesFormulaEntity> list,CfgRuleSalesQtyEntity salesQtyEntity) {
+        Map<String, List<CfgRuleSalesFormulaEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getType().concat(obj.getDefaultType())));
+        //日志
+        for (Map.Entry<String, List<CfgRuleSalesFormulaEntity>> entry : map.entrySet()) {
+            List<CfgRuleSalesFormulaEntity> value = entry.getValue();
+            StringBuffer msg = new StringBuffer();
+            msg.append(StrUtil.format("{}_{}日销量：<br>",CfgRuleStockingRatioTypeEnum.getName(salesQtyEntity.getType()),CfgRuleSalesFormulaTypeEnum.getName(value.get(0).getType())));
+            for (CfgRuleSalesFormulaEntity formulaEntity : value) {
+                if (!StrUtil.equals(formulaEntity.getType(),CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) ) {
+                    msg.append(StrUtil.format("•序号【{}】、名称【{}】、时间段【{}】<br>" ,formulaEntity.getIndex(),formulaEntity.getName(),StrUtil.format("{}~{}",formulaEntity.getStartDate(),formulaEntity.getEndDate())));
+                }
+                JSONObject percentJson = formulaEntity.getPercentJson();
+                percentJson.entrySet().stream().forEach(obj -> {
+                    msg.append(StrUtil.format("•{}：{}<br>", CfgRulePercentEnum.getName(obj.getKey()),obj.getValue()));
+                });
+            }
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), salesQtyEntity.getId(), "销量");
+        }
     }
 
     @Override
@@ -147,16 +168,27 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleSalesFormulaEntity> list,String salesQtyId) {
+    private void handleData(List<CfgRuleSalesFormulaEntity> list,List<CfgRuleSalesFormulaEntity> oldList,String salesQtyId,Boolean isCustom) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-
-        Integer index = MathUtil.ONE;
+        //排序
+        Integer maxIndex = MathUtil.ZERO;
+        if (isCustom) {
+            maxIndex = oldList.stream().max(Comparator.comparingInt(CfgRuleSalesFormulaEntity::getIndex)).map(CfgRuleSalesFormulaEntity::getIndex).orElse(MathUtil.ZERO);
+        }
         for (CfgRuleSalesFormulaEntity salesFormula : list) {
             salesFormula.setSalesQtyId(salesQtyId);
             //排序
-            salesFormula.setIndex(index);
+            salesFormula.setIndex(maxIndex + 1);
+            //主键id赋值
+            CfgRuleSalesFormulaEntity entity = oldList.stream().filter(obj -> StrUtil.equals(obj.getName(), salesFormula.getName())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(entity)) {
+                salesFormula.setId(entity.getId());
+                //自定义添加的需要保持原有序号
+                salesFormula.setIndex(isCustom ? entity.getIndex() : salesFormula.getIndex());
+            }
+
             //固定销量
             if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(salesFormula.getDefaultType())) {
                 salesFormula.setPercentJson(JSONUtil.parseObj(new CfgRuleSalesFormulaDTO.PercentJsonDTO()));
@@ -188,7 +220,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             }
             salesFormula.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             salesFormula.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
-            index ++;
+            maxIndex ++;
         }
     }
 }

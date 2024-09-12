@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -80,6 +81,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         if (CollectionUtils.isEmpty(fieldList)) {
             return Boolean.TRUE;
         }
+        String idStr = IdWorker.getIdStr();
         List<OperateLogEntity> list = new LinkedList<>();
         for (Map.Entry<Pair<String, String>, Pair<String, String>> entry : operationLogMap.entrySet()) {
             //Pair<字段名称, 类路径>
@@ -134,6 +136,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                     .setNewValue(newValue)
                     .setFieldName(fieldName)
                     .setContent(content)
+                    .setUniqueKey(idStr)
                     .setOperation("编辑信息");
             list.add(entity);
         }
@@ -151,6 +154,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         entity.setModuleType(moduleType)
                 .setBusinessId(businessId)
                 .setContent(content)
+                .setUniqueKey(IdWorker.getIdStr())
                 .setOperation(operation);
         return this.save(entity);
     }
@@ -167,6 +171,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             entity.setModuleType(moduleType)
                     .setBusinessId(pair.getKey())
                     .setContent(String.format(content,pair.getValue()))
+                    .setUniqueKey(IdWorker.getIdStr())
                     .setOperation(operation);
             list.add(entity);
         }

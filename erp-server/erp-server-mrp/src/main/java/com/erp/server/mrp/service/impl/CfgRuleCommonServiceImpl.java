@@ -8,6 +8,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.entity.CfgRuleCommonEntity;
+import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleCommonMapper;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import com.erp.server.mrp.service.CfgRuleWarehouseService;
@@ -58,7 +60,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
             throw new ServiceException("公共配置（规则设置）保存失败");
         }
         //操作日志
-        addOperateLog(updateList);
+        addOperateLog(updateList,list);
         return Boolean.TRUE;
     }
 
@@ -68,13 +70,16 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
      * @date 2024/9/11 16:32
      * @param updateList
      */
-    private void addOperateLog (List<CfgRuleCommonDTO.UpdateDTO> updateList) {
+    private void addOperateLog (List<CfgRuleCommonDTO.UpdateDTO> updateList,List<CfgRuleCommonEntity> list) {
         if (CollectionUtils.isEmpty(updateList)) {
             return;
         }
-        StringBuffer msg = new StringBuffer();
         for (CfgRuleCommonDTO.UpdateDTO updateDTO : updateList) {
+            StringBuffer msg = new StringBuffer();
             appendOperateLog(updateDTO,msg);
+            //最上级id
+            String id = list.stream().filter(obj -> StrUtil.equals(updateDTO.getName(), obj.getName())).findFirst().map(CfgRuleCommonEntity::getId).orElse("");
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), id, CfgRuleCommonTypeEnum.getName(updateDTO.getType()));
         }
     }
     /**
@@ -87,11 +92,11 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     private void appendOperateLog (CfgRuleCommonDTO.UpdateDTO updateDTO,StringBuffer msg) {
         //循环添加
         if (CollectionUtils.isNotEmpty(updateDTO.getChildrenList())) {
-            msg.append(updateDTO.getName());
+            msg.append(updateDTO.getName().concat("<br>"));
             updateDTO.getChildrenList().stream().forEach(obj -> appendOperateLog(obj, msg));
         }  else {
             if (StrUtil.equals(updateDTO.getValue(),"true")) {
-                msg.append(updateDTO.getName());
+                msg.append(updateDTO.getName().concat("<br>"));
             }
         }
     }

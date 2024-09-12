@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -84,7 +83,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
 
         // 记录主单操作日志
         log.info("编辑 开始记录备货（规则设置）日志数据，id：【{}】", cfgRuleStockUpEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleStockUpEntity.getId(), "设置规则");
+        String msg = StrUtil.format("编辑【{}】 ",  "备货设置");
         operateLogService.addModuleOperateLogByObj(old, cfgRuleStockUpEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), cfgRuleStockUpEntity.getId(), msg);
         return Boolean.TRUE;
     }

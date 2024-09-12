@@ -3,7 +3,7 @@ package com.erp.model.mrp.enums;
 import com.common.core.constant.EnumMessage;
 
 public enum FbaOrderTypeEnum implements EnumMessage {
-    ALL("ALL", "全部（FBA+FBM）"),
+    ALL("all", "全部（FBA+FBM）"),
     //fba
     FBA("fba", "FBA"),
     //fbm

@@ -33,10 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -94,6 +91,21 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         if(!save) {
             throw new ServiceException("仓库（规则设置）明细保存失败");
         }
+        //日志
+        addOperateLog(list,warehouseEntityList,mainId,virtualWarehouseIdList);
+
+        return Boolean.TRUE;
+    }
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/9/12 12:01
+     * @param list
+     * @param warehouseEntityList
+     * @param mainId
+     * @param virtualWarehouseIdList
+     */
+    private void addOperateLog (List<CfgRuleWarehouseDetailEntity> list,List<WarehouseEntity> warehouseEntityList, String mainId,List<String> virtualWarehouseIdList) {
         //虚拟仓
         List<VirtualWarehouseEntity> virtualWarehouseList = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
@@ -107,29 +119,41 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
                 .flatMap(obj -> Stream.of(obj.getChannelIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
         List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
+        Map<String, List<CfgRuleWarehouseDetailEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getWarehouseType()));
+        StringBuffer msg = new StringBuffer();
         //日志
-        for (CfgRuleWarehouseDetailEntity detailEntity : list) {
-            //实体仓
-            String warehouseName = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
-            //虚拟仓
-            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
-            //店铺
-            String shopNames = shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
-            //平台
-            String dictPlatformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(), detailEntity.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
-            String msg = "";
-            if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(detailEntity.getWarehouseType())) {
-                if (StrUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
-                     msg = StrUtil.format("本地仓:实体仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】",  warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType()));
+        for (Map.Entry<String, List<CfgRuleWarehouseDetailEntity>> entry : map.entrySet()) {
+            List<CfgRuleWarehouseDetailEntity> value = entry.getValue();
+            if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(entry.getKey())) {
+                if (StrUtil.isBlank(value.get(0).getVirtualWarehouseId())) {
+                    msg.append("本地仓:<br>");
                 } else {
-                     msg = StrUtil.format("虚拟仓:虚拟仓【{}】、关联实体仓【{}】、关联平台【{}】、关联店铺【{}】、库存分配【{}】",  warehouseName,virtualWarehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType()));
+                    msg.append("虚拟仓:<br>");
                 }
             } else {
-                 msg = StrUtil.format("海外仓:海外备货仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】", warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType()));
+                msg.append("海外仓:<br>");
             }
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), mainId, "设置规则");
+            for (CfgRuleWarehouseDetailEntity detailEntity : value) {
+                //实体仓
+                String warehouseName = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+                //虚拟仓
+                String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+                //店铺
+                String shopNames = shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+                //平台
+                String dictPlatformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(), detailEntity.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+                if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(detailEntity.getWarehouseType())) {
+                    if (StrUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
+                        msg.append(StrUtil.format("•实体仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】<br>",  warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
+                    } else {
+                        msg.append(StrUtil.format("•虚拟仓【{}】、关联实体仓【{}】、关联平台【{}】、关联店铺【{}】、库存分配【{}】<br>",  warehouseName,virtualWarehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
+                    }
+                } else {
+                    msg.append(StrUtil.format("•海外备货仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】<br>", warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
+                }
+            }
         }
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), mainId, "仓库");
     }
 
     /**
