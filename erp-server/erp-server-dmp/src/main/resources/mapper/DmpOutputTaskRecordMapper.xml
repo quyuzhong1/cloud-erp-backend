@@ -44,7 +44,8 @@
         AND NOT EXISTS (
             SELECT 1
             FROM dmp_cfg_output_black b
-            WHERE b.field_name = t.source_code
+            WHERE b.is_deleted = FALSE
+            AND b.field_name = t.source_code
         )
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
@@ -82,6 +83,7 @@
         t.update_time AS lastSyncTime,
         t.response_data AS returnMsg,
         t.is_need_sync AS isNeedSync
+        CASE WHEN dcob.id IS NULL OR dcob.id = '' THEN FALSE ELSE TRUE END AS isBlack
         FROM dmp_output_task_record t
         LEFT JOIN dmp_output_task g ON t.main_id = g.id
         LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
@@ -89,6 +91,7 @@
         LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
         LEFT JOIN dmp_basic_system l ON k.system_id = l.id
         LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_name
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
         <!--权限-->

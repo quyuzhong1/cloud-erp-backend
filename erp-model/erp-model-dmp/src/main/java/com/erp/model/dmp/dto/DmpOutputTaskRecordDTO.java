@@ -154,6 +154,11 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 是在黑名单
+         */
+        private Boolean isBlack;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;

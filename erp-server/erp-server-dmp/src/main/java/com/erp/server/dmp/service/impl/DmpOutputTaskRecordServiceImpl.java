@@ -9,9 +9,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.utils.ApplicationContextUtils;
@@ -34,7 +33,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -70,9 +68,6 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
-    @Resource
-    private DmpCfgInputService dmpCfgInputService;
 
     @Resource
     private DmpCfgInputConvertService dmpCfgInputConvertService;
@@ -248,11 +243,36 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             return Boolean.FALSE;
         }
 
+        //校验是否存在黑名单
+        checkExistsBlack(ids);
+
         return this.lambdaUpdate()
                 .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
                 .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
                 .in(DmpOutputTaskRecordEntity::getId, ids)
                 .update();
+    }
+
+    /**
+     * 校验是否存在黑名单
+     * @param ids
+     */
+    private void checkExistsBlack(List<String> ids) {
+        List<DmpOutputTaskRecordEntity> list = this.lambdaQuery().in(DmpOutputTaskRecordEntity::getId, ids).list();
+
+        List<String> outputTaskIds = list.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+        List<DmpCfgOutputBlackEntity> blackEntityList = dmpCfgOutputBlackService.lambdaQuery().in(DmpCfgOutputBlackEntity::getMainId, outputTaskIds).list();
+
+        for (DmpOutputTaskRecordEntity recordEntity : list) {
+            DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity = blackEntityList.stream()
+                    .filter(req -> req.getMainId().equals(recordEntity.getMainId())
+                            && req.getFieldValue().equals(recordEntity.getSourceCode())
+                    ).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(dmpCfgOutputBlackEntity)) {
+                throw new ServiceException("单据【" + recordEntity.getSourceCode() + "】已存在黑名单，禁止操作!");
+            }
+        }
     }
 
     @Override
@@ -268,6 +288,20 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             customizeBlack(dto);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelOutputBlack(String id) {
+        DmpOutputTaskRecordEntity entity = this.lambdaQuery().eq(DmpOutputTaskRecordEntity::getId, id).last("LIMIT 1").one();
+
+        dmpCfgOutputBlackService.lambdaUpdate()
+                    .eq(DmpCfgOutputBlackEntity::getFieldName, entity.getSourceCode())
+                    .eq(DmpCfgOutputBlackEntity::getMainId, entity.getMainId())
+                    .remove();
+
+        return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.DELETE);
+
     }
 
     /**
@@ -404,7 +438,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 .eq(DmpCfgOutputBlackEntity::getFieldValue, sourceCode)
                 .list();
         if (CollectionUtils.isNotEmpty(list)) {
-            throw new ServiceException("数据已在黑名单存在，请不要重复添加！");
+            throw new ServiceException("单据【"+sourceCode+"】已在黑名单存在，请不要重复添加！");
         }
     }
 
@@ -447,6 +481,6 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(dmpCfgOutputEntity.getOutputClass()), DmpOutputTaskHandler.class);
             dmpOutputTaskHandler.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity, cfgOutputRecordEntityListMap.getValue());
         }
-        return null;
+        return Boolean.TRUE;
     }
 }
