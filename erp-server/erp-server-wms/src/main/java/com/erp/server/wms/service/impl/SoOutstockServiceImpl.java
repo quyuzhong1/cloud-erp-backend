@@ -1983,12 +1983,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<LogisticsBillDTO.BatchUpdateTrackNoDTO> batchUpdateTrackNoDTOList = new ArrayList<>();
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         List<SoOutstockEntity> updateList = new ArrayList<>();
+
         for(SoOutstockDTO.PagingUpdateDTO pagingUpdateDTO : dtoList){
             SoOutstockEntity soOutstock = list.stream().filter(v->v.getId().equals(pagingUpdateDTO.getId())).findFirst().orElse(null);
             if(Objects.isNull(soOutstock)){
                 BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),pagingUpdateDTO.getId(),ApiError.ERROR_99058.msg);
                 batchResultDTOList.add(batchResultDTO);
             }else{
+                //2024.09.11 jack 旺店通的销售出库单，不允许操作更新物流渠道字段，提示：第三方平台单据不允许修改
+                String createUserName = soOutstock.getCreateUserName();
+                String qimen = PlatformDictEnum.QI_MEN.getCode();
+                boolean isQimen = createUserName.equals(qimen);
+                if(isQimen){
+                    BatchResultDTO batchResultDTO = BatchResultDTO.fail(soOutstock.getId(),soOutstock.getCode(),ApiError.ERROR_99142.msg);
+                    batchResultDTOList.add(batchResultDTO);
+                    continue;
+                }
                 LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
                 batchUpdateTrackNoDTO.setTrackNoList(pagingUpdateDTO.getTrackNoList());
                 batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
@@ -2002,6 +2012,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         soOutstock.setTrackNo(String.join(",", pagingUpdateDTO.getTrackNoList()));
                     }
                     soOutstock.setLogisticsChannelId(pagingUpdateDTO.getLogisticsChannelId());
+                    //2024.09.11 jack 销售出库单增加物流渠道名称logisticsChannelName
+                    soOutstock.setLogisticsChannelName(logisticsInfo.getName());
                     updateList.add(soOutstock);
                 }
             }

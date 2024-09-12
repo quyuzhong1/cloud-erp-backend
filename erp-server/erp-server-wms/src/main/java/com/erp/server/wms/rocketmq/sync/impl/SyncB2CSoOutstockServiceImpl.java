@@ -314,6 +314,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 }
             }
         }
+
+        //2024.09.11 jack sdc-erp销售出库单增加旺店通的物流渠道名称
+        soOutstock.setLogisticsChannelName(entity.getLogisticsCompanyName());
         //保存销售出库单
         soOutstockService.save(soOutstock);
         //保存销售出库单详情
@@ -368,6 +371,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     }
 
     /**
+     *
      * 构建库存相关数据
      */
     private static InventoryInOutStockRuleDTO getInventoryInOutStockRuleDTO(List<InOutStockDTO> inOutStockList) {
