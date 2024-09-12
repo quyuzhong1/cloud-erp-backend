@@ -65,6 +65,8 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 this.removeByIds(deleteIds);
+                // 数据处理
+                oldList = oldList.stream().filter(obj -> !deleteIds.contains(obj.getId())).collect(Collectors.toList());
             }
         }
 
@@ -197,6 +199,14 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             stockingRatioEntity.setType(type);
             //时间
             List<LocalDate> dateList = stockingRatioEntity.getDateList();
+            if (CollectionUtils.isNotEmpty(dateList)) {
+                if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
+                    throw new ServiceException("时间区间不能为空");
+                }
+                if (dateList.get(0).isAfter(dateList.get(1))) {
+                    throw new ServiceException("开始时间不能大于结束时间");
+                }
+            }
             stockingRatioEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             stockingRatioEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
             maxIndex ++;

@@ -71,6 +71,8 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 this.removeByIds(deleteIds);
+                // 数据处理
+                oldList = oldList.stream().filter(obj -> !deleteIds.contains(obj.getId())).collect(Collectors.toList());
             }
         }
         if (CollectionUtils.isEmpty(list)) {
@@ -82,7 +84,6 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（销量）");
         }
 
-        // 数据处理
         handleData(list,oldList,salesQtyId,isCustom);
         log.info("编辑 开始修改销量去噪信息数据，id：【{}】", salesQtyId);
         boolean save = super.saveOrUpdateBatch(list);

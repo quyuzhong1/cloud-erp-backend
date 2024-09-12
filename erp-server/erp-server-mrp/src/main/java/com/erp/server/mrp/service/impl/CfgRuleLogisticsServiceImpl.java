@@ -71,6 +71,8 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 this.deleteByIdList(deleteIds);
+                // 数据处理
+                oldList = oldList.stream().filter(obj -> !deleteIds.contains(obj.getId())).collect(Collectors.toList());
             }
         }
         if (CollectionUtils.isEmpty(list)) {

@@ -521,6 +521,13 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             Integer index = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), cfgRuleStockUpEntity.getId())).max(Comparator.comparingInt(obj -> obj.getIndex())).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
             List<CfgRuleStockingRatioDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             for (StockingRatioImportExcelDTO importExcelDTO: value) {
+                //日期
+                LocalDate startDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getStartDateStr());
+                LocalDate endDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getEndDateStr());
+                if (startDate.isAfter(endDate)) {
+                    errorMsgList.add("开始时间不能大于结束时间");
+                }
+
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     //错误数据
                     wrongList.add(importExcelDTO);
@@ -657,7 +664,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 String salesQtyId = cfgRuleSalesQtyService.update(updateDTO);
 
                 //添加默认配置
-                cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyId,Boolean.TRUE);
+                cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyId,Boolean.FALSE);
             } catch (Exception e) {
                 errorMsgList.add(e.getMessage());
             }
