@@ -1184,6 +1184,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param response
      */
     private void exportErrorExcel (List<JSONObject> errorList,List<String> headList, HttpServletResponse response) {
+        if (CollectionUtils.isEmpty(errorList)) {
+            return;
+        }
         String fileName = "运营月销预估";
         ExcelUtil.customExportUtil(headList,errorList,fileName, response);
     }
