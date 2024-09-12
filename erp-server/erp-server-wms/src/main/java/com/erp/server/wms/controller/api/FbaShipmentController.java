@@ -396,7 +396,7 @@ public class FbaShipmentController extends BaseController {
      *  货件快粘贴
      **/
     @PostMapping("/requisitionFbaQuickPaste")
-    public ApiResult<List<String>> requisitionFbaQuickPaste(@RequestBody @Validated FbaShipmentDTO.QuickPasteDTO dto) {
+    public ApiResult<List<FbaShipmentDTO.SearchResultDTO>> requisitionFbaQuickPaste(@RequestBody @Validated FbaShipmentDTO.QuickPasteDTO dto) {
         return success(fbaShipmentService.requisitionFbaQuickPaste(dto));
     }
 

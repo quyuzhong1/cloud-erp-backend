@@ -252,5 +252,5 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
 
     PagingVO<FbaShipmentDTO.SearchResultDTO> searchByCodeWithRequisition(PagingDTO<FbaShipmentDTO.SearchDTO> dto);
 
-    List<String> requisitionFbaQuickPaste(FbaShipmentDTO.QuickPasteDTO dto);
+    List<FbaShipmentDTO.SearchResultDTO> requisitionFbaQuickPaste(FbaShipmentDTO.QuickPasteDTO dto);
 }
