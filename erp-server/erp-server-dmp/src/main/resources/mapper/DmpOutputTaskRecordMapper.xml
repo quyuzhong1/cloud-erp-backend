@@ -82,7 +82,7 @@
         t.create_time,
         t.update_time AS lastSyncTime,
         t.response_data AS returnMsg,
-        t.is_need_sync AS isNeedSync
+        t.is_need_sync AS isNeedSync,
         CASE WHEN dcob.id IS NULL OR dcob.id = '' THEN FALSE ELSE TRUE END AS isBlack
         FROM dmp_output_task_record t
         LEFT JOIN dmp_output_task g ON t.main_id = g.id
