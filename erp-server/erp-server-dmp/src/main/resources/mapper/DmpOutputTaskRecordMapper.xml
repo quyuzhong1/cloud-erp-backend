@@ -91,7 +91,7 @@
         LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
         LEFT JOIN dmp_basic_system l ON k.system_id = l.id
         LEFT JOIN dmp_basic_system i ON h.system_id = i.id
-        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_name
+        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
         <!--权限-->

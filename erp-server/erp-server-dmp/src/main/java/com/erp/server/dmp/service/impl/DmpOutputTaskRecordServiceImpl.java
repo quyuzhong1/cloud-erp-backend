@@ -394,9 +394,14 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
                 .list();
 
         for (DmpOutputTaskRecordEntity recordEntity : recordEntityList) {
-            //获取对应的输出配置
-            String cfgOutputId = recordEntity.getMainId();
-            DmpCfgOutputEntity dmpCfgOutputEntity = cfgOutputEntityList.stream().filter(req -> req.getId().equals(cfgOutputId)).findFirst().orElse(null);
+
+            DmpOutputTaskEntity dmpOutputTaskEntity = dmpOutputTaskEntityList.stream().filter(req -> req.getId().equals(recordEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(dmpOutputTaskEntity)) {
+                return;
+            }
+
+
+            DmpCfgOutputEntity dmpCfgOutputEntity = cfgOutputEntityList.stream().filter(req -> req.getId().equals(dmpOutputTaskEntity.getCfgOutputId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(dmpCfgOutputEntity)) {
                 continue;
             }
@@ -408,7 +413,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             }
 
             //查询黑名单用于校验是否存在，避免重复添加
-            checkOutpuBlackExist(cfgOutputId, sourceCodeKeys, recordEntity.getSourceCode());
+            checkOutpuBlackExist(recordEntity.getMainId(), sourceCodeKeys, recordEntity.getSourceCode());
 
             //添加黑名单
             DmpCfgOutputBlackDTO.AddDTO addDTO = new DmpCfgOutputBlackDTO.AddDTO();
@@ -416,7 +421,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             addDTO.setDataType(DmpCfgOutputBlackDataTypeEnum.STRING.getCode());
             addDTO.setFieldName(sourceCodeKeys.get(0));
             addDTO.setFieldValue(recordEntity.getSourceCode());
-            addDTO.setMainId(cfgOutputId);
+            addDTO.setMainId(recordEntity.getMainId());
             addDTO.setRemark(dto.getRemark());
             dmpCfgOutputBlackService.add(addDTO);
 

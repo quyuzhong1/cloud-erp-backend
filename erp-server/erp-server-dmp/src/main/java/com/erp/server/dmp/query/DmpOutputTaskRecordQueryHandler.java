@@ -25,10 +25,10 @@ public class DmpOutputTaskRecordQueryHandler extends AbstractQueryHandler {
                 return "t.status = '" + DmpOutputTaskRecordStatusEnum.FINISH.getCode() + "' AND t.is_need_sync = " + Boolean.FALSE + "";
             } else if (DmpPushMonitorTabEnum.PUSH_ING.getCode().equals(searchType)) {
                 return "(t.status = '" + DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode() + "' " +
-                        "|| t.status = " + DmpOutputTaskRecordStatusEnum.MQERROR.getCode() + "" +
-                        "|| t.status = " + DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode() + ")";
+                        "OR t.status = " + DmpOutputTaskRecordStatusEnum.MQERROR.getCode() + "" +
+                        "OR t.status = " + DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode() + ")";
             } else if (DmpPushMonitorTabEnum.BLACK.getCode().equals(searchType)) {
-                return "EXISTS ( SELECT 1 FROM dmp_cfg_output_black b WHERE b.field_name = t.source_code ) ";
+                return "EXISTS ( SELECT 1 FROM dmp_cfg_output_black b WHERE b.field_value = t.source_code ) ";
             } else {
                 super.buildDefaultDTO("t.status", searchType);
             }
