@@ -18,6 +18,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -78,7 +79,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
         LocalDateTime endTime = checkAndConvertEntTime(autoCheckNow);
 
         try {
-            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+            FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
             String queryType = AmazonFbaQueryTypeEnum.DATE_RANGE.getCode();
             String marketplaceId = marketPlaceEnum.getMarketplaceId();
             List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
