@@ -19,14 +19,14 @@ public class StockUpImportExcelDTO implements Serializable {
     /**
      * 平台
      */
-    @ExcelProperty(value = "平台", index = 0)
+    @ExcelProperty(value = "*平台", index = 0)
     @FieldValid(fieldName = "平台", isNotBlank = true, maxLength = 32)
     private String platform;
 
     /**
      * SKU
      */
-    @ExcelProperty(value = "SKU", index = 1)
+    @ExcelProperty(value = "*SKU", index = 1)
     @FieldValid(fieldName = "SKU", isNotBlank = true, maxLength = 32)
     private String skuNo;
 
@@ -34,43 +34,43 @@ public class StockUpImportExcelDTO implements Serializable {
     /**
      * 店铺
      */
-    @ExcelProperty(value = "店铺", index = 2)
+    @ExcelProperty(value = "*店铺", index = 2)
     @FieldValid(fieldName = "店铺", isNotBlank = true, maxLength = 32)
     private String shopName;
 
     /**
      * 采购审批（天）
      */
-    @ExcelProperty(value = "*采购审批（天）", index = 3)
-    @FieldValid(fieldName = "采购审批（天）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
+    @ExcelProperty(value = "采购审批（天）", index = 3)
+    @FieldValid(fieldName = "采购审批（天）", formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
     private String purchaseApproveDays;
 
     /**
      * 生产周期（天）
      */
-    @ExcelProperty(value = "*生产周期（天）", index = 4)
-    @FieldValid(fieldName = "生产周期（天）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
+    @ExcelProperty(value = "生产周期（天）", index = 4)
+    @FieldValid(fieldName = "生产周期（天）", formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
     private String productionDays;
 
     /**
      * 供应商发货（天）
      */
-    @ExcelProperty(value = "*供应商发货（天）", index = 5)
-    @FieldValid(fieldName = "供应商发货（天）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
+    @ExcelProperty(value = "供应商发货（天）", index = 5)
+    @FieldValid(fieldName = "供应商发货（天）", formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
     private String supplierDeliveryDays;
 
     /**
      * 质检入库（天）
      */
-    @ExcelProperty(value = "*质检入库（天）", index = 6)
-    @FieldValid(fieldName = "质检入库（天）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
+    @ExcelProperty(value = "质检入库（天）", index = 6)
+    @FieldValid(fieldName = "质检入库（天）",formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
     private String qcDays;
 
     /**
      * 采购频率（天）
      */
-    @ExcelProperty(value = "*采购频率（天）", index = 7)
-    @FieldValid(fieldName = "采购频率（天）", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
+    @ExcelProperty(value = "采购频率（天）", index = 7)
+    @FieldValid(fieldName = "采购频率（天）", formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
     private String purchaseCycleDays;
 
     /**
@@ -202,15 +202,15 @@ public class StockUpImportExcelDTO implements Serializable {
     /**
      * 安全天数
      */
-    @ExcelProperty(value = "*安全天数", index = 26)
-    @FieldValid(fieldName = "安全天数", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
+    @ExcelProperty(value = "安全天数", index = 26)
+    @FieldValid(fieldName = "安全天数", formatPattern= FieldFormatPatternTypeEnum.YEAR_DAYS)
     private String safeDays;
 
     /**
      * 默认备货系数
      */
-    @ExcelProperty(value = "*默认备货系数", index = 27)
-    @FieldValid(fieldName = "默认备货系数", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @ExcelProperty(value = "默认备货系数", index = 27)
+    @FieldValid(fieldName = "默认备货系数", formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String stockingRatio;
 
     /**
