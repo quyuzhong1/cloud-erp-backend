@@ -18,6 +18,7 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAmzReportFieldService;
 import com.erp.server.dmp.service.DmpAmzReportInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -34,6 +35,7 @@ import java.util.Map;
  *
  * @author Jim
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputAmzReportParseApiInitHandler extends DmpInputInitHandler {
@@ -53,7 +55,8 @@ public class DmpInputAmzReportParseApiInitHandler extends DmpInputInitHandler {
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
         List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
         if(CollectionUtils.isEmpty(findMongoData)) {
-            ServiceException.runError("未找到mongo报告文档信息:taskId=" + dmpInputTaskEntity.getParentTaskId());
+            log.warn("亚马逊报告主任务taskId={},结果为空无需处理", dmpInputTaskEntity.getParentTaskId());
+            return Collections.emptyList();
         }
         // 报告文档信息
         Map<String, Object> reportDocumentMongoObjectMap = findMongoData.get(0);

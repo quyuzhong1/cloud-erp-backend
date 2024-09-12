@@ -63,7 +63,9 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputInitHandler
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
         List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
         if (CollectionUtils.isEmpty(findMongoData)) {
-            ServiceException.runError("未找到mongo报告信息:taskId=" + dmpInputTaskEntity.getId());
+            // 主数据不存在明细无需处理
+            log.warn("FBA明细下载主任务taskId={},结果为空明细无需处理", dmpInputTaskEntity.getParentTaskId());
+            return Collections.emptyList();
         }
         String shopId = findMongoData.get(0).getOrDefault("nextLevelId", "").toString();
         if (StringUtils.isBlank(shopId)){
