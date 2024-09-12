@@ -865,7 +865,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseApplicationDetailList = purchaseApplicationDetailFeign.listByMainIds(purchaseIds);
         }
         //采购入库数量
-        List<PurchaseApplicationDTO.ListDTO> purchaseList = new ArrayList<>();
+        /*List<PurchaseApplicationDTO.ListDTO> purchaseList = new ArrayList<>();
         for (PurchaseApplicationDetailEntity detailEntity : purchaseApplicationDetailList) {
             PurchaseApplicationDTO.ListDTO obj = new PurchaseApplicationDTO.ListDTO();
             obj.setPurchaseApplicationDetailId(detailEntity.getId());
@@ -873,7 +873,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             obj.setId(detailEntity.getPurchaseApplicationId());
             purchaseList.add(obj);
         }
-        purchaseList = purchaseApplicationFeign.listStockInQty(purchaseList);
+        purchaseList = purchaseApplicationFeign.listStockInQty(purchaseList);*/
         for(PilotApplicationDTO.ListDTO item : list) {
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
             item.setOrderStatusName(PilotPushPurchaseStatusEnum.getName(item.getOrderStatus()));
@@ -920,7 +920,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 item.setPurchaseApplyQty(sum);
             }
             //采购入库量
-            List<PurchaseApplicationEntity> collect1 = purchaseApplicationList.stream().filter(item1 -> item1.getSourceId().equals(item.getId())).collect(Collectors.toList());
+            /*List<PurchaseApplicationEntity> collect1 = purchaseApplicationList.stream().filter(item1 -> item1.getSourceId().equals(item.getId())).collect(Collectors.toList());
             List<String> purchaseIdList = collect1.stream().map(item1 -> item1.getId()).distinct().collect(Collectors.toList());
             List<String> detailIds = purchaseApplicationDetailList.stream()
                     .filter(item1 -> purchaseIdList.contains(item1.getPurchaseApplicationId()))
@@ -928,7 +928,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                     .collect(Collectors.toList());
             List<PurchaseApplicationDTO.ListDTO> purchaseList2 = purchaseList.stream().filter(obj1 -> detailIds.contains(obj1.getPurchaseApplicationDetailId())).collect(Collectors.toList());
             int sum = purchaseList2.stream().mapToInt(item1 -> item1.getStockInQty()).sum();
-            item.setStockInQty(sum);
+            item.setStockInQty(sum);*/
         }
     }
     /**
