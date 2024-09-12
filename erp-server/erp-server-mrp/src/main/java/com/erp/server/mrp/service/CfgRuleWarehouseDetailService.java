@@ -22,7 +22,7 @@ public interface CfgRuleWarehouseDetailService extends SuperService<CfgRuleWareh
     * @param cfgLocalWarehouseList
     * @return
     */
-    Boolean update(List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList,String mainId,String type);
+    Boolean update(List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList,String mainId,String type,Boolean isVirtual);
 
     /**
      * 根据主表id集合查询

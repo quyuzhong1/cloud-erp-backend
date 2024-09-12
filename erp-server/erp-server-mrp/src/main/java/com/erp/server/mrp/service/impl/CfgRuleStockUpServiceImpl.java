@@ -67,7 +67,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             cfgRuleStockUpEntity.setId(old.getId());
         }
         // 数据处理
-        handleData(cfgRuleStockUpEntity);
+        handleData(cfgRuleStockUpEntity,old,updateDTO.getIsCustom());
 
         boolean save = super.saveOrUpdate(cfgRuleStockUpEntity);
         if(!save) {
@@ -205,7 +205,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgRuleStockUpEntity cfgRuleStockUpEntity) {
+    private void handleData(CfgRuleStockUpEntity cfgRuleStockUpEntity,CfgRuleStockUpEntity old,Boolean isCustom) {
         if (MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
                 MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
             throw new ServiceException("常规品备货系数必须大于等于0，并且小于等于99");
@@ -214,5 +214,36 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
                 MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
             throw new ServiceException("新品备货系数必须大于等于0，并且小于等于99");
         }
+        //自定义的需要赋值，避免生成变更日志
+        if (isCustom) {
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getPurchaseApproveDays())) {
+                cfgRuleStockUpEntity.setPurchaseApproveDays(old.getPurchaseApproveDays());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getProductionDays())) {
+                cfgRuleStockUpEntity.setProductionDays(old.getProductionDays());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getSupplierDeliveryDays())) {
+                cfgRuleStockUpEntity.setSupplierDeliveryDays(old.getSupplierDeliveryDays());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getQcDays())) {
+                cfgRuleStockUpEntity.setQcDays(old.getQcDays());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getPurchaseCycleDays())) {
+                cfgRuleStockUpEntity.setPurchaseCycleDays(old.getPurchaseCycleDays());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getSafeDays())) {
+                cfgRuleStockUpEntity.setSafeDays(old.getSafeDays());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getInstockDays())) {
+                cfgRuleStockUpEntity.setInstockDays(old.getInstockDays());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getStockingRatio())) {
+                cfgRuleStockUpEntity.setStockingRatio(old.getStockingRatio());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getNewStockingRatio())) {
+                cfgRuleStockUpEntity.setNewStockingRatio(old.getNewStockingRatio());
+            }
+        }
+
     }
 }

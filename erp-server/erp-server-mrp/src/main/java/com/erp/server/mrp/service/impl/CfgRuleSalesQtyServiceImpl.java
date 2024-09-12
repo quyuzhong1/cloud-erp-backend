@@ -90,7 +90,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         }
 
         // 数据处理
-        handleData(cfgRuleSalesQtyEntity);
+        handleData(cfgRuleSalesQtyEntity,oldList.get(0),updateDetailDTO.getIsCustom());
 
         boolean save = super.saveOrUpdate(cfgRuleSalesQtyEntity);
         if(!save) {
@@ -350,7 +350,20 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity,CfgRuleSalesQtyEntity oldEntity,Boolean isCustom) {
+        if (isCustom) {
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsCfgSame())) {
+                cfgRuleSalesQtyEntity.setIsCfgSame(oldEntity.getIsCfgSame());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsIgnoreOutOfStock())) {
+                cfgRuleSalesQtyEntity.setIsIgnoreOutOfStock(oldEntity.getIsIgnoreOutOfStock());
+            }
+            if (StrUtil.isBlank(cfgRuleSalesQtyEntity.getSalesQtyType())) {
+                cfgRuleSalesQtyEntity.setSalesQtyType(oldEntity.getSalesQtyType());
+            }
+            if (StrUtil.isBlank(cfgRuleSalesQtyEntity.getOrderType())) {
+                cfgRuleSalesQtyEntity.setOrderType(oldEntity.getOrderType());
+            }
+        }
     }
 }
