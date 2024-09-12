@@ -84,6 +84,8 @@
             SUM(other_cost) AS actualOtherCost,
             SUM(other_tax_cost) AS actualOtherTaxCost,
             SUM(total_logistics_cost) AS totalCost,
+            MAX(source_code) as source_code,
+            MAX(transport_no) as transport_no,
         main_id
         FROM
         tms_first_mile_reconciliation_detail
