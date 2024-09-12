@@ -45,7 +45,7 @@
             SELECT 1
             FROM dmp_cfg_output_black b
             WHERE b.is_deleted = FALSE
-            AND b.field_value = t.source_code
+            AND b.field_value = t.source_code AND t.main_id = b.main_id
         )
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
@@ -63,7 +63,7 @@
         AND EXISTS (
             SELECT 1
             FROM dmp_cfg_output_black b
-            WHERE b.field_value = t.source_code
+            WHERE b.field_value = t.source_code AND t.main_id = b.main_id
         )
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
@@ -91,7 +91,7 @@
         LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
         LEFT JOIN dmp_basic_system l ON k.system_id = l.id
         LEFT JOIN dmp_basic_system i ON h.system_id = i.id
-        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
+        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value AND g.id = dcob.main_id
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
         <!--权限-->
