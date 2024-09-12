@@ -484,6 +484,7 @@ public class CfgRuleStockUpDTO implements Serializable {
         ) {
             this.setId(Optional.ofNullable(entity).orElse(defaultStockUp).getId());
             this.setPurchaseApproveDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getPurchaseApproveDays())) ? defaultStockUp.getPurchaseApproveDays() : entity.getPurchaseApproveDays());
+            this.setProductionDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getProductionDays())) ? defaultStockUp.getProductionDays() : entity.getProductionDays());
             this.setSupplierDeliveryDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getSupplierDeliveryDays())) ? defaultStockUp.getSupplierDeliveryDays() : entity.getSupplierDeliveryDays());
             this.setQcDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getQcDays())) ? defaultStockUp.getQcDays() : entity.getQcDays());
             this.setPurchaseCycleDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getPurchaseCycleDays())) ? defaultStockUp.getPurchaseCycleDays() : entity.getPurchaseCycleDays());

@@ -18,7 +18,6 @@ import com.erp.server.mrp.calculation.service.ShopInfoService;
 import com.erp.server.mrp.calculation.utils.TreeUtils;
 import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
-import com.google.common.collect.Lists;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -32,7 +31,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum.*;
@@ -55,7 +54,7 @@ public class InventoryServiceImpl implements InventoryService {
     public int getFbaUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes) {
         String code = String.join("+", codes);
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-        return inventoryMapper.getFbaUsable(replenishmentResultDTO, code, SnapshotTableEnum.getTableName(FBA_INVENTORY, calcDate));
+        return inventoryMapper.getFbaUsable(replenishmentResultDTO, code, SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calcDate));
     }
 
     @Override
@@ -69,11 +68,15 @@ public class InventoryServiceImpl implements InventoryService {
         if (CfgRuleInventoryNodeEnum.FBA_DELIVERY.getCode().equals(code)) {
             //发FBA，签收数量取对应货件的签收数量 在途数量 = 发货单上的实发数量 - 签收数量；
             inTransitDetails = inventoryMapper.getFbaDelivery(replenishmentResultDTO,
-                    SnapshotTableEnum.getTableName(FBA_SHIPMENT, calcDate),
-                    SnapshotTableEnum.getTableName(FBA_SHIPMENT_DETAIL, calcDate),
                     SnapshotTableEnum.getTableName(FIRST_MILE_DELIVERY, calcDate),
-                    SnapshotTableEnum.getTableName(FIRST_MILE_DELIVERY_DETAIL, calcDate)
+                    SnapshotTableEnum.getTableName(FIRST_MILE_DELIVERY_DETAIL, calcDate),
+                    SnapshotTableEnum.getTableName(FBA_SHIPMENT, calcDate),
+                    SnapshotTableEnum.getTableName(FBA_SHIPMENT_DETAIL, calcDate)
+
             );
+            if (CollectionUtils.isEmpty(inTransitDetails)) {
+                return 0;
+            }
             List<String> firstMileDeliveryIds = inTransitDetails.stream().map(ReplenishmentResultDTO.FbaInTransitDetailDTO::getSourceId).collect(Collectors.toList());
             //查询头程物流单
             List<LogisticsBillEntity> logisticsBills = inventoryMapper.getLogisticsBillBySourceIds(firstMileDeliveryIds, SnapshotTableEnum.getTableName(LOGISTICS_BILL, calcDate));
@@ -137,14 +140,11 @@ public class InventoryServiceImpl implements InventoryService {
             startDate = startDate.plusDays(1);
         }
         //拆分为时间list
-        List<List<LocalDate>> partition = Lists.partition(dateList, 60);
-        for (List<LocalDate> list : partition) {
-            CompletableFuture.runAsync(() -> {
-                for (LocalDate localDate : list) {
-                    getHistoryInventoryByPlatformType(localDate, replenishmentResult);
-                }
-            }, threadPoolTaskExecutor);
+        List<ReplenishmentResultDTO.SalesInfoDTO> salesInfo = new ArrayList<>();
+        for (LocalDate localDate : dateList) {
+            salesInfo.add(getHistoryInventoryByPlatformType(localDate, replenishmentResult));
         }
+        replenishmentResult.setSalesInfos(salesInfo);
     }
 
     @Override
@@ -167,7 +167,7 @@ public class InventoryServiceImpl implements InventoryService {
     public int getOverseasUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         String code = String.join("+", codes);
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-        int overseasUsable = inventoryMapper.getOverseasUsable(replenishmentResultDTO, code, getTableName(OVERSEAS_INVENTORY, calcDate));
+        int overseasUsable = inventoryMapper.getOverseasUsable(replenishmentResultDTO, code, getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calcDate));
         replenishmentSuggestionService.listSalesBySkuId(replenishmentResultDTO.getReplenishment().getSkuId());
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
         List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> allPlatformWarehouse = warehouseResult.getOverseasWarehouseList().
@@ -383,15 +383,16 @@ public class InventoryServiceImpl implements InventoryService {
      * @param localDate           日期
      * @param replenishmentResult 补货结果
      */
-    private void getHistoryInventoryByPlatformType(LocalDate localDate, ReplenishmentResultDTO replenishmentResult) {
+    private ReplenishmentResultDTO.SalesInfoDTO getHistoryInventoryByPlatformType(LocalDate localDate, ReplenishmentResultDTO replenishmentResult) {
         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
-            getHistoryInventoryByFba(localDate, replenishmentResult);
+            return getHistoryInventoryByFba(localDate, replenishmentResult);
         } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
             //todo 后期做
         } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResult.getReplenishment().getPlatformType()) ||
                 CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
             //todo 后期做
         }
+        return null;
     }
 
 
@@ -401,10 +402,10 @@ public class InventoryServiceImpl implements InventoryService {
      * @param localDate           日期
      * @param replenishmentResult 补货结果
      */
-    private void getHistoryInventoryByFba(LocalDate localDate, ReplenishmentResultDTO replenishmentResult) {
+    private ReplenishmentResultDTO.SalesInfoDTO getHistoryInventoryByFba(LocalDate localDate, ReplenishmentResultDTO replenishmentResult) {
         int qty = 0;
         // 判断表是否存在
-        String tableName = getTableName(FBA_INVENTORY, localDate.format(DateTimeFormatter.BASIC_ISO_DATE));
+        String tableName = getTableName(SnapshotTableEnum.FBA_INVENTORY, localDate.format(DateTimeFormatter.BASIC_ISO_DATE));
         boolean exist = inventoryMapper.isTableExist(tableName);
         //如果表不存在，库存默认为0
         if (exist) {
@@ -419,6 +420,9 @@ public class InventoryServiceImpl implements InventoryService {
                     salesInfoDTO.setOriginalSalesQty(0);
                     return salesInfoDTO;
                 });
+        infoDTO.setOriginalSalesQty(Optional.ofNullable(infoDTO.getOriginalSalesQty()).orElse(0));
+        infoDTO.setDate(Optional.ofNullable(infoDTO.getDate()).orElse(localDate));
         infoDTO.setOriginalInventoryQty(qty);
+        return infoDTO;
     }
 }

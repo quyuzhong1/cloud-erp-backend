@@ -16,7 +16,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
-import com.erp.server.mrp.calculation.handler.SkuCalculationHandler;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
 import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.service.*;
@@ -76,6 +75,8 @@ public class BasicReplenishmentDataService {
 
     @Resource
     private CfgRuleLogisticsService cfgRuleLogisticsService;
+    @Resource
+    private StockingTimeHandler stockingTimeHandler;
 
     /**
      * 增量变动建议补货基础数据
@@ -102,6 +103,7 @@ public class BasicReplenishmentDataService {
                 ReplenishmentSuggestionEntity entity = new ReplenishmentSuggestionEntity();
                 entity.setShopId(shopInfo.getId());
                 entity.setArea(shopInfo.getDictAreaCode());
+                entity.setFbaWarehouseId(shopInfo.getWarehouseId());
                 entity.setCountry(shopInfo.getDictCountryCode());
                 entity.setPlatformType(PlatformMappingTypeEnum.getEnum(mapping.getType()).getPlatformType().getCode());
                 entity.setPlatform(shopInfo.getDictPlatform());
@@ -117,6 +119,7 @@ public class BasicReplenishmentDataService {
                     .findFirst().orElse(new ReplenishmentSuggestionEntity());
             entity.setShopId(v.getShopId());
             entity.setArea(v.getArea());
+            entity.setFbaWarehouseId(v.getFbaWarehouseId());
             entity.setCountry(v.getCountry());
             entity.setPlatformType(v.getPlatformType());
             entity.setPlatform(v.getPlatform());
@@ -190,6 +193,7 @@ public class BasicReplenishmentDataService {
                         } else {
                             detail.setSkuType(CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
                         }
+                        replenishmentResult.setReplenishmentDetail(detail);
                         //初始化配置
                         CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
                         //获取销量配置
@@ -260,8 +264,7 @@ public class BasicReplenishmentDataService {
                             CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
                             CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
                             cfgRuleStrategy.setStockUpResult(stockUpResult);
-                            SkuCalculationHandler skuCalculationHandler = new StockingTimeHandler();
-                            skuCalculationHandler.handle(cfgRuleStrategy, replenishmentResult);
+                            stockingTimeHandler.handle(cfgRuleStrategy, replenishmentResult);
                             replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, replenishmentResult);
                         }
                     } catch (Exception e) {
@@ -274,7 +277,7 @@ public class BasicReplenishmentDataService {
     }
 
     private void getFbaHistorySales(CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult, ReplenishmentResultDTO replenishmentResult) {
-        if (FbaOrderTypeEnum.FBA.name().equals(salesQtyResult.getOrderType())) {
+        if (FbaOrderTypeEnum.FBA.getCode().equals(salesQtyResult.getOrderType())) {
             List<ReplenishmentResultDTO.SalesInfoDTO> sales;
             // 以销售订单订单创建时间计算销量
             if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyResult.getSalesQtyType())) {

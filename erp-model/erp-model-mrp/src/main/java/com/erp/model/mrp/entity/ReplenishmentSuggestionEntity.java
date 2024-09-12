@@ -60,6 +60,12 @@ public class ReplenishmentSuggestionEntity extends BaseEntity<ReplenishmentSugge
     private String area;
 
     /**
+     * fba仓库
+     */
+    @TableField("fba_warehouse_id")
+    private String fbaWarehouseId;
+
+    /**
      * 平台
      */
     @TableField("platform")

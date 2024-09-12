@@ -285,6 +285,8 @@ public class CfgRuleSalesQtyDTO implements Serializable {
             resultDTO.setPlatformType(entity.getPlatformType());
             resultDTO.setSkuType(skuType);
             resultDTO.setDefaultSalesQty(defaultSalesQty);
+            resultDTO.setDefaultFormula(defaultFormula);
+            resultDTO.setDefaultDenoising(defaultDenoising);
             return resultDTO;
         }
     }

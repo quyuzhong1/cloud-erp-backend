@@ -3,8 +3,8 @@
 <mapper namespace="com.erp.server.mrp.mapper.InventoryMapper">
 
     <select id="getFbaUsable" resultType="java.lang.Integer">
-        select sum(#{code})
-        from #{tableName}
+        select COALESCE(sum(${code}), 0)
+        from ${tableName}
         where is_deleted = false
           and sku_no = #{result.replenishment.skuNo}
           and warehouse_id = #{result.replenishment.fbaWarehouseId}
@@ -20,9 +20,9 @@
                t2.receive_qty                            as receiveQty,
                t2.delivery_qty - t2.receive_qty          as inTransitQty,
                #{result.replenishmentDetail.calcVersion} as calcVersion
-        from #{tableName} t1
+        from ${tableName} t1
                  INNER JOIN
-             #{tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
+             ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
         where t1.is_deleted = false
           and t2.sku_id = #{result.replenishment.skuId}
           and t1.shop_id = #{result.replenishment.shopId}
@@ -40,23 +40,23 @@
                COALESCE(
                        (SELECT SUM
                                (t4.receive_qty)
-                        FROM #{shipmentName} t3
-                                 INNER JOIN #{shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                        FROM ${shipmentName} t3
+                                 INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
                             AND t4.main_id = t3.id
                             AND t3.code = t2.fba_shipment_code
                             AND t4.sku_id = #{result.replenishment.skuId}), 0)  AS receiveQty,
                (t2.delivery_qty - COALESCE(
                        (SELECT SUM
                                (t4.receive_qty)
-                        FROM #{shipmentName} t3
-                                 INNER JOIN #{shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                        FROM ${shipmentName} t3
+                                 INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
                             AND t4.main_id = t3.id
                             AND t3.code = t2.fba_shipment_code
                             AND t4.sku_id = #{result.replenishment.skuId}), 0)) as inTransitQty,
                #{result.replenishmentDetail.calcVersion}                        as calcVersion
-        from #{tableName} t1
+        from ${tableName} t1
                  INNER JOIN
-             #{tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
+             ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
         where t1.is_deleted = false
           and t2.sku_id = #{result.replenishment.skuId}
           and t1.shop_id = #{result.replenishment.shopId}
@@ -64,30 +64,30 @@
           and (t2.delivery_qty - COALESCE(
                 (SELECT SUM
                         (t4.receive_qty)
-                 FROM #{shipmentName} t3
-                          INNER JOIN #{shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                 FROM ${shipmentName} t3
+                          INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
                      AND t4.main_id = t3.id
                      AND t3.code = t2.fba_shipment_code
                      AND t4.sku_id = #{result.replenishment.skuId}), 0)) > 0
     </select>
     <select id="getLogisticsBillBySourceIds" resultType="com.erp.model.tms.entity.LogisticsBillEntity">
-        select * from #{tableName} where is_deleted = false
+        select * from ${tableName} where is_deleted = false
         and source_id in
         <foreach collection="sourceIds" item="sourceId" open="(" close=")" separator=",">
             #{sourceId}
         </foreach>
     </select>
     <select id="listLogisticsChannelByIds" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
-        select * from #{tableName} where is_deleted = false
+        select * from ${tableName} where is_deleted = false
         and id in
         <foreach collection="channelIds" item="channelId" open="(" close=")" separator=",">
             #{channelId}
         </foreach>
     </select>
     <select id="listFirstMileDelivery" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$FbaShipmentDTO">
-        select t1.id,t1.approve_time,t2.fba_shipment_code from #{tableName} t1
+        select t1.id,t1.approve_time,t2.fba_shipment_code from ${tableName} t1
         INNER JOIN
-        #{tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
+        ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
         where t1.is_deleted = false and t2.fba_shipment_code in
         <foreach collection="codes" item="code" open="(" close=")" separator=",">
             #{code}
@@ -100,8 +100,8 @@
                          AND schemaname = 'public')
     </select>
     <select id="getFbaOldUsable" resultType="java.lang.Integer">
-        select fulfillable_qty
-        from #{tableName}
+        select COALESCE(sum(fulfillable_qty), 0 )
+        from ${tableName}
         where is_deleted = false
           and sku_no = #{result.replenishment.skuNo}
           and warehouse_id = #{result.replenishment.fbaWarehouseId}
@@ -115,8 +115,8 @@
         wdp.id AS sourceId,
         wdp.code AS sourceCode
         FROM
-        #{tableName} AS wdp
-        INNER JOIN #{tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
+        ${tableName} AS wdp
+        INNER JOIN ${tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
         AND wdpd.main_id = wdp.id
         WHERE
         wdp.is_deleted = FALSE
@@ -126,10 +126,10 @@
             <!-- 当 codes 包含 'approve' 时 -->
             <if test="'approve' in codes">
                 AND (
-                (wdp.status = 'approve' AND wdp.delivery_status = 'unShipped')
+                (wdp.approve_status = 'approve' AND wdp.delivery_status = 'unShipped')
                 <!-- 检查并处理其他状态 -->
                 <if test="codes.size() > 1">
-                    OR wdp.status IN
+                    OR wdp.approve_status IN
                     <foreach item="code" collection="codes" open="(" separator="," close=")">
                         <!-- 跳过 'approve'，因为已单独处理 -->
                         <if test="code != 'approve'">
@@ -141,7 +141,7 @@
             </if>
             <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
             <if test="'approve' not in codes">
-                AND wdp.status IN
+                AND wdp.approve_status IN
                 <foreach item="code" collection="codes" open="(" separator="," close=")">
                     #{code}
                 </foreach>
@@ -149,8 +149,8 @@
         </if>
     </select>
     <select id="getOverseasUsable" resultType="java.lang.Integer">
-        select sum(#{code})
-        from #{tableName}
+        select COALESCE(sum(${code}), 0)
+        from ${tableName}
         where is_deleted = false
           and sku_id = #{result.replenishment.skuId}
           and warehouse_id = #{result.replenishment.fbaWarehouseId}
@@ -161,7 +161,7 @@
         warehouse_id AS warehouseId,
         SUM ( qty ) AS qty
         FROM
-        #{tableName}
+        ${tableName}
         WHERE is_deleted = false
         AND dict_inventory_status IN
         <foreach item="code" collection="codes" open="(" separator="," close=")">
@@ -177,7 +177,7 @@
         virtual_warehouse_id AS warehouseId,
         SUM ( qty ) AS qty
         FROM
-        #{tableName}
+        ${tableName}
         WHERE is_deleted = false
         AND dict_inventory_status IN
         <foreach item="code" collection="codes" open="(" separator="," close=")">
@@ -199,8 +199,8 @@
             pa.approve_time AS estimatedPutAwayDate,
             pad.id AS detailId
         FROM
-            #{tableName} AS pa
-                INNER JOIN #{tableDetailName} AS pad ON pad.is_deleted = FALSE
+        ${tableName} AS pa
+                INNER JOIN ${tableDetailName} AS pad ON pad.is_deleted = FALSE
                 AND pad.purchase_application_id = pa."id"
         WHERE
             pad.sku_id = #{skuId}
@@ -239,8 +239,8 @@
         pod.purchase_qty AS qty,
         po.delivery_warehouse_id AS warehouseId
         FROM
-        #{tableName} AS po
-        INNER JOIN #{tableDetailName} AS pod ON pod.is_deleted = FALSE
+        ${tableName} AS po
+        INNER JOIN ${tableDetailName} AS pod ON pod.is_deleted = FALSE
         AND pod.purchase_order_id = po."id"
         WHERE
         pod.sku_id = #{skuId}
@@ -257,9 +257,9 @@
         parp.purchase_order_detail_id,
         parp.purchase_order_id,
         COALESCE(pod.purchase_qty,0) as purchaseQty
-        from #{otherTableName} parp
-        left join #{tableName} po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status = false
-        left join #{tableDetailName} pod on parp.purchase_order_detail_id = pod.id and po.id = pod.purchase_order_id and pod.is_deleted = false
+        from ${otherTableName} parp
+        left join ${tableName} po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status = false
+        left join ${tableDetailName} pod on parp.purchase_order_detail_id = pod.id and po.id = pod.purchase_order_id and pod.is_deleted = false
         where
         parp.is_deleted = false
             and parp.purchase_application_detail_id in
@@ -275,9 +275,9 @@
         sod.qty,
         sod.parent_id,
         sod.source_detail_id
-        from #{tableName} so
-        inner join #{tableDetailName} sod on so.id = sod.main_id and sod.is_deleted = false
-        left join #{otherTableName} pod on pod.source_detail_id = sod.id and pod.is_deleted = false
+        from ${tableName} so
+        inner join ${tableDetailName} sod on so.id = sod.main_id and sod.is_deleted = false
+        left join ${otherTableName} pod on pod.source_detail_id = sod.id and pod.is_deleted = false
         <where>
             so.is_deleted = false and so.invalid_status = false and pod.id is null
                 and sod.source_detail_id in

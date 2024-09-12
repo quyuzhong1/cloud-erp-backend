@@ -151,6 +151,10 @@ public class ReplenishmentResultDTO {
          */
         private String shopId;
 
+        /**
+         * fba店铺
+         */
+        private String fbaWarehouseId;
 
         /**
          * 平台
@@ -166,6 +170,7 @@ public class ReplenishmentResultDTO {
             dto.setCountry(entity.getCountry());
             dto.setShopId(entity.getShopId());
             dto.setPlatform(entity.getPlatform());
+            dto.setFbaWarehouseId(entity.getFbaWarehouseId());
             return dto;
         }
     }

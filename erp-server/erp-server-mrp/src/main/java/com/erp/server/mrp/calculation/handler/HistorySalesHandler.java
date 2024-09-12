@@ -64,7 +64,7 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
             timePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, qty));
             long count = salesInfos.stream()
                     .filter(v -> !now.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
-                    .filter(v -> !v.getIsIgnoreOutOfStock())
+                    .filter(v -> Boolean.FALSE.equals(v.getIsIgnoreOutOfStock()))
                     .filter(v -> !COMPLETELY.getCode().equals(v.getDenoisingType()))
                     .count();
             BigDecimal avgQty = new BigDecimal(0);
