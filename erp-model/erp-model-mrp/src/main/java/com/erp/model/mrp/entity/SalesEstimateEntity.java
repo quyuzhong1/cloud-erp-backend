@@ -62,8 +62,6 @@ public class SalesEstimateEntity extends BaseEntity<SalesEstimateEntity> {
 
     public static final String SALES_QTY = "sales_qty";
 
-    public static final String AVG_DAILY_SALES_QTY = "avg_daily_sales_qty";
-
     public static final String MONTH = "month";
 
     public static final String CALC_VERSION = "calc_version";

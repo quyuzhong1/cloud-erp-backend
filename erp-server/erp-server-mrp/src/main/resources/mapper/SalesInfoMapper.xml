@@ -16,7 +16,6 @@
         <result column="replenishment_detail_id" property="replenishmentDetailId" />
         <result column="date" property="date" />
         <result column="sales_qty" property="salesQty" />
-        <result column="avg_daily_sales_qty" property="avgDailySalesQty" />
         <result column="is_ignore_out_of_stock" property="isIgnoreOutOfStock" />
         <result column="sales_qty_type" property="salesQtyType" />
         <result column="original_sales_qty" property="originalSalesQty" />
@@ -29,8 +28,7 @@
         select
             si.replenishment_detail_id,
             si.date,
-            si.sales_qty,
-            si.avg_daily_sales_qty
+            si.sales_qty
         from sales_info si
         <where>
             si.is_deleted = false and now() > si.date and  si.replenishment_detail_id in

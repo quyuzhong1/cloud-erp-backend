@@ -16,7 +16,6 @@
         <result column="replenishment_detail_id" property="replenishmentDetailId" />
         <result column="date" property="date" />
         <result column="sales_qty" property="salesQty" />
-        <result column="avg_daily_sales_qty" property="avgDailySalesQty" />
         <result column="month" property="month" />
         <result column="calc_version" property="calcVersion" />
     </resultMap>

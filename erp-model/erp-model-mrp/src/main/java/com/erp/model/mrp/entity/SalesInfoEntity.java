@@ -80,8 +80,6 @@ public class SalesInfoEntity extends BaseEntity<SalesInfoEntity> {
 
     public static final String SALES_QTY = "sales_qty";
 
-    public static final String AVG_DAILY_SALES_QTY = "avg_daily_sales_qty";
-
     public static final String IS_IGNORE_OUT_OF_STOCK = "is_ignore_out_of_stock";
 
     public static final String SALES_QTY_TYPE = "sales_qty_type";

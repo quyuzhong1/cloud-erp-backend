@@ -58,8 +58,6 @@
                rs.country,
                rs.shop_id,
                rs.platform,
-               rs.brand_id,
-               rs.category_id,
                rs.replenishment_type,
                rs.remark,
                rsd.id as detailId,

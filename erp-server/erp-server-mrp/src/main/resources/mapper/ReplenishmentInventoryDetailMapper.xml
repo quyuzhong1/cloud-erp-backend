@@ -19,7 +19,7 @@
         <result column="virtual_warehouse_id" property="virtualWarehouseId" />
         <result column="warehouse_type" property="warehouseType" />
         <result column="channel_type" property="channelType" />
-        <result column="channel_id_json" property="channelIdJson" jdbcType="OTHER" typeHandler="com.erp.model.mrp.handler.ObjectToListStringHandler" />
+        <result column="channel_id_json" property="channelIdJson" jdbcType="OTHER" typeHandler="com.erp.server.mrp.handler.ObjectJsonArrayHandler" />
         <result column="inventory_allocate_type" property="inventoryAllocateType" />
         <result column="total_qty" property="totalQty" />
         <result column="calc_version" property="calcVersion" />
