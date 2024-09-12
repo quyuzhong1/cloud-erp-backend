@@ -104,7 +104,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        vtf.id desc
+        vtf.trade_time desc
     </select>
 
     <!-- 虚拟库库存明细分页查询 -->

@@ -38,7 +38,6 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
@@ -68,7 +67,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -388,9 +386,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getBillDate()),
+        /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getBillDate()),
                 new InventoryClosedRecordDTO.ClosedParamDTO(entity.getSubcontractOrgId(), entity.getBillDate()));
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
         //调用审核流程
         approveProcess(entity, dto);
 
@@ -463,9 +461,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
 
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getBillDate()),
+        /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getBillDate()),
                 new InventoryClosedRecordDTO.ClosedParamDTO(entity.getSubcontractOrgId(), entity.getBillDate()));
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
 
         // 更新审核信息
         updateApproveStatus(Arrays.asList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -1036,10 +1034,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
 
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getSubcontractOrgId(),obj.getBillDate())
+        /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getSubcontractOrgId(),obj.getBillDate())
                         ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getBillDate()))).
                 distinct().collect(Collectors.toList());
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
 
 
         log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
