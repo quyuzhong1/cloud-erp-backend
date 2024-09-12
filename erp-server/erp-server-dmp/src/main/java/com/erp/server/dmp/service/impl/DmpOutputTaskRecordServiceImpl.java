@@ -296,7 +296,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         DmpOutputTaskRecordEntity entity = this.lambdaQuery().eq(DmpOutputTaskRecordEntity::getId, id).last("LIMIT 1").one();
 
         dmpCfgOutputBlackService.lambdaUpdate()
-                    .eq(DmpCfgOutputBlackEntity::getFieldName, entity.getSourceCode())
+                    .eq(DmpCfgOutputBlackEntity::getFieldValue, entity.getSourceCode())
                     .eq(DmpCfgOutputBlackEntity::getMainId, entity.getMainId())
                     .remove();
 
