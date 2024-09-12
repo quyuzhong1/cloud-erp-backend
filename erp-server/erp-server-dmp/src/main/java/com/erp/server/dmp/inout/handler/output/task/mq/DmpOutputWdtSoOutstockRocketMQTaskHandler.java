@@ -174,6 +174,9 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
         //第三方单据编号
         resultEntity.setThirdCode(itemList.stream().map(DmpSoOutstockDetailEntity::getThirdOrderCode).distinct().collect(Collectors.joining(",")));
     	
+        resultEntity.setLogisticsCompanyCode(entity.getLogisticsCompanyCode());
+        resultEntity.setLogisticsCompanyName(entity.getLogisticsCompanyName());
+        
         return resultEntity;
     }
 

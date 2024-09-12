@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -186,7 +187,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             resultMap.put("FInvoiceType", viewDTO.getType());
         }
         List<CurrencyDTO.ViewDTO> viewDTOS1 = sysUserFeign.listByCurrency(Arrays.asList(entity.getCurrency()));
-
+        if(CollectionUtils.isEmpty(viewDTOS1)){
+            throw new ServiceException("币种字典表为空");
+        }
         resultMap.put("currency", viewDTOS1.get(MathUtil.ZERO).getKingdeeCode());
         resultMap.put("remark", entity.getRemark());
 

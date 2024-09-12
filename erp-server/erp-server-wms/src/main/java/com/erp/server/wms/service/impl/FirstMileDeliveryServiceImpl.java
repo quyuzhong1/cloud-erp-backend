@@ -787,6 +787,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             matchRuleDTO.setType(StockOutTransferTypeEnum.FIRST_MILE.getCode());
             matchRuleDTO.setReceiveCountry(entity.getCountryId());
             matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
+            matchRuleDTO.setFromWarehouse(entity.getDeliveryWarehouseId());
             Boolean isMatchRule = cfgRuleOutService.matchTransferRule(matchRuleDTO);
             //发货仓与中转仓一致
             CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = getTransitSettingDTO();

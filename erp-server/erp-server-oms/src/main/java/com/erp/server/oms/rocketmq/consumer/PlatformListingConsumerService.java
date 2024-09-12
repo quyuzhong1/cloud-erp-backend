@@ -141,8 +141,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 }
                 // 添加到映射
                 SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
-                if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
-                        || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
+                if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
                     skuMappingEntity.setHasMappingAll(true);
                 }
                 if (!skuMappingService.save(skuMappingEntity)) {

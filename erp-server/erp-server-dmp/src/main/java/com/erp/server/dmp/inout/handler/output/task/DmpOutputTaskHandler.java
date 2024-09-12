@@ -37,6 +37,7 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -264,7 +265,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 					for(DmpSoDetailEntity detailEntity : dmpSoDetailEntityList) {
 						String skuNo = detailEntity.getPlatformSku();
 						if(StringUtils.isNotBlank(skuNo)) {
-							String key = "dmp:output:listing:" + sourcePlatform + ":" + skuNo;
+							String key = RedisKeyConstant.PRODUCT_LISTING_TIME + sourcePlatform + ":" + skuNo;
 							if(!SKU_LISTING_TIME_SET.contains(key)) {
 								Boolean hasKey = redisTemplate.hasKey(key);
 								if(hasKey) {
@@ -278,7 +279,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 									SendResult syncSend = mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PRODUCT_LISTING_TO_PLM_TOPIC, tag
 											, JSON.toJSONString(mqData), key);
 									if(SendStatus.SEND_OK.equals(syncSend.getSendStatus())) {
-										redisTemplate.opsForValue().set(key, now);
 										SKU_LISTING_TIME_SET.add(key);
 									}
 								}

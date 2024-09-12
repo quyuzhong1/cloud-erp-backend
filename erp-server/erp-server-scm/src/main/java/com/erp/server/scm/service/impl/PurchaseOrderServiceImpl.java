@@ -106,7 +106,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER_CONTRACT;
 
 /**
  * <p>
@@ -494,9 +493,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
 
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getPurchaseDate()),
+        /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getPurchaseDate()),
                 new InventoryClosedRecordDTO.ClosedParamDTO(entity.getReceiveOrgId(), entity.getPurchaseDate()));
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
 
         String type = dto.getType();
 
@@ -609,9 +608,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
 
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getPurchaseDate()),
+        /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getPurchaseDate()),
                 new InventoryClosedRecordDTO.ClosedParamDTO(entity.getReceiveOrgId(), entity.getPurchaseDate()));
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
 
         log.info("采购订单反审核，id=【{}】", JSONUtil.toJsonStr(id));
 
@@ -900,10 +899,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98012);
         }
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getPurchaseDate())
+        /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getPurchaseDate())
                         ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getPurchaseDate()))).
                 distinct().collect(Collectors.toList());
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
 
         log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
         //更新订单作废状态
