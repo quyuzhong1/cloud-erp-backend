@@ -115,7 +115,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
                     msg.append(StrUtil.format("•{}：{}<br>", CfgRulePercentEnum.getName(obj.getKey()),obj.getValue()));
                 });
             }
-            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), salesQtyEntity.getId(), "销量");
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(salesQtyEntity.getRefId(),salesQtyEntity.getId()), "销量");
         }
     }
 
