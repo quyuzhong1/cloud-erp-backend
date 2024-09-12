@@ -222,7 +222,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     public static class TabListDTO {
         /**
          * 类型：/dmp/common/enumDropDown?type=DmpPushMonitorTab
-         * all全部、init:待推送、pushIng:推送中、finish:推送成功、error:推送失败、0:无需同步
+         * all全部、init:待推送、pushIng:推送中、finish:推送成功、error:推送失败、noNeedSync:无需同步
          */
         private String tabFlag;
 
