@@ -45,7 +45,7 @@
             SELECT 1
             FROM dmp_cfg_output_black b
             WHERE b.is_deleted = FALSE
-            AND b.field_name = t.source_code
+            AND b.field_value = t.source_code
         )
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
@@ -63,7 +63,7 @@
         AND EXISTS (
             SELECT 1
             FROM dmp_cfg_output_black b
-            WHERE b.field_name = t.source_code
+            WHERE b.field_value = t.source_code
         )
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
