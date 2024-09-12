@@ -1,8 +1,15 @@
 package com.erp.server.dmp.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.dmp.dto.DmpOutputTaskDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +23,32 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecordEntity> {
 
+
+    /**
+     * 获取 tab列表
+     * @Author Luo_WG
+     * @Date 2024/9/3 15:05
+     * @param permissionSql
+     * @return java.util.List<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO>
+     **/
+    List<DmpOutputTaskRecordDTO.TabListDTO> listStatusCount(@Param("permissionSql")String permissionSql);
+
+    /**
+     * 推送任务列表分页查询
+     * @Author Luo_WG
+     * @Date 2024/9/3 14:35
+     * @param params
+     * @return com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingDTO>
+     **/
+    IPage<DmpOutputTaskRecordDTO.PagingDTO> paging(Page query, @Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
+
+    /**
+     * 导出数据查询
+     * @Author Luo_WG
+     * @Date 2024/9/5 17:40
+     * @param objectPage
+     * @param params
+     * @return com.baomidou.mybatisplus.extension.plugins.pagination.Page<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingDTO>
+     **/
+    Page<DmpOutputTaskRecordDTO.PagingDTO> listExportExcel(Page<Object> objectPage, @Param("params") DmpOutputTaskRecordDTO.ExpotParamDTO params);
 }

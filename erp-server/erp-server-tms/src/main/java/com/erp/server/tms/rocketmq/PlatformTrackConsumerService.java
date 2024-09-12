@@ -6,7 +6,6 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -53,9 +52,9 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private LogisticsTrackService logisticsTrackService;
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         try {
-            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+            dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
             throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
         }

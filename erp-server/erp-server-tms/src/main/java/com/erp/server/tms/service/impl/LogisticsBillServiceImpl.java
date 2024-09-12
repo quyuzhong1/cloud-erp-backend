@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import cn.hutool.log.Log;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -22,13 +21,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -46,6 +43,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -66,7 +64,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -74,6 +71,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_BILL;
 
 /**
  * 物流单 服务实现类
@@ -147,6 +146,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private CfgRuleFeign cfgRuleFeign;
     @Autowired
     private SysDictFeign sysDictFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -372,21 +373,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
 
     @Override
-    public Boolean exportExcel(LogisticsBillDTO.PagingParamDTO params, HttpServletResponse response) {
-        List<LogisticsBillDTO.PagingVO> list = baseMapper.listExport(params);
-        fillPagingDb(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/logisticsBill.xlsx";
-        String name = "自发货物流单列表";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, "", excelPath);
-        } catch (IOException e) {
-            log.error("自发货物流单导出错 {}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(LogisticsBillDTO.PagingParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("自发货物流单列表", EXPORT_TMS_LOGISTICS_BILL.getCode(), params);
         return Boolean.TRUE;
 
     }
@@ -1049,8 +1037,22 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
-        log.warn("物流商更新重量:{}",JSONUtil.toJsonStr(logisticsUpdateWeightVO));
-        return service.updateWeight(logisticsUpdateWeightVO);
+        ApiResult<String> result = service.updateWeight(logisticsUpdateWeightVO);
+        if(result.getCode() != -1){
+            if(result.isSuccess()){
+                log.warn("物流商更新重量成功:{}",JSONUtil.toJsonStr(logisticsUpdateWeightVO));
+            }else{
+                log.warn("物流商更新重量失败:{}",JSONUtil.toJsonStr(logisticsUpdateWeightVO));
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto) {
+        Page<LogisticsBillDTO.PagingVO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        fillPagingDb(page.getRecords());
+        return new PagingVO<>(page);
     }
 
     @Override

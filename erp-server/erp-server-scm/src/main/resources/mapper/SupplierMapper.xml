@@ -148,7 +148,6 @@
             </foreach>
         </if>
         create_time DESC
-        limit 50000
     </select>
     <select id="listSupplierByCategoryType" resultType="com.erp.model.scm.dto.SupplierDTO$SupplierSimpleDTO">
         SELECT

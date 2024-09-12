@@ -49,6 +49,11 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
         updateDTO.setId(dmpOutputTaskRecordId);
         updateDTO.setStatus(DmpOutputTaskRecordStatusEnum.FINISH.getCode());
         
+        if(StringUtils.isBlank(dmpOutputTaskRecordId)) {
+        	log.error("{}接收到异常数据 ，数据：{}" , bizName , ext);
+        	return;
+        }
+        
         int count = 1;
         if(StringUtils.isNotBlank(dmpOutputTaskRecordDataId)) {
         	String redisKey = "dmp:output:record:" + dmpOutputTaskRecordDataId;

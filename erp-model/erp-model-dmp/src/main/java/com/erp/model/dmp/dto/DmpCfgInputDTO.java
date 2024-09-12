@@ -145,4 +145,18 @@ public class DmpCfgInputDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ListDmpCfgInputDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 单据名称
+         */
+        private String name;
+    }
+
+
 }

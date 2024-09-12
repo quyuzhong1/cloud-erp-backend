@@ -50,6 +50,7 @@ public interface DmpPullTaskMapper extends BaseMapper<DmpPullTaskEntity> {
      * @return List<ListDTO>
      */
     List<DmpPullTaskDTO.ListDTO> listExportExcel(@Param("params") DmpPullTaskDTO.ParamDTO dto);
+    Page<DmpPullTaskDTO.ListDTO> listExportExcel(@Param("page")Page<DmpPullTaskDTO.ListDTO> page, @Param("params") DmpPullTaskDTO.ParamDTO dto);
 
     void deleteByIds(List<String> ids);
     void updateStatus(@Param("noNeedSyncIds")List<String> noNeedSyncIds);

@@ -25,6 +25,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
@@ -33,13 +34,17 @@ import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper;
-import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
+import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
+import com.erp.server.tms.service.TransferLogisticsSupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -47,13 +52,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION;
+
 /**
  * <p>
  * b2c报关对账单 服务实现类
@@ -92,7 +100,8 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 
     @Autowired
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -188,25 +197,8 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     }
 
     @Override
-    public void exportList(TmsB2cDeclareReconciliationDTO.ExportDTO param, HttpServletResponse response) {
-        List<TmsB2cDeclareReconciliationDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/tmsB2cDeclareReconciliation.xlsx";
-        String name = "b2c报关对账单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(TmsB2cDeclareReconciliationDTO.ExportDTO param) {
+        downloadTaskFeign.saveDownloadTask("b2c报关对账单导出", EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -395,6 +387,15 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             return Collections.EMPTY_LIST;
         }
         return this.listByIds(idList);
+    }
+
+    @Override
+    public PagingVO<TmsB2cDeclareReconciliationDTO.ListDTO> exportB2cDeclareReconciliation(PagingDTO<TmsB2cDeclareReconciliationDTO.ExportDTO> dto) {
+        Page<TmsB2cDeclareReconciliationDTO.ListDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     @Override

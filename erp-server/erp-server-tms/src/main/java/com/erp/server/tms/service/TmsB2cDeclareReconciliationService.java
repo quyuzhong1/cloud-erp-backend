@@ -6,7 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -128,14 +127,14 @@ public interface TmsB2cDeclareReconciliationService extends SuperService<TmsB2cD
     BatchResultDTO cancelProcess(String id);
 
     /**
-    * 导出Excel
-    * @author will
-    * @date: 2024-03-19
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(TmsB2cDeclareReconciliationDTO.ExportDTO dto, HttpServletResponse response);
+     * 导出Excel
+     *
+     * @param dto
+     * @return
+     * @author will
+     * @date: 2024-03-19
+     */
+    void exportList(TmsB2cDeclareReconciliationDTO.ExportDTO dto);
 
     /**
     * 审核通过回调方法
@@ -152,4 +151,7 @@ public interface TmsB2cDeclareReconciliationService extends SuperService<TmsB2cD
      * @return List<TmsB2cDeclareReconciliationEntity>
      */
     List<TmsB2cDeclareReconciliationEntity> listEntityByIds(List<String> idList);
+
+    PagingVO<TmsB2cDeclareReconciliationDTO.ListDTO> exportB2cDeclareReconciliation(PagingDTO<TmsB2cDeclareReconciliationDTO.ExportDTO> dto);
+
 }

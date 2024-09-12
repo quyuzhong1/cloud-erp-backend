@@ -18,6 +18,8 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.netflix.client.ClientException;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
+
 /**
  * dmp输入init任务基础处理器下的旺店通api获取数据方式
  * @author Administrator
@@ -60,8 +62,8 @@ public class DmpInputErpPushApiInitHandler extends DmpInputInitHandler{
 			try {
 				list = FeignQuery.create(clazz)
 						.in("source_type", apiType.split(","))
-						.ge(BaseEntity::getUpdateTime, dmpInputTaskEntity.getStartTime())
-						.le(BaseEntity::getUpdateTime, dmpInputTaskEntity.getEndTime())
+						.last(" and update_time >= CAST('" + LocalDateTimeUtil.formatNormal(dmpInputTaskEntity.getStartTime()) + 
+								"' AS timestamp) AND update_time <= CAST('" + LocalDateTimeUtil.formatNormal(dmpInputTaskEntity.getEndTime()) + "' AS timestamp) ")
 						.list();
 			} catch (Exception e) {
 				Throwable cause = e.getCause();

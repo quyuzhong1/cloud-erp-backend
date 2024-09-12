@@ -80,9 +80,8 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * 导出
      *
      * @param dto
-     * @param response
      */
-    void export(VirtualWarehouseAllocationDTO.ExportDTO dto, HttpServletResponse response);
+    void export(VirtualWarehouseAllocationDTO.ExportDTO dto);
 
     /**
      * 导入
@@ -125,6 +124,11 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @author: tanmujin
      */
     Boolean updateRemark(VirtualWarehouseAllocationDTO.UpdateRemarkDTO updateRemarkDTO);
+
+    /**
+     * 分货单导出
+     */
+    PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
     /**
      * 查询库存数据
      * @author will

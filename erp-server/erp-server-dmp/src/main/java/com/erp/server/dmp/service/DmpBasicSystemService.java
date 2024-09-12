@@ -3,6 +3,9 @@ import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpBasicSystemDTO;
+import com.erp.model.plm.dto.DictControllerDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +35,11 @@ public interface DmpBasicSystemService extends SuperService<DmpBasicSystemEntity
     */
     Boolean update(DmpBasicSystemDTO.UpdateDTO dto);
 
-
+    /**
+     * 查询所有系统（下拉接口）
+     * @Author Luo_WG
+     * @Date 2024/9/5 18:42
+     * @return java.util.List<com.erp.model.plm.dto.DictControllerDTO.DictDropDownDTO>
+     **/
+    List<DictControllerDTO.DictDropDownDTO> listDmpBasicSystem();
 }

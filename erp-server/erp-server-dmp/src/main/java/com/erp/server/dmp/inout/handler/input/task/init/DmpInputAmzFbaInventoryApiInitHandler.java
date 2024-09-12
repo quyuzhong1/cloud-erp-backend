@@ -44,7 +44,8 @@ public class DmpInputAmzFbaInventoryApiInitHandler extends DmpInputInitHandler {
         String shopId = dmpCfgInputDetailEntity.getNextLevelId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-        String extendJson = dmpInputTaskEntity.getExtendJson();
+        // 根据明细类型扩展
+        String extendJson = dmpCfgInputDetailEntity.getExtendJson();
         // 查询所有
         boolean hasAll = false;
         if(StringUtils.isNotBlank(extendJson)) {

@@ -45,6 +45,7 @@ public interface DictCityMapper extends BaseMapper<DictCityEntity> {
      * @return
      */
     List<DictCityDTO.PagingViewDTO> provinceExport(@Param("params")DictCityDTO.ProvincePagingParamDTO dto);
+    Page<DictCityDTO.PagingViewDTO> provinceExport(@Param("page") Page<DictCityDTO.PagingViewDTO> page, @Param("params")DictCityDTO.ProvincePagingParamDTO dto);
 
     List<DictCityDTO.PagingViewDTO> cityExport(@Param("params")DictCityDTO.ProvincePagingParamDTO dto);
     /**
@@ -53,4 +54,6 @@ public interface DictCityMapper extends BaseMapper<DictCityEntity> {
      * @return
      */
     void deleteById(@Param("id") String id);
+    Page<DictCityDTO.PagingViewDTO> cityExport(@Param("page") Page<DictCityDTO.PagingViewDTO> page, @Param("params")DictCityDTO.ProvincePagingParamDTO dto);
+
 }

@@ -32,7 +32,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -645,7 +644,7 @@ public class SoB2cController extends BaseController {
     public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getIds().size()>100){
-            throw new ServiceException("批量提交发货数量不能超过100");
+            throw new ServiceException("批量提交发货数据条数不能超过100");
         }
         //订单自动预报 不影响提交发货流程
         try {
@@ -658,7 +657,7 @@ public class SoB2cController extends BaseController {
             try {
                 result = soB2cService.submitDelivery(id);
             } catch (Exception e) {
-                log.error("B2C销售订单提交发货失败", ExceptionUtil.stacktraceToString(e));
+                log.error("B2C销售订单提交发货失败,id:{}",id, e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
@@ -1108,14 +1107,12 @@ public class SoB2cController extends BaseController {
      * @author Will
      * @date: 2024/4/16 15:06
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2C销售订单信息")
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto, HttpServletResponse response) {
-        Boolean flag = soB2cService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto) {
+        Boolean flag = soB2cService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

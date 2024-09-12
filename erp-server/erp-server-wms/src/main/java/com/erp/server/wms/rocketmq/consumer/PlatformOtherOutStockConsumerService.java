@@ -78,8 +78,8 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
 
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
-        dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpTaskFeign.updateSyncInfo(paramDTO);
     }
 
     @Override
@@ -221,6 +221,8 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
         addDTO.setDeptId(deptDTO.getDepartmentId());
         // 流程申请单号
         addDTO.setProcessApplyCode(dto.getPlatformCode());
+        // 主表备注
+        addDTO.setRemark(dto.getRemark());
         // 客户信息
         OtherOutstockCustomerDTO.AddDTO customerDTO =  convertCustomer(shopInfo);
         addDTO.setOtherOutstockCustomer(customerDTO);

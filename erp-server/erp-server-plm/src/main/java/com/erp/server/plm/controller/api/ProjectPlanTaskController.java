@@ -69,8 +69,8 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出数据")
     @PostMapping("/exportExcel")
-    public ApiResult export(@RequestBody @Validated ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
-       Boolean result= projectPlanTaskService.exportExcel(dto, response);
+    public ApiResult export(@RequestBody @Validated ProjectPlanTaskConditionDTO dto) {
+       Boolean result= projectPlanTaskService.exportExcel(dto);
         return result?success():failure();
     }
 

@@ -7,7 +7,6 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -21,7 +20,9 @@ import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * 销售出库单同步到中台
@@ -42,8 +43,8 @@ public class SoOutstockToDmpDeliverConsumer <T extends DmpSyncTaskIdDTO> extends
     private BiDeliveryDetailInfoService biDeliveryDetailInfoService;
 
     @Override
-    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
-        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpPushTaskService.updateStatus(paramDTO);
     }
 
     @Override

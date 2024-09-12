@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -16,10 +15,11 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
-import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.enums.SaleStateEnum;
@@ -28,7 +28,6 @@ import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
-import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO.InOutStockSummaryPagingViewDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
@@ -40,9 +39,10 @@ import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
@@ -62,7 +62,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.time.LocalDate;
@@ -72,6 +71,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * @Classname: TransactionFlowServiceImpl
@@ -109,7 +110,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Resource
     private DmpMqFeign dmpMqFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
         List<TransactionFlowEntity> txnFlows =  lambdaQuery()
@@ -224,21 +226,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         return new PagingVO(pageData);
     }
     @Override
-    public void exportTransFlow(InventoryDTO.ExportInvFlowSearchParamDTO param, HttpServletResponse response) {
-        List<InventoryDTO.TransFlowPagingViewDTO> dataList = this.baseMapper.exportTransFlow(param);
-        // 填充名称
-        fillInventoryTransactionFlowPageData(dataList);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/inventoryFlow.xlsx";
-        String name = "库存流水明细导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportTransFlow(InventoryDTO.ExportInvFlowSearchParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("库存流水明细导出", EXPORT_WMS_INVENTORY_TRANS_FLOW.getCode(), param);
     }
 
     @Override
@@ -252,17 +241,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param, HttpServletResponse response) {
-        // 出入库流水，只展示跟出入库交易相关的业务，且无需做状态映射
-        List<InventoryDTO.InOutStockTransFlowPagingViewDTO> dataList = this.baseMapper.exportList(param);
-        fillTransactionFlowPageData(dataList);
-        List<ExportTransactionFlowDTO> resultList = BeanMapperUtils.copyList(ExportTransactionFlowDTO.class, dataList);
-        String fileName = StrUtil.format("出入库流水数据{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
-        try {
-            ExcelUtil.exportAdapt(fileName, "出入库流水数据", resultList, ExportTransactionFlowDTO.class, response, null);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("出入库流水数据", EXPORT_WMS_INVENTORY_IN_OUT_STOCK.getCode(), param);
     }
 
     @Override
@@ -276,21 +256,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response) {
-//        // 查询数据
-//        List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
-//
-//        // 填充数据
-//        InventoryDTO.InOutStockSummarySearchParamDTO paramD = BeanMapperUtils.map(InventoryDTO.InOutStockSummarySearchParamDTO.class, param);
-//        fillTransactionSummary(dataList,paramD);
-    	PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO = new PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO>();
-    	pagingParamDTO.setParams(BeanUtil.copyProperties(param, InventoryDTO.InOutStockSummarySearchParamDTO.class));
-    	pagingParamDTO.setPageSize(-1);
-
-        // 导出
-        PagingVO<InOutStockSummaryPagingViewDTO> pagingSummary = this.pagingSummary(pagingParamDTO);
-		List<InOutStockSummaryPagingViewDTO> dataList = (List<InOutStockSummaryPagingViewDTO>)pagingSummary.getList();
-		exportTransactionSummaryExcel(dataList, response);
+    public void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("出入库列表数据", EXPORT_WMS_INVENTORY_IN_OUT_STOCK_SUMMARY.getCode(), param);
     }
 
     @Override
@@ -305,33 +272,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void exportTransportExcel(InventoryReportDTO.ExportTransportSearchParamDTO pagingParamDTO, HttpServletResponse response) {
-        // 如果是否选导出处理
-        if (CollUtil.isNotEmpty(pagingParamDTO.getItems())) {
-            List<InventoryReportDTO.ExportTransportItem> checkData = pagingParamDTO.getItems();
-            List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportTransportItem::getWarehouseId).distinct().collect(Collectors.toList());
-            List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportTransportItem::getSkuId).distinct().collect(Collectors.toList());
-            pagingParamDTO.setWarehouseIdList(warehouseIds);
-            pagingParamDTO.setSkuIdList(skuIds);
-        }
-        // 在途库存大于0的才查询出来
-        List<InventoryReportDTO.TransportPagingDTO> dataList = this.baseMapper.exportTransport(pagingParamDTO);
-        if (CollUtil.isEmpty(dataList)) {
-            return;
-        }
-        // 填充
-        fillTransportPageData(dataList);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/transportInventory.xlsx";
-        String name = "在途库存导出";
-        String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportTransportExcel(InventoryReportDTO.ExportTransportSearchParamDTO pagingParamDTO) {
+        downloadTaskFeign.saveDownloadTask("在途库存导出", EXPORT_WMS_INVENTORY_TRANSPORT.getCode(), pagingParamDTO);
     }
 
     @Override
@@ -374,7 +316,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     public PagingVO<InventoryReportDTO.ListDailyInventoryDTO> dailyInventoryPaging(PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> pagingParamDTO) {
         InventoryReportDTO.DailyInventoryParamDTO params = pagingParamDTO.getParams();
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
-        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        Page query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         if (ObjectUtils.isEmpty(params.getDate())) {
             params.setDate(LocalDate.now());
         }
@@ -384,28 +326,75 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO params, HttpServletResponse response) {
-        PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> pagingParamDTO = new PagingDTO<InventoryReportDTO.DailyInventoryParamDTO>();
-        pagingParamDTO.setParams(params);
-        pagingParamDTO.setPageSize(-1);
-        if (ObjectUtils.isEmpty(params.getDate())) {
-            params.setDate(LocalDate.now());
+    public void exportDailyInventory(InventoryReportDTO.DailyInventoryParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("每日库存导出", EXPORT_WMS_INVENTORY_DAILY.getCode(), params);
+    }
+
+    @Override
+    public PagingVO<ListDailyInventoryDTO> exportInventoryDaily(PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
+        if (ObjectUtils.isEmpty(dto.getParams().getDate())) {
+            dto.getParams().setDate(LocalDate.now());
         }
-        PagingVO<InventoryReportDTO.ListDailyInventoryDTO> pageData = this.dailyInventoryPaging(pagingParamDTO);
+        PagingVO<InventoryReportDTO.ListDailyInventoryDTO> pageData = this.dailyInventoryPaging(dto);
         List<ListDailyInventoryDTO> dataList = (List<ListDailyInventoryDTO>) pageData.getList();
         // 填充
         handleDailyInventory(dataList);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/dailyInventory.xlsx";
-        String name = "每日库存导出";
-        String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
+        return new PagingVO<>(dataList, pageData.getTotalCount(),dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> exportInventoryInOutStock(PagingDTO<InventoryDTO.ExportInOutStockTransFlowSearchParamDTO> dto) {
+        // 出入库流水，只展示跟出入库交易相关的业务，且无需做状态映射
+        Page<InventoryDTO.InOutStockTransFlowPagingViewDTO> page = this.baseMapper.exportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        fillTransactionFlowPageData(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<InOutStockSummaryPagingViewDTO> exportInOutStockSummary(PagingDTO<InventoryDTO.ExcelInOutStockSummarySearchParamDTO> dto) {
+
+//        // 查询数据
+//        List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
+//
+//        // 填充数据
+//        InventoryDTO.InOutStockSummarySearchParamDTO paramD = BeanMapperUtils.map(InventoryDTO.InOutStockSummarySearchParamDTO.class, param);
+//        fillTransactionSummary(dataList,paramD);
+//        PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO = new PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO>();
+//        pagingParamDTO.setParams(BeanUtil.copyProperties(param, InventoryDTO.InOutStockSummarySearchParamDTO.class));
+//        pagingParamDTO.setPageSize(-1);
+//
+//        // 导出
+//        PagingVO<InOutStockSummaryPagingViewDTO> pagingSummary = this.pagingSummary(pagingParamDTO);
+//        List<InOutStockSummaryPagingViewDTO> dataList = (List<InOutStockSummaryPagingViewDTO>)pagingSummary.getList();
+//        exportTransactionSummaryExcel(dataList, response);
+        return null;
+    }
+
+    @Override
+    public PagingVO<InventoryDTO.TransFlowPagingViewDTO> exportInventoryTransFlow(PagingDTO<InventoryDTO.ExportInvFlowSearchParamDTO> dto) {
+        Page<InventoryDTO.TransFlowPagingViewDTO> page = this.baseMapper.exportTransFlow(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        // 填充名称
+        fillInventoryTransactionFlowPageData(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<InventoryReportDTO.TransportPagingDTO> exportInventoryTransport(PagingDTO<InventoryReportDTO.ExportTransportSearchParamDTO> dto) {
+
+        // 如果是否选导出处理
+        if (CollUtil.isNotEmpty(dto.getParams().getItems())) {
+            List<InventoryReportDTO.ExportTransportItem> checkData = dto.getParams().getItems();
+            List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportTransportItem::getWarehouseId).distinct().collect(Collectors.toList());
+            List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportTransportItem::getSkuId).distinct().collect(Collectors.toList());
+            dto.getParams().setWarehouseIdList(warehouseIds);
+            dto.getParams().setSkuIdList(skuIds);
         }
+        // 在途库存大于0的才查询出来
+        Page<InventoryReportDTO.TransportPagingDTO> page = this.baseMapper.exportTransport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollUtil.isEmpty(page.getRecords())) {
+            fillTransportPageData(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     @Override

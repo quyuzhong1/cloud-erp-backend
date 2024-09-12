@@ -1,10 +1,10 @@
 package com.erp.server.wms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -42,4 +42,5 @@ public interface OverseasInventoryMapper extends BaseMapper<OverseasInventoryEnt
      * @date: 2023-11-21
      */
     List<OverseasInventoryDTO.ListDTO> listByParams(@Param("params") OverseasInventoryDTO.PagingParamDTO params);
+    Page<OverseasInventoryDTO.ListDTO> listByParams(@Param("page") Page<OverseasInventoryDTO.ListDTO> page, @Param("params") OverseasInventoryDTO.PagingParamDTO params);
 }

@@ -2,7 +2,6 @@ package com.erp.server.dmp.push.consumer.amz;
 
 
 import com.common.business.dto.DmpSyncMqDTO;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -32,8 +31,8 @@ public class AmazonOrderPushConsumer extends AbstractPlatformConsumerHandler<Dmp
 
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum statusEnum, String msg) {
-        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(id, statusEnum.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpPushTaskService.updateStatus(paramDTO);
     }
 
     @Override

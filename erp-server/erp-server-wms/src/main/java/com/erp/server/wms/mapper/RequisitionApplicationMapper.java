@@ -68,6 +68,7 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.ListDTO>
      **/
     List<RequisitionApplicationDTO.ListDTO> listExport(@Param("params") RequisitionApplicationDTO.PagingParamDTO dto);
+    Page<RequisitionApplicationDTO.ListDTO> listExport(@Param("page") Page<RequisitionApplicationDTO.ListDTO> page, @Param("params") RequisitionApplicationDTO.PagingParamDTO dto);
 
     /**
      * 下推发货单列表查询

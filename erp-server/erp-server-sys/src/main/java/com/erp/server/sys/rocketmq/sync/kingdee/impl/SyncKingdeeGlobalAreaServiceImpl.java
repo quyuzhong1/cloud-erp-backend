@@ -92,9 +92,9 @@ public class SyncKingdeeGlobalAreaServiceImpl implements SyncKingdeeGlobalAreaSe
     }
 
     private DmpPushTaskEntity saveTask(DictGlobalAreaEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH;
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, settingEnum.getKey())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.GLOBAL_AREA.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();

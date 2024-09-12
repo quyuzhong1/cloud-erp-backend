@@ -1,11 +1,10 @@
 package com.erp.server.wms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -48,6 +47,7 @@ public interface SoReturnNoticeMapper extends BaseMapper<SoReturnNoticeEntity> {
      * @return java.util.List<com.erp.model.wms.dto.SoReturnNoticeDTO.PagingView>
      **/
     List<SoReturnNoticeDTO.PagingView> soReturnNoticeExportExcel(@Param("params") SoReturnNoticeDTO.PagingParam dto);
+    Page<SoReturnNoticeDTO.PagingView> soReturnNoticeExportExcel(@Param("page") Page<SoReturnNoticeDTO.PagingView> page, @Param("params") SoReturnNoticeDTO.PagingParam dto);
 
     /**
      * 下推退货签收单-列表查询

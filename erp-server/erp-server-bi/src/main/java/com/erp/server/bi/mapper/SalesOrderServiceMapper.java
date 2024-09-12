@@ -43,6 +43,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<BiOrderInfoEntity> 
      * @return
      */
     List<SkuSalesDTO.PagingSalesInfoDTO> listSkuSalesExcel(@Param("params") SkuSalesDTO.SearchSkuDTO params, @Param("settleRate") String settleRate);
+    Page<SkuSalesDTO.PagingSalesInfoDTO> listSkuSalesExcel(@Param("page") Page<SkuSalesDTO.PagingSalesInfoDTO> page, @Param("params") SkuSalesDTO.SearchSkuDTO params, @Param("settleRate") String settleRate);
 
     /**
      * 获取最近天数的销售数据

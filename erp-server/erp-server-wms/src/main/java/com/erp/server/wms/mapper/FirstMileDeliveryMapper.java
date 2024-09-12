@@ -49,6 +49,8 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     */
     List<FirstMileDeliveryDTO.ListDTO> listExport(@Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
 
+    Page<FirstMileDeliveryDTO.ListDTO> listExport(@Param("page") Page<FirstMileDeliveryDTO.ListDTO> page, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
+
 
     /**
     * 获取状态统计
@@ -64,7 +66,7 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @param sourceIds
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      **/
-    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(@Param("sourceIds") List<String> sourceIds);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecord(@Param("sourceIds") List<String> sourceIds, @Param("fbaShipmentCode") String fbaShipmentCode);
 
     /**
      * 下推加工单列表查询

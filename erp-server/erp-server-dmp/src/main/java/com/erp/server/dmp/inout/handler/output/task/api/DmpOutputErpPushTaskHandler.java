@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushMsgEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -116,9 +118,12 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
 		String dataId = dmpOutputTaskRecordEntity.getDataId();
 		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
+		
+		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
 		String sourceId = dmpPushMsgEntity.getSourceId();
 		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
 				.eq(DmpPushMsgEntity::getSourceId, sourceId)
+				.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
 				.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
 				.ne(DmpPushMsgEntity::getId, dataId)
 				.select(DmpPushMsgEntity::getId)
@@ -130,26 +135,49 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 					.count();
 			if(count > 0) {
+				dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功")
+					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.update();
 				return;
 			}
 		}
 		
 		String parentId = dmpPushMsgEntity.getParentId();
 		if(StringUtils.isNotBlank(parentId) && "operateApprove".equals(dmpPushMsgEntity.getSyncOperate())) {
-			List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery().eq(DmpPushMsgEntity::getSourceId, parentId)
-					.eq(DmpPushMsgEntity::getSyncOperate, dmpPushMsgEntity.getSyncOperate()).orderByDesc(DmpPushMsgEntity::getMessageUpdateTime).list();
-			if(CollUtil.isEmpty(list)) {
-				return;
-			}
-			
-			DmpPushMsgEntity parentDmpPushMsgEntity = list.get(0);
-			String parentDataId = parentDmpPushMsgEntity.getId();
-			List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
-					.eq(DmpOutputTaskRecordEntity::getDataId, parentDataId)
-					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-					.list();
-			if(CollUtil.isEmpty(parentOutputList)) {
-				return;
+			String[] split = parentId.split(",");
+			for(String s : split) {
+				List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery()
+						.eq(DmpPushMsgEntity::getSourceId, s)
+						.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
+						.eq(DmpPushMsgEntity::getSyncOperate, dmpPushMsgEntity.getSyncOperate())
+						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
+						.list();
+				if(CollUtil.isEmpty(list)) {
+					dmpOutputTaskRecordService.lambdaUpdate()
+						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
+						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.update();
+					return;
+				}
+				
+				List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
+						.in(DmpOutputTaskRecordEntity::getDataId, list.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.list();
+				if(CollUtil.isNotEmpty(parentOutputList)) {
+					dmpOutputTaskRecordService.lambdaUpdate()
+						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
+						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.update();
+					return;
+				}
 			}
 		}
 		
@@ -173,6 +201,16 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		}
 		try {
 			Object invoke = method.invoke(bean, dmpOutputTaskRecordEntity.getRequestData());
+			if(invoke instanceof ApiResult) {
+				ApiResult apiResult = (ApiResult)invoke;
+				if(!apiResult.isSuccess()) {
+					status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+					responseData = apiResult.getMsg();
+					if(systemCode.equals(DmpBasicSystemCodeEnum.WDT.getCode()) && responseData != null && responseData.startsWith("单据推送成功，当前状态：")) {
+						return;
+					}
+				}
+			}
 			try {responseData = JSON.toJSONString(invoke);} catch (Exception e) {}
 		} catch (InvocationTargetException e) {
 			Throwable targetException = e.getTargetException();
@@ -184,8 +222,14 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
 			message = "调用" + apiClass + "的" + outputMethod + "方法报错";
 		}
-		dmpOutputUtils.updateStatus(id, status, "traceId=【" + MDC.get("traceId") + "】" + responseData , message);
+		if(!status.equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
+			responseData = "traceId=【" + MDC.get("traceId") + "】" + responseData;
+		}
+		dmpOutputUtils.updateStatus(id, status, responseData , message);
 	}
 
-	
+	@Override
+	protected List<String> getSourceCodeKeys() {
+		return Arrays.asList("sourceCode");
+	}
 }

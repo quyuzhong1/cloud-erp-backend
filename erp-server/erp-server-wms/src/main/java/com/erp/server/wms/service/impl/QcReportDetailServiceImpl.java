@@ -2,7 +2,10 @@ package com.erp.server.wms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -19,6 +22,7 @@ import com.erp.model.wms.entity.QcReportDetailEntity;
 import com.erp.model.wms.entity.QcReportEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.QcReportDetailExcelListener;
 import com.erp.server.wms.mapper.QcReportDetailMapper;
@@ -39,6 +43,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_REPORT_DETAIL;
 
 /**
  * <p>
@@ -61,6 +67,9 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
 
     /**
      * 质检报告明细暂存
@@ -247,31 +256,14 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
     /**
      * 质检列表 导出质检报告
      *
-     * @param mainId
-     * @param response
+     * @param dto
      * @return void
      * @author yl
      * @date 2023-04-25 17:12
      */
     @Override
-    public void exportReportByMainId(String mainId, HttpServletResponse response) {
-        List<QcReportDetailDTO.ListDTO> list = baseMapper.getByMainId(mainId);
-        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.QC_REPORT_RESULT.getKey());
-        List<ExportQcReportExcelDTO> resultList = BeanMapper.copyList(list, ExportQcReportExcelDTO.class);
-        for (ExportQcReportExcelDTO item : resultList) {
-            String resultDict = item.getResultDict();
-            String resultName = dictList.stream().filter(d -> d.getValue().equals(resultDict)).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-            item.setResultDict(resultName);
-        }
-
-        String fileName = "质检报告数据";
-        try {
-            ExcelUtil.export(fileName, "质检报告", resultList, ExportQcReportExcelDTO.class, response);
-        } catch (Exception e) {
-            log.error("导出质检报告出错  ==e", e);
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportReportByMainId(BaseIdDTO dto) {
+        downloadTaskFeign.saveDownloadTask("质检报告数据", EXPORT_WMS_QC_REPORT_DETAIL.getCode(), dto);
     }
 
     @Override
@@ -325,6 +317,21 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
             resultMap.put(mainId, viewList);
         });
         return resultMap;
+    }
+
+    @Override
+    public PagingVO<ExportQcReportExcelDTO> exportQcReportDetail(PagingDTO<BaseIdDTO> dto) {
+
+        List<QcReportDetailDTO.ListDTO> list = baseMapper.getByMainId(dto.getParams().getId());
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.QC_REPORT_RESULT.getKey());
+        List<ExportQcReportExcelDTO> resultList = BeanMapper.copyList(list, ExportQcReportExcelDTO.class);
+        for (ExportQcReportExcelDTO item : resultList) {
+            String resultDict = item.getResultDict();
+            String resultName = dictList.stream().filter(d -> d.getValue().equals(resultDict)).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setResultDict(resultName);
+        }
+        return new PagingVO<>(resultList, resultList.size(), dto.getPageSize(), dto.getCurrPage());
     }
 
 

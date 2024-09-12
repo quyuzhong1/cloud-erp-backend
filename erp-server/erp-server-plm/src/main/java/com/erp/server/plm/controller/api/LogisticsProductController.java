@@ -246,14 +246,12 @@ public class LogisticsProductController extends BaseController {
 
     /**
      * 导出产品信息
-     * @param dto
-     * @param response
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出物流产品信息")
     @PostMapping("/export")
-    public ApiResult exportExcel(@RequestBody @Valid LogisticsProductDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = logisticsProductService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Valid LogisticsProductDTO.ExportDTO dto) {
+        Boolean result = logisticsProductService.exportExcel(dto);
         return result ? success() : failure();
     }
 

@@ -93,6 +93,11 @@ public class PlatformProductDTO extends UniqueDto {
     private String shopId;
 
     /**
+     * ERP系统店铺ID
+     */
+    private String authId;
+
+    /**
      * 匹配结果
      */
     private Boolean matchResult;

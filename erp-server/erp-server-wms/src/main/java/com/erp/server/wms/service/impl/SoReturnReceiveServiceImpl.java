@@ -13,13 +13,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
@@ -35,6 +32,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -51,12 +49,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_RECEIVE;
 
 /**
  * 采购退货签收单
@@ -112,6 +110,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
@@ -689,46 +689,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     }
 
     @Override
-    public Boolean exportExcel(SoReturnReceiveDTO.PagingParam dto, HttpServletResponse response) {
-        List<SoReturnReceiveDTO.PagingView> pagingViews = baseMapper.soReturnReceiveExportExcel(dto);
-        //获取sku的id集合
-        List<String> skuIdList = pagingViews.stream().map(SoReturnReceiveDTO.PagingView::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取退货单id
-        List<String> returnMainIds = pagingViews.stream().map(SoReturnReceiveDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
-        //退货单详情
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnMainIds);
-        //销售单详情id集合
-        List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
-
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        for (SoReturnReceiveDTO.PagingView pagingView : pagingViews) {
-            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
-            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
-            pagingView.setReturnTypeDictName(ReturnTypeEnum.getName(pagingView.getReturnTypeDict()));
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            pagingView.setProductName(productDetailEntity.getName());
-            pagingView.setSalesQty(soDetailEntity.getQty());
-            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-            pagingView.setCustomerName(customerInfoEntity.getName());
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/soReturnReceiveExport.xlsx";
-        String name = "销售退货签收单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(pagingViews, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return Boolean.TRUE;
+    public Boolean exportExcel(SoReturnReceiveDTO.PagingParam dto) {
+        downloadTaskFeign.saveDownloadTask("销售退货签收单", EXPORT_WMS_SO_RETURN_RECEIVE.getCode(), dto);
+        return true;
     }
 
     @Override
@@ -911,6 +874,39 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(PagingDTO<SoReturnReceiveDTO.PagingParam> dto) {
+
+        Page<SoReturnReceiveDTO.PagingView> pagingViews = baseMapper.soReturnReceiveExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        //获取sku的id集合
+        List<String> skuIdList = pagingViews.getRecords().stream().map(SoReturnReceiveDTO.PagingView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取退货单id
+        List<String> returnMainIds = pagingViews.getRecords().stream().map(SoReturnReceiveDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
+        //退货单详情
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnMainIds);
+        //销售单详情id集合
+        List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
+
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        for (SoReturnReceiveDTO.PagingView pagingView : pagingViews.getRecords()) {
+            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
+            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
+            pagingView.setReturnTypeDictName(ReturnTypeEnum.getName(pagingView.getReturnTypeDict()));
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            pagingView.setProductName(productDetailEntity.getName());
+            pagingView.setSalesQty(soDetailEntity.getQty());
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            pagingView.setCustomerName(customerInfoEntity.getName());
+        }
+        return new PagingVO<>(pagingViews);
     }
 
     @Override

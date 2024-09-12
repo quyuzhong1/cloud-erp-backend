@@ -74,29 +74,7 @@ public class DmpOutputTaskJob {
 			.list();
 		
 		if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
-			Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
-	    			.in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
-	    			.select(DmpOutputTaskEntity::getId , DmpOutputTaskEntity::getCfgOutputId)
-	    			.list().stream().collect(Collectors.toMap(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId));
-
-	    	Map<String, DmpCfgOutputEntity> outputIdEntityMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
-	    			.list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
-
-	    	Map<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMaps = new HashMap<>();
-	    	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
-	    		String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
-	    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMaps.get(cfgOutputId);
-	    		if(CollUtil.isEmpty(list)) {
-	    			list = new ArrayList<>();
-	    		}
-	    		list.add(dmpOutputTaskRecordEntity);
-	    		cfgOutputRecordEntityListMaps.put(cfgOutputId, list);
-	    	}
-	    	for(Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
-	    		DmpCfgOutputEntity dmpCfgOutputEntity = outputIdEntityMaps.get(cfgOutputRecordEntityListMap.getKey());
-	    		DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(dmpCfgOutputEntity.getOutputClass()) , DmpOutputTaskHandler.class);
-	    		dmpOutputTaskHandler.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity, dmpOutputTaskRecordEntityList);
-	    	}
+			dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordEntityList);
 		}
 		
         return ReturnT.SUCCESS;

@@ -74,9 +74,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     private WmsFbaInventoryFeign wmsFbaInventoryFeign;
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         try {
-            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+            dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
             throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
         }
@@ -102,9 +102,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 dto.setPlatformSkuNo("");
             }
             ListingInfoEntity oldEntity = null;
-            if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
-                    || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
-                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
+            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
+                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), dto.getAuthId());
             } else {
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());

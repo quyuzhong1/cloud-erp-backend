@@ -5,7 +5,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -13,6 +17,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Scope;
@@ -30,11 +37,16 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqNewTopic;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpCfgOutputBlackCompareSignEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskStatusEnum;
@@ -51,6 +63,8 @@ import com.erp.server.dmp.service.DmpOutputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -74,6 +88,11 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	protected IdentifierGenerator identifierGenerator;
 	
 	protected boolean isNotValidate = false;
+	
+	@Resource
+    private MQProducerService<String> mqProducerService;
+	private static Set<String> SKU_LISTING_TIME_SET = new HashSet<>();
+	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 	
 	@Override
 	public void doDmpHandler(DmpOutputRequest dmpRequest, DmpOutputResponse dmpResponse, DmpHandlerChain chain) {
@@ -110,6 +129,16 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				.set(DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.FINISH.getCode())
 				.set(DmpOutputTaskEntity::getUpdateTime, LocalDateTime.now())
 				.update();
+		
+		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
+		if(CollUtil.isNotEmpty(convertInputDmpBaseEntityListMaps)) {
+			if(convertInputDmpBaseEntityListMaps.keySet().stream().anyMatch(c -> c.getStorageName().equals("dmp_so_detail"))) {
+				dmpOutputExecutorPool.execute(() -> {
+					pushSoInfoSkuListingTime(convertInputDmpBaseEntityListMaps);
+				});
+			}
+		}
+		
 		chain.doDmpHandler(dmpRequest, dmpResponse);
 	}
 	
@@ -120,37 +149,50 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     		return;
     	}
 		
-    	int i = 0;
-    	Integer pushRate = dmpCfgOutputEntity.getPushRate();
-		if(pushRate == null) {
-			pushRate = 3;
-		}
-		dmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
-    	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();
+		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
 			String redisKey = "dmp:output:task:" + dataId;
-			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 3600, TimeUnit.SECONDS)) {
-				try {
-					this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
-				} catch (Exception e) {
-					log.error("处理推送数据失败" , e);
-					throw new RuntimeException(e);
-				}finally {
-					redisTemplate.delete(redisKey);
-				}
+			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 1800, TimeUnit.SECONDS)) {
+				pushDmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
 			}else {
 				log.error(redisKey + "任务正在执行中");
 			}
-    		
-    		if(pushRate > 0) {
-				i = i + 1;
-    			if(i % pushRate == 0) {
-    				try {
-    					Thread.sleep(1000);
-    				} catch (InterruptedException e) {}
-    			}
-			}
+		}
+		
+		if(CollUtil.isEmpty(pushDmpOutputTaskRecordEntityList)) {
+    		return;
     	}
+		
+		pushDmpOutputTaskRecordEntityList.sort((d1 , d2) -> d1.getUpdateTime().compareTo(d2.getUpdateTime()));
+		dmpOutputExecutorPool.execute(() -> {
+			int i = 0;
+	    	Integer pushRate = dmpCfgOutputEntity.getPushRate();
+			if(pushRate == null) {
+				pushRate = 3;
+			}
+			for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : pushDmpOutputTaskRecordEntityList) {
+				MDC.put("traceId", dmpOutputTaskRecordEntity.getId());
+				String dataId = dmpOutputTaskRecordEntity.getDataId();
+				String redisKey = "dmp:output:task:" + dataId;
+				try {
+					this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+				} catch (Exception e) {
+					log.error("处理推送数据失败{}" , dmpOutputTaskRecordEntity.getId() , e);
+				}finally {
+					redisTemplate.delete(redisKey);
+				}
+	    		
+	    		if(pushRate > 0) {
+					i = i + 1;
+	    			if(i % pushRate == 0) {
+	    				try {
+	    					Thread.sleep(1000);
+	    				} catch (InterruptedException e) {}
+	    			}
+				}
+	    	}
+		});
 	}
 	
 	protected abstract void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
@@ -183,6 +225,69 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			}
 		}
 		return false;
+	}
+	
+	private void pushSoInfoSkuListingTime(Map<DmpCfgInputConvertEntity , List<BaseEntity>> convertInputDmpBaseEntityListMaps) {
+		Map<String , DmpSoInfoEntity> dmpSoInfoEntityMap = new HashMap<>();
+		Map<String, List<DmpSoDetailEntity>> dmpSoDetailEntityMap = new HashMap<>();
+		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+			List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
+			if(CollUtil.isNotEmpty(value)) {
+				String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+				if("dmp_so_info".equals(storageName)) {
+					for(BaseEntity v : value) {
+						DmpSoInfoEntity dmpSoInfoEntity = (DmpSoInfoEntity) v;
+						dmpSoInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
+					}
+				}else if("dmp_so_detail".equals(storageName)) {
+					for(BaseEntity v : value) {
+						DmpSoDetailEntity dmpSoDetailEntity = (DmpSoDetailEntity) v;
+						String mainId = dmpSoDetailEntity.getMainId();
+						List<DmpSoDetailEntity> list = dmpSoDetailEntityMap.get(mainId);
+						if(CollUtil.isEmpty(list)) {
+							list = new ArrayList<>();
+						}
+						list.add(dmpSoDetailEntity);
+						dmpSoDetailEntityMap.put(mainId, list);
+					}
+				}
+			}
+		}
+		
+		String tag = RocketMqNewTag.DMP_PRODUCT_LISTING_TO_PLM_TAG.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
+		for(Map.Entry<String, List<DmpSoDetailEntity>> dmpSoDetailEntity : dmpSoDetailEntityMap.entrySet()) {
+			DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoEntityMap.get(dmpSoDetailEntity.getKey());
+			if(dmpSoInfoEntity != null) {
+				String sourcePlatform = dmpSoInfoEntity.getSourcePlatform();
+				if(StringUtils.isNotBlank(sourcePlatform)) {
+					List<DmpSoDetailEntity> dmpSoDetailEntityList = dmpSoDetailEntity.getValue();
+					for(DmpSoDetailEntity detailEntity : dmpSoDetailEntityList) {
+						String skuNo = detailEntity.getPlatformSku();
+						if(StringUtils.isNotBlank(skuNo)) {
+							String key = "dmp:output:listing:" + sourcePlatform + ":" + skuNo;
+							if(!SKU_LISTING_TIME_SET.contains(key)) {
+								Boolean hasKey = redisTemplate.hasKey(key);
+								if(hasKey) {
+									SKU_LISTING_TIME_SET.add(key);
+								}else {
+									String now = DateUtil.now();
+									Map<String, String> mqData = new HashMap<>();
+									mqData.put("sourcePlatform", sourcePlatform);
+									mqData.put("skuNo", skuNo);
+									mqData.put("listingTime", now);
+									SendResult syncSend = mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PRODUCT_LISTING_TO_PLM_TOPIC, tag
+											, JSON.toJSONString(mqData), key);
+									if(SendStatus.SEND_OK.equals(syncSend.getSendStatus())) {
+										redisTemplate.opsForValue().set(key, now);
+										SKU_LISTING_TIME_SET.add(key);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	private boolean validate(Object value , DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity) {
@@ -399,5 +504,9 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			}
 		}
 		return false;
+	}
+	
+	protected List<String> getSourceCodeKeys() {
+		return null;
 	}
 }

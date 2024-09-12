@@ -8,8 +8,9 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -120,6 +121,18 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      */
     BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess,Boolean isSyncKingDee);
     /**
+     * 审核结束
+     * @Author Luo_WG
+     * @Date 2024/9/6 16:57
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isSyncKingDee
+     * @return java.lang.Boolean
+     **/
+    Boolean approveEnd(TransferInfoEntity entity, String type, String comment, Boolean isSyncKingDee);
+
+    /**
      * 虚拟仓库存扣减处理
      * @author will
      * @date 2024/8/13 18:04
@@ -145,14 +158,13 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      */
     Boolean cancelProcess(List<String> ids);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/5/15 11:26
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(TransferInfoDTO.SearchParamDTO dto);
     /**
      * @description: 根据来源ids查询
      * @author Will
@@ -250,4 +262,6 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return List<TransferInfoEntity>
      */
     List<TransferInfoEntity> listBySourceId(String sourceId);
+
+    PagingVO<TransferInfoDTO.ListDTO> exportTransferInfo(PagingDTO<TransferInfoDTO.SearchParamDTO> dto);
 }

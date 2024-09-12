@@ -7,6 +7,7 @@ package com.erp.model.oms.dto;/**
  */
 
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -46,6 +47,7 @@ public class ReportDTO implements Serializable {
         /**
          * sku 创建时间
          */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private List<LocalDateTime> skuCreateTimeList;
 
         /**
@@ -59,6 +61,7 @@ public class ReportDTO implements Serializable {
          */
         @NotNull(message = "订单创建时间不能为空")
         @Size(min = 2,message = "订单创建时间不能为空")
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private List<LocalDateTime> orderCreateTimeList;
 
 

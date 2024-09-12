@@ -4,7 +4,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -47,14 +46,13 @@ public interface QcEffectivenessService {
      */
     PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> viewQcForDocument(PagingDTO<QcEffectivenessDTO.ViewQcForDocumentSearchParamDTO> dto);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/4/12 12:25
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(QcEffectivenessDTO.ExportExcelSearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(QcEffectivenessDTO.ExportExcelSearchParamDTO dto);
 
     /**
      * @description: 查询各个状态的质检单数量
@@ -64,4 +62,8 @@ public interface QcEffectivenessService {
      * @return List<ViewQcOverviewDetailDTO>
      */
     List<QcEffectivenessDTO.ViewQcOverviewDetailDTO> listQcBillGroupQcStatus(QcEffectivenessDTO.CommonSearchParamDTO dto);
+
+    PagingVO<QcEffectivenessDTO.ViewQcForDocumentDTO> exportQcEffectivenessDocument(PagingDTO<QcEffectivenessDTO.ExportExcelSearchParamDTO> dto);
+
+    PagingVO<QcEffectivenessDTO.ViewQcForPersonnelDTO> exportQcEffectivenessPersonnel(PagingDTO<QcEffectivenessDTO.ExportExcelSearchParamDTO> dto);
 }

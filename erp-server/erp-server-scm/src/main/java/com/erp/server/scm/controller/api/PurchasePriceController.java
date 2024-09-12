@@ -12,13 +12,10 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.scm.entity.SalesDemandEntity;
-import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.erp.server.scm.query.PurchasePriceQueryHandler;
 import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
@@ -272,13 +269,8 @@ public class PurchasePriceController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购价目数据导出")
     @PostMapping("/exportPurchasePrice")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
-            menuCode = "scm:purchase:price:paging",
-            tableAlias = "pp")
-    @WebAdvanceQuery(handler = PurchasePriceQueryHandler.class)
-    public ApiResult exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.PagingParamDTO dto, HttpServletResponse response) {
-        purchasePriceService.exportPurchasePrice(dto, response);
+    public ApiResult exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.PagingParamDTO dto) {
+        purchasePriceService.exportPurchasePrice(dto);
         return success();
     }
 

@@ -20,7 +20,6 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -254,7 +253,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO dto, HttpServletResponse response);
+    Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO dto);
     /**
      * @description: 查看财务信息
      * @author Will
@@ -793,10 +792,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Will
      * @date: 2024/4/16 15:07
      * @param dto
-     * @param response
      * @return Boolean
      */
-    Boolean exportExcel(SoB2cDTO.ExportParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoB2cDTO.ExportParamDTO dto);
 
     List<BatchResultDTO> orderForecast(SoB2cDTO.TransferDeclareDTO dto);
 
@@ -818,10 +816,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author Will
      * @date: 2024/4/22 19:54
      * @param dto
-     * @param response
      * @return Boolean
      */
-    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean abnormalExportExcel(SoB2cAbnormalDTO.PagingParamDTO dto);
     /**
      * 扫描单号匹配订单
      * @param code
@@ -948,4 +945,19 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<SoB2cEntity> listByCreateTime(LocalDateTime startTime, LocalDateTime endTime);
 
+    Boolean updateStatus(SoB2cEntity soB2cEntity);
+    /**
+     * 导出异常订单
+     */
+    PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
+    /**
+     * 导出订单
+     */
+    PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(PagingDTO<SoB2cDTO.ExportParamDTO> dto);
+
+    /**
+     * 导出销售额
+     * @param dto 参数
+     */
+    PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
 }

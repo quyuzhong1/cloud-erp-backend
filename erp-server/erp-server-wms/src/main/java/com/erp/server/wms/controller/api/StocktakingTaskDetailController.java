@@ -38,8 +38,8 @@ public class StocktakingTaskDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘点任务明细")
     @PostMapping("/export")
-    public ApiResult exportWarehouse(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
-        Boolean result = stocktakingTaskDetailService.exportExcel(dto, response);
+    public ApiResult exportWarehouse(@RequestBody @Valid BaseIdDTO dto) {
+        Boolean result = stocktakingTaskDetailService.exportExcel(dto);
         return result ? success() : failure();
     }
 

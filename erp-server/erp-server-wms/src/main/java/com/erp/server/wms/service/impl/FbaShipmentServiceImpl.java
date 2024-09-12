@@ -8,7 +8,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -45,6 +44,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
@@ -66,7 +66,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -74,6 +73,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMENT;
 
 /**
  * <p>
@@ -126,7 +127,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private InventoryClosedRecordService inventoryClosedRecordService;
     @Resource
     private StocktakingProfitLossService stocktakingProfitLossService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SysDictFeign sysDictFeign;
     @Override
@@ -1666,23 +1668,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public void export(FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<FbaShipmentDTO.ListDTO> list = baseMapper.export(dto);
-        fillList(list);
-        List<FbaShipmentDTO.ExportDTO> exportDTOList = BeanUtil.copyToList(list,FbaShipmentDTO.ExportDTO.class, CopyOptions.create(FbaShipmentDTO.ExportDTO.class,false,"receiveQty"));
-        List<FbaShipmentDTO.ExportDTO> fillDTOList = fillReceive(exportDTOList);
-//        ExcelUtil.export("FBA货件","FBA货件",exportDTOList,FbaShipmentDTO.ExportDTO.class,response);
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/fbaShipment.xlsx";
-        String name = "FBA货件导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(fillDTOList, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void export(FbaShipmentDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("FBA货件导出", EXPORT_WMS_FBA_SHIPMENT.getCode(), dto);
     }
 
     private List<FbaShipmentDTO.ExportDTO> fillReceive(List<FbaShipmentDTO.ExportDTO> exportDTOList) {
@@ -1779,5 +1766,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }
         return lambdaQuery().in(FbaShipmentEntity::getCode,fbaShipmentCodeList)
                 .list();
+    }
+
+    @Override
+    public PagingVO<FbaShipmentDTO.ExportDTO> exportFbaShipment(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        Page<FbaShipmentDTO.ListDTO> page = baseMapper.export(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        fillList(page.getRecords());
+        List<FbaShipmentDTO.ExportDTO> exportDTOList = BeanUtil.copyToList(page.getRecords(),FbaShipmentDTO.ExportDTO.class, CopyOptions.create(FbaShipmentDTO.ExportDTO.class,false,"receiveQty"));
+        List<FbaShipmentDTO.ExportDTO> fillDTOList = fillReceive(exportDTOList);
+        return new PagingVO<>(fillDTOList, (int) page.getTotal(),dto.getPageSize(), dto.getCurrPage());
     }
 }

@@ -243,7 +243,6 @@
             </otherwise>
         </choose>
         ORDER BY sm.create_time DESC
-        limit 50000
     </select>
     <!--统计-->
     <select id="listMatchCount" resultType="com.erp.model.oms.dto.SkuMappingDTO$MatchCountDTO">
@@ -314,12 +313,17 @@
         sm.expire_time,
         sm.dict_platform,
         sm.platform_name,
-        sm.has_mapping_all
+        sm.has_mapping_all,
+        op.short_name
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
+        <if test="params.shortName !=null and params.shortName!=''">
+            AND op.short_name  ILIKE concat('%',#{params.shortName}::text,'%')
+        </if>
         <if test="matchResult!=null">
             AND li.match_result=#{matchResult}
         </if>
@@ -417,6 +421,7 @@
         SELECT
         sm.id,
         li.id AS listingId,
+        op.short_name as shortName,
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no AS warehouseSkuNo,
@@ -427,10 +432,12 @@
         sm.create_user_name,
         sm.create_time,
         sm.platform_name,
-        sm.has_mapping_all
+        sm.has_mapping_all,
+        op.short_name
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
         WHERE sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
         <choose>
@@ -455,6 +462,9 @@
                 </if>
                 <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
                     AND li.platform_sku_name ILIKE concat('%',#{params.warehouseProductName}::text,'%')
+                </if>
+                <if test="params.shortName !=null and params.shortName!=''">
+                    AND op.short_name  ILIKE concat('%',#{params.shortName}::text,'%')
                 </if>
                 <if test="params.productName !=null and params.productName!=''">
                     AND sm.product_name ILIKE concat('%',#{params.productName}::text,'%')
@@ -498,7 +508,6 @@
         </choose>
 
         ORDER BY sm.create_time DESC
-        limit 50000
     </select>
     <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
         SELECT li.id AS listingId,
@@ -620,7 +629,8 @@
         li.platform_spu_no,
         li.platform_spu_name,
         li.platform_fn_sku,
-        li.platform_sku_id as platformSkuId
+        li.platform_sku_id as platformSkuId,
+        li.auth_id as authId
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE

@@ -5,8 +5,6 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.core.excel.EasyExcelListConverter;
-import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -768,9 +766,10 @@ public class TmsDeclareBillDTO implements Serializable {
         /**
          * 关联单号List
          */
-        @ExcelProperty(value = "关联单号",converter = EasyExcelListConverter.class)
+        @ExcelProperty(value = "关联单号")
         @ColumnWidth(20)
-        private List<String> sourceCodeList;
+        private String sourceCodeList;
+
 
         /**
          * 目的国家(可排序)

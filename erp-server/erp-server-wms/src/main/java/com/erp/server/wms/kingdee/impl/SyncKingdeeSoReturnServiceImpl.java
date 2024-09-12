@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 
 import com.alibaba.fastjson.JSON;
@@ -19,6 +20,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
+import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -37,6 +39,7 @@ import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -100,9 +103,12 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
     @Resource
     private SoReturnReceiveDetailService soReturnReceiveDetailService;
-    
+
     @Resource
     private WmsPushMsgService wmsPushMsgService;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -246,6 +252,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIds);
         }
 
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIds);
 
         for (SoReturnInstockDetailEntity detailEntity : returnInstockDetailEntities) {
             //根据来源id获取销售订单详情id
@@ -291,8 +299,14 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 //仓库
                 map.put("warehouseCode", warehouseCode);
             }
-            //仓位
-            map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            }
+
             //退货日期
             map.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
@@ -360,9 +374,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (SoReturnInstockEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH;
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, settingEnum.getKey())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_RETURN_INSTOCK.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
@@ -381,7 +395,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
           dmpSyncTaskDTO.setParentId(entity.getSoId());
           return dmpMqFeign.saveTask(dmpSyncTaskDTO);
         }
-    	
+
     	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
         wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
         wmsPushMsgEntity.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
@@ -390,9 +404,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
         wmsPushMsgEntity.setParentId(entity.getSoId());
-        
+
         wmsPushMsgService.save(wmsPushMsgEntity);
-        
+
         return null;
     }
 }

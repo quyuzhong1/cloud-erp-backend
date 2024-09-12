@@ -34,13 +34,11 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -82,6 +80,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -115,6 +114,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2C_DELIVERY_ORDER;
 
 /**
  * <p>
@@ -201,6 +202,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private TransferInfoService transferInfoService;
     @Resource
     private WarehouseLocationMoveService warehouseLocationMoveService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
     @Lazy
@@ -765,7 +768,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         detailList.forEach(v -> v.setIndex(orderBasketNoMap.containsKey(v.getSoB2cId()) ? Integer.parseInt(orderBasketNoMap.get(v.getSoB2cId())) : Integer.MAX_VALUE));
 
         //明细取值为拣货单
-        this.allocateCargoDetail(allPrintWayBillPdfResultList);
+        if(!SoB2cDeliveryPrintTypeEnum.LOGISTICS_BILL.getCode().equals(dto.getPrintType())){
+            this.allocateCargoDetail(allPrintWayBillPdfResultList);
+        }
         //循环打印的渠道
         for (String logisticsChannel : logisticsChannelIdList) {
 
@@ -1297,25 +1302,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
-        dto.setPermissionSql(dto.getPermissionSql());
-        List<SoB2cDeliveryDTO.ListDTO> list = this.baseMapper.list(dto);
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        // 数据处理
-        fillList(list);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/b2cDeliveryOrderExport.xlsx";
-        String name = "发货单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("发货单导出", EXPORT_WMS_B2C_DELIVERY_ORDER.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1364,7 +1352,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> logisticsChannelIds = soB2cDeliveryEntities.stream().map(req -> req.getLogisticsChannelId()).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.BaseDTO> channelInfoList = logisticsFeign.listChannelInfoById(logisticsChannelIds);
         List<String> paperSizeList = channelInfoList.stream().map(req -> req.getPaperSize()).distinct().collect(Collectors.toList());
-        if (paperSizeList.size() > 1) {
+        //打印配货单默认100*100不校验
+        if (paperSizeList.size() > 1 && !SoB2cDeliveryPrintTypeEnum.ALLOCATE_CARGO_BILL.getCode().equals(param.getPrintType())) {
             throw new ServiceException(ApiError.PAPER_SIZE_INCONSISTENT_NOT_PRINT);
         }
 
@@ -1508,8 +1497,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
         // 如果是API对接的海外仓忽略发货单为空拦截
-        LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (LogisticsPlatformEnum.GOOD_CANG.equals(platformEnum) || LogisticsPlatformEnum.IML.equals(platformEnum)) {
+        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
             return false;
         }
 
@@ -1965,6 +1953,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //发货出库
         outFreezeVirtualInventory(soB2cDeliveryEntity);
         return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), "操作成功");
+    }
+
+    @Override
+    public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
+        dto.setPermissionSql(dto.getPermissionSql());
+        Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollUtil.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        // 数据处理
+        fillList(page.getRecords());
+        return new PagingVO<>(page);
     }
 
     /**

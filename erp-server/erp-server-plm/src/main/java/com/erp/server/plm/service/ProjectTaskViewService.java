@@ -1,8 +1,9 @@
 package com.erp.server.plm.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -46,12 +47,12 @@ public interface ProjectTaskViewService {
      */
     List<ProductTaskInWarehouseTimeChildDTO> getInWarehouseTimeView(ProductTaskViewSearchDTO dto);
     /**
+     * @param dto
      * @description: 项目视图导出
      * @author Will
      * @date: 2022/11/23 16:16
-     * @param dto
-     * @param response
-
      */
-    void exportExcel(ProductTaskViewSearchDTO dto, HttpServletResponse response);
+    void exportExcel(ProductTaskViewSearchDTO dto);
+
+    PagingVO<ProductTaskViewDTO> exportProductTaskView(PagingDTO<ProductTaskViewSearchDTO> dto);
 }

@@ -86,6 +86,7 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @return List<ListDiffExportDataDTO>
      */
     List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> listDiffExportData(@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
+    Page<VirtualInventoryDiffDTO.ListDiffExportDataDTO> listDiffExportData(@Param("page") Page<VirtualInventoryDiffDTO.ListDiffExportDataDTO> page, @Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
 
     /**
      * 获取虚拟仓可用数量
@@ -140,4 +141,5 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @return List<WarehouseStatisticsExcelDTO>
      */
     List<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
+    Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("page")  Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> page, @Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
 }

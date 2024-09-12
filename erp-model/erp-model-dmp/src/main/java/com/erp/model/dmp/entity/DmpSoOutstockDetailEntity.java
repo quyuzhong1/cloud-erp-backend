@@ -130,6 +130,28 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
      */
      @TableField("src_order_detail_id")
      private String srcOrderDetailId = "";
+     /**
+      * 客户名称
+      */
+     @TableField("customer_name")
+     private String customerName = "";
+     /**
+      * 平台名称
+      */
+     @TableField("platform_name")
+     private String platformName = "";
+     
+     /**
+      * 销售部门名称
+      */
+     @TableField("sale_dept_name")
+     private String saleDeptName = "";
+     
+     /**
+      * 销售员名称
+      */
+     @TableField("sales_man_name")
+     private String salesManName = "";
     /**
      * 备注
      */

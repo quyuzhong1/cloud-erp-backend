@@ -6,8 +6,12 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
@@ -17,11 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -316,19 +315,12 @@ public class SoReturnNoticeController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      * @param dto dto
-     * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售退货通知单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soReturnNotice:paging",
-            tableAlias = "srn"
-    )
-    @WebAdvanceQuery(handler = SoReturnNoticeQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoReturnNoticeDTO.PagingParam dto, HttpServletResponse response) {
-        Boolean flag = soReturnNoticeService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody SoReturnNoticeDTO.PagingParam dto) {
+        Boolean flag = soReturnNoticeService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

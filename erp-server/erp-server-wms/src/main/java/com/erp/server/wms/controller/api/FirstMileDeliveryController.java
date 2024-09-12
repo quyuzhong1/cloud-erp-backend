@@ -385,19 +385,13 @@ public class FirstMileDeliveryController extends BaseController {
     * @author Luo_WG
     * @date:  2023-10-30
     * @param dto
-    * @param response
     * @return
     */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:fbaDelivery:export",
-            tableAlias = "fd"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "头程发货单导出Excel数据")
-    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
-    public void exportList(@RequestBody @Validated FirstMileDeliveryDTO.PagingParamDTO dto, HttpServletResponse response) {
-        firstMileDeliveryService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated FirstMileDeliveryDTO.PagingParamDTO dto) {
+        firstMileDeliveryService.exportList(dto);
+        return success(true);
     }
 
     /**

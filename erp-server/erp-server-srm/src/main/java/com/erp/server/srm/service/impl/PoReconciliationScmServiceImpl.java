@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.StatementDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -40,9 +41,10 @@ import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.ScmDictFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmDictFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.srm.mapper.PoReconciliationMapper;
 import com.erp.server.srm.query.PoReconciliationScmQueryHandler;
 import com.erp.server.srm.service.AttachmentService;
@@ -56,12 +58,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT;
 
 /**
  * <p>
@@ -97,7 +102,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
 
     @Autowired
     private ScmDictFeign scmDictFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -166,6 +172,21 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
+    public PagingVO<PoReconciliationDTO.ListDTO> exportPoReconciliationScmExport(PagingDTO<PoReconciliationDTO.PagingParamDTO> dto) {
+        Page<PoReconciliationDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public StatementDTO<PoReconciliationDTO.ExportDTO, PoReconciliationDetailDTO.ListDTO> exportPoReconciliationScm(PoReconciliationDTO.PagingParamDTO dto) {
+       return null;
+    }
+
+    @Override
     public PagingVO<PoReconciliationDTO.ListDTO> paging(PagingDTO<PoReconciliationDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
@@ -221,7 +242,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
             SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
             if (ObjectUtils.isNotEmpty(supplierEntity)) {
-                exportDTO.setTitil(StrUtil.format("{}{}年{}月对账单",supplierEntity.getName(),listDTO.getEndDate().getYear(),listDTO.getEndDate().getMonthValue()));
+                exportDTO.setTitil(StrUtil.format("{}{}年{}月对账单", supplierEntity.getName(), listDTO.getEndDate().getYear(), listDTO.getEndDate().getMonthValue()));
                 //结算方式名称
                 List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(Arrays.asList(supplierEntity.getPayMethodId()));
                 if (CollectionUtils.isNotEmpty(dictBasicList)) {
@@ -259,7 +280,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                     .map(PoReconciliationDetailDTO.ListDTO::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
             exportDTO.setTotalReceiveAmount(totalReceiveAmount);
             //合计
-            exportDTO.setTotalAmount(MathUtil.add(totalDeliveryAmount,totalReceiveAmount));
+            exportDTO.setTotalAmount(MathUtil.add(totalDeliveryAmount, totalReceiveAmount));
 
             // 导出数据
             StringBuffer sb = new StringBuffer();
@@ -281,24 +302,8 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     }
 
     @Override
-    public void exportList(PoReconciliationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<PoReconciliationDTO.ListDTO> list = this.baseMapper.listExport(dto);
-        if(CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/poReconciliation.xlsx";
-        String name = "对账单Excel导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(PoReconciliationDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("对账单Excel导出", EXPORT_SRM_PO_RECONCILIATION_SCM_EXPORT.getCode(), dto);
     }
 
     @Override

@@ -34,6 +34,7 @@ import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductPlanExcelListener;
 import com.erp.server.plm.mapper.ProductPlanMapper;
@@ -53,6 +54,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_PLAN;
 
 /**
  * @author Will
@@ -99,6 +102,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Resource
     private ProductSaleService productSaleService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
     private ProductStatusTimeService productStatusTimeService;
@@ -282,89 +287,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     }
 
     @Override
-    public Boolean exportProductPlan(ProductPlanSearchDTO productPlanSearchDTO, HttpServletResponse response) {
-        List<ProductPlanExcelDTO> productPlanExcelDTOS = baseMapper.listExportExcel(productPlanSearchDTO);
-        if (CollectionUtils.isNotEmpty(productPlanExcelDTOS)) {
-            List<String> productPlanIds = productPlanExcelDTOS.stream().map(ProductPlanExcelDTO::getProductPlanId).collect(Collectors.toList());
-            List<ProductPlanSaleInfoEntity> productPlanSaleInfoList = productPlanSaleInfoService.listByProductPlanIds(productPlanIds);
-            productPlanExcelDTOS.forEach(obj -> {
-                //枚举格式化
-                obj.setProductStyleName(ProductStyleEnum.getNameByCode(obj.getProductStyleName()));
-                obj.setProductTypeName(ProductTypeEnum.getNameByCode(obj.getProductTypeName()));
-                obj.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode(obj.getThreeGenerationPlanningName()));
-                obj.setSalesPlatformName(PlatformDictEnum.getNameByName(obj.getSalesPlatformName()));
-                obj.setPlanMarketingSeasonName(SeasonEnum.getNameByCode(obj.getPlanMarketingSeasonName()));
-                //销售数据信息
-                if (CollectionUtils.isEmpty(productPlanSaleInfoList)) {
-                    return;
-                }
-                List<ProductPlanSaleInfoEntity> saleInfoList = productPlanSaleInfoList.stream().filter(e -> e.getProductPlanId().equals(obj.getProductPlanId())).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(saleInfoList)) {
-                    return;
-                }
-                for (ProductPlanSaleInfoEntity entity : saleInfoList) {
-                    if (MonthEnum.JANUARY.getCode().equals(entity.getMonth().toString())) {
-                        obj.setJanuaryQtyStr(entity.getSalesQty().toString());
-                        obj.setJanuaryAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.FEBRUARY.getCode().equals(entity.getMonth().toString())) {
-                        obj.setFebruaryQtyStr(entity.getSalesQty().toString());
-                        obj.setFebruaryAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.MARCH.getCode().equals(entity.getMonth().toString())) {
-                        obj.setMarchQtyStr(entity.getSalesQty().toString());
-                        obj.setMarchAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.APRIL.getCode().equals(entity.getMonth().toString())) {
-                        obj.setAprilQtyStr(entity.getSalesQty().toString());
-                        obj.setAprilAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.MAY.getCode().equals(entity.getMonth().toString())) {
-                        obj.setMayQtyStr(entity.getSalesQty().toString());
-                        obj.setMayAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.JUNE.getCode().equals(entity.getMonth().toString())) {
-                        obj.setJuneQtyStr(entity.getSalesQty().toString());
-                        obj.setJuneAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.JULY.getCode().equals(entity.getMonth().toString())) {
-                        obj.setJulyQtyStr(entity.getSalesQty().toString());
-                        obj.setJulyAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.AUGUST.getCode().equals(entity.getMonth().toString())) {
-                        obj.setAugustQtyStr(entity.getSalesQty().toString());
-                        obj.setAugustAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.SEPTEMBER.getCode().equals(entity.getMonth().toString())) {
-                        obj.setSeptemberQtyStr(entity.getSalesQty().toString());
-                        obj.setSeptemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.OCTOBER.getCode().equals(entity.getMonth().toString())) {
-                        obj.setOctoberQtyStr(entity.getSalesQty().toString());
-                        obj.setOctoberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.NOVEMBER.getCode().equals(entity.getMonth().toString())) {
-                        obj.setNovemberQtyStr(entity.getSalesQty().toString());
-                        obj.setNovemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                    if (MonthEnum.DECEMBER.getCode().equals(entity.getMonth().toString())) {
-                        obj.setDecemberQtyStr(entity.getSalesQty().toString());
-                        obj.setDecemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
-                    }
-                }
-            });
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/productPlanExport.xlsx";
-        String name = "产品规划";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(productPlanExcelDTOS, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportProductPlan(ProductPlanSearchDTO productPlanSearchDTO) {
+        downloadTaskFeign.saveDownloadTask("产品规划", EXPORT_PLM_PRODUCT_PLAN.getCode(), productPlanSearchDTO);
         return Boolean.TRUE;
     }
 
@@ -972,6 +896,82 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
 
 
+    }
+
+    @Override
+    public PagingVO<ProductPlanExcelDTO> productPlan(PagingDTO<ProductPlanSearchDTO> dto) {
+        Page<ProductPlanExcelDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (CollectionUtils.isNotEmpty(page.getRecords())) {
+            List<String> productPlanIds = page.getRecords().stream().map(ProductPlanExcelDTO::getProductPlanId).collect(Collectors.toList());
+            List<ProductPlanSaleInfoEntity> productPlanSaleInfoList = productPlanSaleInfoService.listByProductPlanIds(productPlanIds);
+            page.getRecords().forEach(obj -> {
+                //枚举格式化
+                obj.setProductStyleName(ProductStyleEnum.getNameByCode(obj.getProductStyleName()));
+                obj.setProductTypeName(ProductTypeEnum.getNameByCode(obj.getProductTypeName()));
+                obj.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode(obj.getThreeGenerationPlanningName()));
+                obj.setSalesPlatformName(PlatformDictEnum.getNameByName(obj.getSalesPlatformName()));
+                obj.setPlanMarketingSeasonName(SeasonEnum.getNameByCode(obj.getPlanMarketingSeasonName()));
+                //销售数据信息
+                if (CollectionUtils.isEmpty(productPlanSaleInfoList)) {
+                    return;
+                }
+                List<ProductPlanSaleInfoEntity> saleInfoList = productPlanSaleInfoList.stream().filter(e -> e.getProductPlanId().equals(obj.getProductPlanId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(saleInfoList)) {
+                    return;
+                }
+                for (ProductPlanSaleInfoEntity entity : saleInfoList) {
+                    if (MonthEnum.JANUARY.getCode().equals(entity.getMonth().toString())) {
+                        obj.setJanuaryQtyStr(entity.getSalesQty().toString());
+                        obj.setJanuaryAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.FEBRUARY.getCode().equals(entity.getMonth().toString())) {
+                        obj.setFebruaryQtyStr(entity.getSalesQty().toString());
+                        obj.setFebruaryAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.MARCH.getCode().equals(entity.getMonth().toString())) {
+                        obj.setMarchQtyStr(entity.getSalesQty().toString());
+                        obj.setMarchAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.APRIL.getCode().equals(entity.getMonth().toString())) {
+                        obj.setAprilQtyStr(entity.getSalesQty().toString());
+                        obj.setAprilAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.MAY.getCode().equals(entity.getMonth().toString())) {
+                        obj.setMayQtyStr(entity.getSalesQty().toString());
+                        obj.setMayAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.JUNE.getCode().equals(entity.getMonth().toString())) {
+                        obj.setJuneQtyStr(entity.getSalesQty().toString());
+                        obj.setJuneAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.JULY.getCode().equals(entity.getMonth().toString())) {
+                        obj.setJulyQtyStr(entity.getSalesQty().toString());
+                        obj.setJulyAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.AUGUST.getCode().equals(entity.getMonth().toString())) {
+                        obj.setAugustQtyStr(entity.getSalesQty().toString());
+                        obj.setAugustAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.SEPTEMBER.getCode().equals(entity.getMonth().toString())) {
+                        obj.setSeptemberQtyStr(entity.getSalesQty().toString());
+                        obj.setSeptemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.OCTOBER.getCode().equals(entity.getMonth().toString())) {
+                        obj.setOctoberQtyStr(entity.getSalesQty().toString());
+                        obj.setOctoberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.NOVEMBER.getCode().equals(entity.getMonth().toString())) {
+                        obj.setNovemberQtyStr(entity.getSalesQty().toString());
+                        obj.setNovemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                    if (MonthEnum.DECEMBER.getCode().equals(entity.getMonth().toString())) {
+                        obj.setDecemberQtyStr(entity.getSalesQty().toString());
+                        obj.setDecemberAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
+                    }
+                }
+            });
+        }
+        return new PagingVO<>(page);
     }
 
     /**

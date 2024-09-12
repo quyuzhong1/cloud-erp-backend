@@ -1,12 +1,10 @@
 package com.erp.server.tms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
-import com.erp.model.wms.dto.StocktakingProfitLossDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -48,6 +46,7 @@ public interface ShippingTemplateMapper extends BaseMapper<ShippingTemplateEntit
      * @return List<ListDTO>
      */
     List<ShippingTemplateDTO.ListDTO> listByExportExcel(@Param("params") ShippingTemplateDTO.ExportExcelParamDTO params);
+    Page<ShippingTemplateDTO.ListDTO> listByExportExcel(@Param("page") Page<ShippingTemplateDTO.ListDTO> page, @Param("params") ShippingTemplateDTO.ExportExcelParamDTO params);
     /**
      * @description: 运费模板下拉
      * @author Will

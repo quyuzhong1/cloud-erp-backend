@@ -47,6 +47,7 @@ public interface OtherInstockMapper extends BaseMapper<OtherInstockEntity> {
      * @return List<ListDTO> 
      */
     List<OtherInstockDTO.ListDTO> listExportExcel(@Param("params") OtherInstockDTO.SearchParamDTO param);
+    Page<OtherInstockDTO.ListDTO> listExportExcel(@Param("page") Page<OtherInstockDTO.ListDTO> page, @Param("params") OtherInstockDTO.SearchParamDTO param);
 
     /**
      *

@@ -209,9 +209,16 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
             if(CollUtil.isNotEmpty(positionList)) {
             	positionList.forEach(p -> {
             		String positionNo = p.getPositionNo();
-            		if(StringUtils.isNotBlank(positionNo) && nullPositionNo.contains(positionNo)) {
-            			p.setPositionNo("");
+            		if(StringUtils.isNotBlank(positionNo)) {
+            			if(nullPositionNo.contains(positionNo)) {
+            				p.setPositionNo("");
+            			}else if(positionNo.equals("TC-JHZC1")) {
+            				p.setPositionNo("TC-JHZC");
+            			}else if(positionNo.equals("B2B-JHZC1")) {
+            				p.setPositionNo("TC-JHZC");
+            			}
             		}
+            		
             	});
             	if(CollUtil.isNotEmpty(positionList)) {
             		itemEntity.setPositionDetailsList(BeanUtil.copyToList(positionList, PositionDetailsList.class));
