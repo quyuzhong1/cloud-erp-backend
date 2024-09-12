@@ -260,4 +260,11 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param skuId sku
      */
     List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(List<String> shopIds, String skuId);
+
+    /**
+     * 保存建议
+     * @param cfgRuleStrategy 配置值
+     * @param replenishmentResult 建议结果
+     */
+    void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult);
 }

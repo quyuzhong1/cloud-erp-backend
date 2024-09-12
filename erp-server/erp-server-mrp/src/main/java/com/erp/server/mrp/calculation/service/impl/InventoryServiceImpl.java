@@ -196,7 +196,7 @@ public class InventoryServiceImpl implements InventoryService {
                         continue;
                     }
                     //根据库存分配配置
-                    qty = getInventoryQty(replenishmentResultDTO, qty, localUsableDetail, dto, result);
+                    qty = getInventoryQty(replenishmentResultDTO, qty, localUsableDetail, dto, result, ReplenishmentInventoryTypeEnum.LOCAL_USABLE);
                 }
             }
         } else {
@@ -208,7 +208,7 @@ public class InventoryServiceImpl implements InventoryService {
                         continue;
                     }
                     //根据库存分配配置
-                    qty = getInventoryQty(replenishmentResultDTO, qty, localUsableDetail, dto, result);
+                    qty = getInventoryQty(replenishmentResultDTO, qty, localUsableDetail, dto, result, ReplenishmentInventoryTypeEnum.LOCAL_USABLE);
                 }
             }
         }
@@ -229,7 +229,7 @@ public class InventoryServiceImpl implements InventoryService {
                     continue;
                 }
                 //根据库存分配配置
-                qty = getInventoryQty(replenishmentResultDTO, qty, localInTransitDetail, dto, result);
+                qty = getInventoryQty(replenishmentResultDTO, qty, localInTransitDetail, dto, result, ReplenishmentInventoryTypeEnum.LOCAL_IN_TRANSIT);
             }
         }
         replenishmentResultDTO.setLocalInTransitDetail(localInTransitDetail);
@@ -263,7 +263,7 @@ public class InventoryServiceImpl implements InventoryService {
                     continue;
                 }
                 //根据库存分配配置
-                qty = getInventoryQty(replenishmentResultDTO, qty, localPurchaseDetail, dto, result);
+                qty = getInventoryQty(replenishmentResultDTO, qty, localPurchaseDetail, dto, result, ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY);
             }
         }
         replenishmentResultDTO.setLocalInTransitDetail(localPurchaseDetail);
@@ -349,11 +349,11 @@ public class InventoryServiceImpl implements InventoryService {
                 )).values());
     }
 
-    private int getInventoryQty(ReplenishmentResultDTO replenishmentResultDTO, int qty, List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localUsableDetail, LocalInventoryDTO dto, CfgRuleWarehouseDTO.StrategyDetailResultDTO result) {
+    private int getInventoryQty(ReplenishmentResultDTO replenishmentResultDTO, int qty, List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localUsableDetail, LocalInventoryDTO dto, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, ReplenishmentInventoryTypeEnum inventoryType) {
         if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(result.getInventoryAllocateType())) {
             qty += dto.getQty();
             localUsableDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
-                    .buildReplenishmentInventoryDetailDTO(ReplenishmentInventoryTypeEnum.LOCAL_USABLE.getCode(), result, dto.getQty(), Collections.emptyList()));
+                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, dto.getQty(), Collections.emptyList()));
         } else {
             List<String> shopIds;
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(result.getChannelType())) {
@@ -372,7 +372,7 @@ public class InventoryServiceImpl implements InventoryService {
                 detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSale.getShopId(), new BigDecimal(dto.getQty()).multiply(new BigDecimal(shopSale.getQty()).divide(new BigDecimal(total), 2, RoundingMode.HALF_UP))));
             }
             localUsableDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
-                    .buildReplenishmentInventoryDetailDTO(ReplenishmentInventoryTypeEnum.LOCAL_USABLE.getCode(), result, dto.getQty(), detailDTOS));
+                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, dto.getQty(), detailDTOS));
         }
         return qty;
     }

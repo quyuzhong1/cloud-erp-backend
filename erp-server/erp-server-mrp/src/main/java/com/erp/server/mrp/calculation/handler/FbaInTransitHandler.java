@@ -43,6 +43,7 @@ public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
                 .filter(v -> "true".equals(v.getValue()))
                 .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
                 .findFirst().orElse(null);
+        replenishmentResultDTO.getReplenishmentDetail().setCfgFbaInTransit(code);
         int qty = inventoryService.getFbaInTransit(replenishmentResultDTO, code, cfgRuleStrategyDTO.getStockUpResult());
         replenishmentResultDTO.getReplenishmentDetail().setFbaInTransitQty(qty);
     }

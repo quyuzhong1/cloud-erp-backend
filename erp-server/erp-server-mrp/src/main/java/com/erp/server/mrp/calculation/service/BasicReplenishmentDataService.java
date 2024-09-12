@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -162,6 +163,7 @@ public class BasicReplenishmentDataService {
         //查询所有需要计算得数据
         List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData();
         List<String> skuIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> vos = plmTaskFeign.listSkuCostByIds(skuIds);
         List<ProductSaleEntity> productSaleList = plmTaskFeign.listProductSaleBySkuId(skuIds);
         List<List<ReplenishmentSuggestionEntity>> partition = Lists.partition(suggestions, 1000);
         for (List<ReplenishmentSuggestionEntity> list : partition) {
@@ -177,6 +179,8 @@ public class BasicReplenishmentDataService {
                         if (ObjectUtils.isEmpty(sale) || ObjectUtils.isEmpty(sale.getListingTime())) {
                             continue;
                         }
+                        BigDecimal retailPrice = vos.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).map(SkuVO::getRetailPrice).findFirst().orElse(null);
+                        replenishmentResult.setSalesPrice(retailPrice);
                         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ, finalCalculationDate);
                         detail.setDetailId(IdWorker.getIdStr());
                         detail.setCalcVersion(code);
@@ -259,6 +263,7 @@ public class BasicReplenishmentDataService {
                             cfgRuleStrategy.setStockUpResult(stockUpResult);
                             SkuCalculationHandler skuCalculationHandler = new StockingTimeHandler();
                             skuCalculationHandler.handle(cfgRuleStrategy, replenishmentResult);
+                            replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, replenishmentResult);
                         }
                     } catch (Exception e) {
                         entity.setRemark(e.getMessage());

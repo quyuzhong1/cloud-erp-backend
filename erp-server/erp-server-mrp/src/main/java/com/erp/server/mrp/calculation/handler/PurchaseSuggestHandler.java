@@ -7,6 +7,7 @@ import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.mrp.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -117,7 +118,9 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setEstimateInstockDate(estimateInstockDate);
                     }
                     //采购成本 = 采购单价 * 建议采购量，取一供 ＞ 二供
-                    suggestDTO.setPurchaseCost(replenishmentResultDTO.getPurchasePrice().multiply(BigDecimal.valueOf(suggestDTO.getSuggestPurchaseQty())));
+                    if (!ObjectUtils.isEmpty(replenishmentResultDTO.getPurchasePrice())) {
+                        suggestDTO.setPurchaseCost(replenishmentResultDTO.getPurchasePrice().multiply(BigDecimal.valueOf(suggestDTO.getSuggestPurchaseQty())));
+                    }
                     return suggestDTO;
                 }).collect(Collectors.toList());
         replenishmentResultDTO.setPurchaseSuggests(deliverySuggests);

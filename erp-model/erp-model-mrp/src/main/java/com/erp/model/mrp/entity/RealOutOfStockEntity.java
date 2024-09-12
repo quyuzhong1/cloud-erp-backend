@@ -47,7 +47,7 @@ public class RealOutOfStockEntity extends BaseEntity<RealOutOfStockEntity> {
      * 销量
      */
     @TableField("sales_qty")
-    private Integer salesQty;
+    private BigDecimal salesQty;
 
     /**
      * 金额

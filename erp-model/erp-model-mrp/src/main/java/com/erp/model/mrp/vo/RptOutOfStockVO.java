@@ -26,7 +26,7 @@ public class RptOutOfStockVO {
     /**
      * 销量
      */
-    private Integer salesQty;
+    private BigDecimal salesQty;
 
     /**
      * 金额

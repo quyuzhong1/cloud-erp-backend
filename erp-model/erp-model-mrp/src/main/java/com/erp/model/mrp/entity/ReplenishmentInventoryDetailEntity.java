@@ -1,16 +1,15 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.mrp.handler.ObjectToListStringHandler;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * <p>
@@ -42,13 +41,13 @@ public class ReplenishmentInventoryDetailEntity extends BaseEntity<Replenishment
      * 实体仓id
      */
     @TableField("warehouse_id")
-    private Integer warehouseId;
+    private String warehouseId;
 
     /**
      * 虚拟仓id
      */
     @TableField("virtual_warehouse_id")
-    private Integer virtualWarehouseId;
+    private String virtualWarehouseId;
 
     /**
      * 仓库类型，local本地，overseas海外
@@ -65,8 +64,8 @@ public class ReplenishmentInventoryDetailEntity extends BaseEntity<Replenishment
     /**
      * 店铺id的json
      */
-    @TableField(value = "channel_id_json",jdbcType = JdbcType.OTHER,typeHandler = ObjectToListStringHandler.class)
-    private List<String> channelIdJson;
+    @TableField(value = "channel_id_json",jdbcType = JdbcType.OTHER)
+    private JSONArray channelIdJson;
 
     /**
      * 库存分配类型

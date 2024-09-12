@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -39,7 +40,7 @@ public class ShopInventoryDetailEntity extends BaseEntity<ShopInventoryDetailEnt
      * 数量
      */
     @TableField("qty")
-    private Integer qty;
+    private BigDecimal qty;
 
     /**
      * 计算版本  所有子表加   根据单号生成规则

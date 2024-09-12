@@ -53,7 +53,7 @@ public class RptOutOfStockEntity extends BaseEntity<RptOutOfStockEntity> {
      * 销量
      */
     @TableField("sales_qty")
-    private Integer salesQty;
+    private BigDecimal salesQty;
 
     /**
      * 金额

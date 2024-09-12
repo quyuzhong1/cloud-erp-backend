@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -223,6 +224,23 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
      */
     @TableField("calc_date")
     private String calcDate;
+    /**
+     * 本条数据对应使用的规则
+     */
+    @TableField("cfg_rule")
+    private String cfgRule;
+
+    /**
+     * 采购单价
+     */
+    @TableField("purchase_price")
+    private BigDecimal purchasePrice;
+
+    /**
+     * 销售价
+     */
+    @TableField("sales_price")
+    private BigDecimal salesPrice;
 
 
     public static final String MAIN_ID = "main_id";

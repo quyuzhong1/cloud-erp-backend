@@ -20,7 +20,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
@@ -134,6 +133,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Resource
     private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
+    @Resource
+    private PurchaseSuggestService purchaseSuggestService;
 
 
     @Override
@@ -184,7 +185,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             view.setOverseasInventoryAllocateType(CfgRuleInventoryAllocateTypeEnum.getName(inventoryDetailMap.get(CfgRuleWarehouseTypeEnum.LOCAL.getCode())));
             List<SalesInfoEntity> salesInfoList = salesInfos.stream().filter(v -> v.getReplenishmentDetailId().equals(view.getDetailId())).sorted(Comparator.comparing(SalesInfoEntity::getDate)).collect(Collectors.toList());
             List<LocalDate> salesAnalysisDate = salesInfoList.stream().map(SalesInfoEntity::getDate).collect(Collectors.toList());
-            List<Integer> salesAnalysisQty = salesInfoList.stream().map(SalesInfoEntity::getSalesQty).collect(Collectors.toList());
+            List<BigDecimal> salesAnalysisQty = salesInfoList.stream().map(SalesInfoEntity::getSalesQty).collect(Collectors.toList());
             //销量分析
             view.setSalesAnalysis(new ReplenishmentSuggestionVO.SalesAnalysisVO(salesAnalysisDate, salesAnalysisQty));
             SalesEstimateManualVO estimateManualVO = salesEstimateManuals.stream().filter(v -> v.getReplenishmentId().equals(view.getDetailId()))
@@ -272,8 +273,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .between(SalesInfoEntity::getDate, dto.getStartDate(), dto.getEndDate())
                 .orderByAsc(SalesInfoEntity::getDate)
         );
-        List<Integer> originalSales = list.stream().map(SalesInfoEntity::getOriginalSalesQty).collect(Collectors.toList());
-        List<Integer> sales = list.stream().map(SalesInfoEntity::getSalesQty).collect(Collectors.toList());
+        List<BigDecimal> originalSales = list.stream().map(SalesInfoEntity::getOriginalSalesQty).map(BigDecimal::new).collect(Collectors.toList());
+        List<BigDecimal> sales =  list.stream().map(SalesInfoEntity::getSalesQty).collect(Collectors.toList());
         List<LocalDate> dates = list.stream().map(SalesInfoEntity::getDate).collect(Collectors.toList());
         salesAnalysisVO.setDenoisingSales(new SalesAnalysisVO.SalesVO(dates, sales));
         salesAnalysisVO.setHistorySales(new SalesAnalysisVO.SalesVO(dates, originalSales));
@@ -282,7 +283,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .between(SalesEstimateEntity::getDate, LocalDate.now(), LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays()))
                 .orderByAsc(SalesEstimateEntity::getDate)
         );
-        List<Integer> salesEstimates = estimateEntityList.stream().map(SalesEstimateEntity::getSalesQty).collect(Collectors.toList());
+        List<BigDecimal> salesEstimates = estimateEntityList.stream().map(SalesEstimateEntity::getSalesQty).collect(Collectors.toList());
         List<LocalDate> salesEstimateDates = estimateEntityList.stream().map(SalesEstimateEntity::getDate).collect(Collectors.toList());
         salesAnalysisVO.setDenoisingSales(new SalesAnalysisVO.SalesVO(salesEstimateDates, salesEstimates));
         return salesAnalysisVO;
@@ -316,7 +317,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     e.stream().sorted(Comparator.comparing(RptOutOfStockEntity::getEndDate)).forEach(v -> {
                         rptOutOfStockVO.setStartDate(v.getStartDate());
                         rptOutOfStockVO.setEndDate(v.getEndDate());
-                        rptOutOfStockVO.setSalesQty(Math.addExact(Optional.ofNullable(rptOutOfStockVO.getSalesQty()).orElse(0), v.getSalesQty()));
+                        rptOutOfStockVO.setSalesQty(Optional.ofNullable(rptOutOfStockVO.getSalesQty()).orElse(BigDecimal.ZERO).add( v.getSalesQty()));
                         rptOutOfStockVO.setDays(Math.addExact(Optional.ofNullable(rptOutOfStockVO.getDays()).orElse(0), 1));
                         rptOutOfStockVO.setAmount(Optional.ofNullable(rptOutOfStockVO.getAmount())
                                 .orElse(BigDecimal.ZERO).add(v.getAmount()));
@@ -333,8 +334,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .ge(RealOutOfStockEntity::getDate, minOutOfStock)
             );
             BigDecimal amount = realOutOfStock.stream().map(RealOutOfStockEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-            Integer salesQty = realOutOfStock.stream().map(RealOutOfStockEntity::getSalesQty).reduce(0, Math::addExact);
-            rptOutOfStock.setSalesQty(rptOutOfStock.getSalesQty() + salesQty);
+            BigDecimal salesQty = realOutOfStock.stream().map(RealOutOfStockEntity::getSalesQty).reduce(BigDecimal.ZERO, BigDecimal::add);
+            rptOutOfStock.setSalesQty(rptOutOfStock.getSalesQty().add(salesQty));
             rptOutOfStock.setAmount(rptOutOfStock.getAmount().add(amount));
             rptOutOfStock.setDays(rptOutOfStock.getDays() + realOutOfStock.size());
             outOfStockVOMap.put(minOutOfStock, rptOutOfStock);
@@ -804,7 +805,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             //历史销量
             dyHeadMap.keySet().stream().forEach(obj ->{
                 SalesInfoEntity salesInfoEntity = salesList.stream().filter(e -> StrUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
-                Integer salesQty = ObjectUtil.isNotEmpty(salesInfoEntity) ? salesInfoEntity.getSalesQty() : MathUtil.ZERO;
+                BigDecimal salesQty = ObjectUtil.isNotEmpty(salesInfoEntity) ? salesInfoEntity.getSalesQty() : BigDecimal.ZERO;
                 convertMap.put(obj.toString(),salesQty);
             });
             convertDataList.add(convertMap);
@@ -833,6 +834,94 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(List<String> shopIds, String skuId) {
         return baseMapper.getSalesByShopIds(shopIds, skuId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
+        ReplenishmentSuggestionDetailEntity entity = ReplenishmentResultDTO.DetailDTO.buildReplenishmentSuggestionDetail(replenishmentResult.getReplenishmentDetail(), cfgRuleStrategy,
+                replenishmentResult.getTimePeriodSalesEstimates(), replenishmentResult.getAvgTimePeriodSalesEstimates(), replenishmentResult.getTimePeriodSales(),
+                replenishmentResult.getAvgTimePeriodSales(), replenishmentResult.getPurchasePrice(), replenishmentResult.getSalesPrice());
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getFbaInTransitDetails())) {
+            List<FbaInTransitDetailEntity> fbaInTransitDetailEntities = replenishmentResult.getFbaInTransitDetails().stream()
+                    .map(v -> ReplenishmentResultDTO.FbaInTransitDetailDTO.buildFbaInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            fbaInTransitDetailService.saveBatch(fbaInTransitDetailEntities);
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getFbaDeliveryDetails())) {
+            List<EstimatedDeliveryDetailEntity> fbaDeliveryDetails = replenishmentResult.getFbaDeliveryDetails().stream()
+                    .map(v -> ReplenishmentResultDTO.EstimatedDeliveryDetailDTO.buildEstimatedDeliveryDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            estimatedDeliveryDetailService.saveBatch(fbaDeliveryDetails);
+        }
+
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetails())) {
+            List<OverseasInTransitDetailEntity> overseasInTransitDetails = replenishmentResult.getOverseasInTransitDetails().stream()
+                    .map(v -> ReplenishmentResultDTO.OverseasInTransitDetailDTO.buildOverseasInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            overseasInTransitDetailService.saveBatch(overseasInTransitDetails);
+        }
+
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetails())) {
+            List<EstimatedDeliveryDetailEntity> overseasDeliveryDetails = replenishmentResult.getOverseasDeliveryDetails().stream()
+                    .map(v -> ReplenishmentResultDTO.EstimatedDeliveryDetailDTO.buildEstimatedDeliveryDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            estimatedDeliveryDetailService.saveBatch(overseasDeliveryDetails);
+        }
+
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalUsableDetail())) {
+            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetails())) {
+            List<LocalInTransitDetailEntity> localInTransitDetails = replenishmentResult.getLocalInTransitDetails().stream()
+                    .map(v -> ReplenishmentResultDTO.LocalInTransitDetailDTO.buildLocalInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            localInTransitDetailService.saveBatch(localInTransitDetails);
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetail())) {
+            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalPurchaseDetails())) {
+            List<EstimatedPurchaseDetailEntity> localPurchaseDetails = replenishmentResult.getLocalPurchaseDetails().stream()
+                    .map(v -> ReplenishmentResultDTO.EstimatedPurchaseDetailDTO.buildEstimatedPurchaseDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            estimatedPurchaseDetailService.saveBatch(localPurchaseDetails);
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalPurchaseDetail())) {
+            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalPurchaseDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getRptOutOfStocks())) {
+            List<RptOutOfStockEntity> rptOutOfStocks = replenishmentResult.getRptOutOfStocks().stream()
+                    .map(v -> ReplenishmentResultDTO.RptOutOfStockDTO.buildRptOutOfStock(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            rptOutOfStockService.saveBatch(rptOutOfStocks);
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getSalesInfos())) {
+            List<SalesInfoEntity> salesInfos = replenishmentResult.getSalesInfos().stream()
+                    .map(v -> ReplenishmentResultDTO.SalesInfoDTO.buildSalesInfo(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            salesInfoService.saveBatch(salesInfos);
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getSalesEstimates())) {
+            List<SalesEstimateEntity> salesEstimates = replenishmentResult.getSalesEstimates().stream()
+                    .map(v -> ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimate(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            salesEstimateService.saveBatch(salesEstimates);
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getDeliverySuggests())) {
+            List<DeliverySuggestEntity> deliverySuggests = replenishmentResult.getDeliverySuggests().stream()
+                    .map(ReplenishmentResultDTO.DeliverySuggestDTO::buildDeliverySuggest)
+                    .collect(Collectors.toList());
+            deliverySuggestService.saveBatch(deliverySuggests);
+        }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getPurchaseSuggests())) {
+            List<PurchaseSuggestEntity> purchaseSuggests = replenishmentResult.getPurchaseSuggests().stream()
+                    .map(ReplenishmentResultDTO.PurchaseSuggestDTO::buildPurchaseSuggest)
+                    .collect(Collectors.toList());
+            purchaseSuggestService.saveBatch(purchaseSuggests);
+        }
+
+        replenishmentSuggestionDetailService.save(entity);
     }
 
     /**

@@ -8,8 +8,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * <p>
@@ -41,13 +41,7 @@ public class SalesEstimateEntity extends BaseEntity<SalesEstimateEntity> {
      * 销量
      */
     @TableField("sales_qty")
-    private Integer salesQty;
-
-    /**
-     * 日均销预估
-     */
-    @TableField("avg_daily_sales_qty")
-    private Integer avgDailySalesQty;
+    private BigDecimal salesQty;
 
     /**
      * 所属月份

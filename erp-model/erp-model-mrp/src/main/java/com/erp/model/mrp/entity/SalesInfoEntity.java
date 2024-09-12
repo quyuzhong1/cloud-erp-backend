@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -40,13 +41,7 @@ public class SalesInfoEntity extends BaseEntity<SalesInfoEntity> {
      * 销量
      */
     @TableField("sales_qty")
-    private Integer salesQty;
-
-    /**
-     * 日均销
-     */
-    @TableField("avg_daily_sales_qty")
-    private Integer avgDailySalesQty;
+    private BigDecimal salesQty;
 
     /**
      * 断货数据是否从历史销量中排除,true是，false否

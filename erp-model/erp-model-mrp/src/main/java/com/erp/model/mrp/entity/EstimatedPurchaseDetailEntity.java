@@ -49,6 +49,12 @@ public class EstimatedPurchaseDetailEntity extends BaseEntity<EstimatedPurchaseD
     private LocalDate planArrivalDate;
 
     /**
+     * 预计可售日期
+     */
+    @TableField("estimate_sales_date")
+    private LocalDate estimateSalesDate;
+
+    /**
      * 业务类型 本地
      */
     @TableField("type")

@@ -1,9 +1,12 @@
 package com.erp.server.mrp.service.impl;
 
+import cn.hutool.extra.spring.SpringUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.mrp.dto.InventoryTotalDTO;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.model.mrp.entity.ShopInventoryDetailEntity;
 import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
@@ -15,8 +18,10 @@ import com.erp.server.mrp.mapper.ReplenishmentInventoryDetailMapper;
 import com.erp.server.mrp.service.ReplenishmentInventoryDetailService;
 import com.erp.server.mrp.service.ShopInventoryDetailService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,7 +39,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
 
     @Resource
     private ShopInventoryDetailService shopInventoryDetailService;
-
+    @Resource
     private ShopInfoFeign shopInfoFeign;
 
     @Override
@@ -71,5 +76,22 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
             detailVO.setChannelName(shopNames);
         }
         return detailVO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion) {
+        List<ReplenishmentInventoryDetailEntity> entities = new ArrayList<>();
+        List<ShopInventoryDetailEntity> detailEntities = new ArrayList<>();
+        for (ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO dto : inventoryDetail) {
+            ReplenishmentInventoryDetailEntity entity = ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO.buildReplenishmentInventoryDetail(dto, replenishmentDetailId, calcVersion);
+            entity.setId(IdWorker.getIdStr());
+            entities.add(entity);
+            for (ReplenishmentResultDTO.ShopInventoryDetailDTO detail : dto.getShopInventoryDetails()) {
+                detailEntities.add(ReplenishmentResultDTO.ShopInventoryDetailDTO.buildShopInventoryDetail(detail,entity.getId(), calcVersion));
+            }
+        }
+        SpringUtil.getBean(ReplenishmentInventoryDetailServiceImpl.class).saveBatch(entities);
+        shopInventoryDetailService.saveBatch(detailEntities);
     }
 }

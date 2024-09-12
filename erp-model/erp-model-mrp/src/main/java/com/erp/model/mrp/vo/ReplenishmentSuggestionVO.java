@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.ibatis.type.JdbcType;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -520,6 +521,6 @@ public class ReplenishmentSuggestionVO {
         /**
          * 数量
          */
-        private List<Integer> qty;
+        private List<BigDecimal> qty;
     }
 }

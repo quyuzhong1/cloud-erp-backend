@@ -1,11 +1,13 @@
 package com.erp.model.mrp.vo;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.annotation.Dict;
 import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -20,12 +22,12 @@ public class InventoryDetailVO {
     /**
      * 实体仓id
      */
-    private Integer warehouseId;
+    private String warehouseId;
 
     /**
      * 虚拟仓id
      */
-    private Integer virtualWarehouseId;
+    private String virtualWarehouseId;
 
     /**
      * 仓库类型，local本地，overseas海外
@@ -40,9 +42,11 @@ public class InventoryDetailVO {
     /**
      * 店铺id的json
      */
-    private List<String> channelIdJson;
+    private JSONArray channelIdJson;
 
-
+    /**
+     * 店铺id的名字
+     */
     private List<String> channelName;
 
     /**
@@ -74,7 +78,7 @@ public class InventoryDetailVO {
         /**
          * 数量
          */
-        private Integer qty;
+        private BigDecimal qty;
     }
     
     
