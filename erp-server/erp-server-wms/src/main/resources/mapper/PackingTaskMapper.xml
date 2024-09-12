@@ -50,8 +50,8 @@
         pt.weighting_status as weightingStatus
         from packing_task pt
         where pt.is_deleted = FALSE
-        <if test="params.source_code != null and params.source_code != ''">
-            and pt.source_code ILIKE concat('%',#{params.searchKeyword}::text,'%')
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            and pt.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
         </if>
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
             and ${params.sqlMap.default}
