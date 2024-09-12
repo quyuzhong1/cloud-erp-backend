@@ -1,6 +1,5 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.sdk.oms.amz.spapi.model.fbainventory.InventoryDetails;
@@ -19,7 +18,7 @@ import java.util.*;
  */
 @Service
 @Scope("prototype")
-public class DmpInputAmazonFbaInventoryDmpHandler extends DmpInputDbConvertDmpHandler {
+public class DmpInputAmzFbaInventoryDmpHandler extends DmpInputDbConvertDmpHandler {
 
 
     @Override

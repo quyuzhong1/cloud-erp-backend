@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmazonFbaInventoryApiInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzFbaInventoryApiInitHandler extends DmpInputInitHandler {
 
     @Resource
     private CfgAppClientService cfgAppClientService;

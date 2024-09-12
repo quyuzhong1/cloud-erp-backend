@@ -2,19 +2,8 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.dto.PlatformFbaShipmentDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
-import com.erp.sdk.oms.amz.spapi.model.fbainventory.InventoryDetails;
-import com.erp.sdk.oms.amz.spapi.model.fbainventory.ResearchingQuantity;
-import com.erp.sdk.oms.amz.spapi.model.fbainventory.ReservedQuantity;
-import com.erp.sdk.oms.amz.spapi.model.fbainventory.UnfulfillableQuantity;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Address;
-import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.BoxContentsFeeDetails;
-import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.BoxContentsSource;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.LabelPrepType;
-import com.google.gson.annotations.SerializedName;
-import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +18,7 @@ import java.util.TreeMap;
  */
 @Service
 @Scope("prototype")
-public class DmpInputAmazonFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandler {
+public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandler {
 
 
     @Override
