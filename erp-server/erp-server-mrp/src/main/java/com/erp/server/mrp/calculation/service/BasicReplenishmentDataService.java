@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -179,8 +178,8 @@ public class BasicReplenishmentDataService {
                         if (ObjectUtils.isEmpty(sale) || ObjectUtils.isEmpty(sale.getListingTime())) {
                             continue;
                         }
-                        BigDecimal retailPrice = vos.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).map(SkuVO::getRetailPrice).findFirst().orElse(null);
-                        replenishmentResult.setSalesPrice(retailPrice);
+                        SkuVO skuVO = vos.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).findFirst().orElse(new SkuVO());
+                        replenishmentResult.setSalesPrice(skuVO.getRetailPrice());
                         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ, finalCalculationDate);
                         detail.setDetailId(IdWorker.getIdStr());
                         detail.setCalcVersion(code);

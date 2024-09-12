@@ -102,10 +102,6 @@ public class ReplenishmentSuggestionVO {
          */
         private Integer fbaPlanDeliveryQty;
         /**
-         * 海外仓库存分配类型
-         */
-        private String overseasInventoryAllocateType;
-        /**
          * 海外仓可用
          */
         private Integer overseasUsableQty;
@@ -119,10 +115,6 @@ public class ReplenishmentSuggestionVO {
          * 海外仓预计发货
          */
         private Integer overseasPlanDeliveryQty;
-        /**
-         * 本地仓库存分配类型
-         */
-        private String localInventoryAllocateType;
         /**
          * 本地仓可用
          */

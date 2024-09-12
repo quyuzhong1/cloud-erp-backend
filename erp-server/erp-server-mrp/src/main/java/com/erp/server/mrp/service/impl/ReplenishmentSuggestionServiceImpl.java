@@ -157,7 +157,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
-        List<ReplenishmentInventoryDetailEntity> replenishmentInventoryDetails = replenishmentInventoryDetailService.listByReplenishmentDetailIds(detailIds);
         List<SalesEstimateManualEntity> salesEstimateManuals = salesEstimateManualService.listByReplenishmentDetailIds(detailIds);
         List<SalesInfoEntity> salesInfos = salesInfoService.listByReplenishmentDetailIds(detailIds, LocalDate.now().minusDays(16), LocalDate.now());
         List<RecentSuggestionDetailEntity> suggestionDetails = recentSuggestionDetailService.listByReplenishmentDetailIds(detailIds);
@@ -177,12 +176,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             List<LabelVO> vos = labelVOS.stream().filter(v -> v.getReplenishmentId().equals(view.getId())).collect(Collectors.toList());
             view.setLabels(vos);
             view.setShopName(shopInfoEntity.getName());
-            List<ReplenishmentInventoryDetailEntity> inventoryDetails = replenishmentInventoryDetails.stream().filter(v -> v.getReplenishmentDetailId().equals(view.getDetailId())).collect(Collectors.toList());
-            Map<String, String> inventoryDetailMap = inventoryDetails.stream().collect(Collectors.toMap(ReplenishmentInventoryDetailEntity::getWarehouseType, ReplenishmentInventoryDetailEntity::getInventoryAllocateType, (o1, o2) -> o1));
-            //海外仓库存分配类型
-            view.setOverseasInventoryAllocateType(CfgRuleInventoryAllocateTypeEnum.getName(inventoryDetailMap.get(CfgRuleWarehouseTypeEnum.OVERSEAS.getCode())));
-            //本地仓库存分配类型
-            view.setOverseasInventoryAllocateType(CfgRuleInventoryAllocateTypeEnum.getName(inventoryDetailMap.get(CfgRuleWarehouseTypeEnum.LOCAL.getCode())));
             List<SalesInfoEntity> salesInfoList = salesInfos.stream().filter(v -> v.getReplenishmentDetailId().equals(view.getDetailId())).sorted(Comparator.comparing(SalesInfoEntity::getDate)).collect(Collectors.toList());
             List<LocalDate> salesAnalysisDate = salesInfoList.stream().map(SalesInfoEntity::getDate).collect(Collectors.toList());
             List<BigDecimal> salesAnalysisQty = salesInfoList.stream().map(SalesInfoEntity::getSalesQty).collect(Collectors.toList());
