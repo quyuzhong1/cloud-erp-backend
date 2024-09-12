@@ -36,6 +36,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
         List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults = cfgRuleStrategyDTO.getSalesQtyResult().getFormulaResults();
+        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults = cfgRuleStrategyDTO.getSalesQtyResult().getDefaultFormulaResults();
         List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = new ArrayList<>();
         //计算天数
         int days = cfgRuleStrategyDTO.getSettings()
@@ -46,14 +47,20 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         LocalDate basicCalcDate = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         for (int i = 0; i < days; i++) {
             LocalDate calcDate = basicCalcDate.plusDays(i);
-            //获取最大优先级的规则
+            //获取最大优先级的规则 优先取 sku 固定规则，其次sku动态规则，其次sku默认规则，取不到则取系统动态规则，其次系统默认规则
             CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult = formulaResults.stream()
                     .filter(v -> !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
                     .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
                             .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
                     .orElseGet(() -> formulaResults.stream()
                             .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
-                            .findFirst().orElse(null));
+                            .findFirst().orElse(defaultFormulaResults.stream()
+                                    .filter(v -> !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
+                                    .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
+                                            .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
+                                    .orElseGet(() -> defaultFormulaResults.stream()
+                                            .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
+                                            .findFirst().orElse(null))));
             if (ObjectUtils.isEmpty(formulaResult)) {
                 continue;
             }
@@ -101,15 +108,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, firstDayOfNextMonth, firstDayOfFollowingMonth, FOLLOWING_MONTH);
     }
 
-    /**
-     *
-     * @param salesEstimates
-     * @param timePeriodSalesEstimates
-     * @param avgTimePeriodSalesEstimates
-     * @param firstDayOfNextMonth
-     * @param firstDayOfFollowingMonth
-     * @param recentTimePeriodEnum
-     */
+
     private void getSalesByTime(List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates, List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> timePeriodSalesEstimates, List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates, LocalDate firstDayOfNextMonth, LocalDate firstDayOfFollowingMonth, RecentTimePeriodEnum recentTimePeriodEnum) {
         LocalDate lastDayOfFollowingMonth = firstDayOfNextMonth.withDayOfMonth(firstDayOfNextMonth.lengthOfMonth());
         BigDecimal followingSales = salesEstimates.stream()

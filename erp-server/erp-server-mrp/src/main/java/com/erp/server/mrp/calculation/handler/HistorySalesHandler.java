@@ -42,7 +42,7 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
         CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
         boolean isIgnoreOutOfStock = salesQtyResult.getIsIgnoreOutOfStock();
         //开始计算去噪销量
-        calculationSales(isIgnoreOutOfStock, replenishmentResultDTO, salesQtyResult.getDenoisingResults());
+        calculationSales(isIgnoreOutOfStock, replenishmentResultDTO, salesQtyResult.getDenoisingResults(), salesQtyResult.getDefaultDenoisingResults());
         //开始计算分时段销量和日均
         calculationTimePeriodSales(replenishmentResultDTO);
     }
@@ -69,7 +69,7 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                     .count();
             BigDecimal avgQty = new BigDecimal(0);
             if (count != 0) {
-                avgQty = qty.divide(BigDecimal.valueOf(count), 2 , RoundingMode.HALF_UP);
+                avgQty = qty.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
             }
             avgTimePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, avgQty));
         }
@@ -77,13 +77,16 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
         replenishmentResultDTO.setAvgTimePeriodSales(avgTimePeriodSales);
     }
 
-    private void calculationSales(boolean isIgnoreOutOfStock, ReplenishmentResultDTO replenishmentResultDTO, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults) {
+    private void calculationSales(boolean isIgnoreOutOfStock, ReplenishmentResultDTO replenishmentResultDTO, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults) {
         for (ReplenishmentResultDTO.SalesInfoDTO salesInfo : replenishmentResultDTO.getSalesInfos()) {
             //获取符合的最大优先级销量去噪规则 (序号越小优先级越大)
             CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO denoisingResult = denoisingResults.stream()
                     .filter(v -> !v.getStartDate().isAfter(salesInfo.getDate()) && !v.getEndDate().isBefore(salesInfo.getDate()))
                     .max(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO::getIndex))
-                    .orElse(null);
+                    .orElse(defaultDenoisingResults.stream()
+                            .filter(v -> !v.getStartDate().isAfter(salesInfo.getDate()) && !v.getEndDate().isBefore(salesInfo.getDate()))
+                            .max(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO::getIndex))
+                            .orElse(null));
             // 断货排除 ＞ 销量去噪
             if (isIgnoreOutOfStock && salesInfo.getOriginalInventoryQty() == 0 && salesInfo.getOriginalSalesQty() == 0) {
                 //存在真实断货
@@ -93,14 +96,14 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                 //走销量规则
                 if (ObjectUtils.isEmpty(denoisingResult)) {
                     salesInfo.setSalesQty(new BigDecimal(salesInfo.getOriginalSalesQty()));
-                }else {
+                } else {
                     CfgRuleSalesDenoisingDenoisingTypeEnum code = CfgRuleSalesDenoisingDenoisingTypeEnum.getEnumByCode(denoisingResult.getDenoisingType());
                     BigDecimal salesQty = new BigDecimal(0);
                     switch (Objects.requireNonNull(code)) {
                         case PERCENTAGE:
                             salesQty = new BigDecimal(salesInfo.getOriginalSalesQty())
                                     .multiply(BigDecimal.valueOf(denoisingResult.getEffectiveValue()))
-                                    .divide(new BigDecimal(100), 2 , RoundingMode.HALF_UP);
+                                    .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
                             break;
                         case FIXED_VALUE:
                             salesQty = BigDecimal.valueOf(denoisingResult.getEffectiveValue());

@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
@@ -168,7 +169,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
 
     @Override
     public List<CfgRuleStockUpEntity> getDefaultCfgRuleStockUp() {
-        return list(lambdaQuery().eq(CfgRuleStockUpEntity::getRefId,""));
+        return list(Wrappers.<CfgRuleStockUpEntity>lambdaQuery().eq(CfgRuleStockUpEntity::getRefId,""));
     }
 
     /**
