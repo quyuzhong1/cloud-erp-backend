@@ -94,9 +94,10 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         if (CollectionUtils.isNotEmpty(updateDTO.getChildrenList())) {
             msg.append(updateDTO.getName().concat("<br>"));
             updateDTO.getChildrenList().stream().forEach(obj -> appendOperateLog(obj, msg));
+            msg.append("<br>");
         }  else {
             if (StrUtil.equals(updateDTO.getValue(),"true")) {
-                msg.append(updateDTO.getName().concat("<br>"));
+                msg.append(updateDTO.getName().concat(","));
             }
         }
     }

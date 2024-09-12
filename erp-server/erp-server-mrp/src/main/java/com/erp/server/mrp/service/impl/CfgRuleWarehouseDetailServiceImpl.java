@@ -59,14 +59,14 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList,String mainId,String type) {
+    public Boolean update(List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList,String mainId,String type,Boolean isVirtual) {
         if (CollectionUtils.isEmpty(cfgLocalWarehouseList)) {
             cfgLocalWarehouseList = Collections.EMPTY_LIST;
         }
         List<CfgRuleWarehouseDetailEntity> list = BeanMapperUtils.copyList(CfgRuleWarehouseDetailEntity.class, cfgLocalWarehouseList);
         //原仓库配置明细
         List<String> virtualWarehouseIdList = cfgLocalWarehouseList.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).map(CfgRuleWarehouseDetailDTO.UpdateDTO::getVirtualWarehouseId).collect(Collectors.toList());
-        List<CfgRuleWarehouseDetailEntity> oldList = listByWarehouseType(CollectionUtils.isNotEmpty(virtualWarehouseIdList) ? Boolean.TRUE :Boolean.FALSE ,Collections.singletonList(mainId),type);
+        List<CfgRuleWarehouseDetailEntity> oldList = listByWarehouseType(isVirtual,Collections.singletonList(mainId),type);
 
         //删除明细
         List<String> deleteIds = getDeleteIds(list, oldList);

@@ -6,12 +6,14 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -19,6 +21,7 @@ import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsMapper;
 import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
+import com.erp.server.mrp.service.CfgRuleStockUpService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,6 +51,8 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     @Autowired
     private CfgRuleLogisticsDetailService cfgRuleLogisticsDetailService;
 
+    @Autowired
+    private CfgRuleStockUpService cfgRuleStockUpService;
     /**
     * 修改
     */
@@ -66,6 +71,8 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 this.deleteByIdList(deleteIds);
+                // 数据处理
+                oldList = oldList.stream().filter(obj -> !deleteIds.contains(obj.getId())).collect(Collectors.toList());
             }
         }
         if (CollectionUtils.isEmpty(list)) {
@@ -83,6 +90,11 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
 
         //店铺
         List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
+        //备货信息
+        CfgRuleStockUpEntity stockUpEntity = cfgRuleStockUpService.getById(stockUpId);
+        if (ObjectUtil.isEmpty(stockUpEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（备货）");
+        }
         //日志
         StringBuffer msg = new StringBuffer();
         msg.append( StrUtil.format("本地发FBA：<br>"));
@@ -90,13 +102,16 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             String parentMsg = StrUtil.format("物流方式【{}】、物流时效【{}】、发货频率【{}】<br>",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
             msg.append(parentMsg);
             List<CfgRuleLogisticsDetailDTO.UpdateDTO> detailList = logisticsEntity.getDetailList();
+            if (CollectionUtils.isEmpty(detailList)) {
+                continue;
+            }
             for (CfgRuleLogisticsDetailDTO.UpdateDTO updateDTO : detailList) {
                 String shopNames = CollectionUtils.isEmpty(shopInfoList) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
                 String childMsg = StrUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(),StrUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, logisticsEntity.getLogisticsCycleDays());
                 msg.append(childMsg);
             }
         }
-        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "备货");
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(stockUpEntity.getRefId(),stockUpEntity.getId()) , "备货");
         return Boolean.TRUE;
     }
 

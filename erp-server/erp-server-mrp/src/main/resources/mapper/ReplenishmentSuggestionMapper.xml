@@ -47,6 +47,10 @@
                rsd.cfg_fba_in_transit
         from replenishment_suggestion rs
                  inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and rs.is_deleted = FALSE
+        </where>
     </select>
 
     <select id="view" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$View">

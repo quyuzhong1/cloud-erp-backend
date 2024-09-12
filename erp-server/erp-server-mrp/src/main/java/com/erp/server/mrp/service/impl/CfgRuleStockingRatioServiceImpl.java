@@ -5,14 +5,17 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleStockingRatioMapper;
+import com.erp.server.mrp.service.CfgRuleStockUpService;
 import com.erp.server.mrp.service.CfgRuleStockingRatioService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +43,9 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     @Autowired
     private OperateLogService operateLogService;
 
+    @Autowired
+    private CfgRuleStockUpService cfgRuleStockUpService;
+
     /**
     * 修改
     */
@@ -59,6 +65,8 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 this.removeByIds(deleteIds);
+                // 数据处理
+                oldList = oldList.stream().filter(obj -> !deleteIds.contains(obj.getId())).collect(Collectors.toList());
             }
         }
 
@@ -84,6 +92,11 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
      * @param stockUpId
      */
     private void addOperateLog (List<CfgRuleStockingRatioEntity> list,String stockUpId) {
+        //备货信息
+        CfgRuleStockUpEntity stockUpEntity = cfgRuleStockUpService.getById(stockUpId);
+        if (ObjectUtil.isEmpty(stockUpEntity)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（备货）");
+        }
         Map<String, List<CfgRuleStockingRatioEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getType()));
         //日志
         for (Map.Entry<String, List<CfgRuleStockingRatioEntity>> entry : map.entrySet()) {
@@ -93,7 +106,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             for (CfgRuleStockingRatioEntity ratioEntity : value) {
                 msg.append(StrUtil.format("•序号【{}】、名称【{}】、时间段【{}】、备货系数【{}】<br>", ratioEntity.getIndex(),ratioEntity.getName(),StrUtil.format("{}~{}",ratioEntity.getStartDate(),ratioEntity.getEndDate()),ratioEntity.getStockingRatio()));
             }
-            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), stockUpId, "备货");
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(stockUpEntity.getRefId(),stockUpEntity.getId()), "备货");
         }
     }
 
@@ -186,6 +199,14 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             stockingRatioEntity.setType(type);
             //时间
             List<LocalDate> dateList = stockingRatioEntity.getDateList();
+            if (CollectionUtils.isNotEmpty(dateList)) {
+                if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
+                    throw new ServiceException("时间区间不能为空");
+                }
+                if (dateList.get(0).isAfter(dateList.get(1))) {
+                    throw new ServiceException("开始时间不能大于结束时间");
+                }
+            }
             stockingRatioEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             stockingRatioEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
             maxIndex ++;

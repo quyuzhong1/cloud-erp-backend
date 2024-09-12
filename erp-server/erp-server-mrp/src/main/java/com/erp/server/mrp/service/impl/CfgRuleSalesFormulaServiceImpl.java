@@ -72,6 +72,9 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 this.removeByIds(deleteIds);
+
+                // 数据处理
+                oldList = oldList.stream().filter(obj -> !deleteIds.contains(obj.getId())).collect(Collectors.toList());
             }
         }
         if (CollectionUtils.isEmpty(list)) {
@@ -100,7 +103,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
      * @param salesQtyEntity
      */
     private void addOperateLog (List<CfgRuleSalesFormulaEntity> list,CfgRuleSalesQtyEntity salesQtyEntity) {
-        Map<String, List<CfgRuleSalesFormulaEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getType().concat(obj.getDefaultType())));
+        Map<String, List<CfgRuleSalesFormulaEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getType().concat(StrUtil.blankToDefault(obj.getDefaultType(),""))));
         //日志
         for (Map.Entry<String, List<CfgRuleSalesFormulaEntity>> entry : map.entrySet()) {
             List<CfgRuleSalesFormulaEntity> value = entry.getValue();
@@ -115,7 +118,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
                     msg.append(StrUtil.format("•{}：{}<br>", CfgRulePercentEnum.getName(obj.getKey()),obj.getValue()));
                 });
             }
-            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), salesQtyEntity.getId(), "销量");
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(salesQtyEntity.getRefId(),salesQtyEntity.getId()), "销量");
         }
     }
 
@@ -172,55 +175,60 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        //排序
-        Integer maxIndex = MathUtil.ZERO;
-        if (isCustom) {
-            maxIndex = oldList.stream().max(Comparator.comparingInt(CfgRuleSalesFormulaEntity::getIndex)).map(CfgRuleSalesFormulaEntity::getIndex).orElse(MathUtil.ZERO);
-        }
-        for (CfgRuleSalesFormulaEntity salesFormula : list) {
-            salesFormula.setSalesQtyId(salesQtyId);
+        Map<String, List<CfgRuleSalesFormulaEntity>> map = list.stream().collect(Collectors.groupingBy(CfgRuleSalesFormulaEntity::getType));
+        for (Map.Entry<String, List<CfgRuleSalesFormulaEntity>> entry : map.entrySet()) {
+            List<CfgRuleSalesFormulaEntity> value = entry.getValue();
             //排序
-            salesFormula.setIndex(maxIndex + 1);
-            //主键id赋值
-            CfgRuleSalesFormulaEntity entity = oldList.stream().filter(obj -> StrUtil.equals(obj.getName(), salesFormula.getName())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(entity)) {
-                salesFormula.setId(entity.getId());
-                //自定义添加的需要保持原有序号
-                salesFormula.setIndex(isCustom ? entity.getIndex() : salesFormula.getIndex());
+            Integer maxIndex = MathUtil.ZERO;
+            if (isCustom) {
+                maxIndex = oldList.stream().filter(obj -> StrUtil.equals(obj.getType(),entry.getKey())).max(Comparator.comparingInt(CfgRuleSalesFormulaEntity::getIndex)).map(CfgRuleSalesFormulaEntity::getIndex).orElse(MathUtil.ZERO);
             }
+            for (CfgRuleSalesFormulaEntity salesFormula : value) {
+                salesFormula.setSalesQtyId(salesQtyId);
+                //排序
+                salesFormula.setIndex(maxIndex + 1);
+                //主键id赋值
+                CfgRuleSalesFormulaEntity entity = oldList.stream().filter(obj -> StrUtil.equals(obj.getType(),salesFormula.getType()) && StrUtil.equals(obj.getName(), StrUtil.blankToDefault(salesFormula.getName(),""))).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(entity)) {
+                    salesFormula.setId(entity.getId());
+                    //自定义添加的需要保持原有序号
+                    salesFormula.setIndex(isCustom ? entity.getIndex() : salesFormula.getIndex());
+                }
 
-            //固定销量
-            if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(salesFormula.getDefaultType())) {
-                salesFormula.setPercentJson(JSONUtil.parseObj(new CfgRuleSalesFormulaDTO.PercentJsonDTO()));
-            }
-            //动态销量
-            if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(salesFormula.getDefaultType())) {
-                salesFormula.setFixedValue(BigDecimal.ZERO);
-                //默认配置需要校验百分比之和为100
-                if (CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(salesFormula.getType())) {
-                    BigDecimal totalRatio = salesFormula.getPercentJsonDTO().getTotalRatio();
-                    if (MathUtil.compareTo(totalRatio,new BigDecimal(100)) != MathUtil.ZERO) {
-                        throw new ServiceException("默认动态销量系数之和必须=100%；");
+                //固定销量
+                if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(salesFormula.getDefaultType())) {
+                    salesFormula.setPercentJson(JSONUtil.parseObj(new CfgRuleSalesFormulaDTO.PercentJsonDTO()));
+                }
+                //动态销量
+                if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(salesFormula.getDefaultType())) {
+                    salesFormula.setFixedValue(BigDecimal.ZERO);
+                    //默认配置需要校验百分比之和为100
+                    if (CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(salesFormula.getType())) {
+                        BigDecimal totalRatio = salesFormula.getPercentJsonDTO().getTotalRatio();
+                        if (MathUtil.compareTo(totalRatio,new BigDecimal(100)) != MathUtil.ZERO) {
+                            throw new ServiceException("默认动态销量系数之和必须=100%；");
+                        }
                     }
                 }
-            }
-            //百分比json
-            JSONObject percentJson = JSONUtil.parseObj(salesFormula.getPercentJsonDTO());
-            salesFormula.setPercentJson(percentJson);
+                //百分比json
+                JSONObject percentJson = JSONUtil.parseObj(salesFormula.getPercentJsonDTO());
+                salesFormula.setPercentJson(percentJson);
 
-            //时间
-            List<LocalDate> dateList = salesFormula.getDateList();
-            if (CollectionUtils.isNotEmpty(dateList)) {
-                if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
-                    throw new ServiceException("时间区间不能为空");
+                //时间
+                List<LocalDate> dateList = salesFormula.getDateList();
+                if (CollectionUtils.isNotEmpty(dateList)) {
+                    if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
+                        throw new ServiceException("时间区间不能为空");
+                    }
+                    if (dateList.get(0).isAfter(dateList.get(1))) {
+                        throw new ServiceException("开始时间不能大于结束时间");
+                    }
                 }
-                if (dateList.get(0).isAfter(dateList.get(1))) {
-                    throw new ServiceException("开始时间不能大于结束时间");
-                }
+                salesFormula.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
+                salesFormula.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
+                maxIndex ++;
             }
-            salesFormula.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
-            salesFormula.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
-            maxIndex ++;
         }
+
     }
 }

@@ -90,7 +90,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         }
 
         // 数据处理
-        handleData(cfgRuleSalesQtyEntity);
+        handleData(cfgRuleSalesQtyEntity,oldList.get(0),updateDetailDTO.getIsCustom());
 
         boolean save = super.saveOrUpdate(cfgRuleSalesQtyEntity);
         if(!save) {
@@ -110,7 +110,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         // 记录主单操作日志
         log.info("编辑 开始记录销量（规则设置）日志数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
         String msg = StrUtil.format("编辑【{}】 ",  "销量设置");
-        operateLogService.addModuleOperateLogByObj(oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), cfgRuleSalesQtyEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(cfgRuleSalesQtyEntity.getRefId(),cfgRuleSalesQtyEntity.getId()), msg);
         return cfgRuleSalesQtyEntity.getId();
     }
 
@@ -350,7 +350,20 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity,CfgRuleSalesQtyEntity oldEntity,Boolean isCustom) {
+        if (isCustom) {
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsCfgSame())) {
+                cfgRuleSalesQtyEntity.setIsCfgSame(oldEntity.getIsCfgSame());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsIgnoreOutOfStock())) {
+                cfgRuleSalesQtyEntity.setIsIgnoreOutOfStock(oldEntity.getIsIgnoreOutOfStock());
+            }
+            if (StrUtil.isBlank(cfgRuleSalesQtyEntity.getSalesQtyType())) {
+                cfgRuleSalesQtyEntity.setSalesQtyType(oldEntity.getSalesQtyType());
+            }
+            if (StrUtil.isBlank(cfgRuleSalesQtyEntity.getOrderType())) {
+                cfgRuleSalesQtyEntity.setOrderType(oldEntity.getOrderType());
+            }
+        }
     }
 }

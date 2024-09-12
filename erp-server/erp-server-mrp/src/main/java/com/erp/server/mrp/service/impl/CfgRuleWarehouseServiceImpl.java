@@ -81,13 +81,13 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         }
 
         //添加本地仓设置
-        cfgRuleWarehouseDetailService.update(updateDTO.getCfgLocalWarehouseList(),cfgRuleWarehouseEntity.getId(), CfgRuleWarehouseTypeEnum.LOCAL.getCode());
+        cfgRuleWarehouseDetailService.update(updateDTO.getCfgLocalWarehouseList(),cfgRuleWarehouseEntity.getId(), CfgRuleWarehouseTypeEnum.LOCAL.getCode(),Boolean.FALSE);
 
         //本地虚拟仓设置
-        cfgRuleWarehouseDetailService.update(updateDTO.getCfgLocalVirtualWarehouseList(),cfgRuleWarehouseEntity.getId(), CfgRuleWarehouseTypeEnum.LOCAL.getCode());
+        cfgRuleWarehouseDetailService.update(updateDTO.getCfgLocalVirtualWarehouseList(),cfgRuleWarehouseEntity.getId(), CfgRuleWarehouseTypeEnum.LOCAL.getCode(),Boolean.TRUE);
 
         //添加海外仓设置
-        cfgRuleWarehouseDetailService.update(updateDTO.getCfgOverseasWarehouseList(),cfgRuleWarehouseEntity.getId(),CfgRuleWarehouseTypeEnum.OVERSEAS.getCode());
+        cfgRuleWarehouseDetailService.update(updateDTO.getCfgOverseasWarehouseList(),cfgRuleWarehouseEntity.getId(),CfgRuleWarehouseTypeEnum.OVERSEAS.getCode(),Boolean.FALSE);
 
         // 记录主单操作日志
         log.info("编辑 开始记录仓库（规则设置）日志数据，id：【{}】", cfgRuleWarehouseEntity.getId());
@@ -153,11 +153,8 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         }
         List<String> platformList = platformMappingList.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
         List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> list =  wmsVirtualWarehouseFeign.listCfgRuleVirtualWarehouse (platformList);
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
         List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList = handleRefreshVirtual(list);
-        cfgRuleWarehouseDetailService.update(cfgLocalWarehouseList,ruleWarehouseEntity.getId(),CfgRuleWarehouseTypeEnum.LOCAL.getCode());
+        cfgRuleWarehouseDetailService.update(cfgLocalWarehouseList,ruleWarehouseEntity.getId(),CfgRuleWarehouseTypeEnum.LOCAL.getCode(),Boolean.TRUE);
     }
 
     @Override
