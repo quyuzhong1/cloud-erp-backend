@@ -31,39 +31,8 @@ public class DmpInputAmzReportParseProductNextDmpHandler extends DmpInputDoNextD
 		return Collections.singletonList(dmpInputMongoEntity);
 	}
 
-
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
 		log.debug("DmpInputAmzReportParseProductNextDmpHandler afterConvertData 处理");
 	}
-
-
-//	@Override
-//	protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
-//		List<ParamData> paramDataList = new ArrayList<>();
-//		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).list();
-//		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
-//		return mongoService.findMongoData(paramDataList, childMongoStorageName);
-//	}
-//
-//	@Override
-//	protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
-//		DmpCfgInputConvertEntity mainConvertId = this.getMainConvertId();
-//		String parentStorageName = mainConvertId.getStorageName();
-//		ServiceImpl parentServiceImpl = this.getServiceImpl(parentStorageName);
-//		QueryWrapper<?> wrapper = new QueryWrapper<>();
-//		wrapper.eq(INPUT_TASK_ID, inputTaskId);
-//		List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
-//		Map<String, String> billNoIdMap = new HashMap<>();
-//		if (CollUtil.isNotEmpty(listMaps)) {
-//			for (Map<String, Object> listMap : listMaps) {
-//				billNoIdMap.put(listMap.get("sku_id").toString(), listMap.get(BaseEntity.ID).toString());
-//			}
-//		}
-//		for (Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-//			String billNo = dmpInputMongoChildEntity.get("listingId").toString();
-//			String dmpId = billNoIdMap.get(billNo);
-//			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
-//		}
-//	}
 }
