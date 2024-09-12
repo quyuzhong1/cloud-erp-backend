@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -90,7 +91,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputInitHandler
             String shipmentIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_DETAIL.getBusinessTypeName(), shipmentId);
             Object resultObj = redisUtil.get(shipmentIdResultKey);
             if (null != resultObj) {
-                List<JSONObject> curItemList = JSONUtil.toList(resultObj.toString(), JSONObject.class);
+                List<JSONObject> curItemList = JSONArray.parseArray(resultObj.toString(), JSONObject.class);
                 allItemList.addAll(curItemList);
                 continue;
             }
@@ -112,7 +113,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputInitHandler
                 InboundShipmentItemList itemData = response.getPayload().getItemData();
                 List<JSONObject> curJsonList = itemData.stream().map(e -> (JSONObject) JSON.toJSON(e)).collect(Collectors.toList());
                 // 缓存倒redis
-                redisUtil.set(shipmentIdResultKey, JSONUtil.toJsonStr(curJsonList), 600);
+                redisUtil.set(shipmentIdResultKey, JSONArray.toJSONString(curJsonList), 600);
                 allItemList.addAll(curJsonList);
             } catch (ApiException e) {
                 if (429 == e.getCode()) {
