@@ -397,25 +397,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public void updateRule(ReplenishmentSuggestionDTO.UpdateRuleDTO dto) {
-        if (ObjectUtil.isEmpty(dto.getStockUpUpdateDTO()) && ObjectUtil.isEmpty(dto.getSalesQtyUpdateDTO())) {
-            throw new ServiceException("备货、销量设置不能全部为空！");
-        }
-        //更新备货信息
-        if (ObjectUtil.isNotEmpty(dto.getStockUpUpdateDTO())) {
-            dto.getStockUpUpdateDTO().setRefId(dto.getId());
-            dto.getStockUpUpdateDTO().setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
-            cfgRuleStockUpService.update(dto.getStockUpUpdateDTO());
-        }
-        //更新销量信息
-        if (ObjectUtil.isNotEmpty(dto.getSalesQtyUpdateDTO())) {
-            dto.getSalesQtyUpdateDTO().setRefId(dto.getId());
-            dto.getSalesQtyUpdateDTO().setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
-            cfgRuleSalesQtyService.update(dto.getSalesQtyUpdateDTO());
-        }
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO) {
         if (ObjectUtil.isEmpty(stockUpUpdateDTO) && ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
@@ -430,8 +411,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (ObjectUtil.isNotEmpty(stockUpUpdateDTO)) {
             stockUpUpdateDTO.setRefId(id);
             stockUpUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
-            CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
-            cfgRuleStockUpService.update(updateDTO);
+            cfgRuleStockUpService.customUpdate(stockUpUpdateDTO);
         }
         //更新销量信息
         if (ObjectUtil.isNotEmpty(salesQtyUpdateDTO)) {

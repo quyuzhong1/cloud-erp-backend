@@ -96,13 +96,6 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      */
     BatchResultDTO restoreReplenishment(String id,String replenishmentRemark);
     /**
-     * 单个设置规则
-     * @author will
-     * @date 2024/8/29 15:57
-     * @param dto
-     */
-    void updateRule(ReplenishmentSuggestionDTO.UpdateRuleDTO dto);
-    /**
      * 批量设置规则
      * @author will
      * @date 2024/8/29 15:57

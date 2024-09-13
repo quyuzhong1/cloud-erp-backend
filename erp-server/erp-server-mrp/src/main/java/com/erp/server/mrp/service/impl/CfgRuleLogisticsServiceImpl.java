@@ -212,7 +212,9 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         }
         for (CfgRuleLogisticsEntity  logisticsEntity: list) {
             //排序
-            logisticsEntity.setIndex(maxIndex + 1);
+            if (ObjectUtil.isEmpty(logisticsEntity.getIndex())) {
+                logisticsEntity.setIndex(maxIndex + 1);
+            }
             //备货主表id
             logisticsEntity.setStockUpId(stockUpId);
             //相同物流方式赋值id
@@ -220,7 +222,9 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             if (ObjectUtil.isNotEmpty(entity)) {
                 logisticsEntity.setId(entity.getId());
                 //自定义添加的需要保持原有序号
-                logisticsEntity.setIndex(isCustom ? entity.getIndex() : logisticsEntity.getIndex());
+                if (ObjectUtil.isEmpty(logisticsEntity.getIndex())) {
+                    logisticsEntity.setIndex(isCustom ? entity.getIndex() : logisticsEntity.getIndex());
+                }
             }
             maxIndex ++;
         }
