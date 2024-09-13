@@ -27,6 +27,11 @@ public class PagingDTO<T> extends PermissionsDTO {
     private Integer pageSize = 10;
 
     /**
+     * 每页最后的id
+     */
+    private String lastId;
+
+    /**
      * 查询参数
      */
     @NotNull(message = "参数不能为空")
