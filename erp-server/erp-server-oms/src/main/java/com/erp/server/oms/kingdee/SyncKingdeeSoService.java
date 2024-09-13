@@ -1,5 +1,7 @@
 package com.erp.server.oms.kingdee;
 
+import java.util.Map;
+
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 
@@ -17,4 +19,6 @@ public interface SyncKingdeeSoService {
      */
     DmpPushTaskEntity syncDataToKingdee(SoInfoEntity entity, String operate);
     void syncOrderToDmp(SoInfoEntity entity, String operate);
+    
+    Map<String , Object> newSyncDataToKingdee(SoInfoEntity entity, String operate);
 }
