@@ -2,7 +2,9 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
@@ -592,4 +594,17 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         }
         return parentSkuWeight;
     }
+
+
+    @Override
+    public void updateCalculateMonthBySourceId(String sourceId) {
+        if (!StrUtil.isBlank(sourceId)) {
+            this.lambdaUpdate()
+                    .set(FirstMileWeightAllocationEntity::getCalculateMonth, "")
+                    .eq(FirstMileWeightAllocationEntity::getSourceId, sourceId)
+                    .update();
+        }
+    }
+
+
 }
