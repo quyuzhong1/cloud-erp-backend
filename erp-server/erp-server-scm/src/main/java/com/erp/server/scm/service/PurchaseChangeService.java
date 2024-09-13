@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
@@ -148,4 +149,11 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
     List<PurchaseChangeEntity> listByPoIds(List<String> ids);
 
     PagingVO<PurchaseChangeExportExcelDTO> exportPurchaseChange(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto);
+
+    /**
+     * 批量获取列表采购单价
+     * @param dto
+     * @return
+     */
+    ApiResult<PurchaseChangeDTO.PurchasePriceDTO> batchGetPurchasePrice(PurchaseChangeDTO.UpdateDTO dto);
 }

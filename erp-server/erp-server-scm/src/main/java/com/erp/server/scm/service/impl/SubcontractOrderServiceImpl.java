@@ -1198,7 +1198,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (Objects.isNull(company)){
             throw new ServiceException("使用组织不存在");
         }
-        String subcontractOrgId = dto.getSubcontractOrgId();
         List<SubcontractOrderDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         if (CollectionUtils.isEmpty(detailList)){
             throw new ServiceException("产品明细不能为空");
@@ -1218,13 +1217,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<Integer> purchaseQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
         //采购组织Id
         List<String> purchaseOrgIdList = Collections.singletonList(purchaseOrgId);
-        PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO queryDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
-        queryDTO.setSkuIdList(skuIdList);
-        queryDTO.setSupplierIdList(supplierIdList);
-        queryDTO.setPurchaseQtyList(purchaseQtyList);
-        queryDTO.setPurchaseOrgIdList(purchaseOrgIdList);
-        //查询对应
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = purchasePriceDetailService.batchGetTaxPrice(queryDTO);
+        //查询对应采购价目
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = purchasePriceDetailService.batchGetTaxPrice(skuIdList,supplierIdList,purchaseQtyList,purchaseOrgIdList);
 //        //币种信息
 //        List<String> currencyList = viewList.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
 //        List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
@@ -1247,6 +1241,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 if (Objects.nonNull(viewDTO)){
                     e.setPrice(viewDTO.getTaxPrice());
                     e.setTaxRate(viewDTO.getTaxRate());
+                    e.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), viewDTO.getPurchaseQty()));
 //                    if (CollectionUtils.isNotEmpty(currencyViewList)){
 //                        CurrencyDTO.ViewDTO currencyDTO = currencyViewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
 //                        e.setCurrencySymbol(currencyDTO.getSymbol());
@@ -1267,6 +1262,73 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             });
         }
         purchasePriceDTO.setDto(dto);
+        purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
+        return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(purchasePriceDTO) : ApiResult.error("获取采购单价异常", purchasePriceDTO);
+    }
+
+    @Override
+    public ApiResult<SubcontractOrderDTO.SubcontractPurchasePriceDTO> batchGetPoPurchasePrice(ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
+        if (CollectionUtils.isEmpty(list)){
+            throw new ServiceException("产品明细不能为空");
+        }
+        SubcontractOrderDTO.SubcontractPurchasePriceDTO purchasePriceDTO = new SubcontractOrderDTO.SubcontractPurchasePriceDTO();
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        //采购组织Id
+        List<String> purchaseOrgIdList = list.stream().filter(e -> Objects.nonNull(e) && !e.getIsConstitute()).map(SubcontractOrderDTO.GeneratePoDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIdList);
+        if (CollectionUtils.isEmpty(companyList)){
+            throw new ServiceException("使用组织不存在");
+        }
+
+        //skuId
+        List<String> skuIdList = list.stream().filter(e -> Objects.nonNull(e) && !e.getIsConstitute()).map(SubcontractOrderDTO.GeneratePoDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        //供应商Id
+        List<String> supplierIdList = list.stream().filter(e -> Objects.nonNull(e) && !e.getIsConstitute()).map(SubcontractOrderDTO.GeneratePoDTO::getSupplierId).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntityList = supplierService.listByIds(supplierIdList);
+        //采购数量-需要根据sku进行汇总
+        Map<String, Integer> skuQtyList = list.stream().filter(e -> Objects.nonNull(e) && !e.getIsConstitute()).collect(Collectors.groupingBy(SubcontractOrderDTO.GeneratePoDTO::getSkuId, Collectors.summingInt(SubcontractOrderDTO.GeneratePoDTO::getQty)));
+        List<Integer> purchaseQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
+
+        //查询对应采购价目
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = purchasePriceDetailService.batchGetTaxPrice(skuIdList,supplierIdList,purchaseQtyList,purchaseOrgIdList);
+        if (CollectionUtils.isEmpty(viewList)){
+            //未查到结果，直接返回
+            throw new ServiceException("采购单价信息查询结果为空");
+        }
+        for (SubcontractOrderDTO.GeneratePoDTO updateDTO : list){
+            if (updateDTO.getIsConstitute()){
+                continue;
+            }
+            //获取sku汇总数量
+            Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), MathUtil.ZERO);
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(updateDTO.getSkuId())
+                            && obj.getSupplierId().equals(updateDTO.getSupplierId())
+                            && StrUtil.equals(obj.getPurchaseOrgId(),updateDTO.getPurchaseOrgId())
+                            && (purchaseQty >= obj.getMinQty() && obj.getMaxQty() > purchaseQty))
+                    .findFirst().orElse(null);
+            if (Objects.nonNull(viewDTO)){
+                updateDTO.setPrice(viewDTO.getTaxPrice());
+                updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), viewDTO.getPurchaseQty()));
+            }else {
+                SkuVO skuVO = skuVOList.stream().filter(f -> f.getSkuId().equals(updateDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(skuVO)){
+                    batchResultDTOList.add(BatchResultDTO.fail(updateDTO.getSkuId(), "", "sku基础信息未找到"));
+                }
+                SupplierEntity supplierEntity = supplierEntityList.stream().filter(f -> f.getId().equals(updateDTO.getSupplierId())).findFirst().orElse(null);
+                if (Objects.isNull(supplierEntity)){
+                    batchResultDTOList.add(BatchResultDTO.fail(updateDTO.getSupplierId(), "", "供应商基础信息未找到"));
+                }
+                BaseIdDTO.CodeDTO company = companyList.stream().filter(f -> f.getId().equals(updateDTO.getPurchaseOrgId())).findFirst().orElse(null);
+                if (Objects.isNull(company)){
+                    batchResultDTOList.add(BatchResultDTO.fail(updateDTO.getPurchaseOrgId(), "", "采购组织信息未找到"));
+                }
+                if (Objects.nonNull(skuVO) && Objects.nonNull(supplierEntity) && Objects.nonNull(company)){
+                    batchResultDTOList.add(BatchResultDTO.fail(updateDTO.getSkuId(), "", StrUtil.format("采购组织【{}】在供应商【{}】SKU【{}】数量【{}】未匹配到采购单价", company.getName(), supplierEntity.getName(), skuVO.getSkuName(), purchaseQty)));
+                }
+            }
+        }
+        purchasePriceDTO.setList(list);
         purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
         return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(purchasePriceDTO) : ApiResult.error("获取采购单价异常", purchasePriceDTO);
     }
@@ -1301,13 +1363,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<Integer> purchaseQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
         //采购组织Id
         List<String> purchaseOrgIdList = Collections.singletonList(purchaseOrgId);
-        PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO queryDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
-        queryDTO.setSkuIdList(skuIdList);
-        queryDTO.setSupplierIdList(supplierIdList);
-        queryDTO.setPurchaseQtyList(purchaseQtyList);
-        queryDTO.setPurchaseOrgIdList(purchaseOrgIdList);
-        //查询对应
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = purchasePriceDetailService.batchGetTaxPrice(queryDTO);
+        //查询对应采购价目
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = purchasePriceDetailService.batchGetTaxPrice(skuIdList,supplierIdList,purchaseQtyList,purchaseOrgIdList);
 //        //币种信息
 //        List<String> currencyList = viewList.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO::getCurrency).collect(Collectors.toList());
 //        List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);

@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -465,4 +466,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PagingVO<BomExportExcelVO> exportPurchaseOrderContract(PagingDTO<String> dto);
 
     PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
+
+    /**
+     * 批量获取列表采购单价
+     * @param dto
+     * @return
+     */
+    ApiResult<PurchaseOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(PurchaseOrderDTO.UpdateDTO dto);
 }

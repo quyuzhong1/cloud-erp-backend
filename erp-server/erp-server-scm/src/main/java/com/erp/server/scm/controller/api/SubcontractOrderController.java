@@ -12,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
@@ -119,7 +120,7 @@ public class SubcontractOrderController extends BaseController {
     }
 
     /**
-     * 批量获取列表采购单价
+     * 新增编辑-批量获取列表采购单价
      * @param dto
      * @return
      */
@@ -401,6 +402,15 @@ public class SubcontractOrderController extends BaseController {
     public ApiResult<Void> generatePo(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
          subcontractOrderService.generatePo(list,Boolean.FALSE);
         return success();
+    }
+    /**
+     * 下推采购订单-批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    @PostMapping("/batchGetPoPurchasePrice")
+    public ApiResult<SubcontractOrderDTO.SubcontractPurchasePriceDTO> batchGetPoPurchasePrice(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
+        return subcontractOrderService.batchGetPoPurchasePrice(list);
     }
 
     /**

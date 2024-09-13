@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -126,6 +127,15 @@ public class PurchaseChangeController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 批量获取列表采购单价
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchGetPurchasePrice")
+    public ApiResult<PurchaseChangeDTO.PurchasePriceDTO> batchGetPurchasePrice(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
+        return purchaseChangeService.batchGetPurchasePrice(dto);
+    }
     /**
      * 新增并提交
      * @author Will

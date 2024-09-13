@@ -587,6 +587,21 @@ public class SubcontractOrderDTO implements Serializable {
         /**
          * 来源id
          */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 是否是组合SKU
+         */
+        @NotNull(message = "sku是否组合标识不能为空")
+        private Boolean isConstitute;
+        /**
+         * 来源id
+         */
         @NotBlank(message = "来源id不能为空")
         @Size(max = 19, message = "来源id最大长度不能超过19位")
         private String sourceId;
@@ -624,6 +639,15 @@ public class SubcontractOrderDTO implements Serializable {
         @Min(value = 1, message = "采购数量最小值为1")
         @Max(value = 99999999, message = "采购数量最大值为99999999")
         private Integer qty;
+        /**
+         * 含税单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 价税合计
+         */
+        private BigDecimal amount;
 
         /**
          * 是否赠品
@@ -827,6 +851,19 @@ public class SubcontractOrderDTO implements Serializable {
          * 批量表单数据
          */
         private SubcontractOrderDTO.UpdateDTO dto;
+        /**
+         * 批量校验结果
+         */
+        private List<BatchResultDTO> batchResultDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SubcontractPurchasePriceDTO {
+        /**
+         * 批量表单数据
+         */
+        private List<SubcontractOrderDTO.GeneratePoDTO> list;
         /**
          * 批量校验结果
          */

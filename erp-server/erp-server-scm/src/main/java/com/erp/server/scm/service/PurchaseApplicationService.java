@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
@@ -189,4 +190,18 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
     Boolean close(PurchaseApplicationDTO.CloseDTO dto);
 
     PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
+
+    /**
+     * 采购订单下推-批量获取列表采购单价
+     * @param dto
+     * @return
+     */
+    ApiResult<PurchaseApplicationDTO.PurchasePriceDTO> batchGetPurchasePrice(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto);
+
+    /**
+     * 委外订单下推-批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    ApiResult<PurchaseApplicationDTO.SubcontractPurchasePriceDTO> batchGetSubcontractPurchasePrice(ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list);
 }

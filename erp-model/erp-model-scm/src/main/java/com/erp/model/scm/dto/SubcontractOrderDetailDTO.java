@@ -244,6 +244,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
+         * 价税合计
+         */
+        private BigDecimal amount;
+
+        /**
         * 仓库id
         */
         @NotBlank(message = "仓库id不能为空")

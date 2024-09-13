@@ -2,6 +2,7 @@ package com.erp.model.scm.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.plm.vo.ProductVO;
@@ -67,6 +68,15 @@ public class PurchaseOrderDTO implements Serializable {
          * 单据类型名称
          */
         private String typeName;
+        /**
+         * 退货方式
+         */
+        private String returnType;
+
+        /**
+         * 退货方式名称
+         */
+        private String returnTypeName;
 
         /**
          * 采购单号【可排序】
@@ -1626,5 +1636,18 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotEmpty(message = "采购单明细Id不能为空")
         private List<String>  purchaseDetailIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchasePriceDTO {
+        /**
+         * 批量表单数据
+         */
+        private PurchaseOrderDTO.UpdateDTO dto;
+        /**
+         * 批量校验结果
+         */
+        private List<BatchResultDTO> batchResultDTOList;
     }
 }

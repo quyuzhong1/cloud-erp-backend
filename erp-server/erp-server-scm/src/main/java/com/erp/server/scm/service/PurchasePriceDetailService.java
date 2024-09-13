@@ -257,8 +257,11 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
 
     /**
      * 根据组织/供应商/sku/数量获取采购单价
-     * @param dto
+     * @param skuIdList
+     * @param supplierIdList
+     * @param purchaseQtyList
+     * @param purchaseOrgIdList
      * @return
      */
-    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto);
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(List<String> skuIdList, List<String> supplierIdList, List<Integer> purchaseQtyList, List<String> purchaseOrgIdList);
 }
