@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.InventoryTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
@@ -19,6 +21,7 @@ import com.erp.server.mrp.service.ReplenishmentInventoryDetailService;
 import com.erp.server.mrp.service.ShopInventoryDetailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -53,6 +56,9 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                 .eq(ReplenishmentInventoryDetailEntity::getReplenishmentDetailId, params.getDetailId())
                 .eq(ReplenishmentInventoryDetailEntity::getInventoryType, params.getType())
         );
+        if (ObjectUtils.isEmpty(inventoryDetail)) {
+            throw new ServiceException(ApiError.ERROR_DETAIL_NOT_EXIST);
+        }
         InventoryDetailVO detailVO = InventoryDetailVO.buildInventoryDetailVO(inventoryDetail);
         ApiResult<List<ShopInfoEntity>> allShopInfoResult = shopInfoFeign.list();
         List<ShopInfoEntity> allShopInfo = allShopInfoResult.getData();

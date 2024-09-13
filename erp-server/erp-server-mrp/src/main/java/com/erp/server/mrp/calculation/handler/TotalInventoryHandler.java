@@ -49,13 +49,13 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
                 .orElse(null);
         if (!ObjectUtils.isEmpty(localResult)) {
             List<String> codes = localResult.getChildrenList().stream().filter(v -> "true".equals(v.getValue())).map(CfgRuleCommonDTO.StrategyResultDTO::getCode).collect(Collectors.toList());
-            if (codes.contains(TOTAL_LOCAL_USABLE.getCode())) {
+            if (codes.contains(TOTAL_LOCAL_USABLE.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty();
             }
-            if (codes.contains(TOTAL_LOCAL_IN_TRANSIT.getCode())) {
+            if (codes.contains(TOTAL_LOCAL_IN_TRANSIT.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalInTransitQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalInTransitQty();
             }
-            if (codes.contains(TOTAL_LOCAL_ESTIMATED_DELIVERY.getCode())) {
+            if (codes.contains(TOTAL_LOCAL_ESTIMATED_DELIVERY.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalPlanPurchaseQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalPlanPurchaseQty();
             }
         }
@@ -69,13 +69,13 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
                 .orElse(null);
         if (!ObjectUtils.isEmpty(overseasResult)) {
             List<String> codes = overseasResult.getChildrenList().stream().filter(v -> "true".equals(v.getValue())).map(CfgRuleCommonDTO.StrategyResultDTO::getCode).collect(Collectors.toList());
-            if (codes.contains(TOTAL_OVERSEAS_USABLE.getCode())) {
+            if (codes.contains(TOTAL_OVERSEAS_USABLE.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty();
             }
-            if (codes.contains(TOTAL_OVERSEAS_IN_TRANSIT.getCode())) {
+            if (codes.contains(TOTAL_OVERSEAS_IN_TRANSIT.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty();
             }
-            if (codes.contains(TOTAL_OVERSEAS_ESTIMATED_DELIVERY.getCode())) {
+            if (codes.contains(TOTAL_OVERSEAS_ESTIMATED_DELIVERY.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getOverseasPlanDeliveryQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getOverseasPlanDeliveryQty();
             }
         }
@@ -89,13 +89,13 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
                 .orElse(null);
         if (!ObjectUtils.isEmpty(fbaResult)) {
             List<String> codes = fbaResult.getChildrenList().stream().filter(v -> "true".equals(v.getValue())).map(CfgRuleCommonDTO.StrategyResultDTO::getCode).collect(Collectors.toList());
-            if (codes.contains(TOTAL_FBA_USABLE.getCode())) {
+            if (codes.contains(TOTAL_FBA_USABLE.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty();
             }
-            if (codes.contains(TOTAL_FBA_IN_TRANSIT.getCode())) {
+            if (codes.contains(TOTAL_FBA_IN_TRANSIT.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty();
             }
-            if (codes.contains(TOTAL_FBA_ESTIMATED_DELIVERY.getCode())) {
+            if (codes.contains(TOTAL_FBA_ESTIMATED_DELIVERY.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getFbaPlanDeliveryQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getFbaPlanDeliveryQty();
             }
         }

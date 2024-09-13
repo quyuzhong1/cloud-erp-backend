@@ -208,10 +208,10 @@
             <!-- 当 codes 包含 'approve' 时 -->
             <if test="'approve' in codes">
                 AND (
-                (pa.status = 'approve' AND pa.createPoType IN (0, 1))
+                (pa.approve_status = 'approve' AND pad.create_po_type IN ('0', '1'))
                 <!-- 检查并处理其他状态 -->
                 <if test="codes.size() > 1">
-                    OR pa.status IN
+                    OR pa.approve_status IN
                     <foreach item="code" collection="codes" open="(" separator="," close=")">
                         <!-- 跳过 'approve'，因为已单独处理 -->
                         <if test="code != 'approve'">
@@ -223,7 +223,7 @@
             </if>
             <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
             <if test="'approve' not in codes">
-                AND pa.status IN
+                AND pa.approve_status IN
                 <foreach item="code" collection="codes" open="(" separator="," close=")">
                     #{code}
                 </foreach>
@@ -285,6 +285,9 @@
                     #{item}
                 </foreach>
         </where>
+    </select>
+    <select id="getAllFbaHistoryInventory" resultType="com.erp.model.wms.entity.FbaInventoryEntity">
+        select * from ${tableName} where is_deleted = false
     </select>
 
 </mapper>

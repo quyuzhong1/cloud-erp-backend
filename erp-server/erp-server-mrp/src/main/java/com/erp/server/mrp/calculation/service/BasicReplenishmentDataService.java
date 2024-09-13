@@ -13,15 +13,18 @@ import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
 import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
+import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.*;
 import com.google.common.collect.Lists;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -33,6 +36,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+
+import static com.erp.model.mrp.enums.SnapshotTableEnum.FBA_INVENTORY;
 
 @Service
 public class BasicReplenishmentDataService {
@@ -78,10 +83,22 @@ public class BasicReplenishmentDataService {
     @Resource
     private StockingTimeHandler stockingTimeHandler;
 
+    @Resource
+    private FbaHistoryInventoryService fbaHistoryInventoryService;
+    @Resource
+    private InventoryMapper inventoryMapper;
+
     /**
      * 增量变动建议补货基础数据
      */
     public void initReplenishmentSku(LocalDate calculationDate) {
+        calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
+        //清洗每日库存到历史表
+        List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(FBA_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+            fbaHistoryInventoryService.saveTodayInventory(inventoryEntities, calculationDate);
+        }
+
         //获取所有已审核且存在上市时间得非费用服务类sku
         List<SkuVO> vos = plmTaskFeign.listApproveAndListingSku();
         //获取已生成补货基础数据得信息
@@ -139,7 +156,6 @@ public class BasicReplenishmentDataService {
      * @param calculationDate 计算日期
      */
     public void calculationDetail(LocalDate calculationDate) {
-        calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
         List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
         CfgSettingDTO newDaysSetting = settings.stream()
                 .filter(v -> v.getKey().equals(CfgSettingEnum.NEW_DAYS.getCode()))
@@ -169,7 +185,6 @@ public class BasicReplenishmentDataService {
         List<ProductSaleEntity> productSaleList = plmTaskFeign.listProductSaleBySkuId(skuIds);
         List<List<ReplenishmentSuggestionEntity>> partition = Lists.partition(suggestions, 1000);
         for (List<ReplenishmentSuggestionEntity> list : partition) {
-            LocalDate finalCalculationDate = calculationDate;
             CompletableFuture.runAsync(() -> {
                 for (ReplenishmentSuggestionEntity entity : list) {
                     try {
@@ -183,10 +198,10 @@ public class BasicReplenishmentDataService {
                         }
                         SkuVO skuVO = vos.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).findFirst().orElse(new SkuVO());
                         replenishmentResult.setSalesPrice(skuVO.getRetailPrice());
-                        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ, finalCalculationDate);
+                        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ, calculationDate);
                         detail.setDetailId(IdWorker.getIdStr());
                         detail.setCalcVersion(code);
-                        detail.setCalcDate(finalCalculationDate.format(DateTimeFormatter.BASIC_ISO_DATE));
+                        detail.setCalcDate(calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE));
                         detail.setMainId(entity.getId());
                         if (sale.getListingTime().plusDays(Long.parseLong(newDaysSetting.getDataJson())).isAfter(LocalDate.now())) {
                             detail.setSkuType(CfgRuleStockingRatioTypeEnum.NEW.getCode());
@@ -288,9 +303,26 @@ public class BasicReplenishmentDataService {
             }
             replenishmentResult.setSalesInfos(sales);
             //获取历史库存
-            inventoryService.getHistoryInventory(replenishmentResult);
+            List<FbaHistoryInventoryEntity> list = fbaHistoryInventoryService.listBySkuNo(replenishmentResult.getReplenishment().getSkuNo(), replenishmentResult.getReplenishment().getFbaWarehouseId());
+            inventoryService.getHistoryInventory(replenishmentResult,list);
         } else {
             // todo 后期做
         }
+    }
+
+
+    private void getHistorySales(List<CfgRuleSalesQtyEntity> defaultCfgRuleSalesQty, List<ReplenishmentSuggestionEntity> suggestions){
+        //执行Amz
+        CfgRuleSalesQtyEntity cfgRuleSalesQty = defaultCfgRuleSalesQty.stream()
+                .filter(v -> v.getPlatformType().equals(CfgRulePlatformTypeEnum.AMAZON.getCode()))
+                .findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(cfgRuleSalesQty)) {
+
+        }
+        //执行海外
+
+        //执行B2B
+
+        //执行本地
     }
 }

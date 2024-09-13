@@ -49,13 +49,15 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
             LocalDate calcDate = basicCalcDate.plusDays(i);
             //获取最大优先级的规则 优先取 sku 固定规则，其次sku动态规则，其次sku默认规则，取不到则取系统动态规则，其次系统默认规则
             CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult = formulaResults.stream()
-                    .filter(v -> !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
+                    .filter(v -> !ObjectUtils.isEmpty(v.getStartDate()) && !ObjectUtils.isEmpty(v.getEndDate()) &&
+                            !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
                     .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
                             .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
                     .orElseGet(() -> formulaResults.stream()
                             .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
                             .findFirst().orElse(defaultFormulaResults.stream()
-                                    .filter(v -> !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
+                                    .filter(v -> !ObjectUtils.isEmpty(v.getStartDate()) && !ObjectUtils.isEmpty(v.getEndDate()) &&
+                                            !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
                                     .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
                                             .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
                                     .orElseGet(() -> defaultFormulaResults.stream()
@@ -106,6 +108,8 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         LocalDate firstDayOfFollowingMonth = basicCalcDate.plusMonths(2).withDayOfMonth(1);
         // 获取下下个月的最后一天
         getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, firstDayOfNextMonth, firstDayOfFollowingMonth, FOLLOWING_MONTH);
+        replenishmentResult.setTimePeriodSalesEstimates(timePeriodSalesEstimates);
+        replenishmentResult.setAvgTimePeriodSalesEstimates(avgTimePeriodSalesEstimates);
     }
 
 
@@ -170,7 +174,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
     private boolean getIsExcluded(List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, LocalDate basicCalcDate, int days) {
         return salesInfos.stream()
                 .filter(v -> !basicCalcDate.minusDays(days).isAfter(v.getDate()) && basicCalcDate.isAfter(v.getDate()))
-                .allMatch(v -> v.getIsIgnoreOutOfStock() || CfgRuleSalesDenoisingDenoisingTypeEnum.COMPLETELY.getCode().equals(v.getDenoisingType()));
+                .allMatch(v -> Boolean.TRUE.equals(v.getIsIgnoreOutOfStock()) || CfgRuleSalesDenoisingDenoisingTypeEnum.COMPLETELY.getCode().equals(v.getDenoisingType()));
     }
 
     private BigDecimal getSaleQtyByDay(List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, LocalDate basicCalcDate, int days) {

@@ -4,6 +4,7 @@ import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
+import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 
 import java.util.List;
 
@@ -30,8 +31,9 @@ public interface InventoryService {
      * 获取历史库存
      *
      * @param replenishmentResult 补货结果
+     * @param list
      */
-    void getHistoryInventory(ReplenishmentResultDTO replenishmentResult);
+    void getHistoryInventory(ReplenishmentResultDTO replenishmentResult, List<FbaHistoryInventoryEntity> list);
 
     /**
      * 获取FBA预计发货

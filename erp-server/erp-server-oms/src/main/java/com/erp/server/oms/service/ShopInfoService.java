@@ -347,4 +347,10 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return List<ListDTO>
      */
     List<ShopDTO.ListDTO> listSelect(ShopDTO.SelectDTO dto);
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    List<String> listShopInfoByPlatform(String platform);
 }

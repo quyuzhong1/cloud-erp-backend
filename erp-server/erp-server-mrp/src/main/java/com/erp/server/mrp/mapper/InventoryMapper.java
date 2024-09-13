@@ -7,6 +7,7 @@ import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FbaInventoryEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -47,4 +48,6 @@ public interface InventoryMapper {
     List<PurchaseApplicationRefPoDTO.ListDTO> listPurchaseApplicationRefPo(@Param("detailIds") List<String> detailIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("otherTableName") String otherTableName);
 
     List<SubcontractOrderDetailEntity> listSubcontractOrderDetail(@Param("detailIds") List<String> detailIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("otherTableName") String otherTableName);
+
+    List<FbaInventoryEntity> getAllFbaHistoryInventory(String tableName);
 }

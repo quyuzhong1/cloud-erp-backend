@@ -138,4 +138,11 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/pagingSelect")
     PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto);
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    @GetMapping("feign/shop/listShopInfoByPlatform")
+    List<String> listShopInfoByPlatform(@RequestParam String platform);
 }

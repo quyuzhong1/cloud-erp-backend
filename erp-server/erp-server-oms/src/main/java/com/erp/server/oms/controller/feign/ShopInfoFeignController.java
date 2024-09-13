@@ -189,4 +189,13 @@ public class ShopInfoFeignController extends BaseController {
     public PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
         return shopInfoService.pagingSelect(dto);
     }
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    @GetMapping("/listShopInfoByPlatform")
+    public List<String> listShopInfoByPlatform(@RequestParam String platform){
+        return shopInfoService.listShopInfoByPlatform(platform);
+    }
 }

@@ -1078,7 +1078,7 @@ public class ReplenishmentResultDTO {
             ReplenishmentInventoryDetailEntity entity = new ReplenishmentInventoryDetailEntity();
             entity.setReplenishmentDetailId(replenishmentDetailId);
             entity.setInventoryType(dto.getInventoryType());
-            entity.setWarehouseId(entity.getWarehouseId());
+            entity.setWarehouseId(dto.getWarehouseId());
             entity.setVirtualWarehouseId(dto.getVirtualWarehouseId());
             entity.setWarehouseType(dto.getWarehouseType());
             entity.setChannelType(dto.getChannelType());

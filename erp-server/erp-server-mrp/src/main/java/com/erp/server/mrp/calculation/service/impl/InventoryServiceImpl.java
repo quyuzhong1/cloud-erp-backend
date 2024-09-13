@@ -5,6 +5,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.*;
+import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
@@ -28,10 +29,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum.*;
@@ -128,7 +126,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public void getHistoryInventory(ReplenishmentResultDTO replenishmentResult) {
+    public void getHistoryInventory(ReplenishmentResultDTO replenishmentResult, List<FbaHistoryInventoryEntity> list) {
         //拆分时间为表名
         String calcDate = replenishmentResult.getReplenishmentDetail().getCalcDate();
         LocalDate endDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE);
@@ -139,10 +137,12 @@ public class InventoryServiceImpl implements InventoryService {
             dateList.add(startDate);
             startDate = startDate.plusDays(1);
         }
+        Map<LocalDate, Integer> localDateMap = list.stream()
+                .collect(Collectors.toMap(FbaHistoryInventoryEntity::getBillDate, FbaHistoryInventoryEntity::getFulfillableQty, Integer::sum));
         //拆分为时间list
         List<ReplenishmentResultDTO.SalesInfoDTO> salesInfo = new ArrayList<>();
         for (LocalDate localDate : dateList) {
-            salesInfo.add(getHistoryInventoryByPlatformType(localDate, replenishmentResult));
+            salesInfo.add(getHistoryInventoryByFba(localDate, replenishmentResult, localDateMap));
         }
         replenishmentResult.setSalesInfos(salesInfo);
     }
@@ -287,21 +287,25 @@ public class InventoryServiceImpl implements InventoryService {
             List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> applications = inventoryMapper.listPurchasePlan(codes, replenishmentResultDTO.getReplenishment().getSkuId(), getTableName(PURCHASE_APPLICATION, calcDate), getTableName(PURCHASE_APPLICATION_DETAIL, calcDate));
             //查询关联采购
             List<String> detailIds = applications.stream().map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getDetailId).collect(Collectors.toList());
-            List<PurchaseApplicationRefPoDTO.ListDTO> refList = inventoryMapper.listPurchaseApplicationRefPo(detailIds, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate), getTableName(PURCHASE_APPLICATION_REF_PO, calcDate));
+            List<PurchaseApplicationRefPoDTO.ListDTO> refList = null;
+            List<SubcontractOrderDetailEntity> subcontractOrderDetailList = null;
+            if (!CollectionUtils.isEmpty(detailIds)) {
+                refList = inventoryMapper.listPurchaseApplicationRefPo(detailIds, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate), getTableName(PURCHASE_APPLICATION_REF_PO, calcDate));
+                subcontractOrderDetailList = inventoryMapper.listSubcontractOrderDetail(detailIds, getTableName(SUBCONTRACT_ORDER, calcDate), getTableName(SUBCONTRACT_ORDER_DETAIL, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
+            }
             //已下推委外订单的数量
-            List<SubcontractOrderDetailEntity> subcontractOrderDetailList = inventoryMapper.listSubcontractOrderDetail(detailIds, getTableName(SUBCONTRACT_ORDER, calcDate), getTableName(SUBCONTRACT_ORDER_DETAIL, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
             //处理已审核 & 部分生成 数据
             for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO application : applications) {
                 if (ApproveStatusEnum.APPROVE.getCode().equals(application.getStatus()) && CreatePoTypeEnum.PARTIAL_GENERATED.getStatus().equals(application.getCreatePoType())) {
                     //委外数量
                     Integer subcontractQty = MathUtil.ZERO;
-                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(subcontractOrderDetailList)) {
+                    if (!CollectionUtils.isEmpty(subcontractOrderDetailList)) {
                         subcontractQty = subcontractOrderDetailList.stream().filter(v -> v.getSourceDetailId().equals(application.getDetailId()) && StringUtils.isBlank(v.getParentId()))
                                 .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
                     }
                     //采购数量
                     Integer purchaseQty = MathUtil.ZERO;
-                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(refList)) {
+                    if (!CollectionUtils.isEmpty(refList)) {
                         purchaseQty = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(application.getDetailId()))
                                 .map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
                     }
@@ -369,31 +373,31 @@ public class InventoryServiceImpl implements InventoryService {
             // 计算每个店铺的占比
             List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
             for (LocalInventoryDTO.ShopSalesDTO shopSale : shopSales) {
-                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSale.getShopId(), new BigDecimal(dto.getQty()).multiply(new BigDecimal(shopSale.getQty()).divide(new BigDecimal(total), 2, RoundingMode.HALF_UP))));
+                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSale.getShopId(), new BigDecimal(dto.getQty()).multiply(new BigDecimal(shopSale.getQty()).divide(new BigDecimal(0 == total ? 1 : total), 2, RoundingMode.HALF_UP))));
             }
             localUsableDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
                     .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, dto.getQty(), detailDTOS));
         }
         return qty;
     }
-
-    /**
-     * 根据平台获取历史库存
-     *
-     * @param localDate           日期
-     * @param replenishmentResult 补货结果
-     */
-    private ReplenishmentResultDTO.SalesInfoDTO getHistoryInventoryByPlatformType(LocalDate localDate, ReplenishmentResultDTO replenishmentResult) {
-        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
-            return getHistoryInventoryByFba(localDate, replenishmentResult);
-        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
-            //todo 后期做
-        } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResult.getReplenishment().getPlatformType()) ||
-                CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
-            //todo 后期做
-        }
-        return null;
-    }
+//
+//    /**
+//     * 根据平台获取历史库存
+//     *
+//     * @param localDate           日期
+//     * @param replenishmentResult 补货结果
+//     */
+//    private ReplenishmentResultDTO.SalesInfoDTO getHistoryInventoryByPlatformType(LocalDate localDate, ReplenishmentResultDTO replenishmentResult) {
+//        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
+//            return getHistoryInventoryByFba(localDate, replenishmentResult, list);
+//        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
+//            //todo 后期做
+//        } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResult.getReplenishment().getPlatformType()) ||
+//                CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
+//            //todo 后期做
+//        }
+//        return null;
+//    }
 
 
     /**
@@ -401,16 +405,9 @@ public class InventoryServiceImpl implements InventoryService {
      *
      * @param localDate           日期
      * @param replenishmentResult 补货结果
+     * @param list
      */
-    private ReplenishmentResultDTO.SalesInfoDTO getHistoryInventoryByFba(LocalDate localDate, ReplenishmentResultDTO replenishmentResult) {
-        int qty = 0;
-        // 判断表是否存在
-        String tableName = getTableName(SnapshotTableEnum.FBA_INVENTORY, localDate.format(DateTimeFormatter.BASIC_ISO_DATE));
-        boolean exist = inventoryMapper.isTableExist(tableName);
-        //如果表不存在，库存默认为0
-        if (exist) {
-            qty = inventoryMapper.getFbaOldUsable(replenishmentResult, tableName);
-        }
+    private ReplenishmentResultDTO.SalesInfoDTO getHistoryInventoryByFba(LocalDate localDate, ReplenishmentResultDTO replenishmentResult, Map<LocalDate, Integer> localDateMap) {
         ReplenishmentResultDTO.SalesInfoDTO infoDTO = replenishmentResult.getSalesInfos()
                 .stream()
                 .filter(v -> v.getDate().equals(localDate))
@@ -422,7 +419,7 @@ public class InventoryServiceImpl implements InventoryService {
                 });
         infoDTO.setOriginalSalesQty(Optional.ofNullable(infoDTO.getOriginalSalesQty()).orElse(0));
         infoDTO.setDate(Optional.ofNullable(infoDTO.getDate()).orElse(localDate));
-        infoDTO.setOriginalInventoryQty(qty);
+        infoDTO.setOriginalInventoryQty(Optional.ofNullable(localDateMap.get(localDate)).orElse(0));
         return infoDTO;
     }
 }

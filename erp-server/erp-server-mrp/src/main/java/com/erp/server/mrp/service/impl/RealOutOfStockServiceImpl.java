@@ -6,6 +6,7 @@ import com.erp.server.mrp.mapper.RealOutOfStockMapper;
 import com.erp.server.mrp.service.RealOutOfStockService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDate;
 
@@ -29,7 +30,7 @@ public class RealOutOfStockServiceImpl extends SuperServiceImpl<RealOutOfStockMa
                 .orderByDesc(RealOutOfStockEntity::getDate)
                 .last("LIMIT 1")
         );
-        if (realOutOfStock.getDate().plusDays(1).equals(basicCalcDate)) {
+        if (ObjectUtils.isEmpty(realOutOfStock) || realOutOfStock.getDate().plusDays(1).equals(basicCalcDate)) {
             return null;
         }else {
             return realOutOfStock.getDate().plusDays(1);
