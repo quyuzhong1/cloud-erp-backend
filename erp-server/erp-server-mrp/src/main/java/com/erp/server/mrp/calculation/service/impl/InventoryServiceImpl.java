@@ -329,7 +329,7 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
         for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO detail : detailList) {
-            detail.setSourceType(PURCHASE_ORDER.getCode());
+            detail.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
             detail.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
             detail.setEstimatedPutAwayDate(detail.getEstimatedPutAwayDate().plusDays(stockUpResult.getPurchaseApproveDays())
                     .plusDays(stockUpResult.getProductionDays()).plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays())

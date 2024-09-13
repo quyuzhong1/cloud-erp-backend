@@ -24,7 +24,7 @@ public interface ReplenishmentSuggestionMapper extends BaseMapper<ReplenishmentS
 
     Page<ReplenishmentSuggestionVO.PagingView> paging(Page<Object> objectPage, ReplenishmentSuggestionDTO.PagingParamDTO params);
 
-    ReplenishmentSuggestionVO.View view(String detailId);
+    ReplenishmentSuggestionVO.View view(@Param("detailId") String detailId);
     /**
      * 根据唯一键查询（平台、店铺、sku）
      * @author will

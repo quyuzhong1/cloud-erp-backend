@@ -8,7 +8,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum LocalInTransitTypeEnum implements EnumMessage {
 
-    PURCHASE_IN_TRANSIT("PURCHASE_IN_TRANSIT", "采购在途"), TRANSFER_IN_TRANSIT("TRANSFER_IN_TRANSIT", "调拨在途");
+    PURCHASE_IN_TRANSIT("purchaseInTransit", "采购在途"), TRANSFER_IN_TRANSIT("transferInTransit", "调拨在途");
     private final String code;
     private final String name;
 

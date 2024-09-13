@@ -62,6 +62,15 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
     /**
+     * 是否开启海外仓
+     */
+    @GetMapping("/isEnableOverseas")
+    public ApiResult<Boolean> isEnableOverseas() {
+        Boolean isEnableOverseas = replenishmentSuggestionService.isEnableOverseas();
+        return success(isEnableOverseas);
+    }
+
+    /**
      * 补货建议明细
      * @param detailId 明细id
      */

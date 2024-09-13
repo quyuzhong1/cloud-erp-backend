@@ -137,6 +137,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
     @Resource
     private PurchaseSuggestService purchaseSuggestService;
+    @Resource
+    private CfgRuleWarehouseService cfgRuleWarehouseService;
 
 
     @Override
@@ -907,6 +909,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
 
         replenishmentSuggestionDetailService.save(entity);
+    }
+
+    @Override
+    public Boolean isEnableOverseas() {
+        CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getByPlatformType(CfgRulePlatformTypeEnum.AMAZON.getCode());
+        return cfgRuleWarehouse.getIsEnableOverseas();
     }
 
     /**

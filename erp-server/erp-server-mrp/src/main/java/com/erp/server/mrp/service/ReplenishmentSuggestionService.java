@@ -260,4 +260,10 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param replenishmentResult 建议结果
      */
     void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult);
+
+    /**
+     * 是否开启海外仓
+     */
+    Boolean isEnableOverseas();
+
 }
