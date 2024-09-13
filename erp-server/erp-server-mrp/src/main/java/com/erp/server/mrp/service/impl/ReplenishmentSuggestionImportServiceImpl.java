@@ -332,8 +332,13 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         if (isSixFull) {
             errorMsgList.add("物流方式【铁运整柜】未设置完全");
         }
-    }
+        List<String> indexList = Arrays.asList(excelDTO.getOneIndex(),excelDTO.getTwoIndex(),excelDTO.getThreeIndex(),excelDTO.getFourIndex(),excelDTO.getFiveIndex(),excelDTO.getSixIndex());
+        long count = indexList.stream().filter(obj -> StrUtil.isNotBlank(obj) && indexList.contains(obj)).count();
+        if (count > 1) {
+            errorMsgList.add("物流时效优先级重复");
+        }
 
+    }
     /**
      * 备货数据格式化
      * @author will
