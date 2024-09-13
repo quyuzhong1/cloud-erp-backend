@@ -196,7 +196,7 @@
             pad.dest_warehouse_id AS warehouseId,
             pad.apply_qty AS qty,
             pad.create_po_type AS createPoType,
-            pa.approve_time AS estimatedPutAwayDate,
+            COALESCE(pa.approve_time,pa.create_time) AS estimatedPutAwayDate,
             pad.id AS detailId
         FROM
         ${tableName} AS pa

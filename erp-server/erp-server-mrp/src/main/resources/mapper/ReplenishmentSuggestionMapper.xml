@@ -5,52 +5,54 @@
 
     <select id="paging" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$PagingView">
         select rs.id,
-               rs.update_time,
-               rs.platform_type,
-               rs.sku_id,
-               rs.sku_no,
-               rs.country,
-               rs.shop_id,
-               rs.platform,
-               rs.replenishment_type,
-               rs.remark,
-               rsd.id as detailId,
-               rsd.sku_type,
-               rsd.fba_usable_qty,
-               rsd.fba_in_transit_qty,
-               rsd.fba_plan_delivery_qty,
-               rsd.overseas_usable_qty,
-               rsd.overseas_in_transit_qty,
-               rsd.overseas_plan_delivery_qty,
-               rsd.local_usable_qty,
-               rsd.local_in_transit_qty,
-               rsd.local_plan_purchase_qty,
-               rsd.total_inventory_qty,
-               rsd.sales_qty,
-               rsd.avg_sales_qty,
-               rsd.sales_estimate_qty,
-               rsd.avg_sales_estimate_qty,
-               rsd.purchase_approve_days,
-               rsd.production_days,
-               rsd.supplier_delivery_days,
-               rsd.qc_days,
-               rsd.purchase_cycle_days,
-               rsd.safe_days,
-               rsd.instock_days,
-               rsd.fba_sellable_days,
-               rsd.overseas_sellable_days,
-               rsd.local_sellable_days,
-               rsd.total_sellable_days,
-               rsd.delivery_min_days,
-               rsd.delivery_default_days,
-               rsd.delivery_max_days,
-               rsd.cfg_fba_in_transit
+        rs.update_time,
+        rs.platform_type,
+        rs.sku_id,
+        rs.sku_no,
+        rs.country,
+        rs.shop_id,
+        rs.platform,
+        rs.replenishment_type,
+        rs.remark,
+        rsd.id as detailId,
+        rsd.sku_type,
+        rsd.fba_usable_qty,
+        rsd.fba_in_transit_qty,
+        rsd.fba_plan_delivery_qty,
+        rsd.overseas_usable_qty,
+        rsd.overseas_in_transit_qty,
+        rsd.overseas_plan_delivery_qty,
+        rsd.local_usable_qty,
+        rsd.local_in_transit_qty,
+        rsd.local_plan_purchase_qty,
+        rsd.total_inventory_qty,
+        rsd.sales_qty as salesQtyJson,
+        rsd.avg_sales_qty as avgSalesQtyJson,
+        rsd.sales_estimate_qty as salesEstimateQtyJson,
+        rsd.avg_sales_estimate_qty as avgSalesEstimateQtyJson,
+        rsd.purchase_approve_days,
+        rsd.purchase_approve_days,
+        rsd.production_days,
+        rsd.supplier_delivery_days,
+        rsd.qc_days,
+        rsd.purchase_cycle_days,
+        rsd.safe_days,
+        rsd.instock_days,
+        rsd.fba_sellable_days,
+        rsd.overseas_sellable_days,
+        rsd.local_sellable_days,
+        rsd.total_sellable_days,
+        rsd.delivery_min_days,
+        rsd.delivery_default_days,
+        rsd.delivery_max_days,
+        rsd.cfg_fba_in_transit
         from replenishment_suggestion rs
-                 inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
+        inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and rs.is_deleted = FALSE
         </where>
+        order by rs.replenishment_type asc
     </select>
 
     <select id="view" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$View">
@@ -64,7 +66,7 @@
                rs.platform,
                rs.replenishment_type,
                rs.remark,
-               rsd.id as detailId,
+               rsd.id                     as detailId,
                rsd.sku_type,
                rsd.fba_usable_qty,
                rsd.fba_in_transit_qty,
@@ -76,11 +78,11 @@
                rsd.local_in_transit_qty,
                rsd.local_plan_purchase_qty,
                rsd.total_inventory_qty,
-               rsd.sales_qty,
-               rsd.avg_sales_qty,
-               rsd.sales_estimate_qty,
-               rsd.avg_sales_estimate_qty,
-               rsd.purchase_approve_days,
+               rsd.sales_qty              as salesQtyJson,
+               rsd.avg_sales_qty          as avgSalesQtyJson,
+               rsd.sales_estimate_qty     as sales_estimate_qty,
+               rsd.avg_sales_estimate_qty as salesEstimateQtyJson,
+               rsd.purchase_approve_days  as avgSalesEstimateQtyJson,
                rsd.production_days,
                rsd.supplier_delivery_days,
                rsd.qc_days,
@@ -102,31 +104,31 @@
     <!-- 根据唯一键查询（平台、店铺、sku） -->
     <select id="listByUnique" resultType="com.erp.model.mrp.entity.ReplenishmentSuggestionEntity">
         select
-           rs.id,
-           rs.update_time,
-           rs.platform_type,
-           rs.sku_id,
-           rs.sku_no,
-           rs.country,
-           rs.shop_id,
-           rs.platform,
-           rs.replenishment_type,
-           rs.remark
+        rs.id,
+        rs.update_time,
+        rs.platform_type,
+        rs.sku_id,
+        rs.sku_no,
+        rs.country,
+        rs.shop_id,
+        rs.platform,
+        rs.replenishment_type,
+        rs.remark
         from replenishment_suggestion rs
         <where>
-               rs.is_deleted = false
-               and rs.platform in
-                <foreach collection="platformCodeList" item="item" open="(" close=")" separator=",">
-                   #{item}
-                </foreach>
-               and rs.shop_id in
-               <foreach collection="shopIdList" item="item" open="(" close=")" separator=",">
-                      #{item}
-               </foreach>
-               and rs.sku_id in
-               <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
-                      #{item}
-               </foreach>
+            rs.is_deleted = false
+            and rs.platform in
+            <foreach collection="platformCodeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            and rs.shop_id in
+            <foreach collection="shopIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            and rs.sku_id in
+            <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </where>
     </select>
     <select id="getSalesByShopIds" resultType="com.erp.model.mrp.dto.LocalInventoryDTO$ShopSalesDTO">
