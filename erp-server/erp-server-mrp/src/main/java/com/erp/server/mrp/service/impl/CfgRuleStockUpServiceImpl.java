@@ -214,7 +214,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             throw new ServiceException("新品备货系数必须大于等于0，并且小于等于99");
         }
         //自定义的需要赋值，避免生成变更日志
-        if (isCustom) {
+        if (isCustom && ObjectUtil.isNotEmpty(old)) {
             if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getPurchaseApproveDays())) {
                 cfgRuleStockUpEntity.setPurchaseApproveDays(old.getPurchaseApproveDays());
             }
