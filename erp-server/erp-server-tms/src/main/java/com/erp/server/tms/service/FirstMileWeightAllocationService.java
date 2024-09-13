@@ -82,4 +82,10 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * 新增重量分摊
      */
     BatchResultDTO add(String logisticsBillId);
+
+    /**
+     * 根据sourceId删除
+     * @param sourceId
+     */
+    void updateCalculateMonthBySourceId(String sourceId);
 }

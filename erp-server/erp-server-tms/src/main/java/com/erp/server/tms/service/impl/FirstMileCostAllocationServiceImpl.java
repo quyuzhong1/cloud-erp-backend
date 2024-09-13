@@ -218,6 +218,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         firstMileSkuCostRefService.removeBySkuCostAllocation(skuCostAllocationEntityList);
         //删除sku分摊明细记录
         firstMileSkuCostAllocationDetailService.removeByMainId(entity.getId());
+        //更新最新核算期间为null
+        firstMileWeightAllocationService.updateCalculateMonthBySourceId(entity.getSourceId());
         //主表删除
         this.lambdaUpdate().eq(FirstMileCostAllocationEntity::getId, entity.getId()).remove();
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), "删除记录操作成功");

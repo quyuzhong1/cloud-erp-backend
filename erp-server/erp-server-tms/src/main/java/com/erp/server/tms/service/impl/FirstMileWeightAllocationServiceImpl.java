@@ -551,6 +551,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         return success ? BatchResultDTO.success(logisticsBillId, logisticsBillEntity.getTransportNo()) : BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "保存失败");
     }
 
+
     /**
      * 按照计费规则获取重量
      */
