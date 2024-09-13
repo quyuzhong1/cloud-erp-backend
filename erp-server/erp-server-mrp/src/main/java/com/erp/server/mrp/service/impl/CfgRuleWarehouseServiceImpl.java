@@ -4,7 +4,6 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
@@ -91,8 +90,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
 
         // 记录主单操作日志
         log.info("编辑 开始记录仓库（规则设置）日志数据，id：【{}】", cfgRuleWarehouseEntity.getId());
-        String msg = StrUtil.format("编辑【{}】 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleWarehouseEntity.getId(), "仓库（规则设置）");
-        operateLogService.addModuleOperateLogByObj(old, cfgRuleWarehouseEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), cfgRuleWarehouseEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, cfgRuleWarehouseEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), cfgRuleWarehouseEntity.getId(), "");
         return Boolean.TRUE;
     }
 

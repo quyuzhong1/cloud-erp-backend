@@ -139,14 +139,16 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
                 //虚拟仓
                 String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
                 //店铺
-                String shopNames = shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+                String shopNames = StrUtil.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(),detailEntity.getChannelType()) ? "全部店铺":
+                        shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
                 //平台
                 String dictPlatformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(), detailEntity.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+
                 if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(detailEntity.getWarehouseType())) {
                     if (StrUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
                         msg.append(StrUtil.format("•实体仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】<br>",  warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
                     } else {
-                        msg.append(StrUtil.format("•虚拟仓【{}】、关联实体仓【{}】、关联平台【{}】、关联店铺【{}】、库存分配【{}】<br>",  warehouseName,virtualWarehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
+                        msg.append(StrUtil.format("•虚拟仓【{}】、关联实体仓【{}】、关联平台【{}】、关联店铺【{}】、库存分配【{}】<br>", virtualWarehouseName,warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
                     }
                 } else {
                     msg.append(StrUtil.format("•海外备货仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】<br>", warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
