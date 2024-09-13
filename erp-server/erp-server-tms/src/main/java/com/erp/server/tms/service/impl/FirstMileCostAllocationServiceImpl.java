@@ -502,6 +502,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //查询是否存在发货单其他费用分摊账期
             FirstMileCostAllocationDTO.PagingVO oldAllocation = voList.stream().filter(e -> Objects.nonNull(e)
                             && StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(deliveryDetailEntity.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
+                            && StrUtil.isNotBlank(e.getPlatformSkuNo()) && StrUtil.isNotBlank(deliveryDetailEntity.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
                             && Objects.nonNull(e.getReconciliationMonth()) && Objects.nonNull(reportPeriodMonth.getMonth()) && e.getReconciliationMonth().isAfter(reportPeriodMonth.getMonth()))
                     .findFirst().orElse(null);
             FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity = null;
@@ -516,7 +517,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             firstMileSkuCostAllocationEntity.setId(null);
             firstMileSkuCostAllocationEntity.setMainId(entity.getId());
             firstMileSkuCostAllocationEntity.setSourceDetailId(deliveryDetailEntity.getId());
-            InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity = initFirstMileAllocationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(deliveryDetailEntity.getSkuId()))
+            InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity = initFirstMileAllocationDetailEntityList.stream()
+                    .filter(e -> Objects.nonNull(e) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
+                    && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo()))
                     .findFirst().orElse(null);
             firstMileSkuCostAllocationEntity
                     .setSkuId(deliveryDetailEntity.getSkuId())
@@ -532,7 +535,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 firstMileSkuCostAllocationEntity.setInitFirstMileDetailId(initFirstMileAllocationDetailEntity.getId());
                 firstMileSkuCostAllocationEntity.setAllocatedWeight(initFirstMileAllocationDetailEntity.getWeightAllocation());
             } else {
-                List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream().filter(e -> e.getSkuId().equals(deliveryDetailEntity.getSkuId())).collect(Collectors.toList());
+                List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream()
+                        .filter(e -> StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
+                                && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
+                        ).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(weightAllocationEntityList1)) {
                     throw new ServiceException(StrUtil.format("发货单【{}】SKU【{}】期初和重量分摊记录不存在", entity.getSourceCode(), deliveryDetailEntity.getSkuNo()));
                 }
@@ -732,7 +738,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //期初头程分摊记录
             InitFirstMileAllocationDetailEntity initEntity = null;
             if (!CollectionUtils.isEmpty(initFirstMileAllocationDetailEntityList)) {
-                initEntity = initFirstMileAllocationDetailEntityList.stream().filter(e -> e.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                initEntity = initFirstMileAllocationDetailEntityList.stream()
+                        .filter(e -> StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(detailEntity.getSkuId())
+                                && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(detailEntity.getPlatformSkuNo())
+                        ).findFirst().orElse(null);
             }
             //sku分摊记录
             FirstMileSkuCostAllocationEntity skuCostAllocationEntity = firstMileSkuCostAllocationEntityList.stream()
@@ -1200,6 +1209,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
                 .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
+                .setPlatformSkuNo(firstMileSkuCostAllocationEntity.getPlatformSkuNo())
                 .setFeeType(AllocationFeeTypeEnum.OTHER_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstOtherFee());
         if (Objects.nonNull(reconciliationDetailEntity)) {
@@ -1237,6 +1247,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
                 .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
+                .setPlatformSkuNo(firstMileSkuCostAllocationEntity.getPlatformSkuNo())
                 .setFeeType(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstOtherTaxFee());
         if (Objects.nonNull(reconciliationDetailEntity)) {
@@ -1274,6 +1285,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
                 .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
+                .setPlatformSkuNo(firstMileSkuCostAllocationEntity.getPlatformSkuNo())
                 .setFeeType(AllocationFeeTypeEnum.DECLARE_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstTariffFee());
         if (Objects.nonNull(reconciliationDetailEntity)) {
@@ -1316,6 +1328,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
                 .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
+                .setPlatformSkuNo(firstMileSkuCostAllocationEntity.getPlatformSkuNo())
                 .setFeeType(AllocationFeeTypeEnum.SHIPPING_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstShippingCost());
         if (Objects.nonNull(reconciliationDetailEntity)) {

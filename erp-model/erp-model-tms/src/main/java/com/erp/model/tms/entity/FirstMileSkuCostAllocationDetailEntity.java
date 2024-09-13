@@ -8,7 +8,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -97,6 +96,11 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
      */
     @TableField(exist = false)
     private String skuId;
+    /**
+     * 平台sku
+     */
+    @TableField(exist = false)
+    private String platformSkuNo;
 
     public static final String MAIN_ID = "main_id";
 
