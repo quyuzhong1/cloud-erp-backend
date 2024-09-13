@@ -528,19 +528,17 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             if (StrUtil.isBlank(cfgRuleStockUpEntity.getId())) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的备货设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
-
             String names = value.stream().collect(Collectors.groupingBy(StockingRatioImportExcelDTO::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
             if (StrUtil.isNotBlank(names)) {
-                throw new ServiceException("备货系数名称【{}】唯一不能添加重复数据",names);
+                errorMsgList.add("备货系数名称唯一不能添加重复数据");
             }
-
             //备货系数
             Integer index = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), cfgRuleStockUpEntity.getId())).max(Comparator.comparingInt(obj -> obj.getIndex())).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
             List<CfgRuleStockingRatioDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             for (StockingRatioImportExcelDTO importExcelDTO: value) {
                 //日期
-                LocalDate startDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getStartDateStr());
-                LocalDate endDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getEndDateStr());
+                LocalDate startDate = LocalDateUtil.parseStrToLocalDate(importExcelDTO.getStartDateStr());
+                LocalDate endDate = LocalDateUtil.parseStrToLocalDate(importExcelDTO.getEndDateStr());
                 if (startDate.isAfter(endDate)) {
                     errorMsgList.add("开始时间不能大于结束时间");
                 }
@@ -553,7 +551,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                     continue;
                 }
                 index ++;
-                CfgRuleStockingRatioDTO.UpdateDTO updateDTO = formatCfgRuleStockUpDTO(excelDTO, index);
+                CfgRuleStockingRatioDTO.UpdateDTO updateDTO = formatCfgRuleStockUpDTO(importExcelDTO, index);
                 updateDTOList.add(updateDTO);
             }
             cfgRuleStockingRatioService.update(updateDTOList,cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),Boolean.TRUE);

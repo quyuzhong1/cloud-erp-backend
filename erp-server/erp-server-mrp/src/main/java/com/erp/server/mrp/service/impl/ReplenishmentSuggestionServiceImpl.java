@@ -436,7 +436,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             }
             salesQtyUpdateDTO.setRefId(id);
             salesQtyUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
-            stockUpUpdateDTO.setIsCustom(Boolean.TRUE);
+            salesQtyUpdateDTO.setIsCustom(Boolean.TRUE);
             cfgRuleSalesQtyService.update(salesQtyUpdateDTO);
         }
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
