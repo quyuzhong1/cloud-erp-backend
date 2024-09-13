@@ -249,5 +249,5 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @param dto
      */
 
-    ApiResult<?> batchGetPurchasePrice(SubcontractOrderDTO.UpdateDTO dto);
+    ApiResult<SubcontractOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(SubcontractOrderDTO.UpdateDTO dto);
 }

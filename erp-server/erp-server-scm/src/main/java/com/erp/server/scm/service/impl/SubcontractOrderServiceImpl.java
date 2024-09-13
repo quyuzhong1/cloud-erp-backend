@@ -306,9 +306,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     public void update(SubcontractOrderDTO.UpdateDTO updateDTO) {
         //重算含税单价-含税税率
-        ApiResult<?> apiResult = this.batchGetPurchasePrice(updateDTO);
+        ApiResult<SubcontractOrderDTO.PurchasePriceDTO> apiResult = this.batchGetPurchasePrice(updateDTO);
         if (apiResult.isSuccess()){
-            updateDTO = (SubcontractOrderDTO.UpdateDTO) apiResult.getData();
+            updateDTO = apiResult.getData().getDto();
         }else {
             throw new ServiceException(apiResult.getMsg());
         }
@@ -1190,7 +1190,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    public ApiResult<?> batchGetPurchasePrice(SubcontractOrderDTO.UpdateDTO dto) {
+    public ApiResult<SubcontractOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(SubcontractOrderDTO.UpdateDTO dto) {
+        SubcontractOrderDTO.PurchasePriceDTO purchasePriceDTO = new SubcontractOrderDTO.PurchasePriceDTO();
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         String purchaseOrgId = dto.getPurchaseOrgId();
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(purchaseOrgId);
@@ -1265,7 +1266,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 }
             });
         }
-        return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(dto) : ApiResult.error("获取采购单价异常", batchResultDTOList);
+        purchasePriceDTO.setDto(dto);
+        purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
+        return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(purchasePriceDTO) : ApiResult.error("获取采购单价异常", purchasePriceDTO);
     }
 
     /**

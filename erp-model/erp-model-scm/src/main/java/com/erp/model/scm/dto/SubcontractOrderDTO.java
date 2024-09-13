@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
@@ -819,4 +820,16 @@ public class SubcontractOrderDTO implements Serializable {
         private List<ViewAddDetailDTO> childList;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PurchasePriceDTO {
+        /**
+         * 批量表单数据
+         */
+        private SubcontractOrderDTO.UpdateDTO dto;
+        /**
+         * 批量校验结果
+         */
+        private List<BatchResultDTO> batchResultDTOList;
+    }
 }
