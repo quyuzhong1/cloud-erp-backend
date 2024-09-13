@@ -4,6 +4,7 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
@@ -14,8 +15,10 @@ import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
 import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
 import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.mrp.mapper.CfgRuleWarehouseMapper;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
@@ -28,10 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -164,6 +164,57 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
             isEnableOverseas = Boolean.TRUE;
         }
         return isEnableOverseas;
+    }
+
+    @Override
+    public CfgRuleWarehouseDTO.WarehouseShopDTO checkShop(CfgRuleWarehouseDTO.UpdateDTO dto) {
+        CfgRuleWarehouseDTO.WarehouseShopDTO resultDTO = new CfgRuleWarehouseDTO.WarehouseShopDTO();
+        //所有店铺
+        List<ShopInfoEntity> list = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getDisabled,Boolean.FALSE).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return new CfgRuleWarehouseDTO.WarehouseShopDTO();
+        }
+
+        if (!dto.getIsEnableVirtual()) {
+            List<String> shopNameList = handleCheckShop(dto.getCfgLocalVirtualWarehouseList(), list);
+            resultDTO.setShopNameList(shopNameList);
+        }
+        if (dto.getIsEnableVirtual()) {
+            List<String> virtualShopNameList = handleCheckShop(dto.getCfgLocalWarehouseList(),list);
+            resultDTO.setVirtualShopNameList(virtualShopNameList);
+        }
+        if (dto.getIsEnableOverseas()) {
+            List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(),list);
+            resultDTO.setOverseasShopNameList(overseasShopNameList);
+        }
+        return resultDTO;
+    }
+
+    /**
+     * 处理验证店铺数据
+     * @author will
+     * @date 2024/9/13 16:04
+     * @param cfgList
+     * @param shopList
+     * @return List<String>
+     */
+    private List<String> handleCheckShop (List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgList,List<ShopInfoEntity> shopList) {
+        if (CollectionUtils.isEmpty(cfgList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> shopIdList = new ArrayList<>();
+        for (CfgRuleWarehouseDetailDTO.UpdateDTO warehouseDTO : cfgList) {
+            if (StrUtil.equals(VitualWarehouseChannelTypeEnum.SHOP.getCode(),warehouseDTO.getChannelType())) {
+                //按店铺
+                shopIdList.addAll(warehouseDTO.getChannelIdList());
+            } else {
+                //按平台
+                List<String> platformShopIdList = shopList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), warehouseDTO.getDictPlatform())).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+                shopIdList.addAll(platformShopIdList);
+            }
+        }
+        List<String> shopNameList = shopList.stream().filter(obj -> shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
+        return  shopNameList;
     }
 
     /**

@@ -9,6 +9,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 /**
@@ -79,7 +81,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list,stockUpId,oldList);
+        handleData(list,stockUpId,oldList,isCustom);
         log.info("编辑 开始修改备货物流（规则设置）数据，id：【{}】", stockUpId);
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -195,16 +197,32 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleLogisticsEntity> list,String stockUpId,List<CfgRuleLogisticsEntity> oldList) {
+    private void handleData(List<CfgRuleLogisticsEntity> list,String stockUpId,List<CfgRuleLogisticsEntity> oldList,Boolean isCustom) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        String names = list.stream().collect(Collectors.groupingBy(CfgRuleLogisticsEntity::getLogisticsMethod)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(names)) {
+            throw new ServiceException("物流方式【{}】唯一不能添加重复数据",names);
+        }
+        //排序
+        Integer maxIndex = MathUtil.ZERO;
+        if (isCustom) {
+            maxIndex = oldList.stream().max(Comparator.comparingInt(CfgRuleLogisticsEntity::getIndex)).map(CfgRuleLogisticsEntity::getIndex).orElse(MathUtil.ZERO);
+        }
         for (CfgRuleLogisticsEntity  logisticsEntity: list) {
+            //排序
+            logisticsEntity.setIndex(maxIndex + 1);
             //备货主表id
             logisticsEntity.setStockUpId(stockUpId);
             //相同物流方式赋值id
-            String id = oldList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsMethod(), logisticsEntity.getLogisticsMethod())).findFirst().map(CfgRuleLogisticsEntity::getId).orElse("");
-            logisticsEntity.setId(id);
+            CfgRuleLogisticsEntity entity = oldList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsMethod(), logisticsEntity.getLogisticsMethod())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(entity)) {
+                logisticsEntity.setId(entity.getId());
+                //自定义添加的需要保持原有序号
+                logisticsEntity.setIndex(isCustom ? entity.getIndex() : logisticsEntity.getIndex());
+            }
+            maxIndex ++;
         }
     }
 }

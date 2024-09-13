@@ -28,7 +28,18 @@ public class CfgRuleWarehouseController extends BaseController {
     @Resource
     private CfgRuleWarehouseService cfgRuleWarehouseService;
 
-
+    /**
+     * 校验店铺
+     * @author will
+     * @date 2024/9/13 15:44
+     * @param dto
+     * @return ApiResult<WarehouseShopDTO>
+     */
+    @PostMapping("/checkShop")
+    public ApiResult<CfgRuleWarehouseDTO.WarehouseShopDTO> checkShop(@RequestBody @Validated CfgRuleWarehouseDTO.UpdateDTO dto) {
+        CfgRuleWarehouseDTO.WarehouseShopDTO shopDTO = cfgRuleWarehouseService.checkShop(dto);
+        return success(shopDTO);
+    }
     /**
     * 修改
     * @author will

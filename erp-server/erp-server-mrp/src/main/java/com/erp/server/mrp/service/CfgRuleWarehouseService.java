@@ -53,4 +53,12 @@ public interface CfgRuleWarehouseService extends SuperService<CfgRuleWarehouseEn
      * @return Boolean
      */
     Boolean getIsEnableOverseas(String platformType);
+    /**
+     * 校验店铺
+     * @author will
+     * @date 2024/9/13 15:44
+     * @param dto
+     * @return WarehouseShopDTO
+     */
+    CfgRuleWarehouseDTO.WarehouseShopDTO checkShop(CfgRuleWarehouseDTO.UpdateDTO dto);
 }

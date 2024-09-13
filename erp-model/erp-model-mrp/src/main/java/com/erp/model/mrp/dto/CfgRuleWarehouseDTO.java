@@ -226,4 +226,21 @@ public class CfgRuleWarehouseDTO implements Serializable {
             return detailResultDTO;
         }
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseShopDTO {
+        /**
+         * 实体仓店铺
+         */
+        private List<String> shopNameList;
+        /**
+         * 虚拟仓店铺
+         */
+        private List<String> virtualShopNameList;
+        /**
+         * 海外仓店铺
+         */
+        private List<String> overseasShopNameList;
+    }
 }
