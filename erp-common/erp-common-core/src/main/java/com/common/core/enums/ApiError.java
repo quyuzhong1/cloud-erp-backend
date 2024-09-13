@@ -1484,6 +1484,7 @@ public enum ApiError implements Serializable {
     ERROR_CFG_RULE_SALES_NOT_EXIST(97004,"销量（{}规则配置）不存在"),
     ERROR_CFG_RULE_NEWS_NOT_EXIST(97010,"新品系统规则配置不存在"),
     ERROR_CFG_RULE_REPLENISHMENT_NOT_EXIST(97011,"补货天数规则配置不存在"),
+    ERROR_DETAIL_NOT_EXIST(97012,"明细数据不存在"),
 
 
 

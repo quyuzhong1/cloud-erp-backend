@@ -2,9 +2,7 @@ package com.erp.server.mrp.calculation.handler;
 
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 
@@ -19,8 +17,9 @@ public class OverseasInTransitHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        return CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
-                || !CollectionUtils.isEmpty(cfgRuleStrategyDTO.getWarehouseResult().getOverseasWarehouseList());
+//        return CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
+//                || Boolean.TRUE.equals(cfgRuleStrategyDTO.getWarehouseResult().getIsEnableOverseas());
+        return false;
     }
 
     @Override

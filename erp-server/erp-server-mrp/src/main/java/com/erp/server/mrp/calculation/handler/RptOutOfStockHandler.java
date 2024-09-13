@@ -13,7 +13,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
@@ -49,37 +51,37 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
             for (int i = 0; i <= days; i++) {
                 LocalDate calcDate = basicCalcDate.plusDays(i);
                 //获取到货库存
-                Integer fbaInTransit = replenishmentResultDTO.getFbaInTransitDetails()
+                Integer fbaInTransit = Optional.ofNullable(replenishmentResultDTO.getFbaInTransitDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.FbaInTransitDetailDTO::getInTransitQty)
                         .reduce(0, Math::addExact);
-                Integer fbaDelivery = replenishmentResultDTO.getFbaDeliveryDetails()
+                Integer fbaDelivery =  Optional.ofNullable(replenishmentResultDTO.getFbaDeliveryDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer overseasInTransit = replenishmentResultDTO.getOverseasInTransitDetails()
+                Integer overseasInTransit = Optional.ofNullable(replenishmentResultDTO.getOverseasInTransitDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.OverseasInTransitDetailDTO::getInTransitQty)
                         .reduce(0, Math::addExact);
-                Integer overseasDelivery = replenishmentResultDTO.getOverseasDeliveryDetails()
+                Integer overseasDelivery = Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer localInTransit = replenishmentResultDTO.getLocalInTransitDetails()
+                Integer localInTransit = Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer localDelivery = replenishmentResultDTO.getLocalPurchaseDetails()
+                Integer localDelivery = Optional.ofNullable(replenishmentResultDTO.getLocalPurchaseDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                BigDecimal salesQty = replenishmentResultDTO.getSalesEstimates()
+                BigDecimal salesQty = Optional.ofNullable(replenishmentResultDTO.getSalesEstimates()).orElse(Collections.emptyList())
                         .stream()
                         .filter(v -> v.getDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.SalesEstimateDTO::getSalesQty)
@@ -93,7 +95,7 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
         }
 
         if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-            BigDecimal balanceInventory = BigDecimal.valueOf(replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty());
+            BigDecimal balanceInventory = BigDecimal.valueOf(replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty());
             //结余库存 = 前日结余库存 - 预估销量 + 到货库存
             for (int i = 0; i <= days; i++) {
                 LocalDate calcDate = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE).plusDays(i);
@@ -130,7 +132,7 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
         }
         if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                 || CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-            BigDecimal balanceInventory = BigDecimal.valueOf(replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty());
+            BigDecimal balanceInventory = BigDecimal.valueOf(replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty());
             //结余库存 = 前日结余库存 - 预估销量 + 到货库存
             for (int i = 0; i <= days; i++) {
                 LocalDate calcDate = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE).plusDays(i);
@@ -154,6 +156,7 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
                 realStartDate = getRealStartDate(replenishmentResultDTO.getSalesPrice(), balanceInventory, realStartDate, rptOutOfStocks, calcDate, salesQty);
             }
         }
+        replenishmentResultDTO.setRptOutOfStocks(rptOutOfStocks);
     }
 
     /**
@@ -169,9 +172,9 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
         if (balanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
             if (null == realStartDate) {
                 realStartDate = calcDate;
-                rptOutOfStocks.add(new ReplenishmentResultDTO.RptOutOfStockDTO(calcDate, calcDate, calcDate, salesQty, salesQty.multiply(salesPrice)));
+                rptOutOfStocks.add(new ReplenishmentResultDTO.RptOutOfStockDTO(calcDate, calcDate, calcDate, salesQty, salesQty.multiply(Optional.ofNullable(salesPrice).orElse(BigDecimal.ZERO))));
             }else {
-                rptOutOfStocks.add(new ReplenishmentResultDTO.RptOutOfStockDTO(calcDate, realStartDate, calcDate, salesQty, salesQty.multiply(salesPrice)));
+                rptOutOfStocks.add(new ReplenishmentResultDTO.RptOutOfStockDTO(calcDate, realStartDate, calcDate, salesQty, salesQty.multiply(Optional.ofNullable(salesPrice).orElse(BigDecimal.ZERO))));
             }
         }else {
             realStartDate = null;
