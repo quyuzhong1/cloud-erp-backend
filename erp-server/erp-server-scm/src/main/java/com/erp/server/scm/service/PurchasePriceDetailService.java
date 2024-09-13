@@ -254,4 +254,11 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return Boolean
      */
     Boolean enable(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 根据组织/供应商/sku/数量获取采购单价
+     * @param dto
+     * @return
+     */
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto);
 }

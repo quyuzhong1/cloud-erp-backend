@@ -7,6 +7,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
@@ -242,4 +243,11 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return List<ListSelectDTO>
      */
     List<SubcontractOrderDTO.ListSelectDTO> listSubcontractOrder();
+
+    /**
+     * 批量获取采购单价
+     * @param dto
+     */
+
+    ApiResult<?> batchGetPurchasePrice(SubcontractOrderDTO.UpdateDTO dto);
 }

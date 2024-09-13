@@ -284,6 +284,13 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private Boolean isGeneratePo;
 
         /**
+         * 是否自动生成入库单
+         * 勾选即为当成品采购订单入库时，以相应BOM数量对子件数量自动入库。
+         */
+        @NotNull(message = "是否自动生成入库单不能为空")
+        private Boolean isGenerateInStock;
+
+        /**
         * 来源明细id
         */
         @Size(max = 19,message = "来源明细id最大长度不能超过19位")

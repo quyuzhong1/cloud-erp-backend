@@ -812,6 +812,14 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return updateDisabled(updateDTO);
     }
 
+    @Override
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto) {
+        if (Objects.isNull(dto) || (CollectionUtils.isEmpty(dto.getPurchaseOrgIdList()) && CollectionUtils.isEmpty(dto.getSkuIdList()) && CollectionUtils.isEmpty(dto.getSupplierIdList())&& CollectionUtils.isEmpty(dto.getPurchaseQtyList()))) {
+            return Collections.emptyList();
+        }
+        return baseMapper.batchGetTaxPrice(dto);
+    }
+
 
     @Override
     public Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> listPurchaseTaxPriceView(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto) {

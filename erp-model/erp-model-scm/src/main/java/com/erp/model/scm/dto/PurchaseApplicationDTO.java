@@ -1033,6 +1033,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 是否自动生成采购订单
          */
         private Boolean isGeneratePo;
+        /**
+         * 是否自动生成入库单
+         * 勾选即为当成品采购订单入库时，以相应BOM数量对子件数量自动入库。
+         */
+        private Boolean isGenerateInStock;
 
         /**
          * 付款条件

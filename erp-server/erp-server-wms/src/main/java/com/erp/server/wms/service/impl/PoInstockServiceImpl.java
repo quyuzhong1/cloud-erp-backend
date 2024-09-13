@@ -52,6 +52,7 @@ import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -163,6 +164,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
+    @Resource
+    private PurchaseOrderFeign purchaseOrderFeign;
 
 
     @Override
@@ -655,10 +658,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         List<PoInstockEntity> list = Arrays.asList(entity);
         log.info("采购入库单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
+        String msg = "";
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE.getStatus());
+            //子件校验数量-入库-推送金蝶
+//            autoInStockSubcontractChild(entity);
             //自动生成委外发料单
             autoGenerateSubcontractIssue(Collections.singletonList(entity));
             // 更新库存（需区分有无收货单）
@@ -683,6 +689,100 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购入库单【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    /**
+     * 子件校验并入库
+     * @param poInstockEntity
+     */
+    private void autoInStockSubcontractChild(PoInstockEntity poInstockEntity) {
+        //校验入库单是否是父级委外订单
+        if (!SubcontractTypeEnum.ENUM_PARENT.getCode().equals(poInstockEntity.getSubcontractType())){
+            return;
+        }
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainIds(Collections.singletonList(poInstockEntity.getId()));
+        if (CollectionUtils.isEmpty(poInstockDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98051);
+        }
+        //委外订单明细父级SKU信息ids
+        List<String> parentPodIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
+        log.info("根据父级SKU采购订单ID查询子级SKU信息，parentPodIds = {}", parentPodIds);
+        //采购订单明细信息
+        List<PurchaseOrderDTO.ViewGenerateStockInDTO> purchaseOrderDetailList = purchaseOrderFeign.viewGenerateStockIn(parentPodIds);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)){
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        //采购订单
+        List<String> poIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDTO.ViewGenerateStockInDTO::getPurchaseOrderId).collect(Collectors.toList());
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIdList);
+
+        //父级委外订单信息
+        List<String> subDetailIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDTO.ViewGenerateStockInDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listChildSubcontractDetailByIds(subDetailIdList);
+        //排除非自动入库的订单
+        subcontractOrderDetailList = subcontractOrderDetailList.stream().filter(e -> Objects.nonNull(e) && Objects.nonNull(e.getIsGenerateInStock()) && e.getIsGenerateInStock()).collect(Collectors.toList());
+        //根据委外订单查询采购订单明细
+        List<String> subcontractOrderDetailIds = subcontractOrderDetailList.stream().map(SubcontractOrderDetailEntity::getId).distinct().collect(Collectors.toList());
+
+        //查询bom信息
+        List<String> skuIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+
+//        for (PoInstockEntity poInstockEntity : resultList) {
+            //入库明细信息
+            List<PoInstockDetailEntity> thisPoDetailList = poInstockDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), poInstockEntity.getId())).collect(Collectors.toList());
+            SubcontractIssueDTO.AddDTO addDTO = new SubcontractIssueDTO.AddDTO();
+
+            //采购订单关联的委外订单id
+            String sourceId = purchaseOrderList.stream().filter(obj -> StrUtil.equals(obj.getId(), poInstockEntity.getPurchaseOrderId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceId())).orElse("");
+            addDTO.setSubcontractOrderId(sourceId);
+            addDTO.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
+            addDTO.setSourceId(poInstockEntity.getId());
+            addDTO.setType(SubcontractIssueTypeEnum.NORMAL.getCode());
+            addDTO.setDate(LocalDate.now());
+            addDTO.setSupplierId(poInstockEntity.getSupplierId());
+            //入库单明细
+            for (PoInstockDetailEntity detailEntity : thisPoDetailList) {
+                //采购订单明细
+                PurchaseOrderDTO.ViewGenerateStockInDTO poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getPurchaseOrderDetailId(), detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (Objects.isNull(poDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_98026);
+                }
+                //未入库数量
+                Integer unStockInQty = Objects.nonNull(poDetailEntity.getUnStockInQty()) ? poDetailEntity.getUnStockInQty() : MathUtil.ZERO;
+                //子级委外订单明细
+                List<SubcontractOrderDetailEntity> subDetailList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getParentId(), poDetailEntity.getSourceDetailId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(subDetailList)) {
+                    throw new ServiceException(ApiError.ERROR_98070);
+                }
+                List<SubcontractIssueDetailDTO.AddDTO> detailList = new ArrayList<>();
+                //汇总
+                for (SubcontractOrderDetailEntity childSubDetail : subDetailList) {
+                    SubcontractIssueDetailDTO.AddDTO addDetailDTO = new SubcontractIssueDetailDTO.AddDTO();
+                    addDetailDTO.setSubcontractOrderDetailId(childSubDetail.getId());
+                    addDetailDTO.setSourceDetailId(detailEntity.getId());
+                    //父级SKU和子级SKU之间的用量
+                    Integer quantity = bomList.stream()
+                            .filter(obj -> childSubDetail.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(childSubDetail.getSkuId()) && obj.getParentSkuId().equals(detailEntity.getSkuId()))
+                            .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(quantity)) {
+                        throw new ServiceException(ApiError.ERROR_95166);
+                    }
+                    //应入库数量
+                    int stockInQty = detailEntity.getStockInQty() * quantity;
+                    addDetailDTO.setIssueQty(detailEntity.getStockInQty() * quantity);
+                    addDetailDTO.setWarehouseId(childSubDetail.getWarehouseId());
+                    addDetailDTO.setWarehouseLocation(childSubDetail.getWarehouseLocation());
+                    detailList.add(addDetailDTO);
+                }
+                addDTO.setDetailList(detailList);
+                //自动新增
+//                SubcontractIssueDTO.AutoAddDTO autoAddDTO = new SubcontractIssueDTO.AutoAddDTO(addDTO, isApprove);
+//                subcontractIssueService.autoAdd(autoAddDTO);
+            }
+        throw new ServiceException(ApiError.ERROR_98051);
+//        }
     }
 
     /**

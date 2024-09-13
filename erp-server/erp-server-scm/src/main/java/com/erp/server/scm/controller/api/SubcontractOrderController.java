@@ -119,6 +119,16 @@ public class SubcontractOrderController extends BaseController {
     }
 
     /**
+     * 批量获取列表采购单价
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchGetPurchasePrice")
+    public ApiResult<?> batchGetPurchasePrice(@RequestBody @Validated SubcontractOrderDTO.UpdateDTO dto) {
+        return subcontractOrderService.batchGetPurchasePrice(dto);
+    }
+
+    /**
     * 新增并提交审核
     * @author will
     * @date:  2023-06-08

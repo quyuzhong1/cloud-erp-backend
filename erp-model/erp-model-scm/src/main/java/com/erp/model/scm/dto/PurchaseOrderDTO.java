@@ -990,6 +990,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 库位名称
          */
         private String warehouseLocationName;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
     }
 
     @Data
