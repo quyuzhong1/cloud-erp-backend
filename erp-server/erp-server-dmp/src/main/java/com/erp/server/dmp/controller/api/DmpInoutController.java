@@ -212,7 +212,9 @@ public class DmpInoutController extends BaseController {
 	    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMap.getValue();
 	    		if(DmpBasicSystemCodeEnum.ERP.getCode().equals(systemCode)) {
 	    			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, list);
-	    			dmpOutputTaskRecordService.batchSync(erpQuerySync);
+	    			if(CollUtil.isNotEmpty(erpQuerySync)) {
+	    				dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordService.listByIds(erpQuerySync.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList())));
+	    			}
 	    		}else {
 	    			List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
 		    		List<String> ids = list.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
