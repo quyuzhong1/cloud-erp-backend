@@ -47,6 +47,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -128,6 +129,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private FirstMileCostAllocationService service;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -249,7 +252,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     && StrUtil.isNotBlank(e.getReportPeriodId()) && !e.getReportPeriodId().equals(entity.getReportPeriodId())
                     && ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(list)){
-                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "存在未确认的费用分摊，请确认后下推费用分摊");
+                List<String> monthList = list.stream().filter(e -> Objects.nonNull(e) && Objects.nonNull(e.getReportPeriodMonth())).map(e->{
+                    return dateTimeFormatter.format(e.getReportPeriodMonth());
+                } ).distinct().collect(Collectors.toList());
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), StrUtil.format("【{}】月份存在未核算完成单据，请核算完成后生成", String.join(",",monthList)));
             }
         }
         //处理分摊数据
@@ -572,10 +578,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //总成本
             firstMileSkuCostAllocationEntity.setProductTotalCost(MathUtil.multiply(firstMileSkuCostAllocationEntity.getProductCost(), BigDecimal.valueOf(firstMileSkuCostAllocationEntity.getDeliveryQty()), 4));
             //签收数量
-            firstMileSkuCostAllocationEntity.setCurrentMonthReceiveQty(receiveDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())).map(FirstMileDeliveryDTO.ReceiveDTO::getCurrentMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
-            firstMileSkuCostAllocationEntity.setLastMonthReceiveQty(receiveDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())).map(FirstMileDeliveryDTO.ReceiveDTO::getLastMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
-            firstMileSkuCostAllocationEntity.setAsLastMonthReceiveQty(receiveDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())).map(FirstMileDeliveryDTO.ReceiveDTO::getAsLastMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
-            firstMileSkuCostAllocationEntity.setAsCurrentMonthReceiveQty(receiveDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())).map(FirstMileDeliveryDTO.ReceiveDTO::getAsCurrentMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
+            firstMileSkuCostAllocationEntity.setCurrentMonthReceiveQty(receiveDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())).map(FirstMileDeliveryDTO.ReceiveDTO::getCurrentMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
+            firstMileSkuCostAllocationEntity.setLastMonthReceiveQty(receiveDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())).map(FirstMileDeliveryDTO.ReceiveDTO::getLastMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
+            firstMileSkuCostAllocationEntity.setAsLastMonthReceiveQty(receiveDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())).map(FirstMileDeliveryDTO.ReceiveDTO::getAsLastMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
+            firstMileSkuCostAllocationEntity.setAsCurrentMonthReceiveQty(receiveDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())).map(FirstMileDeliveryDTO.ReceiveDTO::getAsCurrentMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum));
             //费用来源
             if (Objects.nonNull(firstMileEstimatedBillEntity)) {
                 firstMileSkuCostAllocationEntity.setBillSourceType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
@@ -733,7 +739,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                     .filter(e -> e.getId().equals(detailEntity.getCostMainId())).findFirst().orElse(null);
             //sku签收统计
             List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList = receiveDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.nonNull(skuCostAllocationEntity)
-                    && StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuCostAllocationEntity.getSkuId())).collect(Collectors.toList());
+                    && StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getSkuId().equals(skuCostAllocationEntity.getSkuId()) && e.getPlatformSkuNo().equals(skuCostAllocationEntity.getPlatformSkuNo())).collect(Collectors.toList());
             //本月签收数量
             int currentMonthReceiveQty = receiveDTOList.stream().map(FirstMileDeliveryDTO.ReceiveDTO::getCurrentMonthReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             //截止本月签收数量
@@ -861,12 +867,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             }
             //期末暂估费用 计算
             /**
-             * 1.预估账单有签收：本月累计签收数量*单产品分摊
+             * 1.预估账单有签收：（本月累计签收数量+期初签收）*单产品分摊
              * 2.无账单无签收：取值为0
              * 3.有实际账单：取值为0
              */
             if (ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(skuCostAllocationEntity.getBillSourceType())) {
-                detailEntity.setEndPeriodEstimatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty), 4));
+                detailEntity.setEndPeriodEstimatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty + initReceiveQty), 4));
             } else {
                 detailEntity.setEndPeriodEstimatedCost(BigDecimal.ZERO);
             }
@@ -1087,7 +1093,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 allocationWeight = firstMileSkuCostAllocationEntity.getAllocatedWeight();
             }
             //分摊成本 单位成本* 数量
-            BigDecimal productTotalCost = Objects.nonNull(firstMileSkuCostAllocationEntity.getProductCost()) ? firstMileSkuCostAllocationEntity.getProductCost() : BigDecimal.ZERO;
+//            BigDecimal productCost = Objects.nonNull(firstMileSkuCostAllocationEntity.getProductCost()) ? firstMileSkuCostAllocationEntity.getProductCost() : BigDecimal.ZERO;
+            BigDecimal productTotalCost = Objects.nonNull(firstMileSkuCostAllocationEntity.getProductTotalCost()) ? firstMileSkuCostAllocationEntity.getProductTotalCost() : BigDecimal.ZERO;
 //            Integer deliveryQty = Objects.nonNull(firstMileSkuCostAllocationEntity.getDeliveryQty()) ? firstMileSkuCostAllocationEntity.getDeliveryQty() : MathUtil.ZERO;
 //            BigDecimal productTotalCost = MathUtil.multiply(productCost, BigDecimal.valueOf(deliveryQty), 4);
             //构建费用分摊明细
@@ -1393,7 +1400,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             List<FirstMileCostAllocationEntity> list = firstMileCostAllocationEntityList.stream().filter(e -> e.getReportPeriodMonth().isAfter(reportPeriodMonth.getMonth())).collect(Collectors.toList());
             //存在后置数据，前置数据不能改状态 已确认改为其他状态
             if (!CollectionUtils.isEmpty(list) && ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus()) && StrUtil.isNotBlank(status) && !ConfirmStatusEnum.CONFIRM.getCode().equals(status)){
-                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(),"存在累计分摊数据，不能修改核算状态");
+                return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(),"已存在最新核算期间，不允许修改历史核算数据");
             }
         }
         this.lambdaUpdate().eq(FirstMileCostAllocationEntity::getId, entity.getId())

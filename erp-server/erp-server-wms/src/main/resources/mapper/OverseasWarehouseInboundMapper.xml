@@ -193,6 +193,7 @@
     <select id="countReceiveQtyByParams" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ReceiveDTO">
         SELECT
             owi.source_code as businessCode,
+            owid.platform_sku_no as platformSkuNo,
             owid.sku_id,
             SUM(CASE WHEN owir.receive_time >= DATE_TRUNC('month', #{params.month}::date - INTERVAL '1 month') AND DATE_TRUNC('month', #{params.month}::date) > owir.receive_time THEN owir.receive_qty ELSE 0 END) AS  lastMonthReceiveQty,
             SUM(CASE WHEN EXTRACT(YEAR FROM owir.receive_time) = EXTRACT(YEAR FROM #{params.month}::date) AND EXTRACT(MONTH FROM owir.receive_time) = EXTRACT(MONTH FROM #{params.month}::date) THEN owir.receive_qty ELSE 0 END) AS  currentMonthReceiveQty,
@@ -209,7 +210,7 @@
                 #{item}
             </foreach>
         </if>
-        GROUP BY businessCode,owid.sku_id
+        GROUP BY businessCode,owid.sku_id,owid.platform_sku_no
     </select>
 
     <sql id="OverDataCompareByCondition">

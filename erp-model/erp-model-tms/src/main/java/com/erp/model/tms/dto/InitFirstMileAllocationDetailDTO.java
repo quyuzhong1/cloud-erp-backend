@@ -1,6 +1,8 @@
 package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -102,6 +104,10 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
         * skuId
         */
         private String skuId;
+        /**
+         * 平台SKU
+         */
+        private String platformSkuNo;
 
         /**
         * 产品名称
@@ -280,8 +286,14 @@ public class InitFirstMileAllocationDetailDTO implements Serializable {
          * skuNo
          */
         @NotBlank(message = "skuNo不能为空")
-        @Size(max = 19,message = "skuNo最大长度不能超过19位")
+        @Size(max = 64,message = "skuNo最大长度不能超过64位")
         private String skuNo;
+        /**
+         * 平台SKU
+         */
+        @NotBlank(message = "平台SKU不能为空")
+        @Size(max = 64,message = "平台SKU最大长度不能超过64位")
+        private String platformSkuNo;
 
         /**
         * 产品名称

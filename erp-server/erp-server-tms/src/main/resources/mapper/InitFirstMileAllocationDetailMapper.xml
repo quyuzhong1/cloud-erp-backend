@@ -25,6 +25,7 @@
        <result column="warehouse_name" property="warehouseName" />
        <result column="sku_no" property="skuNo" />
        <result column="sku_id" property="skuId" />
+        <result column="platform_sku_no" property="platformSkuNo" />
        <result column="product_name" property="productName" />
        <result column="init_receive_qty" property="initReceiveQty" />
        <result column="init_transit_cost" property="initTransitCost" />
@@ -51,7 +52,7 @@
         version,
         is_deleted,
         main_id, source_id, source_detail_id, source_code, source_type, business_code, business_type, shop_id, shop_name,
-        warehouse_id, warehouse_name, sku_no, sku_id, product_name, init_receive_qty, init_transit_cost, init_transit_tariff,
+        warehouse_id, warehouse_name, platform_sku_no,sku_no, sku_id, product_name, init_receive_qty, init_transit_cost, init_transit_tariff,
         init_estimated_cost,init_estimated_tariff,
         weight_allocation, product_cost, exchange_rate, weight_unit, currency, currency_symbol
     </sql>

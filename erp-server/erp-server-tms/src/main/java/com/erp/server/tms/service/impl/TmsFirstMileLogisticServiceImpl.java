@@ -1167,6 +1167,18 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (CollectionUtils.isEmpty(sourceDetailList)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
         }
+        //修改业务编码
+        //发货单
+        List<String> deliveryIds = sourceDetailList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getDeliveryId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(deliveryIds);
+        sourceDetailList.forEach(e -> {
+            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(f -> Objects.nonNull(f) && Objects.equals(f.getId(), e.getDeliveryId())).findFirst().orElse(null);
+            if (Objects.nonNull(businessDTO)) {
+                e.setBusinessCode(businessDTO.getBusinessCode());
+            } else {
+                e.setBusinessCode("");
+            }
+        });
 //        boolean notGenerate = sourceDetailList.stream()
 //                .anyMatch(e -> !ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(e.getReconciliationStatus()));
 //        if (notGenerate){

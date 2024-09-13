@@ -18,6 +18,7 @@
     <select id="countReceiveQtyByParams" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ReceiveDTO">
         SELECT
             fs.code as businessCode,
+            fsr.msku as platformSkuNo,
             fsr.sku_id,
             SUM(CASE WHEN fsr.receive_date >= DATE_TRUNC('month', #{params.month}::date - INTERVAL '1 month') AND DATE_TRUNC('month', #{params.month}::date) > fsr.receive_date THEN fsr.receive_qty ELSE 0 END) AS  lastMonthReceiveQty,
             SUM(CASE WHEN EXTRACT(YEAR FROM fsr.receive_date) = EXTRACT(YEAR FROM #{params.month}::date) AND EXTRACT(MONTH FROM fsr.receive_date) = EXTRACT(MONTH FROM #{params.month}::date) THEN fsr.receive_qty ELSE 0 END) AS  currentMonthReceiveQty,
@@ -33,6 +34,6 @@
                 #{item}
             </foreach>
         </if>
-        GROUP BY businessCode,fsr.sku_id
+        GROUP BY businessCode,fsr.sku_id,platformSkuNo
     </select>
 </mapper>

@@ -229,7 +229,10 @@ public class InitFirstMileAllocationDTO implements Serializable {
          * sku编号【可排序】
          */
         private String skuNo;
-
+        /**
+         * 平台SKU
+         */
+        private String platformSkuNo;
         /**
          * 产品名称
          */

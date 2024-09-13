@@ -50,56 +50,62 @@ public class InitFirstMileAllocationDetailExcelDTO implements Serializable {
     @FieldValid(fieldName = "SKU）",maxLength = 200)
     private String  skuNo;
     /**
+     * 平台SKU
+     */
+    @ExcelProperty(value = "*平台SKU", index = 5)
+    @FieldValid(fieldName = "平台SKU）",maxLength = 200)
+    private String  platformSkuNo;
+    /**
      * 产品名称
      */
-    @ExcelProperty(value = "产品名称", index = 5)
+    @ExcelProperty(value = "产品名称", index = 6)
     @FieldValid(fieldName = "产品名称）",maxLength = 200)
     private String  productName;
     /**
      * 初始签收数量
      */
-    @ExcelProperty(value = "*初始签收数量", index = 6)
+    @ExcelProperty(value = "*初始签收数量", index = 7)
     @FieldValid(fieldName = "初始签收数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String  initReceiveQty;
     /**
      * 期初在途头程费用
      */
-    @ExcelProperty(value = "*期初在途头程费用", index = 7)
+    @ExcelProperty(value = "*期初在途头程费用", index = 8)
     @FieldValid(fieldName = "期初在途头程费用",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String initTransitCost;
     /**
      * 期初在途头程关税
      */
-    @ExcelProperty(value = "*期初在途头程关税", index = 8)
+    @ExcelProperty(value = "*期初在途头程关税", index = 9)
     @FieldValid(fieldName = "期初在途头程关税",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String initTransitTariff;
     /**
      * *期初暂估头程费用
      */
-    @ExcelProperty(value = "*期初暂估头程费用", index = 9)
+    @ExcelProperty(value = "*期初暂估头程费用", index = 10)
     @FieldValid(fieldName = "期初暂估头程费用",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String initEstimatedCost;
     /**
      * *期初暂估头程关税
      */
-    @ExcelProperty(value = "*期初暂估头程关税", index = 10)
+    @ExcelProperty(value = "*期初暂估头程关税", index = 11)
     @FieldValid(fieldName = "期初暂估头程关税",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String initEstimatedTariff;
     /**
      * *分摊重量(KG)
      */
-    @ExcelProperty(value = "*分摊重量(KG)", index = 11)
+    @ExcelProperty(value = "*分摊重量(KG)", index = 12)
     @FieldValid(fieldName = "分摊重量(KG)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String weightAllocation;
     /**
      * *产品成本
      */
-    @ExcelProperty(value = "*产品成本", index = 12)
+    @ExcelProperty(value = "*产品成本", index = 13)
     @FieldValid(fieldName = "产品成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
     private String productCost;
     /**
      * 错误信息
      */
-    @ExcelProperty(value = "错误数据", index = 13)
+    @ExcelProperty(value = "错误数据", index = 14)
     private String errorMsg;
 }

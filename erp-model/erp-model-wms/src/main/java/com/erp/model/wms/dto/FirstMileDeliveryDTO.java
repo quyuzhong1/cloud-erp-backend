@@ -1276,6 +1276,7 @@ public class FirstMileDeliveryDTO implements Serializable {
         private String businessCode;
         private String skuId;
         private String skuNo;
+        private String platformSkuNo;
         /**
          * 上月签收数量
          */

@@ -10,6 +10,9 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
 
 /**
  * <p>
@@ -91,6 +94,11 @@ public class InitFirstMileAllocationDetailEntity extends BaseEntity<InitFirstMil
     */
     @TableField("sku_id")
     private String skuId;
+    /**
+     * 平台SKU
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
     /**
     * 产品名称
     */
