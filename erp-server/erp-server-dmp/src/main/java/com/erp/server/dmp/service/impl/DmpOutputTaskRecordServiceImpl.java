@@ -555,13 +555,15 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 				for(Map.Entry<String, Map<String, Object>> i : invoke.entrySet()) {
 					List<DmpOutputTaskRecordEntity> updateList = dataIdOutputMaps.get(i.getKey());
 					if(CollUtil.isNotEmpty(updateList)) {
-						updateList.forEach(u -> {
-							u.setRequestData(JSON.toJSONString(i.getValue()));
-						});
+						String requestData = JSON.toJSONString(i.getValue());
+						this.lambdaUpdate()
+							.in(DmpOutputTaskRecordEntity::getId, updateList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()))
+							.set(DmpOutputTaskRecordEntity::getRequestData, requestData)
+							.update();
+						updateList.forEach(u -> u.setRequestData(requestData));
 						allUpdateList.addAll(updateList);
 					}
 				}
-				this.updateBatchById(allUpdateList);
 				return allUpdateList;
 			}
 		}
