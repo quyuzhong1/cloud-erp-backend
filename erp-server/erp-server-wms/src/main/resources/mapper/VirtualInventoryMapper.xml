@@ -390,6 +390,9 @@
             <if test="params.isDiff != null and params.isDiff == false">
                 and  COALESCE(diff.usableQty,0)  + COALESCE(frozenDiff.frozenQty,0) >= COALESCE(inv.usableQty,0)
             </if>
+            <if test="lastId != null and lastId != ''">
+                and diff.invId > #{lastId}
+            </if>
         </where>
         ORDER BY diff.invId
     </select>

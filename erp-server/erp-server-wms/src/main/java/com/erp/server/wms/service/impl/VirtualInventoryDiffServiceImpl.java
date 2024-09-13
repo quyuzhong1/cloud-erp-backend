@@ -233,7 +233,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
     @Override
     public PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> exportWarehouseStatisticsData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
-        Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> page = baseMapper.listWarehouseStatistics(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> page = baseMapper.listWarehouseStatistics(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), dto.getLastId());
         return new PagingVO<>(page);
     }
 
