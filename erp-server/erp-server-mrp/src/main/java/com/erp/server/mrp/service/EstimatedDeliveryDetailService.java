@@ -1,10 +1,10 @@
 package com.erp.server.mrp.service;
 
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.mrp.dto.EstimatedDeliveryDTO;
-import com.erp.model.mrp.entity.EstimatedDeliveryDetailEntity;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.entity.EstimatedDeliveryDetailEntity;
 import com.erp.model.mrp.vo.EstimatedDeliveryVO;
 
 /**
@@ -17,5 +17,5 @@ import com.erp.model.mrp.vo.EstimatedDeliveryVO;
  */
 public interface EstimatedDeliveryDetailService extends SuperService<EstimatedDeliveryDetailEntity> {
 
-    PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<EstimatedDeliveryDTO> params);
+    PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
 }

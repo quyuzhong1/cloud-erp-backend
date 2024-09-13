@@ -45,17 +45,17 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * 本地仓在途明细
      * @param params 明细id
      */
-    PagingVO<LocalInTransitDetailVO> localInTransitDetail(PagingDTO<LocalInTransitDetailDTO> params);
+    PagingVO<LocalInTransitDetailVO> localInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
     /**
      * 预计发货明细
      * @param params 明细id
      */
-    PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<EstimatedDeliveryDTO> params);
+    PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
     /**
      * 预计采购明细
      * @param params 明细id
      */
-    PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<EstimatedPurchaseDTO> params);
+    PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
     /**
      * 店铺库存明细
      * @param params 明细id

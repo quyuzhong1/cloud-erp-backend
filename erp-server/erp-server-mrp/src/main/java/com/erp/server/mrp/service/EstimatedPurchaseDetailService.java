@@ -1,10 +1,10 @@
 package com.erp.server.mrp.service;
 
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.mrp.dto.EstimatedPurchaseDTO;
-import com.erp.model.mrp.entity.EstimatedPurchaseDetailEntity;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.entity.EstimatedPurchaseDetailEntity;
 import com.erp.model.mrp.vo.EstimatedPurchaseVO;
 
 /**
@@ -17,5 +17,5 @@ import com.erp.model.mrp.vo.EstimatedPurchaseVO;
  */
 public interface EstimatedPurchaseDetailService extends SuperService<EstimatedPurchaseDetailEntity> {
 
-    PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<EstimatedPurchaseDTO> params);
+    PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
 }

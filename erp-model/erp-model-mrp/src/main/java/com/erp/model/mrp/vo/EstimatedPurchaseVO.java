@@ -27,6 +27,10 @@ public class EstimatedPurchaseVO {
      * 预计到货日期
      */
     private LocalDate planArrivalDate;
+    /**
+     * 预计可售日期
+     */
+    private LocalDate estimateSalesDate;
 
     /**
      * 业务类型 本地

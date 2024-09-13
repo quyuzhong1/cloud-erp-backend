@@ -97,7 +97,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param params 明细id
      */
     @PostMapping("/localInTransitDetail")
-    public ApiResult<PagingVO<LocalInTransitDetailVO>> localInTransitDetail(@RequestBody @Validated PagingDTO<LocalInTransitDetailDTO> params) {
+    public ApiResult<PagingVO<LocalInTransitDetailVO>> localInTransitDetail(@RequestBody @Validated PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         PagingVO<LocalInTransitDetailVO> paging = replenishmentSuggestionService.localInTransitDetail(params);
         return success(paging);
     }
@@ -107,7 +107,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param params 明细id
      */
     @PostMapping("/estimatedDelivery")
-    public ApiResult<PagingVO<EstimatedDeliveryVO>> estimatedDelivery(@RequestBody @Validated PagingDTO<EstimatedDeliveryDTO> params) {
+    public ApiResult<PagingVO<EstimatedDeliveryVO>> estimatedDelivery(@RequestBody @Validated PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         PagingVO<EstimatedDeliveryVO> paging = replenishmentSuggestionService.estimatedDelivery(params);
         return success(paging);
     }
@@ -117,7 +117,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param params 明细id
      */
     @PostMapping("/estimatedPurchase")
-    public ApiResult<PagingVO<EstimatedPurchaseVO>> estimatedPurchase(@RequestBody @Validated PagingDTO<EstimatedPurchaseDTO> params) {
+    public ApiResult<PagingVO<EstimatedPurchaseVO>> estimatedPurchase(@RequestBody @Validated PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         PagingVO<EstimatedPurchaseVO> paging = replenishmentSuggestionService.estimatedPurchase(params);
         return success(paging);
     }

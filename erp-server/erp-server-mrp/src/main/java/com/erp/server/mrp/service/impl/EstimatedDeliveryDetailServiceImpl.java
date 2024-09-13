@@ -5,7 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.erp.model.mrp.dto.EstimatedDeliveryDTO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.EstimatedDeliveryDetailEntity;
 import com.erp.model.mrp.vo.EstimatedDeliveryVO;
 import com.erp.server.mrp.mapper.EstimatedDeliveryDetailMapper;
@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 public class EstimatedDeliveryDetailServiceImpl extends SuperServiceImpl<EstimatedDeliveryDetailMapper, EstimatedDeliveryDetailEntity> implements EstimatedDeliveryDetailService {
 
     @Override
-    public PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<EstimatedDeliveryDTO> params) {
+    public PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<EstimatedDeliveryVO> page = baseMapper.estimatedDelivery(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         for (EstimatedDeliveryVO vo : page.getRecords()) {
                 vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));

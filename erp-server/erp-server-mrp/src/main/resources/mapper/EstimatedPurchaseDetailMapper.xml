@@ -24,9 +24,9 @@
         <result column="calc_version" property="calcVersion"/>
     </resultMap>
     <select id="estimatedPurchase" resultType="com.erp.model.mrp.vo.EstimatedPurchaseVO">
-        select status, qty, plan_arrival_date, type, source_id, source_code, source_type
+        select status, qty, plan_arrival_date,estimate_sales_date, type, source_id, source_code, source_type
         from estimated_purchase_detail
-        where replenishment_detail_id = #{params.id}
+        where replenishment_detail_id = #{params.detailId}
           and source_type = #{params.sourceType}
           and is_deleted = false
     </select>

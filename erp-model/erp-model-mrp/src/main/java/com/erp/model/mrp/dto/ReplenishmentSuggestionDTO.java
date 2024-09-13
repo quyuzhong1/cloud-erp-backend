@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -182,6 +183,16 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          */
         @NotBlank(message = "明细id不能为空")
         private String detailId;
+
+        /**
+         * 类型
+         * @see ReplenishmentInventoryTypeEnum
+         */
+        private String type;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     @Data

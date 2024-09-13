@@ -26,8 +26,8 @@
     <select id="estimatedDelivery" resultType="com.erp.model.mrp.vo.EstimatedDeliveryVO">
         select status, qty, plan_arrival_date, type, source_id, source_code, source_type
         from estimated_delivery_detail
-        where replenishment_detail_id = #{params.id}
-          and type = #{type}
+        where replenishment_detail_id = #{params.detailId}
+          and type = #{params.type}
           and source_type = #{params.sourceType}
           and is_deleted = false
     </select>

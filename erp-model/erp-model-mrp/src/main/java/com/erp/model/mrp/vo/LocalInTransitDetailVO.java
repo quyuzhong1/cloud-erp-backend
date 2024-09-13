@@ -19,6 +19,8 @@ public class LocalInTransitDetailVO {
      */
     private LocalDate planArrivalDate;
 
+
+
     /**
      * 来源id
      */
