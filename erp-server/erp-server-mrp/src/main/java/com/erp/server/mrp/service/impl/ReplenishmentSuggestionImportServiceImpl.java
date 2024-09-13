@@ -536,17 +536,22 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             Integer index = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), cfgRuleStockUpEntity.getId())).max(Comparator.comparingInt(obj -> obj.getIndex())).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
             List<CfgRuleStockingRatioDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             for (StockingRatioImportExcelDTO importExcelDTO: value) {
+                List<String> errorMsgDetailList = new ArrayList<>();
+                //上级错误学习
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    errorMsgDetailList.addAll(errorMsgList);
+                }
                 //日期
                 LocalDate startDate = LocalDateUtil.parseStrToLocalDate(importExcelDTO.getStartDateStr());
                 LocalDate endDate = LocalDateUtil.parseStrToLocalDate(importExcelDTO.getEndDateStr());
                 if (startDate.isAfter(endDate)) {
-                    errorMsgList.add("开始时间不能大于结束时间");
+                    errorMsgDetailList.add("开始时间不能大于结束时间");
                 }
 
-                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                if (CollectionUtils.isNotEmpty(errorMsgDetailList)) {
                     //错误数据
                     wrongList.add(importExcelDTO);
-                    importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgDetailList));
                     errorList.add(importExcelDTO);
                     continue;
                 }
