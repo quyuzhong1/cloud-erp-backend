@@ -51,20 +51,8 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(CustomerGroupEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
-
-        //金蝶id
-        if (StringUtils.isNotBlank(entity.getSyncKingdeeId())) {
-            resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        }
-        //业务id
-        resultMap.put("id", entity.getId());
-        //分组名称
-        resultMap.put("groupName", entity.getName());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
         //生成任务
-       return saveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
     }
 
     /**
@@ -108,4 +96,21 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
         
         return null;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(CustomerGroupEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+
+        //金蝶id
+        if (StringUtils.isNotBlank(entity.getSyncKingdeeId())) {
+            resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        }
+        //业务id
+        resultMap.put("id", entity.getId());
+        //分组名称
+        resultMap.put("groupName", entity.getName());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        return resultMap;
+	}
 }

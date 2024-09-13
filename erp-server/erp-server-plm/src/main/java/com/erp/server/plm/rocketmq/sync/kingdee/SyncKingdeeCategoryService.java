@@ -1,5 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.kingdee;
 
+import java.util.Map;
+
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 
@@ -18,4 +20,6 @@ public interface SyncKingdeeCategoryService {
      * @param entity
      */
     DmpPushTaskEntity syncDataToKingdee(BasicCategoryEntity entity, String operate);
+    
+    Map<String, Object> newSyncDataToKingdee(BasicCategoryEntity entity, String operate);
 }

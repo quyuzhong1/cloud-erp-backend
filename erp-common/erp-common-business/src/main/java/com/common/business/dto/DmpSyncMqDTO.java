@@ -78,7 +78,6 @@ public class DmpSyncMqDTO extends DmpSyncTaskIdDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class SyncParamDetailDTO {
 
         /**
@@ -92,5 +91,18 @@ public class DmpSyncMqDTO extends DmpSyncTaskIdDTO implements Serializable {
          */
         @NotBlank(message = "同步操作不能为空")
         private String syncOperate;
+        
+        /**
+         * 数据id
+         */
+        private String dataId;
+
+		public SyncParamDetailDTO(@NotBlank(message = "来源id不能为空") String sourceId,
+				@NotBlank(message = "同步操作不能为空") String syncOperate) {
+			super();
+			this.sourceId = sourceId;
+			this.syncOperate = syncOperate;
+		}
+        
     }
 }

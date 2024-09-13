@@ -1,6 +1,8 @@
 package com.erp.server.dmp.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -109,5 +111,12 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return java.lang.Boolean
      **/
     Boolean batchSync(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList);
-
+    
+    /**
+     * erp推送查询同步
+     * @param dmpCfgOutputEntity
+     * @param dmpCfgInputEntity
+     * @param list
+     */
+    List<DmpOutputTaskRecordEntity> erpQuerySync(DmpCfgOutputEntity dmpCfgOutputEntity , List<DmpOutputTaskRecordEntity> list);
 }

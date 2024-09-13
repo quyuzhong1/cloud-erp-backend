@@ -93,9 +93,6 @@ public class DmpInoutController extends BaseController {
 	private DmpCfgOutputService dmpCfgOutputService;
 	
 	@Autowired
-	private DmpPushMsgService dmpPushMsgService;
-	
-	@Autowired
 	private DmpOutputTaskRecordService dmpOutputTaskRecordService;
 	
     @PostMapping("doInputTask")
@@ -213,36 +210,12 @@ public class DmpInoutController extends BaseController {
 	    		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
 	    		
 	    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMap.getValue();
-	    		List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
-	    		List<String> ids = list.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
 	    		if(DmpBasicSystemCodeEnum.ERP.getCode().equals(systemCode)) {
-	    			String extendJson = dmpCfgInputEntity.getExtendJson();
-	    			JSONObject parseObject = JSON.parseObject(extendJson);
-	    			String system = parseObject.getString("system");
-	    			String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(dmpCfgInputEntity.getTypeId())).get(0).getApiType();
-	    			
-					List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
-	    			DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO();
-	    			syncParamDTO.setSourceType(SourceTypeEnum.getEnum(apiType));
-	    			List<SyncParamDetailDTO> sourceDetailList = new ArrayList<>();
-	    			for(DmpPushMsgEntity dmpPushMsgEntity : dmpPushMsgEntityList) {
-	    				SyncParamDetailDTO syncParamDetailDTO = new SyncParamDetailDTO();
-	    				syncParamDetailDTO.setSourceId(dmpPushMsgEntity.getSourceId());
-	    				syncParamDetailDTO.setSyncOperate(dmpPushMsgEntity.getSyncOperate());
-	    				sourceDetailList.add(syncParamDetailDTO);
-	    			}
-	    			syncParamDTO.setSourceDetailList(sourceDetailList);
-	    			try {
-						FeignQuery.invoke("com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "findDataSendSyncTask", Arrays.asList(syncParamDTO));
-						dmpOutputTaskRecordService.lambdaUpdate()
-							.in(DmpOutputTaskRecordEntity::getId, ids)
-							.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
-							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-							.update();
-					} catch (Exception e) {
-						log.error("查询同步调用erp服务报错" , e);
-					}
+	    			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, list);
+	    			dmpOutputTaskRecordService.batchSync(erpQuerySync);
 	    		}else {
+	    			List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
+		    		List<String> ids = list.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
 	    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
 	    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 	    			dmpOutputHotfixCreateRequest.setQueryParams(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dataIds)));
@@ -252,6 +225,7 @@ public class DmpInoutController extends BaseController {
 							.in(DmpOutputTaskRecordEntity::getId, ids)
 							.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
 							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.set(DmpOutputTaskRecordEntity::getIsNeedSync, false)
 							.update();
 					} catch (Exception e) {
 						log.error("查询同步调用dmp报错" , e);
