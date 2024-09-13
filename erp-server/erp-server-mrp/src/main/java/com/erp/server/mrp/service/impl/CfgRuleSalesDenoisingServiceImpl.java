@@ -145,6 +145,10 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        String names = list.stream().collect(Collectors.groupingBy(CfgRuleSalesDenoisingEntity::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(names)) {
+            throw new ServiceException("销量去噪名称【{}】唯一不能添加重复数据",names);
+        }
         //排序
         Integer maxIndex = MathUtil.ZERO;
         if (isCustom) {

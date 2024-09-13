@@ -22,10 +22,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.*;
-import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
-import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
-import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
+import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -350,13 +347,27 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         resultDTO.setRefId(entity.getId());
         resultDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
         resultDTO.setPlatformType(entity.getPlatformType());
-        resultDTO.setProductionDays(Integer.valueOf(excelDTO.getProductionDays()));
-        resultDTO.setPurchaseApproveDays(Integer.valueOf(excelDTO.getPurchaseApproveDays()));
-        resultDTO.setSupplierDeliveryDays(Integer.valueOf(excelDTO.getSupplierDeliveryDays()));
-        resultDTO.setQcDays(Integer.valueOf(excelDTO.getQcDays()));
-        resultDTO.setPurchaseCycleDays(Integer.valueOf(excelDTO.getPurchaseCycleDays()));
-        resultDTO.setSafeDays(Integer.valueOf(excelDTO.getSafeDays()));
-        resultDTO.setStockingRatio(MathUtil.valueOf(excelDTO.getStockingRatio()));
+        if (ObjectUtil.isNotEmpty(excelDTO.getProductionDays())) {
+            resultDTO.setProductionDays(Integer.valueOf(excelDTO.getProductionDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getPurchaseApproveDays())) {
+            resultDTO.setPurchaseApproveDays(Integer.valueOf(excelDTO.getPurchaseApproveDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getSupplierDeliveryDays())) {
+            resultDTO.setSupplierDeliveryDays(Integer.valueOf(excelDTO.getSupplierDeliveryDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getQcDays())) {
+            resultDTO.setQcDays(Integer.valueOf(excelDTO.getQcDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getPurchaseCycleDays())) {
+            resultDTO.setPurchaseCycleDays(Integer.valueOf(excelDTO.getPurchaseCycleDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getSafeDays())) {
+            resultDTO.setSafeDays(Integer.valueOf(excelDTO.getSafeDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getStockingRatio())) {
+            resultDTO.setStockingRatio(MathUtil.valueOf(excelDTO.getStockingRatio()));
+        }
 
         //物流信息
         List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList = new ArrayList<>();
@@ -419,8 +430,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             sixUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getSixLogisticsDays()));
             sixUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getSixLogisticsCycleDays()));
             cfgLogisticsList.add(sixUpdateDTO);
-            resultDTO.setCfgLogisticsList(cfgLogisticsList);
         }
+        resultDTO.setCfgLogisticsList(cfgLogisticsList);
         return resultDTO;
     }
 
@@ -517,26 +528,35 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             if (StrUtil.isBlank(cfgRuleStockUpEntity.getId())) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的备货设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
+            String names = value.stream().collect(Collectors.groupingBy(StockingRatioImportExcelDTO::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
+            if (StrUtil.isNotBlank(names)) {
+                errorMsgList.add("备货系数名称唯一不能添加重复数据");
+            }
             //备货系数
             Integer index = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), cfgRuleStockUpEntity.getId())).max(Comparator.comparingInt(obj -> obj.getIndex())).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
             List<CfgRuleStockingRatioDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             for (StockingRatioImportExcelDTO importExcelDTO: value) {
+                List<String> errorMsgDetailList = new ArrayList<>();
+                //上级错误学习
+                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                    errorMsgDetailList.addAll(errorMsgList);
+                }
                 //日期
-                LocalDate startDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getStartDateStr());
-                LocalDate endDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getEndDateStr());
+                LocalDate startDate = LocalDateUtil.parseStrToLocalDate(importExcelDTO.getStartDateStr());
+                LocalDate endDate = LocalDateUtil.parseStrToLocalDate(importExcelDTO.getEndDateStr());
                 if (startDate.isAfter(endDate)) {
-                    errorMsgList.add("开始时间不能大于结束时间");
+                    errorMsgDetailList.add("开始时间不能大于结束时间");
                 }
 
-                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                if (CollectionUtils.isNotEmpty(errorMsgDetailList)) {
                     //错误数据
                     wrongList.add(importExcelDTO);
-                    importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgDetailList));
                     errorList.add(importExcelDTO);
                     continue;
                 }
                 index ++;
-                CfgRuleStockingRatioDTO.UpdateDTO updateDTO = formatCfgRuleStockUpDTO(excelDTO, index);
+                CfgRuleStockingRatioDTO.UpdateDTO updateDTO = formatCfgRuleStockUpDTO(importExcelDTO, index);
                 updateDTOList.add(updateDTO);
             }
             cfgRuleStockingRatioService.update(updateDTOList,cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),Boolean.TRUE);

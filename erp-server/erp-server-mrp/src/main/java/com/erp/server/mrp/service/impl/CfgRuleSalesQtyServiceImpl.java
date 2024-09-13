@@ -90,7 +90,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         }
 
         // 数据处理
-        handleData(cfgRuleSalesQtyEntity,oldList.get(0),updateDetailDTO.getIsCustom());
+        handleData(cfgRuleSalesQtyEntity,CollectionUtils.isNotEmpty(oldList) ? oldList.get(0) : null,updateDetailDTO.getIsCustom());
 
         boolean save = super.saveOrUpdate(cfgRuleSalesQtyEntity);
         if(!save) {
@@ -351,7 +351,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     * 新增修改处理数据
     */
     private void handleData(CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity,CfgRuleSalesQtyEntity oldEntity,Boolean isCustom) {
-        if (isCustom) {
+        if (isCustom && ObjectUtil.isNotEmpty(oldEntity)) {
             if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsCfgSame())) {
                 cfgRuleSalesQtyEntity.setIsCfgSame(oldEntity.getIsCfgSame());
             }

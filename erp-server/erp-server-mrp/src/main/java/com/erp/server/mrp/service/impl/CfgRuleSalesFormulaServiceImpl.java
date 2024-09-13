@@ -183,6 +183,11 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             if (isCustom) {
                 maxIndex = oldList.stream().filter(obj -> StrUtil.equals(obj.getType(),entry.getKey())).max(Comparator.comparingInt(CfgRuleSalesFormulaEntity::getIndex)).map(CfgRuleSalesFormulaEntity::getIndex).orElse(MathUtil.ZERO);
             }
+            String names = value.stream().filter(obj -> StrUtil.isNotBlank(obj.getName())).collect(Collectors.groupingBy(CfgRuleSalesFormulaEntity::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
+            if (StrUtil.isNotBlank(names)) {
+                throw new ServiceException("销量名称【{}】唯一不能添加重复数据",names);
+            }
+
             for (CfgRuleSalesFormulaEntity salesFormula : value) {
                 salesFormula.setSalesQtyId(salesQtyId);
                 //排序
