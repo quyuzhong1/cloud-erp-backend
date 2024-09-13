@@ -21,7 +21,7 @@
         <result column="delivery_qty" property="deliveryQty"/>
         <result column="receive_qty" property="receiveQty"/>
         <result column="in_transit_qty" property="inTransitQty"/>
-        <result column="plan_arrival_date" property="planArrivalDate"/>
+        <result column="estimate_sales_date" property="estimateSalesDate"/>
         <result column="calc_version" property="calcVersion"/>
     </resultMap>
     <select id="overseasInTransitDetail" resultType="com.erp.model.mrp.vo.OverseasInTransitDetailVO">
@@ -32,7 +32,7 @@
                delivery_qty,
                receive_qty,
                in_transit_qty,
-               plan_arrival_date
+               estimate_sales_date
         from overseas_in_transit_detail
         where replenishment_detail_id = #{detailId}
           and is_deleted = false

@@ -17,6 +17,7 @@
         <result column="status" property="status"/>
         <result column="qty" property="qty"/>
         <result column="plan_arrival_date" property="planArrivalDate"/>
+        <result column="estimate_sales_date" property="estimateSalesDate"/>
         <result column="type" property="type"/>
         <result column="source_id" property="sourceId"/>
         <result column="source_code" property="sourceCode"/>

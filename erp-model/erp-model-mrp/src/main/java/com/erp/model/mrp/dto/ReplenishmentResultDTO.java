@@ -458,7 +458,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceType(dto.getSourceType());
             entity.setStatus(dto.getStatus());
             entity.setDeliveryDate(dto.getDeliveryDate());
-            entity.setPlanArrivalDate(dto.getEstimateSalesDate());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
             entity.setDeclareQty(dto.getDeclareQty());
             entity.setDeliveryQty(dto.getDeliveryQty());
             entity.setReceiveQty(dto.getReceiveQty());
@@ -815,8 +815,8 @@ public class ReplenishmentResultDTO {
             entity.setReplenishmentDetailId(replenishmentDetailId);
             entity.setStatus(dto.getStatus());
             entity.setQty(dto.getQty());
-            entity.setPlanArrivalDate(dto.getEstimateSalesDate());
             entity.setType(dto.getType());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
             entity.setSourceId(dto.getSourceId());
             entity.setSourceCode(dto.getSourceCode());
             entity.setSourceType(dto.getSourceType());
@@ -1000,7 +1000,7 @@ public class ReplenishmentResultDTO {
             entity.setDeliveryQty(dto.getDeliveryQty());
             entity.setReceiveQty(dto.getReceiveQty());
             entity.setInTransitQty(dto.getInTransitQty());
-            entity.setPlanArrivalDate(dto.getEstimateSalesDate());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
             entity.setCalcVersion(calcVersion);
             return entity;
         }

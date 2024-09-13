@@ -43,6 +43,12 @@ public class LocalInTransitDetailEntity extends BaseEntity<LocalInTransitDetailE
     private LocalDate planArrivalDate;
 
     /**
+     * 预计可售日期
+     */
+    @TableField("estimate_sales_date")
+    private LocalDate estimateSalesDate;
+
+    /**
      * 来源id
      */
     @TableField("source_id")

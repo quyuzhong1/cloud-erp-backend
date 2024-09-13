@@ -85,10 +85,10 @@ public class FbaInTransitDetailEntity extends BaseEntity<FbaInTransitDetailEntit
     private Integer inTransitQty;
 
     /**
-     * 预计到货日期
+     * 预计可售日期
      */
-    @TableField("plan_arrival_date")
-    private LocalDate planArrivalDate;
+    @TableField("estimate_sales_date")
+    private LocalDate estimateSalesDate;
 
     /**
      * 计算版本  所有子表加   根据单号生成规则

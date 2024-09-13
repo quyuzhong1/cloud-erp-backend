@@ -43,10 +43,10 @@ public class EstimatedDeliveryDetailEntity extends BaseEntity<EstimatedDeliveryD
     private Integer qty;
 
     /**
-     * 预计到货日期
+     * 预计可售日期
      */
-    @TableField("plan_arrival_date")
-    private LocalDate planArrivalDate;
+    @TableField("estimate_sales_date")
+    private LocalDate estimateSalesDate;
 
     /**
      * 业务类型 FBA/海外仓
@@ -85,7 +85,7 @@ public class EstimatedDeliveryDetailEntity extends BaseEntity<EstimatedDeliveryD
 
     public static final String QTY = "qty";
 
-    public static final String PLAN_ARRIVAL_DATE = "plan_arrival_date";
+    public static final String ESTIMATE_SALES_DATE = "estimate_sales_date";
 
     public static final String TYPE = "type";
 

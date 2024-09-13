@@ -16,6 +16,7 @@
         <result column="replenishment_detail_id" property="replenishmentDetailId"/>
         <result column="qty" property="qty"/>
         <result column="plan_arrival_date" property="planArrivalDate"/>
+        <result column="estimate_sales_date" property="estimateSalesDate"/>
         <result column="source_id" property="sourceId"/>
         <result column="source_code" property="sourceCode"/>
         <result column="calc_version" property="calcVersion"/>
@@ -24,6 +25,7 @@
     <select id="localInTransitDetail" resultType="com.erp.model.mrp.vo.LocalInTransitDetailVO">
         select qty,
                plan_arrival_date,
+               estimate_sales_date,
                source_id,
                source_code,
                source_type

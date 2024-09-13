@@ -19,7 +19,10 @@ public class LocalInTransitDetailVO {
      */
     private LocalDate planArrivalDate;
 
-
+    /**
+     * 预计可售日期
+     */
+    private LocalDate estimateSalesDate;
 
     /**
      * 来源id

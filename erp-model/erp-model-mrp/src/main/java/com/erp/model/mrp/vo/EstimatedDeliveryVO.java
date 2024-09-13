@@ -26,7 +26,7 @@ public class EstimatedDeliveryVO {
     /**
      * 预计到货日期
      */
-    private LocalDate planArrivalDate;
+    private LocalDate estimateSalesDate;
 
     /**
      * 业务类型 FBA/海外仓
