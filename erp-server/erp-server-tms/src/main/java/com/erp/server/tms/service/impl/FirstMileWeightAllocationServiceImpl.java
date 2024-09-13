@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,6 +15,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
@@ -23,7 +25,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.plm.feign.BomSkuFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -44,6 +46,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.common.core.enums.ApiError;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,7 +107,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     @Resource
     private WmsCartonFeign wmsCartonFeign;
     @Resource
-    private BomSkuFeign bomSkuFeign;
+    private PlmTaskFeign plmTaskFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
@@ -271,7 +274,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         String cfgWeightAllocationType = cfgSettingView.getAllocationSettingDTO().getWeightFirstAllocation();
         //产品包装信息
         List<String> skuIds = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomSkuList = bomSkuFeign.listBomChildBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<String> childrenSkuIds = bomSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
         childrenSkuIds.addAll(skuIds);
         List<ProductPackEntity> productPackList = productPackFeign.listBySkuIds(childrenSkuIds);
@@ -434,14 +437,17 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         String cfgWeightAllocationType = cfgSettingView.getAllocationSettingDTO().getWeightFirstAllocation();
         //产品包装信息
         List<String> skuIds = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomSkuList = bomSkuFeign.listBomChildBySkuIds(skuIds);
-        List<String> childrenSkuIds = bomSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        childrenSkuIds.addAll(skuIds);
-        List<ProductPackEntity> productPackList = productPackFeign.listBySkuIds(childrenSkuIds);
+        List<BomChildrenSkuDTO> bomSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        //遍历出combo类型的skuid
+        List<BomChildrenSkuDTO> comboSkuList = bomSkuList.stream().filter(b -> b.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        Map<String, List<BomChildrenSkuDTO>> comboSkuMap = comboSkuList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
+        List<String> comboSkuIds = comboSkuList.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        //遍历出single类型的skuid
+        List<String> singleSkuIds = skuIds.stream().filter(e ->!comboSkuIds.contains(e)).collect(Collectors.toList());
+        List<ProductPackEntity> productPackList = productPackFeign.listBySkuIds(singleSkuIds);
         //物流商
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(logisticsBillEntity.getLogisticsSupplierId());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(firstMileDeliveryEntity.getCountryId()));
-
         FirstMileWeightAllocationDTO.AddDTO weightAllocationDTO = new FirstMileWeightAllocationDTO.AddDTO();
         weightAllocationDTO.setLogisticsBillId(logisticsBillId);
         weightAllocationDTO.setSourceId(logisticsBillEntity.getOutstockId());
@@ -491,20 +497,25 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 entity.setProductName(deliveryDetail.getProductName());
                 entity.setPlatformSkuNo(deliveryDetail.getPlatformSkuNo());
             }
-            List<BomChildrenSkuDTO> bomChildrenList = bomSkuList.stream().filter(item -> item.getParentSkuId().equals(cartonDetail.getSkuId())).collect(Collectors.toList());
-            if(!bomChildrenList.isEmpty()){
-                //bom
-                BigDecimal parentSkuWeight = getParentSkuWeight(bomChildrenList, productPackList);
-                entity.setProductWeight(parentSkuWeight);
-            }else {
-                //单sku
-                Optional<ProductPackEntity> productPackOptional = productPackList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId())).findFirst();
-                ProductPackEntity productPackEntity = productPackOptional.get();
+            //2024-09-13 jack and 凤玲 头程费用分摊页面--单产品重量取值逻辑优化
+            //单产品重量：取值来源表为产品管理-毛重/净重：优先取值毛重，其次取值净重
+            //1.单SKU时：直接取值毛重和净重
+            //2.组合SKU时：销售套装取值 优先毛重*用例【取值版本为最新版本，后续改为发货单版本】
+            if(singleSkuIds.contains(cartonDetail.getSkuId())){
+                ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId())).findFirst().get();
                 productPackEntity.handleData();
                 BigDecimal productWeight = productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) != 0 ? productPackEntity.getGrossWeight() : productPackEntity.getNetWeight();
                 entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
+            }else if(comboSkuIds.contains(cartonDetail.getSkuId())){
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = comboSkuMap.get(cartonDetail.getSkuId());
+                BigDecimal sum = BigDecimal.ZERO;
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                    BigDecimal grossWeight = bomChildrenSkuDTO.getGrossWeight().compareTo(BigDecimal.ZERO)<=0 ?  bomChildrenSkuDTO.getNetWeight() : bomChildrenSkuDTO.getGrossWeight();
+                    BigDecimal quantity = null == bomChildrenSkuDTO.getQuantity() || bomChildrenSkuDTO.getQuantity() <0 ? BigDecimal.ZERO : new BigDecimal(bomChildrenSkuDTO.getQuantity());
+                    sum = sum.add(quantity.multiply(grossWeight).divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
+                }
+                entity.setProductWeight(sum);
             }
-
             BigDecimal boxSize = cartonDetail.getBoxLength().multiply(cartonDetail.getBoxWidth()).multiply(cartonDetail.getBoxHeight());
             BigDecimal volumeSetting = BigDecimal.valueOf(weightAllocationDTO.getVolumeSetting());
             if(volumeSetting.compareTo(BigDecimal.ZERO) == 0){
