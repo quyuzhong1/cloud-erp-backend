@@ -1,11 +1,13 @@
 package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.model.mrp.enums.TimePeriodEnum;
+import com.erp.model.mrp.vo.ReplenishmentSuggestionVO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -242,25 +244,6 @@ public class ReplenishmentResultDTO {
          */
         private Integer totalInventoryQty;
 
-        /**
-         * 分时段销量  json
-         */
-        private String salesQty;
-
-        /**
-         * 分时段日均销  json
-         */
-        private String avgSalesQty;
-
-        /**
-         * 预估销量 json
-         */
-        private String salesEstimateQty;
-
-        /**
-         * 预估日销量  json
-         */
-        private String avgSalesEstimateQty;
 
         /**
          * 采购审批天数（天）
@@ -367,20 +350,20 @@ public class ReplenishmentResultDTO {
             detail.setLocalPlanPurchaseQty(dto.getLocalPlanPurchaseQty());
             detail.setTotalInventoryQty(dto.getTotalInventoryQty());
             if (!CollectionUtils.isEmpty(timePeriodSales)) {
-                detail.setSalesQty(JSON.toJSONString(timePeriodSales.stream()
-                        .collect(Collectors.toMap(v -> v.getCode().getName(), TimePeriodSalesDTO::getQty))));
+                detail.setSalesQty(JSONUtil.parseArray(timePeriodSales.stream().map(v -> new ReplenishmentSuggestionVO.SalesVO(v.getCode().getName(), v.getQty()))
+                        .collect(Collectors.toList())));
             }
             if (!CollectionUtils.isEmpty(avgTimePeriodSales)) {
-                detail.setAvgSalesQty(JSON.toJSONString(avgTimePeriodSales.stream()
-                        .collect(Collectors.toMap(v -> v.getCode().getName(), TimePeriodSalesDTO::getQty))));
+                detail.setAvgSalesQty(JSONUtil.parseArray(avgTimePeriodSales.stream().map(v -> new ReplenishmentSuggestionVO.SalesVO(v.getCode().getName(), v.getQty()))
+                        .collect(Collectors.toList())));
             }
             if (!CollectionUtils.isEmpty(timePeriodSalesEstimates)) {
-                detail.setSalesEstimateQty(JSON.toJSONString(timePeriodSalesEstimates.stream()
-                        .collect(Collectors.toMap(v -> RecentTimePeriodEnum.getNameByCode(v.getCode(), false, dto.getCalcDate()), TimePeriodSalesEstimateDTO::getQty))));
+                detail.setSalesEstimateQty(JSONUtil.parseArray(timePeriodSalesEstimates.stream().map(v -> new ReplenishmentSuggestionVO.SalesVO(RecentTimePeriodEnum.getNameByCode(v.getCode(), false, dto.getCalcDate()), v.getQty()))
+                        .collect(Collectors.toList())));
             }
             if (!CollectionUtils.isEmpty(avgTimePeriodSalesEstimates)) {
-                detail.setAvgSalesEstimateQty(JSON.toJSONString(avgTimePeriodSalesEstimates.stream()
-                        .collect(Collectors.toMap(v -> RecentTimePeriodEnum.getNameByCode(v.getCode(), true, dto.getCalcDate()), TimePeriodSalesEstimateDTO::getQty))));
+                detail.setAvgSalesEstimateQty(JSONUtil.parseArray(avgTimePeriodSalesEstimates.stream().map(v -> new ReplenishmentSuggestionVO.SalesVO(RecentTimePeriodEnum.getNameByCode(v.getCode(), true, dto.getCalcDate()), v.getQty()))
+                        .collect(Collectors.toList())));
             }
             detail.setPurchaseApproveDays(dto.getPurchaseApproveDays());
             detail.setProductionDays(dto.getProductionDays());

@@ -1,14 +1,11 @@
 package com.erp.model.mrp.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.erp.model.mrp.enums.ReplenishmentTypeEnum;
-import com.erp.model.mrp.handler.ObjectToListSaleHandler;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.ibatis.type.JdbcType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -141,24 +138,25 @@ public class ReplenishmentSuggestionVO {
         /**
          * 分时段销量
          */
-        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private String salesQtyJson;
         private List<SalesVO> salesQty;
 
         /**
          * 分时段日均销
          */
-        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private String avgSalesQtyJson;
         private List<SalesVO> avgSalesQty;
 
         /**
          * 预估销量
          */
-        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private String salesEstimateQtyJson;
         private List<SalesVO> salesEstimateQty;
         /**
          * 预估日销量
          */
-        @TableField( jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private String avgSalesEstimateQtyJson;
+
         private List<SalesVO> avgSalesEstimateQty;
         /**
          * 运营月销量预估
@@ -384,24 +382,24 @@ public class ReplenishmentSuggestionVO {
         /**
          * 分时段销量
          */
-        @TableField(jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private String salesQtyJson;
         private List<SalesVO> salesQty;
 
         /**
          * 分时段日均销
          */
-        @TableField(jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private String avgSalesQtyJson;
         private List<SalesVO> avgSalesQty;
 
         /**
          * 预估销量
          */
-        @TableField(jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private String salesEstimateQtyJson;
         private List<SalesVO> salesEstimateQty;
         /**
          * 预估日销量
          */
-        @TableField(jdbcType = JdbcType.OTHER, typeHandler = ObjectToListSaleHandler.class)
+        private String avgSalesEstimateQtyJson;
         private List<SalesVO> avgSalesEstimateQty;
         /**
          * 采购审批天数（天）
@@ -470,6 +468,8 @@ public class ReplenishmentSuggestionVO {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class SalesVO {
         /**
          * 类型
@@ -478,7 +478,7 @@ public class ReplenishmentSuggestionVO {
         /**
          * 数量
          */
-        private String qty;
+        private BigDecimal qty;
     }
 
     @Getter

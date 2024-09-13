@@ -4,16 +4,13 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
-import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
@@ -24,20 +21,14 @@ import com.erp.server.mrp.service.*;
 import com.google.common.collect.Lists;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
-import static com.erp.model.mrp.enums.SnapshotTableEnum.FBA_INVENTORY;
 
 @Service
 public class BasicReplenishmentDataService {
@@ -93,59 +84,59 @@ public class BasicReplenishmentDataService {
      */
     public void initReplenishmentSku(LocalDate calculationDate) {
         calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
-        //清洗每日库存到历史表
-        List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(FBA_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
-        if (!CollectionUtils.isEmpty(inventoryEntities)) {
-            fbaHistoryInventoryService.saveTodayInventory(inventoryEntities, calculationDate);
-        }
-
-        //获取所有已审核且存在上市时间得非费用服务类sku
-        List<SkuVO> vos = plmTaskFeign.listApproveAndListingSku();
-        //获取已生成补货基础数据得信息
-        List<ReplenishmentSuggestionEntity> replenishmentSuggestion = replenishmentSuggestionService.listAllSkuAndShop();
-        List<String> suggestionList = replenishmentSuggestion.stream().map(v -> v.getSkuId() + "|" + v.getSkuNo() + "|" + v.getShopId()).collect(Collectors.toList());
-        //获取所有店铺
-        ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
-        if (!allShopResult.isSuccess()) {
-            throw new ServiceException(ApiError.ERROR_1023);
-        }
-        List<ReplenishmentSuggestionEntity> suggestionLists = new ArrayList<>();
-        List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
-        for (CfgPlatformMappingEntity mapping : mappings) {
-            for (ShopInfoEntity shopInfo : allShopResult.getData()) {
-                //跳过店铺不是当前循环平台的数据
-                if (!mapping.getPlatform().equals(shopInfo.getDictPlatform())) {
-                    continue;
-                }
-                ReplenishmentSuggestionEntity entity = new ReplenishmentSuggestionEntity();
-                entity.setShopId(shopInfo.getId());
-                entity.setArea(shopInfo.getDictAreaCode());
-                entity.setFbaWarehouseId(shopInfo.getWarehouseId());
-                entity.setCountry(shopInfo.getDictCountryCode());
-                entity.setPlatformType(PlatformMappingTypeEnum.getEnum(mapping.getType()).getPlatformType().getCode());
-                entity.setPlatform(shopInfo.getDictPlatform());
-                suggestionLists.add(entity);
-            }
-        }
-        //过滤掉已生成建议基础数据且sku_no未发生变化得sku
-        List<ReplenishmentSuggestionEntity> replenishmentList = suggestionLists.parallelStream().map(v -> vos.parallelStream().map(e -> {
-            if (suggestionList.contains(e.getSkuId() + "|" + e.getSkuNo() + "|" + v.getShopId())) {
-                return null;
-            }
-            ReplenishmentSuggestionEntity entity = replenishmentSuggestion.stream().filter(suggestion -> suggestion.getSkuId().equals(e.getSkuId()) && suggestion.getShopId().equals(v.getShopId()))
-                    .findFirst().orElse(new ReplenishmentSuggestionEntity());
-            entity.setShopId(v.getShopId());
-            entity.setArea(v.getArea());
-            entity.setFbaWarehouseId(v.getFbaWarehouseId());
-            entity.setCountry(v.getCountry());
-            entity.setPlatformType(v.getPlatformType());
-            entity.setPlatform(v.getPlatform());
-            entity.setSkuId(e.getSkuId());
-            entity.setSkuNo(e.getSkuNo());
-            entity.setReplenishmentType(ObjectUtils.isEmpty(entity.getReplenishmentType()) ? ReplenishmentTypeEnum.NORMAL.getCode() : entity.getReplenishmentType());
-            return entity;
-        }).filter(Objects::nonNull).collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
-        replenishmentSuggestionService.saveOrUpdateBatch(replenishmentList);
+//        //清洗每日库存到历史表
+//        List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(FBA_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+//        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+//            fbaHistoryInventoryService.saveTodayInventory(inventoryEntities, calculationDate);
+//        }
+//
+//        //获取所有已审核且存在上市时间得非费用服务类sku
+//        List<SkuVO> vos = plmTaskFeign.listApproveAndListingSku();
+//        //获取已生成补货基础数据得信息
+//        List<ReplenishmentSuggestionEntity> replenishmentSuggestion = replenishmentSuggestionService.listAllSkuAndShop();
+//        List<String> suggestionList = replenishmentSuggestion.stream().map(v -> v.getSkuId() + "|" + v.getSkuNo() + "|" + v.getShopId()).collect(Collectors.toList());
+//        //获取所有店铺
+//        ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
+//        if (!allShopResult.isSuccess()) {
+//            throw new ServiceException(ApiError.ERROR_1023);
+//        }
+//        List<ReplenishmentSuggestionEntity> suggestionLists = new ArrayList<>();
+//        List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
+//        for (CfgPlatformMappingEntity mapping : mappings) {
+//            for (ShopInfoEntity shopInfo : allShopResult.getData()) {
+//                //跳过店铺不是当前循环平台的数据
+//                if (!mapping.getPlatform().equals(shopInfo.getDictPlatform())) {
+//                    continue;
+//                }
+//                ReplenishmentSuggestionEntity entity = new ReplenishmentSuggestionEntity();
+//                entity.setShopId(shopInfo.getId());
+//                entity.setArea(shopInfo.getDictAreaCode());
+//                entity.setFbaWarehouseId(shopInfo.getWarehouseId());
+//                entity.setCountry(shopInfo.getDictCountryCode());
+//                entity.setPlatformType(PlatformMappingTypeEnum.getEnum(mapping.getType()).getPlatformType().getCode());
+//                entity.setPlatform(shopInfo.getDictPlatform());
+//                suggestionLists.add(entity);
+//            }
+//        }
+//        //过滤掉已生成建议基础数据且sku_no未发生变化得sku
+//        List<ReplenishmentSuggestionEntity> replenishmentList = suggestionLists.parallelStream().map(v -> vos.parallelStream().map(e -> {
+//            if (suggestionList.contains(e.getSkuId() + "|" + e.getSkuNo() + "|" + v.getShopId())) {
+//                return null;
+//            }
+//            ReplenishmentSuggestionEntity entity = replenishmentSuggestion.stream().filter(suggestion -> suggestion.getSkuId().equals(e.getSkuId()) && suggestion.getShopId().equals(v.getShopId()))
+//                    .findFirst().orElse(new ReplenishmentSuggestionEntity());
+//            entity.setShopId(v.getShopId());
+//            entity.setArea(v.getArea());
+//            entity.setFbaWarehouseId(v.getFbaWarehouseId());
+//            entity.setCountry(v.getCountry());
+//            entity.setPlatformType(v.getPlatformType());
+//            entity.setPlatform(v.getPlatform());
+//            entity.setSkuId(e.getSkuId());
+//            entity.setSkuNo(e.getSkuNo());
+//            entity.setReplenishmentType(ObjectUtils.isEmpty(entity.getReplenishmentType()) ? ReplenishmentTypeEnum.NORMAL.getCode() : entity.getReplenishmentType());
+//            return entity;
+//        }).filter(Objects::nonNull).collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
+//        replenishmentSuggestionService.saveOrUpdateBatch(replenishmentList);
         calculationDetail(calculationDate);
     }
 
