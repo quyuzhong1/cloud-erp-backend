@@ -42,7 +42,7 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<VirtualInventoryDTO.ListDTO> paging(Page query,@Param("params") VirtualInventoryDTO.SearchParamDTO params);
+    IPage<VirtualInventoryDTO.ListDTO> paging(Page query,@Param("params") VirtualInventoryDTO.SearchParamDTO params, @Param("lastId") String lastId);
     /**
      * 根据SKU和虚拟仓库查询
      * @author will
@@ -141,5 +141,5 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @return List<WarehouseStatisticsExcelDTO>
      */
     List<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params, @Param("lastId") String lastId);
-    Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("page")  Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> page, @Param("params") VirtualInventoryDiffDTO.SearchParamDTO params, @Param("lastId") String lastId);
+    Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("page")  Page<VirtualInventoryDiffDTO.SearchParamDTO> page, @Param("params") VirtualInventoryDiffDTO.SearchParamDTO params, @Param("lastId") String lastId);
 }

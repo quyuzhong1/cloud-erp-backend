@@ -272,6 +272,12 @@ public class PackingTaskDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+
+        /**
+         * 关联单号
+         */
+        private String sourceCode;
     }
 
     /**
