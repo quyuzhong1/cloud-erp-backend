@@ -78,7 +78,7 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
             if (!CollectionUtils.isEmpty(data.getList())) {
                 list.addAll((Collection<? extends VirtualInventoryDiffDTO.ListDiffExportDataDTO>) data.getList());
             }
-            diffExportTotalCount = data.getTotalCount();
+
             if (diffExportTotalCount == 0) {
                 diffExportTotalCount = data.getTotalCount();
             }
@@ -102,7 +102,6 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
                 warehouseStatisticsList.addAll((Collection<? extends VirtualInventoryDTO.WarehouseStatisticsExcelDTO>) data.getList());
             }
 
-            totalCount = data.getTotalCount();
             if (totalCount == 0) {
                 totalCount = data.getTotalCount();
             }
