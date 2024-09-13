@@ -22,10 +22,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.*;
-import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
-import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
-import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
+import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -517,6 +514,12 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             if (StrUtil.isBlank(cfgRuleStockUpEntity.getId())) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的备货设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
+
+            String names = value.stream().collect(Collectors.groupingBy(StockingRatioImportExcelDTO::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
+            if (StrUtil.isNotBlank(names)) {
+                throw new ServiceException("备货系数名称【{}】唯一不能添加重复数据",names);
+            }
+
             //备货系数
             Integer index = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), cfgRuleStockUpEntity.getId())).max(Comparator.comparingInt(obj -> obj.getIndex())).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
             List<CfgRuleStockingRatioDTO.UpdateDTO> updateDTOList = new ArrayList<>();

@@ -581,7 +581,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         replenishmentRefLabelService.update(dto,entity.getId());
 
         //现标签
-        List<LabelInfoEntity> labelInfoList = labelInfoService.listByIds(updateLabelDTO.getLabelIdList());
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(updateLabelDTO.getLabelIdList()) ? Collections.EMPTY_LIST : labelInfoService.listByIds(updateLabelDTO.getLabelIdList());
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
         //原标签
         List<LabelInfoDTO.ViewDTO> oldList = replenishmentRefLabelService.listLabelInfoByRefId(updateLabelDTO.getId());
@@ -606,7 +606,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         dto.setIsIncrement(Boolean.TRUE);
         replenishmentRefLabelService.update(dto,entity.getId());
         // 操作日志
-        List<LabelInfoEntity> labelInfoList = labelInfoService.listByIds(labelIdList);
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.EMPTY_LIST : labelInfoService.listByIds(labelIdList);
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
         String msg = StrUtil.format("添加了标签【{}】",labelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "添加标签");
@@ -623,7 +623,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         //取消标签
         replenishmentRefLabelService.deleteLabel(labelIdList,entity.getId());
 
-        List<LabelInfoEntity> labelInfoList = labelInfoService.listByIds(labelIdList);
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.EMPTY_LIST : labelInfoService.listByIds(labelIdList);
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
         String msg = StrUtil.format("删除了标签【{}】",labelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "删除标签");
@@ -717,7 +717,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         List<ReplenishmentSuggestionVO.PagingView> list = pagingVO.getRecords();
         if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO<>();
+            throw new ServiceException("未找到历史销量数据");
         }
         //历史销量数据处理
         List<LinkedHashMap> resultList = handleHistorySalesQty(list);
