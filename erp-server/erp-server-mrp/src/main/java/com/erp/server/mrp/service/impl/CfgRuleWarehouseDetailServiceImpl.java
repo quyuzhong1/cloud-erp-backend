@@ -92,7 +92,7 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             throw new ServiceException("仓库（规则设置）明细保存失败");
         }
         //日志
-        addOperateLog(list,warehouseEntityList,mainId,virtualWarehouseIdList);
+        addOperateLog(list,warehouseEntityList,mainId,virtualWarehouseIdList,ruleWarehouseEntity);
 
         return Boolean.TRUE;
     }
@@ -105,7 +105,13 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
      * @param mainId
      * @param virtualWarehouseIdList
      */
-    private void addOperateLog (List<CfgRuleWarehouseDetailEntity> list,List<WarehouseEntity> warehouseEntityList, String mainId,List<String> virtualWarehouseIdList) {
+    private void addOperateLog (List<CfgRuleWarehouseDetailEntity> list,List<WarehouseEntity> warehouseEntityList
+            , String mainId,List<String> virtualWarehouseIdList,CfgRuleWarehouseEntity ruleWarehouseEntity) {
+        /**
+         * 1、启用虚拟仓时添加虚拟仓日志，否则添加实体仓日志
+         * 2、启用海外仓时添加海外仓日志
+         */
+
         //虚拟仓
         List<VirtualWarehouseEntity> virtualWarehouseList = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
@@ -122,13 +128,23 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         //日志
         for (Map.Entry<String, List<CfgRuleWarehouseDetailEntity>> entry : map.entrySet()) {
             List<CfgRuleWarehouseDetailEntity> value = entry.getValue();
+
+            //本地仓日志头
             if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(entry.getKey())) {
-                if (StrUtil.isBlank(value.get(0).getVirtualWarehouseId())) {
-                    msg.append("本地仓:<br>");
-                } else {
-                    msg.append("虚拟仓:<br>");
+                //未启用虚拟仓不添加虚拟仓日志，未启用实体仓不添加实体仓日志
+                if ((CollectionUtils.isNotEmpty(virtualWarehouseList) && !ruleWarehouseEntity.getIsEnableVirtual())
+                        || (CollectionUtils.isEmpty(virtualWarehouseList) && ruleWarehouseEntity.getIsEnableVirtual())) {
+                    continue;
                 }
-            } else {
+
+                if (ruleWarehouseEntity.getIsEnableVirtual()) {
+                    msg.append("虚拟仓:<br>");
+                } else {
+                    msg.append("本地仓:<br>");
+                }
+            }
+            //海外仓日志头
+            if (CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(entry.getKey()) && ruleWarehouseEntity.getIsEnableOverseas()) {
                 msg.append("海外仓:<br>");
             }
             for (CfgRuleWarehouseDetailEntity detailEntity : value) {
@@ -141,17 +157,22 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
                         shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
                 //平台
                 String dictPlatformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(), detailEntity.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
-
+                //本地日志
                 if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(detailEntity.getWarehouseType())) {
-                    if (StrUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
-                        msg.append(StrUtil.format("•实体仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】<br>",  warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
-                    } else {
+                    if (ruleWarehouseEntity.getIsEnableVirtual()) {
                         msg.append(StrUtil.format("•虚拟仓【{}】、关联实体仓【{}】、关联平台【{}】、关联店铺【{}】、库存分配【{}】<br>", virtualWarehouseName,warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
+                    } else {
+                        msg.append(StrUtil.format("•实体仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】<br>",  warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
                     }
-                } else {
+                }
+                //海外仓日志
+                if (CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(entry.getKey()) && ruleWarehouseEntity.getIsEnableOverseas()) {
                     msg.append(StrUtil.format("•海外备货仓【{}】、平台【{}】、店铺【{}】、库存分配【{}】<br>", warehouseName,dictPlatformName,shopNames, CfgRuleInventoryAllocateTypeEnum.getName(detailEntity.getInventoryAllocateType())));
                 }
             }
+        }
+        if (StrUtil.isBlank(msg)) {
+            return;
         }
         operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), mainId, "仓库");
     }
