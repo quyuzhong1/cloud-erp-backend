@@ -347,13 +347,27 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         resultDTO.setRefId(entity.getId());
         resultDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
         resultDTO.setPlatformType(entity.getPlatformType());
-        resultDTO.setProductionDays(Integer.valueOf(excelDTO.getProductionDays()));
-        resultDTO.setPurchaseApproveDays(Integer.valueOf(excelDTO.getPurchaseApproveDays()));
-        resultDTO.setSupplierDeliveryDays(Integer.valueOf(excelDTO.getSupplierDeliveryDays()));
-        resultDTO.setQcDays(Integer.valueOf(excelDTO.getQcDays()));
-        resultDTO.setPurchaseCycleDays(Integer.valueOf(excelDTO.getPurchaseCycleDays()));
-        resultDTO.setSafeDays(Integer.valueOf(excelDTO.getSafeDays()));
-        resultDTO.setStockingRatio(MathUtil.valueOf(excelDTO.getStockingRatio()));
+        if (ObjectUtil.isNotEmpty(excelDTO.getProductionDays())) {
+            resultDTO.setProductionDays(Integer.valueOf(excelDTO.getProductionDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getPurchaseApproveDays())) {
+            resultDTO.setPurchaseApproveDays(Integer.valueOf(excelDTO.getPurchaseApproveDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getSupplierDeliveryDays())) {
+            resultDTO.setSupplierDeliveryDays(Integer.valueOf(excelDTO.getSupplierDeliveryDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getQcDays())) {
+            resultDTO.setQcDays(Integer.valueOf(excelDTO.getQcDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getPurchaseCycleDays())) {
+            resultDTO.setPurchaseCycleDays(Integer.valueOf(excelDTO.getPurchaseCycleDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getSafeDays())) {
+            resultDTO.setSafeDays(Integer.valueOf(excelDTO.getSafeDays()));
+        }
+        if (ObjectUtil.isNotEmpty(excelDTO.getStockingRatio())) {
+            resultDTO.setStockingRatio(MathUtil.valueOf(excelDTO.getStockingRatio()));
+        }
 
         //物流信息
         List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList = new ArrayList<>();
@@ -416,8 +430,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             sixUpdateDTO.setLogisticsDays(Integer.valueOf(excelDTO.getSixLogisticsDays()));
             sixUpdateDTO.setLogisticsCycleDays(Integer.valueOf(excelDTO.getSixLogisticsCycleDays()));
             cfgLogisticsList.add(sixUpdateDTO);
-            resultDTO.setCfgLogisticsList(cfgLogisticsList);
         }
+        resultDTO.setCfgLogisticsList(cfgLogisticsList);
         return resultDTO;
     }
 

@@ -721,6 +721,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         //历史销量数据处理
         List<LinkedHashMap> resultList = handleHistorySalesQty(list);
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException("未找到历史销量数据");
+        }
         LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
         List<LinkedHashMap<String ,Object>> convertDataList = (List<LinkedHashMap<String ,Object>>) resultList.get(0).get("data");
         DynamicExcelDTO excelDTO = new DynamicExcelDTO();
@@ -802,6 +805,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 convertMap.put(obj.toString(),salesQty);
             });
             convertDataList.add(convertMap);
+        }
+        if (CollectionUtils.isEmpty(convertDataList)) {
+            return Collections.EMPTY_LIST;
         }
         resultMap.put("head", headMap);
         resultMap.put("data", convertDataList);
