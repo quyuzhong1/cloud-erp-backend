@@ -97,7 +97,7 @@ public class SalesEstimateManualServiceImpl extends SuperServiceImpl<SalesEstima
         /**
          * 当月剩余有效预估 = 当月初始整月预估值 / 当月的天数 * 剩余天数
          */
-        Integer days = thisMonthDays - thisDays;
+        Integer days = thisMonthDays - thisDays + 1;
         BigDecimal currentMonthSurplusSalesQty = MathUtil.multiply(MathUtil.divide(currentMonthSalesQty,new BigDecimal(thisMonthDays)),new BigDecimal(days));
         salesEstimateManualEntity.setCurrentMonthSurplusSalesQty(currentMonthSurplusSalesQty);
     }
