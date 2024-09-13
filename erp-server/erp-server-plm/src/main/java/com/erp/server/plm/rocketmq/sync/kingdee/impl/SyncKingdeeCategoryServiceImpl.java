@@ -65,52 +65,8 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(BasicCategoryEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
-
-        //是否存在上级
-        boolean isExistParent = !MathUtil.ZERO.toString().equals(entity.getPid());
-        resultMap.put("isExistParent", isExistParent);
-        //业务id
-        resultMap.put("id",entity.getId());
-        //编码
-        resultMap.put("code",entity.getCode());
-        //名称
-        resultMap.put("name",entity.getName());
-        //金蝶id
-        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-
-        //模块类型
-        Integer moduleType = ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode();
-        //辅助资料类型编码
-        String fNumber = AssistantDataEnum.ONE_LEVEL_CATEGORY.getCode();
-
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
-        }
-
-        //二级分类
-        if (isExistParent) {
-            moduleType = ApiModuleTypeEnum.SECOND_LEVEL_CATEGORY.getCode();
-            fNumber = AssistantDataEnum.SECOND_LEVEL_CATEGORY.getCode();
-            //查询上级分类编码
-            BasicCategoryEntity parent = basicCategoryService.lambdaQuery().eq(BasicCategoryEntity::getId, entity.getPid()).one();
-            if (ObjectUtils.isEmpty(parent)) {
-                log.error("未找到上级分类，pid = {}",entity.getPid());
-              throw new ServiceException(new ApiResult(1,"未找到上级分类"));
-            }
-            //上级编码
-            resultMap.put("parentCode",parent.getCode());
-            //二级编码
-            resultMap.put("code",parent.getCode().concat(entity.getCode()));
-        }
-        resultMap.put("moduleType",moduleType);
-        resultMap.put("fNumber", fNumber);
-
         //生成任务
-        return saveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
     }
 
 
@@ -156,4 +112,53 @@ public class SyncKingdeeCategoryServiceImpl implements SyncKingdeeCategoryServic
         
         return null;
     }
+
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(BasicCategoryEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+
+        //是否存在上级
+        boolean isExistParent = !MathUtil.ZERO.toString().equals(entity.getPid());
+        resultMap.put("isExistParent", isExistParent);
+        //业务id
+        resultMap.put("id",entity.getId());
+        //编码
+        resultMap.put("code",entity.getCode());
+        //名称
+        resultMap.put("name",entity.getName());
+        //金蝶id
+        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+
+        //模块类型
+        Integer moduleType = ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode();
+        //辅助资料类型编码
+        String fNumber = AssistantDataEnum.ONE_LEVEL_CATEGORY.getCode();
+
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return resultMap;
+        }
+
+        //二级分类
+        if (isExistParent) {
+            moduleType = ApiModuleTypeEnum.SECOND_LEVEL_CATEGORY.getCode();
+            fNumber = AssistantDataEnum.SECOND_LEVEL_CATEGORY.getCode();
+            //查询上级分类编码
+            BasicCategoryEntity parent = basicCategoryService.lambdaQuery().eq(BasicCategoryEntity::getId, entity.getPid()).one();
+            if (ObjectUtils.isEmpty(parent)) {
+                log.error("未找到上级分类，pid = {}",entity.getPid());
+              throw new ServiceException(new ApiResult(1,"未找到上级分类"));
+            }
+            //上级编码
+            resultMap.put("parentCode",parent.getCode());
+            //二级编码
+            resultMap.put("code",parent.getCode().concat(entity.getCode()));
+        }
+        resultMap.put("moduleType",moduleType);
+        resultMap.put("fNumber", fNumber);
+        return resultMap;
+	}
 }

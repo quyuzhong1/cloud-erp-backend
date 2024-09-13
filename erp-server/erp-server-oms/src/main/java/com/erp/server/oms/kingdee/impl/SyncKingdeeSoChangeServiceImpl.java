@@ -105,7 +105,118 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SoChangeEntity entity, String operate) {
-        String id = entity.getId();
+        //生成任务
+       return saveTask(entity,operate,newSyncDataToKingdee(entity, operate));
+    }
+
+
+    /**
+     * 填充数据
+     *
+     * @param entity
+     * @return void
+     * @author yl
+     * @date 2023-06-07 14:08
+     */
+    private SoChangeEntity fillDb(SoChangeEntity entity, String soKingdeeId, String soCode) {
+        //销售变更单详情
+        List<SoChangeDetailEntity> details = soChangeDetailService.listDetailDbByMainId(entity.getId());
+        //订单详情的ids
+        List<String> soDetailIdList = details.stream().map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soDetailService.listByIdsSeq(soDetailIdList);
+        List<String> soKingdeeDetailIds = soDetailList.stream().map(SoDetailEntity::getKingdeeDetailId).collect(Collectors.toList());
+        //表示是新增加审核
+        if (StringUtils.isEmpty(entity.getSyncKingdeeId())) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("SaleOrderBillId", soKingdeeId);
+            map.put("SaleOrderBillNo", soCode);
+            map.put("SOEntryIds", soKingdeeDetailIds);
+            //自动生成变更单
+            String result = dmpTaskFeign.createkingdeeSoChange(map);
+            log.info("json======{}", result);
+            JSONObject json = JSONUtil.parseObj(result);
+            Boolean isSuccess = (Boolean) json.getOrDefault("IsSuccess", Boolean.FALSE);
+            List<SoChangeDetailEntity> updateList = new ArrayList<>(10);
+            //如果成功了
+            if (isSuccess) {
+                List<JSONObject> dataList = (List<JSONObject>) json.getOrDefault("Datas", new ArrayList<>());
+                if (CollectionUtils.isNotEmpty(dataList)) {
+                    JSONObject dataJson = dataList.get(0);
+                    String syncKingdeeId = dataJson.get("FID").toString();
+                    entity.setSyncKingdeeId(syncKingdeeId);
+                    List<JSONObject> detailList = (List<JSONObject>) dataJson.getOrDefault("SaleOrderEntry", new ArrayList<>());
+                    for (int i = 0; i < detailList.size(); i++) {
+                        if (soDetailList.size() >= detailList.size()) {
+                            JSONObject detailJson = detailList.get(i);
+                            SoDetailEntity soDetail = soDetailList.get(i);
+                            String soDetailId = soDetail.getId();
+                        String KingdeeDetailId = String.valueOf(detailJson.getOrDefault("FEntryID", ""));
+                            SoChangeDetailEntity soChangeDetail = details.stream().filter(d -> d.getSoDetailId().equals(soDetailId)).
+                                    findFirst().orElse(null);
+                            if (soChangeDetail != null) {
+                        soChangeDetail.setKingdeeDetailId(KingdeeDetailId);
+                        updateList.add(soChangeDetail);
+                            }
+                        }
+                    }
+                }
+                soChangeService.updateById(entity);
+            }
+            if (updateList.size() > 0) {
+                soChangeDetailService.updateBatchById(updateList);
+            }
+        }
+
+        return entity;
+    }
+
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (SoChangeEntity entity, String operate, Map<String, Object> resultMap) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_CHANGE.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.SO_CHANGE.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_CHANGE_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            taskFeignDTO.setSyncOperate(operate);
+           return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+       
+    	OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.SO_CHANGE.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        omsPushMsgEntity.setSyncOperate(operate);
+        omsPushMsgService.save(omsPushMsgEntity);
+        
+        return null;
+    }
+
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(SoChangeEntity entity, String operate) {
+		String id = entity.getId();
 
         Map<String, Object> resultMap = new HashMap<>();
         //业务id
@@ -249,113 +360,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         }
 
         resultMap.put("detailList", list);
-
-        //生成任务
-       return saveTask(entity,operate,resultMap);
-    }
-
-
-    /**
-     * 填充数据
-     *
-     * @param entity
-     * @return void
-     * @author yl
-     * @date 2023-06-07 14:08
-     */
-    private SoChangeEntity fillDb(SoChangeEntity entity, String soKingdeeId, String soCode) {
-        //销售变更单详情
-        List<SoChangeDetailEntity> details = soChangeDetailService.listDetailDbByMainId(entity.getId());
-        //订单详情的ids
-        List<String> soDetailIdList = details.stream().map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soDetailService.listByIdsSeq(soDetailIdList);
-        List<String> soKingdeeDetailIds = soDetailList.stream().map(SoDetailEntity::getKingdeeDetailId).collect(Collectors.toList());
-        //表示是新增加审核
-        if (StringUtils.isEmpty(entity.getSyncKingdeeId())) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("SaleOrderBillId", soKingdeeId);
-            map.put("SaleOrderBillNo", soCode);
-            map.put("SOEntryIds", soKingdeeDetailIds);
-            //自动生成变更单
-            String result = dmpTaskFeign.createkingdeeSoChange(map);
-            log.info("json======{}", result);
-            JSONObject json = JSONUtil.parseObj(result);
-            Boolean isSuccess = (Boolean) json.getOrDefault("IsSuccess", Boolean.FALSE);
-            List<SoChangeDetailEntity> updateList = new ArrayList<>(10);
-            //如果成功了
-            if (isSuccess) {
-                List<JSONObject> dataList = (List<JSONObject>) json.getOrDefault("Datas", new ArrayList<>());
-                if (CollectionUtils.isNotEmpty(dataList)) {
-                    JSONObject dataJson = dataList.get(0);
-                    String syncKingdeeId = dataJson.get("FID").toString();
-                    entity.setSyncKingdeeId(syncKingdeeId);
-                    List<JSONObject> detailList = (List<JSONObject>) dataJson.getOrDefault("SaleOrderEntry", new ArrayList<>());
-                    for (int i = 0; i < detailList.size(); i++) {
-                        if (soDetailList.size() >= detailList.size()) {
-                            JSONObject detailJson = detailList.get(i);
-                            SoDetailEntity soDetail = soDetailList.get(i);
-                            String soDetailId = soDetail.getId();
-                        String KingdeeDetailId = String.valueOf(detailJson.getOrDefault("FEntryID", ""));
-                            SoChangeDetailEntity soChangeDetail = details.stream().filter(d -> d.getSoDetailId().equals(soDetailId)).
-                                    findFirst().orElse(null);
-                            if (soChangeDetail != null) {
-                        soChangeDetail.setKingdeeDetailId(KingdeeDetailId);
-                        updateList.add(soChangeDetail);
-                            }
-                        }
-                    }
-                }
-                soChangeService.updateById(entity);
-            }
-            if (updateList.size() > 0) {
-                soChangeDetailService.updateBatchById(updateList);
-            }
-        }
-
-        return entity;
-    }
-
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (SoChangeEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_CHANGE.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	//添加推送任务
-            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-            taskFeignDTO.setSourceId(entity.getId());
-            taskFeignDTO.setSourceCode(entity.getCode());
-            taskFeignDTO.setSourceType(SourceTypeEnum.SO_CHANGE.getCode());
-            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_CHANGE_TAG.getName());
-            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-            taskFeignDTO.setSyncOperate(operate);
-           return dmpMqFeign.saveTask(taskFeignDTO);
-        }
-       
-    	OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
-        omsPushMsgEntity.setSourceId(entity.getId());
-        omsPushMsgEntity.setSourceCode(entity.getCode());
-        omsPushMsgEntity.setSourceType(SourceTypeEnum.SO_CHANGE.getCode());
-        omsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        omsPushMsgEntity.setSyncOperate(operate);
-        omsPushMsgService.save(omsPushMsgEntity);
-        
-        return null;
-    }
+        return resultMap;
+	}
 
 }

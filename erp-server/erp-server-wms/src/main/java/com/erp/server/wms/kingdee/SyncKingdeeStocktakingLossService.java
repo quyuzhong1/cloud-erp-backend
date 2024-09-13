@@ -1,5 +1,7 @@
 package com.erp.server.wms.kingdee;
 
+import java.util.Map;
+
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 
@@ -12,4 +14,5 @@ import com.erp.model.wms.entity.StocktakingProfitLossEntity;
  */
 public interface SyncKingdeeStocktakingLossService {
     DmpPushTaskEntity syncDataToKingdee(StocktakingProfitLossEntity entity, String code);
+    Map<String , Object> newSyncDataToKingdee(StocktakingProfitLossEntity entity, String code);
 }
