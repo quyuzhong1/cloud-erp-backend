@@ -75,8 +75,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     @Override
     public PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<VirtualInventoryDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        IPage<VirtualInventoryDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams(), dto.getLastId());
         // 填充名称
         fillPageData(pageData.getRecords());
         return new PagingVO<>(pageData);

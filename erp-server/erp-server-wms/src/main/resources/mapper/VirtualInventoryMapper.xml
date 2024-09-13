@@ -51,31 +51,42 @@
 
     <!-- 虚拟库存分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListDTO">
-        select
-            string_agg(vi.id, ',') as indexId,
-            vi.sku_id as skuId,
-            vi.warehouse_id as warehouseId,
-            vi.virtual_warehouse_id as virtualWarehouseId
-        from virtual_inventory vi
-        left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
-        <where>
-            ${params.sqlMap.default}
-            and vi.is_deleted = false
-            <if test="params.hideZeroInventory">
-                and  vi.qty != 0
+        SELECT
+            t.indexId,
+            t.skuId,
+            t.virtualWarehouseId
+        FROM (
+            select
+                min(vi.id) as indexId,
+                vi.sku_id as skuId,
+                vi.virtual_warehouse_id as virtualWarehouseId
+            from virtual_inventory vi
+            left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
+            <where>
+                ${params.sqlMap.default}
+                and vi.is_deleted = false
+                <if test="params.hideZeroInventory">
+                    and  vi.qty != 0
+                </if>
+
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </where>
+            group by vi.sku_id,vi.virtual_warehouse_id
+            order by
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
             </if>
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
-            </if>
-        </where>
-        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
-        order by
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
+            indexId
+        )t
+        WHERE 1=1
+        <if test="lastId != null and lastId != ''">
+            and t.indexId > #{lastId}
         </if>
-        vi.sku_id
+        ORDER BY t.indexId
     </select>
 
     <!-- 根据SKU和虚拟仓库查询 -->
