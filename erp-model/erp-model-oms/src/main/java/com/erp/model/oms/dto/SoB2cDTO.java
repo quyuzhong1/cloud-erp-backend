@@ -2678,6 +2678,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String receiverTaxNo;
 
+        /**
+         * 销售出库时间
+         */
+        private LocalDate soOutStockTime;
 
         //get方法
         private String getLengthStr () {

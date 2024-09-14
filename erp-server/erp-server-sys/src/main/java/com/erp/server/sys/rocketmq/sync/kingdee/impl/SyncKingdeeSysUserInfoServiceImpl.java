@@ -54,38 +54,8 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SysUserInfoEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
-        String code = entity.getCode();
-        //表示没有金蝶的code 那就无需推送的
-        if (StringUtils.isBlank(code)) {
-            return null;
-        }
-
-        //业务id
-        resultMap.put("id", entity.getUid());
-        //编码
-        resultMap.put("code", entity.getCode());
-        //名称
-        resultMap.put("userName", entity.getUserName());
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
-        }
-
-        //邮箱
-        resultMap.put("email", entity.getEmail());
-        //电话号码
-        resultMap.put("mobile", entity.getMobile());
-        //用户状态1：正常 0：禁用
-        resultMap.put("userState", entity.getUserState());
-
         //生成任务
-        return saveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
     }
 
     /**
@@ -130,4 +100,38 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
         
         return null;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(SysUserInfoEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+        String code = entity.getCode();
+        //表示没有金蝶的code 那就无需推送的
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
+
+        //业务id
+        resultMap.put("id", entity.getUid());
+        //编码
+        resultMap.put("code", entity.getCode());
+        //名称
+        resultMap.put("userName", entity.getUserName());
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return resultMap;
+        }
+
+        //邮箱
+        resultMap.put("email", entity.getEmail());
+        //电话号码
+        resultMap.put("mobile", entity.getMobile());
+        //用户状态1：正常 0：禁用
+        resultMap.put("userState", entity.getUserState());
+        return resultMap;
+	}
 }

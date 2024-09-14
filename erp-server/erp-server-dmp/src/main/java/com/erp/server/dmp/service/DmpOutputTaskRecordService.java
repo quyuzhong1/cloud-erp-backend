@@ -1,6 +1,8 @@
 package com.erp.server.dmp.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -84,6 +86,15 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     Boolean addOutputBlack(DmpOutputTaskRecordDTO.AddOutputBlackDTO dto);
 
     /**
+     * 取消黑名单
+     * @Author Luo_WG
+     * @Date 2024/9/11 19:21
+     * @param id
+     * @return java.lang.Boolean
+     **/
+    BatchResultDTO cancelOutputBlack(String id);
+
+    /**
      * 导出Excel数据解析
      * @Author Luo_WG
      * @Date 2024/9/5 17:39
@@ -100,4 +111,12 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return java.lang.Boolean
      **/
     Boolean batchSync(List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList);
+    
+    /**
+     * erp推送查询同步
+     * @param dmpCfgOutputEntity
+     * @param dmpCfgInputEntity
+     * @param list
+     */
+    List<DmpOutputTaskRecordEntity> erpQuerySync(DmpCfgOutputEntity dmpCfgOutputEntity , List<DmpOutputTaskRecordEntity> list);
 }

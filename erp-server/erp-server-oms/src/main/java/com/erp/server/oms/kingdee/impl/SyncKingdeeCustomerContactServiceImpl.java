@@ -60,46 +60,8 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(CustomerContactEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        //业务id
-        resultMap.put("id", entity.getId());
-        //客户联系人
-        resultMap.put("code", entity.getCode());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
-        }
-
-        //联系人名称
-        resultMap.put("person", entity.getPerson());
-        //职位
-        resultMap.put("position", entity.getPosition());
-        //联系电话
-        resultMap.put("telNumber", entity.getTelNumber());
-        //电子邮箱
-        resultMap.put("email", entity.getEmail());
-        //是否默认
-        resultMap.put("isDefault", entity.getIsDefault());
-        //禁用状态
-        resultMap.put("disabled", entity.getDisabled());
-        //客户地址信息
-        List<CustomerAddressDTO.ViewDTO> viewDTOS = customerAddressService.listByMainId(entity.getMainId());
-        //客户信息
-        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
-
-        //地址编号
-        CustomerAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> req.getPerson().equals(entity.getPerson())).findFirst().orElse(new CustomerAddressDTO.ViewDTO());
-        resultMap.put("addressCode", viewDTO.getCode());
-        resultMap.put("address", viewDTO.getAddress());
-        //客户编号
-        resultMap.put("customerCode", customerInfoEntity.getCode());
-
         //生成任务
-        return saveTask(entity,operate,resultMap);
+        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
     }
 
     /**
@@ -143,4 +105,46 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
         
         return null;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(CustomerContactEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        //业务id
+        resultMap.put("id", entity.getId());
+        //客户联系人
+        resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return resultMap;
+        }
+
+        //联系人名称
+        resultMap.put("person", entity.getPerson());
+        //职位
+        resultMap.put("position", entity.getPosition());
+        //联系电话
+        resultMap.put("telNumber", entity.getTelNumber());
+        //电子邮箱
+        resultMap.put("email", entity.getEmail());
+        //是否默认
+        resultMap.put("isDefault", entity.getIsDefault());
+        //禁用状态
+        resultMap.put("disabled", entity.getDisabled());
+        //客户地址信息
+        List<CustomerAddressDTO.ViewDTO> viewDTOS = customerAddressService.listByMainId(entity.getMainId());
+        //客户信息
+        CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getMainId());
+
+        //地址编号
+        CustomerAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> req.getPerson().equals(entity.getPerson())).findFirst().orElse(new CustomerAddressDTO.ViewDTO());
+        resultMap.put("addressCode", viewDTO.getCode());
+        resultMap.put("address", viewDTO.getAddress());
+        //客户编号
+        resultMap.put("customerCode", customerInfoEntity.getCode());
+        return resultMap;
+	}
 }

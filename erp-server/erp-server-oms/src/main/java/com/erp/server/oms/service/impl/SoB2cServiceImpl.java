@@ -5545,6 +5545,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
             ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
             String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
+            ruleDTO.setFromWarehouse(deliveryWarehouseId);
             CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(deliveryWarehouseId,ruleDTO));
             isTransit = resultDTO.getIsTransit();
             transitWarehouseId = resultDTO.getTransitWarehouseId();
@@ -7026,6 +7027,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 未找到B2C销售订单明细信息
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
+        detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getSplitDetailId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(detailList)){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
+        }
         // 检查
         skuMappingCheck(entity, detailList);
 
@@ -7665,7 +7670,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             skuInventoryDTO.setSkuIdList(skuIdList);
             inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
         }
+        //销售出库
+        List<String> soIds = records.stream().map(SoB2cDTO.ExcelExportDTO::getId).distinct().collect(Collectors.toList());
+        List<List<String>> partionSoIds = com.google.common.collect.Lists.partition(soIds, 5000);
+        List<SoOutstockEntity> soOutstockEntityList = new ArrayList<>();
+        partionSoIds.forEach(v->{
+            soOutstockEntityList.addAll(FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getSoId,v).select(SoOutstockEntity::getSoId,SoOutstockEntity::getBillDate).list());
+        });
+
         for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
+            SoOutstockEntity soOutstock = soOutstockEntityList.stream().filter(v->v.getSoId().equals(exportDTO.getId())).findFirst().orElse(new SoOutstockEntity());
+            exportDTO.setSoOutStockTime(soOutstock.getBillDate());
             //审核状态
             exportDTO.setApproveStatusName(ApproveStatusEnum.getName(exportDTO.getApproveStatus()));
             //订单状态

@@ -334,7 +334,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             wmsPushMsgService.save(wmsPushMsgEntity);
         }
         
-        return null;
+        return new ArrayList<>();
         
     }
 
@@ -385,6 +385,6 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             wmsPushMsgService.save(wmsPushMsgEntity);
         }
         
-        return null;
+        return new ArrayList<>();
     }
 }

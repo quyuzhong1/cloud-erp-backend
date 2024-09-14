@@ -1,5 +1,7 @@
 package com.erp.server.scm.kingdee;
 
+import java.util.Map;
+
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 
@@ -19,4 +21,6 @@ public interface SyncKingdeeSupplierService {
      * @param operate
      */
     DmpPushTaskEntity syncDataToKingdee(SupplierEntity entity, String operate);
+    
+    Map<String , Object> newSyncDataToKingdee(SupplierEntity entity, String operate);
 }

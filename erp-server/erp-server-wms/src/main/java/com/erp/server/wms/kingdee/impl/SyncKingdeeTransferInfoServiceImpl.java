@@ -85,7 +85,56 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(TransferInfoEntity entity, String operate) {
-        //第三方马帮拉取数据无推送
+        //生成任务
+        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (TransferInfoEntity entity, String operate, Map<String, Object> resultMap) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.TRANSFER_INFO.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(entity.getId());
+            dmpSyncTaskDTO.setSourceCode(entity.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.TRANSFER_INFO.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_TRANSFER_INFO_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
+        
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.TRANSFER_INFO.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        wmsPushMsgService.save(wmsPushMsgEntity);
+        
+        return null;
+    }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(TransferInfoEntity entity, String operate) {
+		//第三方马帮拉取数据无推送
         if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getThirdPartySystem())) {
             return null;
         }
@@ -101,7 +150,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
+            return resultMap;
         }
 
         //调拨类型
@@ -209,51 +258,6 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
             list.add(jsonObject);
         }
         resultMap.put("list", list);
-
-        //生成任务
-        return saveTask(entity,operate,resultMap);
-    }
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (TransferInfoEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.TRANSFER_INFO.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	//添加推送任务
-            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-            dmpSyncTaskDTO.setSourceId(entity.getId());
-            dmpSyncTaskDTO.setSourceCode(entity.getCode());
-            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.TRANSFER_INFO.getCode());
-            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_TRANSFER_INFO_TAG.getName());
-            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskDTO.setSyncOperate(operate);
-            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
-        }
-        
-        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.TRANSFER_INFO.getCode());
-        wmsPushMsgEntity.setSourceId(entity.getId());
-        wmsPushMsgEntity.setSourceCode(entity.getCode());
-        wmsPushMsgEntity.setSyncOperate(operate);
-        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        
-        wmsPushMsgService.save(wmsPushMsgEntity);
-        
-        return null;
-    }
+        return resultMap;
+	}
 }

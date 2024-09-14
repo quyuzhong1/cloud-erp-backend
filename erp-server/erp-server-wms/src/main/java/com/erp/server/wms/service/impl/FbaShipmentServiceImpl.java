@@ -1660,12 +1660,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 }
             }
             //提交
-            transferInfoService.submit(Collections.singletonList(transferOutId));
+            transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
 
             //审核
             TransferInfoEntity entity1 = transferInfoService.getById(transferOutId);
             if (Objects.nonNull(entity1)){
-                transferInfoService.approve(entity1,ApproveType.PASS,"", null , Boolean.TRUE);
+                transferInfoService.approve(entity1,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
             }
         } else {
             throw new ServiceException("[FBA货件签收]新增直接调拨单失败");

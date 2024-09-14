@@ -86,7 +86,56 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(StocktakingProfitLossEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
+        //生成任务
+        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (StocktakingProfitLossEntity entity, String operate, Map<String, Object> resultMap) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.STOCKTAKING_LOSS.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(entity.getId());
+            dmpSyncTaskDTO.setSourceCode(entity.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_STOCKTAKING_LOSS_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
+        
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.STOCKTAKING_LOSS.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        wmsPushMsgService.save(wmsPushMsgEntity);
+        
+        return null;
+    }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(StocktakingProfitLossEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
         if (Objects.isNull(entity)) {
             throw new ServiceException("未找到盘亏单");
         }
@@ -100,7 +149,7 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
+            return resultMap;
         }
 
         resultMap.put("sourceCode", entity.getSourceCode());
@@ -161,52 +210,7 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
             list.add(jsonObject);
         }
         resultMap.put("detailList", list);
-
-        //生成任务
-        return saveTask(entity,operate,resultMap);
-    }
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (StocktakingProfitLossEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.STOCKTAKING_LOSS.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	//添加推送任务
-            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-            dmpSyncTaskDTO.setSourceId(entity.getId());
-            dmpSyncTaskDTO.setSourceCode(entity.getCode());
-            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode());
-            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_STOCKTAKING_LOSS_TAG.getName());
-            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskDTO.setSyncOperate(operate);
-            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
-        }
-        
-        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.STOCKTAKING_LOSS.getCode());
-        wmsPushMsgEntity.setSourceId(entity.getId());
-        wmsPushMsgEntity.setSourceCode(entity.getCode());
-        wmsPushMsgEntity.setSyncOperate(operate);
-        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        
-        wmsPushMsgService.save(wmsPushMsgEntity);
-        
-        return null;
-    }
+        return resultMap;
+	}
 
 }

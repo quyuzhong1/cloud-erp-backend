@@ -51,31 +51,42 @@
 
     <!-- 虚拟库存分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListDTO">
-        select
-            string_agg(vi.id, ',') as indexId,
-            vi.sku_id as skuId,
-            vi.warehouse_id as warehouseId,
-            vi.virtual_warehouse_id as virtualWarehouseId
-        from virtual_inventory vi
-        left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
-        <where>
-            ${params.sqlMap.default}
-            and vi.is_deleted = false
-            <if test="params.hideZeroInventory">
-                and  vi.qty != 0
+        SELECT
+            t.indexId,
+            t.skuId,
+            t.virtualWarehouseId
+        FROM (
+            select
+                min(vi.id) as indexId,
+                vi.sku_id as skuId,
+                vi.virtual_warehouse_id as virtualWarehouseId
+            from virtual_inventory vi
+            left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
+            <where>
+                ${params.sqlMap.default}
+                and vi.is_deleted = false
+                <if test="params.hideZeroInventory">
+                    and  vi.qty != 0
+                </if>
+
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </where>
+            group by vi.sku_id,vi.virtual_warehouse_id
+            order by
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
             </if>
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
-            </if>
-        </where>
-        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
-        order by
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
+            indexId
+        )t
+        WHERE 1=1
+        <if test="lastId != null and lastId != ''">
+            and t.indexId > #{lastId}
         </if>
-        vi.sku_id
+        ORDER BY t.indexId
     </select>
 
     <!-- 根据SKU和虚拟仓库查询 -->
@@ -347,15 +358,29 @@
     <!-- 查询仓库统计数据 -->
     <select id="listWarehouseStatistics"
             resultType="com.erp.model.wms.dto.VirtualInventoryDTO$WarehouseStatisticsExcelDTO">
-        select diff.sku_id,pd.sku_no as skuNo,pd.name as productName,diff.warehouse_id,wh.name as warehouseName,wh.kingdee_warehouse_code as warehouseCode,diff.usableQty,COALESCE(frozenDiff.frozenQty,0) as frozenQty,diff.usableQty + COALESCE(frozenDiff.frozenQty,0) as realQty,COALESCE(inv.usableQty,0) as distributionQty,(COALESCE(diff.usableQty,0) + COALESCE(frozenDiff.frozenQty,0) - COALESCE(inv.usableQty,0)) as unDistributionQty from
+        select
+            diff.invId,
+            diff.sku_id,pd.sku_no as skuNo,
+            pd.name as productName,
+            diff.warehouse_id,
+            wh.name as warehouseName,
+            wh.kingdee_warehouse_code as warehouseCode,
+            diff.usableQty,
+            COALESCE(frozenDiff.frozenQty,0) as frozenQty,
+            diff.usableQty + COALESCE(frozenDiff.frozenQty,0) as realQty,
+            COALESCE(inv.usableQty,0) as distributionQty,
+            (COALESCE(diff.usableQty,0) + COALESCE(frozenDiff.frozenQty,0) - COALESCE(inv.usableQty,0)) as unDistributionQty
+        from
           (select
+               min(vi.id) AS invId,
                vi.sku_id,
                vi.warehouse_id,
                sum(vi.qty) as usableQty
            from inventory vi
            where vi.is_deleted = false and vi.dict_inventory_status = 'usable'
            group by vi.sku_id , vi.warehouse_id) diff
-            left join (select
+        left join
+          (select
             vi.sku_id,
             vi.warehouse_id,
             sum(vi.qty) as frozenQty
@@ -376,7 +401,11 @@
             <if test="params.isDiff != null and params.isDiff == false">
                 and  COALESCE(diff.usableQty,0)  + COALESCE(frozenDiff.frozenQty,0) >= COALESCE(inv.usableQty,0)
             </if>
+            <if test="lastId != null and lastId != ''">
+                and diff.invId > #{lastId}
+            </if>
         </where>
+        ORDER BY diff.invId
     </select>
 
 </mapper>

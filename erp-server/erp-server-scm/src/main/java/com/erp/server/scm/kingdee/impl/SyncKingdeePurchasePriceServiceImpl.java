@@ -85,83 +85,8 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(PurchasePriceEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
-
-        //业务id
-        resultMap.put("id", entity.getId());
-        //编码
-        resultMap.put("code", entity.getCode());
-        //名称
-        resultMap.put("name", entity.getCode());
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
-        }
-        //查询供应商
-        SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
-        if (ObjectUtils.isEmpty(supplierEntity)) {
-           throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
-        }
-        //供应商编码
-        resultMap.put("supplierCode", supplierEntity.getCode());
-        //采购组织id
-        String purchaseOrgId = entity.getPurchaseOrgId();
-        //组织
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId));
-
-        String purchaseOrgCode = "";
-        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            purchaseOrgCode = accountingCompanyList.get(0).getCode();
-        }
-        //采购组织
-        resultMap.put("purchaseOrgCode", purchaseOrgCode);
-
-        if (StringUtils.isNotBlank(entity.getPricingUserId())) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPricingUserId());
-
-            if (ObjectUtils.isNotEmpty(findUserDTO)) {
-                //定价员
-                resultMap.put("pricingUserCode", findUserDTO.getCode());
-            }
-        }
-
-        //获取币别信息
-        List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Arrays.asList(entity.getCurrency()));
-        CurrencyDTO.ViewDTO currencyDTO = currencyListt.stream().filter(req -> req.getId().equals(entity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
-        resultMap.put("currencyCode", currencyDTO.getKingdeeCode());
-
-        //价目明细
-        List<PurchasePriceDetailDTO.ViewDTO> details = purchasePriceDetailService.getByPurchasePriceId(entity.getId());
-        if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException(ApiError.ERROR_98049);
-        }
-        List<JSONObject> list = new ArrayList<>();
-        for (PurchasePriceDetailDTO.ViewDTO detailEntity : details) {
-            BigDecimal rate = MathUtil.divide(detailEntity.getTaxRate(), MathUtil.BigDecimal_100);
-            JSONObject jsonObject = new JSONObject();
-            //金蝶id
-            resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-            resultMap.put("kingdeeDetailId", detailEntity.getKingdeeDetailId());
-            jsonObject.set("detailId", detailEntity.getId());
-            jsonObject.set("skuNo", detailEntity.getSkuNo());
-            jsonObject.set("taxRate", detailEntity.getTaxRate());
-            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(), MathUtil.add(MathUtil.BigDecimal_1, rate)));
-            jsonObject.set("taxPrice", detailEntity.getTaxPrice());
-            jsonObject.set("minQty", detailEntity.getMinQty());
-            jsonObject.set("maxQty", detailEntity.getMaxQty());
-            jsonObject.set("effectiveDate", LocalDateTimeUtil.format(detailEntity.getEffectiveDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            jsonObject.set("expireDate",LocalDateTimeUtil.format(detailEntity.getExpireDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            jsonObject.set("disabled", detailEntity.getDisabled());
-            list.add(jsonObject);
-        }
-        resultMap.put("list", list);
-
         //生成任务
-       return saveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
     }
 
     /**
@@ -288,4 +213,83 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
        
        return null;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(PurchasePriceEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+
+        //业务id
+        resultMap.put("id", entity.getId());
+        //编码
+        resultMap.put("code", entity.getCode());
+        //名称
+        resultMap.put("name", entity.getCode());
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return resultMap;
+        }
+        //查询供应商
+        SupplierEntity supplierEntity = supplierService.getById(entity.getSupplierId());
+        if (ObjectUtils.isEmpty(supplierEntity)) {
+           throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
+        //供应商编码
+        resultMap.put("supplierCode", supplierEntity.getCode());
+        //采购组织id
+        String purchaseOrgId = entity.getPurchaseOrgId();
+        //组织
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId));
+
+        String purchaseOrgCode = "";
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            purchaseOrgCode = accountingCompanyList.get(0).getCode();
+        }
+        //采购组织
+        resultMap.put("purchaseOrgCode", purchaseOrgCode);
+
+        if (StringUtils.isNotBlank(entity.getPricingUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPricingUserId());
+
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                //定价员
+                resultMap.put("pricingUserCode", findUserDTO.getCode());
+            }
+        }
+
+        //获取币别信息
+        List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Arrays.asList(entity.getCurrency()));
+        CurrencyDTO.ViewDTO currencyDTO = currencyListt.stream().filter(req -> req.getId().equals(entity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+        resultMap.put("currencyCode", currencyDTO.getKingdeeCode());
+
+        //价目明细
+        List<PurchasePriceDetailDTO.ViewDTO> details = purchasePriceDetailService.getByPurchasePriceId(entity.getId());
+        if (CollectionUtils.isEmpty(details)) {
+            throw new ServiceException(ApiError.ERROR_98049);
+        }
+        List<JSONObject> list = new ArrayList<>();
+        for (PurchasePriceDetailDTO.ViewDTO detailEntity : details) {
+            BigDecimal rate = MathUtil.divide(detailEntity.getTaxRate(), MathUtil.BigDecimal_100);
+            JSONObject jsonObject = new JSONObject();
+            //金蝶id
+            resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+            resultMap.put("kingdeeDetailId", detailEntity.getKingdeeDetailId());
+            jsonObject.set("detailId", detailEntity.getId());
+            jsonObject.set("skuNo", detailEntity.getSkuNo());
+            jsonObject.set("taxRate", detailEntity.getTaxRate());
+            jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(), MathUtil.add(MathUtil.BigDecimal_1, rate)));
+            jsonObject.set("taxPrice", detailEntity.getTaxPrice());
+            jsonObject.set("minQty", detailEntity.getMinQty());
+            jsonObject.set("maxQty", detailEntity.getMaxQty());
+            jsonObject.set("effectiveDate", LocalDateTimeUtil.format(detailEntity.getEffectiveDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            jsonObject.set("expireDate",LocalDateTimeUtil.format(detailEntity.getExpireDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            jsonObject.set("disabled", detailEntity.getDisabled());
+            list.add(jsonObject);
+        }
+        resultMap.put("list", list);
+        return resultMap;
+	}
 }

@@ -5,6 +5,7 @@ import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -22,6 +23,8 @@ public interface SyncKingdeePurchasePriceService {
      * @param operate
      */
     DmpPushTaskEntity syncDataToKingdee(PurchasePriceEntity entity, String operate);
+    
+    Map<String , Object> newSyncDataToKingdee(PurchasePriceEntity entity, String operate);
     /**
      * @description: 金蝶更新分录禁用
      * @author Will
