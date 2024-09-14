@@ -351,7 +351,7 @@
         fdd.delivery_qty AS deliveryQty
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
         WHERE
         ${params.sqlMap.default}
         and fd.is_deleted = FALSE and fd.approve_status = 'approve'
