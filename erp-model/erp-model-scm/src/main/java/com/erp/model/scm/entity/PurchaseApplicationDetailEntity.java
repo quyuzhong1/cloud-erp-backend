@@ -143,6 +143,24 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
      */
     @TableField("close_reason")
     private String closeReason;
+
+    /**
+     * 签收数量
+     */
+    @TableField("receive_qty")
+    private Integer receiveQty;
+
+    /**
+     * 入库数量
+     */
+    @TableField("stock_in_qty")
+    private Integer stockInQty;
+
+    /**
+     * 来源单据详情id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
     
     public static final String PURCHASE_APPLICATION_ID = "purchase_application_id";
 
@@ -183,6 +201,8 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     public static final String REMARK = "remark";
 
     public static final String VARIANT_PROPERTY = "variant_property";
+
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
 
 
     @Override

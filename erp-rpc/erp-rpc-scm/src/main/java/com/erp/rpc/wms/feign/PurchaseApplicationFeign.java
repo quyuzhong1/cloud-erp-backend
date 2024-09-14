@@ -52,7 +52,7 @@ public interface PurchaseApplicationFeign {
      * 查询已下推的SKU及其数量
      */
     @PostMapping("/listSkuAndQty")
-    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> skuIds);
+    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds);
 
     /**
      * 查询入库数量

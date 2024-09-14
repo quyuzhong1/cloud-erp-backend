@@ -927,7 +927,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                     .filter(item1 -> item1.getSkuId().equals(item.getSkuId())).map(item1 -> item1.getId())
                     .collect(Collectors.toList());
             List<PurchaseApplicationDTO.ListDTO> purchaseList2 = purchaseList.stream().filter(obj1 -> detailIds.contains(obj1.getPurchaseApplicationDetailId())).collect(Collectors.toList());
-            int sum = purchaseList2.stream().mapToInt(item1 -> item1.getStockInQty()).sum();
+            int sum = purchaseList2.stream().mapToInt(item1 ->  item1.getStockInQty() == null?0:item1.getStockInQty()).sum();
             item.setStockInQty(sum);*/
         }
     }
@@ -1038,6 +1038,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseDTO.setSkuId(dto.getSkuId());
             purchaseDTO.setSkuNo(dto.getSkuNo());
             purchaseDTO.setPurchaseApplicationId("");
+            purchaseDTO.setSourceDetailId(dto.getDetailId());
             detailList.add(purchaseDTO);
             //更新采购申请数量
             pilotApplicationDetailService.lambdaUpdate()
@@ -1090,29 +1091,27 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.listByIds(paramDTO.getDetailIds());
         List<String> ids = detailList.stream().map(PilotApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<PilotApplicationEntity> pilotList = this.lambdaQuery().in(PilotApplicationEntity::getId, ids).list();
+        List<PilotApplicationDetailEntity> pilotDetailList = this.pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, ids).list();
+
         for (PilotApplicationEntity entity : pilotList) {
             if (entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE) != 0){
                 throw new ServiceException("只有已审核的单据允许下推采购申请单");
             }
+//            PilotApplicationDetailEntity detailEntity = pilotDetailList.stream().filter(r -> r.getMainId().equals(entity.getId())).findFirst().orElse(null);
+//            if(ObjectUtil.isNotEmpty(detailEntity)){
+//                if (detailEntity.getOrderStatus().equals(PilotPushPurchaseStatusEnum.ORDER.getCode())){
+//                    throw new ServiceException("已下单，不能下推");
+//                }
+//            }
         }
         Map<String, PilotApplicationEntity> pilotMap = pilotList.stream().collect(Collectors.toMap(BaseEntity::getId, item2 -> item2));
         //sku信息
         List<String> skuIds = detailList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
         Map<String, ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
-        //采购申请单
-        List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> purchaseList = purchaseApplicationFeign.listSkuAndQty(skuIds);
-        Map<String, Integer> purchaseMap = purchaseList.stream().collect(Collectors.toMap(item1 -> item1.getSkuId(), item2 -> item2.getQty()));
-        List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(ids);
-        Map<String, String> purchaseIdMap = purchaseApplicationList.stream().collect(Collectors.toMap(item -> item.getSourceId(), item2 -> item2.getId()));
-        //采购申请单明细
-        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = new ArrayList<>();
-        if(!purchaseApplicationList.isEmpty()){
-            List<String> mainIds = purchaseApplicationList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-            purchaseApplicationDetailList = purchaseApplicationDetailFeign.listByMainIds(mainIds);
-        }
-
-
+        //根据试产量产单主键id查询采购申请单明细的集合
+        List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> purchaseSkuQtyList = purchaseApplicationFeign.listSkuAndQty(ids);
+        Map<String, Integer> purchaseSkuQtyMap = purchaseSkuQtyList.stream().collect(Collectors.toMap(item -> item.getSourceId() + ":" + item.getSourceDetailId() + ":" + item.getSkuId(), item2 -> item2.getQty()));
         List<PilotApplicationDTO.PushPurchaseApplicationDTO> resultList = new ArrayList<>(detailList.size());
         for (PilotApplicationDetailEntity detailEntity : detailList) {
             PilotApplicationDTO.PushPurchaseApplicationDTO dto = new PilotApplicationDTO.PushPurchaseApplicationDTO();
@@ -1131,15 +1130,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             }
             dto.setType(detailEntity.getType());
             dto.setTypeName(PilotApplicationTypeEnum.getName(detailEntity.getType()));
-            if(purchaseMap.containsKey(detailEntity.getSkuId())){
-                //待申请量=批准数量-已下推的SKU申请累计申请量（查询采购申请单中该sku已申请的数量）
-                String purchaseApplicationId = purchaseIdMap.get(detailEntity.getMainId());
-                PurchaseApplicationDetailEntity purchaseDetailEntity = purchaseApplicationDetailList.stream()
-                        .filter(item -> item.getPurchaseApplicationId().equals(purchaseApplicationId))
-                        .filter(item -> item.getSkuId().equals(detailEntity.getSkuId()))
-                        .findFirst().orElse(new PurchaseApplicationDetailEntity().setApplyQty(0));
-                int spareApplyQty = detailEntity.getApproveQty() - purchaseDetailEntity.getApplyQty();
-                dto.setSpareApplyQty(spareApplyQty);
+            if(purchaseSkuQtyMap.containsKey(detailEntity.getMainId() + ":" + detailEntity.getId() + ":" + detailEntity.getSkuId())){
+                //待申请量=批准数量-已下推的申请量
+                //已申请量
+                Integer qty = purchaseSkuQtyMap.get(detailEntity.getMainId() + ":" + detailEntity.getId() + ":" + detailEntity.getSkuId());
+                //批准数量
+                Integer approveQty = detailEntity.getApproveQty();
+                dto.setSpareApplyQty(approveQty - qty);
             }else {
                 dto.setSpareApplyQty(detailEntity.getApproveQty());
             }

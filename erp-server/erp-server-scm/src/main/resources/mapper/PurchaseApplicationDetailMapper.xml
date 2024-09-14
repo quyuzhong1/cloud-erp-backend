@@ -29,15 +29,31 @@
         <result column="receive_qty" property="receiveQty" />
         <result column="stock_in_qty" property="stockInQty" />
         <result column="create_po_type" property="createPoType" />
+        <result column="source_detail_id" property="sourceDetailId" />
         <result column="remark" property="remark" />
     </resultMap>
     <select id="listSkuAndQty"
             resultType="com.erp.model.scm.dto.PurchaseApplicationDetailDTO$PurchaseSkuQtyDTO">
-        select pad.sku_id skuId,
-               sum(pad.apply_qty) qty
-        from purchase_application_detail pad
-        where pad.is_deleted = false
-        group by pad.sku_id
+        SELECT
+            pa.source_id,
+            pad.source_detail_id,
+            pad.sku_id,
+            SUM ( pad.apply_qty ) qty
+        FROM
+            purchase_application as pa
+            left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = FALSE
+        WHERE
+            PAD.is_deleted = FALSE
+            <if test="sourceIds!=null and sourceIds.size>0">
+                AND pa.source_id IN
+                <foreach collection="sourceIds" item="sourceId" open="(" separator="," close=")">
+                    #{sourceId}
+                </foreach>
+            </if>
+        GROUP BY
+            pa.source_id,
+            pad.source_detail_id,
+            PAD.sku_id
     </select>
 
 </mapper>

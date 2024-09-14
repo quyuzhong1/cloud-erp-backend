@@ -330,7 +330,7 @@ public class PurchaseApplicationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class  AddDTO extends CommonDTO {
         /**
          * 采购申请明细
          */

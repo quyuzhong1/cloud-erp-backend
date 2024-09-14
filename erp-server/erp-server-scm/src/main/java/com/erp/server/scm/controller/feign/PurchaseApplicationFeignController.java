@@ -73,8 +73,8 @@ public class PurchaseApplicationFeignController {
      * 查询已下推的SKU及其数量
      */
     @PostMapping("/listSkuAndQty")
-    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(@RequestBody List<String> skuIds){
-        return purchaseApplicationDetailService.listSkuAndQty(skuIds);
+    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(@RequestBody List<String> sourceIds){
+        return purchaseApplicationDetailService.listSkuAndQty(sourceIds);
     }
 
     /**
