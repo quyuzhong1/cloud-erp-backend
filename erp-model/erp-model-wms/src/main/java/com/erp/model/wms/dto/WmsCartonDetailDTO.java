@@ -146,6 +146,10 @@ public class WmsCartonDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ListPackingDetailDTO {
         /**
+         * 发货单id
+         */
+        private String firstMileId;
+        /**
          * 箱子id
          */
         private String id;

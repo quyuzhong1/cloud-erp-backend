@@ -1291,7 +1291,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailList = dto.getFbaBindShipmentViewDTOS();
         detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getDeliveryCode()) && StringUtils.isNotBlank(v.getFbaShipmentId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(detailList)){
-            throw new ServiceException("待生成详情为空");
+            throw new ServiceException("请先绑定货件再下推");
         }
         if(detailList.stream().anyMatch(v->StringUtils.isBlank(v.getFbaBoxNo()))){
             throw new ServiceException("箱号不能为空");

@@ -85,7 +85,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_DELIVERY;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -1712,6 +1712,28 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    public void exportPackingDetail(PackingTaskDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("发货单装箱清单导出", EXPORT_WMS_FIRST_MILE_PACKING_TASK_DETAIL.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+
+        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(dto.getParams().getIds())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.firstMilePackingTaskDetail(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(),dto.getParams().getIds(), dto.getParams().getPermissionSql());
+        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //补充数据
+        buildPackingDetailTask(page.getRecords());
+        //切换为装箱清单导出
+        buildPackingDetailExportTask(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    @Override
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {
             return false;
@@ -2155,6 +2177,53 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         baseApproveParamDTO.setIds(Arrays.asList(transferId));
         baseApproveParamDTO.setType(ApproveType.PASS);
         transferInfoService.approve(entity,ApproveType.PASS,"", null, Boolean.TRUE, Boolean.FALSE);
+    }
+
+    /**
+     * 填充装箱任务信息
+     * @param listPackingDetailDTOS
+     */
+    private void buildPackingDetailTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
+        listPackingDetailDTOS.forEach(listPackingDetailDTO -> {
+            listPackingDetailDTO.setPackingStatusName(PackingTaskStatusEnum.getName(listPackingDetailDTO.getPackingStatus()));
+            listPackingDetailDTO.setWeightingStatusName(PackingWeightStatusEnum.getName(listPackingDetailDTO.getWeightingStatus()));
+            listPackingDetailDTO.setMeasureSourceName(MeasureSourceEnum.getName(listPackingDetailDTO.getMeasureSource()));
+            listPackingDetailDTO.setSourceTypeName(PickingSourceTypeEnum.getName(listPackingDetailDTO.getSourceType()));
+        });
+    }
+
+    private void buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
+        List<String> taskIds = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskId).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listByIds(taskIds);
+        Map<String, PackingTaskEntity> taskMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
+        //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(taskIds, null);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
+        listPackingDetailDTOS.forEach(pagingViewDTO -> {
+            PackingTaskEntity packingTaskEntity = taskMap.get(pagingViewDTO.getTaskId());
+            PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(pagingViewDTO.getTaskId());
+            pagingViewDTO.setTaskCode(packingTaskEntity.getCode());
+            pagingViewDTO.setSourceCode(packingTaskEntity.getSourceCode());
+            pagingViewDTO.setSourceType(packingTaskEntity.getSourceType());
+            pagingViewDTO.setSourceTypeName(PickingSourceTypeEnum.getName(packingTaskEntity.getSourceType()));
+            if (Objects.nonNull(statusDTO)){
+                String packingStatus = com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(statusDTO.getPackingStatus())? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
+                pagingViewDTO.setPackingTotalStatus(packingStatus);
+                pagingViewDTO.setPackingTotalStatusName(PackingTaskStatusEnum.getName(packingStatus));
+                String weightingStatus = com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(statusDTO.getWeightingStatus()) ? PackingWeightStatusEnum.UNWEIGHED.getCode() : statusDTO.getWeightingStatus();
+                pagingViewDTO.setWeightingTotalStatus(weightingStatus);
+                pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.getName(weightingStatus));
+                pagingViewDTO.setErrorMsg(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
+                pagingViewDTO.setPackageWeightStr(pagingViewDTO.getPackageWeight().toPlainString() + UnitEnum.WeightUnitEnum.KG.getName());
+            }else {
+                pagingViewDTO.setPackingTotalStatus(PackingTaskStatusEnum.UNPACKED.getCode());
+                pagingViewDTO.setPackingTotalStatusName(PackingTaskStatusEnum.UNPACKED.getName());
+                pagingViewDTO.setWeightingTotalStatus(PackingWeightStatusEnum.UNWEIGHED.getCode());
+                pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.UNWEIGHED.getName());
+                pagingViewDTO.setPackageWeight(BigDecimal.ZERO);
+                pagingViewDTO.setPackageWeightStr("0" + UnitEnum.WeightUnitEnum.KG.getName());
+            }
+        });
     }
 }
 

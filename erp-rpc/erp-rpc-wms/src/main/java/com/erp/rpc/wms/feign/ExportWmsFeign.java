@@ -106,6 +106,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/packingTaskDetail")
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
+    @PostMapping("/feign/export/firstMilePackingTaskDetail")
+    PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto);
+
     @PostMapping("/feign/export/packingTask")
     PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(@RequestBody PagingDTO<PackingTaskDTO.PagingParamDTO> dto);
 

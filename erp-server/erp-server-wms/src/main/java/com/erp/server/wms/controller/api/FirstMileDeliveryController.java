@@ -522,4 +522,14 @@ public class FirstMileDeliveryController extends BaseController {
         Boolean result = firstMileDeliveryService.generateStatusUpdate(dto);
         return result == true ? success() : failure();
     }
+
+    /**
+     * 导出装箱清单Excel
+     */
+    @PostMapping("/exportPackingDetail")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出装箱任务Excel")
+    public ApiResult exportPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        firstMileDeliveryService.exportPackingDetail(dto);
+        return success();
+    }
 }
