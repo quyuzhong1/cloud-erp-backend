@@ -623,7 +623,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     /**
-     * 根据id更新是否补货和补货原因
+     * 手动更新是否补货和补货原因
      *
      * @param id
      * @param replenishmentRemark
@@ -635,7 +635,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return lambdaUpdate().eq(ReplenishmentSuggestionEntity::getId, id)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentRemark, replenishmentRemark)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentType, replenishmentType)
-                .set(ReplenishmentSuggestionEntity::getIsAutoReplenishment,Boolean.FALSE)
+                .set(ReplenishmentSuggestionEntity::getIsManual,Boolean.TRUE)
                 .update();
     }
     @Override
