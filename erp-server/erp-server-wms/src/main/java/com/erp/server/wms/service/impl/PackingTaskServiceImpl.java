@@ -177,6 +177,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private PackingTaskService service;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private FbaShipmentPackingService fbaShipmentPackingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -366,6 +368,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         PackingTaskEntity packingTask = this.getById(dto.getTaskId());
         if (Objects.isNull(packingTask)){
             throw new ServiceException(ApiError.ERROR_92141);
+        }
+        //已绑定货件不能操作
+        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByPackingTaskId(dto.getTaskId());
+        if(CollectionUtils.isNotEmpty(fbaShipmentPackingEntityList)){
+            throw new ServiceException("已绑定货件不能操作");
         }
         checkSourceOrderStatus(packingTask);
         if (Objects.nonNull(isDeleteCarton) && isDeleteCarton){
@@ -1164,6 +1171,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         PackingTaskEntity packingTaskEntity = this.getById(addDTO.getTaskId());
         if (Objects.isNull(packingTaskEntity)){
             throw new ServiceException(ApiError.ERROR_92141);
+        }
+        //已绑定货件不能操作
+        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByPackingTaskId(addDTO.getTaskId());
+        if(CollectionUtils.isNotEmpty(fbaShipmentPackingEntityList)){
+            throw new ServiceException("已绑定货件不能操作");
         }
         WmsCartonEntity cartonEntity = null;
         //查询当前箱子记录

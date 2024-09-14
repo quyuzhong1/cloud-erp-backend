@@ -22,14 +22,17 @@ import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
+import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.convert.FbaShipmentPackingConverter;
 import com.erp.server.wms.mapper.FbaShipmentPackingMapper;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
+import com.erp.server.wms.service.WmsCartonService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +63,8 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private WmsCartonService wmsCartonService;
 
     @Override
     @DataIdempotent(keyIdName = "data.boxNo")
@@ -182,5 +187,18 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         if(CollectionUtil.isNotEmpty(fbaIds)){
             lambdaUpdate().in(FbaShipmentPackingEntity::getMainId,fbaIds).remove();
         }
+    }
+
+    @Override
+    public List<FbaShipmentPackingEntity> listByPackingTaskId(String taskId) {
+        if(StringUtils.isBlank(taskId)){
+            return new ArrayList<>();
+        }
+        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Arrays.asList(taskId));
+        if(CollectionUtil.isEmpty(wmsCartonEntityList)){
+            return new ArrayList<>();
+        }
+        List<String> cartonIds = wmsCartonEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        return this.lambdaQuery().in(FbaShipmentPackingEntity::getCartonId,cartonIds).list();
     }
 }
