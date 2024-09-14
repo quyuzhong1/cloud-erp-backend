@@ -600,5 +600,13 @@ public class PurchasePriceDTO implements Serializable {
          * 价税合计
          */
         private BigDecimal amount;
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 }

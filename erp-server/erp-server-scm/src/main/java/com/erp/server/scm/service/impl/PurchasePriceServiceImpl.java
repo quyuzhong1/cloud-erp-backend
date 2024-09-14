@@ -20,6 +20,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
@@ -1032,6 +1033,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return Collections.emptyList();
         }
         for(PurchasePriceDTO.PriceDTO updateDTO : list){
+            if (StrUtil.isBlank(updateDTO.getPurchaseOrgId()) || StrUtil.isBlank(updateDTO.getSkuId()) || StrUtil.isBlank(updateDTO.getSupplierId()) || Objects.isNull(updateDTO.getQty())){
+                continue;
+            }
             List<BomChildrenSkuDTO> bomChildrenSkuDTOList = skuDTOList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getParentSkuId()) && StrUtil.isNotBlank(updateDTO.getSkuId()) && Objects.equals(e.getParentSkuId(), updateDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)){
                 //sku是组合品时，不计算采购单价
@@ -1051,6 +1055,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             if (Objects.nonNull(viewDTO)){
                 updateDTO.setTaxPrice(viewDTO.getTaxPrice());
                 updateDTO.setTaxRate(viewDTO.getTaxRate());
+                updateDTO.setCurrency(viewDTO.getCurrency());
+                updateDTO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(viewDTO.getCurrency()));
                 updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), viewDTO.getPurchaseQty()));
                 updateList.add(updateDTO);
             }

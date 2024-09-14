@@ -354,8 +354,8 @@ public class PurchasePriceController extends BaseController {
      * @param list
      * @return
      */
-    @PostMapping("/batchGetPoPurchasePrice")
-    public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPoPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
+    @PostMapping("/batchGetPurchasePrice")
+    public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
         return success(purchasePriceService.batchGetPurchasePrice(list));
     }
 }
