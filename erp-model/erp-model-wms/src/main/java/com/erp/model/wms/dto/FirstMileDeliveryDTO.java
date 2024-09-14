@@ -444,6 +444,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          * ERP的SKU【可排序】
          */
         private String skuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
 
         /**
          * 产品名称

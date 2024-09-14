@@ -345,6 +345,7 @@
         fd.delivery_warehouse_name AS warehouseName,
         fdd.sku_id AS skuId,
         fdd.sku_no AS skuNo,
+        fdd.platform_sku_no AS platformSkuNo,
         fdd.stock_sku AS stockSku,
         fdd.plan_qty AS planQty,
         fdd.delivery_qty AS deliveryQty
