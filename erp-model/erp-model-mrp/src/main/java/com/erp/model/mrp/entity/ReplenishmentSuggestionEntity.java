@@ -81,7 +81,7 @@ public class ReplenishmentSuggestionEntity extends BaseEntity<ReplenishmentSugge
      * 是否手动（补货、恢复补货），true是，false否
      */
     @TableField("is_manual")
-    private String isManual;
+    private Boolean isManual;
 
     /**
      * 补货原因
