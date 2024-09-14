@@ -10,6 +10,11 @@ import java.util.List;
 public class InventoryEstimationDTO {
 
     /**
+     * 建议明细id
+     */
+    private String detailId;
+
+    /**
      * 时间段
      * @see com.erp.model.mrp.enums.TimePeriodEstimateEnum
      */

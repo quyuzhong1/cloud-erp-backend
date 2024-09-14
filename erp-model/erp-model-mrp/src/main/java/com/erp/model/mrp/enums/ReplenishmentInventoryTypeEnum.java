@@ -8,6 +8,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ReplenishmentInventoryTypeEnum implements EnumMessage {
 
+    FBA_IN_TRANSIT("FBA_IN_TRANSIT","FBA在途"),
+    FBA_ESTIMATED_DELIVERY("FBA_ESTIMATED_DELIVERY","FBA预计发货"),
     OVERSEAS_USABLE("OVERSEAS_USABLE", "海外仓可用"),
     OVERSEAS_IN_TRANSIT("OVERSEAS_IN_TRANSIT", "海外仓在途"),
     OVERSEAS_ESTIMATED_DELIVERY("OVERSEAS_ESTIMATED_DELIVERY", "海外仓预计发货"),

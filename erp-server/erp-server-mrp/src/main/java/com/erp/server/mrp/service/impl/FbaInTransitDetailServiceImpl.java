@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -13,6 +14,8 @@ import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
 import com.erp.server.mrp.mapper.FbaInTransitDetailMapper;
 import com.erp.server.mrp.service.FbaInTransitDetailService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -36,5 +39,10 @@ public class FbaInTransitDetailServiceImpl extends SuperServiceImpl<FbaInTransit
             }
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<FbaInTransitDetailEntity> getByReplenishmentId(String detailId) {
+        return list(Wrappers.<FbaInTransitDetailEntity>lambdaQuery().eq(FbaInTransitDetailEntity::getReplenishmentDetailId, detailId));
     }
 }

@@ -138,8 +138,9 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/inventoryEstimation")
-    public ApiResult<?> inventoryEstimation(@RequestBody @Validated InventoryEstimationDTO dto) {
-        return null;
+    public ApiResult<EstimationResultDTO> inventoryEstimation(@RequestBody @Validated InventoryEstimationDTO dto) {
+        EstimationResultDTO result = replenishmentSuggestionService.inventoryEstimation(dto);
+        return success(result);
     }
 
     /**
@@ -147,8 +148,9 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/inventoryEstimationDetail")
-    public ApiResult<?> inventoryEstimationDetail(@RequestBody @Validated InventoryEstimationDetailDTO dto) {
-        return null;
+    public ApiResult<EstimationDetailResultDTO> inventoryEstimationDetail(@RequestBody @Validated InventoryEstimationDetailDTO dto) {
+        EstimationDetailResultDTO result = replenishmentSuggestionService.inventoryEstimationDetail(dto);
+        return success(result);
     }
 
     /**

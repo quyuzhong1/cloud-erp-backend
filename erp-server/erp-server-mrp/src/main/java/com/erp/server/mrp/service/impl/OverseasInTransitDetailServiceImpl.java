@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -11,6 +12,8 @@ import com.erp.model.mrp.vo.OverseasInTransitDetailVO;
 import com.erp.server.mrp.mapper.OverseasInTransitDetailMapper;
 import com.erp.server.mrp.service.OverseasInTransitDetailService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -30,5 +33,10 @@ public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<Oversea
             vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<OverseasInTransitDetailEntity> getByReplenishmentId(String detailId) {
+        return list(Wrappers.<OverseasInTransitDetailEntity>lambdaQuery().eq(OverseasInTransitDetailEntity::getReplenishmentDetailId, detailId));
     }
 }

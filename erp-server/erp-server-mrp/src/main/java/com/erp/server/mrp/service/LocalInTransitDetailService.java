@@ -7,6 +7,8 @@ import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.LocalInTransitDetailEntity;
 import com.erp.model.mrp.vo.LocalInTransitDetailVO;
 
+import java.util.List;
+
 /**
  * <p>
  * 本地在途明细 服务类
@@ -18,4 +20,10 @@ import com.erp.model.mrp.vo.LocalInTransitDetailVO;
 public interface LocalInTransitDetailService extends SuperService<LocalInTransitDetailEntity> {
 
     PagingVO<LocalInTransitDetailVO> localInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
+
+    /**
+     * 获取本地在途明细
+     * @param detailId 建议id
+     */
+    List<LocalInTransitDetailEntity> getByReplenishmentId(String detailId);
 }

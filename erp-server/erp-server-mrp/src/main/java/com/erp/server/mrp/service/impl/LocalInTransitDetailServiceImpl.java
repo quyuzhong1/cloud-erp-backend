@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -10,6 +11,8 @@ import com.erp.model.mrp.vo.LocalInTransitDetailVO;
 import com.erp.server.mrp.mapper.LocalInTransitDetailMapper;
 import com.erp.server.mrp.service.LocalInTransitDetailService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -26,5 +29,10 @@ public class LocalInTransitDetailServiceImpl extends SuperServiceImpl<LocalInTra
     public PagingVO<LocalInTransitDetailVO> localInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<LocalInTransitDetailVO> page = baseMapper.localInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<LocalInTransitDetailEntity> getByReplenishmentId(String detailId) {
+        return list(Wrappers.<LocalInTransitDetailEntity>lambdaQuery().eq(LocalInTransitDetailEntity::getReplenishmentDetailId, detailId));
     }
 }

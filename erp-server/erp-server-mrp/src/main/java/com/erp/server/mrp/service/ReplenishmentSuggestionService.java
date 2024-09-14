@@ -264,4 +264,17 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
 
 
     List<ReplenishmentResultDTO> listAllCalculationData();
+
+    /**
+     * 库存预测
+     * @param dto 参数
+     */
+    EstimationResultDTO inventoryEstimation(InventoryEstimationDTO dto);
+
+    /**
+     * 库存预测明细
+     *
+     * @param dto 参数
+     */
+    EstimationDetailResultDTO inventoryEstimationDetail(InventoryEstimationDetailDTO dto);
 }

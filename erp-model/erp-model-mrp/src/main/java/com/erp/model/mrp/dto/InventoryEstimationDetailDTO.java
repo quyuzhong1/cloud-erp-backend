@@ -3,25 +3,24 @@ package com.erp.model.mrp.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
 @Setter
 public class InventoryEstimationDetailDTO {
-
     /**
-     * 时间段
-     * @see com.erp.model.mrp.enums.TimePeriodEstimateEnum
+     * 建议明细id
      */
-    private String timePeriodEstimate;
+    private String detailId;
 
     /**
-     * 是否计算真实数据
+     * 日期
      */
-    private Boolean isReal;
+    private LocalDate date;
 
     /**
-     * 是否计算模拟
+     * 是否模拟
      */
     private Boolean isSimulated;
     /**
