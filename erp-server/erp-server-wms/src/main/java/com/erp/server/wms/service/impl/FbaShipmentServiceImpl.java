@@ -287,7 +287,17 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
-        List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id));
+        List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listBySourceIds(Arrays.asList(id));
+        List<String> ids= requisitionApplicationEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        ids.add(id);
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(ids);
+        List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews;
+        if(CollectionUtils.isNotEmpty(firstMileDeliveryEntityList)){
+            deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(ids,null);
+        }else {
+            FbaShipmentEntity shipmentEntity = this.getById(id);
+            deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(new ArrayList<>(), shipmentEntity.getCode());
+        }
         return deliverRecordViews;
     }
 

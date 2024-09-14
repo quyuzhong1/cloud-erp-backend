@@ -210,11 +210,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * 根据来源单号查询发货记录
      *
      * @param ids
+     * @param fbaShipmentCode
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      * @Author Luo_WG
      * @Date 2023/11/1 18:06
      **/
-    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids, String fbaShipmentCode);
 
     /**
      * 根据来源单号查询发货信息
