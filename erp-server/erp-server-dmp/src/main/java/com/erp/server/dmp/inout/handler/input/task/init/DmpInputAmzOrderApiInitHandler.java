@@ -3,6 +3,8 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -15,14 +17,15 @@ import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.GetOrdersResponse;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -33,16 +36,15 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器下的旺店通api获取数据方式
  *
  * @author Administrator
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
@@ -55,7 +57,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         // 获取店铺信息
-        String shopId = dmpCfgInputDetailEntity.getNextLevelId();
+        String shopId = nextLevelId;
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -67,17 +69,15 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj) {
             String msg = StrUtil.format("【订单拉取】 PlatformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+//            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+//            initDmpResponse.setDoNextChain(false);
             throw new ServiceException(msg);
         }
-
-        // 转换请求参数
-        // 当前站点
-        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
         // 是否检查当前时间
         Boolean autoCheckNow = dmpCfgInputEntity.parseExtendAutoCheckNow();
         // 开始时间
-        LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
+        LocalDateTime startTime = dmpCfgInputDetailEntity.getLastTime();
         // 结束时间
         LocalDateTime endTime = checkAndConvertEntTime(autoCheckNow);
 
@@ -85,7 +85,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         // 根据亚马逊的响应时间记录下次执行开始时间
         LocalDateTime nextStartTime;
         // 亚马逊订单下载
-        OrdersV0Api api = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+        OrdersV0Api api = AmazonSpApiInitUtils.create(OrdersV0Api.class, shopInfoDTO, false);
         // 正式环境请求
         String lastUpdatedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
         String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(endTime).toString();
@@ -106,7 +106,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
             List<Order> orderList = new LinkedList<>(orders.getPayload().getOrders());
             String currentNextToken = orders.getPayload().getNextToken();
             int currentSize = orders.getPayload().getOrders().size();
-            while (StringUtils.isNotBlank(currentNextToken) && currentSize == 100) {
+            while (StringUtils.isNotBlank(currentNextToken) && 100 == currentSize) {
                 GetOrdersResponse currentResp = api.getOrders(marketplaceIds, null, null, null, null, null, null, null, null, null, 100, null, null, currentNextToken, null, null, null, null, null, null, null, null);
                 orderList.addAll(currentResp.getPayload().getOrders());
                 currentNextToken = currentResp.getPayload().getNextToken();
@@ -114,11 +114,13 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
                 List<String> currentLimitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
                 rateLimitStr = currentLimitArray.get(0);
             }
-            // TODO
+            List<JSONObject> curJsonList = orderList.stream().map(e -> fillDataAndToJsonObject(e, shopInfoDTO)).collect(Collectors.toList());
+
             // 反写下次任务开始时间
+            dmpCfgInputDetailEntity.setNextTime(nextStartTime);
 
             // 返回下载源数据
-            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(orderList)));
+            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSONArray.toJSONString(curJsonList)));
         } catch (ApiException e) {
             if (429 == e.getCode()) {
                 // 设置动态速率，失效时间=1/limit
@@ -132,6 +134,19 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
     }
 
     /**
+     * 设置亚马逊账号和转换JSON
+     */
+    private JSONObject fillDataAndToJsonObject(Order entity, AmazonShopInfoDTO shopInfoDTO) {
+        JSONObject json = (JSONObject) JSON.toJSON(entity);
+        json.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
+        // 根据站点判断店铺ID
+        AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(entity.getMarketplaceId());
+        json.put("shopId", shopNameDTO.getShopId());
+        json.put("shopName", shopNameDTO.getShopName());
+        return json;
+    }
+
+    /**
      * 检查并转换结束时间
      */
     public LocalDateTime checkAndConvertEntTime(Boolean autoCheckNow) {
@@ -141,7 +156,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         if (DmpInputTaskTaskTypeEnum.NORMAL.getCode().equalsIgnoreCase(dmpCfgInputDetailEntity.getTaskType())
                 && null != autoCheckNow
                 && autoCheckNow
-        ){
+        ) {
             // 期望的目标时间 = 当前时间-延时时间
             LocalDateTime targetNow = LocalDateTime.now().minusSeconds(dmpCfgInputDetailEntity.getDealyTime());
             // 间隔分钟
@@ -157,6 +172,4 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         }
         return endTime;
     }
-
-
 }

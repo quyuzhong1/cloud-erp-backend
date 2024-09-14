@@ -38,22 +38,14 @@ import java.util.Map;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzReportParseApiInitHandler extends DmpInputInitHandler {
-    @Resource
-    private DmpAmzReportInfoService dmpAmzReportInfoService;
+public class DmpInputAmzReportParseApiInitHandler extends DmpInputAmzCommonInitHandler {
+
     @Resource
     private CfgAmzReportFieldService cfgAmzReportFieldService;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if(StringUtils.isBlank(parentStorageName)) {
-            return Collections.emptyList();
-        }
-        // 查询报告文档信息
-        List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-        List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        List<Map<String, Object>> findMongoData = getParentStorageMongoData();
         if(CollectionUtils.isEmpty(findMongoData)) {
             log.warn("亚马逊报告主任务taskId={},结果为空无需处理", dmpInputTaskEntity.getParentTaskId());
             return Collections.emptyList();
@@ -101,18 +93,5 @@ public class DmpInputAmzReportParseApiInitHandler extends DmpInputInitHandler {
             }
         });
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJsonStr(jsonArray)));
-    }
-
-    /**
-     * 校验和获取指定字段
-     */
-    private String checkAndGetMongoValue(Map<String, Object> nongoObjectMap, String mongoFieldName) {
-        Object reportDocumentIdObj = nongoObjectMap.get(mongoFieldName);
-        if (null == reportDocumentIdObj) {
-            String msg = StrUtil.format("未找到{}:taskId={}", mongoFieldName, dmpInputTaskEntity.getId());
-            ServiceException.runError(msg);
-        }
-        return (String) reportDocumentIdObj;
-
     }
 }

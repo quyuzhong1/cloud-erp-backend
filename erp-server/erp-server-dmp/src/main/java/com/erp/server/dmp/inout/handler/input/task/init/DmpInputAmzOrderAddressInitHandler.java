@@ -1,31 +1,21 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
-import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiClient;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
 import com.erp.sdk.oms.amz.spapi.model.orders.Address;
+import com.erp.sdk.oms.amz.spapi.model.orders.OrderBuyerInfo;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -40,51 +30,37 @@ import java.util.*;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzOrderAddressInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHandler {
     @Resource
     private CfgAppClientService cfgAppClientService;
-    @Resource
-    private RedisUtil redisUtil;
     @Resource
     private AmazonOrderHandler amazonOrderHandler;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        List<Map<String, Object>> findMongoData = null;
-        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if (StringUtils.isNotBlank(parentStorageName)) {
-            List<ParamData> paramDataList = new ArrayList<>();
-            paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-            findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
-        }
+        // 获取上一级mongo数据
+        List<Map<String, Object>> findMongoData = getParentStorageMongoData();
         if (CollUtil.isEmpty(findMongoData)) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
-        // 店铺ID
-        String nextLevelId = dmpCfgInputDetailEntity.getNextLevelId();
+        // 解析到当前店铺ID
+        String shopId = parseShopId(findMongoData);
         // 需要查询的店铺
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(nextLevelId);
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
 
-        List<ParamData> paramDataList = new ArrayList<>();
-//		List<String> orderIdList = findMongoData.stream().map(f -> f.get("order_id").toString()).collect(Collectors.toList());
-//		paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
-//		findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
-        if (CollUtil.isEmpty(findMongoData)) {
-            return new ArrayList<>();
-        }
+        // 主单信息
+        List<Map<String, Object>> mainMongoDataList = getMainOrderMongoDate(findMongoData, shopInfoDTO.getPlatformShopCode());
 
         List<JSONObject> addressJsonList = new LinkedList<>();
         for (Map<String, Object> mongoData : findMongoData) {
-            String amazonOrderId = mongoData.get("amazonOrderId").toString();
-            // 检查来源
-            if (StringUtils.isBlank(amazonOrderId)) {
-                String msg = StrUtil.format("订单来源ID:{}", JSONUtil.toJsonStr(mongoData));
-                throw new ServiceException(msg);
+            // 主单ID
+            String amazonOrderId = checkAndGetMongoValue(mongoData, "amazonOrderId");
+            // 检查是否查询
+            if (orderOtherCheckCanDoNextRequest(mainMongoDataList, amazonOrderId)) {
+                log.warn("FBA或多渠道订单不获取地址信息:{}", amazonOrderId);
+                continue;
             }
-            String platformShopCode = shopInfoDTO.getPlatformShopCode();
-
-            OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+            OrdersV0Api ordersVoApi = AmazonSpApiInitUtils.create(OrdersV0Api.class, shopInfoDTO, false);
 
             // 生成RDT权限获取地址信息
             // amazon-rdt-token:店铺ID:订单ID
@@ -93,26 +69,31 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputInitHandler {
             // 修改x-amz-access-token的token
             ordersVoApi.getApiClient().addDefaultHeader(ApiClient.SIGNED_ACCESS_TOKEN_HEADER_NAME, rdtToken);
 
+            // 查询买家信息
+            OrderBuyerInfo buyerInfo = amazonOrderHandler.downloadBuyer(shopInfoDTO.getPlatformShopCode(), amazonOrderId, ordersVoApi);
+
             // 设置地址
-            Address shippingAddress = amazonOrderHandler.downloadAddress(platformShopCode, amazonOrderId, ordersVoApi);
-            addressJsonList.add(setAmazonOrderIdAndToJsonObject(shippingAddress, amazonOrderId));
-            // 缓存移除结果
-//            String addressKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getBusinessTypeName(), uniqueId);
-//            if (redisUtil.hasKey(addressKey)) {
-//                redisUtil.del(addressKey);
-//            }
+            Address shippingAddress = amazonOrderHandler.downloadAddress(shopInfoDTO.getPlatformShopCode(), amazonOrderId, ordersVoApi);
+
+            // 合并转json
+            JSONObject jsonObject = setAmazonOrderIdAndToJsonObject(shippingAddress, buyerInfo, amazonOrderId, shopInfoDTO.getPlatformShopCode());
+
+            addressJsonList.add(jsonObject);
         }
 
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(addressJsonList)));
     }
 
+
     /**
      * 设置亚马逊订单ID和转换JSON
      */
-    private JSONObject setAmazonOrderIdAndToJsonObject(Address orderItem, String amazonOrderId) {
-        JSONObject json = (JSONObject) JSON.toJSON(orderItem);
+    private JSONObject setAmazonOrderIdAndToJsonObject(Address address, OrderBuyerInfo buyerInfo, String amazonOrderId, String platformShopCode) {
+        JSONObject json = (JSONObject) JSON.toJSON(address);
         json.put("amazonOrderId", amazonOrderId);
+        json.put("platformShopCode", platformShopCode);
+        JSONObject jsonBuyer = (JSONObject) JSON.toJSON(buyerInfo);
+        json.put("buyerInfo", jsonBuyer);
         return json;
     }
-
 }

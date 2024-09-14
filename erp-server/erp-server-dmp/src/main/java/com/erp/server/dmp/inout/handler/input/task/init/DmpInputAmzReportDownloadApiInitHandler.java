@@ -36,20 +36,14 @@ import java.util.Map;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzReportDownloadApiInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzReportDownloadApiInitHandler extends DmpInputAmzCommonInitHandler {
 
     @Resource
     private AmzReportHandleService amzReportHandleService;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if (StringUtils.isBlank(parentStorageName)) {
-            return Collections.emptyList();
-        }
-        List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-        List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        List<Map<String, Object>> findMongoData = getParentStorageMongoData();
         if (CollectionUtils.isEmpty(findMongoData)) {
             // 主数据不存在明细无需处理
             log.warn("亚马逊报告下载主任务taskId={},结果为空无需处理", dmpInputTaskEntity.getParentTaskId());

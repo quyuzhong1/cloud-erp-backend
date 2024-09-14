@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonInitHandler {
     @Resource
     private RedisUtil redisUtil;
     @Resource
@@ -56,13 +56,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputInitHandler
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if (StringUtils.isBlank(parentStorageName)) {
-            return Collections.emptyList();
-        }
-        List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-        List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        List<Map<String, Object>> findMongoData = getParentStorageMongoData();
         if (CollectionUtils.isEmpty(findMongoData)) {
             // 主数据不存在明细无需处理
             log.warn("FBA明细下载主任务taskId={},结果为空明细无需处理", dmpInputTaskEntity.getParentTaskId());

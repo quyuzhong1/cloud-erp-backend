@@ -5,6 +5,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.Dict;
 import com.common.business.constant.RedisCacheConstants;
@@ -61,7 +62,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzOrderDetailInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHandler {
     @Resource
     private RedisUtil redisUtil;
     @Resource
@@ -69,30 +70,19 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputInitHandler {
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        List<Map<String, Object>> findMongoData = null;
-        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if (StringUtils.isNotBlank(parentStorageName)) {
-            List<ParamData> paramDataList = new ArrayList<>();
-            paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-            findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
-        }
+        // 获取上一级mongo数据
+        List<Map<String, Object>> findMongoData = getParentStorageMongoData();
         if (CollUtil.isEmpty(findMongoData)) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
-        String nextLevelId = dmpCfgInputDetailEntity.getNextLevelId();
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(nextLevelId);
-        if (null == shopInfoDTO) {
-            throw new ServiceException("未找到店铺授权:" + nextLevelId);
-        }
+        // 店铺信息
+        String shopId = parseShopId(findMongoData);
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
 
         List<JSONObject> allItemList = new LinkedList<>();
         for (Map<String, Object> findMongo : findMongoData) {
-            String amazonOrderId = findMongo.get("amazonOrderId").toString();
+            String amazonOrderId = checkAndGetMongoValue(findMongo, "amazonOrderId");
             // 检查来源
-            if (StringUtils.isBlank(amazonOrderId)) {
-                String msg = StrUtil.format("订单来源ID:{}", JSONUtil.toJsonStr(findMongo));
-                throw new ServiceException(msg);
-            }
             // 缓存获取结果
             String amazonOrderIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS.getBusinessTypeName(), amazonOrderId);
             Object resultObj = redisUtil.get(amazonOrderIdResultKey);
@@ -148,10 +138,10 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputInitHandler {
             if (CollectionUtils.isEmpty(curOrderItems)) {
                 continue;
             }
-            List<JSONObject> curJsonList = curOrderItems.stream().map(e -> setAmazonOrderIdAndToJsonObject(e, amazonOrderId)).collect(Collectors.toList());
+            List<JSONObject> curJsonList = curOrderItems.stream().map(e -> setAmazonOrderIdAndToJsonObject(e, amazonOrderId, shopInfoDTO.getPlatformShopCode())).collect(Collectors.toList());
             allItemList.addAll(curJsonList);
             // 缓存倒redis
-            redisUtil.set(amazonOrderIdResultKey, JSONUtil.toJsonStr(curOrderItems), 600);
+            redisUtil.set(amazonOrderIdResultKey, JSONArray.toJSONString(curJsonList), 600);
             log.warn("查询亚马逊订单详情成功, amazonOrderId={}, platformShopCode={}", amazonOrderId, shopInfoDTO.getPlatformShopCode());
         }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allItemList)));
@@ -160,11 +150,11 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputInitHandler {
     /**
      * 设置亚马逊订单ID和转换JSON
      */
-    private JSONObject setAmazonOrderIdAndToJsonObject(OrderItem orderItem, String amazonOrderId) {
+    private JSONObject setAmazonOrderIdAndToJsonObject(OrderItem orderItem, String amazonOrderId, String platformShopCode) {
         JSONObject json = (JSONObject) JSON.toJSON(orderItem);
         json.put("amazonOrderId", amazonOrderId);
+        json.put("platformShopCode", platformShopCode);
         return json;
     }
-
 
 }

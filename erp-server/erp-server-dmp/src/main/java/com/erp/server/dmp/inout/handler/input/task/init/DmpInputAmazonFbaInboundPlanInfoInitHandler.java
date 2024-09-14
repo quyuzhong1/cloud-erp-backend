@@ -34,23 +34,17 @@ import java.util.*;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmazonFbaInboundPlanInfoInitHandler extends DmpInputInitHandler {
+public class DmpInputAmazonFbaInboundPlanInfoInitHandler extends DmpInputAmzCommonInitHandler {
 
     @Resource
     private CfgAppClientService cfgAppClientService;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if (StringUtils.isBlank(parentStorageName)) {
-            return Collections.emptyList();
-        }
-        // 查询报告文档信息
-        List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-        List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        List<Map<String, Object>> findMongoData = getParentStorageMongoData();
         if (CollectionUtils.isEmpty(findMongoData)) {
-            ServiceException.runError("未找到mongo信息:taskId=" + dmpInputTaskEntity.getParentTaskId());
+            log.warn("FBA入库计划taskId={},结果为空明细无需处理", dmpInputTaskEntity.getParentTaskId());
+            return Collections.emptyList();
         }
 
         String shopId = findMongoData.get(0).get("nextLevelId").toString();

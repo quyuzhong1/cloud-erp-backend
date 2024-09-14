@@ -2,24 +2,18 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundPlan;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.Shipment;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -36,23 +30,17 @@ import java.util.Map;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmazonFbaInboundPlanShipmentsInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzFbaInboundPlanShipmentsInitHandler extends DmpInputAmzCommonInitHandler {
 
     @Resource
     private CfgAppClientService cfgAppClientService;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-        if (StringUtils.isBlank(parentStorageName)) {
-            return Collections.emptyList();
-        }
-        // 查询报告文档信息
-        List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-        List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        List<Map<String, Object>> findMongoData = getParentStorageMongoData();
         if (CollectionUtils.isEmpty(findMongoData)) {
-            ServiceException.runError("未找到mongo信息:taskId=" + dmpInputTaskEntity.getParentTaskId());
+            log.warn("FBA入库计划货件askId={},结果为空明细无需处理", dmpInputTaskEntity.getParentTaskId());
+            return Collections.emptyList();
         }
 
         String shopId = findMongoData.get(0).get("nextLevelId").toString();
