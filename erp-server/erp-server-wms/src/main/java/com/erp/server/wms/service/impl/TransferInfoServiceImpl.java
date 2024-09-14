@@ -172,6 +172,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
+
+    @Resource
     private RequisitionApplicationService requisitionApplicationService;
 
     @Resource
@@ -772,20 +775,23 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<String> idList = pushFirstMileDeliveryList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
         List<TransferInfoDetailEntity> pushDetailList = detailList.stream().filter(obj -> idList.contains(obj.getMainId())).collect(Collectors.toList());
 
-
         //头程发货单明细
         List<String> sourceDetailIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailService.listByIds(sourceDetailIdList);
 
+        List<String> sourceIds = pushFirstMileDeliveryList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listByIds(sourceIds);
+
+        //要货申请主表数据
+        List<String> requisitionIds = firstMileDeliveryEntityList.stream().map(FirstMileDeliveryEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationService.listByIds(requisitionIds);
+
         //要货申请明细
-        List<String> applicationDetailIdList = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailList = requisitionApplicationDetailService.listByIds(applicationDetailIdList);
+        List<String> applicationMainIdList = requisitionApplicationList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailList = requisitionApplicationDetailService.listByMainIds(applicationMainIdList);
         if (CollectionUtils.isEmpty(requisitionApplicationDetailList)) {
             throw new ServiceException("未找到直接调拨单对应的要货申请明细");
         }
-        //要货申请主表数据
-        List<String> mainIdList = requisitionApplicationDetailList.stream().map(RequisitionApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationService.listByIds(mainIdList);
 
         //出冻结库存
         List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
@@ -801,7 +807,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (ObjectUtil.isEmpty(firstMileDeliveryDetailEntity)) {
                 throw new ServiceException("未找到头程发货单明细");
             }
-            RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), firstMileDeliveryDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream().filter(obj -> firstMileDeliveryDetailEntity.getFnSku().equals(obj.getPlatformFnSku()) && firstMileDeliveryDetailEntity.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(applicationDetailEntity)) {
                 throw new ServiceException("未找到要货申请明细");
             }
