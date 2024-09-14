@@ -108,10 +108,14 @@
             <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-            and vi.virtual_warehouse_id in
-            <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
+
+            <if test="virtualWarehouseIdList != null and virtualWarehouseIdList.size > 0">
+                and vi.virtual_warehouse_id in
+                <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+
         </where>
     </select>
 
