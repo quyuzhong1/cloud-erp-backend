@@ -39,7 +39,10 @@
                in_transit_qty,
                estimate_sales_date
         from fba_in_transit_detail
-        where replenishment_detail_id = #{detailId} and is_deleted = false
+        where replenishment_detail_id = #{params.detailId} and is_deleted = false
+        <if test="params.estimateSalesDate != null" >
+            and estimate_sales_date = #{params.estimateSalesDate}
+        </if>
     </select>
 
 </mapper>

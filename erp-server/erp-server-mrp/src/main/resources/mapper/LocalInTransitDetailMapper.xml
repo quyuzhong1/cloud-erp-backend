@@ -24,15 +24,18 @@
     </resultMap>
     <select id="localInTransitDetail" resultType="com.erp.model.mrp.vo.LocalInTransitDetailVO">
         select qty,
-               plan_arrival_date,
-               estimate_sales_date,
-               source_id,
-               source_code,
-               source_type
+        plan_arrival_date,
+        estimate_sales_date,
+        source_id,
+        source_code,
+        source_type
         from local_in_transit_detail
         where replenishment_detail_id = #{params.detailId}
-          and source_type = #{params.sourceType}
-          and is_deleted = false
+        and source_type = #{params.sourceType}
+        and is_deleted = false
+        <if test="params.estimateSalesDate != null">
+            and estimate_sales_date = #{params.estimateSalesDate}
+        </if>
     </select>
 
 </mapper>

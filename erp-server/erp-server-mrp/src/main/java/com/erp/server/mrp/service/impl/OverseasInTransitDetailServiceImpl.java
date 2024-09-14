@@ -25,7 +25,7 @@ public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<Oversea
 
     @Override
     public PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
-        Page<OverseasInTransitDetailVO> page = baseMapper.overseasInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams().getDetailId());
+        Page<OverseasInTransitDetailVO> page = baseMapper.overseasInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         for (OverseasInTransitDetailVO vo : page.getRecords()) {
             vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));
         }

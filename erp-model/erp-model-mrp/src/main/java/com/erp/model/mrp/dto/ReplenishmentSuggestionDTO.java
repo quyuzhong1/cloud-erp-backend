@@ -193,6 +193,10 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
     }
 
     @Data

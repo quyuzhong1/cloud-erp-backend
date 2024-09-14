@@ -147,7 +147,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/inventoryEstimationDetail")
-    public ApiResult<?> inventoryEstimationDetail(@RequestBody @Validated InventoryEstimationDTO dto) {
+    public ApiResult<?> inventoryEstimationDetail(@RequestBody @Validated InventoryEstimationDetailDTO dto) {
         return null;
     }
 

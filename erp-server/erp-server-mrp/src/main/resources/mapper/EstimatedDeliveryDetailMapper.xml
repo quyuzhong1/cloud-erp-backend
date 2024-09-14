@@ -30,6 +30,9 @@
           and type = #{params.type}
           and source_type = #{params.sourceType}
           and is_deleted = false
+        <if test="params.estimateSalesDate != null" >
+            and estimate_sales_date = #{params.estimateSalesDate}
+        </if>
     </select>
 
 </mapper>
