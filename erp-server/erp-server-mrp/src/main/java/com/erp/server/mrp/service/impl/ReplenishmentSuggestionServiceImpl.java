@@ -635,6 +635,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return lambdaUpdate().eq(ReplenishmentSuggestionEntity::getId, id)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentRemark, replenishmentRemark)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentType, replenishmentType)
+                .set(ReplenishmentSuggestionEntity::getIsAutoReplenishment,Boolean.FALSE)
                 .update();
     }
     @Override
