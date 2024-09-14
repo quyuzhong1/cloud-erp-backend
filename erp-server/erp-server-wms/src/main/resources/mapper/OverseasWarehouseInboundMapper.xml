@@ -210,6 +210,12 @@
                 #{item}
             </foreach>
         </if>
+        <if test="params.sourceCodes != null and params.sourceCodes.size > 0">
+            and owi.source_code in
+            <foreach collection="params.sourceCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         GROUP BY businessCode,owid.sku_id,owid.platform_sku_no
     </select>
 

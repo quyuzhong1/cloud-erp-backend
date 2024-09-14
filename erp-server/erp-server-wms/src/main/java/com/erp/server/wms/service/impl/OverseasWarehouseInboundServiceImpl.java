@@ -1162,7 +1162,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Override
     public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto) {
-        if (Objects.isNull(dto) || (CollectionUtils.isEmpty(dto.getDeliveryIds()) && Objects.isNull(dto.getMonth()))){
+        if (Objects.isNull(dto) || (CollectionUtils.isEmpty(dto.getSourceCodes()) && Objects.isNull(dto.getMonth()) && CollectionUtils.isEmpty(dto.getBusinessCodes()))){
             return Collections.emptyList();
         }
         return baseMapper.countReceiveQtyByParams(dto);

@@ -481,6 +481,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOS = wmsFirstMileDeliveryFeign.countReceiveQtyByParams(
                 FirstMileDeliveryDTO.RequestReceiveDTO.builder()
                         .businessCodes(Collections.singletonList(entity.getBusinessCode()))
+                        .sourceCodes(Collections.singletonList(entity.getSourceCode()))
                         .month(reportPeriodMonth.getMonth())
                         .build());
         //子sku列表
@@ -1093,7 +1094,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //sku成本总金额
 //        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(e -> e.getProductCost().multiply(new BigDecimal(e.getDeliveryQty()))).reduce(BigDecimal.ZERO, BigDecimal::add);
         //SKU单位成本合计
-        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(FirstMileSkuCostAllocationEntity::getProductCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal skuTotalCost = firstMileSkuCostAllocationEntityList.stream().map(FirstMileSkuCostAllocationEntity::getProductTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add);
         //sku总重量
         BigDecimal weightTotal = firstMileSkuCostAllocationEntityList.stream().map(FirstMileSkuCostAllocationEntity::getAllocatedWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
         //头程总金额

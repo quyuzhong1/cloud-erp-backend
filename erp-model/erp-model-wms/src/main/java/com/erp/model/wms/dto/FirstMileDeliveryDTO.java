@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -13,7 +12,6 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -1262,6 +1260,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 业务单号
          */
         private List<String> businessCodes;
+        /**
+         * 发货单号
+         */
+        private List<String> sourceCodes;
         /**
          * 发货单id集合
          */
