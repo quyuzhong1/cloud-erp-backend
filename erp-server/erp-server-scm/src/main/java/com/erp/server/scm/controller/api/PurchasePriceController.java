@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -347,4 +349,13 @@ public class PurchasePriceController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    @PostMapping("/batchGetPoPurchasePrice")
+    public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPoPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
+        return success(purchasePriceService.batchGetPurchasePrice(list));
+    }
 }

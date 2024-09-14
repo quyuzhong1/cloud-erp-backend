@@ -225,4 +225,6 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     List<PurchasePriceDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     PagingVO<PurchasePriceExportExcelDTO> exportPurchasePrice(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto);
+
+    List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
 }

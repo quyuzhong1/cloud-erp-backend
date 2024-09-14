@@ -409,7 +409,7 @@ public class SubcontractOrderController extends BaseController {
      * @return
      */
     @PostMapping("/batchGetPoPurchasePrice")
-    public ApiResult<SubcontractOrderDTO.SubcontractPurchasePriceDTO> batchGetPoPurchasePrice(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
+    public ApiResult<SubcontractOrderDTO.SubcontractPurchasePriceDTO> batchGetPoPurchasePrice(@RequestBody ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
         return subcontractOrderService.batchGetPoPurchasePrice(list);
     }
 

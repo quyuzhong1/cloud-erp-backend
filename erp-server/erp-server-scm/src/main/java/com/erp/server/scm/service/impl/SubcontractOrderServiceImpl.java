@@ -1284,22 +1284,32 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         SubcontractOrderDTO.SubcontractPurchasePriceDTO purchasePriceDTO = new SubcontractOrderDTO.SubcontractPurchasePriceDTO();
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         //采购组织Id
-        List<String> purchaseOrgIdList = list.stream().filter(e -> Objects.nonNull(e) && !e.getIsConstitute()).map(SubcontractOrderDTO.GeneratePoDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
+        List<String> purchaseOrgIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getPurchaseOrgId())).map(SubcontractOrderDTO.GeneratePoDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIdList);
         if (CollectionUtils.isEmpty(companyList)){
             throw new ServiceException("使用组织不存在");
         }
 
         //skuId
-        List<String> skuIdList = list.stream().filter(e -> Objects.nonNull(e) && !e.getIsConstitute()).map(SubcontractOrderDTO.GeneratePoDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())).map(SubcontractOrderDTO.GeneratePoDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(skuVOList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        //根据sku查询是否是组合品
+        List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //供应商Id
-        List<String> supplierIdList = list.stream().filter(e -> Objects.nonNull(e) && !e.getIsConstitute()).map(SubcontractOrderDTO.GeneratePoDTO::getSupplierId).distinct().collect(Collectors.toList());
+        List<String> supplierIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSupplierId())).map(SubcontractOrderDTO.GeneratePoDTO::getSupplierId).distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierEntityList = supplierService.listByIds(supplierIdList);
+        if (CollectionUtils.isEmpty(supplierEntityList)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
         //采购数量-需要根据sku进行汇总
-        Map<String, Integer> skuQtyList = list.stream().filter(e -> Objects.nonNull(e) && !e.getIsConstitute()).collect(Collectors.groupingBy(SubcontractOrderDTO.GeneratePoDTO::getSkuId, Collectors.summingInt(SubcontractOrderDTO.GeneratePoDTO::getQty)));
+        Map<String, Integer> skuQtyList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && Objects.nonNull(e.getQty())).collect(Collectors.groupingBy(SubcontractOrderDTO.GeneratePoDTO::getSkuId, Collectors.summingInt(SubcontractOrderDTO.GeneratePoDTO::getQty)));
         List<Integer> purchaseQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
-
+        if (CollectionUtils.isEmpty(purchaseQtyList)) {
+            throw new ServiceException("采购数量不能全为空");
+        }
         //查询对应采购价目
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = purchasePriceDetailService.batchGetTaxPrice(skuIdList,supplierIdList,purchaseQtyList,purchaseOrgIdList);
         if (CollectionUtils.isEmpty(viewList)){
@@ -1311,11 +1321,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 continue;
             }
             //获取sku汇总数量
-            Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), MathUtil.ZERO);
-            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(updateDTO.getSkuId())
-                            && obj.getSupplierId().equals(updateDTO.getSupplierId())
-                            && StrUtil.equals(obj.getPurchaseOrgId(),updateDTO.getPurchaseOrgId())
-                            && (purchaseQty >= obj.getMinQty() && obj.getMaxQty() > purchaseQty))
+            Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), null);
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> StrUtil.isNotBlank(updateDTO.getSkuId())
+                            && StrUtil.isNotBlank(obj.getSkuId()) && obj.getSkuId().equals(updateDTO.getSkuId())
+                            && StrUtil.isNotBlank(obj.getSupplierId()) && StrUtil.isNotBlank(updateDTO.getSupplierId()) && obj.getSupplierId().equals(updateDTO.getSupplierId())
+                            && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(updateDTO.getPurchaseOrgId()) && StrUtil.equals(obj.getPurchaseOrgId(),updateDTO.getPurchaseOrgId())
+                            && Objects.nonNull(purchaseQty) && (purchaseQty >= obj.getMinQty() && obj.getMaxQty() > purchaseQty))
                     .findFirst().orElse(null);
             if (Objects.nonNull(viewDTO)){
                 updateDTO.setPrice(viewDTO.getTaxPrice());

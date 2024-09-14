@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -9,9 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -567,5 +566,39 @@ public class PurchasePriceDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class PriceDTO {
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 采购数量
+         */
+        private Integer qty;
 
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 价税合计
+         */
+        private BigDecimal amount;
     }
+}
