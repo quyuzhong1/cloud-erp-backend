@@ -3,6 +3,7 @@ package com.erp.server.mrp.service;
 import com.erp.model.mrp.entity.SalesEstimateEntity;
 import com.common.business.service.SuperService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -18,7 +19,7 @@ public interface SalesEstimateService extends SuperService<SalesEstimateEntity> 
     /**
      * 根据补货建议明细id查询距离今日多少天的数据
      * @param detailId 建议id
-     * @param days 天数
+     * @param date 结束日期
      */
-    List<SalesEstimateEntity> listByReplenishmentIdAndDay(String detailId, Integer days);
+    List<SalesEstimateEntity> listByReplenishmentIdAndDay(String detailId, LocalDate date);
 }

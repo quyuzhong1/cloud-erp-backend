@@ -22,10 +22,10 @@ import java.util.List;
 public class SalesEstimateServiceImpl extends SuperServiceImpl<SalesEstimateMapper, SalesEstimateEntity> implements SalesEstimateService {
 
     @Override
-    public List<SalesEstimateEntity> listByReplenishmentIdAndDay(String detailId, Integer days) {
+    public List<SalesEstimateEntity> listByReplenishmentIdAndDay(String detailId, LocalDate date) {
         return list(Wrappers.<SalesEstimateEntity>lambdaQuery()
                 .eq(SalesEstimateEntity::getReplenishmentDetailId, detailId)
-                .between(SalesEstimateEntity::getDate, LocalDate.now(), LocalDate.now().plusDays(days))
+                .between(SalesEstimateEntity::getDate, LocalDate.now(), date)
         );
     }
 }
