@@ -1787,9 +1787,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         if(StringUtils.isBlank(searchDTO.getRequisitionId())){
             throw new ServiceException("要货申请不能为空");
         }
-        if(StringUtils.isBlank(searchDTO.getCode())){
-            throw new ServiceException("单号不能为空");
-        }
         RequisitionApplicationEntity requisitionApplicationEntity = Optional.ofNullable(requisitionApplicationService.getById(searchDTO.getRequisitionId())).orElseThrow(()->new ServiceException("要货申请为空"));
         searchDTO.setShopId(requisitionApplicationEntity.getChannelId());
         IPage<FbaShipmentDTO.SearchResultDTO> searchData = this.baseMapper.search(query, dto.getParams());
