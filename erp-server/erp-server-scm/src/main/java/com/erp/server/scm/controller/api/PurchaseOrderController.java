@@ -153,15 +153,15 @@ public class PurchaseOrderController extends BaseController {
         Boolean flag = purchaseOrderService.update(dto);
         return flag == true ? success() : failure();
     }
-    /**
-     * 批量获取列表采购单价
-     * @param dto
-     * @return
-     */
-    @PostMapping("/batchGetPurchasePrice")
-    public ApiResult<PurchaseOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
-        return purchaseOrderService.batchGetPurchasePrice(dto);
-    }
+//    /**
+//     * 批量获取列表采购单价
+//     * @param dto
+//     * @return
+//     */
+//    @PostMapping("/batchGetPurchasePrice")
+//    public ApiResult<PurchaseOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
+//        return purchaseOrderService.batchGetPurchasePrice(dto);
+//    }
     /**
      * 新增并提交
      * @author Will

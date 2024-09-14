@@ -119,15 +119,15 @@ public class SubcontractOrderController extends BaseController {
         return success();
     }
 
-    /**
-     * 新增编辑-批量获取列表采购单价
-     * @param dto
-     * @return
-     */
-    @PostMapping("/batchGetPurchasePrice")
-    public ApiResult<SubcontractOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(@RequestBody @Validated SubcontractOrderDTO.UpdateDTO dto) {
-        return subcontractOrderService.batchGetPurchasePrice(dto);
-    }
+//    /**
+//     * 新增编辑-批量获取列表采购单价
+//     * @param dto
+//     * @return
+//     */
+//    @PostMapping("/batchGetPurchasePrice")
+//    public ApiResult<SubcontractOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(@RequestBody @Validated SubcontractOrderDTO.UpdateDTO dto) {
+//        return subcontractOrderService.batchGetPurchasePrice(dto);
+//    }
 
     /**
     * 新增并提交审核
@@ -403,15 +403,15 @@ public class SubcontractOrderController extends BaseController {
          subcontractOrderService.generatePo(list,Boolean.FALSE);
         return success();
     }
-    /**
-     * 下推采购订单-批量获取列表采购单价
-     * @param list
-     * @return
-     */
-    @PostMapping("/batchGetPoPurchasePrice")
-    public ApiResult<SubcontractOrderDTO.SubcontractPurchasePriceDTO> batchGetPoPurchasePrice(@RequestBody ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
-        return subcontractOrderService.batchGetPoPurchasePrice(list);
-    }
+//    /**
+//     * 下推采购订单-批量获取列表采购单价
+//     * @param list
+//     * @return
+//     */
+//    @PostMapping("/batchGetPoPurchasePrice")
+//    public ApiResult<SubcontractOrderDTO.SubcontractPurchasePriceDTO> batchGetPoPurchasePrice(@RequestBody ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
+//        return subcontractOrderService.batchGetPoPurchasePrice(list);
+//    }
 
     /**
      * 添加已有产品显示

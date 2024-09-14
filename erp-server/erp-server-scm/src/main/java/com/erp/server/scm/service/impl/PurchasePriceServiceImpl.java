@@ -1013,7 +1013,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return Collections.emptyList();
         }
         //根据sku查询是否是组合品
-        List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+//        List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //供应商Id
         List<String> supplierIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSupplierId())).map(PurchasePriceDTO.PriceDTO::getSupplierId).distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierEntityList = supplierService.listByIds(supplierIdList);
@@ -1036,14 +1036,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             if (StrUtil.isBlank(updateDTO.getPurchaseOrgId()) || StrUtil.isBlank(updateDTO.getSkuId()) || StrUtil.isBlank(updateDTO.getSupplierId()) || Objects.isNull(updateDTO.getQty())){
                 continue;
             }
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = skuDTOList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getParentSkuId()) && StrUtil.isNotBlank(updateDTO.getSkuId()) && Objects.equals(e.getParentSkuId(), updateDTO.getSkuId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)){
-                //sku是组合品时，不计算采购单价
-                BigDecimal price = Objects.nonNull(updateDTO.getTaxPrice()) ? updateDTO.getTaxPrice():BigDecimal.ZERO;
-                Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
-                updateDTO.setAmount(MathUtil.multiply(price,qty));
-                updateList.add(updateDTO);
-            }
+//            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = skuDTOList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getParentSkuId()) && StrUtil.isNotBlank(updateDTO.getSkuId()) && Objects.equals(e.getParentSkuId(), updateDTO.getSkuId())).collect(Collectors.toList());
+//            if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)){
+//                //sku是组合品时，不计算采购单价
+//                BigDecimal price = Objects.nonNull(updateDTO.getTaxPrice()) ? updateDTO.getTaxPrice():BigDecimal.ZERO;
+//                Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
+//                updateDTO.setAmount(MathUtil.multiply(price,qty));
+//                updateList.add(updateDTO);
+//            }
             //获取sku汇总数量
             Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), null);
             PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> StrUtil.isNotBlank(updateDTO.getSkuId())

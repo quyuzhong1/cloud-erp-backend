@@ -181,12 +181,12 @@ public class PurchaseChangeDTO implements Serializable {
         /**
          * 采购组织
          */
-        @NotBlank(message = "采购组织不能为空")
+//        @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
         /**
          * 供应商id
          */
-        @NotBlank(message = "供应商id不能为空")
+//        @NotBlank(message = "供应商id不能为空")
         private String supplierId;
         /**
          * 采购订单id

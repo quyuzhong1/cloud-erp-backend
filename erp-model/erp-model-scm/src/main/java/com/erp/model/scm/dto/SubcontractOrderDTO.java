@@ -587,17 +587,17 @@ public class SubcontractOrderDTO implements Serializable {
         /**
          * 来源id
          */
-        @NotBlank(message = "采购组织不能为空")
+//        @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
         /**
          * skuId
          */
-        @NotBlank(message = "skuId不能为空")
+//        @NotBlank(message = "skuId不能为空")
         private String skuId;
         /**
          * 是否是组合SKU
          */
-        @NotNull(message = "sku是否组合标识不能为空")
+//        @NotNull(message = "sku是否组合标识不能为空")
         private Boolean isConstitute;
         /**
          * 来源id
