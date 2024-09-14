@@ -22,7 +22,7 @@ public class InitFirstMileAllocationDetailExcelDTO implements Serializable {
      * 发货单号
      */
     @ExcelProperty(value = "*发货单号", index = 0)
-    @FieldValid(fieldName = "发货单号",maxLength = 200)
+    @FieldValid(fieldName = "发货单号",isNotBlank = true,maxLength = 200)
     private String  sourceCode;
 
     /**
@@ -47,13 +47,13 @@ public class InitFirstMileAllocationDetailExcelDTO implements Serializable {
      * SKU
      */
     @ExcelProperty(value = "*SKU", index = 4)
-    @FieldValid(fieldName = "SKU）",maxLength = 200)
+    @FieldValid(fieldName = "SKU）",isNotBlank = true,maxLength = 200)
     private String  skuNo;
     /**
      * 平台SKU
      */
     @ExcelProperty(value = "*平台SKU", index = 5)
-    @FieldValid(fieldName = "平台SKU）",maxLength = 200)
+    @FieldValid(fieldName = "平台SKU）",isNotBlank = true,maxLength = 200)
     private String  platformSkuNo;
     /**
      * 产品名称

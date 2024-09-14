@@ -90,9 +90,9 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
                 if (CollectionUtils.isEmpty(firstMileDTOS)){
                     errorMsgList.add(StrUtil.format("发货单【{}】未审核或不存在",excelDTO.getSourceCode()));
                 }
-                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo())).findFirst().orElse(null);
+                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())).findFirst().orElse(null);
                 if (Objects.isNull(firstMileDTO)){
-                    errorMsgList.add(StrUtil.format("发货单【{}】明细中SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo()));
+                    errorMsgList.add(StrUtil.format("发货单【{}】明细中SKU【{}】平台SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo(), excelDTO.getPlatformSkuNo()));
                 }else {
                     initExcel(firstMileDTO,addDTO);
                 }
@@ -102,9 +102,9 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
                 if (CollectionUtils.isEmpty(firstMileDTOS)){
                     errorMsgList.add(StrUtil.format("业务单号【{}】关联的发货单未审核或不存在",excelDTO.getBusinessCode()));
                 }
-                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo())).findFirst().orElse(null);
+                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())).findFirst().orElse(null);
                 if (Objects.isNull(firstMileDTO)){
-                    errorMsgList.add(StrUtil.format("业务单号【{}】明细中SKU【{}】不存在",excelDTO.getBusinessCode(), excelDTO.getSkuNo()));
+                    errorMsgList.add(StrUtil.format("发货单【{}】明细中SKU【{}】平台SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo(), excelDTO.getPlatformSkuNo()));
                 }else {
                     initExcel(firstMileDTO,addDTO);
                 }
