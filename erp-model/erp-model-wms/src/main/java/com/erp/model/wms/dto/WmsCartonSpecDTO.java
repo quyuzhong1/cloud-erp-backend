@@ -324,6 +324,10 @@ public class WmsCartonSpecDTO implements Serializable {
         private String skuNo;
 
         /**
+         * fn_sku
+         */
+        private String fnSku;
+        /**
          * 已装箱数量
          */
         private Integer packQty;
@@ -584,6 +588,11 @@ public class WmsCartonSpecDTO implements Serializable {
          * 产品产品名称
          */
         private String productName;
+
+        /**
+         * fn_sku
+         */
+        private String fnSku;
 
         /**
          * 发货数量

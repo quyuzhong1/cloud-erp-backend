@@ -122,6 +122,7 @@
             pt.id,
             ptd.sku_id,
             ptd.sku_no,
+            ptd.fn_sku,
             SUM(ptd.delivery_qty) AS deliveryQty
         FROM  packing_task_detail ptd
                   LEFT JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted=FALSE
@@ -129,7 +130,8 @@
           AND ptd.main_id = #{mainId}
         GROUP BY pt.id,
             ptd.sku_id,
-            ptd.sku_no
+            ptd.sku_no,
+            ptd.fn_sku
     </select>
     <select id="listGroupSkuByMainIds" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
         SELECT

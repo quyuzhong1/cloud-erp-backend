@@ -42,6 +42,7 @@ import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -248,12 +249,17 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(soDeliveryNoticeEntity.getId());
         packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
         packingTaskEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.ZXRW));
+        List<SoDetailEntity> soDetailEntityList = soInfoFeign.listSoDetailByMainId(soDeliveryNoticeEntity.getSourceId());
         this.save(packingTaskEntity);
         // 操作日志
         String msg = StrUtil.format("自动生成【{}】单据单号为【{}】", "装箱任务单" , packingTaskEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
         List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.b2bDeliveryDetailToPackingTaskDetail(detailEntityList);
-        taskDetailList.forEach(packingTaskDetailEntity -> packingTaskDetailEntity.setMainId(packingTaskEntity.getId()));
+        taskDetailList.forEach(packingTaskDetailEntity -> {
+            packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
+            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getSkuId().equals(packingTaskDetailEntity.getSkuId())).findFirst().orElse(new SoDetailEntity());
+            packingTaskDetailEntity.setFnSku(soDetailEntity.getPlatformSkuNo());
+        });
         //新增任务明细
         packingTaskDetailService.saveBatch(taskDetailList);
     }
@@ -318,7 +324,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //待装箱数量=发货数量-已装箱数量
             int packQty = packingQtyDTOS.stream()
                     .filter(e -> Objects.nonNull(e) && e.getId().equals(groupSkuDTO.getId())
-                            && e.getSkuId().equals(groupSkuDTO.getSkuId()))
+                            && e.getSkuId().equals(groupSkuDTO.getSkuId())
+                            && e.getFnSku().equals(groupSkuDTO.getFnSku()))
                     .mapToInt(WmsCartonSpecDTO.PackingQtyDTO::getPackQty).sum();
             groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - packQty);
             groupSkuDTO.setPackQty(packQty);
@@ -406,10 +413,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 throw new ServiceException("装箱任务中SKU为空，不能装箱其他SKU");
             }
             List<String> deliverySkuIds = taskDetailEntityList.stream().map(PackingTaskDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            Map<String,String> fnSkuMap = taskDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getFnSku())).collect(Collectors.toMap(v->v.getFnSku(),v->v.getSkuNo(),(v1,v2)->v1));
             List<WmsCartonDetailDTO.AddDTO> otherSku = addDTO.getDetailList().stream().filter(e -> Objects.nonNull(e.getSkuId()) && !deliverySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(otherSku)){
                 List<String> skuNoList = otherSku.stream().map(WmsCartonDetailDTO.AddDTO::getSkuNo).distinct().collect(Collectors.toList());
                 throw new ServiceException(StrUtil.format("装箱任务【{}】没有SKU【{}】装箱任务不能进行装箱", packingTask.getCode(), String.join(",", skuNoList)));
+            }
+            List<String> errorSkuList = addDTO.getDetailList().stream().filter(e -> StringUtils.isNotBlank(e.getFnSku()) && !fnSkuMap.getOrDefault(e.getFnSku(),"").equals(e.getSkuNo())).map(v->v.getSkuNo()).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(errorSkuList)){
+                throw new ServiceException(StrUtil.format("sku编号对应的fnsku不正确", errorSkuList));
             }
             //重置装箱信息 根据配置进行更新装箱状态
             buildCartonSpecWeight(addDTO, type);

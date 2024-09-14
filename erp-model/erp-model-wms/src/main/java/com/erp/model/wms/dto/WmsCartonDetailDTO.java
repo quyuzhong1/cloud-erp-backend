@@ -114,6 +114,11 @@ public class WmsCartonDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
         * 装箱数量
         */
         @NotNull(message = "装箱数量不能为空")
