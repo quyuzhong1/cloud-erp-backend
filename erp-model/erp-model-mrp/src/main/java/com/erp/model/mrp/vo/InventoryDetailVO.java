@@ -25,9 +25,19 @@ public class InventoryDetailVO {
     private String warehouseId;
 
     /**
+     * 实体仓名称
+     */
+    private String warehouseName;
+
+    /**
      * 虚拟仓id
      */
     private String virtualWarehouseId;
+
+    /**
+     * 虚拟仓名称
+     */
+    private String virtualWarehouseName;
 
     /**
      * 仓库类型，local本地，overseas海外

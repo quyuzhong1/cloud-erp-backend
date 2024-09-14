@@ -4,7 +4,6 @@ import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 
 import java.util.List;
 
@@ -28,14 +27,6 @@ public interface InventoryService {
     int getFbaInTransit(ReplenishmentResultDTO replenishmentResultDTO, String code, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult);
 
     /**
-     * 获取历史库存
-     *
-     * @param replenishmentResult 补货结果
-     * @param list
-     */
-    void getHistoryInventory(ReplenishmentResultDTO replenishmentResult, List<FbaHistoryInventoryEntity> list);
-
-    /**
      * 获取FBA预计发货
      *
      * @param replenishmentResultDTO 参数
@@ -55,6 +46,7 @@ public interface InventoryService {
 
     /**
      * 获取本地仓可用库存
+     *
      * @param replenishmentResultDTO 参数
      * @param codes                  编码
      * @param cfgRuleStrategyDTO     配置
@@ -63,6 +55,7 @@ public interface InventoryService {
 
     /**
      * 获取本地仓在途
+     *
      * @param replenishmentResultDTO 参数
      * @param codes                  编码
      * @param cfgRuleStrategyDTO     配置
@@ -71,9 +64,11 @@ public interface InventoryService {
 
     /**
      * 获取本地仓在途
+     *
      * @param replenishmentResultDTO 参数
      * @param localPurchase          本地采购
      * @param cfgRuleStrategyDTO     配置
      */
     int getLocalPurchase(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO localPurchase, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+
 }

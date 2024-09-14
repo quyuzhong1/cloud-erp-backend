@@ -26,7 +26,7 @@ public interface ReplenishmentInventoryDetailService extends SuperService<Replen
     /**
      * 获取库存明细
      */
-    InventoryDetailVO inventoryDetail(InventoryTotalDTO params);
+    List<InventoryDetailVO> inventoryDetail(InventoryTotalDTO params);
 
     /**
      * 保存库存明细及店铺明细

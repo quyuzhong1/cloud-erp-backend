@@ -33,4 +33,16 @@ public class SalesServiceImpl implements SalesService {
                 SnapshotTableEnum.getTableName(SO_OUT_STOCK, calcDate), SnapshotTableEnum.getTableName(SO_OUT_STOCK_DETAIL, calcDate), SnapshotTableEnum.getTableName(SO_B2C, calcDate),
                 LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(360));
     }
+
+    @Override
+    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllSalesBySoOutStock(String calcDate) {
+        return salesMapper.listAllSalesBySoOutStock(SnapshotTableEnum.getTableName(SO_OUT_STOCK, calcDate), SnapshotTableEnum.getTableName(SO_OUT_STOCK_DETAIL, calcDate), SnapshotTableEnum.getTableName(SO_B2C, calcDate),
+                LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(360));
+    }
+
+    @Override
+    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllSalesBySob2c(String calcDate) {
+        return salesMapper.listAllSalesBySob2c(SnapshotTableEnum.getTableName(SO_B2C, calcDate), SnapshotTableEnum.getTableName(SO_B2C_DETAIL, calcDate),
+                LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(360));
+    }
 }

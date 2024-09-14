@@ -58,9 +58,10 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
     /**
      * 店铺库存明细
+     *
      * @param params 明细id
      */
-    InventoryDetailVO inventoryDetail(InventoryTotalDTO params);
+    List<InventoryDetailVO> inventoryDetail(InventoryTotalDTO params);
     /**
      * 销量分析
      * @param dto 参数
@@ -261,9 +262,6 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      */
     void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult);
 
-    /**
-     * 是否开启海外仓
-     */
-    Boolean isEnableOverseas();
 
+    List<ReplenishmentResultDTO> listAllCalculationData();
 }

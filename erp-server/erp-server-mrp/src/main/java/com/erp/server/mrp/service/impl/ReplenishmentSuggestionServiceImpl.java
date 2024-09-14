@@ -266,7 +266,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public InventoryDetailVO inventoryDetail(InventoryTotalDTO params) {
+    public List<InventoryDetailVO> inventoryDetail(InventoryTotalDTO params) {
         return replenishmentInventoryDetailService.inventoryDetail(params);
     }
 
@@ -916,9 +916,43 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public Boolean isEnableOverseas() {
-        CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getByPlatformType(CfgRulePlatformTypeEnum.AMAZON.getCode());
-        return cfgRuleWarehouse.getIsEnableOverseas();
+    public List<ReplenishmentResultDTO> listAllCalculationData() {
+        //查询主表数据
+        List<ReplenishmentSuggestionEntity> entities = list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
+                .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
+                .orderByAsc(ReplenishmentSuggestionEntity::getSkuId));
+        List<String> suggestionIds = entities.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(suggestionIds)) {
+            return Collections.emptyList();
+        }
+        List<ReplenishmentSuggestionDetailEntity> detailList = replenishmentSuggestionDetailService.listByMainIdList(suggestionIds);
+        List<String> detailsIds = detailList.stream().map(ReplenishmentSuggestionDetailEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailsIds)) {
+            return Collections.emptyList();
+        }
+        List<SalesInfoEntity> salesInfoList = salesInfoService.listByReplenishmentDetailIds(detailsIds);
+        return entities.parallelStream()
+                .map(v -> {
+                    ReplenishmentResultDTO resultDTO = new ReplenishmentResultDTO();
+                    ReplenishmentResultDTO.BasicDTO basicDTO = ReplenishmentResultDTO.BasicDTO.buildBasicDTO(v);
+                    resultDTO.setReplenishment(basicDTO);
+                    ReplenishmentSuggestionDetailEntity detail = detailList.stream()
+                            .filter(e -> e.getMainId().equals(v.getId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (ObjectUtils.isEmpty(detail)) {
+                        return null;
+                    }
+                    ReplenishmentResultDTO.DetailDTO detailDTO = ReplenishmentResultDTO.DetailDTO.buildDetail(detail);
+                    resultDTO.setReplenishmentDetail(detailDTO);
+                    List<ReplenishmentResultDTO.SalesInfoDTO> salesInfoEntityList = salesInfoList.stream()
+                            .filter(e -> e.getReplenishmentDetailId().equals(detailDTO.getDetailId()))
+                            .map(ReplenishmentResultDTO.SalesInfoDTO::buildSalesInfoDTO)
+                            .collect(Collectors.toList());
+                    resultDTO.setSalesInfos(salesInfoEntityList);
+                    return resultDTO;
+                }).filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 
     /**

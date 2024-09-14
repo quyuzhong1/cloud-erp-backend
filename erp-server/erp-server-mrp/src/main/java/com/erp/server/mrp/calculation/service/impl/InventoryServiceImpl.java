@@ -6,6 +6,8 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
+import com.erp.model.mrp.entity.SalesInfoEntity;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
@@ -123,28 +125,6 @@ public class InventoryServiceImpl implements InventoryService {
         replenishmentResultDTO.setFbaInTransitDetails(inTransitDetails);
         return inTransitDetails.stream().map(ReplenishmentResultDTO.FbaInTransitDetailDTO::getInTransitQty)
                 .reduce(0, Math::addExact);
-    }
-
-    @Override
-    public void getHistoryInventory(ReplenishmentResultDTO replenishmentResult, List<FbaHistoryInventoryEntity> list) {
-        //拆分时间为表名
-        String calcDate = replenishmentResult.getReplenishmentDetail().getCalcDate();
-        LocalDate endDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE);
-        LocalDate startDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(360);
-        List<LocalDate> dateList = new ArrayList<>();
-        // 遍历每一天
-        while (!startDate.isAfter(endDate)) {
-            dateList.add(startDate);
-            startDate = startDate.plusDays(1);
-        }
-        Map<LocalDate, Integer> localDateMap = list.stream()
-                .collect(Collectors.toMap(FbaHistoryInventoryEntity::getBillDate, FbaHistoryInventoryEntity::getFulfillableQty, Integer::sum));
-        //拆分为时间list
-        List<ReplenishmentResultDTO.SalesInfoDTO> salesInfo = new ArrayList<>();
-        for (LocalDate localDate : dateList) {
-            salesInfo.add(getHistoryInventoryByFba(localDate, replenishmentResult, localDateMap));
-        }
-        replenishmentResult.setSalesInfos(salesInfo);
     }
 
     @Override
@@ -400,27 +380,4 @@ public class InventoryServiceImpl implements InventoryService {
 //        return null;
 //    }
 
-
-    /**
-     * 获取Fba历史库存
-     *
-     * @param localDate           日期
-     * @param replenishmentResult 补货结果
-     * @param list
-     */
-    private ReplenishmentResultDTO.SalesInfoDTO getHistoryInventoryByFba(LocalDate localDate, ReplenishmentResultDTO replenishmentResult, Map<LocalDate, Integer> localDateMap) {
-        ReplenishmentResultDTO.SalesInfoDTO infoDTO = replenishmentResult.getSalesInfos()
-                .stream()
-                .filter(v -> v.getDate().equals(localDate))
-                .findFirst()
-                .orElseGet(() -> {
-                    ReplenishmentResultDTO.SalesInfoDTO salesInfoDTO = new ReplenishmentResultDTO.SalesInfoDTO();
-                    salesInfoDTO.setOriginalSalesQty(0);
-                    return salesInfoDTO;
-                });
-        infoDTO.setOriginalSalesQty(Optional.ofNullable(infoDTO.getOriginalSalesQty()).orElse(0));
-        infoDTO.setDate(Optional.ofNullable(infoDTO.getDate()).orElse(localDate));
-        infoDTO.setOriginalInventoryQty(Optional.ofNullable(localDateMap.get(localDate)).orElse(0));
-        return infoDTO;
-    }
 }

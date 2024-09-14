@@ -62,15 +62,6 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
     /**
-     * 是否开启海外仓
-     */
-    @GetMapping("/isEnableOverseas")
-    public ApiResult<Boolean> isEnableOverseas() {
-        Boolean isEnableOverseas = replenishmentSuggestionService.isEnableOverseas();
-        return success(isEnableOverseas);
-    }
-
-    /**
      * 补货建议明细
      * @param detailId 明细id
      */
@@ -136,8 +127,8 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param params 明细id
      */
     @PostMapping("/inventoryDetail")
-    public ApiResult<InventoryDetailVO> inventoryDetail(@RequestBody @Validated InventoryTotalDTO params) {
-        InventoryDetailVO inventoryDetail = replenishmentSuggestionService.inventoryDetail(params);
+    public ApiResult<List<InventoryDetailVO>> inventoryDetail(@RequestBody @Validated InventoryTotalDTO params) {
+        List<InventoryDetailVO> inventoryDetail = replenishmentSuggestionService.inventoryDetail(params);
         return success(inventoryDetail);
     }
 

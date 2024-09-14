@@ -34,4 +34,12 @@ public class SalesInfoServiceImpl extends SuperServiceImpl<SalesInfoMapper, Sale
     public List<SalesInfoEntity> listHistorySalesInfo(List<String> detailIdList) {
         return baseMapper.listHistorySalesInfo(detailIdList);
     }
+
+    @Override
+    public List<SalesInfoEntity> listByReplenishmentDetailIds(List<String> ids) {
+        return list(Wrappers.<SalesInfoEntity>lambdaQuery()
+                .in(SalesInfoEntity::getReplenishmentDetailId, ids)
+                .orderByAsc(SalesInfoEntity::getDate)
+        );
+    }
 }

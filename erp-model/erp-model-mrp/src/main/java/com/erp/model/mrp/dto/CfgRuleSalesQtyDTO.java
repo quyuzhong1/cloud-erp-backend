@@ -5,7 +5,6 @@ import cn.hutool.json.JSONUtil;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -278,7 +277,7 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          */
         private List<CfgRuleSalesDenoisingEntity> defaultDenoising;
 
-        public static StrategyDTO buildStrategyDTO(ReplenishmentSuggestionEntity entity, String skuType, CfgRuleSalesQtyEntity defaultSalesQty, List<CfgRuleSalesFormulaEntity> defaultFormula, List<CfgRuleSalesDenoisingEntity> defaultDenoising) {
+        public static StrategyDTO buildStrategyDTO(ReplenishmentResultDTO.BasicDTO entity, String skuType, CfgRuleSalesQtyEntity defaultSalesQty, List<CfgRuleSalesFormulaEntity> defaultFormula, List<CfgRuleSalesDenoisingEntity> defaultDenoising) {
             StrategyDTO resultDTO = new StrategyDTO();
             resultDTO.setRefId(entity.getId());
             resultDTO.setPlatformType(entity.getPlatformType());

@@ -383,7 +383,7 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         private List<CfgRuleLogisticsDetailEntity> logisticsDetails;
 
-        public static StrategyDTO buildStrategyDTO(ReplenishmentSuggestionEntity entity, String skuType, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioEntity> defaultStockingRatio,
+        public static StrategyDTO buildStrategyDTO(ReplenishmentResultDTO.BasicDTO entity, String skuType, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioEntity> defaultStockingRatio,
                                                    List<CfgRuleLogisticsEntity> defaultLogistics, List<CfgRuleLogisticsDetailEntity> logisticsDetails) {
             StrategyDTO dto = new StrategyDTO();
             dto.setRefId(entity.getId());

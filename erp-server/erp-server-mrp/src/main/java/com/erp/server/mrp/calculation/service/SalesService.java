@@ -9,4 +9,7 @@ public interface SalesService {
 
     List<ReplenishmentResultDTO.SalesInfoDTO> listSalesBySoOutStock(ReplenishmentResultDTO replenishmentResult);
 
+    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllSalesBySoOutStock(String calculation);
+
+    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllSalesBySob2c(String calculation);
 }
