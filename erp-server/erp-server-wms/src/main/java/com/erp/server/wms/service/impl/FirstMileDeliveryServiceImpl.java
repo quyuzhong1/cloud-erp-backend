@@ -288,9 +288,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return;
         }
         Map<String, String> skuMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+        List<String> deliveryIds = records.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSourceId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOS = baseMapper.getBusinessCodeByIds(deliveryIds);
         records.forEach(listFirstMileDTO -> {
             if (StrUtil.isNotBlank(listFirstMileDTO.getSkuId())){
                 listFirstMileDTO.setProductName(skuMap.get(listFirstMileDTO.getSkuId()));
+            }
+            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), listFirstMileDTO.getSourceId())).findFirst().orElse(null);
+            if (Objects.nonNull(businessDTO)){
+                listFirstMileDTO.setBusinessCode(businessDTO.getBusinessCode());
             }
         });
     }

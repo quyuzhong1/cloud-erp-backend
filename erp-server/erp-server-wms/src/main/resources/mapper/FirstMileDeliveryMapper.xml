@@ -335,9 +335,8 @@
         fdd.id as sourceDetailId,
         fd.code as sourceCode,
         'delivery' as sourceType,
-        concat(fdd.fba_shipment_code,owi.code) AS businessCode,
+--         concat(fdd.fba_shipment_code,owi.code) AS businessCode,
         fdd.fba_shipment_code as fbaShipmentCode,
-        owi.code as overseasWarehouseCode,
         fd.demand_type AS businessType,
         fd.shop_id AS shopId,
         fd.shop_name AS shopName,
@@ -351,7 +350,6 @@
         fdd.delivery_qty AS deliveryQty
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         and fd.is_deleted = FALSE and fd.approve_status = 'approve'
@@ -404,6 +402,7 @@
                 #{item}
             </foreach>
         </if>
+        GROUP BY sourceId,sourceDetailId,sourceCode,sourceType,businessCode,overseasWarehouseCode,fbaShipmentCode,businessType,shopId,shopName,warehouseId,warehouseName,skuId,skuNo,platformSkuNo,stockSku,planQty,deliveryQty
     </select>
     <select id="getBusinessCodeByIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
         SELECT
