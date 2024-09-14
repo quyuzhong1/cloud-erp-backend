@@ -266,6 +266,15 @@ public class WmsCartonDetailDTO implements Serializable {
         private String errorMsg;
 
         /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+        /**
+         * 货件/海外仓单号
+         */
+        private String businessCode;
+        /**
          * 外部箱号
          */
         private String outCode;

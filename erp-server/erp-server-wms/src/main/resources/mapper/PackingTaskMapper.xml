@@ -204,8 +204,8 @@
         INNER JOIN wms_carton wc ON wc.id = wcd.main_id AND wc.is_deleted = FALSE
         JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
         JOIN packing_task pt ON wc.packing_task_id = pt.id and pt.is_deleted = FALSE
-        LEFT JOIN fba_shipment_packing fsp on  fsp.carton_id = wc.id and fsp.is_deleted =false and fsp.sku_id = wcd.sku_id
-        WHERE wcd.is_deleted = FALSE
+        LEFT JOIN fba_shipment_packing fsp on  fsp.carton_id = wc.id and fsp.is_deleted =false
+        WHERE  ${params.sqlMap.default} and wcd.is_deleted = FALSE
             AND wcd.pack_qty > 0
         <if test="taskIds != null and taskIds.size > 0">
             AND wc.packing_task_id IN
