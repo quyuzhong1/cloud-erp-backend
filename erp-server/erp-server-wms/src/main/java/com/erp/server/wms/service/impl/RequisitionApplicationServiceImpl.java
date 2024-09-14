@@ -1396,7 +1396,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuNos(skuNo);
         List<RequisitionApplicationAssembleExportDTO> datas = new ArrayList<>();
         for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : detailEntityList) {
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenList.stream().filter(v->v.getParentSkuId().equals(requisitionApplicationDetailEntity.getSkuId()) && v.getBomVersion().equals(requisitionApplicationDetailEntity.getBomVersion())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomChildrenList.stream().filter(v->v.getParentSkuId().equals(requisitionApplicationDetailEntity.getSkuId()) && v.getBomVersion().equals(requisitionApplicationDetailEntity.getBomVersion())&& BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(bomChildrenSkuDTOS)){
                 continue;
             }
