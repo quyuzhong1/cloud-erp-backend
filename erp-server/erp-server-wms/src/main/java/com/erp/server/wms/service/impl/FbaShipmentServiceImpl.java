@@ -720,8 +720,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<FirstMileDeliveryEntity> fbaDeliveryEntities = firstMileDeliveryService.listBySourceIds(ids);
         //根据来源详情id查询发货详情
         List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
-        //根据详情id查询收货记录
-        List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
         //根据sku获取产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         for (FbaShipmentDTO.ListDTO record : records) {
