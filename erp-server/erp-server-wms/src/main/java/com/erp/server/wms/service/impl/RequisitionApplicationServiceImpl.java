@@ -1096,7 +1096,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException(ApiError.ERROR_99104);
         }
         if(list.stream().anyMatch(v->RequisitionApplicationTypeEnum.FBA.getCode().equals(v.getType()))){
-            throw new ServiceException("FBA下推发货单请选择绑定货件");
+            throw new ServiceException("FBA要货申请不支持批量下推");
         }
         List<FirstMileDeliveryEntity> entities = firstMileDeliveryService.listBySourceIds(ids);
         boolean invalidStatus = entities.stream().anyMatch(FirstMileDeliveryEntity::getInvalidStatus);
