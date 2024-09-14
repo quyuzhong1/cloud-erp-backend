@@ -273,9 +273,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         }
         //装箱内容物详情
         List<WmsCartonDTO.DetailDTO> cartonDetailList = wmsCartonFeign.listByPackingTaskId(packingTaskEntity.getId());
-        Map<String, BigDecimal> cartonDetailMap = cartonDetailList.stream().collect(Collectors.toMap(
+        Map<String, BigDecimal> cartonDetailMap = cartonDetailList.stream().distinct().collect(Collectors.toMap(
                 WmsCartonDTO.DetailDTO::getSkuId,
-                WmsCartonDTO.DetailDTO::getPackageWeight
+                WmsCartonDTO.DetailDTO::getPackageWeight,
+                (existingValue, newValue) -> existingValue
         ));
         //系统配置
         CfgSettingDTO.ViewDTO cfgSettingView = cfgSettingService.view();

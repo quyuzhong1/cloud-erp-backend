@@ -18,7 +18,7 @@
                eb.create_time createTime,
                lb.channel_id logisticsChannelId,
                eb.logistics_bill_id,
-               lbc.reconciliation_status,
+               lbc.reconciliation_status actualBillStatus,
                lbc.currency
         from first_mile_estimated_bill eb
                  inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
