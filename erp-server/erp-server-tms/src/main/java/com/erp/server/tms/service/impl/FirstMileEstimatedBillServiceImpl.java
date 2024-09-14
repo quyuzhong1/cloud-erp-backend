@@ -98,17 +98,13 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
         List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCostList = this.baseMapper.listEstimatedCost(logisticsBillIds);
         Map<String, List<FirstMileEstimatedBillDTO.EstimatedCost>> estimatedCostMap = estimatedCostList.stream().collect(Collectors.groupingBy(item -> item.getLogisticsBillId()));
-        //业务单号
-        List<String> outStockIds = records.stream().map(item -> item.getOutStockId()).distinct().collect(Collectors.toList());
-        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(outStockIds);
-        //根据物流单获取对账单数据
-        List<TmsFirstMileLogisticDTO.ReconciliationDTO> reconciliationDTOList = tmsFirstMileReconciliationService.listReconciliationAndCostByBillIds(logisticsBillIds);
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getName(item.getStatus()));
             item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
             item.setToCountryName(item.getToCountry());
             item.setToCountry(countryMap.getOrDefault(item.getToCountryName(), ""));
             item.setFeeRuleName(ShippingFeeRuleEnum.getName(item.getFeeRule()));
+            item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
 
             //预计费用
             if(estimatedCostMap.containsKey(item.getLogisticsBillId())){
@@ -154,22 +150,6 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 }
             }
             item.setTransportStatusName(FmLogisticTrackStatusEnum.getNameByCode(item.getTransportStatus()).getName());
-            //业务单号查询逻辑修改 展示FBA发货单号和第三方货号-同期初展示逻辑
-            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(e -> Objects.equals(e.getId(), item.getOutStockId())).findFirst().orElse(null);
-            if (Objects.nonNull(businessDTO)){
-                item.setBusinessCode(businessDTO.getBusinessCode());
-            }else {
-                item.setBusinessCode("");
-            }
-
-            //对账单信息
-            TmsFirstMileLogisticDTO.ReconciliationDTO reconciliationDTO = reconciliationDTOList.stream().filter(e -> StrUtil.isNotBlank(e.getLogisticsBillId()) && Objects.equals(e.getLogisticsBillId(), item.getLogisticsBillId())).findFirst().orElse(null);
-            if (Objects.nonNull(reconciliationDTO)){
-                item.setActualBillStatus(reconciliationDTO.getReconciliationStatus());
-                item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
-                item.setCurrency(reconciliationDTO.getCurrency());
-                item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(reconciliationDTO.getCurrency()));
-            }
         }
     }
 

@@ -4,7 +4,7 @@
 
     <select id="paging" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$View">
         select eb.id,
-               lb.source_code businessCode,
+               fd. businessCode,
                lb.outstock_id outStockId,
                lb.transport_no transportNo,
                eb.status,
@@ -17,11 +17,25 @@
                eb.confirm_time confirmTime,
                eb.create_time createTime,
                lb.channel_id logisticsChannelId,
-               eb.logistics_bill_id
+               eb.logistics_bill_id,
+               lbc.reconciliation_status,
+               lbc.currency
         from first_mile_estimated_bill eb
                  inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
                  left join logistics_channel lc on lb.channel_id = lc.id
                  left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+                 left join logistics_bill_cost lbc on lbc.is_deleted = FALSE AND eb.logistics_bill_id = lbc.logistics_bill_id
+        LEFT JOIN (
+        SELECT
+            fd.ID,
+            concat ( fdd.fba_shipment_code, owi.code ) AS businessCode
+        FROM
+            wms_first_mile_delivery fd
+        LEFT JOIN wms_first_mile_delivery_detail fdd ON fdd.main_id = fd.ID AND fdd.is_deleted =FALSE
+                LEFT JOIN wms_overseas_warehouse_inbound owi ON owi.source_id = fd.ID AND owi.is_deleted = FALSE
+        WHERE
+            fd.is_deleted = FALSE
+        ) AS fd ON lb.outstock_id = fd.ID
         <where>
             ${params.sqlMap.default}
             and eb.is_deleted = false
@@ -54,10 +68,10 @@
                 lb.channel_id logisticsChannelId,
                 eb.logistics_bill_id
         from first_mile_estimated_bill eb
-                inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
-                left join logistics_channel lc on lb.channel_id = lc.id
-                left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-                left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
+        inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
+        left join logistics_channel lc on lb.channel_id = lc.id
+        left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        left join logistics_bill_cost lbc on lbc.logistics_bill_id = lb.id and lbc.is_deleted = false
         <where>
             eb.id in
             <foreach collection="ids" item="id" open="(" separator="," close=")">
