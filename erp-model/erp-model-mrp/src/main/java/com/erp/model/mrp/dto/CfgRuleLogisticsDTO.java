@@ -95,7 +95,6 @@ public class CfgRuleLogisticsDTO implements Serializable {
         /**
         * 排序字段
         */
-        @NotNull(message = "排序字段不能为空")
         private Integer index;
 
         /**

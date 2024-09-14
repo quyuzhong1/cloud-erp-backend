@@ -42,7 +42,7 @@ public class FixedSalesQtyImportExcelDTO implements Serializable {
      * 规则名称
      */
     @ExcelProperty(value = "*规则名称", index = 3)
-    @FieldValid(fieldName = "规则名称", isNotBlank = true, maxLength = 10)
+    @FieldValid(fieldName = "规则名称", isNotBlank = true, maxLength = 10, formatPattern = FieldFormatPatternTypeEnum.NAME)
     private String name;
 
     /**
@@ -63,7 +63,7 @@ public class FixedSalesQtyImportExcelDTO implements Serializable {
      * 固定日销量
      */
     @ExcelProperty(value = "*固定日销量", index = 6)
-    @FieldValid(fieldName = "固定日销量", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "固定日销量", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.INTEGER)
     private String fixedValue;
 
     /**

@@ -533,18 +533,16 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             if (StrUtil.isBlank(cfgRuleStockUpEntity.getId())) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的备货设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
-            String names = value.stream().collect(Collectors.groupingBy(StockingRatioImportExcelDTO::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
-            if (StrUtil.isNotBlank(names)) {
-                errorMsgList.add("备货系数名称唯一不能添加重复数据");
-            }
-            //备货系数
-            Integer index = cfgRuleStockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), cfgRuleStockUpEntity.getId())).max(Comparator.comparingInt(obj -> obj.getIndex())).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
             List<CfgRuleStockingRatioDTO.UpdateDTO> updateDTOList = new ArrayList<>();
             for (StockingRatioImportExcelDTO importExcelDTO: value) {
                 List<String> errorMsgDetailList = new ArrayList<>();
-                //上级错误学习
+                //上级错误信息
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     errorMsgDetailList.addAll(errorMsgList);
+                }
+                long count = value.stream().filter(obj -> StrUtil.equals(obj.getName(), importExcelDTO.getName())).count();
+                if (count > 1) {
+                    errorMsgDetailList.add("备货系数名称唯一不能添加重复数据");
                 }
                 //日期
                 LocalDate startDate = LocalDateUtil.parseStrToLocalDate(importExcelDTO.getStartDateStr());
@@ -560,8 +558,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                     errorList.add(importExcelDTO);
                     continue;
                 }
-                index ++;
-                CfgRuleStockingRatioDTO.UpdateDTO updateDTO = formatCfgRuleStockUpDTO(importExcelDTO, index);
+                CfgRuleStockingRatioDTO.UpdateDTO updateDTO = formatCfgRuleStockUpDTO(importExcelDTO);
                 updateDTOList.add(updateDTO);
             }
             cfgRuleStockingRatioService.update(updateDTOList,cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),Boolean.TRUE);
@@ -576,9 +573,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param excelDTO
      * @return List<UpdateDTO>
      */
-    private CfgRuleStockingRatioDTO.UpdateDTO formatCfgRuleStockUpDTO (StockingRatioImportExcelDTO excelDTO, Integer index) {
+    private CfgRuleStockingRatioDTO.UpdateDTO formatCfgRuleStockUpDTO (StockingRatioImportExcelDTO excelDTO) {
         CfgRuleStockingRatioDTO.UpdateDTO updateDTO = new CfgRuleStockingRatioDTO.UpdateDTO();
-        updateDTO.setIndex(index);
         updateDTO.setName(excelDTO.getName());
         updateDTO.setStockingRatio(MathUtil.valueOf(excelDTO.getStockingRatioStr()));
         //日期
@@ -733,9 +729,12 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         updateDTO.setType(CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode());
         updateDTO.setDefaultType(CfgRuleSalesFormulaDefaultTypeEnum.getCode(excelDTO.getDefaultTypeName()));
         updateDTO.setPriority(MathUtil.THREE);
-        updateDTO.setFixedValue(MathUtil.valueOf(excelDTO.getFixedValue()));
-        CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = formatPercentJson(excelDTO);
-        updateDTO.setPercentJsonDTO(percentJsonDTO);
+        if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(updateDTO.getDefaultType())) {
+            CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = formatPercentJson(excelDTO);
+            updateDTO.setPercentJsonDTO(percentJsonDTO);
+        } else {
+            updateDTO.setFixedValue(Integer.valueOf(excelDTO.getFixedValue()));
+        }
         return Arrays.asList(updateDTO);
     }
 
@@ -748,16 +747,16 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      */
     private CfgRuleSalesFormulaDTO.PercentJsonDTO formatPercentJson (DefaultSalesQtyImportExcelDTO excelDTO) {
         CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = new CfgRuleSalesFormulaDTO.PercentJsonDTO();
-        percentJsonDTO.setThreeDaysRatio(MathUtil.valueOf(excelDTO.getThreeDaysRatio()));
-        percentJsonDTO.setSevenDaysRatio(MathUtil.valueOf(excelDTO.getSevenDaysRatio()));
-        percentJsonDTO.setNinetyDaysRatio(MathUtil.valueOf(excelDTO.getNinetyDaysRatio()));
-        percentJsonDTO.setFourteenDaysRatio(MathUtil.valueOf(excelDTO.getFourteenDaysRatio()));
-        percentJsonDTO.setThirtyDaysRatio(MathUtil.valueOf(excelDTO.getThirtyDaysRatio()));
-        percentJsonDTO.setSixtyDaysRatio(MathUtil.valueOf(excelDTO.getSixtyDaysRatio()));
-        percentJsonDTO.setNinetyDaysRatio(MathUtil.valueOf(excelDTO.getNinetyDaysRatio()));
-        percentJsonDTO.setOneHundredEightyDaysRatio(MathUtil.valueOf(excelDTO.getOneHundredEightyDaysRatio()));
-        percentJsonDTO.setTwoHundredSeventyDaysRatio(MathUtil.valueOf(excelDTO.getTwoHundredSeventyDaysRatio()));
-        percentJsonDTO.setThreeHundredSixtyDaysRatio(MathUtil.valueOf(excelDTO.getThreeHundredSixtyDaysRatio()));
+        percentJsonDTO.setThreeDaysRatio(MathUtil.valueOfInteger(excelDTO.getThreeDaysRatio()));
+        percentJsonDTO.setSevenDaysRatio(MathUtil.valueOfInteger(excelDTO.getSevenDaysRatio()));
+        percentJsonDTO.setNinetyDaysRatio(MathUtil.valueOfInteger(excelDTO.getNinetyDaysRatio()));
+        percentJsonDTO.setFourteenDaysRatio(MathUtil.valueOfInteger(excelDTO.getFourteenDaysRatio()));
+        percentJsonDTO.setThirtyDaysRatio(MathUtil.valueOfInteger(excelDTO.getThirtyDaysRatio()));
+        percentJsonDTO.setSixtyDaysRatio(MathUtil.valueOfInteger(excelDTO.getSixtyDaysRatio()));
+        percentJsonDTO.setNinetyDaysRatio(MathUtil.valueOfInteger(excelDTO.getNinetyDaysRatio()));
+        percentJsonDTO.setOneHundredEightyDaysRatio(MathUtil.valueOfInteger(excelDTO.getOneHundredEightyDaysRatio()));
+        percentJsonDTO.setTwoHundredSeventyDaysRatio(MathUtil.valueOfInteger(excelDTO.getTwoHundredSeventyDaysRatio()));
+        percentJsonDTO.setThreeHundredSixtyDaysRatio(MathUtil.valueOfInteger(excelDTO.getThreeHundredSixtyDaysRatio()));
         return percentJsonDTO;
     }
 
@@ -1006,7 +1005,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     private List<CfgRuleSalesFormulaDTO.UpdateDTO>  formatFixedSalesQty (FixedSalesQtyImportExcelDTO excelDTO) {
         CfgRuleSalesFormulaDTO.UpdateDTO updateDTO = new CfgRuleSalesFormulaDTO.UpdateDTO();
         updateDTO.setName(excelDTO.getName());
-        updateDTO.setFixedValue(MathUtil.valueOf(excelDTO.getFixedValue()));
+        updateDTO.setFixedValue(Integer.valueOf(excelDTO.getFixedValue()));
         updateDTO.setPriority(MathUtil.ONE);
         updateDTO.setType(CfgRuleSalesFormulaTypeEnum.FIXED.getCode());
         LocalDate startDate = LocalDateUtil.parseStrToLocalDate(excelDTO.getStartDateStr());

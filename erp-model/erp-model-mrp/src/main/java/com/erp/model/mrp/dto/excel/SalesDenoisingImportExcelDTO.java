@@ -44,7 +44,7 @@ public class SalesDenoisingImportExcelDTO implements Serializable {
      * 规则名称
      */
     @ExcelProperty(value = "*规则名称", index = 3)
-    @FieldValid(fieldName = "规则名称", isNotBlank = true, maxLength = 10)
+    @FieldValid(fieldName = "规则名称", isNotBlank = true, maxLength = 10, formatPattern = FieldFormatPatternTypeEnum.NAME)
     private String name;
 
     /**

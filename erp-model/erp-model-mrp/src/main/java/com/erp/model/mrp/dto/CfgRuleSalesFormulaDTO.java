@@ -7,7 +7,6 @@ import lombok.experimental.Accessors;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -76,7 +75,7 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
         * 固定值
         */
-        private BigDecimal fixedValue;
+        private Integer fixedValue;
 
         /**
         * 百分比json
@@ -112,7 +111,7 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          * 固定值
          */
         @Digits(integer = 12, fraction = 4, message = "固定值整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal fixedValue;
+        private Integer fixedValue;
 
         /**
          * 百分比json
@@ -182,8 +181,9 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          * 固定值
          */
         @NotNull(message = "固定值不能为空")
-        @Digits(integer = 12, fraction = 4, message = "固定值整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal fixedValue;
+        @Min(value = 0,message = "固定值最小值为0")
+        @Max(value = 999999999,message = "固定值最大值为999999999")
+        private Integer fixedValue;
 
     }
 
@@ -237,8 +237,9 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
         * 固定值
         */
-        @Digits(integer = 12, fraction = 4, message = "固定值整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal fixedValue;
+        @Min(value = 0,message = "固定值最小值为0")
+        @Max(value = 999999999,message = "固定值最大值为999999999")
+        private Integer fixedValue;
 
         /**
         * 百分比json
@@ -256,53 +257,53 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
          * 三天日均
          */
-        private BigDecimal threeDaysRatio;
+        private Integer threeDaysRatio;
         /**
          * 七天日均
          */
-        private BigDecimal sevenDaysRatio;
+        private Integer sevenDaysRatio;
         /**
          * 十四天日均
          */
-        private BigDecimal fourteenDaysRatio;
+        private Integer fourteenDaysRatio;
         /**
          * 三十天日均
          */
-        private BigDecimal thirtyDaysRatio;
+        private Integer thirtyDaysRatio;
         /**
          * 六十天日均
          */
-        private BigDecimal sixtyDaysRatio;
+        private Integer sixtyDaysRatio;
         /**
          * 九十天日均
          */
-        private BigDecimal ninetyDaysRatio;
+        private Integer ninetyDaysRatio;
         /**
          * 一百八十天日均
          */
-        private BigDecimal oneHundredEightyDaysRatio;
+        private Integer oneHundredEightyDaysRatio;
         /**
          * 二百七十天日均
          */
-        private BigDecimal twoHundredSeventyDaysRatio;
+        private Integer twoHundredSeventyDaysRatio;
         /**
          * 三百六十天日均
          */
-        private BigDecimal threeHundredSixtyDaysRatio;
+        private Integer threeHundredSixtyDaysRatio;
 
         /**
          * 总百分比
          */
-        public BigDecimal getTotalRatio () {
-            BigDecimal totalRatio = ObjectUtil.isEmpty(threeDaysRatio) ? BigDecimal.ZERO : threeDaysRatio
-                    .add(ObjectUtil.isEmpty(sevenDaysRatio) ? BigDecimal.ZERO : sevenDaysRatio)
-                    .add(ObjectUtil.isEmpty(fourteenDaysRatio) ? BigDecimal.ZERO : fourteenDaysRatio)
-                    .add(ObjectUtil.isEmpty(thirtyDaysRatio) ? BigDecimal.ZERO : thirtyDaysRatio)
-                    .add(ObjectUtil.isEmpty(sixtyDaysRatio) ? BigDecimal.ZERO : sixtyDaysRatio)
-                    .add(ObjectUtil.isEmpty(ninetyDaysRatio) ? BigDecimal.ZERO : ninetyDaysRatio)
-                    .add(ObjectUtil.isEmpty(oneHundredEightyDaysRatio) ? BigDecimal.ZERO : oneHundredEightyDaysRatio)
-                    .add(ObjectUtil.isEmpty(twoHundredSeventyDaysRatio) ? BigDecimal.ZERO : twoHundredSeventyDaysRatio)
-                    .add(ObjectUtil.isEmpty(threeHundredSixtyDaysRatio) ? BigDecimal.ZERO : threeHundredSixtyDaysRatio);
+        public Integer getTotalRatio () {
+            Integer totalRatio = (ObjectUtil.isEmpty(threeDaysRatio) ? 0 : threeDaysRatio)
+                     + (ObjectUtil.isEmpty(sevenDaysRatio) ? 0 : sevenDaysRatio)
+                     + (ObjectUtil.isEmpty(fourteenDaysRatio) ? 0 : fourteenDaysRatio)
+                     + (ObjectUtil.isEmpty(thirtyDaysRatio) ? 0 : thirtyDaysRatio)
+                     + (ObjectUtil.isEmpty(sixtyDaysRatio) ? 0 : sixtyDaysRatio)
+                     + (ObjectUtil.isEmpty(ninetyDaysRatio) ? 0 : ninetyDaysRatio)
+                     + (ObjectUtil.isEmpty(oneHundredEightyDaysRatio) ? 0 : oneHundredEightyDaysRatio)
+                     + (ObjectUtil.isEmpty(twoHundredSeventyDaysRatio) ? 0 : twoHundredSeventyDaysRatio)
+                     + (ObjectUtil.isEmpty(threeHundredSixtyDaysRatio) ? 0 : threeHundredSixtyDaysRatio);
             return totalRatio;
         }
     }
@@ -348,51 +349,51 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         /**
          * 固定日销量
          */
-        private BigDecimal fixedValue;
+        private Integer fixedValue;
 
         /**
          * 3天日均（%）
          */
-        private BigDecimal threeDaysRatio;
+        private Integer threeDaysRatio;
 
         /**
          * 7天日均（%）
          */
-        private BigDecimal sevenDaysRatio;
+        private Integer sevenDaysRatio;
 
         /**
          * 14天日均（%）
          */
-        private BigDecimal fourteenDaysRatio;
+        private Integer fourteenDaysRatio;
 
         /**
          * 30天日均（%）
          */
-        private BigDecimal thirtyDaysRatio;
+        private Integer thirtyDaysRatio;
 
         /**
          * 60天日均（%）
          */
-        private BigDecimal sixtyDaysRatio;
+        private Integer sixtyDaysRatio;
 
         /**
          * 90天日均（%）
          */
-        private BigDecimal ninetyDaysRatio;
+        private Integer ninetyDaysRatio;
 
         /**
          * 180天日均（%）
          */
-        private BigDecimal oneHundredEightyDaysRatio;
+        private Integer oneHundredEightyDaysRatio;
 
         /**
          * 270天日均（%）
          */
-        private BigDecimal twoHundredSeventyDaysRatio;
+        private Integer twoHundredSeventyDaysRatio;
 
         /**
          * 360天日均（%）
          */
-        private BigDecimal threeHundredSixtyDaysRatio;
+        private Integer threeHundredSixtyDaysRatio;
     }
 }

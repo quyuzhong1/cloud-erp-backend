@@ -14,7 +14,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -447,7 +446,7 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 固定值
          */
-        private BigDecimal fixedValue;
+        private Integer fixedValue;
         /**
          * 百分比json
          */

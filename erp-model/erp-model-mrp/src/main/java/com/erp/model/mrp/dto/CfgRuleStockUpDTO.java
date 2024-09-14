@@ -188,7 +188,6 @@ public class CfgRuleStockUpDTO implements Serializable {
         /**
          * 物流信息
          */
-        @NotEmpty(message = "物流信息配置不能为空")
         @Valid
         private List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList;
 

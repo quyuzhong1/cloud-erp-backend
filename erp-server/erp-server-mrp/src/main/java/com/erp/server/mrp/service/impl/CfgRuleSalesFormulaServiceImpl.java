@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -206,11 +205,11 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
                 }
                 //动态销量
                 if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(salesFormula.getDefaultType())) {
-                    salesFormula.setFixedValue(BigDecimal.ZERO);
+                    salesFormula.setFixedValue(MathUtil.ZERO);
                     //默认配置需要校验百分比之和为100
                     if (CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(salesFormula.getType())) {
-                        BigDecimal totalRatio = salesFormula.getPercentJsonDTO().getTotalRatio();
-                        if (MathUtil.compareTo(totalRatio,new BigDecimal(100)) != MathUtil.ZERO) {
+                        Integer totalRatio = salesFormula.getPercentJsonDTO().getTotalRatio();
+                        if (MathUtil.compareTo(totalRatio,100) != MathUtil.ZERO) {
                             throw new ServiceException("默认动态销量系数之和必须=100%；");
                         }
                     }

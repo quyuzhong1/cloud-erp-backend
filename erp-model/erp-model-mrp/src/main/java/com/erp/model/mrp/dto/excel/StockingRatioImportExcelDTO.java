@@ -42,7 +42,7 @@ public class StockingRatioImportExcelDTO implements Serializable {
      * 规则名称
      */
     @ExcelProperty(value = "*规则名称", index = 3)
-    @FieldValid(fieldName = "规则名称", isNotBlank = true, maxLength = 10)
+    @FieldValid(fieldName = "规则名称", isNotBlank = true, maxLength = 10, formatPattern = FieldFormatPatternTypeEnum.NAME)
     private String name;
 
     /**
@@ -63,7 +63,7 @@ public class StockingRatioImportExcelDTO implements Serializable {
      * 备货系数
      */
     @ExcelProperty(value = "*备货系数", index = 6)
-    @FieldValid(fieldName = "备货系数", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "备货系数", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.NUMBER_99)
     private String stockingRatioStr;
 
     /**

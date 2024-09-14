@@ -11,7 +11,6 @@ import lombok.experimental.Accessors;
 import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -74,7 +73,7 @@ public class CfgRuleSalesFormulaEntity extends BaseEntity<CfgRuleSalesFormulaEnt
     * 固定值
     */
     @TableField("fixed_value")
-    private BigDecimal fixedValue;
+    private Integer fixedValue;
     /**
     * 百分比json
     */
