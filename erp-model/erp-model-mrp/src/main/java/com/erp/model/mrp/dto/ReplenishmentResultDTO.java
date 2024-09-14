@@ -287,6 +287,23 @@ public class ReplenishmentResultDTO {
          * 最长发货时效（天）
          */
         private Integer deliveryMaxDays;
+        /**
+         * 发货频率
+         */
+        private Integer logisticsCycleDays;
+
+        /**
+         * 最短备货时效（天）
+         */
+        private Integer stockUpMinDays;
+        /**
+         * 默认备货时效（天）
+         */
+        private Integer stockUpDefaultDays;
+        /**
+         * 最长备货时效（天）
+         */
+        private Integer stockUpMaxDays;
 
         /**
          * 安全天数（天）
@@ -390,6 +407,10 @@ public class ReplenishmentResultDTO {
             detail.setDeliveryMinDays(dto.getDeliveryMinDays());
             detail.setDeliveryDefaultDays(dto.getDeliveryDefaultDays());
             detail.setDeliveryMaxDays(dto.getDeliveryMaxDays());
+            detail.setLogisticsCycleDays(dto.getLogisticsCycleDays());
+            detail.setStockUpMinDays(dto.getStockUpMinDays());
+            detail.setStockUpDefaultDays(dto.getStockUpDefaultDays());
+            detail.setStockUpMaxDays(dto.getStockUpMaxDays());
             detail.setSafeDays(dto.getSafeDays());
             detail.setInstockDays(dto.getInstockDays());
             detail.setFbaSellableDays(dto.getFbaSellableDays());

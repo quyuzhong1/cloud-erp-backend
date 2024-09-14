@@ -198,6 +198,23 @@ public class ReplenishmentSuggestionVO {
          * 最长发货时效（天）
          */
         private Integer deliveryMaxDays;
+        /**
+         * 发货频率
+         */
+        private Integer logisticsCycleDays;
+
+        /**
+         * 最短备货时效（天）
+         */
+        private Integer stockUpMinDays;
+        /**
+         * 默认备货时效（天）
+         */
+        private Integer stockUpDefaultDays;
+        /**
+         * 最长备货时效（天）
+         */
+        private Integer stockUpMaxDays;
 
         /**
          * 安全天数（天）
@@ -437,6 +454,23 @@ public class ReplenishmentSuggestionVO {
          * 最长发货时效（天）
          */
         private Integer deliveryMaxDays;
+        /**
+         * 发货频率
+         */
+        private Integer logisticsCycleDays;
+
+        /**
+         * 最短备货时效（天）
+         */
+        private Integer stockUpMinDays;
+        /**
+         * 默认备货时效（天）
+         */
+        private Integer stockUpDefaultDays;
+        /**
+         * 最长备货时效（天）
+         */
+        private Integer stockUpMaxDays;
 
         /**
          * 安全天数（天）
