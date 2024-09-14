@@ -115,7 +115,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:virtualWarehouseAllocation:paging",
-            tableAlias = "vwa"
+            tableAlias = "vma"
     )
     @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
     public ApiResult<PagingVO<VirtualWarehouseAllocationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualWarehouseAllocationDTO.PagingParamDTO> dto) {
@@ -222,6 +222,11 @@ public class VirtualWarehouseAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货单")
     @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:paging",
+            tableAlias = "vma"
+    )
     public ApiResult<Boolean> export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
         virtualWarehouseAllocationService.export(dto);
         return success(true);
@@ -278,7 +283,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:virtualWarehouseAllocation:paging",
-            tableAlias = "vwa"
+            tableAlias = "vma"
     )
     public ApiResult<List<VirtualWarehouseAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(virtualWarehouseAllocationService.tabList(dto));
