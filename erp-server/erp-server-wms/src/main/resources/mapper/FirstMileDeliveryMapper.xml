@@ -390,7 +390,7 @@
         fdd.delivery_qty AS deliveryQty
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
         WHERE fd.is_deleted = FALSE and fd.approve_status = 'approve'
         <if test="codes != null and codes.size > 0">
             and fd.code in
@@ -416,7 +416,7 @@
             owi.code as overseasWarehouseCode
         FROM first_mile_delivery fd
          LEFT JOIN first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
-         LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE
+         LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
         where fd.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             and fd.id in
@@ -435,7 +435,7 @@
         owi.code as overseasWarehouseCode
         FROM first_mile_delivery fd
         LEFT JOIN first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
-        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
         where fd.is_deleted = FALSE
         <if test="deliveryCodes != null and deliveryCodes.size > 0">
             and fd.code in
