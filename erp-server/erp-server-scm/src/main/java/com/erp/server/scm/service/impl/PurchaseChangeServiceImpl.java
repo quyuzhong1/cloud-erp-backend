@@ -26,19 +26,18 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ExecutionStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastPoChangeDetailDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -64,6 +63,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -486,67 +486,121 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     public ApiResult<PurchaseChangeDTO.PurchasePriceDTO> batchGetPurchasePrice(PurchaseChangeDTO.UpdateDTO dto) {
+        PurchaseChangeDTO.PurchasePriceDTO purchasePriceDTO = new PurchaseChangeDTO.PurchasePriceDTO();
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         //采购订单id
         String purchaseOrderId = dto.getPurchaseOrderId();
         PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(purchaseOrderId);
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
-        //TODO 区分采购订单类型  sku是否组合品
-        PurchaseChangeDTO.PurchasePriceDTO purchasePriceDTO = new PurchaseChangeDTO.PurchasePriceDTO();
-        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
-        String purchaseOrgId = dto.getPurchaseOrgId();
-        SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(purchaseOrgId);
-        if (Objects.isNull(company)){
-            throw new ServiceException("使用组织不存在");
-        }
-        List<PurchaseChangeDetailDTO.UpdateDTO> detailList = dto.getDetails();
-        if (CollectionUtils.isEmpty(detailList)){
-            throw new ServiceException("产品明细不能为空");
-        }
-        //skuId
-        List<String> skuIdList = detailList.stream().map(PurchaseChangeDetailDTO.UpdateDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        //供应商Id
-        String supplierId = dto.getSupplierId();
-        List<SupplierEntity> supplierEntityList = supplierService.listByIds(Collections.singleton(supplierId));
-        //采购数量-需要根据sku进行汇总
-        Map<String, Integer> skuQtyList = detailList.stream().collect(Collectors.groupingBy(PurchaseChangeDetailDTO.UpdateDTO::getSkuId, Collectors.summingInt(PurchaseChangeDetailDTO.UpdateDTO::getQty)));
-        List<Integer> purchaseQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
-        //采购组织Id
-        List<String> purchaseOrgIdList = Collections.singletonList(purchaseOrgId);
-        //查询对应采购价目
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = purchasePriceDetailService.batchGetTaxPrice(skuIdList,Collections.singletonList(supplierId),purchaseQtyList,purchaseOrgIdList);
-        if (CollectionUtils.isEmpty(viewList)){
-            //未查到结果，直接返回
-            throw new ServiceException("采购单价信息查询结果为空");
-        }
-        for (PurchaseChangeDetailDTO.UpdateDTO updateDTO : dto.getDetails()){
-            //获取sku汇总数量
-            Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), MathUtil.ZERO);
-            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(updateDTO.getSkuId())
-                            && obj.getSupplierId().equals(supplierId)
-                            && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId)
-                            && (purchaseQty >= obj.getMinQty() && obj.getMaxQty() > purchaseQty))
-                    .findFirst().orElse(null);
-            if (Objects.nonNull(viewDTO)){
-                updateDTO.setPrice(viewDTO.getTaxPrice());
-                updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(),updateDTO.getQty()));
-            }else {
-                SkuVO skuVO = skuVOList.stream().filter(f -> f.getSkuId().equals(updateDTO.getSkuId())).findFirst().orElse(null);
-                if (Objects.isNull(skuVO)){
-                    batchResultDTOList.add(BatchResultDTO.fail(updateDTO.getSkuId(), "", "sku基础信息未找到"));
+//        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
+        //区分采购订单类型  sku是否组合品
+        String type = purchaseOrderEntity.getType();
+        if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(type)){
+            return batchGetReturnPurchasePrice(purchaseOrderEntity,dto,purchasePriceDTO,batchResultDTOList);
+        }else{
+            String purchaseOrgId = dto.getPurchaseOrgId();
+            SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(purchaseOrgId);
+            if (Objects.isNull(company)){
+                throw new ServiceException("使用组织不存在");
+            }
+            List<PurchaseChangeDetailDTO.UpdateDTO> detailList = dto.getDetails();
+            if (CollectionUtils.isEmpty(detailList)){
+                throw new ServiceException("产品明细不能为空");
+            }
+            //skuId
+            List<String> skuIdList = detailList.stream().map(PurchaseChangeDetailDTO.UpdateDTO::getSkuId).distinct().collect(Collectors.toList());
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+            //根据sku查询是否是组合品
+            List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+            //供应商Id
+            String supplierId = dto.getSupplierId();
+            List<SupplierEntity> supplierEntityList = supplierService.listByIds(Collections.singleton(supplierId));
+            //采购数量-需要根据sku进行汇总
+            Map<String, Integer> skuQtyList = detailList.stream().collect(Collectors.groupingBy(PurchaseChangeDetailDTO.UpdateDTO::getSkuId, Collectors.summingInt(PurchaseChangeDetailDTO.UpdateDTO::getQty)));
+            List<Integer> purchaseQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
+            //采购组织Id
+            List<String> purchaseOrgIdList = Collections.singletonList(purchaseOrgId);
+            //查询对应采购价目
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = purchasePriceDetailService.batchGetTaxPrice(skuIdList,Collections.singletonList(supplierId),purchaseQtyList,purchaseOrgIdList);
+            if (CollectionUtils.isEmpty(viewList)){
+                //未查到结果，直接返回
+                throw new ServiceException("采购单价信息查询结果为空");
+            }
+            for (PurchaseChangeDetailDTO.UpdateDTO updateDTO : dto.getDetails()){
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOList = skuDTOList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getParentSkuId()) && Objects.equals(e.getParentSkuId(), updateDTO.getSkuId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)){
+                    //sku是组合品时，不计算采购单价
+                    BigDecimal price = Objects.nonNull(updateDTO.getPrice()) ? updateDTO.getPrice():BigDecimal.ZERO;
+                    Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
+                    updateDTO.setAmount(MathUtil.multiply(price,qty));
+                    continue;
                 }
-                SupplierEntity supplierEntity = supplierEntityList.stream().filter(f -> f.getId().equals(supplierId)).findFirst().orElse(null);
-                if (Objects.isNull(supplierEntity)){
-                    batchResultDTOList.add(BatchResultDTO.fail(supplierId, "", "供应商基础信息未找到"));
-                }
-                if (Objects.nonNull(skuVO) && Objects.nonNull(supplierEntity)){
-                    batchResultDTOList.add(BatchResultDTO.fail(updateDTO.getSkuId(), "", StrUtil.format("采购组织【{}】在供应商【{}】SKU【{}】数量【{}】未匹配到采购单价", company.getCompanyName(), supplierEntity.getName(), skuVO.getSkuName(), purchaseQty)));
+                //获取sku汇总数量
+                Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), MathUtil.ZERO);
+                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(updateDTO.getSkuId())
+                                && obj.getSupplierId().equals(supplierId)
+                                && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId)
+                                && (purchaseQty >= obj.getMinQty() && obj.getMaxQty() > purchaseQty))
+                        .findFirst().orElse(null);
+                if (Objects.nonNull(viewDTO)){
+                    updateDTO.setPrice(viewDTO.getTaxPrice());
+                    updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(),updateDTO.getQty()));
+                }else {
+                    SkuVO skuVO = skuVOList.stream().filter(f -> f.getSkuId().equals(updateDTO.getSkuId())).findFirst().orElse(null);
+                    if (Objects.isNull(skuVO)){
+                        batchResultDTOList.add(BatchResultDTO.fail(updateDTO.getSkuId(), "", "sku基础信息未找到"));
+                    }
+                    SupplierEntity supplierEntity = supplierEntityList.stream().filter(f -> f.getId().equals(supplierId)).findFirst().orElse(null);
+                    if (Objects.isNull(supplierEntity)){
+                        batchResultDTOList.add(BatchResultDTO.fail(supplierId, "", "供应商基础信息未找到"));
+                    }
+                    if (Objects.nonNull(skuVO) && Objects.nonNull(supplierEntity)){
+                        batchResultDTOList.add(BatchResultDTO.fail(updateDTO.getSkuId(), "", StrUtil.format("采购组织【{}】在供应商【{}】SKU【{}】数量【{}】未匹配到采购单价", company.getCompanyName(), supplierEntity.getName(), skuVO.getSkuName(), purchaseQty)));
+                    }
                 }
             }
+            purchasePriceDTO.setDto(dto);
+            purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
+            return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(purchasePriceDTO) : ApiResult.error("获取采购单价异常", purchasePriceDTO);
         }
-        purchasePriceDTO.setDto(dto);
+    }
+
+    /**
+     * 补货采购订单  进行采购变更时  采购退货单_退货单价，允许修改；补货采购订单_采购单价，允许修改
+     * @param purchaseOrderEntity
+     * @param dto
+     * @param purchasePriceDTO
+     * @param batchResultDTOList
+     * @return
+     */
+    private ApiResult<PurchaseChangeDTO.PurchasePriceDTO> batchGetReturnPurchasePrice(PurchaseOrderEntity purchaseOrderEntity, PurchaseChangeDTO.UpdateDTO dto, PurchaseChangeDTO.PurchasePriceDTO purchasePriceDTO, List<BatchResultDTO> batchResultDTOList) {
+        String sourceId = purchaseOrderEntity.getSourceId();
+        List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(Collections.singletonList(sourceId));
+        if (CollectionUtils.isEmpty(poReturnEntityList)){
+            batchResultDTOList.add(BatchResultDTO.fail(sourceId, purchaseOrderEntity.getSourceCode(),"采购退货单记录不存在"));
+            purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
+            purchasePriceDTO.setDto(dto);
+            return ApiResult.error("获取退货单价异常",purchasePriceDTO);
+        }
+        //根据主键唯一 只会存在一个退货单记录
+        PoReturnEntity poReturnEntity = poReturnEntityList.get(0);
+        List<PoReturnDetailEntity> poReturnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(Collections.singletonList(poReturnEntity.getId()));
+        if (CollectionUtils.isEmpty(poReturnDetailEntityList)){
+            batchResultDTOList.add(BatchResultDTO.fail(sourceId, purchaseOrderEntity.getSourceCode(),"采购退货单明细记录不存在"));
+            purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
+        }
+        //遍历赋值
+        for (PurchaseChangeDetailDTO.UpdateDTO updateDTO : dto.getDetails()){
+            PoReturnDetailEntity poReturnDetailEntity = poReturnDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(updateDTO.getSkuId()) && Objects.equals(e.getSkuId(), updateDTO.getSkuId())).findFirst().orElse(null);
+            if (Objects.nonNull(poReturnDetailEntity)){
+                BigDecimal returnPrice = Objects.nonNull(poReturnDetailEntity.getReturnPrice()) ? poReturnDetailEntity.getReturnPrice() : BigDecimal.ZERO;
+                updateDTO.setPrice(returnPrice);
+                Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
+                updateDTO.setAmount(MathUtil.multiply(returnPrice,qty));
+            }
+        }
         purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
-        return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(purchasePriceDTO) : ApiResult.error("获取采购单价异常", purchasePriceDTO);
+        purchasePriceDTO.setDto(dto);
+        return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(purchasePriceDTO) : ApiResult.error("获取退货单价异常", purchasePriceDTO);
     }
 
 

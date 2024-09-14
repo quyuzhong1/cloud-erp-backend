@@ -67,6 +67,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -932,6 +933,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(skuVOList)){
             throw new ServiceException("sku不存在");
         }
+        //根据sku查询是否是组合品
+        List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //供应商Id
         List<String> supplierIdList = detailList.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSupplierId).distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierEntityList = supplierService.listByIds(supplierIdList);
@@ -948,6 +951,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             throw new ServiceException("采购单价信息查询结果为空");
         }
         for (PurchaseApplicationDTO.GeneratePurchaseOrderDTO updateDTO : dto.getList()){
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = skuDTOList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getParentSkuId()) && Objects.equals(e.getParentSkuId(), updateDTO.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)){
+                //sku是组合品时，不计算采购单价
+                BigDecimal price = Objects.nonNull(updateDTO.getTaxPrice()) ? updateDTO.getTaxPrice(): BigDecimal.ZERO;
+                Integer qty = Objects.nonNull(updateDTO.getPurchaseQty()) ? updateDTO.getPurchaseQty() : MathUtil.ZERO;
+                updateDTO.setTaxAmount(MathUtil.multiply(price,qty));
+                continue;
+            }
             //获取sku汇总数量
             Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), MathUtil.ZERO);
             PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(updateDTO.getSkuId())
@@ -1001,6 +1012,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(skuVOList)){
             throw new ServiceException("sku不存在");
         }
+        //根据sku查询是否是组合品
+        List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //供应商Id
         List<String> supplierIdList = list.stream().map(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getChildList).flatMap(Collection::stream).map(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSupplierId).distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierEntityList = supplierService.listByIds(supplierIdList);
@@ -1028,6 +1041,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //计算子件采购数量
             Map<String, Integer> skuQtyList = dto.getChildList().stream().collect(Collectors.groupingBy(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSkuId, Collectors.summingInt(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getQty)));
             for (PurchaseApplicationDTO.GenerateSubcontractOrderDTO updateDTO : dto.getChildList()){
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOList = skuDTOList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getParentSkuId()) && Objects.equals(e.getParentSkuId(), updateDTO.getSkuId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)){
+                    //sku是组合品时，不计算采购单价
+                    BigDecimal price = Objects.nonNull(updateDTO.getPrice()) ? updateDTO.getPrice():BigDecimal.ZERO;
+                    Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
+                    updateDTO.setAmount(MathUtil.multiply(price,qty));
+                    continue;
+                }
                 //获取sku汇总数量
                 Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), MathUtil.ZERO);
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(updateDTO.getSkuId())

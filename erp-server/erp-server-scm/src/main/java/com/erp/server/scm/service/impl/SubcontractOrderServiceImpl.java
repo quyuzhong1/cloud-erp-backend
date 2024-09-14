@@ -65,6 +65,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1209,6 +1210,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //skuId
         List<String> skuIdList = childList.stream().map(SubcontractOrderDetailDTO.UpdateDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(skuVOList)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        //根据sku查询是否是组合品
+        List<BomChildrenSkuDTO> skuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //供应商Id
         List<String> supplierIdList = childList.stream().map(SubcontractOrderDetailDTO.UpdateDTO::getSupplierId).distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierEntityList = supplierService.listByIds(supplierIdList);
@@ -1230,36 +1236,40 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (CollectionUtils.isEmpty(updateDTO.getChildList())){
                 continue;
             }
-            updateDTO.getChildList().forEach(e -> {
+            for (SubcontractOrderDetailDTO.UpdateDTO e : updateDTO.getChildList()) {
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOList = skuDTOList.stream().filter(f -> Objects.nonNull(f) && StrUtil.isNotBlank(f.getParentSkuId()) && Objects.equals(f.getParentSkuId(), e.getSkuId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)) {
+                    //sku是组合品时，不计算采购单价
+                    BigDecimal price = Objects.nonNull(e.getPrice()) ? e.getPrice() : BigDecimal.ZERO;
+                    Integer qty = Objects.nonNull(e.getQty()) ? e.getQty() : MathUtil.ZERO;
+                    e.setAmount(MathUtil.multiply(price, qty));
+                    continue;
+                }
                 //获取sku汇总数量
                 Integer purchaseQty = skuQtyList.getOrDefault(e.getSkuId(), MathUtil.ZERO);
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(e.getSkuId())
                                 && obj.getSupplierId().equals(e.getSupplierId())
-                                && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId)
+                                && StrUtil.equals(obj.getPurchaseOrgId(), purchaseOrgId)
                                 && (purchaseQty >= obj.getMinQty() && obj.getMaxQty() > purchaseQty))
                         .findFirst().orElse(null);
-                if (Objects.nonNull(viewDTO)){
+                if (Objects.nonNull(viewDTO)) {
                     e.setPrice(viewDTO.getTaxPrice());
                     e.setTaxRate(viewDTO.getTaxRate());
                     e.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), viewDTO.getPurchaseQty()));
-//                    if (CollectionUtils.isNotEmpty(currencyViewList)){
-//                        CurrencyDTO.ViewDTO currencyDTO = currencyViewList.stream().filter(obj -> obj.getId().equals(viewDTO.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
-//                        e.setCurrencySymbol(currencyDTO.getSymbol());
-//                    }
-                }else {
+                } else {
                     SkuVO skuVO = skuVOList.stream().filter(f -> f.getSkuId().equals(e.getSkuId())).findFirst().orElse(null);
-                    if (Objects.isNull(skuVO)){
+                    if (Objects.isNull(skuVO)) {
                         batchResultDTOList.add(BatchResultDTO.fail(e.getSkuId(), "", "sku基础信息未找到"));
                     }
                     SupplierEntity supplierEntity = supplierEntityList.stream().filter(f -> f.getId().equals(e.getSupplierId())).findFirst().orElse(null);
-                    if (Objects.isNull(supplierEntity)){
+                    if (Objects.isNull(supplierEntity)) {
                         batchResultDTOList.add(BatchResultDTO.fail(e.getSupplierId(), "", "供应商基础信息未找到"));
                     }
-                    if (Objects.nonNull(skuVO) && Objects.nonNull(supplierEntity)){
+                    if (Objects.nonNull(skuVO) && Objects.nonNull(supplierEntity)) {
                         batchResultDTOList.add(BatchResultDTO.fail(e.getSkuId(), "", StrUtil.format("采购组织【{}】在供应商【{}】SKU【{}】数量【{}】未匹配到采购单价", company.getCompanyName(), supplierEntity.getName(), skuVO.getSkuName(), purchaseQty)));
                     }
                 }
-            });
+            }
         }
         purchasePriceDTO.setDto(dto);
         purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
@@ -1406,7 +1416,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 }
             });
         }
-        return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(dto) : ApiResult.error("获取采购单价异常", batchResultDTOList);
+        return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(dto) : ApiResult.error("获取采购单价异常", dto);
     }
     /**
      * @description: 启动流程
