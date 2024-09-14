@@ -421,11 +421,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         //更新销量信息
         if (ObjectUtil.isNotEmpty(salesQtyUpdateDTO)) {
-            List<ReplenishmentSuggestionDetailEntity> detailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(entity.getId()));
-            if (CollectionUtils.isNotEmpty(detailList)) {
-                String skuType = detailList.get(0).getSkuType();
-                salesQtyUpdateDTO.setType(skuType);
-            }
             salesQtyUpdateDTO.setRefId(id);
             salesQtyUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
             salesQtyUpdateDTO.setIsCustom(Boolean.TRUE);

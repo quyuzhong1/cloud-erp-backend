@@ -705,7 +705,6 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      */
     private CfgRuleSalesQtyDTO.UpdateDetailDTO  formatSalesQty (ReplenishmentSuggestionEntity entity) {
         CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO = new CfgRuleSalesQtyDTO.UpdateDetailDTO();
-        updateDTO.setType(CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
         updateDTO.setPlatformType(entity.getPlatformType());
         updateDTO.setRefId(entity.getId());
         updateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());

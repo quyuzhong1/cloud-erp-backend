@@ -210,7 +210,7 @@ public class StockUpImportExcelDTO implements Serializable {
      * 默认备货系数
      */
     @ExcelProperty(value = "默认备货系数", index = 27)
-    @FieldValid(fieldName = "默认备货系数", formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "默认备货系数", formatPattern= FieldFormatPatternTypeEnum.NUMBER_99)
     private String stockingRatio;
 
     /**

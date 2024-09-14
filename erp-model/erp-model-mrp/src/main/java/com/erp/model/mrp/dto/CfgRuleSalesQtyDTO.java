@@ -170,7 +170,6 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 默认日销量
          */
-        @NotNull(message = "默认日销量不能为空")
         @Valid
         private CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultSalesQtyDTO;
 
