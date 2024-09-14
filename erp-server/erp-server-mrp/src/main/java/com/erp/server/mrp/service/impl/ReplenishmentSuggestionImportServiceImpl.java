@@ -1093,6 +1093,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             if (ObjectUtil.isEmpty(salesQtyEntity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的销量设置数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
             }
+
+            //添加验证信息
+            checkSalesDenoising(excelDTO,errorMsgList);
+
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 wrongList.add(excelDTO);
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -1115,6 +1119,27 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         }
         successList.removeAll(wrongList);
     }
+
+    /**
+     * 去噪类型验证
+     * @author will
+     * @date 2024/9/14 17:04
+     * @param excelDTO
+     * @param errorMsgList
+     */
+    private void checkSalesDenoising (SalesDenoisingImportExcelDTO excelDTO,List<String> errorMsgList) {
+        //固定值验证
+        if (StrUtil.equals(CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getName(),excelDTO.getDenoisingTypeName())
+                && ObjectUtil.isEmpty(excelDTO.getFixedValue())) {
+            errorMsgList.add("去噪类型为固定值去噪时固定值不能为空");
+        }
+        //百分比验证
+        if (StrUtil.equals(CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getName(),excelDTO.getDenoisingTypeName())
+                && ObjectUtil.isEmpty(excelDTO.getPercentageValue())) {
+            errorMsgList.add("去噪类型为百分比去噪时百分比去噪不能为空");
+        }
+    }
+
     /**
      * 销量去噪
      * @author will

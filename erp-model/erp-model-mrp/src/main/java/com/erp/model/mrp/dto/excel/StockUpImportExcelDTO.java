@@ -91,7 +91,7 @@ public class StockUpImportExcelDTO implements Serializable {
      * 优先级（空运)
      */
     @ExcelProperty(value = "优先级（空运)", index = 10)
-    @FieldValid(fieldName = "优先级（空运)",formatPattern= FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "优先级（空运)",formatPattern= FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String oneIndex;
 
     /**
@@ -112,7 +112,7 @@ public class StockUpImportExcelDTO implements Serializable {
      * 优先级（快递)
      */
     @ExcelProperty(value = "优先级（快递)", index = 13)
-    @FieldValid(fieldName = "优先级（快递)",formatPattern= FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "优先级（快递)",formatPattern= FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String twoIndex;
 
     /**
@@ -133,7 +133,7 @@ public class StockUpImportExcelDTO implements Serializable {
      * 优先级（海运散装)
      */
     @ExcelProperty(value = "优先级（海运散装)", index = 16)
-    @FieldValid(fieldName = "优先级（海运散装)",formatPattern= FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "优先级（海运散装)",formatPattern= FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String threeIndex;
 
     /**
@@ -154,7 +154,7 @@ public class StockUpImportExcelDTO implements Serializable {
      * 优先级（海运整柜)
      */
     @ExcelProperty(value = "优先级（海运整柜)", index = 19)
-    @FieldValid(fieldName = "优先级（海运整柜)",formatPattern= FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "优先级（海运整柜)",formatPattern= FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String fourIndex;
 
     /**
@@ -175,7 +175,7 @@ public class StockUpImportExcelDTO implements Serializable {
      * 优先级（铁运散装)
      */
     @ExcelProperty(value = "优先级（铁运散装)", index = 22)
-    @FieldValid(fieldName = "优先级（铁运散装)",formatPattern= FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "优先级（铁运散装)",formatPattern= FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String fiveIndex;
 
     /**
@@ -196,7 +196,7 @@ public class StockUpImportExcelDTO implements Serializable {
      * 优先级（铁运整柜)
      */
     @ExcelProperty(value = "优先级（铁运整柜)", index = 25)
-    @FieldValid(fieldName = "优先级（铁运整柜)",formatPattern= FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "优先级（铁运整柜)",formatPattern= FieldFormatPatternTypeEnum.POSITIVEINTEGER)
     private String sixIndex;
 
     /**
