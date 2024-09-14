@@ -170,7 +170,11 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             requisitionApplicationDetailEntity.setSkuNo(skuVO.getSkuNo());
-            requisitionApplicationDetailEntity.setFromVirtualWarehouseName(virtualWarehouseNameMap.get(requisitionApplicationDetailEntity.getFromVirtualWarehouseId()));
+            String virtualWarehouseName = virtualWarehouseNameMap.get(requisitionApplicationDetailEntity.getFromVirtualWarehouseId());
+            requisitionApplicationDetailEntity.setFromVirtualWarehouseName(StringUtils.isNotBlank(virtualWarehouseName)?virtualWarehouseName:"");
+            if(requisitionApplicationDetailEntity.getFromVirtualWarehouseId() == null){
+                requisitionApplicationDetailEntity.setFromVirtualWarehouseId("");
+            }
 
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(requisitionApplicationDetailEntity.getId())) {
