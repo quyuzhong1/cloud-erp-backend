@@ -91,6 +91,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                 List<ShopInventoryDetailEntity> detailEntities = shopInventoryDetailList.stream()
                         .filter(v -> v.getMainId().equals(entity.getId()))
                         .collect(Collectors.toList());
+                List<InventoryDetailVO.ShopInventoryDetailVO> vos = new ArrayList<>();
                 for (ShopInventoryDetailEntity detail : detailEntities) {
                     InventoryDetailVO.ShopInventoryDetailVO vo = new InventoryDetailVO.ShopInventoryDetailVO();
                     vo.setQty(detail.getQty());
@@ -98,7 +99,9 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                     String shopName = allShopInfo.stream().filter(v -> vo.getShopId().equals(v.getId()))
                             .map(ShopInfoEntity::getName).findFirst().orElse("");
                     vo.setShopName(shopName);
+                    vos.add(vo);
                 }
+                detailVO.setShopInventoryDetails(vos);
             }
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
                 detailVO.setChannelName(Collections.singletonList("全部店铺"));
