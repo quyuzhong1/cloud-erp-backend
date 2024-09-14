@@ -78,6 +78,12 @@ public class ReplenishmentSuggestionEntity extends BaseEntity<ReplenishmentSugge
     private String replenishmentType;
 
     /**
+     * 是否自动补货，true是，false否
+     */
+    @TableField("is_auto_replenishment")
+    private String isAutoReplenishment;
+
+    /**
      * 补货原因
      */
     @TableField("replenishment_remark")

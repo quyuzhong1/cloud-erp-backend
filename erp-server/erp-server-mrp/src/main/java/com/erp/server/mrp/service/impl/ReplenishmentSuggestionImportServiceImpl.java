@@ -500,10 +500,6 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         List<String> refIdList = replenishmentSuggestionList.stream().map(ReplenishmentSuggestionEntity::getId).distinct().collect(Collectors.toList());
         List<CfgRuleStockUpEntity> cfgRuleStockUpList = cfgRuleStockUpService.listByRefIdList(refIdList);
 
-        //查询备货系数
-        List<String> stockUpIdList = cfgRuleStockUpList.stream().map(CfgRuleStockUpEntity::getId).distinct().collect(Collectors.toList());
-        List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(stockUpIdList);
-
         Map<String, List<StockingRatioImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getPlatform().concat(obj.getShopName()).concat(obj.getSkuNo())));
 
         //记录错误数据
