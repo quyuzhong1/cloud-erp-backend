@@ -406,7 +406,7 @@ public class SubcontractReturnController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "委外退料单导出Excel数据")
-    public void exportList(@RequestBody @Validated SubcontractReturnDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportList(@RequestBody @Validated SubcontractReturnDTO.PagingParamDTO dto, HttpServletResponse response) {
         subcontractReturnService.exportList(dto, response);
     }
 
