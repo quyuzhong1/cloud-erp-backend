@@ -43,7 +43,7 @@ public interface SubcontractReturnOrderMapper extends BaseMapper<SubcontractRetu
     * @param params
     * @return
     */
-    List<SubcontractReturnOrderDTO.ListDTO> listExport(@Param("params") SubcontractReturnOrderDTO.ExportDTO params);
+    List<SubcontractReturnOrderDTO.ListDTO> listExport(@Param("params") SubcontractReturnOrderDTO.PagingParamDTO params);
 
 
     /**

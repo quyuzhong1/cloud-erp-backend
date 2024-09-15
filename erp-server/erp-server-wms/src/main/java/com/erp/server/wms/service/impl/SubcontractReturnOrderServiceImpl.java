@@ -161,7 +161,7 @@ public class SubcontractReturnOrderServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
-    public void exportList(SubcontractReturnOrderDTO.ExportDTO param, HttpServletResponse response) {
+    public void exportList(SubcontractReturnOrderDTO.PagingParamDTO param, HttpServletResponse response) {
         List<SubcontractReturnOrderDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;

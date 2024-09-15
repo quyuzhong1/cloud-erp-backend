@@ -142,7 +142,7 @@ public interface SubcontractReturnOrderService extends SuperService<SubcontractR
     * @param response
     * @return
     */
-    void exportList(SubcontractReturnOrderDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SubcontractReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法

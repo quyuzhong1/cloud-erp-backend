@@ -403,7 +403,7 @@ public class SubcontractReturnOrderController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "委外退料单导出Excel数据")
-    public void exportList(@RequestBody @Validated SubcontractReturnOrderDTO.ExportDTO dto, HttpServletResponse response) {
+    public void exportList(@RequestBody @Validated SubcontractReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
         subcontractReturnOrderService.exportList(dto, response);
     }
 
