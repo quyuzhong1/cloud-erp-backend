@@ -76,6 +76,10 @@ public class SubcontractReturnDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        /**
+         * 明细id
+         */
+        private String  detailId;
 
         /**
         * 委外退料单号
@@ -411,5 +415,100 @@ public class SubcontractReturnDTO implements Serializable {
 
     }
 
+    /**
+     * 委外明细分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SubcontractDetailListDTO{
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 父级来源明细id
+         */
+        private String parentSourceDetailId;
+
+        /**
+         * 委外订单id
+         */
+        private String subcontractOrderId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 图片
+         */
+        private String imagesUrl;
+
+        /**
+         * SPU编号
+         */
+        private String spuNo;
+
+        /**
+         * sku状态
+         */
+        private String statusName;
+
+        /**
+         * 产品分类
+         */
+        private String categoryName;
+
+        /**
+         * 品牌
+         */
+        private String brandName;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 委外订单明细
+         */
+        private List<SubcontractReturnDetailDTO.ListSourceDetailDTO> detailList;
+    }
+    /**
+     * 委外明细分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DetailPagingParamDTO {
+
+        /**
+         * 来源id（现只有委外订单id）
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * sku编码集合
+         */
+        private List<String>  skuNoList;
+
+    }
 }

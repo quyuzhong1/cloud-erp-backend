@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.erp.model.wms.dto.SubcontractIssueDTO;
 import com.erp.server.wms.service.SubcontractReturnDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -410,5 +411,20 @@ public class SubcontractReturnController extends BaseController {
         subcontractReturnService.exportList(dto, response);
     }
 
-
+    /**
+     * 添加产品
+     * @author will
+     * @date: 2024-01-08
+     * @param dto
+     * @return ApiResult<PagingVO<SubcontractIssueDTO.SubcontractDetailListDTO>>
+     */
+    @PostMapping("/listSubcontractDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:subcontractReturn:listSubcontractDetail",
+            tableAlias = ""
+    )
+    public ApiResult<List<SubcontractReturnDTO.SubcontractDetailListDTO>> listSubcontractDetail(@RequestBody @Validated SubcontractReturnDTO.DetailPagingParamDTO dto) {
+        return success(subcontractReturnService.listSubcontractDetail(dto));
+    }
 }

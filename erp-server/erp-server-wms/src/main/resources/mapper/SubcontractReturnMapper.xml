@@ -43,11 +43,38 @@
         update_time,
         version,
         is_deleted,
-        code, approve_status, type, bill_date, source_id, source_code, source_type, invalid_status, invalid_time, invalid_remark, approve_time, approve_user_name, approve_user_id, sync_kingdee_id, supplier_id, supplier_name, subcontract_order_id, subcontract_order_code
+        code, approve_status, type, bill_date, source_id, source_code, source_type, invalid_status, invalid_time, invalid_remark,
+        approve_time, approve_user_name, approve_user_id, sync_kingdee_id, supplier_id, supplier_name, subcontract_order_id, subcontract_order_code
+    </sql>
+    <sql id="pageSql">
+        sr.id,sr.code,sr.approve_status,sr.type,sr.bill_date,sr.source_id,sr.source_code,sr.source_type,sr.invalid_status,sr.invalid_time,
+        sr.invalid_remark,sr.approve_time,sr.approve_user_name,sr.supplier_id,sr.supplier_name,sr.subcontract_order_id,sr.subcontract_order_code,
+        srd.id as detailId,srd.parent_sku_id, srd.parent_sku_no, srd.sku_id, srd.sku_no, srd.bom_version, srd.quantity, srd.parent_sku_use_qty,
+        srd.return_qty, srd.warehouse_id,srd.warehouse_name, srd.remark, srd.source_detail_id, srd.warehouse_location, srd.kingdee_detail_id,
+        srd.subcontract_order_detail_id,
+        sr.create_user_id,sr.create_user_name,sr.create_time,sr.update_user_id,sr.update_user_name,sr.update_time
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.SubcontractReturnDTO$ListDTO">
-
+        select
+        <include refid="pageSql" />
+        from subcontract_return sr
+        inner join subcontract_return_detail srd on sr.id = srd.main_id and srd.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and sr.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            sr.create_time desc
+        </where>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

@@ -105,6 +105,11 @@ public class SubcontractReturnDetailEntity extends BaseEntity<SubcontractReturnD
     @TableField("subcontract_order_detail_id")
     private String subcontractOrderDetailId;
 
+    /**
+     * 审核状态
+     */
+    @TableField(exist = false)
+    private String approveStatus;
 
     public static final String PARENT_SKU_ID = "parent_sku_id";
 

@@ -252,6 +252,109 @@ public class SubcontractReturnDetailDTO implements Serializable {
 
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class ListSourceDetailDTO {
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 委外订单id
+         */
+        private String subcontractOrderId;
+
+        /**
+         * 父级来源明细id
+         */
+        private String parentSourceDetailId;
+
+        /**
+         * 委外订单明细id
+         */
+        private String subcontractOrderDetailId;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 父级skuId
+         */
+        private String parentSkuId;
+
+        /**
+         * 父级skuNo
+         */
+        private String parentSkuNo;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * 领料数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 可用库存
+         */
+        private Integer curInventoryQty;
+
+        /**
+         * 已发料数量
+         */
+        private Integer hasIssueQty;
+
+        /**
+         * 发料数量
+         */
+        private Integer issueQty;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+    }
 
 }

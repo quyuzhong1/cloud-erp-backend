@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SubcontractReturnDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 委外退料明细单 服务类
@@ -32,5 +34,10 @@ public interface SubcontractReturnDetailService extends SuperService<Subcontract
     */
     Boolean update(SubcontractReturnDetailDTO.UpdateDTO dto);
 
-
+    /**
+     * 根据委外订单明细id获取委外退料明细
+     * @param subcontractOrderDetailIdList
+     * @return
+     */
+    List<SubcontractReturnDetailEntity> listBySubcontractOrderDetailIdList(List<String> subcontractOrderDetailIdList);
 }

@@ -1,18 +1,34 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.wms.dto.SubcontractReturnDTO;
+import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
+import com.erp.model.wms.dto.SubcontractReturnDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
+import com.erp.model.wms.entity.SubcontractReturnDetailEntity;
 import com.erp.model.wms.entity.SubcontractReturnEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SubcontractReturnMapper;
-import com.erp.server.wms.service.SubcontractReturnService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
@@ -22,23 +38,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SubcontractReturnDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
@@ -66,6 +76,18 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SubcontractReturnDetailService subcontractReturnDetailService;
+    @Autowired
+    private InventoryService inventoryService;
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -393,6 +415,116 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     }
 
     @Override
+    public List<SubcontractReturnDTO.SubcontractDetailListDTO> listSubcontractDetail(SubcontractReturnDTO.DetailPagingParamDTO dto) {
+        List<SubcontractReturnDTO.SubcontractDetailListDTO> resultList = new ArrayList<>();
+        //委外订单id
+        String sourceId = dto.getSourceId();
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(sourceId));
+        if (CollectionUtil.isEmpty(subcontractOrderList)) {
+            throw new ServiceException(ApiError.ERROR_98073);
+        }
+        //委外明细
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(sourceId));
+        if (CollectionUtil.isEmpty(subcontractOrderDetailList)) {
+            throw  new ServiceException(ApiError.ERROR_98070);
+        }
+        //委外父级SKU明细
+        List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getParentId()) && (CollectionUtil.isEmpty(dto.getSkuNoList()) ? Boolean.TRUE : dto.getSkuNoList().contains(obj.getSkuNo()))).collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(parentList)) {
+            throw new ServiceException(ApiError.ERROR_98071);
+        }
+
+        //bom信息
+        List<String> parentSkuIdList = parentList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIdList);
+
+        //委外子级SKU明细
+        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(parentList)) {
+            throw new ServiceException(ApiError.ERROR_98072);
+        }
+
+        //已审核发料数量
+        List<String> subcontractOrderDetailIdList = childList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
+        List<SubcontractReturnDetailEntity> hasDetailList = subcontractReturnDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
+
+        //sku信息
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuCategoryByIds(parentSkuIdList);
+
+        //即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSubDetailSkuInventoryList(childList);
+
+        for (SubcontractOrderDetailEntity parentDetailEntity : parentList) {
+            SubcontractReturnDTO.SubcontractDetailListDTO detailListDTO = new SubcontractReturnDTO.SubcontractDetailListDTO();
+            detailListDTO.setSkuId(parentDetailEntity.getSkuId());
+            detailListDTO.setSkuNo(parentDetailEntity.getSkuNo());
+            detailListDTO.setSourceId(subcontractOrderList.get(0).getId());
+            detailListDTO.setSubcontractOrderId(subcontractOrderList.get(0).getId());
+            detailListDTO.setParentSourceDetailId(parentDetailEntity.getId());
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuId().equals(parentDetailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95010);
+            }
+            detailListDTO.setCategoryName(skuVO.getCategoryName());
+            detailListDTO.setBrandName(skuVO.getBrandName());
+            detailListDTO.setProductName(skuVO.getSkuName());
+            detailListDTO.setSpuNo(skuVO.getSpuNo());
+            detailListDTO.setStatusName(ProductDetailStatusEnum.getName(skuVO.getStatus()));
+            detailListDTO.setImagesUrl(skuVO.getSkuImagesUrl());
+            detailListDTO.setSupplierId(parentDetailEntity.getSupplierId());
+            detailListDTO.setSupplierName(parentDetailEntity.getSupplierName());
+            List<SubcontractOrderDetailEntity> childEntityList = childList.stream().filter(obj -> obj.getParentId().equals(parentDetailEntity.getId())).collect(Collectors.toList());
+            List<SubcontractReturnDetailDTO.ListSourceDetailDTO> detailList = new ArrayList<>();
+            for (SubcontractOrderDetailEntity  childDetailEntity : childEntityList) {
+                SubcontractReturnDetailDTO.ListSourceDetailDTO detailDTO = new SubcontractReturnDetailDTO.ListSourceDetailDTO();
+                detailDTO.setSourceId(subcontractOrderList.get(0).getId());
+                detailDTO.setSubcontractOrderId(subcontractOrderList.get(0).getId());
+                detailDTO.setSourceDetailId(childDetailEntity.getId());
+                detailDTO.setSubcontractOrderDetailId(childDetailEntity.getId());
+                detailDTO.setParentSourceDetailId(parentDetailEntity.getId());
+                detailDTO.setParentSkuId(parentDetailEntity.getSkuId());
+                detailDTO.setParentSkuNo(parentDetailEntity.getSkuNo());
+                detailDTO.setSkuId(childDetailEntity.getSkuId());
+                detailDTO.setSkuNo(childDetailEntity.getSkuNo());
+                detailDTO.setWarehouseId(childDetailEntity.getWarehouseId());
+                detailDTO.setWarehouseName(childDetailEntity.getWarehouseName());
+                detailDTO.setReceiveQty(childDetailEntity.getDeliveryQty());
+                detailDTO.setWarehouseLocation(childDetailEntity.getWarehouseLocation());
+                WarehouseLocationEntity warehouseLocation = warehouseLocationService.findByWarehouseIdAndCode(childDetailEntity.getWarehouseId(), childDetailEntity.getWarehouseLocation());
+                if (Objects.nonNull(warehouseLocation)){
+                    detailDTO.setWarehouseLocationName(warehouseLocation.getName());
+                }
+                //bom信息
+                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
+                        .findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                    throw new ServiceException(ApiError.ERROR_95163);
+                }
+                detailDTO.setProductName(bomChildrenSkuDTO.getSkuName());
+                detailDTO.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+                detailDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
+
+                //即时库存
+                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(detailDTO.getSkuId())
+                                && s.getWarehouseId().equals(detailDTO.getWarehouseId())
+                                && (StrUtil.isBlank(childDetailEntity.getWarehouseLocation()) ? Boolean.TRUE : childDetailEntity.getWarehouseLocation().equals(s.getWarehouseLocationId())))
+                        .mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
+                detailDTO.setCurInventoryQty(curInventoryQty);
+
+                //已退料数量
+                Integer hasIssueQty = hasDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(detailDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
+                        .map(SubcontractReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                detailDTO.setHasIssueQty(hasIssueQty);
+                detailList.add(detailDTO);
+            }
+            detailListDTO.setDetailList(detailList);
+            resultList.add(detailListDTO);
+        }
+        return resultList;
+    }
+
+    @Override
     public SubcontractReturnDTO.ViewDTO view(String id) {
         SubcontractReturnEntity subcontractReturnEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外退料单数据"));
         SubcontractReturnDTO.ViewDTO data = BeanMapperUtils.map(SubcontractReturnDTO.ViewDTO.class, subcontractReturnEntity);
@@ -501,5 +633,29 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     */
     private void handleData(SubcontractReturnEntity subcontractReturnEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSubDetailSkuInventoryList(List<SubcontractOrderDetailEntity> childList) {
+        //skuId集合
+        List<String> skuIdList = childList.stream().map(SubcontractOrderDetailEntity::getSkuId)
+                .distinct().collect(Collectors.toList());
+        //仓库Id集合
+        List<String> warehouseIdList = childList.stream().map(SubcontractOrderDetailEntity::getWarehouseId)
+                .distinct().collect(Collectors.toList());
+        //仓位集合
+        List<String> warehouseLocationList = childList.stream().map(SubcontractOrderDetailEntity::getWarehouseLocation)
+                .distinct().collect(Collectors.toList());
+        return listSkuInventoryTotalList(skuIdList,warehouseIdList,warehouseLocationList);
+    }
+    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryTotalList(List<String> skuIdList,List<String> warehouseIdList
+            ,List<String> warehouseLocationList) {
+        InventoryQtyDTO.SkuInventoryParamDTO paramDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        paramDTO.setSkuIdList(skuIdList);
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setWarehouseLocationIdList(warehouseLocationList);
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(paramDTO);
+        return skuInventoryTotalList;
     }
 }

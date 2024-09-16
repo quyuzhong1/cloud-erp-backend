@@ -41,8 +41,25 @@
         update_time,
         version,
         is_deleted,
-        parent_sku_id, parent_sku_no, sku_id, sku_no, bom_version, quantity, parent_sku_use_qty, return_qty, warehouse_id, warehouse_name, remark, source_detail_id, warehouse_location, main_id, kingdee_detail_id, subcontract_order_detail_id
+        parent_sku_id, parent_sku_no, sku_id, sku_no, bom_version, quantity, parent_sku_use_qty, return_qty, warehouse_id,
+        warehouse_name, remark, source_detail_id, warehouse_location, main_id, kingdee_detail_id, subcontract_order_detail_id
     </sql>
+    <select id="listBySubcontractOrderDetailIdList"
+            resultType="com.erp.model.wms.entity.SubcontractReturnDetailEntity">
+        select
+        <include refid="Base_Column_List" />
+        from subcontract_return_detail srd
+        inner join subcontract_issue sr on sr.is_deleted = false and sr.id = srd.main_id
+        <where>
+            srd.is_deleted = false and sr.invalid_status = false
+            <if test="subcontractOrderDetailIdList != null and subcontractOrderDetailIdList.size > 0">
+                and srd.subcontract_order_detail_id in
+                <foreach collection="subcontractOrderDetailIdList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 
 
 </mapper>

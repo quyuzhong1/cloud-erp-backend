@@ -152,4 +152,10 @@ public interface SubcontractReturnService extends SuperService<SubcontractReturn
     */
     Boolean approveEnd(ApproveOneDTO dto, SubcontractReturnEntity entity);
 
+    /**
+     * 添加产品
+     * @param dto
+     * @return
+     */
+    List<SubcontractReturnDTO.SubcontractDetailListDTO> listSubcontractDetail(SubcontractReturnDTO.DetailPagingParamDTO dto);
 }

@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.entity.SubcontractReturnDetailEntity;
 import com.erp.server.wms.mapper.SubcontractReturnDetailMapper;
 import com.erp.server.wms.service.SubcontractReturnDetailService;
@@ -11,6 +12,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +88,13 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<SubcontractReturnDetailEntity> listBySubcontractOrderDetailIdList(List<String> subcontractOrderDetailIdList) {
+        if (CollectionUtils.isEmpty(subcontractOrderDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
+    }
 
     /**
     * 新增修改处理数据

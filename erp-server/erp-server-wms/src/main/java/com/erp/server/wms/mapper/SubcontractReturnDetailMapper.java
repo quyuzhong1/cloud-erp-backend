@@ -3,6 +3,9 @@ import com.erp.model.wms.entity.SubcontractReturnDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +19,10 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SubcontractReturnDetailMapper extends BaseMapper<SubcontractReturnDetailEntity> {
 
+    /**
+     *根据委外订单明细id集合查询
+     * @param subcontractOrderDetailIdList
+     * @return
+     */
+    List<SubcontractReturnDetailEntity> listBySubcontractOrderDetailIdList(@Param("subcontractOrderDetailIdList")List<String> subcontractOrderDetailIdList);
 }
