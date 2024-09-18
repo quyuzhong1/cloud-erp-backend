@@ -1362,7 +1362,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 FirstMileDeliveryDetailDTO.AddDTO detailAddDto = RequisitionApplicationConverter.INSTANCE.generateFbaDeliverDetailFDD(fbaShipmentDetailEntity,skuVO);
                 detailAddDto.setFbaShipmentCode(fbaShipmentEntity.getCode());
                 RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO fbaBindShipmentDetailViewDTO = fbaBindShipmentDetailViewDTOList.stream().filter(v->v.getFnSku().equals(fbaShipmentDetailEntity.getFnSku())).findFirst().orElse(null);
-                if(Objects.isNull(fbaBindShipmentDetailViewDTO)){
+                if(Objects.isNull(fbaBindShipmentDetailViewDTO) || "0".equals(fbaBindShipmentDetailViewDTO.getAssociatedDeliveryQty())){
                     throw new ServiceException("货件明细关联不到装箱fnSku,货件号{}，FNSKU：{}",fbaShipmentEntity.getCode(),fbaShipmentDetailEntity.getFnSku());
                 }
                 detailAddDto.setDeliveryQty(Integer.valueOf(fbaBindShipmentDetailViewDTO.getAssociatedDeliveryQty()));
