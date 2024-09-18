@@ -3,13 +3,16 @@ package com.erp.server.dmp.controller.api;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.common.business.dto.base.BaseIdsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +33,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.WdtInsufficientInventoryDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
@@ -237,5 +241,46 @@ public class DmpInoutController extends BaseController {
 	    	
     	}
     	return success(dmpOutputTaskRecordEntityList);
+    }
+    
+    /**
+     * 获取旺店通库存不足单据
+     * @return
+     */
+    @GetMapping("getWdtInsufficientInventory")
+    public ApiResult<Collection<WdtInsufficientInventoryDTO>> getWdtInsufficientInventory() {
+    	List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
+	    	.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.ERROR.getCode() , DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode()))
+	    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%' ")
+	    	.list();
+    	Map<String, WdtInsufficientInventoryDTO> map = new HashMap<>();
+    	if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+    		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+    			String requestData = dmpOutputTaskRecordEntity.getResponseData();
+                String[] split = requestData.split("sku=");
+                for(int i = 1; i < split.length ; i++) {
+                	String[] split2 = split[i].split(",仓库=");
+                    String skuNo = split2[0].replace("[", "").replace("]", "");
+                    String[] split3 = split2[1].split(",仓位=");
+                    String warehouseName = split3[0].replace("[", "").replace("]", "");
+                    String[] split4 = split3[1].split(",库存状态");
+                    String position = split4[0].replace("[", "").replace("]", "");
+                    String[] split5 = split4[1].split("交易数:");
+    				String qty = split5[1].substring(0, 3).replace("[", "").replace("]", "").trim();
+                    
+                    String key = warehouseName + "_" + position + "_" + skuNo;
+                    WdtInsufficientInventoryDTO dto = map.get(key);
+            		if(dto == null) {
+            			dto = new WdtInsufficientInventoryDTO();
+            			dto.setWarehouse(warehouseName);
+            			dto.setPosition(position);
+            			dto.setSku(skuNo);
+            		}
+            		dto.setNum(dto.getNum() + (Integer.valueOf(qty) * -1));
+            		map.put(key, dto);
+                }
+    		}
+    	}
+    	return success(map.values());
     }
 }
