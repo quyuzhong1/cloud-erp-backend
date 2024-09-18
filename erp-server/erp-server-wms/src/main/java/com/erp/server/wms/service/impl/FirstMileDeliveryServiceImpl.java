@@ -1330,7 +1330,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isEmpty(ids) && StringUtils.isBlank(fbaShipmentCode)) {
             return Collections.emptyList();
         }
-        return baseMapper.listDeliveryRecord(ids,null);
+        return baseMapper.listDeliveryRecord(ids,fbaShipmentCode);
     }
 
     @Override
