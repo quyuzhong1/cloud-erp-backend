@@ -55,6 +55,14 @@ public class SubcontractReturnDetailDTO implements Serializable {
         * sku编码
         */
         private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 即时库存
+         */
+        private Integer curInventoryQty;
 
         /**
         * bom版本
@@ -65,6 +73,18 @@ public class SubcontractReturnDetailDTO implements Serializable {
         * 用量
         */
         private Integer quantity;
+        /**
+         * 已退料数量
+         */
+        private Integer hasReturnQty;
+        /**
+         * 最大可退数量
+         */
+        private Integer maxReturnQty;
+        /**
+         * 已发料数量
+         */
+        private Integer hasIssueQty;
 
         /**
         * 父sku用料数量
@@ -100,6 +120,10 @@ public class SubcontractReturnDetailDTO implements Serializable {
         * 仓位
         */
         private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
 
         /**
         * 主表id
@@ -116,7 +140,10 @@ public class SubcontractReturnDetailDTO implements Serializable {
         */
         private String subcontractOrderDetailId;
 
-
+        /**
+         * 来源父级明细id
+         */
+        private String parentSourceDetailId;
     }
 
     /**
@@ -151,8 +178,8 @@ public class SubcontractReturnDetailDTO implements Serializable {
         /**
         * 父级skuId
         */
-        @NotBlank(message = "父级skuId不能为空")
-        @Size(max = 19,message = "父级skuId最大长度不能超过19位")
+//        @NotBlank(message = "父级skuId不能为空")
+//        @Size(max = 19,message = "父级skuId最大长度不能超过19位")
         private String parentSkuId;
 
         /**
@@ -177,8 +204,8 @@ public class SubcontractReturnDetailDTO implements Serializable {
         /**
         * bom版本
         */
-        @NotBlank(message = "bom版本不能为空")
-        @Size(max = 32,message = "bom版本最大长度不能超过32位")
+//        @NotBlank(message = "bom版本不能为空")
+//        @Size(max = 32,message = "bom版本最大长度不能超过32位")
         private String bomVersion;
 
         /**
@@ -227,17 +254,20 @@ public class SubcontractReturnDetailDTO implements Serializable {
         /**
         * 来源明细id
         */
-//        @NotBlank(message = "来源明细id不能为空")
-//        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
+        @NotBlank(message = "来源明细id不能为空")
+        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
         private String sourceDetailId;
 
         /**
         * 仓位
         */
-        @NotBlank(message = "仓位不能为空")
-        @Size(max = 32,message = "仓位最大长度不能超过32位")
+//        @NotBlank(message = "仓位不能为空")
+//        @Size(max = 32,message = "仓位最大长度不能超过32位")
         private String warehouseLocation;
-
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
         /**
         * 主表id
         */

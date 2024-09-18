@@ -13,9 +13,7 @@ import java.util.Arrays;
 public enum SubcontractReturnTypeEnum implements EnumMessage {
 
 
-    NORMAL("normal", "正常领料"),
-    EXCEED("exceed", "超出领料"),
-
+    NORMAL("normal", "正常退料")
     ;
 
     /**

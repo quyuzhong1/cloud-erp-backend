@@ -61,58 +61,6 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     @Autowired
     private PlmTaskFeign plmTaskFeign;
 
-//    @GlobalTransactional(rollbackFor = Exception.class)
-//    @Transactional(rollbackFor = Exception.class)
-//    @Override
-//    public BaseResultDTO.AddDTO add(SubcontractReturnDetailDTO.AddDTO addDTO) {
-//        SubcontractReturnDetailEntity subcontractReturnDetailEntity = new SubcontractReturnDetailEntity();
-//        BeanMapperUtils.copy(addDTO, subcontractReturnDetailEntity);
-//
-//        // 数据处理
-//        handleData(subcontractReturnDetailEntity);
-//
-//        log.info("开始新增委外退料明细单");
-//        boolean save = super.save(subcontractReturnDetailEntity);
-//        if(!save) {
-//            throw new ServiceException("委外退料明细单保存失败");
-//        }
-//
-//        // 操作日志
-//        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外退料明细单" , subcontractReturnDetailEntity.getId());
-//        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLog(msg, null, subcontractReturnDetailEntity.getId(), "新增操作");
-//        // TODO 新增明细（如果有明细的话）
-//
-//        return new BaseResultDTO.AddDTO(subcontractReturnDetailEntity.getId(), subcontractReturnDetailEntity.getId());
-//    }
-//
-//    /**
-//    * 修改
-//    */
-//    @Transactional(rollbackFor = Exception.class)
-//    @Override
-//    public Boolean update(SubcontractReturnDetailDTO.UpdateDTO updateDTO) {
-//        SubcontractReturnDetailEntity old = super.getById(updateDTO.getId());
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "委外退料明细单"));
-//        SubcontractReturnDetailEntity subcontractReturnDetailEntity =  BeanMapperUtils.map(SubcontractReturnDetailEntity.class, updateDTO);
-//
-//        // 数据处理
-//        handleData(subcontractReturnDetailEntity);
-//        log.info("编辑 开始修改委外退料明细单数据，id：【{}】", old.getId());
-//        boolean save = super.updateById(subcontractReturnDetailEntity);
-//        if(!save) {
-//            throw new ServiceException("委外退料明细单保存失败");
-//        }
-//        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-//
-//        // 记录主单操作日志
-//            log.info("编辑 开始记录委外退料明细单日志数据，id：【{}】", subcontractReturnDetailEntity.getId());
-//            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), subcontractReturnDetailEntity.getId(), "委外退料明细单");
-//        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLogByObj(old, subcontractReturnDetailEntity, null, subcontractReturnDetailEntity.getId(), msg);
-//        return Boolean.TRUE;
-//    }
-
     @Override
     public void add(List<SubcontractReturnDetailDTO.AddDTO> details, String mainId) {
         if (CollectionUtil.isEmpty(details)) {
@@ -141,6 +89,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), mainId, "新增操作");
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(List<SubcontractReturnDetailDTO.UpdateDTO> details, String mainId) {
         if (CollectionUtil.isEmpty(details)) {
@@ -149,7 +98,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         List<SubcontractReturnDetailEntity> list = BeanMapperUtils.copyList(SubcontractReturnDetailEntity.class, details);
 
         //原明细数据
-        List<SubcontractReturnDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<SubcontractReturnDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> deleteIds = getDeleteIds(list, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SubcontractReturnDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -159,7 +108,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             this.removeByIds(deleteIds);
         }
 
-        //委外发料主表信息
+        //委外退料主表信息
         SubcontractReturnEntity subcontractReturnEntity = subcontractReturnService.getById(mainId);
         if (ObjectUtil.isEmpty(subcontractReturnEntity)) {
             throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_NOT_EXIST);
@@ -171,12 +120,12 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         //数据验证
         checkData(list,subcontractReturnEntity);
 
-        log.info("编辑 开始修改委外发料明细单数据，id：【{}】", mainId);
+        log.info("编辑 开始修改委外退料明细单数据，id：【{}】", mainId);
         //新增或修改采购订单明细
         boolean save = this.saveOrUpdateBatch(list);
 
         if(!save) {
-            throw new ServiceException("委外发料明细单保存失败");
+            throw new ServiceException("委外退料明细单保存失败");
         }
         return Boolean.TRUE;
     }
@@ -213,19 +162,19 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             //委外子SKU明细信息
             SubcontractOrderDetailEntity  childDetailEntity = childDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSubcontractOrderDetailId()))
                     .findFirst().orElse(null);
-            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(childDetailEntity)) {
+            if (ObjectUtils.isEmpty(childDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98072);
             }
             //委外父级SKU明细信息
             SubcontractOrderDetailEntity parentDetailEntity = parentDetailList.stream().filter(obj -> obj.getId().equals(childDetailEntity.getParentId()))
                     .findFirst().orElse(null);
-            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(parentDetailEntity)) {
+            if (ObjectUtils.isEmpty(parentDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98071);
             }
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(parentDetailEntity.getSkuId()) && obj.getSkuId().equals(childDetailEntity.getSkuId()))
                     .findFirst().orElse(null);
-            if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+            if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                 throw new ServiceException(ApiError.ERROR_95163);
             }
             detailEntity.setParentSkuId(parentDetailEntity.getSkuId());
@@ -314,23 +263,20 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         List<String> subcontractOrderDetailIdList = list.stream().map(SubcontractReturnDetailEntity::getSubcontractOrderDetailId).collect(Collectors.toList());
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(subcontractOrderDetailIdList);
 
-        //委外明细已关联的委外发料
+        //委外明细已关联的委外退料
         List<SubcontractReturnDetailEntity> subcontractReturnDetailList = this.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
         for (SubcontractReturnDetailEntity entity : list) {
             SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(detailEntity)) {
+            if (Objects.isNull(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98072);
             }
-            //正常领料需要验证发料数量
-            if (SubcontractReturnTypeEnum.NORMAL.getCode().equals(subcontractReturnEntity.getType())) {
-                //已下推发料数量
-                Integer totalReturnQty = subcontractReturnDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(entity.getSubcontractOrderDetailId())
-                                && SubcontractReturnTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
-                        .map(SubcontractReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (MathUtil.add(totalReturnQty,entity.getReturnQty()) > detailEntity.getDeliveryQty()) {
-                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalReturnQty);
-                }
+            //已下推退料数量
+            Integer totalReturnQty = subcontractReturnDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(entity.getSubcontractOrderDetailId())
+                            && SubcontractReturnTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
+                    .map(SubcontractReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (MathUtil.add(totalReturnQty,entity.getReturnQty()) > detailEntity.getDeliveryQty()) {
+                throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalReturnQty);
             }
         }
     }

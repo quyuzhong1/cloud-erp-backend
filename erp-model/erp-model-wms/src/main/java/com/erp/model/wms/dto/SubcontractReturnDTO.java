@@ -191,6 +191,54 @@ public class SubcontractReturnDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+        /**
+         * 父skuId
+         */
+        private String parentSkuId;
+        /**
+         * 父skuNo
+         */
+        private String parentSkuNo;
+
+        private String skuId;
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 退料数量
+         */
+        private Integer returnQty;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
     }
 
     /**
@@ -226,11 +274,19 @@ public class SubcontractReturnDTO implements Serializable {
         * 单据审核状态
         */
         private String approveStatus;
+        /**
+         * 单据审核状态名称
+         */
+        private String approveStatusName;
 
         /**
         * 退料类型
         */
         private String type;
+        /**
+         * 退料类型名称
+         */
+        private String typeName;
 
         /**
         * 退料日期
@@ -256,6 +312,10 @@ public class SubcontractReturnDTO implements Serializable {
         * 作废状态（false未作废，true已作废）
         */
         private Boolean invalidStatus;
+        /**
+         * 作废状态
+         */
+        private String invalidStatusName;
 
         /**
         * 作废时间
@@ -307,7 +367,10 @@ public class SubcontractReturnDTO implements Serializable {
         */
         private String subcontractOrderCode;
 
-
+        /**
+         * 退料明细
+         */
+        private List<SubcontractReturnDetailDTO.ViewDTO> detailList;
     }
 
     /**

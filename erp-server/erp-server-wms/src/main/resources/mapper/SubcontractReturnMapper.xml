@@ -50,7 +50,7 @@
         sr.id,sr.code,sr.approve_status,sr.type,sr.bill_date,sr.source_id,sr.source_code,sr.source_type,sr.invalid_status,sr.invalid_time,
         sr.invalid_remark,sr.approve_time,sr.approve_user_name,sr.supplier_id,sr.supplier_name,sr.subcontract_order_id,sr.subcontract_order_code,
         srd.id as detailId,srd.parent_sku_id, srd.parent_sku_no, srd.sku_id, srd.sku_no, srd.bom_version, srd.quantity, srd.parent_sku_use_qty,
-        srd.return_qty, srd.warehouse_id,srd.warehouse_name, srd.remark, srd.source_detail_id, srd.warehouse_location, srd.kingdee_detail_id,
+        srd.return_qty, srd.warehouse_id,srd.warehouse_name, srd.remark, srd.source_detail_id, srd.warehouse_location, srd.warehouse_location_name,srd.kingdee_detail_id,
         srd.subcontract_order_detail_id,
         sr.create_user_id,sr.create_user_name,sr.create_time,sr.update_user_id,sr.update_user_name,sr.update_time
     </sql>

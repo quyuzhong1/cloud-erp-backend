@@ -1,7 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.erp.model.wms.dto.SubcontractIssueDTO;
+import com.erp.server.wms.query.SubcontractIssueQueryHandler;
+import com.erp.server.wms.query.SubcontractReturnQueryHandler;
 import com.erp.server.wms.service.SubcontractReturnDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,8 +106,9 @@ public class SubcontractReturnController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:subcontractReturn:paging",
-            tableAlias = ""
+            tableAlias = "sr"
     )
+    @WebAdvanceQuery(handler = SubcontractReturnQueryHandler.class)
     public ApiResult<PagingVO<SubcontractReturnDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SubcontractReturnDTO.PagingParamDTO> dto) {
         return success(subcontractReturnService.paging(dto));
     }
@@ -155,12 +159,12 @@ public class SubcontractReturnController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.SUBMIT, desc = "委外退料单提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		//数据查询放入外层，处理结果统一更新或单条更新
 		List<SubcontractReturnEntity> list = subcontractReturnService.lambdaQuery().in(SubcontractReturnEntity::getId, ids).list();
 		Map<String, SubcontractReturnEntity> idEntityMap = list.stream().collect(Collectors.toMap(SubcontractReturnEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             BatchResultDTO submit;
             try {
                 submit = subcontractReturnService.submit(id);
@@ -194,9 +198,9 @@ public class SubcontractReturnController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "委外退料单审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		//数据查询放入外层，处理结果统一更新或单条更新
 		List<SubcontractReturnEntity> list = subcontractReturnService.lambdaQuery().in(SubcontractReturnEntity::getId, ids).list();
 		Map<String, SubcontractReturnEntity> idEntityMap = list.stream().collect(Collectors.toMap(SubcontractReturnEntity::getId, w -> w));
         for (String id : ids) {
@@ -233,12 +237,11 @@ public class SubcontractReturnController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "委外退料单反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SubcontractReturnEntity> list = subcontractReturnService.lambdaQuery().in(SubcontractReturnEntity::getId, ids).list();
 		Map<String, SubcontractReturnEntity> idEntityMap = list.stream().collect(Collectors.toMap(SubcontractReturnEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             BatchResultDTO disApproveResult;
             try {
                 disApproveResult = subcontractReturnService.disApprove(id);
@@ -273,12 +276,11 @@ public class SubcontractReturnController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "委外退料单删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SubcontractReturnEntity> list = subcontractReturnService.lambdaQuery().in(SubcontractReturnEntity::getId, ids).list();
 		Map<String, SubcontractReturnEntity> idEntityMap = list.stream().collect(Collectors.toMap(SubcontractReturnEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             BatchResultDTO deleteResult;
             try {
                 deleteResult = subcontractReturnService.delete(id);
@@ -311,12 +313,11 @@ public class SubcontractReturnController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "委外退料单作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SubcontractReturnEntity> list = subcontractReturnService.lambdaQuery().in(SubcontractReturnEntity::getId, ids).list();
 		Map<String, SubcontractReturnEntity> idEntityMap = list.stream().collect(Collectors.toMap(SubcontractReturnEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             BatchResultDTO invalidResult;
             try {
                 invalidResult = subcontractReturnService.invalid(id,dto.getRemark());
@@ -350,12 +351,12 @@ public class SubcontractReturnController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.CANCEL, desc = "委外退料单撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<SubcontractReturnEntity> list = subcontractReturnService.lambdaQuery().in(SubcontractReturnEntity::getId, ids).list();
         Map<String, SubcontractReturnEntity> idEntityMap = list.stream().collect(Collectors.toMap(SubcontractReturnEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             BatchResultDTO cancelResult;
             try {
                 cancelResult = subcontractReturnService.cancelProcess(id);
@@ -404,7 +405,7 @@ public class SubcontractReturnController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:subcontractReturn:export",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "委外退料单导出Excel数据")
     public void exportList(@RequestBody @Validated SubcontractReturnDTO.PagingParamDTO dto, HttpServletResponse response) {

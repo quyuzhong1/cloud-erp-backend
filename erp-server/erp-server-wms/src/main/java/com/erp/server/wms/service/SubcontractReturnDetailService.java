@@ -17,24 +17,6 @@ import java.util.List;
  */
 public interface SubcontractReturnDetailService extends SuperService<SubcontractReturnDetailEntity> {
 
-//    /**
-//    * 新增
-//    * @author zdy
-//    * @date: 2024-09-15
-//    * @param dto
-//    * @return
-//    */
-//    BaseResultDTO.AddDTO add(SubcontractReturnDetailDTO.AddDTO dto);
-//
-//    /**
-//    * 修改
-//    * @author zdy
-//    * @date: 2024-09-15
-//    * @param dto
-//    * @return
-//    */
-//    Boolean update(SubcontractReturnDetailDTO.UpdateDTO dto);
-
     /**
      * 根据委外订单明细id获取委外退料明细
      * @param subcontractOrderDetailIdList
@@ -58,7 +40,7 @@ public interface SubcontractReturnDetailService extends SuperService<Subcontract
 
     /**
      * @description: 根据主表ids查询
-     * @author Will
+     * @author zdy
      * @date: 2024/1/9 14:43
      * @param mainIdList
      * @return List<SubcontractReturnDetailEntity>
@@ -67,7 +49,7 @@ public interface SubcontractReturnDetailService extends SuperService<Subcontract
 
     /**
      * @description: 根据mainId删除
-     * @author Will
+     * @author zdy
      * @date: 2024/1/9 15:46
      * @param mainId
      */
@@ -75,7 +57,7 @@ public interface SubcontractReturnDetailService extends SuperService<Subcontract
 
     /**
      * @description: 根据来源明细id集合查询
-     * @author Will
+     * @author zdy
      * @date: 2024/1/9 16:56
      * @param sourceDetailIdList
      * @return List<SubcontractReturnDetailEntity>

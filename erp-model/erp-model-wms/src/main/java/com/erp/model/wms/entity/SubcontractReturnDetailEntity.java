@@ -90,6 +90,11 @@ public class SubcontractReturnDetailEntity extends BaseEntity<SubcontractReturnD
     @TableField("warehouse_location")
     private String warehouseLocation;
     /**
+     * 仓位名称
+     */
+    @TableField("warehouse_location_name")
+    private String warehouseLocationName;
+    /**
     * 主表id
     */
     @TableField("main_id")

@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.constant.ApproveType;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
@@ -15,10 +16,15 @@ import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SubcontractReturnDTO;
-import com.erp.model.wms.dto.SubcontractReturnDetailDTO;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.SubcontractReturnTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -45,16 +51,18 @@ import cn.hutool.core.collection.CollUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SUBCONTRACT_RETURN;
+
 /**
  * <p>
  * 委外退料单 服务实现类
@@ -88,6 +96,8 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     private WarehouseLocationService warehouseLocationService;
     @Autowired
     private PoInstockService poInstockService;
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -119,11 +129,14 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         //新增明细
         subcontractReturnDetailService.add(addDTO.getDetailList(),subcontractReturnEntity.getId());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外退料单" , subcontractReturnEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, subcontractReturnEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        String msg = null;
+        if (StrUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),subcontractReturnEntity.getSourceType())){
+            msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外退料单" , subcontractReturnEntity.getCode());
+        }else if (StrUtil.equals(SourceTypeEnum.PO_RETURN.getCode(),subcontractReturnEntity.getSourceType())){
+            //TODO 增加子件和成品退货单记录
+            msg = StrUtil.format("用户【{}】从成品采购退货单【{}】下推生成了委外退料单【{}】，子件采购退货单【{}】", UserContext.getDefaultLoginUser().getUserName(), subcontractReturnEntity.getSourceCode(), subcontractReturnEntity.getCode());
+        }
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), subcontractReturnEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(subcontractReturnEntity.getId(), code);
     }
 
@@ -134,7 +147,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     @Override
     public Boolean update(SubcontractReturnDTO.UpdateDTO updateDTO) {
         SubcontractReturnEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "委外发料单"));
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "委外退料单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -150,17 +163,17 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         subcontractReturnEntity.setSourceType(old.getSourceType());
         // 数据处理
         handleData(subcontractReturnEntity);
-        log.info("编辑 开始修改委外发料单数据，单号：【{}】", old.getCode());
+        log.info("编辑 开始修改委外退料单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(subcontractReturnEntity);
         if(!save) {
-            throw new ServiceException("委外发料单保存失败");
+            throw new ServiceException("委外退料单保存失败");
         }
         //修改明细
         subcontractReturnDetailService.update(updateDTO.getDetailList(),subcontractReturnEntity.getId());
 
         // 记录主单操作日志
-        log.info("编辑 开始记录委外发料单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "委外发料单");
+        log.info("编辑 开始记录委外退料单日志数据，单号：【{}】", old.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "委外退料单");
         operateLogService.addModuleOperateLogByObj(old, subcontractReturnEntity, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), subcontractReturnEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -200,24 +213,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
 
     @Override
     public void exportList(SubcontractReturnDTO.PagingParamDTO param, HttpServletResponse response) {
-        List<SubcontractReturnDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/subcontractReturn.xlsx";
-        String name = "委外退料单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        downloadTaskFeign.saveDownloadTask("委外退料单导出", EXPORT_WMS_SUBCONTRACT_RETURN.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -232,14 +228,15 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         log.info("提交 开始修改委外退料单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动委外退料单流程，id=：【{}】", entity.getId());
-        startProcess(entity);
+        //启动流程（如果需要的话）
+//        log.info("提交 开始启动委外退料单流程，id=：【{}】", entity.getId());
+//        if (isProcess){
+//            startProcess(entity);
+//        }
         // 记录操作日志
         log.info("提交 开始记录委外退料单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外退料单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -281,8 +278,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外退料单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -293,25 +289,24 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     * @param dto
     */
     private void approveProcess(SubcontractReturnEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-        approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
-        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
-        approveDTO.setComment(dto.getComment());
-        approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
-        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
-        Integer code = approveResult.getCode();
-        if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
-        }
-        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+//        LoginUser userInfo = UserContext.getDefaultLoginUser();
+//        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+//        approveDTO.setBusinessId(entity.getId());
+//        approveDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_RETURN.getCode());
+//        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+//        approveDTO.setComment(dto.getComment());
+//        approveDTO.setUserId(userInfo.getUid());
+//        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+//        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+//        Integer code = approveResult.getCode();
+//        if (200 != code) {
+//            throw new ServiceException(ApiError.ERROR_94006);
+//        }
+//        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+//        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
-        }
+//        }
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -321,15 +316,13 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         SubcontractReturnEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外退料单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
+        // 审核完成自动退料扣库存
+        inventoryTransCoreService.unApprove(new InventoryUnApproveDTO(InventorySourceTypeEnum.RETURN_MATERIAL, entity.getId()));
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外退料单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -338,7 +331,6 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
@@ -347,18 +339,18 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     public BatchResultDTO delete(String id) {
         SubcontractReturnEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外退料单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
         // 删除主单数据
         log.info("删除 开始删除委外退料单主单数据，id：【{}】", id);
         super.removeById(id);
+        //删除明细数据（如果有明细数据的话）
+        subcontractReturnDetailService.deleteByMainId(id);
         // 删除日志数据
         log.info("删除 开始删除委外退料单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外退料单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除委外退料单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), entity.getCode(), "删除委外退料单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
     /**
@@ -369,7 +361,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     public BatchResultDTO invalid(String id, String remark) {
         SubcontractReturnEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外退料单数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) || !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改委外退料单状态数据，id：【{}】", id);
@@ -380,8 +372,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外退料单", remark);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "作废操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
 
@@ -394,11 +385,9 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     public BatchResultDTO cancelProcess(String id) {
         SubcontractReturnEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外退料单数据"));
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
 
         log.info("撤销 开始修改委外退料单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -406,14 +395,12 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外退料单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
-        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
-        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        workflowFeign.revokeProcess(revokeDTO);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), entity.getId(), "取消流程操作");
+//        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+//        revokeDTO.setBusinessId(entity.getId());
+//        revokeDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_RETURN.getCode());
+//        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+//        workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
@@ -425,8 +412,10 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
-
+        if (dto.getType().equals(ApproveType.PASS)) {
+            // 审核完成自动退料扣库存
+            autoOutStockInventory(entity);
+        }
         return Boolean.TRUE;
     }
 
@@ -459,7 +448,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         if (CollectionUtil.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98072);
         }
-        //已审核发料数量
+        //已审核退料数量
         List<String> subcontractOrderDetailIdList = childList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
         List<SubcontractIssueDetailEntity> hasIssueDetailList = subcontractIssueDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
         //已审核退料数量
@@ -532,7 +521,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
                         .mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
                 detailDTO.setCurInventoryQty(curInventoryQty);
 
-                //已发料数量
+                //已退料数量
                 Integer hasIssueQty = hasIssueDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(detailDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
                         .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailDTO.setHasIssueQty(hasIssueQty);
@@ -555,7 +544,6 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         SubcontractReturnDTO.ViewDTO data = BeanMapperUtils.map(SubcontractReturnDTO.ViewDTO.class, subcontractReturnEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
     /**
@@ -570,8 +558,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_RETURN.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -584,6 +571,73 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        //状态名称
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+
+        //退料类型
+        data.setTypeName(SubcontractReturnTypeEnum.NORMAL.getName());
+
+        //委外退料明细
+        List<SubcontractReturnDetailEntity> subcontractReturnDetailList = subcontractReturnDetailService.listByMainIds(Collections.singletonList(data.getId()));
+        if (CollectionUtil.isEmpty(subcontractReturnDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST);
+        }
+
+        //产品信息
+        List<String> skuIdList = subcontractReturnDetailList.stream().map(SubcontractReturnDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = subcontractReturnDetailList.stream()
+                .map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
+
+        //即时库存
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSubReturnSkuInventoryList(subcontractReturnDetailList);
+
+        //已审核退料数量
+        List<String> subDetailIdList = subcontractReturnDetailList.stream().map(SubcontractReturnDetailEntity::getSubcontractOrderDetailId).collect(Collectors.toList());
+        List<SubcontractReturnDetailEntity> hasReturnDetailList = subcontractReturnDetailService.listBySubcontractOrderDetailIdList(subDetailIdList);
+        //已审核发料数量
+        List<SubcontractIssueDetailEntity> hasIssueDetailList = subcontractIssueDetailService.listBySubcontractOrderDetailIdList(subDetailIdList);
+
+        //委外明细
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(subDetailIdList);
+
+        List<SubcontractReturnDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(SubcontractReturnDetailDTO.ViewDTO.class, subcontractReturnDetailList);
+        for (SubcontractReturnDetailDTO.ViewDTO viewDTO : detailList) {
+            //仓位名称
+            String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(viewDTO.getWarehouseId()) && obj.getCode().equals(viewDTO.getWarehouseLocation()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            viewDTO.setWarehouseLocationName(warehouseLocationName);
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            viewDTO.setProductName(skuVO.getSkuName());
+            //即时库存
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(viewDTO.getSkuId())
+                            && s.getWarehouseId().equals(viewDTO.getWarehouseId())
+                            && (StrUtil.isBlank(viewDTO.getWarehouseLocation()) ? Boolean.TRUE : viewDTO.getWarehouseLocation().equals(s.getWarehouseLocationId())))
+                    .mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
+            viewDTO.setCurInventoryQty(curInventoryQty);
+            //已退料数量
+            Integer hasReturnQty = hasReturnDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(viewDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
+                    .map(SubcontractReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewDTO.setHasReturnQty(hasReturnQty);
+            //已发料数量
+            Integer hasIssueQty = hasIssueDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(viewDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
+                    .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewDTO.setHasReturnQty(hasIssueQty);
+            //最大可退数量
+            viewDTO.setMaxReturnQty(hasIssueQty - hasReturnQty);
+            //委外明细父级来源id
+            String parentSourceDetailId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(viewDTO.getSubcontractOrderDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
+            viewDTO.setParentSourceDetailId(parentSourceDetailId);
+        }
+        data.setDetailList(detailList);
     }
 
     /**
@@ -634,12 +688,27 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //产品信息
+        List<String> skuIdList = list.stream().map(SubcontractReturnDTO.ListDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream().map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
 
         // 属性赋值
         for(SubcontractReturnDTO.ListDTO data : list) {
+            //状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            //仓位信息
+            String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(data.getWarehouseId()) && obj.getCode().equals(data.getWarehouseLocation()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            data.setWarehouseLocationName(warehouseLocationName);
+            //产品信息
+            String productName = skuVOList.stream().filter(obj -> obj.getSkuId().equals(data.getSkuId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            data.setProductName(productName);
         }
     }
     /**
@@ -647,7 +716,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     */
     private void validateSubmit(SubcontractReturnEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
@@ -662,8 +731,11 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
             subcontractReturnEntity.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
             subcontractReturnEntity.setSourceId(subcontractReturnEntity.getSubcontractOrderId());
         }
+        if (StrUtil.isBlank(subcontractReturnEntity.getType())){
+            subcontractReturnEntity.setType(SubcontractReturnTypeEnum.NORMAL.getCode());
+        }
         //委外订单
-        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(subcontractReturnEntity.getSubcontractOrderId()));
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(subcontractReturnEntity.getSubcontractOrderId()));
         if (CollectionUtil.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
@@ -673,11 +745,11 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
             subcontractReturnEntity.setSourceCode(subcontractOrderList.get(0).getCode());
         } else {
             //来源单号是入库单
-            PoInstockEntity poInstockEntity = poInstockService.getById(subcontractReturnEntity.getSourceId());
-            if (ObjectUtil.isEmpty(poInstockEntity)) {
-                throw new ServiceException(ApiError.ERROR_98050);
-            }
-            subcontractReturnEntity.setSourceCode(poInstockEntity.getCode());
+//            PoInstockEntity poInstockEntity = poInstockService.getById(subcontractReturnEntity.getSourceId());
+//            if (ObjectUtil.isEmpty(poInstockEntity)) {
+//                throw new ServiceException(ApiError.ERROR_98050);
+//            }
+//            subcontractReturnEntity.setSourceCode(poInstockEntity.getCode());
         }
         //供应商
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(subcontractReturnEntity.getSupplierId());
@@ -717,7 +789,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
      */
     private void checkSupplier (SubcontractReturnEntity subcontractReturnEntity, List<String> sourceDetailIdList) {
         //委外订单下全部明细
-        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(subcontractReturnEntity.getSourceId()));
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(subcontractReturnEntity.getSourceId()));
         //父级id集合
         List<String> parentIdList = subcontractOrderDetailList.stream().filter(obj -> sourceDetailIdList.contains(obj.getId())).map(SubcontractOrderDetailEntity::getParentId).collect(Collectors.toList());
         //所有父级数据
@@ -733,5 +805,60 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         }
         subcontractReturnEntity.setSupplierId(parentDetailList.get(0).getSupplierId());
         subcontractReturnEntity.setSupplierName(parentDetailList.get(0).getSupplierName());
+    }
+
+    /**
+     * @description: 自动扣库存
+     * @author Will
+     * @date: 2024/1/29 16:10
+     * @param entity
+     */
+    private void autoOutStockInventory (SubcontractReturnEntity entity) {
+        //委外退料明细
+        List<SubcontractReturnDetailEntity> subcontractReturnDetailList = subcontractReturnDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtil.isEmpty(subcontractReturnDetailList)) {
+            throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST);
+        }
+        List<InOutStockDTO> inOutStockList = new ArrayList<>();
+        for (SubcontractReturnDetailEntity detailEntity : subcontractReturnDetailList) {
+            //操作请求实体
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.RETURN_MATERIAL);
+            inOutStockDTO.setSourceId(entity.getId());
+            inOutStockDTO.setSourceCode(entity.getCode());
+            inOutStockDTO.setSourceDetailId(detailEntity.getId());
+            inOutStockDTO.setBillDate(LocalDate.now());
+            inOutStockDTO.setSkuId(detailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+            inOutStockDTO.setQty(detailEntity.getReturnQty());
+            inOutStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+            inOutStockList.add(inOutStockDTO);
+        }
+        //生成退料入库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setParamList(inOutStockList);
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SUBCONTRACT_RETURN_IN.getCode());
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+    }
+    /**
+     * @description: 查询详情获取即时库存
+     * @author Will
+     * @date: 2024/1/9 16:46
+     * @param subcontractReturnDetailList
+     * @return List<SkuInventoryTotalDTO>
+     */
+    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSubReturnSkuInventoryList(List<SubcontractReturnDetailEntity> subcontractReturnDetailList) {
+        //skuId集合
+        List<String> skuIdList = subcontractReturnDetailList.stream().map(SubcontractReturnDetailEntity::getSkuId).distinct()
+                .collect(Collectors.toList());
+        //仓库Id集合
+        List<String> warehouseIdList = subcontractReturnDetailList.stream().map(SubcontractReturnDetailEntity::getWarehouseId)
+                .distinct().collect(Collectors.toList());
+        //仓位集合
+        List<String> warehouseLocationList = subcontractReturnDetailList.stream().map(SubcontractReturnDetailEntity::getWarehouseLocation)
+                .distinct().collect(Collectors.toList());
+
+        return listSkuInventoryTotalList(skuIdList,warehouseIdList,warehouseLocationList);
     }
 }
