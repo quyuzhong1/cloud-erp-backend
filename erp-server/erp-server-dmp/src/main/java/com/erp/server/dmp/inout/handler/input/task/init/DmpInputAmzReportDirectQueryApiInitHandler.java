@@ -118,7 +118,6 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
             }
             throw new ServiceException("[Amazon SP-APi] 查询最新listing失败:body=" + JSONUtil.toJsonStr(e));
         }
-        // TODO 校验mongo已存在跳过处理
 
         JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
         // 补充其他信息
