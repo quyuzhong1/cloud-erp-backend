@@ -124,8 +124,9 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
     }
 
     @Override
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-// 校验是否是本系统发起
+    public AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+        AuthorizeResultDTO resultDTO = new AuthorizeResultDTO();
+        // 校验是否是本系统发起
         String stateKey = StrUtil.format(RedisCacheConstants.AUTH_TIKTOK_STATE, dto.getState());
         log.error("stateKey:：{}", stateKey);
         Object shopIdObj = redisUtil.get(stateKey);
@@ -161,13 +162,18 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
 
         TokenDTO tokenDTO = tikTokSdkClientService.sendTikTokPostToken(paramMap);
         if (ObjectUtil.isEmpty(tokenDTO)) {
-            return Boolean.FALSE;
+            resultDTO.setIsAuthorize(Boolean.FALSE);
+            return resultDTO;
         }
         //根据店铺id 获取到授权信息
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
         if (Objects.isNull(shopAuth)) {
             shopAuth = new ShopAuthEntity();
         }
+
+        resultDTO.setIsAuthorize(Boolean.TRUE);
+        resultDTO.setShopIdList(Arrays.asList(shopId));
+
         shopAuth.setShopId(shopId);
         shopAuth.setToken(tokenDTO.getAccessToken());
         shopAuth.setAccessToken(tokenDTO.getAccessToken());
@@ -218,7 +224,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
 
         redisUtil.del(stateKey);
 
-        return Boolean.TRUE;
+        return resultDTO;
     }
 
     @Override

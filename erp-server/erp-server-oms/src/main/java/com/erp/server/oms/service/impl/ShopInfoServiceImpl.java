@@ -12,6 +12,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.StringUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -756,9 +757,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-
-
-        return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
+        AuthorizeResultDTO resultDTO = AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
+        return resultDTO.getIsAuthorize();
     }
 
     /**

@@ -38,6 +38,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -90,7 +92,8 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
      * @return
      */
     @Override
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+    public AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+        AuthorizeResultDTO resultDTO = new AuthorizeResultDTO();
         ShopAuthDTO.ReturnDTO returnDTO = new ShopAuthDTO.ReturnDTO();
         returnDTO.setCode(dto.getCode());
         returnDTO.setId(dto.getId());
@@ -108,7 +111,9 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
         if (null != obj){
             redisUtil.del(key);
         }
-        return result;
+        resultDTO.setIsAuthorize(Boolean.TRUE);
+        resultDTO.setShopIdList(Arrays.asList(dto.getShopId()));
+        return resultDTO;
     }
 
     /**

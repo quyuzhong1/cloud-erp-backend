@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -69,7 +70,9 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
      * @return
      */
     @Override
-    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+    public AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
+        AuthorizeResultDTO resultDTO = new AuthorizeResultDTO();
+
         String shopId = dto.getShopId();
         if (StringUtils.isBlank(shopId)) {
             throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);
@@ -80,6 +83,10 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
         if (StringUtils.isBlank(dto.getClientSecret())) {
             throw new ServiceException(ApiError.ERROR_WALMART_CLIENT_SECRET_NOT_NULL);
         }
+
+        resultDTO.setIsAuthorize(Boolean.TRUE);
+        resultDTO.setShopIdList(Arrays.asList(shopId));
+
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         //根据店铺id 获取到授权信息
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
@@ -92,7 +99,8 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
         WalmartSdkClientService walmartSdkClientService = new WalmartSdkClientService();
         WalmartTokenDTO walmartTokenDTO = walmartSdkClientService.sendWalmartPostToken(url, dto.getClientId(), dto.getClientSecret());
         if (ObjectUtil.isEmpty(walmartTokenDTO)) {
-            return Boolean.FALSE;
+            resultDTO.setIsAuthorize(Boolean.FALSE);
+            return resultDTO;
         }
 
         String appClientId = shopAuth.getAppClientId();
@@ -148,7 +156,7 @@ public class WalmartAuthorize implements IShopAuthorizeService<T> {
         // platform-token:平台名称:店铺ID
         String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.WALMART.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO);
-        return result;
+        return resultDTO;
     }
 
     /**
