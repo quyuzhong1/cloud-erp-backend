@@ -579,6 +579,7 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 含税单价
          */
+        @NotNull(message = "含税单价不能为空")
         @Digits(integer = 16,fraction = 4,message = "含税单价最大16字符，小数位不能大于4个字符")
         private BigDecimal taxPrice;
         /**

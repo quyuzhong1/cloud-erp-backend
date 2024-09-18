@@ -127,15 +127,7 @@ public class PurchaseChangeController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-//    /**
-//     * 批量获取列表采购单价
-//     * @param dto
-//     * @return
-//     */
-//    @PostMapping("/batchGetPurchasePrice")
-//    public ApiResult<PurchaseChangeDTO.PurchasePriceDTO> batchGetPurchasePrice(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
-//        return purchaseChangeService.batchGetPurchasePrice(dto);
-//    }
+
     /**
      * 新增并提交
      * @author Will

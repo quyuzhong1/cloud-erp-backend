@@ -466,11 +466,4 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PagingVO<BomExportExcelVO> exportPurchaseOrderContract(PagingDTO<String> dto);
 
     PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
-
-    /**
-     * 批量获取列表采购单价
-     * @param dto
-     * @return
-     */
-    ApiResult<PurchaseOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(PurchaseOrderDTO.UpdateDTO dto);
 }

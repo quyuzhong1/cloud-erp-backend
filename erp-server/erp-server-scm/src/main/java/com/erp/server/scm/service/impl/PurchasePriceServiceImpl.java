@@ -67,6 +67,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1021,7 +1022,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return Collections.emptyList();
         }
         //采购数量-需要根据sku进行汇总
-        Map<String, Integer> skuQtyList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && Objects.nonNull(e.getQty())).collect(Collectors.groupingBy(PurchasePriceDTO.PriceDTO::getSkuId, Collectors.summingInt(PurchasePriceDTO.PriceDTO::getQty)));
+        Map<String, Integer> skuQtyList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())
+                        && StrUtil.isNotBlank(e.getSupplierId()) && Objects.nonNull(e.getQty()))
+                .collect(Collectors.groupingBy(e -> e.getSkuId() + "_" + e.getSupplierId(), Collectors.summingInt(PurchasePriceDTO.PriceDTO::getQty)));
         List<Integer> purchaseQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(purchaseQtyList)) {
             return Collections.emptyList();
@@ -1036,16 +1039,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             if (StrUtil.isBlank(updateDTO.getPurchaseOrgId()) || StrUtil.isBlank(updateDTO.getSkuId()) || StrUtil.isBlank(updateDTO.getSupplierId()) || Objects.isNull(updateDTO.getQty())){
                 continue;
             }
-//            List<BomChildrenSkuDTO> bomChildrenSkuDTOList = skuDTOList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getParentSkuId()) && StrUtil.isNotBlank(updateDTO.getSkuId()) && Objects.equals(e.getParentSkuId(), updateDTO.getSkuId())).collect(Collectors.toList());
-//            if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOList)){
-//                //sku是组合品时，不计算采购单价
-//                BigDecimal price = Objects.nonNull(updateDTO.getTaxPrice()) ? updateDTO.getTaxPrice():BigDecimal.ZERO;
-//                Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
-//                updateDTO.setAmount(MathUtil.multiply(price,qty));
-//                updateList.add(updateDTO);
-//            }
             //获取sku汇总数量
-            Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId(), null);
+            Integer purchaseQty = skuQtyList.getOrDefault(updateDTO.getSkuId() + "_" + updateDTO.getSupplierId(), null);
             PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> StrUtil.isNotBlank(updateDTO.getSkuId())
                             && StrUtil.isNotBlank(obj.getSkuId()) && obj.getSkuId().equals(updateDTO.getSkuId())
                             && StrUtil.isNotBlank(obj.getSupplierId()) && StrUtil.isNotBlank(updateDTO.getSupplierId()) && obj.getSupplierId().equals(updateDTO.getSupplierId())
@@ -1057,7 +1052,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 updateDTO.setTaxRate(viewDTO.getTaxRate());
                 updateDTO.setCurrency(viewDTO.getCurrency());
                 updateDTO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(viewDTO.getCurrency()));
-                updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), viewDTO.getPurchaseQty()));
+                updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), updateDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
                 updateList.add(updateDTO);
             }
         }

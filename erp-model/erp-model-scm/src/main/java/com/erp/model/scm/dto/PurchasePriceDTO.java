@@ -599,7 +599,7 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 价税合计
          */
-        private BigDecimal amount;
+        private String amount;
         /**
          * 币种
          */

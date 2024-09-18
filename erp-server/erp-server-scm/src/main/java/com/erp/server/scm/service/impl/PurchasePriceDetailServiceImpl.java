@@ -733,18 +733,18 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
 
     @Override
-    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
         //skuId
-        List<String> skuIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
         //供应商Id
-        List<String> supplierIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSupplierId).distinct().collect(Collectors.toList());
+        List<String> supplierIdList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSupplierId).distinct().collect(Collectors.toList());
         //采购数量
-        List<Integer> purchaseQtyList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseQty).distinct().collect(Collectors.toList());
+        List<Integer> purchaseQtyList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseQty).distinct().collect(Collectors.toList());
         //采购组织Id
-        List<String> purchaseOrgIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
+        List<String> purchaseOrgIdList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
 
 
         PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
@@ -760,7 +760,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
 
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> resultList = new ArrayList<>();
-        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO : list.getList()) {
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO : list) {
             PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
             if (CollectionUtils.isNotEmpty(viewList)) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(searchDTO.getSkuId())

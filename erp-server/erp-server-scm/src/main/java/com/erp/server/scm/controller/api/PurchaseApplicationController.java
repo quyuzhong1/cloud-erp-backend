@@ -380,16 +380,6 @@ public class PurchaseApplicationController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-//    /**
-//     * 下推采购订单-批量获取列表采购单价
-//     * @param dto
-//     * @return
-//     */
-//    @PostMapping("/batchGetPurchasePrice")
-//    public ApiResult<PurchaseApplicationDTO.PurchasePriceDTO> batchGetPurchasePrice(@RequestBody @Validated PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
-//        return purchaseApplicationService.batchGetPurchasePrice(dto);
-//    }
-
     /**
      * 取消流程
      * @author Will

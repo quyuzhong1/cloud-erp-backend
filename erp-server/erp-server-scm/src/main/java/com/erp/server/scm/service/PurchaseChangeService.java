@@ -149,11 +149,4 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
     List<PurchaseChangeEntity> listByPoIds(List<String> ids);
 
     PagingVO<PurchaseChangeExportExcelDTO> exportPurchaseChange(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto);
-
-    /**
-     * 批量获取列表采购单价
-     * @param dto
-     * @return
-     */
-    ApiResult<PurchaseChangeDTO.PurchasePriceDTO> batchGetPurchasePrice(PurchaseChangeDTO.UpdateDTO dto);
 }

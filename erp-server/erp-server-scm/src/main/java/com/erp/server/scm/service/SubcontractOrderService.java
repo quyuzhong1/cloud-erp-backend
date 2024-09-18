@@ -243,18 +243,4 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return List<ListSelectDTO>
      */
     List<SubcontractOrderDTO.ListSelectDTO> listSubcontractOrder();
-
-    /**
-     * 新增编辑-批量获取采购单价
-     * @param dto
-     */
-
-    ApiResult<SubcontractOrderDTO.PurchasePriceDTO> batchGetPurchasePrice(SubcontractOrderDTO.UpdateDTO dto);
-
-    /**
-     * 委外订单下推采购订单-批量获取采购单价
-     * @param list
-     * @return
-     */
-    ApiResult<SubcontractOrderDTO.SubcontractPurchasePriceDTO> batchGetPoPurchasePrice(ValidList<SubcontractOrderDTO.GeneratePoDTO> list);
 }

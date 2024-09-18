@@ -192,13 +192,6 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
     PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
 
     /**
-     * 采购订单下推-批量获取列表采购单价
-     * @param dto
-     * @return
-     */
-    ApiResult<PurchaseApplicationDTO.PurchasePriceDTO> batchGetPurchasePrice(PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto);
-
-    /**
      * 委外订单下推-批量获取列表采购单价
      * @param list
      * @return
