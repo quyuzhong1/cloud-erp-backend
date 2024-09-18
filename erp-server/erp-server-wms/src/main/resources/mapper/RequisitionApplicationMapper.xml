@@ -286,8 +286,9 @@
                          wc.packing_task_id as taskId,
                          wc.box_no as boxNo,
                          (select string_agg(wcd.sku_no|| '*' || wcd.pack_qty, ';') from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as packingSku,
-                         (select string_agg(ptd.fn_sku|| '*' || wcd.pack_qty, ';') from wms_carton_detail wcd
-            inner join packing_task_detail ptd on ptd.sku_id = wcd.sku_id and ptd.main_id = wc.packing_task_id where wcd.is_deleted = false and wcd.main_id = wc.id and ptd.is_deleted = false
+                         (select string_agg(wcd.fn_sku|| '*' || wcd.pack_qty, ';')
+            from wms_carton_detail wcd
+            where wcd.is_deleted = false and wcd.main_id = wc.id
                          ) as packingFnSku
             FROM wms_carton wc
             WHERE wc.is_deleted = FALSE and wc.id in
