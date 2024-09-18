@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -67,12 +66,10 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
         //编辑新品
         updateDTO.getNewDetail().setIsCfgSame(isCfgSame).setType(CfgRuleStockingRatioTypeEnum.NEW.getCode());
-        if (isCfgSame) {
-            updateDTO.getNewDetail().getDynamicSalesQtyList().forEach(obj -> obj.setId(null));
-            updateDTO.getNewDetail().getFixedSalesQtyList().forEach(obj -> obj.setId(null));
-            updateDTO.getNewDetail().getSalesDenoisingList().forEach(obj -> obj.setId(null));
-            updateDTO.getNewDetail().getDefaultSalesQtyDTO().setId(null);
-        }
+        updateDTO.getNewDetail().getDynamicSalesQtyList().forEach(obj -> obj.setId(null));
+        updateDTO.getNewDetail().getFixedSalesQtyList().forEach(obj -> obj.setId(null));
+        updateDTO.getNewDetail().getSalesDenoisingList().forEach(obj -> obj.setId(null));
+        updateDTO.getNewDetail().getDefaultSalesQtyDTO().setId(null);
         this.update(updateDTO.getNewDetail());
         return Boolean.TRUE;
     }
