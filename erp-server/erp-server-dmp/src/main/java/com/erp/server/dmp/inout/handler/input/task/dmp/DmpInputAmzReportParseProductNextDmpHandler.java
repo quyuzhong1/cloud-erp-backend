@@ -1,22 +1,13 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.anno.ParamData;
-import com.common.core.entity.BaseEntity;
-import com.common.core.enums.PannoEnum;
-import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * 亚马逊Listing下一步字段映射转换

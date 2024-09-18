@@ -27,7 +27,7 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
-        //  TODO PlatformProductDTO
+        //  PlatformProductDTO
         Map<String , DmpProductInfoEntity> dmpProductInfoEntityMap = new HashMap<>();
         Map<String, List<DmpSkuInfoEntity>> dmpSkuInfoEntityMap = new HashMap<>();
         for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
@@ -117,7 +117,14 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
         }
         product.setShopId(dmpProductInfoEntity.getNextLevelId());
         // 包装信息
-        String packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", dmpSkuInfoEntity.getPackageLength(), dmpSkuInfoEntity.getPackageWidth(), dmpSkuInfoEntity.getPackageHeight(), dmpSkuInfoEntity.getGrossWeight());
+        String packing = "";
+        if (null != dmpSkuInfoEntity.getPackageLength()
+                || null != dmpSkuInfoEntity.getPackageWidth()
+                || null != dmpSkuInfoEntity.getPackageHeight()
+                || null != dmpSkuInfoEntity.getGrossWeight()
+        ) {
+            packing = StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", dmpSkuInfoEntity.getPackageLength(), dmpSkuInfoEntity.getPackageWidth(), dmpSkuInfoEntity.getPackageHeight(), dmpSkuInfoEntity.getGrossWeight());
+        }
         product.setProductPacking(packing);
         product.setPlatformUpdateTime(dmpSkuInfoEntity.getPlatformUpdateTime());
         product.setPlatformSkuId(dmpSkuInfoEntity.getSkuId());
