@@ -290,4 +290,29 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          */
         private List<String> ids;
     }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WdtInsufficientInventoryDTO {
+        /**
+         * 仓库
+         */
+        private String warehouse;
+
+        /**
+         * 仓位
+         */
+        private String position;
+
+        /**
+         * sku
+         */
+        private String sku;
+
+        /**
+         * 数量
+         */
+        private Integer num = 0;
+    }
 }
