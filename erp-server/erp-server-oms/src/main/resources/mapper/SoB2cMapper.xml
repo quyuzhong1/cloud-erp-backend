@@ -35,7 +35,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        DISTINCT sb2c.id,
+        sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code as platformCode,
@@ -186,7 +186,6 @@
         select
         <include refid="Base_Column_List"></include>
         from so_b2c sb2c
-        inner join so_b2c_detail sb2cd ON sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
