@@ -516,12 +516,12 @@ public class SoB2cDeliveryController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/handleErrorData")
-    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated SoB2cDeliveryDTO.HandleErrorDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO receiverResult;
             try {
-                receiverResult = soB2cDeliveryService.handleErrorData(id);
+                receiverResult = soB2cDeliveryService.handleErrorData(id,dto.getIsAddQty());
             } catch (Exception e) {
                 log.error("处理数据", e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
