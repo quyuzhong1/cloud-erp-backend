@@ -413,8 +413,8 @@ public class SubcontractReturnController extends BaseController {
 
     /**
      * 添加产品
-     * @author will
-     * @date: 2024-01-08
+     * @author zdy
+     * @date: 2024-09-18
      * @param dto
      * @return ApiResult<PagingVO<SubcontractIssueDTO.SubcontractDetailListDTO>>
      */

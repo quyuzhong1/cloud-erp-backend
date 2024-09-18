@@ -25,4 +25,11 @@ public interface SubcontractReturnDetailMapper extends BaseMapper<SubcontractRet
      * @return
      */
     List<SubcontractReturnDetailEntity> listBySubcontractOrderDetailIdList(@Param("subcontractOrderDetailIdList")List<String> subcontractOrderDetailIdList);
+
+    /**
+     * 根据来源明细id集合
+     * @param sourceDetailIdList
+     * @return
+     */
+    List<SubcontractReturnDetailEntity> listBySourceDetailIdList(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
 }

@@ -1028,6 +1028,7 @@ public enum ApiError implements Serializable {
     UPLOAD_SUCCESS_NOT_UPLOAD(92126,"上传成功状态不能重复上传"),
     RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
     ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
+    ERROR_SUBCONTRACT_RETURN_SUPPLIER_DIFF(92125,"委外退料单明细数据对应供应商【{}】必须一致"),
     ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
     ERROR_UPLOAD_SUCCES_CAN_INSTOCK_FORCAST(92132,"仅支持【订单预报(批次)】上传成功时且入库预报为【待上传/上传失败】，可操作【入库预报】"),
     ERROR_TRANSFER_DECLARE_NOT_EXIST(92133,"中转报关单记录不存在"),
@@ -1145,6 +1146,10 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 
     ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
+
+    ERROR_SUBCONTRACT_RETURN_NOT_EXIST(92241,"委外退料单不存在"),
+    ERROR_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST(92242,"委外退料单明细不存在"),
+    ERROR_SUBCONTRACT_RETURN_QTY_EXCEED(92243,"委外退料单SKU【{}】数量不能大于【{}】"),
 
 
     /**

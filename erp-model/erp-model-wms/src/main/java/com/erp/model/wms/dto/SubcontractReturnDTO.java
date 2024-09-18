@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -317,7 +317,12 @@ public class SubcontractReturnDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 委外退料明细不能为空
+         */
+        @NotEmpty(message = "委外退料明细不能为空")
+        @Valid
+        private List<SubcontractReturnDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -333,6 +338,12 @@ public class SubcontractReturnDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 委外发料明细不能为空
+         */
+        @NotEmpty(message = "委外发料明细不能为空")
+        @Valid
+        private List<SubcontractReturnDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
@@ -349,6 +360,7 @@ public class SubcontractReturnDTO implements Serializable {
         /**
         * 退料日期
         */
+        @NotNull(message = "退料日期不能为空")
         private LocalDateTime billDate;
 
         /**
@@ -387,8 +399,8 @@ public class SubcontractReturnDTO implements Serializable {
         /**
         * 供应商id
         */
-        @NotBlank(message = "供应商id不能为空")
-        @Size(max = 19,message = "供应商id最大长度不能超过19位")
+//        @NotBlank(message = "供应商id不能为空")
+//        @Size(max = 19,message = "供应商id最大长度不能超过19位")
         private String supplierId;
 
         /**
@@ -431,6 +443,14 @@ public class SubcontractReturnDTO implements Serializable {
          * 父级来源明细id
          */
         private String parentSourceDetailId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 委外明细id
+         */
+        private String subcontractOrderDetailId;
 
         /**
          * 委外订单id

@@ -193,6 +193,14 @@ public class PurchaseChangeDTO implements Serializable {
          */
         @NotBlank(message = "采购订单id不能为空")
         private String purchaseOrderId;
+        /**
+         * 单据类型
+         */
+        private String type;
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
 
         /**
          * 变更日期

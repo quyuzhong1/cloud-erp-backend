@@ -158,9 +158,14 @@ public class SubcontractReturnDetailDTO implements Serializable {
         /**
         * 父级skuNo
         */
-        @NotBlank(message = "父级skuNo不能为空")
-        @Size(max = 64,message = "父级skuNo最大长度不能超过64位")
+//        @NotBlank(message = "父级skuNo不能为空")
+//        @Size(max = 64,message = "父级skuNo最大长度不能超过64位")
         private String parentSkuNo;
+
+        /**
+         * 父级产品名称
+         */
+        private String parentProductName;
 
         /**
         * skuId
@@ -179,15 +184,19 @@ public class SubcontractReturnDetailDTO implements Serializable {
         /**
         * 用量
         */
-        @NotNull(message = "用量不能为空")
+//        @NotNull(message = "用量不能为空")
         private Integer quantity;
 
         /**
         * 父sku用料数量
         */
-        @NotNull(message = "父sku用料数量不能为空")
+//        @NotNull(message = "父sku用料数量不能为空")
         private Integer parentSkuUseQty;
 
+        /**
+         * 已发料数量
+         */
+        private Integer hasIssueQty;
         /**
         * 退料数量
         */
@@ -204,22 +213,22 @@ public class SubcontractReturnDetailDTO implements Serializable {
         /**
         * 仓库名称
         */
-        @NotBlank(message = "仓库名称不能为空")
-        @Size(max = 64,message = "仓库名称最大长度不能超过64位")
+//        @NotBlank(message = "仓库名称不能为空")
+//        @Size(max = 64,message = "仓库名称最大长度不能超过64位")
         private String warehouseName;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
+//        @NotBlank(message = "备注不能为空")
+//        @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
         /**
         * 来源明细id
         */
-        @NotBlank(message = "来源明细id不能为空")
-        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
+//        @NotBlank(message = "来源明细id不能为空")
+//        @Size(max = 19,message = "来源明细id最大长度不能超过19位")
         private String sourceDetailId;
 
         /**
@@ -232,15 +241,15 @@ public class SubcontractReturnDetailDTO implements Serializable {
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
+//        @NotBlank(message = "主表id不能为空")
+//        @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
         * 对应金蝶详情id
         */
-        @NotBlank(message = "对应金蝶详情id不能为空")
-        @Size(max = 30,message = "对应金蝶详情id最大长度不能超过30位")
+//        @NotBlank(message = "对应金蝶详情id不能为空")
+//        @Size(max = 30,message = "对应金蝶详情id最大长度不能超过30位")
         private String kingdeeDetailId;
 
         /**
@@ -330,6 +339,14 @@ public class SubcontractReturnDetailDTO implements Serializable {
          * 已发料数量
          */
         private Integer hasIssueQty;
+        /**
+         * 已退料数量
+         */
+        private Integer hasReturnQty;
+        /**
+         * 最大可退数量
+         */
+        private Integer maxReturnQty;
 
         /**
          * 发料数量

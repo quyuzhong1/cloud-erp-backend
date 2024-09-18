@@ -86,6 +86,7 @@ public enum BusinessNoTypeEnum {
     CODE_JHC(65, "JHC","拣货车管理",BusinessNoConstant.JHC),
     CODE_JHBC(66, "JHBC","拣货波次",BusinessNoConstant.JHBC),
 
+    CODE_TLD(67, "tld","委外发退料单",BusinessNoConstant.TLD),
     ;
 
 

@@ -103,6 +103,7 @@ public enum ModuleTypeEnum {
     PICKING_LISTS("91", "拣货单"),
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
+    SUBCONTRACT_RETURN("94", "委外退料单"),
     ;
 
 

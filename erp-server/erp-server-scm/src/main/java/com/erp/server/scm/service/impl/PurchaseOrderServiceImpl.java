@@ -1125,6 +1125,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
+        viewDTO.setType(purchaseOrderEntity.getType());
+        viewDTO.setTypeName(PurchaseOrderTypeEnum.getNameByCode(purchaseOrderEntity.getType()));
         viewDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
         viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
         viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());

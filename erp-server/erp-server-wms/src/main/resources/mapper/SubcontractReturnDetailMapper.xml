@@ -60,6 +60,20 @@
             </if>
         </where>
     </select>
-
-
+    <!-- 根据来源明细id查询 -->
+    <select id="listBySourceDetailIdList" resultType="com.erp.model.wms.entity.SubcontractReturnDetailEntity">
+        select
+        <include refid="Base_Column_List" />
+        from subcontract_return_detail srd
+        inner join subcontract_issue sr on sr.is_deleted = false and sr.id = srd.main_id
+        <where>
+            srd.is_deleted = false and sr.invalid_status = false
+            <if test="sourceDetailIdList != null and sourceDetailIdList.size > 0">
+                and srd.source_detail_id in
+                <foreach collection="sourceDetailIdList" open="(" close=")" separator="," item="item">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 </mapper>
