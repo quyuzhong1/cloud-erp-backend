@@ -58,6 +58,9 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
     @Autowired
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
 
+    @Autowired
+    private CfgRuleWarehouseService cfgRuleWarehouseService;
+
     /**
     * 修改
     */
@@ -169,23 +172,34 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
     @Override
     public CfgRuleWarehouseDTO.WarehouseShopDTO checkShop(CfgRuleWarehouseDTO.UpdateDTO dto) {
         CfgRuleWarehouseDTO.WarehouseShopDTO resultDTO = new CfgRuleWarehouseDTO.WarehouseShopDTO();
+        List<CfgPlatformMappingEntity> cfgPlatformMappingList = cfgPlatformMappingService.listByPlatformType(PlatformMappingTypeEnum.getByPlatformType(dto.getPlatformType()));
+        if (CollectionUtils.isEmpty(cfgPlatformMappingList)) {
+            return resultDTO;
+        }
+        List<String> platformList = cfgPlatformMappingList.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
         //所有店铺
-        List<ShopInfoEntity> list = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getDisabled,Boolean.FALSE).list();
+        List<ShopInfoEntity> list = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getDisabled,Boolean.FALSE).in(ShopInfoEntity::getDictPlatform,platformList).list();
         if (CollectionUtils.isEmpty(list)) {
             return new CfgRuleWarehouseDTO.WarehouseShopDTO();
         }
 
         if (!dto.getIsEnableVirtual()) {
-            List<String> shopNameList = handleCheckShop(dto.getCfgLocalVirtualWarehouseList(), list);
-            resultDTO.setShopNameList(shopNameList);
+            List<String> shopNameList = handleCheckShop(dto.getCfgLocalWarehouseList(), list);
+            if (CollectionUtils.isNotEmpty(shopNameList)) {
+                resultDTO.setShopNameList(shopNameList);
+            }
         }
         if (dto.getIsEnableVirtual()) {
-            List<String> virtualShopNameList = handleCheckShop(dto.getCfgLocalWarehouseList(),list);
-            resultDTO.setVirtualShopNameList(virtualShopNameList);
+            List<String> virtualShopNameList = handleCheckShop(dto.getCfgLocalVirtualWarehouseList(),list);
+            if (CollectionUtils.isNotEmpty(virtualShopNameList)) {
+                resultDTO.setVirtualShopNameList(virtualShopNameList);
+            }
         }
         if (dto.getIsEnableOverseas()) {
             List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(),list);
-            resultDTO.setOverseasShopNameList(overseasShopNameList);
+            if (CollectionUtils.isNotEmpty(overseasShopNameList)) {
+                resultDTO.setOverseasShopNameList(overseasShopNameList);
+            }
         }
         return resultDTO;
     }
@@ -213,7 +227,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                 shopIdList.addAll(platformShopIdList);
             }
         }
-        List<String> shopNameList = shopList.stream().filter(obj -> shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
+        List<String> shopNameList = shopList.stream().filter(obj -> !shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
         return  shopNameList;
     }
 
