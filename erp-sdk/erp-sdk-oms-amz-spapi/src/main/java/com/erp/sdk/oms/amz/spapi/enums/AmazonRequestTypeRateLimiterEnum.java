@@ -35,6 +35,8 @@ public enum AmazonRequestTypeRateLimiterEnum {
     FBA_INBOUND_PLAN_DETAIL("2", "6","fba_inbound_plan_detail","FBA入库计划信息"),
     FBA_INBOUND_PLAN_BOXES("2", "6","fba_inbound_plan_boxes","FBA入库计划装箱信息"),
     FBA_INBOUND_PLAN_SHIPMENT("2", "6","fba_inbound_plan_shipment","FBA入库计划货件信息"),
+    // FBA库存
+    FBA_INVENTORY("90", "150","fba_inventory","FBA库存"),
 
     // 报告相关
     REPORTS("0.0222", "10","reports","报告列表"),
