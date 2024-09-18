@@ -67,6 +67,9 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (SysUserInfoEntity entity, String operate, Map<String, Object> resultMap) {
+    	if(resultMap == null) {
+    		return null;
+    	}
     	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
         		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SYS_USER_INFO.getCode())
