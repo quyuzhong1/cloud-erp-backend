@@ -354,7 +354,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             }
             //已送货数量
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(updateDTO.getSourceDetailId()))
+                deliveryQty = deliveryOrderDetailList.stream().filter(e -> !StrUtil.equals(updateDTO.getDetailId(),e.getDetailId()) && e.getSourceDetailId().equals(updateDTO.getSourceDetailId()))
                         .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //收发差异
                 //发货数量 - 已审核收货数量
