@@ -22,7 +22,7 @@ import java.util.List;
 @Mapper
 public interface ReplenishmentSuggestionMapper extends BaseMapper<ReplenishmentSuggestionEntity> {
 
-    Page<ReplenishmentSuggestionVO.PagingView> paging(Page<Object> objectPage, ReplenishmentSuggestionDTO.PagingParamDTO params);
+    Page<ReplenishmentSuggestionVO.PagingView> paging(Page<Object> objectPage,@Param("params") ReplenishmentSuggestionDTO.PagingParamDTO params,@Param("userId") String userId);
 
     ReplenishmentSuggestionVO.View view(@Param("detailId") String detailId);
     /**
