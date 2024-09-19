@@ -139,5 +139,9 @@ public class RocketMqNewConsumerGroup {
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_group";
 
+    /**
+     * 新中台平台入库
+     */
+    public static final String DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_so_out_stock_to_wms_group";
 
 }

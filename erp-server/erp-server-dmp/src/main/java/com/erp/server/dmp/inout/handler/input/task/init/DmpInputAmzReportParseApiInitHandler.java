@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -50,20 +51,22 @@ public class DmpInputAmzReportParseApiInitHandler extends DmpInputAmzCommonInitH
             log.warn("亚马逊报告主任务taskId={},结果为空无需处理", dmpInputTaskEntity.getParentTaskId());
             return Collections.emptyList();
         }
-        // 报告文档信息
-        Map<String, Object> reportDocumentMongoObjectMap = findMongoData.get(0);
-        // 报告文档ID
-        String reportDocumentId = checkAndGetMongoValue(reportDocumentMongoObjectMap, "reportDocumentId");
-
-        // 查询mongo报告信息
-        List<ParamData> subParamDataList = new ArrayList<>();
-        subParamDataList.add(new ParamData("reportDocumentId", "reportDocumentId", PannoEnum.EQ, reportDocumentId));
-        List<Map<String, Object>> reportFindMongoData = mongoService.findMongoData(subParamDataList, "amazon_report_data");
-        if(CollectionUtils.isEmpty(reportFindMongoData)) {
-            ServiceException.runError("未找到mongo报告信息:taskId=" + dmpInputTaskEntity.getParentTaskId());
-        }
         // 报告信息
-        Map<String, Object> reportMongoObjectMap = reportFindMongoData.get(0);
+        Map<String, Object> reportMongoObjectMap = findMongoData.get(0);
+        // 报告文档信息
+//        Map<String, Object> reportDocumentMongoObjectMap = findMongoData.get(0);
+        String reportId = checkAndGetMongoValue(reportMongoObjectMap, "reportId");
+        List<ParamData> paramDataList = new ArrayList<>();
+        paramDataList.add(new ParamData("reportId", "reportId", PannoEnum.EQ, reportId));
+        List<Map<String, Object>> documentMongoDataList = mongoService.findMongoData(paramDataList, "amazon_report_document_data");
+        if (CollUtil.isEmpty(documentMongoDataList)) {
+            ServiceException.runError("未找到主单数据, taskId=" + dmpInputTaskEntity.getId());
+        }
+        Map<String, Object> reportDocumentMongoObjectMap = documentMongoDataList.get(0);
+
+        // 报告文档ID
+//        String reportDocumentId = checkAndGetMongoValue(reportDocumentMongoObjectMap, "reportDocumentId");
+
         // 报告类型
         String reportType = checkAndGetMongoValue(reportMongoObjectMap, "reportType");
         // 店铺ID

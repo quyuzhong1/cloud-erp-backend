@@ -139,5 +139,9 @@ public class RocketMqNewTopic {
      */
     public static final String DMP_FBA_SHIPMENT_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_topic";
 
+    /**
+     * 新中台平台销售出库单
+     */
+    public static final String DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_so_out_stock_to_wms_topic";
 
 }

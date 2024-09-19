@@ -8,6 +8,7 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
@@ -50,6 +51,16 @@ public class DmpInputAmzReportDownloadApiInitHandler extends DmpInputAmzCommonIn
             return Collections.emptyList();
         }
         Map<String, Object> mongoObjectMap = findMongoData.get(0);
+        Object statusObj = mongoObjectMap.get("processingStatus");
+        if (null == statusObj){
+            log.error("报告状态不存在:{}", mongoObjectMap);
+            return Collections.emptyList();
+        }
+        if (!Report.ProcessingStatusEnum.DONE.getValue().equalsIgnoreCase(statusObj.toString())){
+            log.warn("报告状态非完成跳过下载:{}", mongoObjectMap);
+            return Collections.emptyList();
+        }
+
         // 请求获取亚马逊报告文档信息
         ReportDocument reportDocument = queryReportDocument(mongoObjectMap);
 
