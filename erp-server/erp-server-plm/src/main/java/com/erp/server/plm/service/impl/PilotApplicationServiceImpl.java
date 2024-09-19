@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.BetweenFormatter;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
@@ -338,8 +339,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
         dto.setCurApproveId(user.getUid());
         List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        int waitMeApproveCount = processTaskManagementList.size();
         //待我审核
-        int waitMeApproveCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE_ING.getCode(), null, user.getUid());
+//        int waitMeApproveCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE_ING.getCode(), null, user.getUid());
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_ME_APPROVE.getCode(), PilotApplicationTabEnum.WAIT_ME_APPROVE.getName(), waitMeApproveCount));
         //不通过
         int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null);

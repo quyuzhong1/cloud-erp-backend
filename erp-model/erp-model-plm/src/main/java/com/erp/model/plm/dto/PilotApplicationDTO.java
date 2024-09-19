@@ -71,9 +71,13 @@ public class PilotApplicationDTO implements Serializable {
          private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-            * sqlMap 默认key default
+         * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+         /**
+          * 主键id集合
+          */
+        private List<String> ids;
      }
     /**
     * 分页列表

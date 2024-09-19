@@ -98,7 +98,7 @@
                ptm.task_status  approveStatus,
                ptm.remark
         from process_management pm
-                 left join process_task_management ptm on pm.process_instance_id = ptm.process_instance_id and ptm.is_deleted = false
+                 left join process_task_management ptm on pm.process_instance_id = ptm.process_instance_id and ptm.is_deleted = false and ptm.approve_name = ptm.cur_approve_name
         where pm.business_id = #{businessId}
     </select>
     <select id="listProcessByBusinessKey" parameterType="com.erp.model.workflow.dto.ProcessManagementDTO$TaskKeyInfoDTO" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
