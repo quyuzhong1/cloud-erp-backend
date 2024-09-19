@@ -124,6 +124,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
     @Resource
     private SupplierService supplierService;
@@ -317,7 +319,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         skuDTO.setIds(skuIds);
         Map<String, SkuPurchaseDTO.PurchaseInfo> skuPurchaseMap = plmTaskFeign.getPurchaseInfoBySkuIds(skuDTO);
         //价目查询
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = new ValidList<>();
+        List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
         list.forEach(e -> {
             Integer purchaseQty = MathUtil.ZERO;
             //查询已采购数量
@@ -325,15 +327,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 purchaseQty = refList.stream().filter(obj -> e.getId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
             }
             Integer applyQty = Objects.nonNull(e.getApplyQty()) ? e.getApplyQty() : MathUtil.ZERO;
-            priceList.add(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO.builder()
+            priceList.add(PurchasePriceDTO.PriceDTO.builder()
                             .purchaseOrgId(e.getPurchaseOrgId())
-                            .purchaseQty(applyQty - purchaseQty)
+                            .qty(applyQty - purchaseQty)
                             .skuId(e.getSkuId())
-                            .skuNo(e.getSkuNo())
                             .supplierId(e.getSupplierId())
                     .build());
         });
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewDTOList = purchasePriceDetailService.batchGetTaxPrice(priceList);
+        List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
         for (PurchaseApplicationDetailEntity entity :list) {
             PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO dto = new PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO();
             BeanMapperUtils.copy(entity,dto);
@@ -372,7 +373,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             dto.setDetailRemark(entity.getRemark());
             int qty = entity.getApplyQty().intValue() - purchaseQty.intValue();
             //采购单价赋值
-            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj ->
+            PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                             obj.getSkuId().equals(entity.getSkuId())
                             && obj.getSupplierId().equals(entity.getSupplierId())
                             && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId()))
@@ -717,6 +718,40 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isNotEmpty(supplierIdList)) {
             supplierList = supplierService.listByIds(supplierIdList);
         }
+        //价目查询
+        List<PurchasePriceDTO.PriceDTO> priceList = new ValidList<>();
+        list.forEach(e -> {
+            //产品信息
+            String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(e.getSkuId())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+            priceList.add(PurchasePriceDTO.PriceDTO.builder()
+                    .purchaseOrgId(e.getPurchaseOrgId())
+                    .qty(e.getQty())
+                    .skuId(e.getSkuId())
+                    .supplierId(supplierId)
+                    .build());
+            if (CollectionUtils.isNotEmpty(e.getChildList())){
+
+            }
+        });
+        List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
+        List<PurchasePriceDTO.PriceDTO> childPriceList = new ValidList<>();
+        list.forEach(e -> {
+            if (CollectionUtils.isNotEmpty(e.getChildList())){
+                e.getChildList().forEach(f ->{
+                    //产品信息
+                    String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(e.getSkuId())).findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+                    childPriceList.add(PurchasePriceDTO.PriceDTO.builder()
+                            .purchaseOrgId(e.getPurchaseOrgId())
+                            .qty(f.getQty())
+                            .skuId(f.getSkuId())
+                            .supplierId(supplierId)
+                            .build());
+                });
+            }
+        });
+        List<PurchasePriceDTO.PriceDTO> childViewDTOList = purchasePriceService.batchGetPurchasePrice(childPriceList);
         Integer index = MathUtil.ONE;
         List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> resultList = new ArrayList<>();
         for (PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO viewDTO : list) {
@@ -752,8 +787,17 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             viewDTO.setDeliveryQty(viewDTO.getToPushdownQty());
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
             //报价信息
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewDTO.getQty(), viewDTO.getSkuId(), viewDTO.getSkuNo(), viewDTO.getSupplierId(),viewDTO.getPurchaseOrgId());
-            getTaxPrice(priceDTO,viewDTO,null);
+            PurchasePriceDTO.PriceDTO priceDTO = viewDTOList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())
+                            && obj.getSupplierId().equals(supplierId)
+                            && StrUtil.equals(obj.getPurchaseOrgId(),viewDTO.getPurchaseOrgId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(priceDTO)) {
+                viewDTO.setPrice(priceDTO.getTaxPrice());
+                viewDTO.setTaxRate(priceDTO.getTaxRate());
+                viewDTO.setCurrency(priceDTO.getCurrency());
+                viewDTO.setCurrencySymbol(priceDTO.getCurrencySymbol());
+                viewDTO.setAmount(MathUtil.multiply(viewDTO.getPrice(),viewDTO.getQty()));
+            }
             viewDTO.setIndex(index);
             index++;
             //填充BOM子件信息
@@ -784,8 +828,17 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setCurrencySymbol(null);
                 viewGenerateDTO.setAmount(null);
                 //报价信息
-                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO =  new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(viewGenerateDTO.getQty(), viewGenerateDTO.getSkuId(), viewGenerateDTO.getSkuNo(), viewGenerateDTO.getSupplierId(),viewGenerateDTO.getPurchaseOrgId());
-                getTaxPrice(childPriceDTO,null,viewGenerateDTO);
+                PurchasePriceDTO.PriceDTO priceDTO2 = childViewDTOList.stream().filter(obj -> Objects.nonNull(obj) && obj.getSkuId().equals(childrenSkuDTO.getSkuId())
+                                && obj.getSupplierId().equals(supplierId)
+                                && StrUtil.equals(obj.getPurchaseOrgId(),viewDTO.getPurchaseOrgId()))
+                        .findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(priceDTO)) {
+                    viewGenerateDTO.setPrice(priceDTO2.getTaxPrice());
+                    viewGenerateDTO.setTaxRate(priceDTO2.getTaxRate());
+                    viewGenerateDTO.setCurrency(priceDTO2.getCurrency());
+                    viewGenerateDTO.setCurrencySymbol(priceDTO2.getCurrencySymbol());
+                    viewGenerateDTO.setAmount(MathUtil.multiply(viewGenerateDTO.getPrice(),viewGenerateDTO.getQty()));
+                }
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);
@@ -835,7 +888,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (ObjectUtils.isEmpty(findUserDTO)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
-
         Map<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getPurchaseOrgId()).concat(obj.getReceiveOrgId())));
         for (Map.Entry<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> entry :  map.entrySet()) {
             List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> value = entry.getValue();

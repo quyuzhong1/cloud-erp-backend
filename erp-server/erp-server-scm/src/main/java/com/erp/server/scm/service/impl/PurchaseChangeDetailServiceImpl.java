@@ -11,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
@@ -18,8 +19,10 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -34,9 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +56,8 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
     @Resource
     private PurchaseChangeService purchaseChangeService;
@@ -212,7 +215,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
             throw new ServiceException(ApiError.ERROR_98026);
         }
         List<String> podIds = list.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
-
+        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(purchaseOrderDetailList.get(0).getPurchaseOrderId());
         //收货信息
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
 
@@ -221,8 +224,33 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
 
         //退货信息
         List<PoReturnDetailEntity> purchaseReturnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+        //退货单记录
+        List<PoReturnDetailEntity> poReturnDetailEntityList = null;
+        if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(purchaseOrderEntity.getType())){
 
+            String sourceId = purchaseOrderEntity.getSourceId();
+            List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(Collections.singletonList(sourceId));
+            if (CollectionUtils.isEmpty(poReturnEntityList)){
+                throw new ServiceException(StrUtil.format("采购退货单【{}】记录不存在", purchaseOrderEntity.getSourceCode()));
+            }
+            //根据主键唯一 只会存在一个退货单记录
+            PoReturnEntity poReturnEntity = poReturnEntityList.get(0);
+            poReturnDetailEntityList = wmsTaskFeign.listPurchaseReturnOrderDetailByMainIds(Collections.singletonList(poReturnEntity.getId()));
+            if (CollectionUtils.isEmpty(poReturnDetailEntityList)){
+                throw new ServiceException(StrUtil.format("采购退货单【{}】明细记录不存在", poReturnEntity.getCode()));
+            }
+        }
+        //采购价目查询
+        List<PurchasePriceDTO.PriceDTO> priceDTOS = new ArrayList<>();
+        list.forEach(e ->{
+            PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(e.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if (Objects.nonNull(detailEntity) && Objects.nonNull(detailEntity.getIsGift()) && !detailEntity.getIsGift()){
+                priceDTOS.add(new PurchasePriceDTO.PriceDTO(e.getQty(),e.getSkuId(),
+                        purchaseChangeEntity.getSupplierId(),purchaseChangeEntity.getPurchaseOrgId()));
+            }
 
+        });
+        List<PurchasePriceDTO.PriceDTO> priceDTOS1 = purchasePriceService.batchGetPurchasePrice(priceDTOS);
         for (PurchaseChangeDetailEntity purchaseChangeDetailEntity : list) {
             //质检退货数量
             Integer returnQty = MathUtil.ZERO;
@@ -292,18 +320,41 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                 purchaseChangeDetailEntity.setTaxRate(BigDecimal.ZERO);
                 continue;
             }
-
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(purchaseChangeDetailEntity.getQty(),purchaseChangeDetailEntity.getSkuId(),
-                    purchaseChangeDetailEntity.getSkuNo(),purchaseChangeEntity.getSupplierId(),purchaseChangeEntity.getPurchaseOrgId());
-            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(dto);
-            PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
-            //单价
-            BigDecimal taxPrice = viewDTO.getTaxPrice();
-            if (MathUtil.compareTo(taxPrice,purchaseChangeDetailEntity.getPrice()) != MathUtil.ZERO) {
-                String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
-                throw new ServiceException(new ApiResult(1,error));
+            PurchasePriceDTO.PriceDTO priceDTO = priceDTOS1.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())
+                            && obj.getSupplierId().equals(purchaseChangeEntity.getSupplierId())
+                            && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrderEntity.getPurchaseOrgId()))
+                    .findFirst().orElse(null);
+            //是否是 补货采购订单 下推的采购订单
+            if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(purchaseOrderEntity.getType())){
+                PoReturnDetailEntity poReturnDetailEntity = poReturnDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())
+                        && StrUtil.isNotBlank(purchaseChangeDetailEntity.getSkuId()) && Objects.equals(e.getSkuId(), purchaseChangeDetailEntity.getSkuId())).findFirst().orElse(null);
+                if (Objects.nonNull(poReturnDetailEntity)){
+                    BigDecimal returnPrice = poReturnDetailEntity.getReturnPrice();
+                    if (MathUtil.compareTo(returnPrice,purchaseChangeDetailEntity.getPrice()) != MathUtil.ZERO) {
+                        String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
+                        throw new ServiceException(new ApiResult(1,error));
+                    }
+                    if (Objects.isNull(priceDTO)){
+                        String error = String.format("SKU【%s】,数量【%s】报价单价未找到", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
+                        throw new ServiceException(new ApiResult(1,error));
+                    }
+                    BigDecimal taxRate = Objects.nonNull(priceDTO.getTaxRate()) ? priceDTO.getTaxRate() : BigDecimal.ZERO;
+                    purchaseChangeDetailEntity.setTaxRate(MathUtil.divide(taxRate,MathUtil.BigDecimal_100));
+                }
+            }else {
+                if (Objects.isNull(priceDTO)){
+                    String error = String.format("SKU【%s】,数量【%s】报价单价未找到", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
+                    throw new ServiceException(new ApiResult(1,error));
+                }
+                //单价
+                BigDecimal taxPrice = Objects.nonNull(priceDTO.getTaxPrice()) ? priceDTO.getTaxPrice() : BigDecimal.ZERO;
+                if (MathUtil.compareTo(taxPrice,purchaseChangeDetailEntity.getPrice()) != MathUtil.ZERO) {
+                    String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
+                    throw new ServiceException(new ApiResult(1,error));
+                }
+                purchaseChangeDetailEntity.setTaxRate(MathUtil.divide(priceDTO.getTaxRate(),MathUtil.BigDecimal_100));
             }
-            purchaseChangeDetailEntity.setTaxRate(MathUtil.divide(viewDTO.getTaxRate(),MathUtil.BigDecimal_100));
+
         }
     }
 }

@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -567,7 +568,9 @@ public class PurchasePriceDTO implements Serializable {
 
 
     @Data
+    @Builder
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class PriceDTO {
         /**
          * 采购组织
@@ -608,5 +611,12 @@ public class PurchasePriceDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
+
+        public PriceDTO(Integer purchaseQty, String skuId, String supplierId, String purchaseOrgId) {
+            this.qty = purchaseQty;
+            this.skuId = skuId;
+            this.supplierId = supplierId;
+            this.purchaseOrgId = purchaseOrgId;
+        }
     }
 }

@@ -28,6 +28,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ConfirmTypeEnum;
@@ -100,6 +101,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
     @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
@@ -340,8 +343,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             throw new ServiceException(ApiError.ERROR_98036);
         }
         //验证录入的SKU明细报价信息是否正确
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = details.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift()))
-                .map(obj -> new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(obj.getPurchaseQty(), obj.getSkuId(), obj.getSkuNo(), supplierEntity.getSupplierId(),entity.getPurchaseOrgId()))
+        List<PurchasePriceDTO.PriceDTO> priceList = details.stream().filter(obj -> !Boolean.TRUE.equals(obj.getIsGift()))
+                .map(obj -> new PurchasePriceDTO.PriceDTO(obj.getPurchaseQty(), obj.getSkuId(), supplierEntity.getSupplierId(),entity.getPurchaseOrgId()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(priceList)) {
             return;
@@ -374,13 +377,13 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             }
             //根据主键唯一 只会存在一个退货单记录
             PoReturnEntity poReturnEntity = poReturnEntityList.get(0);
-            poReturnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(Collections.singletonList(poReturnEntity.getId()));
+            poReturnDetailEntityList = wmsTaskFeign.listPurchaseReturnOrderDetailByMainIds(Collections.singletonList(poReturnEntity.getId()));
             if (CollectionUtils.isEmpty(poReturnDetailEntityList)){
                 throw new ServiceException(StrUtil.format("采购退货单【{}】明细记录不存在", poReturnEntity.getCode()));
             }
         }
 
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewDTOList = purchasePriceDetailService.batchGetTaxPrice(priceList);
+        List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
         for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
             if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType()) || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
                 //委外成品时，取委外订单中的含税单价
@@ -403,7 +406,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     continue;
                 }
                 //子件
-                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj ->
+                PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                         obj.getSkuId().equals(addDTO.getSkuId())
                         && obj.getSupplierId().equals(supplierEntity.getSupplierId())
                         && StrUtil.equals(obj.getPurchaseOrgId(),addDTO.getPurchaseOrderId())).findFirst().orElse(null);

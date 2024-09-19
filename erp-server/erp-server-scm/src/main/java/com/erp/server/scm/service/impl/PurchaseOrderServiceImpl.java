@@ -208,6 +208,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private DmpMqFeign dmpMqFeign;
     @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
+    @Resource
+    private PurchasePriceService purchasePriceService;
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -1008,20 +1010,56 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         BeanMapperUtils.copy(supplierEntity, supplierDTO);
         viewDTO.setSupplierDTO(supplierDTO);
         viewDTO.setSupplierId(supplierEntity.getSupplierId());
+        //退货单记录
+        List<PoReturnDetailEntity> poReturnDetailEntityList = null;
+        if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(purchaseOrderEntity.getType())){
 
+            String sourceId = purchaseOrderEntity.getSourceId();
+            List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(Collections.singletonList(sourceId));
+            if (CollectionUtils.isEmpty(poReturnEntityList)){
+                throw new ServiceException(StrUtil.format("采购退货单【{}】记录不存在", purchaseOrderEntity.getSourceCode()));
+            }
+            //根据主键唯一 只会存在一个退货单记录
+            PoReturnEntity poReturnEntity = poReturnEntityList.get(0);
+            poReturnDetailEntityList = wmsTaskFeign.listPurchaseReturnOrderDetailByMainIds(Collections.singletonList(poReturnEntity.getId()));
+            if (CollectionUtils.isEmpty(poReturnDetailEntityList)){
+                throw new ServiceException(StrUtil.format("采购退货单【{}】明细记录不存在", poReturnEntity.getCode()));
+            }
+        }
         List<PurchaseChangeDetailDTO.UpdateDTO> detailDTOList = new ArrayList<>();
         for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailList) {
             PurchaseChangeDetailDTO.UpdateDTO detailDTO = new PurchaseChangeDetailDTO.UpdateDTO();
-            detailDTO.setPurchaseOrderDetailId(detailEntity.getId());
-            detailDTO.setSkuId(detailEntity.getSkuId());
-            detailDTO.setSkuNo(detailEntity.getSkuNo());
-            detailDTO.setProductName(detailEntity.getProductName());
-            detailDTO.setCurrency(detailEntity.getCurrency());
-            detailDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
-            detailDTO.setOldQty(detailEntity.getPurchaseQty());
-            detailDTO.setOldPrice(detailEntity.getTaxPrice());
-            detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
-            detailDTOList.add(detailDTO);
+            //补货采购订单
+            if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(purchaseOrderEntity.getType())){
+                PoReturnDetailEntity poReturnDetailEntity = poReturnDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())
+                        && StrUtil.isNotBlank(detailDTO.getSkuId()) && Objects.equals(e.getSkuId(), detailDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.nonNull(poReturnDetailEntity)){
+                    BigDecimal returnPrice = Objects.nonNull(poReturnDetailEntity.getReturnPrice()) ? poReturnDetailEntity.getReturnPrice() : BigDecimal.ZERO;
+                    detailDTO.setPurchaseOrderDetailId(detailEntity.getId());
+                    detailDTO.setSkuId(detailEntity.getSkuId());
+                    detailDTO.setSkuNo(detailEntity.getSkuNo());
+                    detailDTO.setProductName(detailEntity.getProductName());
+                    detailDTO.setCurrency(poReturnDetailEntity.getCurrency());
+                    detailDTO.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
+                    detailDTO.setOldQty(detailEntity.getPurchaseQty());
+                    detailDTO.setOldPrice(detailEntity.getTaxPrice());
+                    detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
+                    detailDTO.setPrice(poReturnDetailEntity.getReturnPrice());
+                    detailDTOList.add(detailDTO);
+                }
+            }else {
+                detailDTO.setPurchaseOrderDetailId(detailEntity.getId());
+                detailDTO.setSkuId(detailEntity.getSkuId());
+                detailDTO.setSkuNo(detailEntity.getSkuNo());
+                detailDTO.setProductName(detailEntity.getProductName());
+                detailDTO.setCurrency(detailEntity.getCurrency());
+                detailDTO.setCurrencySymbol(detailEntity.getCurrencySymbol());
+                detailDTO.setOldQty(detailEntity.getPurchaseQty());
+                detailDTO.setOldPrice(detailEntity.getTaxPrice());
+                detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
+                detailDTOList.add(detailDTO);
+            }
+
         }
         viewDTO.setDetails(detailDTOList);
         return viewDTO;

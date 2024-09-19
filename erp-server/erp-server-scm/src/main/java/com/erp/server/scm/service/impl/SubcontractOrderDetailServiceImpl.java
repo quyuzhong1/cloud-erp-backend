@@ -16,6 +16,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
@@ -61,6 +62,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
@@ -378,19 +381,18 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         //获取采购单价
         String purchaseOrgId = subcontractOrderEntity.getPurchaseOrgId();
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list = new ArrayList<>();
+        List<PurchasePriceDTO.PriceDTO> list = new ArrayList<>();
         newList.forEach(e ->{
-            if (CollectionUtils.isNotEmpty(e.getChildList())){
-                e.getChildList().forEach(f -> list.add(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO.builder()
+            if (CollectionUtils.isNotEmpty(e.getChildList()) && Objects.nonNull(e.getIsGift()) && !e.getIsGift()){
+                e.getChildList().forEach(f -> list.add(PurchasePriceDTO.PriceDTO.builder()
                         .purchaseOrgId(purchaseOrgId)
-                        .purchaseQty(f.getQty())
+                        .qty(f.getQty())
                         .skuId(e.getSkuId())
-                        .skuNo(e.getSkuNo())
                         .supplierId(e.getSupplierId())
                         .build()));
             }
         });
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> priceList = purchasePriceDetailService.batchGetTaxPrice(list);
+        List<PurchasePriceDTO.PriceDTO> priceList = purchasePriceService.batchGetPurchasePrice(list);
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
@@ -571,7 +573,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
      * @author Will
      * @date: 2023/6/14 17:07
      */
-    private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity, Boolean isChild, String purchaseOrgId, List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> priceList) {
+    private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity, Boolean isChild, String purchaseOrgId, List<PurchasePriceDTO.PriceDTO> priceList) {
         //供应商为空
         if (StringUtils.isBlank(entity.getSupplierId())) {
             return;
@@ -587,7 +589,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         //子件SKU默认取供应商报价
         if (isChild) {
-            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = priceList.stream().filter(obj ->
+            PurchasePriceDTO.PriceDTO viewDTO = priceList.stream().filter(obj ->
                             obj.getSkuId().equals(entity.getSkuId())
                             && obj.getSupplierId().equals(entity.getSupplierId())
                             && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))

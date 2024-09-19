@@ -107,6 +107,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
     @Resource
     private InventoryFeign inventoryFeign;
@@ -682,17 +684,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
 
         //价目查询
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> priceList = new ValidList<>();
+        List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
         list.forEach(e -> {
-            priceList.add(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO.builder()
+            priceList.add(PurchasePriceDTO.PriceDTO.builder()
                     .purchaseOrgId(e.getPurchaseOrgId())
-                    .purchaseQty(e.getQty())
+                    .qty(e.getQty())
                     .skuId(e.getSkuId())
-                    .skuNo(e.getSkuNo())
                     .supplierId(e.getSupplierId())
                     .build());
         });
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewDTOList = purchasePriceDetailService.batchGetTaxPrice(priceList);
+        List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
 
         List<SubcontractOrderDTO.ViewGeneratePoDTO> resultList = new ArrayList<>();
 
@@ -710,7 +711,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //报价信息查询
             if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId())) {
                 //采购单价赋值
-                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj ->
+                PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                                 obj.getSkuId().equals(dto.getSkuId())
                                 && obj.getSupplierId().equals(dto.getSupplierId())
                                 && StrUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))

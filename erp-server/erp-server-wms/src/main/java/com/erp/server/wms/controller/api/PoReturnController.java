@@ -206,10 +206,11 @@ public class PoReturnController extends BaseController {
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<PoReturnEntity> entityList = poReturnService.listByIds(dto.getIds());
         List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByMainIds(dto.getIds());
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             PoReturnEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
                 resultDTOS.add(BatchResultDTO.fail(id,id,"采购退货单记录不存在"));
