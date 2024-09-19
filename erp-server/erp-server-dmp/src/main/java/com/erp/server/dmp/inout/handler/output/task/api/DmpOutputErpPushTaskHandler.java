@@ -146,6 +146,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		}
 		
 		String parentId = dmpPushMsgEntity.getParentId();
+		String requestData = dmpOutputTaskRecordEntity.getRequestData();
 		if(StringUtils.isNotBlank(parentId) && "operateApprove".equals(dmpPushMsgEntity.getSyncOperate())) {
 			String[] split = parentId.split(",");
 			for(String s : split) {
@@ -179,6 +180,12 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					return;
 				}
 			}
+			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+			if(CollUtil.isNotEmpty(erpQuerySync)) {
+				requestData = erpQuerySync.get(0).getRequestData();
+			}else {
+				return;
+			}
 		}
 		
 		String id = dmpOutputTaskRecordEntity.getId();
@@ -200,7 +207,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			message = "获取" + apiClass + "的" + outputMethod + "方法报错";
 		}
 		try {
-			Object invoke = method.invoke(bean, dmpOutputTaskRecordEntity.getRequestData());
+			Object invoke = method.invoke(bean, requestData);
 			if(invoke instanceof ApiResult) {
 				ApiResult apiResult = (ApiResult)invoke;
 				if(!apiResult.isSuccess()) {

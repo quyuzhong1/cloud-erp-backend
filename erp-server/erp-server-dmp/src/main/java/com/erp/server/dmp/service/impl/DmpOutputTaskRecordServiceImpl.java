@@ -7,27 +7,40 @@ import java.util.stream.Collectors;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO.SyncParamDetailDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.DmpPushMonitorTabEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
+import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Service;
@@ -74,6 +87,12 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Resource
     private DmpCfgOutputService dmpCfgOutputService;
+    
+    @Autowired
+	private DmpHandlerCache dmpHandlerCache;
+    
+    @Autowired
+	private DmpPushMsgService dmpPushMsgService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -487,5 +506,67 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             dmpOutputTaskHandler.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity, cfgOutputRecordEntityListMap.getValue());
         }
         return Boolean.TRUE;
+    }
+    
+    @Override
+    public List<DmpOutputTaskRecordEntity> erpQuerySync(DmpCfgOutputEntity dmpCfgOutputEntity , List<DmpOutputTaskRecordEntity> list) {
+    	String inputConvertId = dmpCfgOutputEntity.getInputConvertId();
+		String cfgInputId = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getId().equals(inputConvertId)).get(0).getMainId();
+		DmpCfgInputEntity dmpCfgInputEntity = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(cfgInputId)).get(0);
+		
+    	List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
+		List<String> ids = list.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
+    	String extendJson = dmpCfgInputEntity.getExtendJson();
+		JSONObject parseObject = JSON.parseObject(extendJson);
+		String system = parseObject.getString("system");
+		String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(dmpCfgInputEntity.getTypeId())).get(0).getApiType();
+		
+		List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
+		DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO();
+		syncParamDTO.setSourceType(SourceTypeEnum.getEnum(apiType));
+		List<SyncParamDetailDTO> sourceDetailList = new ArrayList<>();
+		for(DmpPushMsgEntity dmpPushMsgEntity : dmpPushMsgEntityList) {
+			SyncParamDetailDTO syncParamDetailDTO = new SyncParamDetailDTO();
+			syncParamDetailDTO.setSourceId(dmpPushMsgEntity.getSourceId());
+			syncParamDetailDTO.setSyncOperate(dmpPushMsgEntity.getSyncOperate());
+			syncParamDetailDTO.setDataId(dmpPushMsgEntity.getId());
+			sourceDetailList.add(syncParamDetailDTO);
+		}
+		syncParamDTO.setSourceDetailList(sourceDetailList);
+		String outputSystemId = dmpCfgOutputEntity.getSystemId();
+		String outputSystemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(outputSystemId)).get(0).getCode();
+		if(DmpBasicSystemCodeEnum.WDT.getCode().equals(outputSystemCode)) {
+			try {
+				FeignQuery.invoke("com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "findWdtDataSendSyncTask", Arrays.asList(syncParamDTO));
+				this.lambdaUpdate()
+					.in(DmpOutputTaskRecordEntity::getId, ids)
+					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.set(DmpOutputTaskRecordEntity::getIsNeedSync, false)
+					.update();
+			} catch (Exception e) {
+				log.error("查询同步调用erp服务报错" , e);
+			}
+		}else {
+			Map<String, Map<String, Object>> invoke = FeignQuery.invoke(Map.class , "com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "newFindDataSendSyncTask", Arrays.asList(syncParamDTO));
+			if(invoke != null) {
+				Map<String, List<DmpOutputTaskRecordEntity>> dataIdOutputMaps = list.stream().collect(Collectors.groupingBy(DmpOutputTaskRecordEntity::getDataId));
+				List<DmpOutputTaskRecordEntity> allUpdateList = new ArrayList<>();
+				for(Map.Entry<String, Map<String, Object>> i : invoke.entrySet()) {
+					List<DmpOutputTaskRecordEntity> updateList = dataIdOutputMaps.get(i.getKey());
+					if(CollUtil.isNotEmpty(updateList)) {
+						String requestData = JSON.toJSONString(i.getValue());
+						this.lambdaUpdate()
+							.in(DmpOutputTaskRecordEntity::getId, updateList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()))
+							.set(DmpOutputTaskRecordEntity::getRequestData, requestData)
+							.update();
+						updateList.forEach(u -> u.setRequestData(requestData));
+						allUpdateList.addAll(updateList);
+					}
+				}
+				return allUpdateList;
+			}
+		}
+		return new ArrayList<>();
     }
 }
