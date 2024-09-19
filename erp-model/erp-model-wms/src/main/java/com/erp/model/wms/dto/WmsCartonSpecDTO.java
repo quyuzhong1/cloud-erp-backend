@@ -440,6 +440,11 @@ public class WmsCartonSpecDTO implements Serializable {
         private String skuNo;
 
         /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
          * 产品产品名称
          */
         private String productName;
