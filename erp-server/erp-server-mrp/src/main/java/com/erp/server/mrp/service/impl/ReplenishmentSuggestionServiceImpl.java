@@ -1029,33 +1029,43 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
                 .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+        //查询发货建议
+        List<DeliverySuggestEntity> deliverySuggestList = deliverySuggestService.listByReplenishmentId(detail.getId());
+        //查询采购建议
+        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByReplenishmentId(detail.getId());
         // 获取首日结余库存
         BigDecimal balanceInventory = new BigDecimal(detail.getFbaUsableQty());
+        BigDecimal calcBalanceInventory = new BigDecimal(detail.getFbaUsableQty());
         for (int i = 0; i < days; i++) {
             LocalDate currentDate = now.plusDays(i);
             date.add(currentDate);
-            if (Boolean.TRUE.equals(dto.getIsReal())) {
-                BigDecimal temp = balanceInventory;
-                BigDecimal salesEstimate = Optional.ofNullable(salesEstimateMap.get(currentDate)).orElse(BigDecimal.ZERO);
-                //到货数量
-                int planArrivalQty = Optional.ofNullable(fbaInTransitDetailMap.get(currentDate)).orElse(0) +
-                        Optional.ofNullable(fbaEstimatedDeliveryMap.get(currentDate)).orElse(0) +
-                        Optional.ofNullable(overseasInTransitDetailMap.get(currentDate)).orElse(0) +
-                        Optional.ofNullable(overseasEstimatedDeliveryMap.get(currentDate)).orElse(0) +
-                        Optional.ofNullable(localInTransitDetailMap.get(currentDate)).orElse(0) +
-                        Optional.ofNullable(localEstimatedPurchaseMap.get(currentDate)).orElse(0);
-                if (0 != planArrivalQty) {
-                    planArrivalDate.add(currentDate);
-                }
-                //库存等于结余库存-预计销量+到货数量
-                balanceInventory = balanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty));
-                inventoryQty.add(balanceInventory);
-                if (temp.compareTo(BigDecimal.ZERO) > 0 && balanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
-                    outOfStockDate.add(currentDate);
-                }
+            BigDecimal temp = balanceInventory;
+            BigDecimal salesEstimate = Optional.ofNullable(salesEstimateMap.get(currentDate)).orElse(BigDecimal.ZERO);
+            //到货数量
+            int planArrivalQty = Optional.ofNullable(fbaInTransitDetailMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(fbaEstimatedDeliveryMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(overseasInTransitDetailMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(overseasEstimatedDeliveryMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(localInTransitDetailMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(localEstimatedPurchaseMap.get(currentDate)).orElse(0);
+            if (0 != planArrivalQty) {
+                planArrivalDate.add(currentDate);
+            }
+            //库存等于结余库存-预计销量+到货数量
+            balanceInventory = balanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty));
+            inventoryQty.add(balanceInventory);
+            if (temp.compareTo(BigDecimal.ZERO) > 0 && balanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
+                outOfStockDate.add(currentDate);
             }
             if (Boolean.TRUE.equals(dto.getIsSimulated())) {
-
+                BigDecimal calcTemp = calcBalanceInventory;
+                //计算试算的建议库存
+                BigDecimal suggestInventory = getSuggestInventory(deliverySuggestList, purchaseSuggestList, currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
+                calcBalanceInventory = calcBalanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty)).add(suggestInventory);
+                calcInventoryQty.add(calcBalanceInventory);
+                if (calcTemp.compareTo(BigDecimal.ZERO) > 0 && calcBalanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
+                    calcOutOfStockDate.add(currentDate);
+                }
             }
         }
         resultDTO.setDate(date);
@@ -1067,6 +1077,36 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         resultDTO.setCalcPlanArrivalDate(calcPlanArrivalDate);
         return resultDTO;
     }
+
+    /**
+     * 计算试算的建议库存
+     * @param deliverySuggestList 发货建议
+     * @param purchaseSuggestList 采购建议
+     * @param currentDate 当前日期
+     */
+    private BigDecimal getSuggestInventory(List<DeliverySuggestEntity> deliverySuggestList, List<PurchaseSuggestEntity> purchaseSuggestList, LocalDate currentDate,
+                                           List<DeliverySuggestDTO.ListDTO> calcDeliverySuggestList, List<PurchaseSuggestDTO.ListDTO> calcPurchaseSuggestList) {
+        BigDecimal suggestInventory = BigDecimal.ZERO;
+        int oldDeliverySuggestQty = deliverySuggestList.stream()
+                .filter(v -> v.getEstimateSalesDate().equals(currentDate))
+                .map(DeliverySuggestEntity::getSuggestDeliveryQty)
+                .reduce(0, Math::addExact);
+        int calcDeliverySuggests = calcDeliverySuggestList.stream()
+                .filter(v -> v.getEstimateSalesDate().equals(currentDate))
+                .map(DeliverySuggestDTO.ListDTO::getSuggestDeliveryQty)
+                .reduce(0, Math::addExact);
+        int oldPurchaseSuggests = purchaseSuggestList.stream()
+                .filter(v -> v.getEstimateSalesDate().equals(currentDate))
+                .map(PurchaseSuggestEntity::getSuggestPurchaseQty)
+                .reduce(0, Math::addExact);
+        int calcPurchaseSuggests = calcPurchaseSuggestList.stream()
+                .filter(v -> v.getEstimateSalesDate().equals(currentDate))
+                .map(PurchaseSuggestDTO.ListDTO::getSuggestPurchaseQty)
+                .reduce(0, Math::addExact);
+        return suggestInventory.subtract(new BigDecimal(oldDeliverySuggestQty).add(new BigDecimal(calcDeliverySuggests)))
+                .subtract(new BigDecimal(oldPurchaseSuggests).add(new BigDecimal(calcPurchaseSuggests)));
+    }
+
 
     @Override
     public EstimationDetailResultDTO inventoryEstimationDetail(InventoryEstimationDetailDTO dto) {
@@ -1135,6 +1175,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
                 .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+        //查询发货建议
+        List<DeliverySuggestEntity> deliverySuggestList = deliverySuggestService.listByReplenishmentId(detail.getId());
+        //查询采购建议
+        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByReplenishmentId(detail.getId());
         int fbaInTransitQty = 0;
         int fbaPlanDeliveryQty = 0;
         int overseasInTransitQty = 0;
@@ -1143,6 +1187,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         int localPlanPurchaseQty = 0;
         // 获取首日结余库存
         BigDecimal balanceInventory = new BigDecimal(detail.getFbaUsableQty());
+        BigDecimal calcBalanceInventory = new BigDecimal(detail.getFbaUsableQty());
         for (int i = 0; i < days; i++) {
             LocalDate currentDate = now.plusDays(i);
             BigDecimal salesEstimate = Optional.ofNullable(salesEstimateMap.get(currentDate)).orElse(BigDecimal.ZERO);
@@ -1160,7 +1205,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             resultDTO.setInventoryQty(balanceInventory);
             resultDTO.setPlanArrivalQty(new BigDecimal(planArrivalQty));
             if (Boolean.TRUE.equals(dto.getIsSimulated())) {
-
+                //计算试算的建议库存
+                BigDecimal suggestInventory = getSuggestInventory(deliverySuggestList, purchaseSuggestList, currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
+                calcBalanceInventory = calcBalanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty)).add(suggestInventory);
+                resultDTO.setCalcInventoryQty(calcBalanceInventory);
+                resultDTO.setCalcPlanArrivalQty(new BigDecimal(planArrivalQty).add(suggestInventory));
             }
         }
         resultDTO.setFbaInTransitQty(fbaInTransitQty);

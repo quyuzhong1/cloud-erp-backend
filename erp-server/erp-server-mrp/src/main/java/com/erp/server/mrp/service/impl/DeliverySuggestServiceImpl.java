@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -101,6 +102,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         List<DeliverySuggestDTO.ListDTO> list = baseMapper.list(params);
         handleList(list);
         return list;
+    }
+
+    @Override
+    public List<DeliverySuggestEntity> listByReplenishmentId(String detailId) {
+        return list(Wrappers.<DeliverySuggestEntity>lambdaQuery().eq(DeliverySuggestEntity::getSourceId, detailId));
     }
 
 

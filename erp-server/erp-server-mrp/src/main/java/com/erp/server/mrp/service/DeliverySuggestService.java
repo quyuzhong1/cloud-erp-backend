@@ -42,4 +42,10 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return List<DeliverySuggestEntity>
      */
     List<DeliverySuggestDTO.ListDTO> list(DeliverySuggestDTO.ListParamDTO params);
+
+    /**
+     * 发货
+     * @param detailId 明细id
+     */
+    List<DeliverySuggestEntity> listByReplenishmentId(String detailId);
 }

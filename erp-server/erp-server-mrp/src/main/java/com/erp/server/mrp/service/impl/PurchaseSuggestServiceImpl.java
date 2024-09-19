@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -126,6 +127,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         }
         handleExport(pagingVO.getRecords());
         return new PagingVO<>(pagingVO);
+    }
+
+    @Override
+    public List<PurchaseSuggestEntity> listByReplenishmentId(String detailId) {
+        return list(Wrappers.<PurchaseSuggestEntity>lambdaQuery().eq(PurchaseSuggestEntity::getSourceId, detailId));
     }
 
     /**

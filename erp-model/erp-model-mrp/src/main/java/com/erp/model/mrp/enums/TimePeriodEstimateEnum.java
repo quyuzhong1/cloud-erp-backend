@@ -30,7 +30,7 @@ public enum TimePeriodEstimateEnum implements EnumMessage {
     /**
      * 120天
      */
-    ONE_HUNDRED_AND_EIGHTY("ONE_HUNDRED_AND_TWENTY", "120天", 120);
+    ONE_HUNDRED_AND_TWENTY("ONE_HUNDRED_AND_TWENTY", "120天", 120);
 
 
     private final String code;

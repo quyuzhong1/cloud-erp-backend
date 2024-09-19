@@ -54,4 +54,9 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
      */
     PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
 
+    /**
+     * 采购建议
+     * @param detailId 明细id
+     */
+    List<PurchaseSuggestEntity> listByReplenishmentId(String detailId);
 }
