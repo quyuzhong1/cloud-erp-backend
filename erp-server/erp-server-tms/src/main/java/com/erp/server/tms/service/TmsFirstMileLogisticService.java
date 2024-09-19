@@ -11,6 +11,7 @@ import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -75,15 +76,13 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     List<BatchResultDTO> updateChannel(TmsFirstMileLogisticDTO.UpdateChannelDTO dto);
 
-    List<BatchResultDTO> generateReconciliation(TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto);
-
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) throws Exception;
 
     void export(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
     void exportFeeDetail(TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response);
 
-    List<BatchResultDTO> delete(List<String> ids);
+    BatchResultDTO delete(LogisticsBillEntity entity);
 
     TmsFirstMileLogisticDTO.HistoryTrackDTO getHistoryTrack(String id);
 
@@ -128,12 +127,12 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     /**
      * 生成物流单
      */
-    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap);
+    BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap,String reconciliationType);
 
     /**
      * 更新对账状态
      */
-    void updateReconciliation(List<String> mainIds, String status);
+    void updateReconciliation(List<String> mainIds, String status,String reconciliationId);
 
     /**
      * 查询周期内已签收未对账的物流单
@@ -141,5 +140,18 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> listAutoGenerateFirstMileReconciliation(LocalDate startDate, LocalDate endDate);
 
-    Boolean autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO);
+    BatchResultDTO autoGenerateFirstMileLogistic(AutoGenerateBillDTO autoGenerateBillDTO);
+
+    /**
+     * 查询生成重量分摊单据所需参数
+     */
+    List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList();
+
+    /**
+     * 下推重量分摊
+     * @param id 物流单ID
+     */
+    BatchResultDTO pushWeightAllocation(String id);
+
+    BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }

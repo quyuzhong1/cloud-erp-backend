@@ -9,6 +9,7 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -48,6 +49,13 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
       * @return PagingVO<FbaDeliveryDTO.ListDTO>>
       */
       PagingVO<FirstMileDeliveryDTO.ListDTO> paging(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 期初明细分页列表
+     * @param pagingParamDTO
+     * @return
+     */
+      PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
 
      /**
      * 状态统计
@@ -298,7 +306,35 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordByFbaCode(String fbaShipmentCode);
 
     /**
+     * 根据编码获取明细列表
+     * @param codes 编码
+     * @param sourceCodes 来源编码
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(List<String> codes,List<String> sourceCodes);
+
+    /**
+     * 根据业务单号统计签收数量
+     * @param dto
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto);
+
+    /**
+     * 根据发货单获取业务单号
+     * @param ids
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids);
+
+    /**
      * 导出
      */
     PagingVO<FirstMileDeliveryDTO.ListDTO> exportFbaDelivery(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto);
+    /**
+     * 根据发货单获取业务单号
+     * @param deliveryCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(List<String> deliveryCodes);
 }

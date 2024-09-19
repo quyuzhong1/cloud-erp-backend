@@ -40,6 +40,9 @@ public class FirstMileDeliveryQueryHandler extends AbstractQueryHandler {
                 return " NOT EXISTS (SELECT id FROM overseas_warehouse_inbound owi WHERE owi.source_id = fd.id AND owi.is_deleted = FALSE)";
             }
         }
+        if ("businessCodes".equals(field)){
+            this.buildDefaultDTO("concat(fdd.fba_shipment_code,owi.code)",value);
+        }
         return null;
     }
 }

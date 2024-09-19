@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -27,6 +28,7 @@ import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProjectTaskExcelListener;
+import com.erp.server.plm.query.ProjectTaskQueryHandler;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -869,6 +871,14 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/listTaskInfo")
     public ApiResult<List<ProductTask.TaskInfoDTO>> listTaskInfo(@RequestBody List<String> taskIdList) {
         List<ProductTask.TaskInfoDTO> list = projectTaskService.listTaskInfo(taskIdList);
+        return success(list);
+
+    }
+
+    @PostMapping("/pagingByAdvanceQuery")
+    @WebAdvanceQuery(handler = ProjectTaskQueryHandler.class)
+    public ApiResult<PagingVO<ProjectTaskDTO.SimpleViewDTO>> pagingByAdvanceQuery(@RequestBody @Validated PagingDTO<ProjectTaskDTO.PagingParamDTO> dto) {
+        PagingVO<ProjectTaskDTO.SimpleViewDTO> list = projectTaskService.pagingByAdvanceQuery(dto);
         return success(list);
 
     }

@@ -417,14 +417,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList = this.listGroupSkuById(dto.getTaskId());
         //更新主表状态
         updatePackingStatus(groupSkuList, dto.getTaskId());
-        //当所有产品待装箱数量为0时，状态自动变更为已装箱
-        List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOList = groupSkuList.stream().filter(e -> Objects.nonNull(e) && e.getWaitPackQty() > 0).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(groupSkuDTOList) && PickingSourceTypeEnum.B2B.getCode().equals(packingTask.getSourceType())) {
-            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getById(packingTask.getSourceId());
-            autoGenerateSoDeliveryNotice(packingTask,soDeliveryNoticeEntity);
-        }else if (CollectionUtils.isEmpty(groupSkuDTOList) && (PickingSourceTypeEnum.FBA.getCode().equals(packingTask.getSourceType()) || PickingSourceTypeEnum.THIRD.getCode().equals(packingTask.getSourceType()))){
-
-        }
         //发送飞书通知
         this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent());
         return Boolean.TRUE;
@@ -1771,31 +1763,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     .build());
         }
         return list;
-    }
-
-    private void autoGenerateSoDeliveryNotice(PackingTaskEntity packingTask, SoDeliveryNoticeEntity soDeliveryNoticeEntity) {
-//        //走TMS自动生成报关单逻辑
-//        if (!"CN".equalsIgnoreCase(soOutstock.getCountry()) && soOutstock.getDeclareStatus().equals(WmsDeclareStatusEnum.WAIT.getCode()) && soOutstock.getOrderType().equals(OrderTypeEnum.B2B.getCode())) {
-//            //走TMS自动生成逻辑
-//            AutoGenerateBillDTO autoGenerateBillDTO = AutoGenerateBillDTO.builder()
-//                    .id(soOutstock.getId())
-//                    .billGenerateTimingEnum(BillGenerateTimingEnum.AFTER_PACKING)
-//                    .sourceTypeEnum(SourceTypeEnum.SO_OUTSTOCK)
-//                    .soOutstockEntity(soOutstock)
-//                    .build();
-//            try {
-//                Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateB2bDeclare(autoGenerateBillDTO);
-//                if(autoGenerateResult){
-//                    TmsDeclareBillDTO.UpdateStatusDTO updateStatusDTO = new TmsDeclareBillDTO.UpdateStatusDTO();
-//                    updateStatusDTO.setIds(Collections.singletonList(soOutstock.getId()));
-//                    updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
-//                    soOutstockService.updateStatus(updateStatusDTO);
-//                }
-//            }catch (Exception e){
-//                log.error("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", soOutstock.getCode(), e.getMessage());
-//                throw new ServiceException(StrUtil.format("销售出库单{} 装箱后自动生成报关单失败>>>>>>{}", soOutstock.getCode(), e.getMessage()));
-//            }
-//        }
     }
 
     private void checkFirstMileStatus(FirstMileDeliveryEntity firstMileDeliveryEntity) {

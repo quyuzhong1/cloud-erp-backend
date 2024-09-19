@@ -313,12 +313,24 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
+        /**
+         * 来源ID
+         */
+        private String sourceId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class  AddDTO extends CommonDTO {
         /**
          * 采购申请明细
          */

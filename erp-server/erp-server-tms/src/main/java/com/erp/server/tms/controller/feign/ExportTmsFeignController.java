@@ -6,8 +6,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.server.tms.query.*;
 import com.erp.server.tms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -55,6 +59,16 @@ public class ExportTmsFeignController {
     private LogisticsLastMileCostService logisticsLastMileCostService;
     @Resource
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
+    @Resource
+    private FirstMileCostAllocationService firstMileCostAllocationService;
+    @Resource
+    private InitFirstMileAllocationService initFirstMileAllocationService;
+    @Resource
+    private InventorySkuCostService inventorySkuCostService;
+    @Resource
+    private FirstMileEstimatedBillService firstMileEstimatedBillService;
+    @Resource
+    private FirstMileWeightAllocationService firstMileWeightAllocationService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -225,5 +239,54 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = TmsCfgSailingQueryHandler.class)
     public PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(@RequestBody PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto) {
         return tmsWarehouseMappingService.exportWarehouseMapping(dto);
+    }
+
+    /**
+     * 费用分摊
+     * @param params
+     * @return
+     */
+    @PostMapping("/exportFirstMileCostAllocation")
+    @WebAdvanceQuery(handler = FirstMileCostAllocationQueryHandler.class)
+    public PagingVO<FirstMileCostAllocationDTO.PagingVO> exportFirstMileCostAllocation(@RequestBody PagingDTO<FirstMileCostAllocationDTO.PagingParamDTO> params) {
+        return firstMileCostAllocationService.paging(params);
+    }
+
+    /**
+     * 期初头程分摊
+     * @param params
+     * @return
+     */
+    @PostMapping("/exportInitFirstMileAllocation")
+    PagingVO<InitFirstMileAllocationDTO.PagingVO> exportInitFirstMileAllocation(@RequestBody PagingDTO<InitFirstMileAllocationDTO.PagingParamDTO> params){
+        return initFirstMileAllocationService.paging(params);
+    }
+
+    /**
+     * sku成本
+     * @param params
+     * @return
+     */
+    @PostMapping("/exportInventorySkuCost")
+    PagingVO<InventorySkuCostDTO.PagingVO> exportInventorySkuCost(@RequestBody PagingDTO<InventorySkuCostDTO.PagingParamDTO> params){
+        return inventorySkuCostService.paging(params);
+    }
+
+    /**
+     * 暂估账单
+     */
+    @PostMapping("/exportFirstMileEstimatedBill")
+    @WebAdvanceQuery(handler = FirstMileEstimatedQueryHandler.class)
+    public PagingVO<FirstMileEstimatedBillDTO.View> exportFirstMileEstimatedBill(@RequestBody PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto){
+        return firstMileEstimatedBillService.paging(dto);
+    }
+
+    /**
+     * 重量分摊
+     */
+    @PostMapping("/exportFirstMileWeightAllocation")
+    @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
+    public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
+        return firstMileWeightAllocationService.paging(dto);
     }
 }

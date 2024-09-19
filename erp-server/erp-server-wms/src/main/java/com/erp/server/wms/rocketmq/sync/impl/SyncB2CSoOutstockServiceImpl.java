@@ -318,6 +318,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstockService.save(soOutstock);
         //保存销售出库单详情
         soOutstockDetailService.saveBatch(detailList);
+        //根据销售出库单创建物流单和自发货费用
+        soOutstockService.saveLogisticsBill(soOutstock);
         //扣减库存
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
         if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {

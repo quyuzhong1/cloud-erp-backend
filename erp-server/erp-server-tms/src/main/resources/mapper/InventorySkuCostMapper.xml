@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.InventorySkuCostMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.InventorySkuCostEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="remark" property="remark" />
+       <result column="code" property="code" />
+       <result column="status" property="status" />
+       <result column="allocated_month" property="allocatedMonth" />
+       <result column="currency" property="currency" />
+       <result column="currency_symbol" property="currencySymbol" />
+       <result column="exchange_rate" property="exchangeRate" />
+       <result column="company_id" property="companyId" />
+       <result column="company_name" property="companyName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        remark, code, status, allocated_month, currency, currency_symbol, exchange_rate, company_id, company_name
+    </sql>
+    <sql id="pagingSql">
+        SELECT
+        c.id,c.code as code, c.status,c.allocated_month as allocatedMonth, to_char(C.allocated_month, 'YYYY-MM') AS allocatedMonthStr,
+        c.currency, c.currency_symbol,c.exchange_rate, c.company_id, c.company_name as companyName,cd.id as detailId,cd.sku_no as skuNo, cd.sku_id,
+        cd.product_name, cd.unit, cd.product_cost as productCost,c.create_user_name as createUserName,c.create_time as createTime
+        FROM  inventory_sku_cost c
+        LEFT JOIN  inventory_sku_cost_detail cd ON cd.main_id=c.id and cd.is_deleted=false
+        <where>
+            ${params.sqlMap.default}
+            and c.is_deleted=false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        c.create_time DESC,c.id
+    </sql>
+    <select id="tabList" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$TabListDTO">
+        SELECT
+        COUNT(distinct c.id) AS count,
+        c.status AS tabFlag
+        FROM  inventory_sku_cost c
+        WHERE  c.is_deleted=false
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY c.status
+    </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$PagingVO">
+        <include refid="pagingSql"/>
+    </select>
+    <select id="exportList" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$PagingVO">
+        <include refid="pagingSql"/>
+    </select>
+    <select id="listDetailByOrgIdAndSkuIds" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$PagingVO">
+        SELECT
+            c.id,c.code as code, c.status,c.allocated_month as allocatedMonth, to_char(C.allocated_month, 'YYYY-MM') AS allocatedMonthStr,
+            c.currency, c.currency_symbol, c.exchange_rate,c.company_id, c.company_name as companyName,cd.id as detailId,cd.sku_no as skuNo, cd.sku_id,
+            cd.product_name, cd.unit, cd.product_cost as productCost,c.create_user_name as createUserName,c.create_time as createTime
+        FROM  inventory_sku_cost c
+        LEFT JOIN  inventory_sku_cost_detail cd ON cd.main_id=c.id and cd.is_deleted=false
+        where c.is_deleted = false
+        <if test="skuIds != null and skuIds.size > 0">
+            and cd.sku_id in
+            <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="status != null and status != ''">
+            and c.status = #{status}
+        </if>
+        <if test="orgId != null and orgId != ''">
+            and c.company_id = #{orgId}
+        </if>
+        <if test="month != null">
+            and c.allocated_month = #{month}
+        </if>
+    </select>
+
+</mapper>

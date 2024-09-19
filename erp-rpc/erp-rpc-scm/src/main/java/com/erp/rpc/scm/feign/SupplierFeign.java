@@ -82,4 +82,10 @@ public interface SupplierFeign {
      */
     @GetMapping("/feign/supplier/getSupplierByOrderIds")
     List<PurchaseOrderSupplierEntity> getSupplierByOrderIds(@RequestBody List<String> ids);
+
+    /**
+     * 根据供应商编号查询
+     */
+    @PostMapping("/feign/supplier/listByCodes")
+    List<SupplierEntity> listByCodes(@RequestBody List<String> codeList);
 }

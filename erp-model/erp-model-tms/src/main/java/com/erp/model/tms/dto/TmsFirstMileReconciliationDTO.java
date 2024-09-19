@@ -14,15 +14,12 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Map;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -143,6 +140,22 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 对账结束日期【可排序】
          */
         private LocalDate endDate;
+        /**
+         * 对账月份
+         */
+        private LocalDate reconciliationMonth;
+        /**
+         * 对账月份【导出使用】
+         */
+        private String reconciliationMonthStr;
+        /**
+         * 对账次数
+         */
+        private Integer reconciliationCount;
+        /**
+         * 对账次数名称【导出使用】
+         */
+        private String reconciliationCountName;
 
         /**
          * 对账周期
@@ -203,6 +216,11 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 实际其他费【可排序】
          */
         private BigDecimal actualOtherCost;
+
+        /**
+         * 实际其他税费【可排序】
+         */
+        private BigDecimal actualOtherTaxCost;
 
         /**
          * 实际计费重【可排序】
@@ -268,6 +286,10 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 生成对账日期
          */
         private LocalDate reconciliationDate;
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        private LocalDate reconciliationMonth;
 
         /**
          * 提交日期
@@ -363,7 +385,11 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        @NotNull(message = "对账月份不能为空")
+        private LocalDate reconciliationMonth;
         /**
          * 明细id集合
          */

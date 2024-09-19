@@ -61,10 +61,14 @@ public class AliExpressLogisticsHandlerImplTest {
     private Map<String, String> authMap = new HashMap<>();
 
     public AliExpressLogisticsHandlerImplTest(){
-        String CLIENT_CODE = "502978";
-        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000700423zHPZZqMly9iku4MQdb7h0hqR18ff9902ExugZffT7nzxEiFwFyWHdZKNC";
-//        String token = "50000100620rOCpJesBimsVqwhdznwFL19448dbexeSxecBcvdotvGJILKkYWzw0qLEq";
+        //test
+//        String CLIENT_CODE = "502978";
+//        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+//        String token = "50000700423zHPZZqMly9iku4MQdb7h0hqR18ff9902ExugZffT7nzxEiFwFyWHdZKNC";
+        //prod
+        String CLIENT_CODE = "503630";
+        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
+        String token = "50000500839eewdp7jko0vtD80GwgipeyTiagAS9MvvfgdtLzm910eedab8AhgxYjWqN";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -229,8 +233,9 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLabelList() throws IOException {
         LogisticsGetLabelVO logisticsQueryVO2 = new LogisticsGetLabelVO();
-        logisticsQueryVO2.setDeliveryNo("8189755534784883");
-        logisticsQueryVO2.setTransportNo("LP00660890024775");
+        logisticsQueryVO2.setDeliveryNo("3040480645907417");
+        logisticsQueryVO2.setTransportNo("CNG00673225193224");
+        logisticsQueryVO2.setTrackNo("LP00673225193224");
 //        logisticsQueryVO2.setTransportNo("PQ936A0792035050134690Z ");
         logisticsQueryVO2.setAuthMap(authMap);
         logisticsQueryVO2.setLabelType("1");

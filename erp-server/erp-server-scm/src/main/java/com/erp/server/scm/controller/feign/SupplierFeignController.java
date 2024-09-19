@@ -126,4 +126,12 @@ public class SupplierFeignController extends BaseController {
     List<PurchaseOrderSupplierEntity> getSupplierByOrderIds(@RequestBody List<String> ids){
         return purchaseOrderSupplierService.listByPurchaseOrderIds(ids);
     }
+
+    /**
+     * 根据供应商编号查询
+     */
+    @PostMapping("/listByCodes")
+    List<SupplierEntity> listByCodes(@RequestBody List<String> codeList){
+        return supplierService.listByCodes(codeList);
+    }
 }

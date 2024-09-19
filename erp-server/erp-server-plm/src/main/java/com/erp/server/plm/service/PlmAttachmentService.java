@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.SuperService;
+import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -64,4 +65,9 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
      * @return List<PlmAttachmentEntity>
      */
     List<PlmAttachmentEntity> batchUpload(List<MultipartFile> multipartFileList, String type);
+
+    /**
+     * 根据URL删除附件信息
+     */
+    void removeAttachmentByUrl(AttachmentDTO.DeleteDTO dto);
 }

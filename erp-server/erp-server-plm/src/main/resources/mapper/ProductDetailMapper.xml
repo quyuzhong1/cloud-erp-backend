@@ -90,6 +90,8 @@
         pd.version,
         pc.actual_tax_cost,
         pc.target_tax_cost,
+        pc.actual_no_tax_cost,
+        pc.target_no_tax_cost,
         pd.warehouse_location,
         pd.warehouse_location_large,
         pi.iterate_ref_sku_id,
