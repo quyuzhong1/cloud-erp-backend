@@ -39,4 +39,9 @@ public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<Oversea
     public List<OverseasInTransitDetailEntity> getByReplenishmentId(String detailId) {
         return list(Wrappers.<OverseasInTransitDetailEntity>lambdaQuery().eq(OverseasInTransitDetailEntity::getReplenishmentDetailId, detailId));
     }
+
+    @Override
+    public int totalQtyByReplenishment(String detailId) {
+        return count(Wrappers.<OverseasInTransitDetailEntity>lambdaQuery().eq(OverseasInTransitDetailEntity::getReplenishmentDetailId, detailId));
+    }
 }

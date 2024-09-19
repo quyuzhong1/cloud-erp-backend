@@ -26,4 +26,10 @@ public interface EstimatedPurchaseDetailService extends SuperService<EstimatedPu
      * @param detailId 明细id
      */
     List<EstimatedPurchaseDetailEntity> getByReplenishmentId(String detailId);
+
+    /**
+     * 总数量
+     * @param detailId 明细id
+     */
+    int totalQtyByReplenishment(String detailId);
 }

@@ -26,4 +26,10 @@ public interface OverseasInTransitDetailService extends SuperService<OverseasInT
      * @param detailId 建议明细
      */
     List<OverseasInTransitDetailEntity> getByReplenishmentId(String detailId);
+
+    /**
+     * 海外仓在途总数量
+     * @param detailId 明细id
+     */
+    int totalQtyByReplenishment(String detailId);
 }

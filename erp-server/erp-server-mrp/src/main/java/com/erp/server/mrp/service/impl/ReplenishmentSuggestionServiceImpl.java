@@ -1142,6 +1142,34 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return resultDTO;
     }
 
+    @Override
+    public Integer inventoryTotal(InventoryTotalDTO params) {
+        ReplenishmentInventoryTypeEnum inventoryType = ReplenishmentInventoryTypeEnum.of(params.getType());
+        int totalQty = 0;
+        switch (inventoryType) {
+            case FBA_IN_TRANSIT:
+                totalQty = fbaInTransitDetailService.totalQtyByReplenishment(params.getDetailId());
+                break;
+            case FBA_ESTIMATED_DELIVERY:
+                totalQty = estimatedDeliveryDetailService.totalQtyByReplenishment(params.getDetailId(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY);
+                break;
+            case OVERSEAS_IN_TRANSIT:
+                totalQty = overseasInTransitDetailService.totalQtyByReplenishment(params.getDetailId());
+                break;
+            case OVERSEAS_ESTIMATED_DELIVERY:
+                totalQty = estimatedDeliveryDetailService.totalQtyByReplenishment(params.getDetailId(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
+                break;
+            case LOCAL_IN_TRANSIT:
+                totalQty = localInTransitDetailService.totalQtyByReplenishment(params.getDetailId());
+                break;
+            case LOCAL_ESTIMATED_DELIVERY:
+                totalQty = estimatedPurchaseDetailService.totalQtyByReplenishment(params.getDetailId());
+                break;
+            default:
+        }
+        return totalQty;
+    }
+
     private EstimationDetailResultDTO handlerLocalEstimateDetail(ReplenishmentSuggestionDetailEntity detail, Map<LocalDate, BigDecimal> salesEstimateMap, InventoryEstimationDetailDTO dto, long days) {
         return null;
     }

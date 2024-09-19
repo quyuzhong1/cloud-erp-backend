@@ -31,4 +31,11 @@ public interface EstimatedDeliveryDetailService extends SuperService<EstimatedDe
      * @param replenishmentInventoryTypeEnum 类型
      */
     List<EstimatedDeliveryDetailEntity> getByReplenishmentIdAndType(String detailId, ReplenishmentInventoryTypeEnum replenishmentInventoryTypeEnum);
+
+    /**
+     * 预计发货总数量
+     * @param detailId 明细id
+     * @param replenishmentInventoryTypeEnum 类型
+     */
+    int totalQtyByReplenishment(String detailId, ReplenishmentInventoryTypeEnum replenishmentInventoryTypeEnum);
 }

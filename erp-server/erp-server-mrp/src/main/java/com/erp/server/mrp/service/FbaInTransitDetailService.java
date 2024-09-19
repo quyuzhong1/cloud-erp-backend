@@ -29,4 +29,10 @@ public interface FbaInTransitDetailService extends SuperService<FbaInTransitDeta
      * @param detailId 建议明细id
      */
     List<FbaInTransitDetailEntity> getByReplenishmentId(String detailId);
+
+    /**
+     * fba在途总数量
+     * @param detailId id
+     */
+    int totalQtyByReplenishment(String detailId);
 }

@@ -45,4 +45,9 @@ public class FbaInTransitDetailServiceImpl extends SuperServiceImpl<FbaInTransit
     public List<FbaInTransitDetailEntity> getByReplenishmentId(String detailId) {
         return list(Wrappers.<FbaInTransitDetailEntity>lambdaQuery().eq(FbaInTransitDetailEntity::getReplenishmentDetailId, detailId));
     }
+
+    @Override
+    public int totalQtyByReplenishment(String detailId) {
+        return count(Wrappers.<FbaInTransitDetailEntity>lambdaQuery().eq(FbaInTransitDetailEntity::getReplenishmentDetailId, detailId));
+    }
 }

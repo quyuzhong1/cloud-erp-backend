@@ -277,4 +277,10 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param dto 参数
      */
     EstimationDetailResultDTO inventoryEstimationDetail(InventoryEstimationDetailDTO dto);
+
+    /**
+     * 库存总数
+     * @param params 明细id
+     */
+    Integer inventoryTotal(InventoryTotalDTO params);
 }

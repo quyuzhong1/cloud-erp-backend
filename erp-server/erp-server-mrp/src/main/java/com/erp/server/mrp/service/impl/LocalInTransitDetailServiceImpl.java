@@ -35,4 +35,9 @@ public class LocalInTransitDetailServiceImpl extends SuperServiceImpl<LocalInTra
     public List<LocalInTransitDetailEntity> getByReplenishmentId(String detailId) {
         return list(Wrappers.<LocalInTransitDetailEntity>lambdaQuery().eq(LocalInTransitDetailEntity::getReplenishmentDetailId, detailId));
     }
+
+    @Override
+    public int totalQtyByReplenishment(String detailId) {
+        return count(Wrappers.<LocalInTransitDetailEntity>lambdaQuery().eq(LocalInTransitDetailEntity::getReplenishmentDetailId, detailId));
+    }
 }

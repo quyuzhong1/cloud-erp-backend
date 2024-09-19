@@ -40,4 +40,10 @@ public class EstimatedPurchaseDetailServiceImpl extends SuperServiceImpl<Estimat
         return list(Wrappers.<EstimatedPurchaseDetailEntity>lambdaQuery()
                 .eq(EstimatedPurchaseDetailEntity::getReplenishmentDetailId, detailId));
     }
+
+    @Override
+    public int totalQtyByReplenishment(String detailId) {
+        return count(Wrappers.<EstimatedPurchaseDetailEntity>lambdaQuery()
+                .eq(EstimatedPurchaseDetailEntity::getReplenishmentDetailId, detailId));
+    }
 }

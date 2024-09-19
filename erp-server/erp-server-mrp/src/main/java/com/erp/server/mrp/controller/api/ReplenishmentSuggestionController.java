@@ -144,6 +144,16 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
     /**
+     * 数量统计
+     * @param params 明细id
+     */
+    @PostMapping("/inventoryTotal")
+    public ApiResult<Integer> inventoryTotal(@RequestBody @Validated InventoryTotalDTO params) {
+        Integer inventoryTotal = replenishmentSuggestionService.inventoryTotal(params);
+        return success(inventoryTotal);
+    }
+
+    /**
      * 库存预测明细
      * @param dto 参数
      */

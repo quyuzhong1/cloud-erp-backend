@@ -26,4 +26,10 @@ public interface LocalInTransitDetailService extends SuperService<LocalInTransit
      * @param detailId 建议id
      */
     List<LocalInTransitDetailEntity> getByReplenishmentId(String detailId);
+
+    /**
+     * 总数量
+     * @param detailId 明细id
+     */
+    int totalQtyByReplenishment(String detailId);
 }

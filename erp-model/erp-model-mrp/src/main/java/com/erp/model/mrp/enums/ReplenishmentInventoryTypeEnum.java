@@ -1,8 +1,12 @@
 package com.erp.model.mrp.enums;
 
 import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.Arrays;
 
 @Getter
 @AllArgsConstructor
@@ -29,5 +33,12 @@ public enum ReplenishmentInventoryTypeEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    public static ReplenishmentInventoryTypeEnum of(String code) {
+        return Arrays.stream(ReplenishmentInventoryTypeEnum.values())
+                .filter(v -> v.getCode().equals(code))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_9028));
     }
 }
