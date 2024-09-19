@@ -50,4 +50,14 @@ public interface NoticeMsgConstant {
      * 装箱完成通知消息体
      */
     String FS_FINISH_PACKING_CONTENT=" 通知类型：{}\n 关联单号：{}";
+
+    /**
+     * 试产量产审核完成通知消息头
+     */
+    String PILOT_APPROVE_END_HEAD="试产量产单已完成审核，请知悉";
+
+    /**
+     * 试产量产审核完成通知消息体
+     */
+    String PILOT_APPROVE_END_CONTENT=" 通知类型：试产量产完成通知\n 产品经理：{%s}\n SKU：{%s}";
 }

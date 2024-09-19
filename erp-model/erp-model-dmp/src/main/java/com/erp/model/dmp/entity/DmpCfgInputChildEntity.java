@@ -43,8 +43,14 @@ public class DmpCfgInputChildEntity extends BaseEntity<DmpCfgInputChildEntity> {
     /**
      * 转换id
      */
-     @TableField("convert_id")
-     private String convertId;
+    @TableField("convert_id")
+    private String convertId;
+    
+    /**
+     * 事务类型：global全局事务（默认），single单独事务，DmpCfgInputChildTransactionalTypeEnum
+     */
+    @TableField("transactional_type")
+    private String transactionalType;
 
 
     public static final String PARENT_ID = "parent_id";

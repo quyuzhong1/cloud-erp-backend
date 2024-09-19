@@ -114,8 +114,78 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SoReturnInstockEntity entity, String operate) {
+        //生成任务
+        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    }
 
-        Map<String, Object> resultMap = new HashMap<>();
+    private String getSoDetailid(SoReturnInstockEntity entity,  List<SoReturnDetailEntity> returnDetailEntitys, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList, SoReturnInstockDetailEntity detailEntity, String soDetailId) {
+        if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntitys.stream().filter(req -> req.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
+                soDetailId = soReturnDetailEntity.getSourceDetailId();
+            }
+        } else if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
+                soDetailId = soReturnDetailEntity.getSourceDetailId();
+            }
+        } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soDetailEntity)) {
+                soDetailId = soDetailEntity.getId();
+            }
+        }
+        return soDetailId;
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (SoReturnInstockEntity entity, String operate, Map<String, Object> resultMap) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_RETURN_INSTOCK.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+          DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+          dmpSyncTaskDTO.setSourceId(entity.getId());
+          dmpSyncTaskDTO.setSourceCode(entity.getCode());
+          dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
+          dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+          dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_RETURN_TAG.getName());
+          dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+          dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+          dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+          dmpSyncTaskDTO.setSyncOperate(operate);
+          dmpSyncTaskDTO.setParentId(entity.getSoId());
+          return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
+
+    	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        wmsPushMsgEntity.setParentId(entity.getSoId());
+
+        wmsPushMsgService.save(wmsPushMsgEntity);
+
+        return null;
+    }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(SoReturnInstockEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -126,7 +196,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
+            return resultMap;
         }
 
         List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
@@ -340,73 +410,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             list.add(map);
         }
         resultMap.put("FEntityList", list);
-
-        //生成任务
-        return saveTask(entity,operate,resultMap);
-    }
-
-    private String getSoDetailid(SoReturnInstockEntity entity,  List<SoReturnDetailEntity> returnDetailEntitys, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList, SoReturnInstockDetailEntity detailEntity, String soDetailId) {
-        if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntitys.stream().filter(req -> req.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
-                soDetailId = soReturnDetailEntity.getSourceDetailId();
-            }
-        } else if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
-            SoReturnDetailEntity soReturnDetailEntity = returnDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
-                soDetailId = soReturnDetailEntity.getSourceDetailId();
-            }
-        } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
-            SoDetailEntity soDetailEntity = soDetailList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soDetailEntity)) {
-                soDetailId = soDetailEntity.getId();
-            }
-        }
-        return soDetailId;
-    }
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (SoReturnInstockEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_RETURN_INSTOCK.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	//添加推送任务
-          DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-          dmpSyncTaskDTO.setSourceId(entity.getId());
-          dmpSyncTaskDTO.setSourceCode(entity.getCode());
-          dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
-          dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-          dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_RETURN_TAG.getName());
-          dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-          dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-          dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-          dmpSyncTaskDTO.setSyncOperate(operate);
-          dmpSyncTaskDTO.setParentId(entity.getSoId());
-          return dmpMqFeign.saveTask(dmpSyncTaskDTO);
-        }
-
-    	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
-        wmsPushMsgEntity.setSourceId(entity.getId());
-        wmsPushMsgEntity.setSourceCode(entity.getCode());
-        wmsPushMsgEntity.setSyncOperate(operate);
-        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        wmsPushMsgEntity.setParentId(entity.getSoId());
-
-        wmsPushMsgService.save(wmsPushMsgEntity);
-
-        return null;
-    }
+        return resultMap;
+	}
 }

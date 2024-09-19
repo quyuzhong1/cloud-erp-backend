@@ -37,7 +37,6 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastPoChangeDetailDTO;
-import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -67,7 +66,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_CHANGE;
 
@@ -244,10 +242,10 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         }
 
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getChangeDate())
+     /*   List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getChangeDate())
                         ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getChangeDate()))).
                 distinct().collect(Collectors.toList());
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
 
         log.info("采购变更作废，ids=【{}】", JSONUtil.toJsonStr(ids));
         //更新作废状态
@@ -272,10 +270,10 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //验证存货核算是否关账
-        List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = new ArrayList<>(2);
+       /* List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = new ArrayList<>(2);
         closedParamList.add(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getReceiveOrgId(),entity.getChangeDate()));
         closedParamList.add(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(),entity.getChangeDate()));
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);
+        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
         log.info("采购变更单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {

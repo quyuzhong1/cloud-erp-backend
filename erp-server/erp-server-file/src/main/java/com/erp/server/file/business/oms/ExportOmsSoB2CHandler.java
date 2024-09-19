@@ -43,4 +43,9 @@ public class ExportOmsSoB2CHandler extends AbstractPageFileEventHandler<SoB2cDTO
     public String getExcelPath() {
         return "excel/oms/soB2c.xlsx";
     }
+
+    @Override
+    protected int getPageSize() {
+        return 50000;
+    }
 }

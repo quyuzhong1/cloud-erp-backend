@@ -88,5 +88,18 @@
         and t2.cur_activity_id = t1.pre_activity_id
         order by process_instance_id
     </select>
+    <select id="listApproveHistory"
+            resultType="com.erp.model.workflow.dto.ProcessTaskManagementDTO$ApproveHistoryDTO">
+        select pm.business_id   businessId,
+               ptm.id           taskId,
+               ptm.approve_id   approveUserId,
+               ptm.approve_name approveUserName,
+               ptm.approve_time approveTime,
+               ptm.task_status  approveStatus,
+               ptm.remark
+        from process_management pm
+                 left join process_task_management ptm on pm.process_instance_id = ptm.process_instance_id and ptm.is_deleted = false
+        where pm.business_id = #{businessId}
+    </select>
 
 </mapper>

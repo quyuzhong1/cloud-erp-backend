@@ -171,5 +171,18 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
 
     TmsFirstMileReconciliationEntity getByCode(String code);
 
+    /**
+     * 更新对账单 兼容对1对多场景兼容
+     * @param dto
+     */
+    void updateReconciliation(TmsFirstMileReconciliationDTO.UpdateDTO dto);
+
     PagingVO<TmsFirstMileReconciliationDTO.ListDTO> exportFirstMileReconciliation(PagingDTO<TmsFirstMileReconciliationDTO.ExportDTO> dto);
+
+    /**
+     * 根据物流单获取对账单信息和费用数据
+     * @param ids
+     * @return
+     */
+    List<TmsFirstMileLogisticDTO.ReconciliationDTO> listReconciliationAndCostByBillIds(List<String> ids);
 }

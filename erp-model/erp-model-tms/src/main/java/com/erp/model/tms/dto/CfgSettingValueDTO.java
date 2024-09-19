@@ -93,7 +93,7 @@ public class CfgSettingValueDTO implements Serializable {
     }
 
     /**
-     * 对账周期
+     * 生成设置
      */
     @Data
     @NoArgsConstructor
@@ -120,6 +120,27 @@ public class CfgSettingValueDTO implements Serializable {
          * 报关对账日期
          */
         private Integer declareReconciliationDate;
+        /**
+         * 头程分摊类型，/wms/dict/drop/down?type=reconciliationType
+         */
+        @NotBlank(message = "头程分摊类型不能为空")
+        private String firstMileAllocationType;
+
+        /**
+         * 头程分摊日期
+         */
+        private Integer firstMileAllocationDate;
+
+//        /**
+//         * 小包分摊类型，/wms/dict/drop/down?type=reconciliationType
+//         */
+//        @NotBlank(message = "小包报关对账类型不能为空")
+//        private String packageAllocationType;
+//
+//        /**
+//         * 小包分摊日期
+//         */
+//        private Integer packageAllocationDate;
     }
 
     /**
@@ -158,5 +179,49 @@ public class CfgSettingValueDTO implements Serializable {
          * B2B报关生成时机，/tms/drop/down/dict/list?key=billGenerateTiming
          */
         private String b2BDeclareGenerateTiming;
+    }
+
+    /**
+     * 分摊设置
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AllocationSettingDTO {
+
+
+        /**
+         * 重量分摊-头程费用配置
+         * http://172.16.100.11:3002/project/128/interface/api/25522   key=weightAllocation
+         *
+         */
+
+        private String weightFirstAllocation;
+        /**
+         * 重量分摊-小包费用配置
+         */
+        private String weightPackageAllocation;
+
+        /**
+         * 费用分摊-头程-运费
+         * http://172.16.100.11:3002/project/128/interface/api/25522   key= firstMileCostAllocation
+         *
+         */
+        private String firstShippingCost;
+        //费用分摊-头程-关税费用
+        private String firstTariffFee;
+        //费用分摊-头程-其他税费
+        private String firstOtherTaxFee;
+        //费用分摊-头程-其他费用
+        private String firstOtherFee;
+
+        /**
+         * 费用分摊-小包-运费
+         * http://172.16.100.11:3002/project/128/interface/api/25522   key=packageCostAllocation
+         */
+        private String packageShippingCost;
+        //费用分摊-小包-关税费用
+        private String packageTariffFee;
+        //费用分摊-小包-其他费用
+        private String packageOtherFee;
     }
 }

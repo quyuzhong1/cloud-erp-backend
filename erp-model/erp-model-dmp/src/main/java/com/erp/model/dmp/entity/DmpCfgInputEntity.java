@@ -62,6 +62,11 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
     */
     @TableField("extend_json")
     private String extendJson;
+    /**
+    * 是否主任务：true(主任务) false(非主任务)
+    */
+    @TableField("is_main_task")
+    private String isMainTask;
     
     public static final String SYSTEM_ID = "system_id";
 

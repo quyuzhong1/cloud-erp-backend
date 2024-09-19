@@ -1059,6 +1059,8 @@ public enum ApiError implements Serializable {
     ERROR_92256(92256,"来源单号不同不能同时打印"),
     ERROR_92257(92257,"来源单号未找到"),
     ERROR_92258(92258,"请选择拣货单"),
+    ERROR_92259(92259,"当前周期【{}】单号【{}】已存在对账单记录"),
+    ERROR_92260(92260,"同一个单【{}】同一个月份【{}】仅可生成一次对账单"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
@@ -1145,6 +1147,7 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 
     ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
+    ERROR_92241(92241, "已进行费用分摊，不能进行反审核"),
 
 
     /**

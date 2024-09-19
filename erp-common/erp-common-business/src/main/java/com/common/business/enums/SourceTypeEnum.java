@@ -59,7 +59,7 @@ public enum SourceTypeEnum {
     STOCKTAKING_PROFIT("stocktakingTaskProfit", "盘盈单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
-    FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单","first_mile_delivery"),
+    FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     FIRST_MILE_DELIVERY_TO_ULANZI("firstMileDeliveryToUlanzi", "头程发货单（发货仓->优蓝子中转仓）","first_mile_delivery_to_ulanzi"),
     FIRST_MILE_DELIVERY_FROM_ULANZI("firstMileDeliveryFromUlanzi", "头程发货单（优蓝子中转仓->目的在途仓）","first_mile_delivery_from_ulanzi"),
     FBA_INVENTORY("fbaInventory", "FBA仓库","fba_inventory"),
@@ -197,6 +197,8 @@ public enum SourceTypeEnum {
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
+    PILOT_APPLICATION("pilotApplication", "试产量产单", "pilot_application"),
+    FIRST_MILE_ESTIMATED("first_mile_estimated", "头程暂估账单", "first_mile_estimated_bill"),
     ;
 
     /**

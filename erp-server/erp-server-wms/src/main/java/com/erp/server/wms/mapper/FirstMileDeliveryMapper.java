@@ -34,6 +34,7 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     * @return
     */
     IPage<FirstMileDeliveryDTO.ListDTO> paging(Page query, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
+    IPage<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(Page query, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
 
     /**
     * 状态数量
@@ -102,4 +103,24 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
 
     List<TmsDeclareBillDTO.DeliveryDTO> getGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO dto);
 
+    /**
+     * 根据编码获取发货明细列表
+     * @param codes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(@Param("codes") List<String> codes,@Param("sourceCodes") List<String> sourceCodes);
+
+    /**
+     * 根据发货单获取业务单号
+     * @param ids
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 根据发货单获取业务单号
+     * @param deliveryCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(@Param("deliveryCodes") List<String> deliveryCodes);
 }

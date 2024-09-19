@@ -632,6 +632,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelIgnore
         private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
 
         /**
          * 运单号
@@ -1517,4 +1521,69 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String logisticsSupplierName;
     }
 
+    /**
+     * 生成头程暂估账单需要的参数
+     */
+    @Data
+    public static class WeightAllocationDTO{
+        /**
+         * 头程物流单ID
+         */
+        private String logisticsBillId;
+        /**
+         * 来源ID
+         */
+        private String sourceId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 业务单号
+         * FBA：取值FBA货件单号
+         * 第三方仓：海外仓入库单号
+         */
+        private String businessCode;
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
+        /**
+         * 物流商ID
+         */
+        private String supplierId;
+        /**
+         * 店铺ID
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 目的国家编码
+         */
+        private String toCountry;
+
+        /**
+         * 物流渠道ID
+         */
+        private String channelId;
+    }
+
+    /**
+     * 对账单参数和费用表记录
+     */
+    @Data
+    public static class ReconciliationDTO {
+        private String id;
+        private String logisticsBillId;
+        private String reconciliationStatus;
+        private BigDecimal actualWeight;
+        private BigDecimal volumeWeight;
+        private BigDecimal weightLogistics;
+        private BigDecimal volumeWeightLogistics;
+        private String weightUnit;
+        private String currency;
+    }
 }

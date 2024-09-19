@@ -1,11 +1,13 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -219,4 +221,95 @@ public class ProjectTaskDTO  implements Serializable {
      * 任务关注人集合
      */
     private List<String> concernUserIdList;
+
+    @Data
+    public static class PagingParamDTO{
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 只能查询已添加sku关联SPU下的任务
+         */
+        @NotEmpty(message = "请选择SKU后才能添加任务")
+        private List<String> skuIdList;
+    }
+
+    @Data
+    public static class SimpleViewDTO{
+        /**
+         * 任务ID
+         */
+        private String id;
+        /**
+         * 任务名称
+         */
+        private String name;
+        /**
+         * 任务负责人ID
+         */
+        private String chargeId;
+        /**
+         * 任务负责人名称
+         */
+        private String chargeName;
+        /**
+         * 阶段ID
+         */
+        private String phaseId;
+        /**
+         * 阶段名称
+         */
+        private String phaseName;
+        /**
+         * 产品ID
+         */
+        private String productId;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 任务状态
+         */
+        private int status;
+        /**
+         * 任务状态名称
+         */
+        private String statusName;
+        /**
+         * spu编码
+         */
+        private String spuNo;
+        /**
+         * 附件名称集合
+         */
+        private List<String> attachNameList;
+        /**
+         * 附件URL集合
+         */
+        private List<String> attachUrlList;
+        /**
+         * 拼接好的任务关联sku
+         */
+        private String skuNoStr;
+    }
+
+    @Data
+    public static class Spu2SkuMapping{
+        /**
+         * spuNo
+         */
+        private String spuNo;
+        /**
+         * 拼接好的skuNo串
+         */
+        private String skuNoStr;
+    }
 }

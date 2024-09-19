@@ -119,14 +119,14 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
      */
     private void submitAndApprove(String id) {
         //提交
-        Boolean submit = transferInfoService.submit(Arrays.asList(id));
+        Boolean submit = transferInfoService.submit(Arrays.asList(id), Boolean.FALSE);
         if (!submit) {
             throw new ServiceException(ApiError.ERROR_1042);
         }
         //审核
         TransferInfoEntity entity = transferInfoService.getById(id);
         if (Objects.nonNull(entity)){
-            transferInfoService.approve(entity,WmsConstant.PASS, "", null,Boolean.FALSE);
+            transferInfoService.approve(entity,WmsConstant.PASS, "", null,Boolean.TRUE, Boolean.FALSE);
         }
     }
 

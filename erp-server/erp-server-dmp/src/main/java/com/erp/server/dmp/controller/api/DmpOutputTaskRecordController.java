@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.QueryParam;
@@ -8,6 +9,7 @@ import com.common.business.wrapper.QueryTypeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -146,6 +149,36 @@ public class DmpOutputTaskRecordController extends BaseController {
     public ApiResult<BaseResultDTO.AddDTO> addOutputBlack(@RequestBody @Validated DmpOutputTaskRecordDTO.AddOutputBlackDTO dto) {
         Boolean flag = dmpOutputTaskRecordService.addOutputBlack(dto);
         return flag ? success() : failure();
+    }
+
+    /**
+     * 取消黑名单
+     * @Author Luo_WG
+     * @Date 2024/9/11 19:27
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/cancelOutputBlack")
+    @LogAction(value = LogActionEnum.DELETE, desc = "取消黑名单")
+    public ApiResult<?> cancelOutputBlack(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = dmpOutputTaskRecordService.cancelOutputBlack(id);
+            } catch (Exception e) {
+                log.error("取消黑名单 取消失败", e);
+                DmpOutputTaskRecordEntity entity = dmpOutputTaskRecordService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "数据不存在, 取消失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

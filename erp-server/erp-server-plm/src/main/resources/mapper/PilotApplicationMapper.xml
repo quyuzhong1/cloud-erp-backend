@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.PilotApplicationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.PilotApplicationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="version" property="version" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="order_status" property="orderStatus" />
+       <result column="remark" property="remark" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_time" property="approveTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        is_deleted,
+        version,
+        code, approve_status, order_status, remark, approve_user_id, approve_time
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.PilotApplicationDTO$ListDTO">
+        select pa.id,
+               pa.code,
+               pa.approve_status approveStatus,
+               pa.order_status orderStatus,
+               pa.bill_date billDate,
+               pa.remark,
+               pa.approve_user_id approveUserId,
+               pa.create_user_id createUserId,
+               pa.create_user_name createUserName,
+               pa.create_time createTime,
+               pad.id detailId,
+               pad.type,
+               pad.sku_id skuId,
+               pad.sku_no skuNo,
+               pad.apply_qty appluQty,
+               pad.approve_qty approveQty,
+               pad.business_type businesType,
+               pad.main_supplier_id mainSupplierId,
+               pad.second_supplier_id secondSupplierId,
+               pad.expect_arrive_date expectArriveDate,
+               pad.remark detailRemark
+        from pilot_application pa
+                 left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
+        <where>
+            pa.is_deleted = false ${params.sqlMap.default}
+            <if test="approveStatus != null and approveStatus != ''">
+                and pa.approve_status = #{approveStatus}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                and pa.order_status = #{order_status}
+            </if>
+            <if test="approveUserId != null and approveUserId != ''">
+                and pa.approve_user_id = #{approveUserId}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pa.create_time DESC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from pilot_application where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExportByParams" resultType="com.erp.model.plm.dto.PilotApplicationDTO$ListDTO">
+        select  pa.id,
+                pa.code,
+                pa.approve_status approveStatus,
+                pa.order_status orderStatus,
+                pa.bill_date billDate,
+                pa.remark,
+                pa.approve_user_id approveUserId,
+                pa.create_user_id createUserId,
+                pa.create_user_name createUserName,
+                pa.create_time createTime,
+                pad.id detailId,
+                pad.type,
+                pad.sku_id skuId,
+                pad.sku_no skuNo,
+                pad.apply_qty appluQty,
+                pad.approve_qty approveQty,
+                pad.business_type businesType,
+                pad.main_supplier_id mainSupplierId,
+                pad.second_supplier_id secondSupplierId,
+                pad.expect_arrive_date expectArriveDate,
+                pad.remark detailRemark
+        from pilot_application pa
+            left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
+        <where>
+            pa.is_deleted = false ${params.sqlMap.default}
+            <if test="approveStatus != null and approveStatus != ''">
+                and pa.approve_status = #{approveStatus}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                and pa.order_status = #{order_status}
+            </if>
+            <if test="approveUserId != null and approveUserId != ''">
+                and pa.approve_user_id = #{approveUserId}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pa.create_time DESC
+    </select>
+    <select id="tabList" resultType="java.lang.Integer">
+        select count(1)
+        from pilot_application pa
+            left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
+        <where>
+            pa.is_deleted = false
+            <if test="approveStatus != null and approveStatus != ''">
+                and pa.approve_status = #{approveStatus}
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                and pa.order_status = #{orderStatus}
+            </if>
+            <if test="approveUserId != null and approveUserId != ''">
+                and pa.approve_user_id = #{approveUserId}
+            </if>
+        </where>
+    </select>
+    <select id="listExportByIds" resultType="com.erp.model.plm.dto.PilotApplicationDTO$ListDTO">
+        select  pa.id,
+                pa.code,
+                pa.approve_status approveStatus,
+                pa.order_status orderStatus,
+                pa.bill_date billDate,
+                pa.remark,
+                pa.approve_user_id approveUserId,
+                pa.create_user_id createUserId,
+                pa.create_user_name createUserName,
+                pa.create_time createTime,
+                pad.id detailId,
+                pad.type,
+                pad.sku_id skuId,
+                pad.sku_no skuNo,
+                pad.apply_qty appluQty,
+                pad.approve_qty approveQty,
+                pad.business_type businesType,
+                pad.main_supplier_id mainSupplierId,
+                pad.second_supplier_id secondSupplierId,
+                pad.expect_arrive_date expectArriveDate,
+                pad.remark detailRemark
+        from pilot_application pa
+            left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
+        <where>
+            pa.is_deleted = false
+            pa.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pa.create_time DESC
+    </select>
+    <select id="pagingByParam" resultType="com.erp.model.plm.dto.PilotApplicationDTO$ListDTO">
+        select  pa.id,
+                pa.code,
+                pa.approve_status approveStatus,
+                pa.bill_date billDate,
+                pa.remark,
+                pa.approve_user_id approveUserId,
+                pa.create_user_id createUserId,
+                pa.create_user_name createUserName,
+                pa.create_time createTime,
+                pad.id detailId,
+                pad.type,
+                pad.sku_id skuId,
+                pad.sku_no skuNo,
+                pad.main_supplier_id mainSupplierId,
+                pad.second_supplier_id secondSupplierId,
+                pad.expect_arrive_date expectArriveDate,
+                pad.remark detailRemark,
+                pad.apply_qty applyQty,
+                pad.approve_qty approveQty,
+                pad.purchase_apply_qty purchaseApplyQty,
+                pad.business_type businessType,
+                pad.order_status orderStatus
+        from pilot_application pa
+        left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and pa.is_deleted = false
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pa.create_time DESC
+    </select>
+    <select id="exportList" resultType="com.erp.model.plm.dto.PilotApplicationDTO$ListDTO">
+        select  pa.id,
+                pa.code,
+                pa.approve_status approveStatus,
+                pa.bill_date billDate,
+                pa.remark,
+                pa.approve_user_id approveUserId,
+                pa.create_user_id createUserId,
+                pa.create_user_name createUserName,
+                pa.create_time createTime,
+                pad.id detailId,
+                pad.type,
+                pad.sku_id skuId,
+                pad.sku_no skuNo,
+                pad.main_supplier_id mainSupplierId,
+                pad.second_supplier_id secondSupplierId,
+                pad.expect_arrive_date expectArriveDate,
+                pad.remark detailRemark,
+                pad.apply_qty applyQty,
+                pad.approve_qty approveQty,
+                pad.purchase_apply_qty purchaseApplyQty,
+                pad.business_type businessType,
+                pad.order_status orderStatus
+        from pilot_application pa
+            left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and pa.is_deleted = false
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pa.create_time DESC
+    </select>
+
+</mapper>

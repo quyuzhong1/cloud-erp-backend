@@ -44,9 +44,11 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -72,6 +74,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,6 +87,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_DELIVERY;
 
@@ -257,6 +261,44 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+    @Override
+    public PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page<FirstMileDeliveryDTO.ListFirstMileDTO> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<FirstMileDeliveryDTO.ListFirstMileDTO> pageData = this.baseMapper.pagingFirstMile(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillFirstMileList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillFirstMileList(List<FirstMileDeliveryDTO.ListFirstMileDTO> records) {
+        if (CollectionUtils.isEmpty(records)){
+            return;
+        }
+        List<String> skuIds = records.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSkuId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)){
+            return;
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuVOList)){
+            return;
+        }
+        Map<String, String> skuMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+//        List<String> deliveryIds = records.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSourceId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+//        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOS = baseMapper.getBusinessCodeByIds(deliveryIds);
+        records.forEach(listFirstMileDTO -> {
+            if (StrUtil.isNotBlank(listFirstMileDTO.getSkuId())){
+                listFirstMileDTO.setProductName(skuMap.get(listFirstMileDTO.getSkuId()));
+            }
+//            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), listFirstMileDTO.getSourceId())).findFirst().orElse(null);
+//            if (Objects.nonNull(businessDTO)){
+//                listFirstMileDTO.setBusinessCode(businessDTO.getBusinessCode());
+//            }
+        });
     }
 
     @Override
@@ -787,6 +829,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             matchRuleDTO.setType(StockOutTransferTypeEnum.FIRST_MILE.getCode());
             matchRuleDTO.setReceiveCountry(entity.getCountryId());
             matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
+            matchRuleDTO.setFromWarehouse(entity.getDeliveryWarehouseId());
             Boolean isMatchRule = cfgRuleOutService.matchTransferRule(matchRuleDTO);
             //发货仓与中转仓一致
             CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = getTransitSettingDTO();
@@ -808,8 +851,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .build();
             try {
                 if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
-                   Boolean autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
-                   if(autoGenerateResult){
+                    BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                   if(autoGenerateResult.getSuccess()){
                        FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                        updateStatusDTO.setIds(Arrays.asList(entity.getId()));
                        updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
@@ -1701,6 +1744,31 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
 
     @Override
+    public List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(List<String> codes,List<String> sourceCodes) {
+        if (CollectionUtils.isEmpty(codes) && CollectionUtils.isEmpty(sourceCodes)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDetailByCodes(codes,sourceCodes);
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto) {
+        //汇总 亚马逊签收报告/第三方仓签收报告签收数量
+        List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList1 = overseasWarehouseInboundService.countReceiveQtyByParams(dto);
+        List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList2 =fbaShipmentReceiveService.countReceiveQtyByParams(dto);
+        return Stream.concat(receiveDTOList1.stream(),receiveDTOList2.stream()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds( List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getBusinessCodeByIds(ids);
+    }
+
+
+    @Override
     public PagingVO<FirstMileDeliveryDTO.ListDTO> exportFbaDelivery(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
         Page<FirstMileDeliveryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
@@ -1708,6 +1776,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(List<String> deliveryCodes) {
+        if (CollectionUtils.isEmpty(deliveryCodes)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getBusinessCodeByCodes(deliveryCodes);
     }
 
     @Override
@@ -1751,14 +1827,28 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(CollectionUtils.isEmpty(result)){
             return new ArrayList<>();
         }
-        List<String> ids = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
+        List<String> outStockIds = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
+        //会存在已要货申请id下推装箱任务
+        List<String> sourceIds = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getSourceId).collect(Collectors.toList());
+        List<String> ids = Stream.concat(outStockIds.stream(), sourceIds.stream()).distinct().collect(Collectors.toList());
         //箱子明细信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
         Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
+        //国家名称填充
+        List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
         //设置箱子明细信息
         result.forEach(v->{
             List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
+            if (CollectionUtils.isEmpty(list) && StrUtil.isNotBlank(v.getSourceId())){
+                list = packingDetailMap.get(v.getSourceId());
+            }
             v.setPackingDTOList(list);
+            if (StrUtil.isNotBlank(v.getToCountry())){
+                DictCountryDTO.ListDTO listDTO = listDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), v.getToCountry())).findFirst().orElse(null);
+                if (Objects.nonNull(listDTO)){
+                    v.setToCountryName(listDTO.getNameCn());
+                }
+            }
         });
         return result;
     }
@@ -2148,12 +2238,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
         }
         //提交
-        transferInfoService.submit(Arrays.asList(transferId));
+        transferInfoService.submit(Arrays.asList(transferId), Boolean.FALSE);
         //审核
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setIds(Arrays.asList(transferId));
         baseApproveParamDTO.setType(ApproveType.PASS);
-        transferInfoService.approve(entity,ApproveType.PASS,"", null, Boolean.TRUE);
+        transferInfoService.approve(entity,ApproveType.PASS,"", null, Boolean.TRUE, Boolean.FALSE);
     }
 }
 

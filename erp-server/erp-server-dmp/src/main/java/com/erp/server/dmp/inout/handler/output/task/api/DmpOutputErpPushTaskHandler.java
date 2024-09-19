@@ -146,6 +146,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		}
 		
 		String parentId = dmpPushMsgEntity.getParentId();
+		String requestData = dmpOutputTaskRecordEntity.getRequestData();
 		if(StringUtils.isNotBlank(parentId) && "operateApprove".equals(dmpPushMsgEntity.getSyncOperate())) {
 			String[] split = parentId.split(",");
 			for(String s : split) {
@@ -179,6 +180,12 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					return;
 				}
 			}
+			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+			if(CollUtil.isNotEmpty(erpQuerySync)) {
+				requestData = erpQuerySync.get(0).getRequestData();
+			}else {
+				return;
+			}
 		}
 		
 		String id = dmpOutputTaskRecordEntity.getId();
@@ -192,38 +199,40 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		String status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
 		String responseData = "";
 		String message = "";
-		try {
-			method = bean.getClass().getMethod(outputMethod, Object.class);
-		} catch (NoSuchMethodException | SecurityException e) {
-			status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-			responseData = "获取" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
-			message = "获取" + apiClass + "的" + outputMethod + "方法报错";
-		}
-		try {
-			Object invoke = method.invoke(bean, dmpOutputTaskRecordEntity.getRequestData());
-			if(invoke instanceof ApiResult) {
-				ApiResult apiResult = (ApiResult)invoke;
-				if(!apiResult.isSuccess()) {
-					status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-					responseData = apiResult.getMsg();
-					if(systemCode.equals(DmpBasicSystemCodeEnum.WDT.getCode()) && responseData != null && responseData.startsWith("单据推送成功，当前状态：")) {
-						return;
+		if(StringUtils.isNotBlank(requestData) && !"null".equals(requestData)) {
+			try {
+				method = bean.getClass().getMethod(outputMethod, Object.class);
+			} catch (NoSuchMethodException | SecurityException e) {
+				status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+				responseData = "获取" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
+				message = "获取" + apiClass + "的" + outputMethod + "方法报错";
+			}
+			try {
+				Object invoke = method.invoke(bean, requestData);
+				if(invoke instanceof ApiResult) {
+					ApiResult apiResult = (ApiResult)invoke;
+					if(!apiResult.isSuccess()) {
+						status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+						responseData = apiResult.getMsg();
+						if(systemCode.equals(DmpBasicSystemCodeEnum.WDT.getCode()) && responseData != null && responseData.startsWith("单据推送成功，当前状态：")) {
+							return;
+						}
 					}
 				}
+				try {responseData = JSON.toJSONString(invoke);} catch (Exception e) {}
+			} catch (InvocationTargetException e) {
+				Throwable targetException = e.getTargetException();
+				status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+				responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(targetException);
+				message = "调用" + apiClass + "的" + outputMethod + "方法报错" + targetException.getMessage();
+			} catch (IllegalAccessException | IllegalArgumentException e) {
+				status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
+				responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
+				message = "调用" + apiClass + "的" + outputMethod + "方法报错";
 			}
-			try {responseData = JSON.toJSONString(invoke);} catch (Exception e) {}
-		} catch (InvocationTargetException e) {
-			Throwable targetException = e.getTargetException();
-			status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-			responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(targetException);
-			message = "调用" + apiClass + "的" + outputMethod + "方法报错" + targetException.getMessage();
-		} catch (IllegalAccessException | IllegalArgumentException e) {
-			status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-			responseData = "调用" + apiClass + "的" + outputMethod + "方法报错" + ExceptionUtil.stacktraceToOneLineString(e);
-			message = "调用" + apiClass + "的" + outputMethod + "方法报错";
-		}
-		if(!status.equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
-			responseData = "traceId=【" + MDC.get("traceId") + "】" + responseData;
+			if(!status.equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
+				responseData = "traceId=【" + MDC.get("traceId") + "】" + responseData;
+			}
 		}
 		dmpOutputUtils.updateStatus(id, status, responseData , message);
 	}

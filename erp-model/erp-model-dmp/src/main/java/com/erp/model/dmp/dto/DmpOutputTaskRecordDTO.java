@@ -154,6 +154,11 @@ public class DmpOutputTaskRecordDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 是在黑名单
+         */
+        private Boolean isBlack;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
@@ -216,8 +221,8 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     @AllArgsConstructor
     public static class TabListDTO {
         /**
-         * 类型：/dmp/common/enumDropDown?type=DmpOutputTaskRecordStatus
-         * all全部、init:待推送、mqsuccess:mq推送成功、mqerror:mq推送失败、cosumererror:消费失败、finish:推送成功、error:推送失败、0:无需同步
+         * 类型：/dmp/common/enumDropDown?type=DmpPushMonitorTab
+         * all全部、init:待推送、pushIng:推送中、finish:推送成功、error:推送失败、noNeedSync:无需同步
          */
         private String tabFlag;
 
@@ -284,5 +289,30 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * 主键id
          */
         private List<String> ids;
+    }
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WdtInsufficientInventoryDTO {
+        /**
+         * 仓库
+         */
+        private String warehouse;
+
+        /**
+         * 仓位
+         */
+        private String position;
+
+        /**
+         * sku
+         */
+        private String sku;
+
+        /**
+         * 数量
+         */
+        private Integer num = 0;
     }
 }

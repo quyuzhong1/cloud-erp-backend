@@ -15,4 +15,25 @@
         <result column="detail_id" property="detailId"/>
         <result column="receive_locale_date" property="receiveLocaleDate"/>
     </resultMap>
+    <select id="countReceiveQtyByParams" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ReceiveDTO">
+        SELECT
+            fs.code as businessCode,
+            fsr.msku as platformSkuNo,
+            fsr.sku_id,
+            SUM(CASE WHEN fsr.receive_date >= DATE_TRUNC('month', #{params.month}::date - INTERVAL '1 month') AND DATE_TRUNC('month', #{params.month}::date) > fsr.receive_date THEN fsr.receive_qty ELSE 0 END) AS  lastMonthReceiveQty,
+            SUM(CASE WHEN EXTRACT(YEAR FROM fsr.receive_date) = EXTRACT(YEAR FROM #{params.month}::date) AND EXTRACT(MONTH FROM fsr.receive_date) = EXTRACT(MONTH FROM #{params.month}::date) THEN fsr.receive_qty ELSE 0 END) AS  currentMonthReceiveQty,
+            SUM(CASE WHEN DATE_TRUNC('month', #{params.month}::date) >= DATE_TRUNC('month', fsr.receive_date) AND fsr.receive_date >= '2024-01-01' THEN fsr.receive_qty ELSE 0 END) AS  asCurrentMonthReceiveQty,
+            SUM(CASE WHEN DATE_TRUNC('month', #{params.month}::date - INTERVAL '1 month') >= DATE_TRUNC('month', fsr.receive_date) AND fsr.receive_date >= '2024-01-01' THEN fsr.receive_qty  ELSE 0 END) AS  asLastMonthReceiveQty
+        FROM fba_shipment fs
+        left join fba_shipment_detail fsd on fsd.main_id = fs.id and fsd.is_deleted = FALSE
+        left join fba_shipment_receive fsr on fsd.id = fsr.detail_id and fsr.is_deleted = FALSE
+        WHERE fs.is_deleted = FALSE
+        <if test="params.businessCodes != null and params.businessCodes.size > 0">
+            and fs.code in
+            <foreach collection="params.businessCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY businessCode,fsr.sku_id,platformSkuNo
+    </select>
 </mapper>

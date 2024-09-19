@@ -42,4 +42,6 @@ public interface DmpCfgInputService extends SuperService<DmpCfgInputEntity> {
      * @return java.util.List<com.erp.model.dmp.dto.DmpCfgInputDTO.ListDmpCfgInputDTO>
      **/
     List<DmpCfgInputDTO.ListDmpCfgInputDTO> listDmpCfgInput(String id);
+
+
 }
