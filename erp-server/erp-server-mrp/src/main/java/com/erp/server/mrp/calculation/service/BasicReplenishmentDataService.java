@@ -152,7 +152,7 @@ public class BasicReplenishmentDataService {
      *
      * @param calculationDate 计算日期
      */
-    public void calculationDetail() {
+    public void calculationDetail(List<String> suggestionIds) {
         List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
         //获取备货默认配置
         List<CfgRuleStockUpEntity> defaultStockUpList = cfgRuleStockUpService.getDefaultCfgRuleStockUp();
@@ -167,7 +167,7 @@ public class BasicReplenishmentDataService {
         List<CfgRuleSalesFormulaEntity> defaultFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(defaultSalesQtyIds);
         List<CfgRuleSalesDenoisingEntity> defaultDenoisingList = cfgRuleSalesDenoisingService.listBySalesQtyIdList(defaultSalesQtyIds);
         //查询所有需要计算得数据
-        List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData();
+        List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(suggestionIds);
         List<List<ReplenishmentResultDTO>> partition = Lists.partition(suggestions, 1000);
         for (List<ReplenishmentResultDTO> list : partition) {
             CompletableFuture.runAsync(() -> {
@@ -265,13 +265,13 @@ public class BasicReplenishmentDataService {
                 .filter(v -> v.getKey().equals(CfgSettingEnum.REPLENISHMENT_DAYS.getCode()))
                 .findFirst()
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_NEWS_NOT_EXIST));
-        suggestions.parallelStream()
-                .forEach(entity -> {
+        List<String> suggestionIds = suggestions.parallelStream()
+                .map(entity -> {
                     ReplenishmentSuggestionDetailEntity detail = new ReplenishmentSuggestionDetailEntity();
                     //计算是否新品
                     ProductSaleEntity sale = productSaleList.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(sale) || ObjectUtils.isEmpty(sale.getListingTime())) {
-                        return;
+                        return null;
                     }
                     SkuVO skuVO = vos.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).findFirst().orElse(new SkuVO());
                     detail.setSalesPrice(skuVO.getRetailPrice());
@@ -306,12 +306,14 @@ public class BasicReplenishmentDataService {
                     replenishmentSuggestionDetailService.save(detail);
                     if (saleQty == 0) {
                         replenishmentSuggestionService.notRestockingReplenishment(entity.getId(), "上市超180天，360天内无销量的商品，系统自动标记暂不补货");
+                        return null;
                     } else {
                         salesInfoService.saveBatch(salesInfoList);
+                        return entity.getId();
                     }
-                });
+                }).filter(Objects::nonNull).collect(Collectors.toList());
         //计算数据
-        calculationDetail();
+        calculationDetail(suggestionIds);
     }
 
     /**
@@ -348,6 +350,7 @@ public class BasicReplenishmentDataService {
             info.setDate(localDate);
             info.setOriginalInventoryQty(Optional.ofNullable(localDateMap.get(localDate)).orElse(0));
             info.setOriginalSalesQty(Optional.ofNullable(salesMap.get(localDate)).orElse(0));
+            info.setCalcVersion(detail.getCalcVersion());
             salesInfo.add(info);
         }
         return salesInfo;

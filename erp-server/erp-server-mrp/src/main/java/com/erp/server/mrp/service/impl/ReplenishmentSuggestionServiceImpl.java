@@ -891,7 +891,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             List<SalesInfoEntity> salesInfos = replenishmentResult.getSalesInfos().stream()
                     .map(v -> ReplenishmentResultDTO.SalesInfoDTO.buildSalesInfo(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
                     .collect(Collectors.toList());
-            salesInfoService.saveBatch(salesInfos);
+            salesInfoService.saveOrUpdateBatch(salesInfos);
         }
         if (CollectionUtils.isNotEmpty(replenishmentResult.getSalesEstimates())) {
             List<SalesEstimateEntity> salesEstimates = replenishmentResult.getSalesEstimates().stream()
@@ -912,14 +912,15 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             purchaseSuggestService.saveBatch(purchaseSuggests);
         }
 
-        replenishmentSuggestionDetailService.save(entity);
+        replenishmentSuggestionDetailService.saveOrUpdate(entity);
     }
 
     @Override
-    public List<ReplenishmentResultDTO> listAllCalculationData() {
+    public List<ReplenishmentResultDTO> listAllCalculationData(List<String> ids) {
         //查询主表数据
         List<ReplenishmentSuggestionEntity> entities = list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
                 .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
+                .in(CollectionUtils.isNotEmpty(ids), ReplenishmentSuggestionEntity::getId, ids)
                 .orderByAsc(ReplenishmentSuggestionEntity::getSkuId));
         List<String> suggestionIds = entities.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(suggestionIds)) {

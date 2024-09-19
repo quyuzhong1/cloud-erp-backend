@@ -263,7 +263,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult);
 
 
-    List<ReplenishmentResultDTO> listAllCalculationData();
+    List<ReplenishmentResultDTO> listAllCalculationData(List<String> suggestionIds);
 
     /**
      * 库存预测

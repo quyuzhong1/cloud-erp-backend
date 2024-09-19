@@ -35,25 +35,26 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
         if (ObjectUtils.isEmpty(salesEstimate)) {
             return;
         }
+        BigDecimal estimateQty = (salesEstimate.getQty().compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ONE : salesEstimate.getQty();
         //FBA可售天数 FBA可用 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getFbaUsableQty())) {
             replenishmentResultDTO.getReplenishmentDetail().setFbaSellableDays(new BigDecimal(detail.getFbaUsableQty())
-                    .divide(salesEstimate.getQty(), 0, RoundingMode.FLOOR).intValue());
+                    .divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
         }
         //海外仓可售天数 海外仓总库存 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getOverseasUsableQty())) {
             replenishmentResultDTO.getReplenishmentDetail().setOverseasSellableDays(new BigDecimal(detail.getOverseasUsableQty())
-                    .divide(salesEstimate.getQty(), 0, RoundingMode.FLOOR).intValue());
+                    .divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
         }
         //本地可售天数 本地总库存 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getLocalUsableQty())) {
             replenishmentResultDTO.getReplenishmentDetail().setLocalSellableDays(new BigDecimal(detail.getLocalUsableQty())
-                    .divide(salesEstimate.getQty(), 0, RoundingMode.FLOOR).intValue());
+                    .divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
         }
         //总库存可售天数 总库存 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getTotalInventoryQty())) {
             replenishmentResultDTO.getReplenishmentDetail().setTotalSellableDays(new BigDecimal(detail.getTotalInventoryQty())
-                    .divide(salesEstimate.getQty(), 0, RoundingMode.FLOOR).intValue());
+                    .divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
         }
     }
 }

@@ -563,6 +563,10 @@ public class ReplenishmentResultDTO {
     @Setter
     public static class SalesInfoDTO {
         /**
+         * id
+         */
+        private String id;
+        /**
          * 日期
          */
         private LocalDate date;
@@ -594,6 +598,7 @@ public class ReplenishmentResultDTO {
 
         public static SalesInfoDTO buildSalesInfoDTO(SalesInfoEntity entity) {
             SalesInfoDTO dto = new SalesInfoDTO();
+            dto.setId(entity.getId());
             dto.setDate(entity.getDate());
             dto.setOriginalSalesQty(entity.getOriginalSalesQty());
             dto.setOriginalInventoryQty(entity.getOriginalInventoryQty());
@@ -602,6 +607,7 @@ public class ReplenishmentResultDTO {
 
         public static SalesInfoEntity buildSalesInfo(SalesInfoDTO dto, String replenishmentDetailId, String calcVersion) {
             SalesInfoEntity entity = new SalesInfoEntity();
+            entity.setId(dto.getId());
             entity.setReplenishmentDetailId(replenishmentDetailId);
             entity.setDate(dto.getDate());
             entity.setSalesQty(dto.getSalesQty());

@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -617,5 +618,10 @@ public class ReplenishmentSuggestionController extends BaseController {
     @GetMapping("/initReplenishmentSku")
     public void initReplenishmentSku(@RequestParam(required = false) LocalDate calculationDate) {
         basicReplenishmentDataService.initReplenishmentSku(calculationDate);
+    }
+
+    @GetMapping("/calculationDetail")
+    public void calculationDetail() {
+        basicReplenishmentDataService.calculationDetail(Collections.emptyList());
     }
 }
