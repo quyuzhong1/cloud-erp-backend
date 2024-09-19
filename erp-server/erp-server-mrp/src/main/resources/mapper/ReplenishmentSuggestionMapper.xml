@@ -55,7 +55,7 @@
         <where>
             ${params.sqlMap.default}
             and rs.is_deleted = FALSE
-            <if test="params.favorite != null and params.favorite != ''">
+            <if test="params.favorite != null ">
                 and exists (select id from replenishment_suggestion_favorite where is_deleted = false and replenishment_suggestion_id =  rs.id and user_id = #{userId})
             </if>
         </where>
