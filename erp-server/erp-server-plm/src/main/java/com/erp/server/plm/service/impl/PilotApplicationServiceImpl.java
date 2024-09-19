@@ -329,21 +329,27 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationDTO.PagingParamDTO searchParam = new PilotApplicationDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<PilotApplicationDTO.TabListDTO> list = new ArrayList<>();
+        //待提交
         int waitSubmitCount = this.baseMapper.tabList(ApproveStatusEnum.WAIT_SUBMIT.getCode(), null, null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
-
+        //根据单据id查询审核流程
+        ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
+        dto.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
+        dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
+        dto.setCurApproveId(user.getUid());
+        List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
+        //待我审核
         int waitMeApproveCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE_ING.getCode(), null, user.getUid());
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_ME_APPROVE.getCode(), PilotApplicationTabEnum.WAIT_ME_APPROVE.getName(), waitMeApproveCount));
-
+        //不通过
         int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.REJECT.getCode(), PilotApplicationTabEnum.REJECT.getName(), rejectCount));
-
+        //未下单
         int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.NOT_ORDER.getCode(), PilotApplicationTabEnum.NOT_ORDER.getName(), notOrderCount));
-
+        //已下单
         int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.ORDER.getCode(), PilotApplicationTabEnum.ORDER.getName(), orderCount));
-
         return list;
     }
 

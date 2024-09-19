@@ -101,5 +101,46 @@
                  left join process_task_management ptm on pm.process_instance_id = ptm.process_instance_id and ptm.is_deleted = false
         where pm.business_id = #{businessId}
     </select>
+    <select id="listProcessByBusinessKey" parameterType="com.erp.model.workflow.dto.ProcessManagementDTO$TaskKeyInfoDTO" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
+        SELECT
+        ptm.id,
+        ptm.create_user_id,
+        ptm.create_user_name,
+        ptm.create_time,
+        ptm.update_user_id,
+        ptm.update_user_name,
+        ptm.update_time,
+        ptm.process_instance_id,
+        ptm.cur_activity_id,
+        ptm.task_id,
+        ptm.cur_approve_id,
+        ptm.start_time,
+        ptm.task_status,
+        ptm.timeout_status,
+        ptm.timeout_warn_time,
+        ptm.timeout_handle_time,
+        ptm.timeout_handle_type,
+        ptm.approve_time,
+        ptm.remark,
+        ptm.pre_activity_id,
+        ptm.execution_id,
+        ptm.approve_id,
+        ptm.cur_activity_name,
+        ptm.cur_approve_name,
+        ptm.approve_name,
+        pm.business_id
+        FROM process_task_management ptm
+        INNER JOIN process_management pm ON ptm.process_instance_id = pm.process_instance_id AND pm.is_deleted = false
+        WHERE ptm.is_deleted = false
+        <if test="params.taskStatus != null">
+          and ptm.task_status =#{params.taskStatus}
+        </if>
+        <if test="params.businessKey != null">
+          and pm.business_key =#{params.businessKey}
+        </if>
+        <if test="params.curApproveId != null">
+          and ptm.cur_approve_id =#{params.curApproveId}
+        </if>
+    </select>
 
 </mapper>
