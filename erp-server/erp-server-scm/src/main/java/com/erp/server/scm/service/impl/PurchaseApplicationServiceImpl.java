@@ -372,10 +372,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             dto.setDetailRemark(entity.getRemark());
             int qty = entity.getApplyQty().intValue() - purchaseQty.intValue();
             //采购单价赋值
-            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj ->
+                            obj.getSkuId().equals(entity.getSkuId())
                             && obj.getSupplierId().equals(entity.getSupplierId())
-                            && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())
-                            && (qty >= obj.getMinQty() && obj.getMaxQty() > qty))
+                            && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId()))
                     .findFirst().orElse(null);
             if (Objects.nonNull(viewDTO)){
                 dto.setTaxPrice(viewDTO.getTaxPrice());

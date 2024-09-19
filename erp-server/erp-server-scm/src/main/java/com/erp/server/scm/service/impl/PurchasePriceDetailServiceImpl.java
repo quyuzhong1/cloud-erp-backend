@@ -791,6 +791,9 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
                     .findFirst().orElse(null);
             if (Objects.nonNull(viewDTO)){
                 BeanMapperUtils.copy(viewDTO, dto);
+                dto.setPurchaseQty(updateDTO.getPurchaseQty());
+                dto.setPurchaseOrgId(updateDTO.getPurchaseOrgId());
+                dto.setSupplierId(updateDTO.getSupplierId());
                 dto.setCurrencySymbol(CurrencyEnum.getSymbolByCode(viewDTO.getCurrency()));
                 updateList.add(dto);
             }

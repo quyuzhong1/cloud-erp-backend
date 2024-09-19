@@ -710,10 +710,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //报价信息查询
             if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId())) {
                 //采购单价赋值
-                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())
+                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewDTOList.stream().filter(obj ->
+                                obj.getSkuId().equals(dto.getSkuId())
                                 && obj.getSupplierId().equals(dto.getSupplierId())
-                                && StrUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId())
-                                && (dto.getQty() >= obj.getMinQty() && obj.getMaxQty() > dto.getQty()))
+                                && StrUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
                         .findFirst().orElse(null);
                 if (Objects.nonNull(viewDTO)){
                     dto.setPrice(viewDTO.getTaxPrice());

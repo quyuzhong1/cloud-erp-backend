@@ -587,10 +587,10 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         //子件SKU默认取供应商报价
         if (isChild) {
-            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = priceList.stream().filter(obj ->
+                            obj.getSkuId().equals(entity.getSkuId())
                             && obj.getSupplierId().equals(entity.getSupplierId())
-                            && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId)
-                            && (entity.getQty() >= obj.getMinQty() && obj.getMaxQty() > entity.getQty()))
+                            && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId))
                     .findFirst().orElse(null);
             if (Objects.isNull(viewDTO)){
                 return;
