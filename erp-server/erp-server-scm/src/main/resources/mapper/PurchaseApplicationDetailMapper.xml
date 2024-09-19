@@ -37,7 +37,6 @@
         SELECT
             pa.source_id,
             pad.source_detail_id,
-            pad.sku_id,
             SUM ( pad.apply_qty ) qty
         FROM
             purchase_application as pa
@@ -52,8 +51,7 @@
             </if>
         GROUP BY
             pa.source_id,
-            pad.source_detail_id,
-            PAD.sku_id
+            pad.source_detail_id
     </select>
 
 </mapper>

@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -195,4 +196,8 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * 下推并提交采购申请
      */
     BatchResultDTO pushAndSubmitPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList);
+    /**
+     * 更新试产量产明细表的订单状态
+     */
+    void updateDetailByPilotApplicationDetailIds(Map<String,String> map);
 }

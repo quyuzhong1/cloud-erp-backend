@@ -10,6 +10,8 @@ import com.common.business.vo.LoginUser;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.entity.BaseEntity;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -126,6 +128,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private PurchaseApplicationDetailFeign purchaseApplicationDetailFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+//    @Resource
+//    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
+//    @Resource
+//    private NoticeMessageService noticeMessageService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -865,7 +871,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseApplicationDetailList = purchaseApplicationDetailFeign.listByMainIds(purchaseIds);
         }
         //采购入库数量
-        /*List<PurchaseApplicationDTO.ListDTO> purchaseList = new ArrayList<>();
+        List<PurchaseApplicationDTO.ListDTO> purchaseList = new ArrayList<>();
         for (PurchaseApplicationDetailEntity detailEntity : purchaseApplicationDetailList) {
             PurchaseApplicationDTO.ListDTO obj = new PurchaseApplicationDTO.ListDTO();
             obj.setPurchaseApplicationDetailId(detailEntity.getId());
@@ -873,7 +879,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             obj.setId(detailEntity.getPurchaseApplicationId());
             purchaseList.add(obj);
         }
-        purchaseList = purchaseApplicationFeign.listStockInQty(purchaseList);*/
+        purchaseList = purchaseApplicationFeign.listStockInQty(purchaseList);
         for(PilotApplicationDTO.ListDTO item : list) {
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
             item.setOrderStatusName(PilotPushPurchaseStatusEnum.getName(item.getOrderStatus()));
@@ -920,7 +926,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 item.setPurchaseApplyQty(sum);
             }
             //采购入库量
-            /*List<PurchaseApplicationEntity> collect1 = purchaseApplicationList.stream().filter(item1 -> item1.getSourceId().equals(item.getId())).collect(Collectors.toList());
+            List<PurchaseApplicationEntity> collect1 = purchaseApplicationList.stream().filter(item1 -> item1.getSourceId().equals(item.getId())).collect(Collectors.toList());
             List<String> purchaseIdList = collect1.stream().map(item1 -> item1.getId()).distinct().collect(Collectors.toList());
             List<String> detailIds = purchaseApplicationDetailList.stream()
                     .filter(item1 -> purchaseIdList.contains(item1.getPurchaseApplicationId()))
@@ -928,7 +934,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                     .collect(Collectors.toList());
             List<PurchaseApplicationDTO.ListDTO> purchaseList2 = purchaseList.stream().filter(obj1 -> detailIds.contains(obj1.getPurchaseApplicationDetailId())).collect(Collectors.toList());
             int sum = purchaseList2.stream().mapToInt(item1 ->  item1.getStockInQty() == null?0:item1.getStockInQty()).sum();
-            item.setStockInQty(sum);*/
+            item.setStockInQty(sum);
         }
     }
     /**
@@ -1091,18 +1097,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.listByIds(paramDTO.getDetailIds());
         List<String> ids = detailList.stream().map(PilotApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<PilotApplicationEntity> pilotList = this.lambdaQuery().in(PilotApplicationEntity::getId, ids).list();
-        List<PilotApplicationDetailEntity> pilotDetailList = this.pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, ids).list();
-
         for (PilotApplicationEntity entity : pilotList) {
             if (entity.getApproveStatus().compareTo(ApproveStatusEnum.APPROVE) != 0){
                 throw new ServiceException("只有已审核的单据允许下推采购申请单");
             }
-//            PilotApplicationDetailEntity detailEntity = pilotDetailList.stream().filter(r -> r.getMainId().equals(entity.getId())).findFirst().orElse(null);
-//            if(ObjectUtil.isNotEmpty(detailEntity)){
-//                if (detailEntity.getOrderStatus().equals(PilotPushPurchaseStatusEnum.ORDER.getCode())){
-//                    throw new ServiceException("已下单，不能下推");
-//                }
-//            }
+        }
+        for (PilotApplicationDetailEntity detailEntity : detailList) {
+            if (detailEntity.getOrderStatus().equals(PilotPushPurchaseStatusEnum.ORDER.getCode())){
+                throw new ServiceException("已下单，不能下推");
+            }
         }
         Map<String, PilotApplicationEntity> pilotMap = pilotList.stream().collect(Collectors.toMap(BaseEntity::getId, item2 -> item2));
         //sku信息
@@ -1111,7 +1114,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
         //根据试产量产单主键id查询采购申请单明细的集合
         List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> purchaseSkuQtyList = purchaseApplicationFeign.listSkuAndQty(ids);
-        Map<String, Integer> purchaseSkuQtyMap = purchaseSkuQtyList.stream().collect(Collectors.toMap(item -> item.getSourceId() + ":" + item.getSourceDetailId() + ":" + item.getSkuId(), item2 -> item2.getQty()));
+        Map<String, Integer> purchaseSkuQtyMap = purchaseSkuQtyList.stream().collect(Collectors.toMap(item -> item.getSourceId() + ":" + item.getSourceDetailId(), item2 -> item2.getQty()));
         List<PilotApplicationDTO.PushPurchaseApplicationDTO> resultList = new ArrayList<>(detailList.size());
         for (PilotApplicationDetailEntity detailEntity : detailList) {
             PilotApplicationDTO.PushPurchaseApplicationDTO dto = new PilotApplicationDTO.PushPurchaseApplicationDTO();
@@ -1130,10 +1133,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             }
             dto.setType(detailEntity.getType());
             dto.setTypeName(PilotApplicationTypeEnum.getName(detailEntity.getType()));
-            if(purchaseSkuQtyMap.containsKey(detailEntity.getMainId() + ":" + detailEntity.getId() + ":" + detailEntity.getSkuId())){
+            if(purchaseSkuQtyMap.containsKey(detailEntity.getMainId() + ":" + detailEntity.getId())){
                 //待申请量=批准数量-已下推的申请量
                 //已申请量
-                Integer qty = purchaseSkuQtyMap.get(detailEntity.getMainId() + ":" + detailEntity.getId() + ":" + detailEntity.getSkuId());
+                Integer qty = purchaseSkuQtyMap.get(detailEntity.getMainId() + ":" + detailEntity.getId());
                 //批准数量
                 Integer approveQty = detailEntity.getApproveQty();
                 dto.setSpareApplyQty(approveQty - qty);
@@ -1246,5 +1249,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public BatchResultDTO pushAndSubmitPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList) {
         PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(dtoList);
         return purchaseApplicationFeign.addAndSubmit(paramDto);
+    }
+
+    @Override
+    public void updateDetailByPilotApplicationDetailIds(Map<String,String> map){
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            //更新订单状态
+            pilotApplicationDetailService.lambdaUpdate()
+                    .set(PilotApplicationDetailEntity::getOrderStatus, entry.getValue())
+                    .eq(PilotApplicationDetailEntity::getId, entry.getKey())
+                    .update();
+        }
     }
 }
