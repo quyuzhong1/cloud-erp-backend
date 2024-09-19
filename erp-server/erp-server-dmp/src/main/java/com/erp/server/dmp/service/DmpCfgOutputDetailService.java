@@ -31,6 +31,4 @@ public interface DmpCfgOutputDetailService extends SuperService<DmpCfgOutputDeta
     * @return
     */
     Boolean update(DmpCfgOutputDetailDTO.UpdateDTO dto);
-
-
 }

@@ -42,4 +42,13 @@ public interface DmpBasicSystemService extends SuperService<DmpBasicSystemEntity
      * @return java.util.List<com.erp.model.plm.dto.DictControllerDTO.DictDropDownDTO>
      **/
     List<DictControllerDTO.DictDropDownDTO> listDmpBasicSystem();
+
+    /**
+     * 根据系统编号查询数据
+     * @Author Luo_WG
+     * @Date 2024/9/19 10:04
+     * @param code
+     * @return java.util.List<com.erp.model.dmp.entity.DmpBasicSystemEntity>
+     **/
+    DmpBasicSystemEntity listByCode(String code);
 }
