@@ -478,7 +478,7 @@ public class WmsCartonSpecDTO implements Serializable {
          * 单据id
          */
         private String sourceId;
-
+        private String sourceType;
         /**
          * 单据单号
          */

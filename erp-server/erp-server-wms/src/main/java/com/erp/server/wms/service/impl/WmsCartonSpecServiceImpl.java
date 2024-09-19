@@ -124,6 +124,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         view.setTaskId(packingTaskEntity.getId());
         //查询装箱详情
         view.setSourceId(packingTaskEntity.getSourceId());
+        view.setSourceType(packingTaskEntity.getSourceType());
         view.setSourceCode(packingTaskEntity.getSourceCode());
         String taskEntityId = packingTaskEntity.getId();
         //查询箱规信息
