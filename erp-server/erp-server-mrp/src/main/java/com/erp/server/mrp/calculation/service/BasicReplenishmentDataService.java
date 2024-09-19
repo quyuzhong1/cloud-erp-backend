@@ -150,7 +150,6 @@ public class BasicReplenishmentDataService {
     /**
      * 全量计算明细数据
      *
-     * @param calculationDate 计算日期
      */
     public void calculationDetail(List<String> suggestionIds) {
         List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();

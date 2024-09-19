@@ -100,7 +100,7 @@
                          AND schemaname = 'public')
     </select>
     <select id="getFbaOldUsable" resultType="java.lang.Integer">
-        select COALESCE(sum(fulfillable_qty), 0 )
+        select COALESCE(sum(fulfillable_qty), 0)
         from ${tableName}
         where is_deleted = false
           and sku_no = #{result.replenishment.skuNo}
@@ -190,20 +190,20 @@
 
     <select id="listPurchasePlan" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedPurchaseDetailDTO">
         SELECT
-            pa.approve_status AS status,
-            pa.code AS sourceCode,
-            pa.id AS sourceId,
-            pad.dest_warehouse_id AS warehouseId,
-            pad.apply_qty AS qty,
-            pad.create_po_type AS createPoType,
-            COALESCE(pa.approve_time,pa.create_time) AS estimatedPutAwayDate,
-            pad.id AS detailId
+        pa.approve_status AS status,
+        pa.code AS sourceCode,
+        pa.id AS sourceId,
+        pad.dest_warehouse_id AS warehouseId,
+        pad.apply_qty AS qty,
+        pad.create_po_type AS createPoType,
+        COALESCE(pa.approve_time,pa.create_time) AS estimatedPutAwayDate,
+        pad.id AS detailId
         FROM
         ${tableName} AS pa
-                INNER JOIN ${tableDetailName} AS pad ON pad.is_deleted = FALSE
-                AND pad.purchase_application_id = pa."id"
+        INNER JOIN ${tableDetailName} AS pad ON pad.is_deleted = FALSE
+        AND pad.purchase_application_id = pa."id"
         WHERE
-            pad.sku_id = #{skuId}
+        pad.sku_id = #{skuId}
         <if test="codes != null and !codes.isEmpty()">
             <!-- 当 codes 包含 'approve' 时 -->
             <if test="'approve' in codes">
@@ -258,14 +258,16 @@
         parp.purchase_order_id,
         COALESCE(pod.purchase_qty,0) as purchaseQty
         from ${otherTableName} parp
-        left join ${tableName} po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status = false
-        left join ${tableDetailName} pod on parp.purchase_order_detail_id = pod.id and po.id = pod.purchase_order_id and pod.is_deleted = false
+        left join ${tableName} po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status =
+        false
+        left join ${tableDetailName} pod on parp.purchase_order_detail_id = pod.id and po.id = pod.purchase_order_id and
+        pod.is_deleted = false
         where
         parp.is_deleted = false
-            and parp.purchase_application_detail_id in
-            <foreach collection="detailIds" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
+        and parp.purchase_application_detail_id in
+        <foreach collection="detailIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
     </select>
 
 
@@ -280,14 +282,80 @@
         left join ${otherTableName} pod on pod.source_detail_id = sod.id and pod.is_deleted = false
         <where>
             so.is_deleted = false and so.invalid_status = false and pod.id is null
-                and sod.source_detail_id in
-                <foreach collection="detailIds" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
+            and sod.source_detail_id in
+            <foreach collection="detailIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </where>
     </select>
     <select id="getAllFbaHistoryInventory" resultType="com.erp.model.wms.entity.FbaInventoryEntity">
-        select * from ${tableName} where is_deleted = false
+        select *
+        from ${tableName}
+        where is_deleted = false
+    </select>
+    <select id="getLocalInTransitDetail"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$LocalInTransitDetailDTO">
+        SELECT warehouseId,
+        source_type,
+        source_code,
+        qty,
+        sourceId,
+        estimatedPutAwayDate
+        FROM (SELECT MAX
+        (warehouse_id) AS warehouseId,
+        MAX(source_type) AS source_type,
+        MAX(source_code) AS source_code,
+        SUM(qty) AS qty,
+        MAX(bill_date) AS estimatedPutAwayDate,
+        MAX(source_id) AS sourceId
+        FROM (select tf.warehouse_id,
+        tf.warehouse_name,
+        tf.bill_date,
+        tf.sku_id,
+        tf.sku_no,
+        tf.qty,
+        tf.source_id,
+        case
+        when tf.source_type in
+        ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder')
+        then 'purchaseInTransit'
+        when tf.source_type in ('transferOut', 'transferIn') then 'transferInTransit'
+        else '' end
+        as source_type,
+        case
+        <if test="isPurchase != null and isPurchase">
+            when tf.source_type = 'instockForcast' then inv.purchase_order_code
+            when tf.source_type = 'warehouseReceive' then wr.purchase_order_code
+            when tf.source_type = 'purchaseStockIn' then po.purchase_order_code
+            when tf.source_type = 'purchaseReturnOrder' then pr.purchase_order_code
+        </if>
+        <if test="isTransfer != null and isTransfer">
+            when tf.source_type = 'transferOut' then tfo.code
+            when tf.source_type = 'transferIn' then tfi.source_code
+        </if>
+        else '' end
+        as source_code
+        from ${transactionFlow} tf
+        <if test="isPurchase != null and isPurchase">
+            left join ${instockForcast} inv
+            on inv.id = tf.source_id and tf.source_type = 'instockForcast'
+            left join ${poReceive} wr on wr.id = tf.source_id and tf.source_type = 'warehouseReceive'
+            left join ${poInstock} po on po.id = tf.source_id and tf.source_type = 'purchaseStockIn'
+            left join ${poReturn} pr on pr.id = tf.source_id and tf.source_type = 'purchaseReturnOrder'
+        </if>
+        <if test="isTransfer != null and isTransfer">
+            left join ${transferOut} tfo on tfo.id = tf.source_id and tf.source_type = 'transferOut'
+            left join ${transferIn} tfi on tfi.id = tf.source_id and tf.source_type = 'transferIn'
+        </if>
+        where tf.is_deleted = 'f'
+        and tf.dict_inventory_status = 'inTransit'
+        and tf.source_type in
+        ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder',
+        'transferOut', 'transferIn')
+        and tf.sku_id = #{skuId}) m
+        group by source_type, source_code
+        order by estimatedPutAwayDate desc) t
+        where t.qty > 0
     </select>
 
 </mapper>

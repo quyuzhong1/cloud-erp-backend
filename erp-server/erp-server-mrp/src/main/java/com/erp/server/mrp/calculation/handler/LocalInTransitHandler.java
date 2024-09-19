@@ -27,7 +27,7 @@ public class LocalInTransitHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        return false;
+        return true;
     }
 
     @Override

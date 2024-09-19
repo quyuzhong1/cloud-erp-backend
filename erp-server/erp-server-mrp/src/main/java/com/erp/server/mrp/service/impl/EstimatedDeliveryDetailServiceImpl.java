@@ -46,8 +46,8 @@ public class EstimatedDeliveryDetailServiceImpl extends SuperServiceImpl<Estimat
 
     @Override
     public int totalQtyByReplenishment(String detailId, ReplenishmentInventoryTypeEnum replenishmentInventoryTypeEnum) {
-        return count(Wrappers.<EstimatedDeliveryDetailEntity>lambdaQuery()
-                .eq(EstimatedDeliveryDetailEntity::getReplenishmentDetailId, detailId)
-                .eq(EstimatedDeliveryDetailEntity::getType, replenishmentInventoryTypeEnum.getCode()));
+        return getByReplenishmentIdAndType(detailId, replenishmentInventoryTypeEnum).stream()
+                .map(EstimatedDeliveryDetailEntity::getQty)
+                .reduce(0, Math::addExact);
     }
 }

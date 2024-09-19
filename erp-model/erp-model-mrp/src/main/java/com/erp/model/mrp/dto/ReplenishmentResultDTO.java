@@ -965,6 +965,11 @@ public class ReplenishmentResultDTO {
         private LocalDate estimateSalesDate;
 
         /**
+         * 预计入库日期
+         */
+        private LocalDate estimatedPutAwayDate;
+
+        /**
          * 来源id
          */
         private String sourceId;
@@ -983,6 +988,10 @@ public class ReplenishmentResultDTO {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
 
         public static LocalInTransitDetailEntity buildLocalInTransitDetail(LocalInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             LocalInTransitDetailEntity entity = new LocalInTransitDetailEntity();

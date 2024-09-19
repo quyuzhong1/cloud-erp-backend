@@ -30,6 +30,13 @@ public enum SnapshotTableEnum implements EnumMessage {
     SUBCONTRACT_ORDER("subcontract_order", "委外订单"),
     SUBCONTRACT_ORDER_DETAIL("subcontract_order_detail", "委外订单明细"),
     PURCHASE_APPLICATION_REF_PO("purchase_application_ref_po", "采购申请单和采购订单关联表"),
+    TRANSACTION_FLOW("transaction_flow", "库存交易流水表"),
+    INSTOCK_FORCAST("instock_forcast", "入库预报表"),
+    PO_RECEIVE("po_receive", "仓库签收单"),
+    PO_INSTOCK("po_instock", "采购入库单"),
+    PO_RETURN("po_return", "采购退货单"),
+    TRANSFER_OUT("transfer_out", "分布式调出单"),
+    TRANSFER_IN("transfer_in", "分布式调入单"),
     ;
 
     private final String code;

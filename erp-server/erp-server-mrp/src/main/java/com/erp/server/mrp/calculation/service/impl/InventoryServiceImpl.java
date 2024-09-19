@@ -5,9 +5,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.*;
-import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
-import com.erp.model.mrp.entity.SalesInfoEntity;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
@@ -29,9 +26,9 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum.*;
@@ -217,17 +214,35 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     private List<LocalInventoryDTO> getLocalInTransitInventory(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
-        List<LocalInventoryDTO> localInventoryList = new ArrayList<>();
-        for (String code : codes) {
-            if (LOCAL_IN_TRANSIT_PURCHASE.getCode().equals(code)) {
-//               List<PurchaseOrderEntity> purchaseOrders = inventoryMapper.getLocalInventoryByPurchase(replenishmentResultDTO.getReplenishment().getSkuId());
-
-
-            } else if (LOCAL_IN_TRANSIT_TRANSFER.getCode().equals(code)) {
-                // todo 调拨在途
-            }
+        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+        String platformType = replenishmentResultDTO.getReplenishment().getPlatformType();
+        boolean isPurchase = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode());
+        boolean isTransfer = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_TRANSFER.getCode());
+        List<ReplenishmentResultDTO.LocalInTransitDetailDTO> localInTransitDetails = inventoryMapper.getLocalInTransitDetail(isPurchase, isTransfer, replenishmentResultDTO.getReplenishment().getSkuId(),getTableName(TRANSACTION_FLOW, calcDate),
+                getTableName(INSTOCK_FORCAST, calcDate),getTableName(PO_RECEIVE, calcDate),getTableName(PO_INSTOCK, calcDate),getTableName(PO_RETURN, calcDate),getTableName(TRANSFER_OUT, calcDate) ,getTableName(TRANSFER_IN, calcDate));
+        for (ReplenishmentResultDTO.LocalInTransitDetailDTO dto : localInTransitDetails) {
+                //预计入库日期 = 采购订单的审核日期 + 生产周期 + 供应商发货时长 + 质检入库时长
+                dto.setEstimatedPutAwayDate(dto.getEstimatedPutAwayDate().plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays()).plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays()));
+                if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType) || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(platformType)) {
+                    //预计到货日期（Amazon） = 预计入库日期 + 本地发FBA时效 + FBA入库时间
+                    //预计到货日期（海外） = 预计入库日期 + 本地发海外时效 + 海外仓入库时间
+                    dto.setEstimateSalesDate(dto.getEstimatedPutAwayDate().plusDays(stockUpResult.getLogisticsResult().getLogisticsDays()).plusDays(stockUpResult.getInstockDays()));
+                }else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(platformType) || CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(platformType)) {
+                    //预计到货日期（本地）= 预计入库日期
+                    dto.setEstimateSalesDate(dto.getEstimatedPutAwayDate());
+                }
         }
-        return localInventoryList;
+        return new ArrayList<>(localInTransitDetails.parallelStream()
+                .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
+                .collect(Collectors.toMap(
+                        LocalInventoryDTO::getWarehouseId,
+                        v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()),
+                        (existing, replacement) -> {
+                            // 合并 qty
+                            existing.setQty(existing.getQty() + replacement.getQty());
+                            return existing;
+                        }
+                )).values());
     }
 
     @Override
@@ -250,6 +265,12 @@ public class InventoryServiceImpl implements InventoryService {
         return qty;
     }
 
+    /**
+     * 获取预计采购库存
+     * @param replenishmentResultDTO 补货建议
+     * @param localPurchase 本地采购配置
+     * @param stockUpResult 备货配置
+     */
     private List<LocalInventoryDTO> getEstimatedPurchaseInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO localPurchase, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
         List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> detailList = new ArrayList<>();
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
@@ -361,23 +382,4 @@ public class InventoryServiceImpl implements InventoryService {
         }
         return qty;
     }
-//
-//    /**
-//     * 根据平台获取历史库存
-//     *
-//     * @param localDate           日期
-//     * @param replenishmentResult 补货结果
-//     */
-//    private ReplenishmentResultDTO.SalesInfoDTO getHistoryInventoryByPlatformType(LocalDate localDate, ReplenishmentResultDTO replenishmentResult) {
-//        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
-//            return getHistoryInventoryByFba(localDate, replenishmentResult, list);
-//        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
-//            //todo 后期做
-//        } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResult.getReplenishment().getPlatformType()) ||
-//                CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResult.getReplenishment().getPlatformType())) {
-//            //todo 后期做
-//        }
-//        return null;
-//    }
-
 }

@@ -43,8 +43,8 @@ public class RealSellableDaysHandler extends AbstractSkuCalculationHandler {
                     .findFirst().orElse(0);
             replenishmentResultDTO.getReplenishmentDetail().setSellableDays(days);
         } else {
-            days = (int) ChronoUnit.DAYS.between(rptOutOfStockDTO.getDate(), LocalDate.now());
+            days = (int) ChronoUnit.DAYS.between(LocalDate.now(), rptOutOfStockDTO.getDate());
         }
-        replenishmentResultDTO.getReplenishmentDetail().setSellableDays(days);
+        replenishmentResultDTO.getReplenishmentDetail().setSellableDays(Math.max(0, days));
     }
 }
