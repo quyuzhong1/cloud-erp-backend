@@ -17,7 +17,10 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
-import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
+import com.erp.model.oms.dto.RefreshShopTokenDTO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -122,9 +125,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-        AuthorizeResultDTO resultDTO = new AuthorizeResultDTO();
-
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         // 校验是否是本系统发起
         String stateKey = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, dto.getState());
         log.error("stateKey:：{}",stateKey);
@@ -153,9 +154,6 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("该类型店铺尚未配置开发者账号");
         }
-
-        resultDTO.setShopIdList(Arrays.asList(shopId));
-        resultDTO.setIsAuthorize(Boolean.TRUE);
         try {
             Map<String, String> paramMap = new HashMap<>(4);
             paramMap.put("clientId", cfgAppClient.getClientId());
@@ -214,12 +212,11 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
 
         } catch (Exception e) {
             log.error("速卖通授权出错了>>>>>>{}", e);
-            resultDTO.setIsAuthorize(Boolean.FALSE);
-            return resultDTO;
+            return Boolean.FALSE;
         }
 
 
-        return resultDTO;
+        return Boolean.TRUE;
     }
 
     /**

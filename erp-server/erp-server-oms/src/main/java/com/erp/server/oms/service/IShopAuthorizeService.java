@@ -3,7 +3,6 @@ package com.erp.server.oms.service;
 import com.erp.model.oms.dto.*;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * 平台授权
@@ -23,7 +22,7 @@ public interface IShopAuthorizeService<T> {
      * 授权
      * @param dto
      */
-    AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response);
+    Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response);
 
     /**
      * 取消授权

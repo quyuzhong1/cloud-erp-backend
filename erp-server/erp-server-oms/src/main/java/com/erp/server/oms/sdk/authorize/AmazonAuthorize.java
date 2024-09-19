@@ -166,9 +166,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-        AuthorizeResultDTO resultDTO = new AuthorizeResultDTO();
-
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         if (StringUtils.isBlank(dto.getState())) {
             throw new ServiceException("信息state不存在");
         }
@@ -185,10 +183,6 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         if (CollectionUtils.isEmpty(shopIds)) {
             throw new ServiceException(ApiError.ERROR_WALMART_SHOP_ID_NOT_NULL);
         }
-
-        resultDTO.setIsAuthorize(Boolean.TRUE);
-        resultDTO.setShopIdList(shopIds);
-
         if (StringUtils.isBlank(dto.getSpapi_oauth_code())) {
             throw new ServiceException("信息Spapi_oauth_code不存在");
         }
@@ -272,7 +266,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
                     shopInfo.getPlatformShopCode()));
         }
         redisUtil.del(key);
-        return resultDTO;
+        return Boolean.TRUE;
     }
 
     /**

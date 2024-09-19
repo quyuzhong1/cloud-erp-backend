@@ -3,14 +3,16 @@ package com.erp.server.oms.service.impl;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.config.AbstractSparrowAnnotationBeanMap;
 import com.common.business.enums.PlatformDictEnum;
-import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.CancelAuthorizeDTO;
+import com.erp.model.oms.dto.RefreshShopTokenDTO;
+import com.erp.model.oms.dto.ShopAuthorizeDTO;
+import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -42,7 +44,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param dto
      * @param response
      */
-    public static AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response){
+    public static Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response){
         IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.shopAuthorize(dto, response);
     }

@@ -36,7 +36,6 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -109,9 +108,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-        AuthorizeResultDTO resultDTO = new AuthorizeResultDTO();
-
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         String bodyStr = "";
         // 二级域名
         String secondDomain = dto.getShop();
@@ -132,8 +129,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
 //                throw new ServiceException("店铺不存在");
             log.warn("不存在的店铺不请求授权：request={}", JSONUtil.toJsonStr(dto));
             // 不存在的店铺授权显示成功
-            resultDTO.setIsAuthorize(Boolean.TRUE);
-            return resultDTO;
+            return true;
         }
         AuthorizeDTO.FindShopAuthorizeDTO findShopAuthorize = new AuthorizeDTO.FindShopAuthorizeDTO();
         findShopAuthorize.setAccessTokenUrl(cfgAppClient.getUrl());
@@ -161,12 +157,10 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         //过期时间
         Integer expiresIn = accessDTO.getExpiresIn();
         if (StringUtils.isBlank(accessToken)) {
-            resultDTO.setIsAuthorize(Boolean.FALSE);
-            return resultDTO;
+            return Boolean.FALSE;
         }
 
         String shopId = shopInfo.getId();
-        resultDTO.setShopIdList(Arrays.asList(shopId));
         //根据店铺id 获取到授权信息
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
         if (Objects.isNull(shopAuth)) {
@@ -189,7 +183,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         shopInfo.setExtendData(map);
 
         shopAuthService.saveOrUpdate(shopAuth);
-        shopInfoService.updateById(shopInfo);
+        boolean result = shopInfoService.updateById(shopInfo);
         // 授权后添加任务
         dmpTaskFeign.createAndEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
         shopInfo.setIsGenTask(Boolean.TRUE);
@@ -207,7 +201,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         if (null != obj) {
             redisUtil.del(key);
         }
-        return resultDTO;
+        return result;
     }
 
     /**

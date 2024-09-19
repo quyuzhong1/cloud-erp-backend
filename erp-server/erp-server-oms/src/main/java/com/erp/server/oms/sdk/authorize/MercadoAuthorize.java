@@ -118,9 +118,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
      * @return
      */
     @Override
-    public AuthorizeResultDTO shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-        AuthorizeResultDTO resultDTO = new AuthorizeResultDTO();
-
+    public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         // 校验是否是本系统发起
         String stateKey = StrUtil.format(RedisCacheConstants.AUTH_MERCADO_STATE, dto.getState());
         log.error("stateKey:：{}", stateKey);
@@ -132,10 +130,6 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         if (StringUtils.isBlank(shopId)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_SHOP_USER_AUTH_PART);
         }
-
-        resultDTO.setShopIdList(Arrays.asList(shopId));
-        resultDTO.setIsAuthorize(Boolean.TRUE);
-
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException("店铺不存在");
@@ -162,8 +156,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
 
         PlatformMercadoTokenDTO platformMercadoTokenDTO = mercadoSdkClientService.sendMercadoPostToken(paramMap);
         if (ObjectUtil.isEmpty(platformMercadoTokenDTO)) {
-            resultDTO.setIsAuthorize(Boolean.FALSE);
-            return resultDTO;
+            return Boolean.FALSE;
         }
         //根据店铺id 获取到授权信息
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
@@ -205,7 +198,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
 
         redisUtil.del(stateKey);
 
-        return resultDTO;
+        return Boolean.TRUE;
     }
 
     /**
