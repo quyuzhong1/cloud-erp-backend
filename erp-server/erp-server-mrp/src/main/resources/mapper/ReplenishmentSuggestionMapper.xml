@@ -54,8 +54,11 @@
         inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and rs.is_deleted = FALSE
-            <if test="params.favorite != null ">
+            and rs.is_deleted = FALSE and rs.platform_type = #{params.platformType}
+            <if test="params.skuType != null and params.skuType != ''">
+                and rsd.sku_type = #{params.skuType}
+            </if>
+            <if test="params.favorite != null and params.favorite ">
                 and exists (select id from replenishment_suggestion_favorite where is_deleted = false and replenishment_suggestion_id =  rs.id and user_id = #{userId})
             </if>
         </where>
