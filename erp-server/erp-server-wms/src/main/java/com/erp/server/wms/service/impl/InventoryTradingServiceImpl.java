@@ -367,8 +367,26 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param transactionList   交易记录列表
      */
     private void checkInventoryList(List<InventoryTransactionDTO> transactionList) {
+
+        // 根据 inventoryId 分组并合并 qty，最终转换为 List
+        List<InventoryTransactionDTO> mergedList = transactionList.stream()
+            .collect(Collectors.groupingBy(
+                InventoryTransactionDTO::getInventoryId,  // 按 inventoryId 分组
+                Collectors.reducing((transaction1, transaction2) ->
+                    InventoryTransactionDTO.getInventoryTransactionDTO(transaction1.getInventoryId(),
+                    transaction1.getQty() + transaction2.getQty(),transaction1)
+                )
+            ))
+            // 获取合并后的 Map 的值
+            .values()
+            .stream()
+            // 由于 reducing 产生的是 Optional，需要使用 get() 获取实际对象
+            .map(Optional::get)
+            // 最终转换为 List
+            .collect(Collectors.toList());
+
         StringBuilder errList = new StringBuilder();
-        for(InventoryTransactionDTO transactionDTO:transactionList) {
+        for(InventoryTransactionDTO transactionDTO : mergedList) {
             errList.append(checkInventory(transactionDTO));
         }
 
