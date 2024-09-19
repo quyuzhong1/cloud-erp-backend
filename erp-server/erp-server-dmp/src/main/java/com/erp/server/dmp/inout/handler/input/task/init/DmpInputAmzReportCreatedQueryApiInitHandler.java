@@ -54,7 +54,7 @@ public class DmpInputAmzReportCreatedQueryApiInitHandler extends DmpInputInitHan
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         String extendJson = dmpCfgInputEntity.getExtendJson();
-        JSONObject extendObj = com.alibaba.fastjson.JSONObject.parseObject(extendJson);
+        JSONObject extendObj = JSONObject.parseObject(extendJson);
         if (null == extendObj) {
             ServiceException.runError("extendJson参数为空");
         }

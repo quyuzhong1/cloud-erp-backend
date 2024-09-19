@@ -20,7 +20,7 @@ import java.util.*;
 
 @Service
 @Scope("prototype")
-public class DmpOutputAmazonFbaShipmentRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+public class DmpOutputAmzFbaShipmentRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {

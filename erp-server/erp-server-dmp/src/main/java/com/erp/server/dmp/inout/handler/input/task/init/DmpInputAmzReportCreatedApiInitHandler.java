@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
@@ -33,6 +34,7 @@ import com.erp.server.dmp.service.AmzReportHandleService;
 import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -42,9 +44,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,18 +74,7 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
             ServiceException.runError("extendJson参数为空");
         }
         String reportType = extendObj.getString("reportType");
-        JSONArray marketplaceIdsArray = extendObj.getJSONArray("marketplaceIds");
 
-        // 校验MarketplaceId
-        if (marketplaceIdsArray.isEmpty()) {
-            ServiceException.runError("未找到MarketplaceId,cfgInputId=" + dmpCfgInputEntity.getId());
-        }
-        Object marketplaceObj = marketplaceIdsArray.stream().findFirst().orElse(null);
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceObj.toString());
-        if (null == marketplaceEnum) {
-            String msg = StrUtil.format("未找到Marketplace枚举类型,cfgInputId={}, marketplaceId={}", dmpCfgInputEntity.getId(), marketplaceIdsArray);
-            ServiceException.runError(msg);
-        }
         // 获取店铺信息
         String shopId = dmpCfgInputDetailEntity.getNextLevelId();
         // 获取店铺授权信息
@@ -93,6 +82,26 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         if (null == shopInfoDTO) {
             ServiceException.runError("未找到店铺授权:" + shopId);
         }
+
+        List<String> marketplaceIds;
+        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.checkAndGetByRecordType(reportType);
+        if (recordTypeEnum.isHasMergeMarketplaces()){
+            // 合并站点
+            // 校验MarketplaceId
+            marketplaceIds = new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet());
+        } else {
+            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+            // 非合并站点
+            marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
+        }
+
+        String marketplaceId = marketplaceIds.stream().findFirst().orElse(null);
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceId);
+        if (null == marketplaceEnum) {
+            String msg = StrUtil.format("未找到Marketplace枚举类型,cfgInputId={}, marketplaceId={}", dmpCfgInputEntity.getId(), marketplaceIds);
+            ServiceException.runError(msg);
+        }
+
 
         // 从缓存获取
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS_CREATE;
@@ -124,7 +133,7 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         }
 
         // 组合请求参数
-        CreateReportSpecification body = createReportSpecificationParam(reportType, marketplaceIdsArray);
+        CreateReportSpecification body = createReportSpecificationParam(reportType, marketplaceIds);
         ApiResponse<CreateReportResponse> reportWithHttpInfo = null;
         try {
             // 请求亚马逊创建报告接口
@@ -144,12 +153,17 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         }
         // 设置到缓存(已完成或结束删除)
 //      redisUtil.set(key, reportId);
+        // 组合响应
         Report report = new Report();
         report.setReportId(reportId);
         report.setReportType(reportType);
         report.setProcessingStatus(Report.ProcessingStatusEnum.IN_PROGRESS);
-        String jsonStr = JSONUtil.toJsonStr(report);
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(jsonStr));
+
+        JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
+        // 补充其他信息
+        jsonObject.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
+        jsonObject.put("createdMethod", "system");
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
     }
 
     /**
@@ -175,15 +189,15 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
     /**
      * 组合请求参数
      */
-    private CreateReportSpecification createReportSpecificationParam(String reportType, JSONArray marketplaceIdsArray) {
+    private CreateReportSpecification createReportSpecificationParam(String reportType, List<String> marketplaceIdsArray) {
         CreateReportSpecification body = new CreateReportSpecification();
         body.setReportType(reportType);
-        body.setMarketplaceIds(marketplaceIdsArray.stream().map(Object::toString).collect(Collectors.toList()));
-        String startTime = dmpInputTaskEntity.getStartTime().atZone(ZoneId.systemDefault())
+        body.setMarketplaceIds(marketplaceIdsArray);
+        String startTime = dmpCfgInputDetailEntity.getLastTime().atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneOffset.UTC)
                 .toOffsetDateTime()
                 .toString();
-        String endTime = dmpInputTaskEntity.getEndTime().atZone(ZoneId.systemDefault())
+        String endTime = dmpCfgInputDetailEntity.getNextTime().atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneOffset.UTC)
                 .toOffsetDateTime()
                 .toString();
