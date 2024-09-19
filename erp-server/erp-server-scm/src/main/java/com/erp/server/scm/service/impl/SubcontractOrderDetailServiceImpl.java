@@ -376,7 +376,21 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
-
+        //获取采购单价
+        String purchaseOrgId = subcontractOrderEntity.getPurchaseOrgId();
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list = new ArrayList<>();
+        newList.forEach(e ->{
+            if (CollectionUtils.isNotEmpty(e.getChildList())){
+                e.getChildList().forEach(f -> list.add(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO.builder()
+                        .purchaseOrgId(purchaseOrgId)
+                        .purchaseQty(f.getQty())
+                        .skuId(e.getSkuId())
+                        .skuNo(e.getSkuNo())
+                        .supplierId(e.getSupplierId())
+                        .build()));
+            }
+        });
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> priceList = purchasePriceDetailService.batchGetTaxPrice(list);
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
@@ -463,7 +477,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 detailEntity.setSupplierName(supplierName);
             }
-            handleSupplierTaxPrice(detailEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId());
+            handleSupplierTaxPrice(detailEntity,Boolean.FALSE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
             //子集SKU信息
             List<SubcontractOrderDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
             for (SubcontractOrderDetailEntity childEntity : childList) {
@@ -492,7 +506,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                     String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                     childEntity.setSupplierName(supplierName);
                 }
-                handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getSubcontractOrgId());
+                handleSupplierTaxPrice(childEntity,Boolean.TRUE,subcontractOrderEntity.getSubcontractOrgId(), priceList);
             }
             resultList.add(detailEntity);
             resultList.addAll(childList);
@@ -550,13 +564,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     /**
+     * @param entity
+     * @param isChild
+     * @param priceList
      * @description: 处理供应商报价
      * @author Will
      * @date: 2023/6/14 17:07
-     * @param entity
-     * @param isChild
      */
-    private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity,Boolean isChild,String purchaseOrgId) {
+    private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity, Boolean isChild, String purchaseOrgId, List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> priceList) {
         //供应商为空
         if (StringUtils.isBlank(entity.getSupplierId())) {
             return;
@@ -570,18 +585,33 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
             return;
         }
-        //供应商报价信息
-        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(entity.getQty(),entity.getSkuId(),entity.getSkuNo(),entity.getSupplierId(),purchaseOrgId);
-        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
-        PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
-        entity.setCurrency(viewDTO.getCurrency());
-        entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
         //子件SKU默认取供应商报价
         if (isChild) {
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = priceList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())
+                            && obj.getSupplierId().equals(entity.getSupplierId())
+                            && StrUtil.equals(obj.getPurchaseOrgId(),purchaseOrgId)
+                            && (entity.getQty() >= obj.getMinQty() && obj.getMaxQty() > entity.getQty()))
+                    .findFirst().orElse(null);
+            if (Objects.isNull(viewDTO)){
+                return;
+            }
+            entity.setCurrency(viewDTO.getCurrency());
+            entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
             entity.setPrice(viewDTO.getTaxPrice());
+            entity.setTaxRate(viewDTO.getTaxRate());
+            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+        }else {
+            //供应商报价信息
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(entity.getQty(),entity.getSkuId(),entity.getSkuNo(),entity.getSupplierId(),purchaseOrgId);
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
+            PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
+            entity.setCurrency(viewDTO.getCurrency());
+            entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
+            entity.setPrice(viewDTO.getTaxPrice());
+            entity.setTaxRate(viewDTO.getTaxRate());
+            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
         }
-        entity.setTaxRate(viewDTO.getTaxRate());
-        entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+
     }
 
 }
