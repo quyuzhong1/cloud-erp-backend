@@ -554,18 +554,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
-        WmsDeliveryPlanEntity entity = this.getById(id);
-        List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews = new ArrayList<>();
-        if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
-            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(null);
-            if(Objects.nonNull(requisitionApplication) && StringUtils.isNotBlank(requisitionApplication.getFbaShipmentCode())){
-                deliverRecordViews = firstMileDeliveryService.listDeliveryRecordByFbaCode(requisitionApplication.getFbaShipmentCode());
-                deliverRecordViews.forEach(view -> view.setRefCode(requisitionApplication.getFbaShipmentCode()));
-            }
-        }else{
-            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(new RequisitionApplicationEntity());
-            deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id,requisitionApplication.getId()), null);
-        }
+        List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews;
+        RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(new RequisitionApplicationEntity());
+        deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id,requisitionApplication.getId()), null);
         return deliverRecordViews;
     }
 
@@ -886,8 +877,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listBySourceIds(ids);
         List<String> requisitionIds = requisitionApplicationEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(new ArrayList<>(CollectionUtil.union(ids,requisitionIds)));
+        List<String> allDeliveryIds = firstMileDeliveryEntities.stream().map(v->v.getId()).collect(Collectors.toList());
         //根据来源详情id查询发货详情
-        List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
+        List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(allDeliveryIds);
 
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -900,14 +892,6 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
 
 
-        List<String> fbaShipmentCodeList = requisitionApplicationEntityList.stream().map(RequisitionApplicationEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<FirstMileDeliveryDetailEntity> allDetailDeliveryByFbaList = firstMileDeliveryDetailService.listByFbaShipmentCodes(fbaShipmentCodeList);
-        List<String> allDeliveryIds = allDetailDeliveryByFbaList.stream().map(FirstMileDeliveryDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(allDeliveryIds)){
-            List<FirstMileDeliveryEntity> deliveryByFbaList = firstMileDeliveryService.listByIds(allDeliveryIds);
-            firstMileDeliveryEntities.addAll(deliveryByFbaList);
-        }
-
         // 属性赋值
         for(WmsDeliveryPlanDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -917,13 +901,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             //设置发货单号拿最新的一个发货单
             if(data.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
                 RequisitionApplicationEntity requisitionApplication = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).findFirst().orElse(new RequisitionApplicationEntity());
-                List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = allDetailDeliveryByFbaList.stream().filter(req -> req.getFbaShipmentCode().equals(requisitionApplication.getFbaShipmentCode())).collect(Collectors.toList());
-                List<String> deliveryIds = deliveryDetailEntities.stream().map(FirstMileDeliveryDetailEntity::getMainId).distinct().collect(Collectors.toList());
-                List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->deliveryIds.contains(v.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
+                List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->v.getSourceId().equals(requisitionApplication.getId()) || v.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
+                List<String> deliveryIds = deliveryEntities.stream().map(v->v.getId()).collect(Collectors.toList());
+                List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = fbaDeliveryDetailEntities.stream().filter(req -> deliveryIds.contains(req.getMainId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deliveryEntities)) {
                     data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
                     //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
-                    List<FirstMileDeliveryDetailEntity> detailDeliveryByFbaList = deliveryDetailEntities.stream().filter(v->v.getSkuId().equals(data.getSkuId())).collect(Collectors.toList());
+                    List<FirstMileDeliveryDetailEntity> detailDeliveryByFbaList = deliveryDetailEntities.stream().filter(v->v.getSkuId().equals(data.getSkuId()) && v.getFnSku().equals(data.getPlatformFnSku())).collect(Collectors.toList());
                     Integer deliveryQty = detailDeliveryByFbaList.stream().mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
                     data.setDeliveryQty(deliveryQty);
                 }
