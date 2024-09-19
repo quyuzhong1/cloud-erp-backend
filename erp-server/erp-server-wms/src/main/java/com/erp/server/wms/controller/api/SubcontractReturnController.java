@@ -89,7 +89,7 @@ public class SubcontractReturnController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:subcontractReturn:paging",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     public ApiResult<List<SubcontractReturnDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(subcontractReturnService.tabList(dto));
@@ -353,7 +353,6 @@ public class SubcontractReturnController extends BaseController {
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<SubcontractReturnEntity> list = subcontractReturnService.lambdaQuery().in(SubcontractReturnEntity::getId, ids).list();
         Map<String, SubcontractReturnEntity> idEntityMap = list.stream().collect(Collectors.toMap(SubcontractReturnEntity::getId, w -> w));
         for (String id : ids) {
@@ -423,7 +422,7 @@ public class SubcontractReturnController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:subcontractReturn:listSubcontractDetail",
-            tableAlias = ""
+            tableAlias = "sr"
     )
     public ApiResult<List<SubcontractReturnDTO.SubcontractDetailListDTO>> listSubcontractDetail(@RequestBody @Validated SubcontractReturnDTO.DetailPagingParamDTO dto) {
         return success(subcontractReturnService.listSubcontractDetail(dto));
