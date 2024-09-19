@@ -425,6 +425,27 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             }
             //重置装箱信息 根据配置进行更新装箱状态
             buildCartonSpecWeight(addDTO, type);
+            //装箱没有fnsku，根据任务明细拆分
+            List<WmsCartonDetailDTO.AddDTO> addDTOList = new ArrayList<>();
+            addDTO.getDetailList().forEach(v->{
+                if(StringUtils.isBlank(v.getFnSku())){
+                    Integer totalNum = v.getPackQty();
+                    List<PackingTaskDetailEntity> taskDetailList = taskDetailEntityList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())).collect(Collectors.toList());
+                    for(PackingTaskDetailEntity packingTaskDetailEntity : taskDetailList){
+                        if(totalNum <= 0){
+                            continue;
+                        }
+                        WmsCartonDetailDTO.AddDTO addDTO1 = BeanUtil.toBean(v,WmsCartonDetailDTO.AddDTO.class);
+                        addDTO1.setFnSku(packingTaskDetailEntity.getFnSku());
+                        addDTO1.setPackQty(Math.min(totalNum,packingTaskDetailEntity.getDeliveryQty()));
+                        totalNum = totalNum - packingTaskDetailEntity.getDeliveryQty();
+                        addDTOList.add(addDTO1);
+                    }
+                }else{
+                    addDTOList.add(v);
+                }
+            });
+            addDTO.setDetailList(addDTOList);
             //新增装箱信息
             wmsCartonSpecService.add(addDTO);
             //根据主表id分组sku查询发货及待装箱数
