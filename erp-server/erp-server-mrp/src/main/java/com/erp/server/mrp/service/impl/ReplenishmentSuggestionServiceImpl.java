@@ -506,6 +506,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO restoreRule(String id, List<String> ruleTypeList) {
         ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        if (CollectionUtils.isEmpty(ruleTypeList)) {
+            ruleTypeList = Arrays.asList(ReplenishmentRuleTypeEnum.STOCK_UP.getCode(),ReplenishmentRuleTypeEnum.SALES.getCode());
+        }
         //恢复备货规则
         if (ruleTypeList.contains(ReplenishmentRuleTypeEnum.STOCK_UP.getCode())) {
             cfgRuleStockUpService.deleteByRefId(entity.getId());

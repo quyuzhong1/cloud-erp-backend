@@ -138,7 +138,6 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 规则选项
          */
-        @NotEmpty(message = "规则选项不能为空")
         private List<String> ruleTypeList;
     }
 
