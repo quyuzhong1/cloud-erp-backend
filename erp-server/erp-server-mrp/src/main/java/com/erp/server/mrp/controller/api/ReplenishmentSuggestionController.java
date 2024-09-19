@@ -567,6 +567,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货规则")
     @PostMapping(value = "/exportReplenishmentRule")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult exportExcel(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportReplenishmentRule(pagingParamDTO);
         return flag == true ? success() : failure();
@@ -581,6 +582,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出历史销量")
     @PostMapping(value = "/exportHistorySalesQty")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult exportHistorySalesQty(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportHistorySalesQty(pagingParamDTO);
         return flag == true ? success() : failure();
@@ -595,6 +597,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货计划_采购建议")
     @PostMapping(value = "/exportPurchaseSuggestion")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult exportPurchaseSuggestion(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportPurchaseSuggestion(pagingParamDTO);
         return flag == true ? success() : failure();
