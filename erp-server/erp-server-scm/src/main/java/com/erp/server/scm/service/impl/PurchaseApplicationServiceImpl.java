@@ -730,28 +730,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     .skuId(e.getSkuId())
                     .supplierId(supplierId)
                     .build());
-            if (CollectionUtils.isNotEmpty(e.getChildList())){
-
-            }
         });
         List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
-        List<PurchasePriceDTO.PriceDTO> childPriceList = new ValidList<>();
-        list.forEach(e -> {
-            if (CollectionUtils.isNotEmpty(e.getChildList())){
-                e.getChildList().forEach(f ->{
-                    //产品信息
-                    String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(e.getSkuId())).findFirst()
-                            .flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
-                    childPriceList.add(PurchasePriceDTO.PriceDTO.builder()
-                            .purchaseOrgId(e.getPurchaseOrgId())
-                            .qty(f.getQty())
-                            .skuId(f.getSkuId())
-                            .supplierId(supplierId)
-                            .build());
-                });
-            }
-        });
-        List<PurchasePriceDTO.PriceDTO> childViewDTOList = purchasePriceService.batchGetPurchasePrice(childPriceList);
         Integer index = MathUtil.ONE;
         List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> resultList = new ArrayList<>();
         for (PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO viewDTO : list) {
@@ -827,18 +807,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setCurrency(null);
                 viewGenerateDTO.setCurrencySymbol(null);
                 viewGenerateDTO.setAmount(null);
-                //报价信息
-                PurchasePriceDTO.PriceDTO priceDTO2 = childViewDTOList.stream().filter(obj -> Objects.nonNull(obj) && obj.getSkuId().equals(childrenSkuDTO.getSkuId())
-                                && obj.getSupplierId().equals(supplierId)
-                                && StrUtil.equals(obj.getPurchaseOrgId(),viewDTO.getPurchaseOrgId()))
-                        .findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(priceDTO)) {
-                    viewGenerateDTO.setPrice(priceDTO2.getTaxPrice());
-                    viewGenerateDTO.setTaxRate(priceDTO2.getTaxRate());
-                    viewGenerateDTO.setCurrency(priceDTO2.getCurrency());
-                    viewGenerateDTO.setCurrencySymbol(priceDTO2.getCurrencySymbol());
-                    viewGenerateDTO.setAmount(MathUtil.multiply(viewGenerateDTO.getPrice(),viewGenerateDTO.getQty()));
-                }
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);
@@ -848,6 +816,42 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         if (CollectionUtils.isEmpty(resultList)) {
             throw new ServiceException(ApiError.ERROR_98092);
+        }
+        //获取采购单价
+        List<PurchasePriceDTO.PriceDTO> childPriceList = new ValidList<>();
+        resultList.forEach(e -> {
+            if (CollectionUtils.isNotEmpty(e.getChildList())){
+                e.getChildList().forEach(f ->{
+                    //产品信息
+                    String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(e.getSkuId())).findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+                    childPriceList.add(PurchasePriceDTO.PriceDTO.builder()
+                            .purchaseOrgId(f.getPurchaseOrgId())
+                            .qty(f.getQty())
+                            .skuId(f.getSkuId())
+                            .supplierId(f.getSupplierId())
+                            .build());
+                });
+            }
+        });
+        List<PurchasePriceDTO.PriceDTO> childViewDTOList = purchasePriceService.batchGetPurchasePrice(childPriceList);
+        for (PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO orderDTO : resultList){
+            if (CollectionUtils.isNotEmpty(orderDTO.getChildList())){
+                for (PurchaseApplicationDTO.ViewChildGenerateSubcontractOrderDTO viewGenerateDTO : orderDTO.getChildList()){
+                    //报价信息
+                    PurchasePriceDTO.PriceDTO priceDTO2 = childViewDTOList.stream().filter(obj -> Objects.nonNull(obj) && obj.getSkuId().equals(viewGenerateDTO.getSkuId())
+                                    && obj.getSupplierId().equals(viewGenerateDTO.getSupplierId())
+                                    && StrUtil.equals(obj.getPurchaseOrgId(),viewGenerateDTO.getPurchaseOrgId()))
+                            .findFirst().orElse(null);
+                    if (ObjectUtils.isNotEmpty(priceDTO2)) {
+                        viewGenerateDTO.setPrice(priceDTO2.getTaxPrice());
+                        viewGenerateDTO.setTaxRate(priceDTO2.getTaxRate());
+                        viewGenerateDTO.setCurrency(priceDTO2.getCurrency());
+                        viewGenerateDTO.setCurrencySymbol(priceDTO2.getCurrencySymbol());
+                        viewGenerateDTO.setAmount(MathUtil.multiply(viewGenerateDTO.getPrice(),viewGenerateDTO.getQty()));
+                    }
+                }
+            }
         }
         return resultList;
     }

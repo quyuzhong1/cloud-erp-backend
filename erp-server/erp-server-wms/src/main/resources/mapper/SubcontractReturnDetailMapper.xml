@@ -47,7 +47,9 @@
     <select id="listBySubcontractOrderDetailIdList"
             resultType="com.erp.model.wms.entity.SubcontractReturnDetailEntity">
         select
-        srd.*
+        srd.*,
+        sr.approve_status as approveStatus,
+        sr.type
         from subcontract_return_detail srd
         inner join subcontract_return sr on sr.is_deleted = false and sr.id = srd.main_id
         <where>

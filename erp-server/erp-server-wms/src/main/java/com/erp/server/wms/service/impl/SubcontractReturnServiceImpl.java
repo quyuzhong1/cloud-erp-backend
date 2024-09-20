@@ -579,7 +579,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
             return;
         }
         //状态名称
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(data.getApproveStatus().getName());
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
 
         //退料类型
@@ -637,7 +637,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
             //已发料数量
             Integer hasIssueQty = hasIssueDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(viewDTO.getSubcontractOrderDetailId()) && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus()))
                     .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
-            viewDTO.setHasReturnQty(hasIssueQty);
+            viewDTO.setHasIssueQty(hasIssueQty);
             //最大可退数量
             viewDTO.setMaxReturnQty(hasIssueQty - hasReturnQty);
             //委外明细父级来源id

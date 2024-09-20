@@ -6,6 +6,8 @@ import com.common.business.dto.base.SortDTO;
 
 import java.util.Date;
 import java.util.List;
+
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -279,7 +281,7 @@ public class SubcontractReturnDTO implements Serializable {
         /**
         * 单据审核状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
         /**
          * 单据审核状态名称
          */

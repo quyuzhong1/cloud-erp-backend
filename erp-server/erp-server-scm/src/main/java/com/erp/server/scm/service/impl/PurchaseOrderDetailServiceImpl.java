@@ -385,6 +385,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
         for (PurchaseOrderDetailDTO.AddDTO addDTO : details) {
+            //子件
+            PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                    obj.getSkuId().equals(addDTO.getSkuId())
+                            && obj.getSupplierId().equals(supplierEntity.getSupplierId())
+                            && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())).findFirst().orElse(null);
             if (PurchaseOrderTypeEnum.ENUM_PURCHASE.getCode().equals(entity.getType()) || PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType())){
                 //委外成品时，取委外订单中的含税单价
                 if (PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(entity.getType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(entity.getSubcontractType())){
@@ -405,11 +410,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     //成品直接返回
                     continue;
                 }
-                //子件
-                PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
-                        obj.getSkuId().equals(addDTO.getSkuId())
-                        && obj.getSupplierId().equals(supplierEntity.getSupplierId())
-                        && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())).findFirst().orElse(null);
                 if (Objects.nonNull(viewDTO)){
                     addDTO.setCurrency(viewDTO.getCurrency());
                     addDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
@@ -427,6 +427,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
                     Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;
                     addDTO.setPurchaseAmount(MathUtil.multiply(returnPrice,qty));
+                    if (Objects.nonNull(viewDTO)){
+                        addDTO.setTaxRate(viewDTO.getTaxRate());
+                    }
                 }
             }
 //
