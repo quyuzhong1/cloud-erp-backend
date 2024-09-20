@@ -320,7 +320,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
          *
          */
         List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),InventorySourceTypeEnum.OTHER_INSTOCK.getCode(),InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
-                ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode(),InventorySourceTypeEnum.RETURN_MATERIAL.getCode(),InventorySourceTypeEnum.MACHINE_INFO.getCode());
+                ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode(),InventorySourceTypeEnum.RETURN_MATERIAL.getCode(),InventorySourceTypeEnum.MACHINE_INFO.getCode(),InventorySourceTypeEnum.PURCHASE_STOCK_IN.getCode());
         //以上类型出可用时需要进行分配数量校验
         List<InventoryTransactionDTO> checkTransactionList = transactionList.stream().filter(obj ->
                         MathUtil.compareTo(obj.getQty(), MathUtil.ZERO ) < MathUtil.ZERO
