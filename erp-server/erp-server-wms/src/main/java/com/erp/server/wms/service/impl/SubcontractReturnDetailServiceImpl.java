@@ -6,10 +6,12 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SubcontractReturnTypeEnum;
 import com.erp.model.wms.enums.SubcontractReturnTypeEnum;
@@ -54,13 +56,15 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     private SubcontractReturnService subcontractReturnService;
     @Autowired
     private WarehouseService warehouseService;
-
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
     @Autowired
     private ScmTaskFeign scmTaskFeign;
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
-
+    @Resource
+    private SubcontractIssueDetailService subcontractIssueDetailService;
     @Override
     public void add(List<SubcontractReturnDetailDTO.AddDTO> details, String mainId) {
         if (CollectionUtil.isEmpty(details)) {
@@ -153,7 +157,10 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         //仓库信息
         List<String> warehouseIdList = list.stream().map(SubcontractReturnDetailEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
-
+        //仓位信息
+        List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = list.stream()
+                .map(obj -> new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getWarehouseId(), obj.getWarehouseLocation())).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         for (SubcontractReturnDetailEntity detailEntity : list) {
             //来源明细id默认委外明细id
             if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(subcontractReturnEntity.getSourceType()) && StrUtil.isBlank(detailEntity.getSourceDetailId())) {
@@ -184,9 +191,11 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             detailEntity.setBomVersion(childDetailEntity.getBomVersion());
             detailEntity.setQuantity(bomChildrenSkuDTO.getQuantity());
             detailEntity.setMainId(subcontractReturnEntity.getId());
-//            detailEntity.setReturnQty(childDetailEntity.getDeliveryQty());
             detailEntity.setWarehouseLocation(detailEntity.getWarehouseLocation());
-
+            //仓位名称
+            String warehouseLocationName = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(detailEntity.getWarehouseId()) && obj.getCode().equals(detailEntity.getWarehouseLocation()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            detailEntity.setWarehouseLocationName(warehouseLocationName);
             //仓库名称
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).map(WarehouseEntity::getName)
                     .findFirst().orElse("");
@@ -265,6 +274,8 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
 
         //委外明细已关联的委外退料
         List<SubcontractReturnDetailEntity> subcontractReturnDetailList = this.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
+        //委外明细已关联的委外发料
+        List<SubcontractIssueDetailEntity> subcontractIssueDetailEntityList = subcontractIssueDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
         for (SubcontractReturnDetailEntity entity : list) {
             SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrderDetailId())).findFirst().orElse(null);
@@ -273,10 +284,15 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             }
             //已下推退料数量
             Integer totalReturnQty = subcontractReturnDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(entity.getSubcontractOrderDetailId())
-                            && SubcontractReturnTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
+                            && !obj.getId().equals(entity.getId()))
                     .map(SubcontractReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (MathUtil.add(totalReturnQty,entity.getReturnQty()) > detailEntity.getDeliveryQty()) {
-                throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalReturnQty);
+            //已下推发料数量
+            Integer totalIssueQty = subcontractIssueDetailEntityList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(entity.getSubcontractOrderDetailId())
+                    && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus())).map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
+            //最大可退
+            Integer maxReturnQty = totalIssueQty - totalReturnQty;
+            if (MathUtil.add(totalReturnQty,entity.getReturnQty()) > maxReturnQty) {
+                throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_QTY_EXCEED,detailEntity.getSkuNo(),maxReturnQty);
             }
         }
     }

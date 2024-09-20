@@ -90,12 +90,12 @@ public class SubcontractReturnDTO implements Serializable {
         private String  detailId;
 
         /**
-        * 委外退料单号
+        * 委外退料单号【可排序】
         */
         private String code;
 
         /**
-        * 单据审核状态
+        * 单据审核状态【可排序】
         */
         private String approveStatus;
 
@@ -105,7 +105,7 @@ public class SubcontractReturnDTO implements Serializable {
         private String type;
 
         /**
-        * 退料日期
+        * 退料日期【可排序】
         */
         private LocalDate billDate;
 
@@ -125,7 +125,7 @@ public class SubcontractReturnDTO implements Serializable {
         private String sourceType;
 
         /**
-        * 作废状态（false未作废，true已作废）
+        * 作废状态（false未作废，true已作废）【可排序】
         */
         private Boolean invalidStatus;
 
@@ -191,12 +191,12 @@ public class SubcontractReturnDTO implements Serializable {
         private String invalidStatusName;
 
         /**
-        * 创建时间
+        * 创建时间【可排序】
         */
         private LocalDateTime createTime;
 
         /**
-        * 创建人名称
+        * 创建人名称【可排序】
         */
         private String createUserName;
         /**
@@ -204,18 +204,21 @@ public class SubcontractReturnDTO implements Serializable {
          */
         private String parentSkuId;
         /**
-         * 父skuNo
+         * 父skuNo【可排序】
          */
         private String parentSkuNo;
 
         private String skuId;
+        /**
+         * 【可排序】
+         */
         private String skuNo;
         /**
          * 产品名称
          */
         private String productName;
         /**
-         * 退料数量
+         * 退料数量【可排序】
          */
         private Integer returnQty;
         /**
@@ -223,7 +226,7 @@ public class SubcontractReturnDTO implements Serializable {
          */
         private String warehouseId;
         /**
-         * 仓库名称
+         * 仓库名称【可排序】
          */
         private String warehouseName;
         /**
@@ -231,20 +234,20 @@ public class SubcontractReturnDTO implements Serializable {
          */
         private String warehouseLocation;
         /**
-         * 仓位名称
+         * 仓位名称【可排序】
          */
         private String warehouseLocationName;
         /**
-         * 备注
+         * 备注【可排序】
          */
         private String remark;
         /**
-         * 更新时间
+         * 更新时间【可排序】
          */
         private LocalDateTime updateTime;
 
         /**
-         * 更新人名称
+         * 更新人名称【可排序】
          */
         private String updateUserName;
     }

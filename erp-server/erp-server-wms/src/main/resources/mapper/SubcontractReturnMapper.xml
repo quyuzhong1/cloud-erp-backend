@@ -47,12 +47,14 @@
         approve_time, approve_user_name, approve_user_id, sync_kingdee_id, supplier_id, supplier_name, subcontract_order_id, subcontract_order_code
     </sql>
     <sql id="pageSql">
-        sr.id,sr.code,sr.approve_status,sr.type,sr.bill_date,sr.source_id,sr.source_code,sr.source_type,sr.invalid_status,sr.invalid_time,
-        sr.invalid_remark,sr.approve_time,sr.approve_user_name,sr.supplier_id,sr.supplier_name,sr.subcontract_order_id,sr.subcontract_order_code,
-        srd.id as detailId,srd.parent_sku_id, srd.parent_sku_no, srd.sku_id, srd.sku_no, srd.bom_version, srd.quantity, srd.parent_sku_use_qty,
-        srd.return_qty, srd.warehouse_id,srd.warehouse_name, srd.remark, srd.source_detail_id, srd.warehouse_location, srd.warehouse_location_name,srd.kingdee_detail_id,
-        srd.subcontract_order_detail_id,
-        sr.create_user_id,sr.create_user_name,sr.create_time,sr.update_user_id,sr.update_user_name,sr.update_time
+        sr.id,sr.code as code,sr.approve_status as approveStatus,sr.type,sr.bill_date as billDate,sr.source_id,sr.source_code as sourceCode,
+        sr.source_type as sourceType,sr.invalid_status as invalidStatus,sr.invalid_time as invalidTime,sr.invalid_remark,
+        sr.approve_time as approveTime,sr.approve_user_name,sr.supplier_id,sr.supplier_name,sr.subcontract_order_id,sr.subcontract_order_code as subcontractOrderCode,
+        srd.id as detailId,srd.parent_sku_id, srd.parent_sku_no as parentSkuNo, srd.sku_id, srd.sku_no as skuNo, srd.bom_version, srd.quantity, srd.parent_sku_use_qty,
+        srd.return_qty as returnQty, srd.warehouse_id,srd.warehouse_name as warehouseName, srd.remark as remark, srd.source_detail_id, srd.warehouse_location,
+        srd.warehouse_location_name as warehouseLocationName,srd.kingdee_detail_id,srd.subcontract_order_detail_id,
+        sr.create_user_id as createUserId,sr.create_user_name as createUserName,sr.create_time as createTime,sr.update_user_id,
+        sr.update_user_name as updateUserName,sr.update_time as updateTime
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.SubcontractReturnDTO$ListDTO">

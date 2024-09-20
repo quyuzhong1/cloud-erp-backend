@@ -219,7 +219,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     }
 
     @Override
-    public void exportList(SubcontractReturnDTO.PagingParamDTO param, HttpServletResponse response) {
+    public void exportList(SubcontractReturnDTO.PagingParamDTO param) {
         downloadTaskFeign.saveDownloadTask("委外退料单导出", EXPORT_WMS_SUBCONTRACT_RETURN.getCode(), param);
     }
 
@@ -335,7 +335,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
 
     private Boolean validateDisApprove(SubcontractReturnEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         return true;
@@ -367,8 +367,8 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     @Override
     public BatchResultDTO invalid(String id, String remark) {
         SubcontractReturnEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到委外退料单数据"));
-        // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) || !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        // 待提交或审核不通过
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改委外退料单状态数据，id：【{}】", id);
