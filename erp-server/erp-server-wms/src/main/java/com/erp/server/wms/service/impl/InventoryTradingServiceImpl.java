@@ -345,21 +345,29 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
 
-        for (InventoryTransactionDTO transactionDTO : checkTransactionList) {
+        Map<String, List<InventoryTransactionDTO>> map = checkTransactionList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
+        for (Map.Entry<String, List<InventoryTransactionDTO>> entry : map.entrySet()) {
+            List<InventoryTransactionDTO> value = entry.getValue();
+            String skuId = value.get(0).getSkuId();
+            String warehouseId = value.get(0).getWarehouseId();
             //虚拟库存校验
-            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),transactionDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(),transactionDTO.getSkuId()))
+            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),warehouseId) && StrUtil.equals(obj.getSkuId(),skuId))
                     .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
             if(MathUtil.compareTo(virtualQty,MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
             }
             //仓库可用库存
-            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),transactionDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(),transactionDTO.getSkuId()))
+            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),warehouseId) && StrUtil.equals(obj.getSkuId(),skuId))
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
-            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",transactionDTO.getWarehouseName(),transactionDTO.getSkuNo(),virtualQty,realInventoryTotal);
-            if (Math.abs(transactionDTO.getQty()) > realInventoryTotal - virtualQty) {
-                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,transactionDTO.getSkuNo(),transactionDTO.getWarehouseName(),virtualQty,realInventoryTotal - virtualQty);
+            //需要出库存数量
+            Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            log.info("仓库【{}】，SKU【{}】，已分配库存【{}】，实体参可用库存【{}】",value.get(0).getWarehouseName(),value.get(0).getSkuNo(),virtualQty,realInventoryTotal);
+            if (Math.abs(qty) > realInventoryTotal - virtualQty) {
+                ServiceException.runError(ApiError.ERROR_CHECK_OUT_VIRTUAL_INVENTORY,value.get(0).getSkuNo(),value.get(0).getWarehouseName(),virtualQty,realInventoryTotal - virtualQty);
             }
         }
+
+
     }
 
     /**
