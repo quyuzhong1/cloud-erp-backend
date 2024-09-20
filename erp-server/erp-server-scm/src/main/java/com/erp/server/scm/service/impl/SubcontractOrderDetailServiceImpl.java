@@ -383,13 +383,17 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         String purchaseOrgId = subcontractOrderEntity.getPurchaseOrgId();
         List<PurchasePriceDTO.PriceDTO> list = new ArrayList<>();
         newList.forEach(e ->{
-            if (CollectionUtils.isNotEmpty(e.getChildList()) && Objects.nonNull(e.getIsGift()) && !e.getIsGift()){
-                e.getChildList().forEach(f -> list.add(PurchasePriceDTO.PriceDTO.builder()
-                        .purchaseOrgId(purchaseOrgId)
-                        .qty(f.getQty())
-                        .skuId(e.getSkuId())
-                        .supplierId(e.getSupplierId())
-                        .build()));
+            if (CollectionUtils.isNotEmpty(e.getChildList())){
+                e.getChildList().forEach(f -> {
+                    if (Objects.nonNull(f.getIsGift()) && !f.getIsGift()){
+                        list.add(PurchasePriceDTO.PriceDTO.builder()
+                                .purchaseOrgId(purchaseOrgId)
+                                .qty(f.getQty())
+                                .skuId(f.getSkuId())
+                                .supplierId(f.getSupplierId())
+                                .build());
+                    }
+                });
             }
         });
         List<PurchasePriceDTO.PriceDTO> priceList = purchasePriceService.batchGetPurchasePrice(list);

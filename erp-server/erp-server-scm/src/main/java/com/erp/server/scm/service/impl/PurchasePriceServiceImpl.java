@@ -1018,7 +1018,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //供应商Id
         List<String> supplierIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSupplierId())).map(PurchasePriceDTO.PriceDTO::getSupplierId).distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierEntityList = supplierService.listByIds(supplierIdList);
-        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(supplierEntityList)) {
+        if (CollectionUtils.isEmpty(supplierEntityList)) {
             return Collections.emptyList();
         }
         //采购数量-需要根据sku进行汇总

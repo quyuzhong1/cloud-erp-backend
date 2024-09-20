@@ -203,10 +203,10 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         List<String> existStatusList = list.stream().map(SubcontractReturnDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new SubcontractReturnDTO.TabListDTO(status, 0));
+            list.add(new SubcontractReturnDTO.TabListDTO(status,ApproveStatusEnum.getTableName(status), 0));
         }
         });
-        list.add(new SubcontractReturnDTO.TabListDTO("all", list.stream().mapToInt(SubcontractReturnDTO.TabListDTO::getCount).sum()));
+        list.add(new SubcontractReturnDTO.TabListDTO("all", "全部", list.stream().mapToInt(SubcontractReturnDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }

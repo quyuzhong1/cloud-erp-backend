@@ -800,7 +800,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //审核通过发送金蝶
             sendPushTask(poInstockEntityList,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
-        throw new ServiceException(ApiError.ERROR_98051);
     }
 
     /**
