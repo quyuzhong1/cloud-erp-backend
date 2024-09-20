@@ -184,7 +184,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             detailEntity.setBomVersion(childDetailEntity.getBomVersion());
             detailEntity.setQuantity(bomChildrenSkuDTO.getQuantity());
             detailEntity.setMainId(subcontractReturnEntity.getId());
-            detailEntity.setReturnQty(childDetailEntity.getDeliveryQty());
+//            detailEntity.setReturnQty(childDetailEntity.getDeliveryQty());
             detailEntity.setWarehouseLocation(detailEntity.getWarehouseLocation());
 
             //仓库名称

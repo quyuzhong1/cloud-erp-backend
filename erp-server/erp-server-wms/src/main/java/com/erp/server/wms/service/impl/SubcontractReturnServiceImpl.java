@@ -335,7 +335,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
 
     private Boolean validateDisApprove(SubcontractReturnEntity entity) {
         // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+        if (!Objects.equals(entity.getApproveStatus().getStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
         return true;
