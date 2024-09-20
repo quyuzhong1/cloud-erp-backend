@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.BetweenFormatter;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
@@ -331,7 +332,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         searchParam.setPermissionSql(param.getPermissionSql());
         List<PilotApplicationDTO.TabListDTO> list = new ArrayList<>();
         //待提交
-        int waitSubmitCount = this.baseMapper.tabList(ApproveStatusEnum.WAIT_SUBMIT.getCode(), null, null);
+//        int waitSubmitCount = this.baseMapper.tabList(ApproveStatusEnum.WAIT_SUBMIT.getCode(), null, null);
+        QueryWrapper<PilotApplicationEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
+        int waitSubmitCount = this.baseMapper.selectCount(queryWrapper);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
         //根据单据id查询审核流程
         ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
@@ -924,25 +928,24 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 item.setActualTaxCost("无价目表");
             }
             //采购申请量
-            List<PurchaseApplicationEntity> collect = purchaseApplicationList.stream().filter(obj -> obj.getSourceId().equals(item.getId())).collect(Collectors.toList());
-            if(!collect.isEmpty()){
-                List<String> purchaseAppIds = collect.stream().map(obj -> obj.getId()).collect(Collectors.toList());
-                List<PurchaseApplicationDetailEntity> detailEntityList = purchaseApplicationDetailList.stream()
-                        .filter(obj -> purchaseAppIds.contains(obj.getPurchaseApplicationId()) && obj.getSkuId().equals(item.getSkuId()))
-                        .collect(Collectors.toList());
-                int sum = detailEntityList.stream().mapToInt(PurchaseApplicationDetailEntity::getApplyQty).sum();
-                item.setPurchaseApplyQty(sum);
+            PurchaseApplicationDetailEntity purchaseApplicationDetailEntity = purchaseApplicationDetailList.stream().filter(r -> null!=r.getSourceDetailId() && r.getSourceDetailId().equals(item.getDetailId())).findFirst().orElse(null);
+            if(null != purchaseApplicationDetailEntity){
+                item.setPurchaseApplyQty(null == purchaseApplicationDetailEntity.getApplyQty() ? 0 : purchaseApplicationDetailEntity.getApplyQty());
             }
+//            List<PurchaseApplicationEntity> collect = purchaseApplicationList.stream().filter(obj -> obj.getSourceId().equals(item.getId())).collect(Collectors.toList());
+//            if(!collect.isEmpty()){
+//                List<String> purchaseAppIds = collect.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+//                List<PurchaseApplicationDetailEntity> detailEntityList = purchaseApplicationDetailList.stream()
+//                        .filter(obj -> purchaseAppIds.contains(obj.getPurchaseApplicationId()) && obj.getSkuId().equals(item.getSkuId()))
+//                        .collect(Collectors.toList());
+//                int sum = detailEntityList.stream().mapToInt(PurchaseApplicationDetailEntity::getApplyQty).sum();
+//                item.setPurchaseApplyQty(sum);
+//            }
             //采购入库量
-            List<PurchaseApplicationEntity> collect1 = purchaseApplicationList.stream().filter(item1 -> item1.getSourceId().equals(item.getId())).collect(Collectors.toList());
-            List<String> purchaseIdList = collect1.stream().map(item1 -> item1.getId()).distinct().collect(Collectors.toList());
-            List<String> detailIds = purchaseApplicationDetailList.stream()
-                    .filter(item1 -> purchaseIdList.contains(item1.getPurchaseApplicationId()))
-                    .filter(item1 -> item1.getSkuId().equals(item.getSkuId())).map(item1 -> item1.getId())
-                    .collect(Collectors.toList());
-            List<PurchaseApplicationDTO.ListDTO> purchaseList2 = purchaseList.stream().filter(obj1 -> detailIds.contains(obj1.getPurchaseApplicationDetailId())).collect(Collectors.toList());
-            int sum = purchaseList2.stream().mapToInt(item1 ->  item1.getStockInQty() == null?0:item1.getStockInQty()).sum();
-            item.setStockInQty(sum);
+            PurchaseApplicationDTO.ListDTO listDTO = purchaseList.stream().filter(r -> null!=r.getSourceDetailId() && r.getSourceDetailId().equals(item.getDetailId())).findFirst().orElse(null);
+            if(null != listDTO){
+                item.setStockInQty(null == listDTO.getStockInQty() ? 0 : listDTO.getStockInQty());
+            }
         }
     }
     /**

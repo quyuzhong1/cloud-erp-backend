@@ -1209,30 +1209,36 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     public List<PurchaseApplicationDTO.ListDTO> listStockInQty(List<PurchaseApplicationDTO.ListDTO> records){
         //查询关联采购
         List<String> detailIds = records.stream().map(PurchaseApplicationDTO.ListDTO::getPurchaseApplicationDetailId).collect(Collectors.toList());
-        PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
-        searchParamDTO.setPurchaseApplicationDetailIds(detailIds);
-        List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(searchParamDTO);
-
-        //入库信息
-        List<PoInstockDetailEntity> purchaseStockInDetailList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(refList)) {
-            List<String> podIds = refList.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
-            //查询入库
-            purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
-        }
-        for (PurchaseApplicationDTO.ListDTO obj : records) {
-            //入库数量
-            if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
-                List<String> thisPodIds = refList.stream()
-                        .filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId()))
-                        .map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId)
-                        .collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(thisPodIds)) {
-                    Integer stockInQty = purchaseStockInDetailList.stream()
-                            .filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
-                            .map(PoInstockDetailEntity::getStockInQty)
-                            .reduce(MathUtil.ZERO, Integer::sum);
-                    obj.setStockInQty(stockInQty);
+        if(CollectionUtils.isNotEmpty(detailIds)){
+            PurchaseApplicationRefPoDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationRefPoDTO.SearchParamDTO();
+            searchParamDTO.setPurchaseApplicationDetailIds(detailIds);
+            List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(searchParamDTO);
+            //入库信息
+            List<PoInstockDetailEntity> purchaseStockInDetailList = new ArrayList<>();
+            if (CollectionUtils.isNotEmpty(refList)) {
+                List<String> podIds = refList.stream().map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+                //查询入库
+                purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+            }
+            List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByIds(detailIds);
+            for (PurchaseApplicationDTO.ListDTO obj : records) {
+                PurchaseApplicationDetailEntity detailEntity = detailList.stream().filter(r -> r.getId().equals(obj.getPurchaseApplicationDetailId())).findFirst().orElse(null);
+                if(null != detailEntity){
+                    obj.setSourceDetailId(detailEntity.getSourceDetailId());
+                }
+                //入库数量
+                if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
+                    List<String> thisPodIds = refList.stream()
+                            .filter(e -> e.getPurchaseApplicationDetailId().equals(obj.getPurchaseApplicationDetailId()))
+                            .map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseOrderDetailId)
+                            .collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(thisPodIds)) {
+                        Integer stockInQty = purchaseStockInDetailList.stream()
+                                .filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                                .map(PoInstockDetailEntity::getStockInQty)
+                                .reduce(MathUtil.ZERO, Integer::sum);
+                        obj.setStockInQty(stockInQty);
+                    }
                 }
             }
         }
