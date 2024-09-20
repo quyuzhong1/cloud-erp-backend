@@ -134,6 +134,20 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
     }
 
     @Override
+    public List<FbaShipmentPackingEntity> listByFbaCodes(List<String> fbaCodes) {
+        if(CollectionUtil.isEmpty(fbaCodes)){
+            return new ArrayList<>();
+        }
+        List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(fbaCodes);
+        List<String> fbaIds = fbaShipmentEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        if(CollectionUtil.isNotEmpty(fbaIds)){
+            return lambdaQuery().in(FbaShipmentPackingEntity::getMainId,fbaIds).list();
+        }else{
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
     public List<FbaShipmentPackingDTO.ViewDTO> listPacking(List<String> ids) {
         List<FbaShipmentEntity> fbaShipmentEntity = fbaShipmentService.listByIds(ids);
         List<String> errorCodes = fbaShipmentEntity.stream().filter(v->!v.getIsPackingDownload()).map(FbaShipmentEntity::getCode).collect(Collectors.toList());

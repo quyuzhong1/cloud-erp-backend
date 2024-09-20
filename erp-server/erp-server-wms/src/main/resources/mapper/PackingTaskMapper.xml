@@ -177,6 +177,12 @@
             <if test="params.taskId != null and params.taskId != ''">
                 AND wc.packing_task_id = #{params.taskId}
             </if>
+        <if test="params.cartonIds != null and params.cartonIds.size > 0">
+            AND wc.id IN
+            <foreach collection="params.cartonIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
             <!-- 权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}

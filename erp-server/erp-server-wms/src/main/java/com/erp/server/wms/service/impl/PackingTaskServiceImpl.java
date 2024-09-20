@@ -679,6 +679,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             List<PackingTaskEntity> packingTaskEntityList = this.listBySourceCodes(sourceCodeList);
             List<String> taskIds = packingTaskEntityList.stream().map(PackingTaskEntity::getId).distinct().collect(Collectors.toList());
             List<PackingTaskDetailEntity> packingTaskDetailEntityList = packingTaskDetailService.listByMainIds(taskIds);
+            List<PackingTaskDetailEntity> copyList = BeanUtil.copyToList(packingTaskDetailEntityList,PackingTaskDetailEntity.class);
             List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(taskIds);
             //根据发货单分组
             Map<String,List<PackingExcelDTO>> map = packingExcelDTOList.stream().collect(Collectors.groupingBy(PackingExcelDTO::getCode));
@@ -725,9 +726,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     detailList.forEach(v->{
                         if(StringUtils.isBlank(v.getFnSku())){
                             Integer totalNum = v.getPackQty();
-                            List<PackingTaskDetailEntity> taskDetailList = packingTaskDetailEntityList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())).collect(Collectors.toList());
-                            List<PackingTaskDetailEntity> copyList = BeanUtil.copyToList(taskDetailList,PackingTaskDetailEntity.class);
-                            for(PackingTaskDetailEntity packingTaskDetailEntity : copyList){
+                            List<PackingTaskDetailEntity> taskDetailList = copyList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())).collect(Collectors.toList());
+                            for(PackingTaskDetailEntity packingTaskDetailEntity : taskDetailList){
                                 if(totalNum <= 0 || packingTaskDetailEntity.getDeliveryQty() <= 0){
                                     continue;
                                 }

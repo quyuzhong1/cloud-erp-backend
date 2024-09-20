@@ -25,6 +25,8 @@ public interface FbaShipmentPackingService extends SuperService<FbaShipmentPacki
 
     List<FbaShipmentPackingEntity> listByMains(List<String> mainIds);
 
+    List<FbaShipmentPackingEntity> listByFbaCodes(List<String> fbaCodes);
+
     List<FbaShipmentPackingDTO.ViewDTO> listPacking(List<String> ids);
 
     void packingExport(FbaShipmentDTO.PagingParamDTO dto);

@@ -1743,6 +1743,33 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
+        FirstMileDeliveryEntity firstMileDeliveryEntity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("发货单为空"));
+        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
+        //三方仓关联装箱任务查，FBA关联货件查
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(Arrays.asList(firstMileDeliveryEntity.getCode(),firstMileDeliveryEntity.getSourceCode()));
+        if(CollectionUtils.isEmpty(packingTaskEntityList)){
+            return new WmsCartonSpecDTO.ListPackingDTO();
+        }
+        PackingTaskEntity packingTaskEntity = packingTaskEntityList.get(0);
+        PackingTaskDTO.PackedDetailDTO packedDetailDTO = new PackingTaskDTO.PackedDetailDTO();
+        if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
+            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(id);
+            String fbaShipmentCode = detailEntityList.get(0).getFbaShipmentCode();
+            List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Arrays.asList(fbaShipmentCode));
+            List<String> cartonIds = fbaShipmentPackingEntityList.stream().map(v->v.getCartonId()).distinct().collect(Collectors.toList());
+            packedDetailDTO.setTaskId(packingTaskEntity.getId());
+            packedDetailDTO.setCartonIds(cartonIds);
+        }else{
+            packedDetailDTO.setTaskId(packingTaskEntity.getId());
+        }
+        listPackingDTO = packingTaskService.listPacking(packedDetailDTO);
+        listPackingDTO.setId(firstMileDeliveryEntity.getId());
+        listPackingDTO.setCode(firstMileDeliveryEntity.getCode());
+        return listPackingDTO;
+    }
+
+    @Override
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {
             return false;
