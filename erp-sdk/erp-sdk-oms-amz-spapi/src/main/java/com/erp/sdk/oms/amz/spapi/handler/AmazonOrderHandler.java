@@ -156,7 +156,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             }
 //            if (StringUtils.isNotBlank(rateLimitStr)){
 //                // 设置动态速率，失效时间=1/limit
-//                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+//                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
 //                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
 //            }
             // （临时）缓存设置根据亚马逊的响应时间记录下次执行开始时间
@@ -171,7 +171,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new RuntimeException("请求亚马逊SP-APi订单api异常失败,body=" + JSONUtil.toJsonStr(e));
@@ -266,13 +266,13 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
 //            if (StringUtils.isNotBlank(rateLimitStr)){
 //                // 设置动态速率，失效时间=1/limit
-//                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+//                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
 //                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
 //            }
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new ServiceException("查询亚马逊订单详情失败：API异常："+JSONUtil.toJsonStr(e));
@@ -393,7 +393,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new ServiceException("查询亚马逊订单地址失败：API异常："+JSONUtil.toJsonStr(e));
@@ -431,7 +431,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             GetOrderBuyerInfoResponse response = orderBuyerInfoResp.getData();
             if (StringUtils.isNotBlank(rateLimitStr)){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             // 结果缓存倒redis(消费完移除)
@@ -440,7 +440,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new ServiceException("查询亚马逊订单地址失败：API异常："+JSONUtil.toJsonStr(e));
@@ -514,7 +514,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new ServiceException("根据订单IDS请求亚马逊SP-APi订单失败：API异常："+JSONUtil.toJsonStr(e));

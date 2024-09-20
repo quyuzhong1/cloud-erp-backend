@@ -62,7 +62,7 @@ public class AmazonSpApiRateLimitUtils {
         rateLimitStr = limitArray.get(0);
         if (StringUtils.isNotBlank(rateLimitStr)){
             // 设置动态速率，失效时间=1/limit
-            BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+            BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
             redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
         }
     }
