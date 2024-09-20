@@ -373,7 +373,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             String mapKey = StrUtil.isBlank(item.getInventoryId()) ?
                     StrUtil.format("{}_{}_{}_{}", item.getWarehouseId(), item.getSkuId(),item.getWarehouseLocation(),item.getInventoryStatus()) :
                     item.getInventoryId();
-            if(checkMap.containsKey(mapKey)){
+            if(!checkMap.containsKey(mapKey)){
                 checkMap.put(mapKey, item);
             }else {
                 // 合并数量
