@@ -75,6 +75,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -724,7 +725,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         if(StringUtils.isBlank(v.getFnSku())){
                             Integer totalNum = v.getPackQty();
                             List<PackingTaskDetailEntity> taskDetailList = packingTaskDetailEntityList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())).collect(Collectors.toList());
-                            for(PackingTaskDetailEntity packingTaskDetailEntity : taskDetailList){
+                            List<PackingTaskDetailEntity> copyList = BeanUtil.copyToList(taskDetailList,PackingTaskDetailEntity.class);
+                            for(PackingTaskDetailEntity packingTaskDetailEntity : copyList){
                                 if(totalNum <= 0 || packingTaskDetailEntity.getDeliveryQty() <= 0){
                                     continue;
                                 }
