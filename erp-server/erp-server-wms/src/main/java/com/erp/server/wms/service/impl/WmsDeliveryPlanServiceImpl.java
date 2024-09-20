@@ -555,8 +555,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
         List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews;
-        RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().findFirst().orElse(new RequisitionApplicationEntity());
-        deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(Arrays.asList(id,requisitionApplication.getId()), null);
+        List<String> ids = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().map(v->v.getId()).collect(Collectors.toList());
+        ids.add(id);
+        deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(ids, null);
         return deliverRecordViews;
     }
 
