@@ -21,6 +21,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.sdk.wms.antu.dto.request.AntuGetReceiptReq;
 import com.sdk.wms.antu.dto.response.AntuReceiptResp;
 import com.sdk.wms.antu.dto.response.AntuResponse;
+import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.utils.AntuUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器下的安兔api获取数据方式
@@ -81,7 +83,9 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
                 String response = AntuUtils.callService(apiType, antuGetReceiptReq);
                 AntuResponse<List<AntuReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {
                 }.getType());
-                allResult.addAll(result.getData());
+
+                List<AntuReceiptResp> receiptRespList = result.getData().stream().filter(req -> AntuEnums.ReceivingStatusEnum.COMPLETE_LISTING.getCode().equals(req.getReceivingStatus())).collect(Collectors.toList());
+                allResult.addAll(receiptRespList);
             }
         }
 
