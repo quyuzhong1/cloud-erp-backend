@@ -440,7 +440,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 resultList.add(pushTaskEntity);
             } else {
                 DmpPushTaskEntity pushTaskEntity;
-                if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(entity.getSourceType())){
+                if ("qimen".equals(entity.getCreateUserName()) || "wangdiantong".equals(entity.getCreateUserName())){
                     pushTaskEntity = syncKingdeeSoOutstockService.syncWdtDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
                 }else {
                     pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
@@ -815,7 +815,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (!OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
             	resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoOutstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
             } else {
-                if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(entity.getSourceType())){
+                if ("qimen".equals(entity.getCreateUserName()) || "wangdiantong".equals(entity.getCreateUserName())){
                 	resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoOutstockService.newSyncWdtDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
                 }else {
                     resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoOutstockService.newSyncB2cDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
