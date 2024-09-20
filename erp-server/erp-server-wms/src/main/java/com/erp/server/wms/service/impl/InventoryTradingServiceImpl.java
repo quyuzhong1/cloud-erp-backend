@@ -317,10 +317,18 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
          * 3. 采购退货单：
          * 4. 委外发料：正常领料、超出领料
          * 5. 加工单：组装、拆卸
-         *
+         * 6.采购入库单
+         * 7.销售退货入库单
          */
-        List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode(),InventorySourceTypeEnum.OTHER_INSTOCK.getCode(),InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
-                ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode(),InventorySourceTypeEnum.RETURN_MATERIAL.getCode(),InventorySourceTypeEnum.MACHINE_INFO.getCode(),InventorySourceTypeEnum.PURCHASE_STOCK_IN.getCode());
+        List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode()
+                ,InventorySourceTypeEnum.OTHER_INSTOCK.getCode()
+                ,InventorySourceTypeEnum.PURCHASE_RETURN_ORDER.getCode()
+                ,InventorySourceTypeEnum.RECEIVE_MATERIAL.getCode()
+                ,InventorySourceTypeEnum.RETURN_MATERIAL.getCode()
+                ,InventorySourceTypeEnum.MACHINE_INFO.getCode()
+                ,InventorySourceTypeEnum.PURCHASE_STOCK_IN.getCode()
+                ,InventorySourceTypeEnum.SO_RETURN_INSTOCK.getCode()
+        );
         //以上类型出可用时需要进行分配数量校验
         List<InventoryTransactionDTO> checkTransactionList = transactionList.stream().filter(obj ->
                         MathUtil.compareTo(obj.getQty(), MathUtil.ZERO ) < MathUtil.ZERO
