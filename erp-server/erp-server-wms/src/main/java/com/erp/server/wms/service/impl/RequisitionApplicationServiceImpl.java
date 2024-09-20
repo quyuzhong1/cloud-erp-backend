@@ -1334,6 +1334,39 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
         }
 
+        //校验装箱SKU在FBA货件里是否存在
+        for (RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO fbaBindShipmentViewDetailDTO : detailList) {
+            List<String> packingSkuArr = Arrays.asList(fbaBindShipmentViewDetailDTO.getPackingSku().split(";"));
+            List<String> packingFnSkuArr = Arrays.asList(fbaBindShipmentViewDetailDTO.getPackingFnSku().split(";"));
+            List<FbaShipmentDetailEntity> fbaShipmentDetailEntityList = allFbaDetailList.stream().filter(v->v.getMainId().equals(fbaBindShipmentViewDetailDTO.getFbaShipmentId())).collect(Collectors.toList());
+            List<String> existSkuNoList = fbaShipmentDetailEntityList.stream().map(v->v.getSkuNo()).distinct().collect(Collectors.toList());
+            List<String> existFnSkuNoList = fbaShipmentDetailEntityList.stream().map(v->v.getFnSku()).distinct().collect(Collectors.toList());
+            for(String skuNo:packingSkuArr){
+                boolean errorFlag = true;
+                for(String existSkuNo:existSkuNoList){
+                    if(skuNo.contains(existSkuNo)){
+                        errorFlag = false;
+                        break;
+                    }
+                }
+                if(errorFlag){
+                    throw new ServiceException("装箱sku:{}关联不到货件：{}",skuNo,fbaBindShipmentViewDetailDTO.getFbaShipmentCode());
+                }
+            }
+            for(String fnSkuNo:packingFnSkuArr){
+                boolean errorFlag = true;
+                for(String existFnSkuNo:existFnSkuNoList){
+                    if(fnSkuNo.contains(existFnSkuNo)){
+                        errorFlag = false;
+                        break;
+                    }
+                }
+                if(errorFlag){
+                    throw new ServiceException("装箱FnSku:{}关联不到货件：{}",fnSkuNo,fbaBindShipmentViewDetailDTO.getFbaShipmentCode());
+                }
+            }
+        }
+
         List<String> skuIdList = allFbaDetailList.stream().map(FbaShipmentDetailEntity::getSkuId).collect(Collectors.toList());
         //获取sku信息
         List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
