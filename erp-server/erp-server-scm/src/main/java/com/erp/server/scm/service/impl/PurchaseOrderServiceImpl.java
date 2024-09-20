@@ -1032,9 +1032,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //补货采购订单
             if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(purchaseOrderEntity.getType())){
                 PoReturnDetailEntity poReturnDetailEntity = poReturnDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())
-                        && StrUtil.isNotBlank(detailDTO.getSkuId()) && Objects.equals(e.getSkuId(), detailDTO.getSkuId())).findFirst().orElse(null);
+                        && StrUtil.isNotBlank(detailEntity.getSkuId()) && Objects.equals(e.getSkuId(), detailEntity.getSkuId())).findFirst().orElse(null);
                 if (Objects.nonNull(poReturnDetailEntity)){
-                    BigDecimal returnPrice = Objects.nonNull(poReturnDetailEntity.getReturnPrice()) ? poReturnDetailEntity.getReturnPrice() : BigDecimal.ZERO;
                     detailDTO.setPurchaseOrderDetailId(detailEntity.getId());
                     detailDTO.setSkuId(detailEntity.getSkuId());
                     detailDTO.setSkuNo(detailEntity.getSkuNo());

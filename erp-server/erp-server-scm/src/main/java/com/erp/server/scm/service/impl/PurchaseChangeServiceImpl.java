@@ -26,14 +26,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastPoChangeDetailDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -305,7 +302,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             });
 
             // 更新库存信息
-            updateInventoryTransCore(purchaseChangeDetailEntityList, purchaseOrderDetailEntityList);
+            updateInventoryTransCore(purchaseChangeDetailEntityList, purchaseOrderDetailEntityList, entity);
 
             //推送金蝶
             DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -680,20 +677,24 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     /**
      * 采购变更单库存变更（需要计算差额，原采购订单已经增加了在途（没有待检的时候））
+     *
      * @param purchaseChangeDetailList 变更单明细
+     * @param entity
      */
-    public void updateInventoryTransCore(List<PurchaseChangeDetailEntity> purchaseChangeDetailList, List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList) {
+    public void updateInventoryTransCore(List<PurchaseChangeDetailEntity> purchaseChangeDetailList, List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList, PurchaseChangeEntity entity) {
         List<InstockForcastDTO.PoChangeDTO> dataList = Lists.newArrayList();
         Map<String,PurchaseOrderDetailEntity> detailOrderMap = originPurchaseOrderDetailEntityList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
+        InstockForcastDTO.PoChangeDTO dto = new InstockForcastDTO.PoChangeDTO();
+        List<InstockForcastPoChangeDetailDTO.AddDTO> members = Lists.newArrayList();
         for(PurchaseChangeDetailEntity purchaseChangeDetailEntity : purchaseChangeDetailList) {
-            InstockForcastDTO.PoChangeDTO dto = new InstockForcastDTO.PoChangeDTO();
-
             String detailOrderId = purchaseChangeDetailEntity.getPurchaseOrderDetailId();
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = detailOrderMap.get(detailOrderId);
             dto.setPurchaseOrderId(purchaseOrderDetailEntity.getPurchaseOrderId());
-            List<InstockForcastPoChangeDetailDTO.AddDTO> members = Lists.newArrayList();
+            dto.setPurchaseChangeOrderId(purchaseChangeDetailEntity.getPurchaseChangeId());
+            dto.setPurchaseChangeOrderCode(entity.getCode());
             InstockForcastPoChangeDetailDTO.AddDTO addDTO = new InstockForcastPoChangeDetailDTO.AddDTO();
             addDTO.setPurchaseOrderDetailId(detailOrderId);
+            addDTO.setPurchaseOrderChangeDetailId(purchaseChangeDetailEntity.getId());
             addDTO.setSkuId(purchaseChangeDetailEntity.getSkuId());
             addDTO.setSkuNo(purchaseChangeDetailEntity.getSkuNo());
             addDTO.setOriginQty(purchaseOrderDetailEntity.getPurchaseQty());
@@ -701,9 +702,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             addDTO.setQty(purchaseChangeDetailEntity.getQty());
             addDTO.setExecutionStatus(purchaseOrderDetailEntity.getExecutionStatus());
             members.add(addDTO);
-            dto.setMembers(members);
-            dataList.add(dto);
         }
+        dto.setMembers(members);
+        dataList.add(dto);
         inventoryFeign.poChangeBatch(dataList);
     }
 

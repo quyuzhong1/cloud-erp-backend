@@ -61,7 +61,7 @@ public enum InventoryBusinessTypeEnum {
 
     PO_RETURN_QC("po_return_qc", "27", "采购退货（质检退货，退货补货）"),
     // 自定义规则，无法固化
-    PURCHASE_ORDER_CHANGE("purchase_order_change", "28", "采购订单变更"),
+//    PURCHASE_ORDER_CHANGE("purchase_order_change", "28", "采购订单变更"),
 
     PO_RETURN_QC_REF("po_return_qc_ref", "29", "采购退货（质检退货，退货退款）"),
 
@@ -88,6 +88,9 @@ public enum InventoryBusinessTypeEnum {
     ASSEMBLE_IN_CHILD_FREEZE("assemble_in_child_freeze", "48", "加工单组装（子SKU冻结减少）"),
     SUBCONTRACT_RETURN_IN("subcontract_return_in", "49", "退料入库"),
     SUBCONTRACT_RETURN_OUT("subcontract_return_out", "50", "退料出库"),
+
+    PURCHASE_ORDER_CHANGE_IN("purchase_order_change_in", "51", "采购订单变更入库"),
+    PURCHASE_ORDER_CHANGE_OUT("purchase_order_change_out", "52", "采购订单变更出库"),
     ;
 
     private String code;
