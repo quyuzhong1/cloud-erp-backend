@@ -199,18 +199,18 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             Map<String, RecentSuggestionDetailEntity> recentSuggestionDetailMap = suggestionDetails.stream().filter(v -> v.getReplenishmentDetailId().equals(view.getDetailId()))
                     .collect(Collectors.toMap(RecentSuggestionDetailEntity::getType, v -> v, (o1, o2) -> o1));
             // 最近断货日期
-            RecentSuggestionDetailEntity recentOutOfStock = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_OUT_OF_STOCK.name());
+            RecentSuggestionDetailEntity recentOutOfStock = recentSuggestionDetailMap.get(RecentSuggestionEnum.RECENT_OUT_OF_STOCK.name());
             if (!ObjectUtils.isEmpty(recentOutOfStock)){
                 view.setOutOfStockDay(new ReplenishmentSuggestionVO.DateVO(recentOutOfStock.getMarkType(), recentOutOfStock.getDate(), recentOutOfStock.getDays()));
             }
             // 最近建议发货日期
-            RecentSuggestionDetailEntity recentSuggestShipping = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_SUGGESTION_SHIPPING.name());
+            RecentSuggestionDetailEntity recentSuggestShipping = recentSuggestionDetailMap.get(RecentSuggestionEnum.RECENT_DELIVERY.name());
             if (!ObjectUtils.isEmpty(recentSuggestShipping)) {
                 view.setSuggestShippingDate(new ReplenishmentSuggestionVO.DateVO(recentSuggestShipping.getMarkType(), recentSuggestShipping.getDate(), recentSuggestShipping.getDays()));
                 view.setSuggestShippingQty(recentSuggestShipping.getQty());
             }
             // 最近建议采购日期
-            RecentSuggestionDetailEntity recentSuggestPurchase = recentSuggestionDetailMap.get(RecentSuggestionDetailEnum.RECENT_SUGGESTION_PURCHASE.name());
+            RecentSuggestionDetailEntity recentSuggestPurchase = recentSuggestionDetailMap.get(RecentSuggestionEnum.RECENT_PURCHASE.name());
             if (!ObjectUtils.isEmpty(recentSuggestPurchase)) {
                 view.setSuggestPurchaseDate(new ReplenishmentSuggestionVO.DateVO(recentSuggestPurchase.getMarkType(), recentSuggestPurchase.getDate(), recentSuggestPurchase.getDays()));
                 view.setSuggestPurchaseQty(recentSuggestPurchase.getQty());
