@@ -73,7 +73,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
             //列表数据较多情况下，进行分割集合
             List<List<String>> partition = ListUtil.partition(receiveCodeList, MathUtil.NUMBER_100);
 
-            for (int i = 1; i <= partition.size(); i++) {
+            for (int i = 0; i < partition.size(); i++) {
                 //查询数据
                 AntuGetReceiptReq antuGetReceiptReq = AntuGetReceiptReq.builder()
                         .page(i)
@@ -84,8 +84,10 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
                 AntuResponse<List<AntuReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {
                 }.getType());
 
-                List<AntuReceiptResp> receiptRespList = result.getData().stream().filter(req -> AntuEnums.ReceivingStatusEnum.COMPLETE_LISTING.getCode().equals(req.getReceivingStatus())).collect(Collectors.toList());
-                allResult.addAll(receiptRespList);
+                if ("Success".equals(result.getAsk())) {
+                    List<AntuReceiptResp> receiptRespList = result.getData().stream().filter(req -> AntuEnums.ReceivingStatusEnum.COMPLETE_LISTING.getCode().equals(req.getReceivingStatus())).collect(Collectors.toList());
+                    allResult.addAll(receiptRespList);
+                }
             }
         }
 
