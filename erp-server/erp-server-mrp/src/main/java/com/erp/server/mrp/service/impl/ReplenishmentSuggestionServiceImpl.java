@@ -648,6 +648,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public List<ReplenishmentSuggestionEntity> listByUnique(List<String> platformCodeList, List<String> shopIdList, List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(platformCodeList) || CollectionUtils.isEmpty(shopIdList) || CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.EMPTY_LIST;
+        }
         return baseMapper.listByUnique(platformCodeList,shopIdList,skuIdList);
     }
 
