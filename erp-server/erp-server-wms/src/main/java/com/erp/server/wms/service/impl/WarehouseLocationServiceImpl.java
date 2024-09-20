@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -396,7 +397,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public PagingVO<WarehouseLocationDTO.LocationListDTO> pagingSelect(PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
-        WarehouseLocationDTO.SelectDTO params = searchDTO.getParams();
+        
+        WarehouseLocationDTO.SelectDTO params = JSON.parseObject(JSON.toJSONString(searchDTO.getParams()), WarehouseLocationDTO.SelectDTO.class);
         IPage<WarehouseLocationDTO.LocationListDTO> pagResult;
         if (StringUtils.isNotBlank(params.getSkuNo())){
             pagResult = baseMapper.pagingSelectBySku(query, params);
