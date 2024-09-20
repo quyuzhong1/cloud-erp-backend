@@ -362,6 +362,9 @@ public class DmpInoutController extends BaseController {
 				    						}else {
 				    							position = locationNameCodeMap.get(position);
 				    						}
+				    						if(position.equals(dto.getCode())) {
+				    							continue;
+				    						}
 											detailAddDto.setInWarehouseLocation(position);
 				    						detailAddDto.setOutInventoryStatus("usable");
 				    						detailAddDto.setInInventoryStatus("usable");
