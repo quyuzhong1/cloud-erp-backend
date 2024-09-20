@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.ShopInfoMappingEntity;
@@ -49,6 +50,11 @@ public class DmpInputLxFbaShipmentReceivedApiInitHandler extends DmpInputInitHan
         }
         String sid = mappingEntity.getThirdPlatformShopId();
         List<FbaShipmentReceiveDTO> dtoList = LingxingApiUtils.getAllReceivedInventory(Integer.parseInt(sid), requestTime);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            log.error("拉取领星货件签收明细数据睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+        }
         if (CollectionUtil.isEmpty(dtoList)) {
             log.info("拉取领星货件签收明细数据列表数据为空,sid={}, date={}", sid, requestTime);
             return Collections.emptyList();

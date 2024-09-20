@@ -141,10 +141,10 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         } catch (ApiException e) {
             if (429 == e.getCode()) {
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
-            throw new ServiceException("[Amazon SP-APi] 创建报告失败:body=" + JSONUtil.toJsonStr(e));
+            throw new ServiceException("[Amazon SP-APi] 创建报告失败:body=" + e.getMessage());
         }
         CreateReportResponse reportResponse = reportWithHttpInfo.getData();
         String reportId = reportResponse.getReportId();

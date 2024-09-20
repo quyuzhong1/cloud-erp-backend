@@ -33,8 +33,7 @@ public class DmpInputAmzFbaShipmentDmpHandler extends DmpInputDbConvertDmpHandle
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 Object addressObj = mongoData.get("shipFromAddress");
                 if (null != addressObj) {
-                    JSONObject detailsJsonObj = (JSONObject) addressObj;
-                    Address shipFromAddress = JSON.parseObject(detailsJsonObj.toJSONString(), Address.class);
+                    Address shipFromAddress = JSON.parseObject(JSONObject.toJSONString(addressObj), Address.class);
                     dmpDataMap.put("countryId", shipFromAddress.getCountryCode());
 
                     String fullAddress = String.join(" ",
