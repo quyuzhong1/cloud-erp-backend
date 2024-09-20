@@ -409,7 +409,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                         obj.getSkuId().equals(addDTO.getSkuId())
                         && obj.getSupplierId().equals(supplierEntity.getSupplierId())
-                        && StrUtil.equals(obj.getPurchaseOrgId(),addDTO.getPurchaseOrderId())).findFirst().orElse(null);
+                        && StrUtil.equals(obj.getPurchaseOrgId(),entity.getPurchaseOrgId())).findFirst().orElse(null);
                 if (Objects.nonNull(viewDTO)){
                     addDTO.setCurrency(viewDTO.getCurrency());
                     addDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());

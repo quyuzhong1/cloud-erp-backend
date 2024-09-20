@@ -2,9 +2,13 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Date;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -44,7 +48,7 @@ public class SubcontractReturnEntity extends BaseEntity<SubcontractReturnEntity>
     * 退料日期
     */
     @TableField("bill_date")
-    private LocalDateTime billDate;
+    private LocalDate billDate;
     /**
     * 来源id
     */

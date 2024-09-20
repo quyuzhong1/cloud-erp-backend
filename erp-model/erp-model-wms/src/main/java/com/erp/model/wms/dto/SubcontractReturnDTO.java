@@ -1,7 +1,10 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
+
+import java.util.Date;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -102,7 +105,7 @@ public class SubcontractReturnDTO implements Serializable {
         /**
         * 退料日期
         */
-        private LocalDateTime billDate;
+        private LocalDate billDate;
 
         /**
         * 来源id
@@ -294,7 +297,7 @@ public class SubcontractReturnDTO implements Serializable {
         /**
         * 退料日期
         */
-        private LocalDateTime billDate;
+        private LocalDate billDate;
 
         /**
         * 来源id
@@ -427,7 +430,7 @@ public class SubcontractReturnDTO implements Serializable {
         * 退料日期
         */
         @NotNull(message = "退料日期不能为空")
-        private LocalDateTime billDate;
+        private LocalDate billDate;
 
         /**
         * 来源id
