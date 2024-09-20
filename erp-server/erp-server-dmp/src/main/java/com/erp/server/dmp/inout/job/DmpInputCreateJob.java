@@ -137,7 +137,7 @@ public class DmpInputCreateJob {
 	public ReturnT<String> createInputTaskByParams(){
 		String jobParam = XxlJobHelper.getJobParam();
 		String systemId = JSONObject.parseObject(jobParam).getString("systemId");
-		String taskTypeStr = JSONObject.parseObject(jobParam).getString("taskType");
+		String taskTypeStr = JSONObject.parseObject(jobParam).getString("taskTypeList");
 		XxlJobHelper.log("【任务开始】任务参数: jobParam:{}",jobParam);
 		List<String> taskTypeList = Arrays.stream(taskTypeStr.split(",")).collect(Collectors.toList());
 		if (StringUtils.isBlank(systemId) || CollectionUtils.isEmpty(taskTypeList)){
@@ -154,6 +154,7 @@ public class DmpInputCreateJob {
 		try {
 			List<String> taskIdlist = dmpCfgInputService.listBySystemIdAndTaskType(systemId, taskTypeList);
 			if (CollectionUtils.isEmpty(taskIdlist)){
+				XxlJobHelper.log("【任务结束】无可执行的任务");
 				return ReturnT.SUCCESS;
 			}
 			// 正常

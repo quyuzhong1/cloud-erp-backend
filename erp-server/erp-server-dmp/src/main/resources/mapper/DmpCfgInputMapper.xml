@@ -53,8 +53,8 @@
         WHERE
         dci.is_deleted = 'f'
         AND dcid.is_deleted = 'f'
-        AND dci.system_id = ''
-        AND dicd.task_type IN
+        AND dci.system_id = #{systemId}
+        AND dcid.task_type IN
         <foreach collection="taskTypeList" item="type" open="(" separator="," close=")">
             #{type}
         </foreach>
