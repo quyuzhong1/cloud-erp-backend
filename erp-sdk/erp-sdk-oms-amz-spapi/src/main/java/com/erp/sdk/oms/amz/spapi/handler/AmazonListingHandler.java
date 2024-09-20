@@ -305,7 +305,7 @@ public class AmazonListingHandler extends AbstractProductHandler<PlatformAmazonL
                     BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
                     redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
                 }
-                throw new ServiceException("[Amazon SP-APi] 下载listing失败:body=" + JSONUtil.toJsonStr(e));
+                throw new ServiceException("[Amazon SP-APi] 下载listing失败:body=" + e.getMessage());
             }
             List<Item> items = apiResponse.getData().getItems();
             if (CollectionUtils.isEmpty(items)) {

@@ -144,7 +144,7 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
                 BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
-            throw new ServiceException("[Amazon SP-APi] 创建报告失败:body=" + JSONUtil.toJsonStr(e));
+            throw new ServiceException("[Amazon SP-APi] 创建报告失败:body=" + e.getMessage());
         }
         CreateReportResponse reportResponse = reportWithHttpInfo.getData();
         String reportId = reportResponse.getReportId();
