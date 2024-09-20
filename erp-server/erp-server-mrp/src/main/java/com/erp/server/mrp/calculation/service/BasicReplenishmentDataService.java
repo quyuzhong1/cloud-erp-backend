@@ -197,6 +197,17 @@ public class BasicReplenishmentDataService {
                         CfgRuleSettingStrategy<CfgRuleWarehouseDTO.StrategyDTO, CfgRuleWarehouseDTO.StrategyResultDTO> warehouseStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_WAREHOUSE.getCode());
                         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = warehouseStrategy.process(new CfgRuleWarehouseDTO.StrategyDTO(entity.getPlatformType(), entity.getPlatform(), entity.getShopId()));
                         cfgRuleStrategy.setWarehouseResult(warehouseResult);
+                        //获取店铺对应的本地仓，海外仓
+                        List<String> localWarehouse = warehouseResult.getLocalWarehouseList()
+                                .stream()
+                                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
+                                .collect(Collectors.toList());
+                        dto.setLocalWarehouseId(localWarehouse);
+                        List<String> overseasWarehouse = warehouseResult.getOverseasWarehouseList()
+                                .stream()
+                                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
+                                .collect(Collectors.toList());
+                        dto.setOverseasWarehouseId(overseasWarehouse);
                         //获取库存配置
                         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
                         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(entity.getPlatformType()));

@@ -41,7 +41,7 @@ public interface InventoryMapper {
 
     List<LocalInventoryDTO> getVirtualUsable(@Param("skuId") String skuId, @Param("codes") List<String> codes, @Param("tableName") String tableName);
 
-    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchasePlan(@Param("codes") List<String> codes,@Param("skuId") String skuId, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchasePlan(@Param("codes") List<String> codes, @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") List<String> codes, @Param("skuId") String skuId, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
@@ -51,7 +51,7 @@ public interface InventoryMapper {
 
     List<FbaInventoryEntity> getAllFbaHistoryInventory(String tableName);
 
-    List<ReplenishmentResultDTO.LocalInTransitDetailDTO> getLocalInTransitDetail(@Param("isPurchase") Boolean isPurchase,@Param("isTransfer") Boolean isTransfer,
-            @Param("skuId") String skuId,@Param("transactionFlow") String transactionFlow,@Param("instockForcast") String instockForcast,@Param("poReceive") String poReceive,
-                                                                                 @Param("poInstock") String poInstock,@Param("poReturn") String poReturn,@Param("transferOut") String transferOut,@Param("transferIn") String transferIn);
+    List<ReplenishmentResultDTO.LocalInTransitDetailDTO> getLocalInTransitDetail(@Param("isPurchase") Boolean isPurchase, @Param("isTransfer") Boolean isTransfer,
+                                                                                 @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("transactionFlow") String transactionFlow, @Param("instockForcast") String instockForcast, @Param("poReceive") String poReceive,
+                                                                                 @Param("poInstock") String poInstock, @Param("poReturn") String poReturn, @Param("transferOut") String transferOut, @Param("transferIn") String transferIn);
 }

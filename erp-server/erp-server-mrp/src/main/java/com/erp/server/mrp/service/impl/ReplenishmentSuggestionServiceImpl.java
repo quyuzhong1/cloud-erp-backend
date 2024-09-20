@@ -914,7 +914,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .collect(Collectors.toList());
             purchaseSuggestService.saveBatch(purchaseSuggests);
         }
-
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getRecentSuggestions())) {
+            List<RecentSuggestionDetailEntity> recentSuggestionDetails = replenishmentResult.getRecentSuggestions().stream()
+                    .map(v -> ReplenishmentResultDTO.RecentSuggestionDTO.buildRecentSuggestionEntity(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                    .collect(Collectors.toList());
+            recentSuggestionDetailService.saveBatch(recentSuggestionDetails);
+        }
         replenishmentSuggestionDetailService.saveOrUpdate(entity);
     }
 

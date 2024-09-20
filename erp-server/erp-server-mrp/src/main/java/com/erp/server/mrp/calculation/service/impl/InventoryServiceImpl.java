@@ -218,7 +218,11 @@ public class InventoryServiceImpl implements InventoryService {
         String platformType = replenishmentResultDTO.getReplenishment().getPlatformType();
         boolean isPurchase = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode());
         boolean isTransfer = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_TRANSFER.getCode());
-        List<ReplenishmentResultDTO.LocalInTransitDetailDTO> localInTransitDetails = inventoryMapper.getLocalInTransitDetail(isPurchase, isTransfer, replenishmentResultDTO.getReplenishment().getSkuId(),getTableName(TRANSACTION_FLOW, calcDate),
+        List<String> localWarehouseIds = replenishmentResultDTO.getLocalWarehouseId();
+        if (CollectionUtils.isEmpty(localWarehouseIds)) {
+            return Collections.emptyList();
+        }
+        List<ReplenishmentResultDTO.LocalInTransitDetailDTO> localInTransitDetails = inventoryMapper.getLocalInTransitDetail(isPurchase, isTransfer, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds,getTableName(TRANSACTION_FLOW, calcDate),
                 getTableName(INSTOCK_FORCAST, calcDate),getTableName(PO_RECEIVE, calcDate),getTableName(PO_INSTOCK, calcDate),getTableName(PO_RETURN, calcDate),getTableName(TRANSFER_OUT, calcDate) ,getTableName(TRANSFER_IN, calcDate));
         for (ReplenishmentResultDTO.LocalInTransitDetailDTO dto : localInTransitDetails) {
                 //预计入库日期 = 采购订单的审核日期 + 生产周期 + 供应商发货时长 + 质检入库时长
@@ -274,6 +278,10 @@ public class InventoryServiceImpl implements InventoryService {
     private List<LocalInventoryDTO> getEstimatedPurchaseInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO localPurchase, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
         List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> detailList = new ArrayList<>();
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+        List<String> localWarehouseIds = replenishmentResultDTO.getLocalWarehouseId();
+        if (CollectionUtils.isEmpty(localWarehouseIds)) {
+            return Collections.emptyList();
+        }
         CfgRuleCommonDTO.StrategyResultDTO localReplenishmentPlan = TreeUtils.findByCode(localPurchase, LOCAL_REPLENISHMENT_PLAN.getCode());
         if (!ObjectUtils.isEmpty(localReplenishmentPlan) && !CollectionUtils.isEmpty(localReplenishmentPlan.getChildrenList())) {
             // todo 本地补货计划
@@ -285,7 +293,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .filter(v -> "true".equals(v.getValue()))
                     .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
                     .collect(Collectors.toList());
-            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> applications = inventoryMapper.listPurchasePlan(codes, replenishmentResultDTO.getReplenishment().getSkuId(), getTableName(PURCHASE_APPLICATION, calcDate), getTableName(PURCHASE_APPLICATION_DETAIL, calcDate));
+            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> applications = inventoryMapper.listPurchasePlan(codes, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds, getTableName(PURCHASE_APPLICATION, calcDate), getTableName(PURCHASE_APPLICATION_DETAIL, calcDate));
             //查询关联采购
             List<String> detailIds = applications.stream().map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getDetailId).collect(Collectors.toList());
             List<PurchaseApplicationRefPoDTO.ListDTO> refList = null;

@@ -204,6 +204,10 @@
         AND pad.purchase_application_id = pa."id"
         WHERE
         pad.sku_id = #{skuId}
+          and pad.dest_warehouse_id in
+        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
         <if test="codes != null and !codes.isEmpty()">
             <!-- 当 codes 包含 'approve' 时 -->
             <if test="'approve' in codes">
@@ -352,7 +356,12 @@
         and tf.source_type in
         ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder',
         'transferOut', 'transferIn')
-        and tf.sku_id = #{skuId}) m
+        and tf.sku_id = #{skuId}
+        and tf.warehouse_id in
+        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        ) m
         group by source_type, source_code
         order by estimatedPutAwayDate desc) t
         where t.qty > 0

@@ -26,10 +26,13 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
+    @Resource
+    private RecentSuggestionHandler recentSuggestionHandler;
+
 
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        return null;
+        return recentSuggestionHandler;
     }
 
     @Override

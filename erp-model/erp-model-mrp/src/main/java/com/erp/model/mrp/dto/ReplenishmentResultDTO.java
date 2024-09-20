@@ -112,6 +112,11 @@ public class ReplenishmentResultDTO {
     private List<PurchaseSuggestDTO> purchaseSuggests;
 
     /**
+     * 最近建议明细
+     */
+    private List<RecentSuggestionDTO> recentSuggestions;
+
+    /**
      * 采购单价
      */
     private BigDecimal purchasePrice;
@@ -120,6 +125,16 @@ public class ReplenishmentResultDTO {
      * 销售价
      */
     private BigDecimal salesPrice;
+
+    /**
+     * 本地仓id
+     */
+    private List<String> localWarehouseId;
+
+    /**
+     * 海外仓id
+     */
+    private List<String> overseasWarehouseId;
 
     @Getter
     @Setter
@@ -1200,5 +1215,57 @@ public class ReplenishmentResultDTO {
          */
         private Integer originalInventoryQty;
 
+    }
+
+    @Getter
+    @Setter
+    public static class RecentSuggestionDTO {
+        /**
+         * 类型
+         */
+        private String type;
+
+        /**
+         * 天数
+         */
+        private Integer days;
+
+        /**
+         * 补货建议标识类型
+         */
+        private String markType;
+
+        /**
+         * 建议数量
+         */
+        private Integer qty;
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        public static RecentSuggestionDTO buildRecentSuggestion(String type, Integer days, String markType, Integer qty, LocalDate date) {
+            RecentSuggestionDTO dto = new RecentSuggestionDTO();
+            dto.setType(type);
+            dto.setQty(qty);
+            dto.setDate(date);
+            dto.setDays(days);
+            dto.setMarkType(markType);
+            return dto;
+        }
+
+        public static RecentSuggestionDetailEntity buildRecentSuggestionEntity(RecentSuggestionDTO dto, String replenishmentDetailId, String calcVersion) {
+
+            RecentSuggestionDetailEntity entity = new RecentSuggestionDetailEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setType(dto.getType());
+            entity.setDays(dto.getDays());
+            entity.setMarkType(dto.getMarkType());
+            entity.setQty(dto.getQty());
+            entity.setDate(dto.getDate());
+            entity.setCalcVersion(calcVersion);
+            return entity;
+        }
     }
 }
