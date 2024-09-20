@@ -612,6 +612,11 @@ public class PurchasePriceDTO implements Serializable {
          */
         private String currencySymbol;
 
+        /**
+         * 采购交期（天）
+         */
+        private Integer deliveryDay;
+
         public PriceDTO(Integer purchaseQty, String skuId, String supplierId, String purchaseOrgId) {
             this.qty = purchaseQty;
             this.skuId = skuId;

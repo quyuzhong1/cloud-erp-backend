@@ -1053,6 +1053,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 updateDTO.setCurrency(viewDTO.getCurrency());
                 updateDTO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(viewDTO.getCurrency()));
                 updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), updateDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
+                updateDTO.setDeliveryDay(viewDTO.getDeliveryDay());
                 updateList.add(updateDTO);
             }
         }

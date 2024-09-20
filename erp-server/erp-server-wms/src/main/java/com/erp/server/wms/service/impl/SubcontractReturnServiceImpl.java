@@ -197,18 +197,25 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         SubcontractReturnDTO.PagingParamDTO searchParam = new SubcontractReturnDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<SubcontractReturnDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(SubcontractReturnDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new SubcontractReturnDTO.TabListDTO(status,ApproveStatusEnum.getTableName(status), 0));
-        }
-        });
-        list.add(new SubcontractReturnDTO.TabListDTO("all", "全部", list.stream().mapToInt(SubcontractReturnDTO.TabListDTO::getCount).sum()));
+        List<SubcontractReturnDTO.TabListDTO> tabListDTOList = new ArrayList<>();
+        tabListDTOList.add(new SubcontractReturnDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getStatus(),ApproveStatusEnum.WAIT_SUBMIT.getTableName(),getCountByStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus(),list)));
+        tabListDTOList.add(new SubcontractReturnDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getStatus(),ApproveStatusEnum.APPROVE_ING.getTableName(),getCountByStatus(ApproveStatusEnum.APPROVE_ING.getStatus(),list)));
+        tabListDTOList.add(new SubcontractReturnDTO.TabListDTO(ApproveStatusEnum.APPROVE.getStatus(),ApproveStatusEnum.APPROVE.getTableName(),getCountByStatus(ApproveStatusEnum.APPROVE.getStatus(),list)));
+        tabListDTOList.add(new SubcontractReturnDTO.TabListDTO(ApproveStatusEnum.REJECT.getStatus(),ApproveStatusEnum.REJECT.getTableName(),getCountByStatus(ApproveStatusEnum.REJECT.getStatus(),list)));
         // 计算合计数量
-        return list;
+        return tabListDTOList;
+    }
+
+    private Integer getCountByStatus(String status, List<SubcontractReturnDTO.TabListDTO> list) {
+        if (CollectionUtil.isEmpty(list) || StrUtil.isBlank(status)){
+            return MathUtil.ZERO;
+        }
+        SubcontractReturnDTO.TabListDTO tabListDTO = list.stream().filter(e -> Objects.nonNull(e) && status.equals(e.getTabFlag())).findFirst().orElse(null);
+        if (Objects.nonNull(tabListDTO)){
+            return Objects.nonNull(tabListDTO.getCount())? tabListDTO.getCount() :MathUtil.ZERO;
+        }else {
+            return MathUtil.ZERO;
+        }
     }
 
     @Override

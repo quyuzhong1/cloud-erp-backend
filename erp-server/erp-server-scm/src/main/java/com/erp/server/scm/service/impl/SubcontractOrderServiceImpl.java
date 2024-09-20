@@ -779,6 +779,19 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
+        //价目查询
+        List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
+        resultList.forEach(e ->{
+            if (Objects.nonNull(e.getIsGift()) && !e.getIsGift()){
+                priceList.add(PurchasePriceDTO.PriceDTO.builder()
+                        .purchaseOrgId(e.getPurchaseOrgId())
+                        .qty(e.getQty())
+                        .skuId(e.getSkuId())
+                        .supplierId(e.getSupplierId())
+                        .build());
+            }
+        });
+        List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
 
         List<String> poIds = new ArrayList<>();
         Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
@@ -840,13 +853,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
                 if (!addDetailDTO.getIsGift()) {
                     //供应商报价信息
-                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDetailDTO.getQty(),addDetailDTO.getSkuId(),addDetailDTO.getSkuNo(),addDetailDTO.getSupplierId(),addDetailDTO.getPurchaseOrgId());
-                    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
-                    PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
-                    poDetailAddDTO.setCurrency(viewDTO.getCurrency());
-                    poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                    poDetailAddDTO.setTaxPrice(ObjectUtils.isEmpty(addDetailDTO.getTaxPrice())? viewDTO.getTaxPrice() : addDetailDTO.getTaxPrice());
-                    poDetailAddDTO.setDeliveryDay(viewDTO.getDeliveryDay());
+                    PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                                    obj.getSkuId().equals(addDetailDTO.getSkuId())
+                                            && obj.getSupplierId().equals(addDetailDTO.getSupplierId())
+                                            && StrUtil.equals(obj.getPurchaseOrgId(),addDetailDTO.getPurchaseOrgId()))
+                            .findFirst().orElse(null);
+                    if (Objects.nonNull(viewDTO)){
+                        poDetailAddDTO.setCurrency(viewDTO.getCurrency());
+                        poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                        poDetailAddDTO.setTaxPrice(ObjectUtils.isEmpty(addDetailDTO.getTaxPrice())? viewDTO.getTaxPrice() : addDetailDTO.getTaxPrice());
+                        poDetailAddDTO.setTaxRate(viewDTO.getTaxRate());
+                        poDetailAddDTO.setDeliveryDay(viewDTO.getDeliveryDay());
+                    }
                 }
                 poDetailAddDTO.setPurchaseAmount(MathUtil.multiply(poDetailAddDTO.getTaxPrice(),poDetailAddDTO.getPurchaseQty()));
                 poDetailList.add(poDetailAddDTO);

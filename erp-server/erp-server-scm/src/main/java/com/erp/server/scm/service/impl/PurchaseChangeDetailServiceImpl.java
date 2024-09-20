@@ -342,16 +342,12 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                     purchaseChangeDetailEntity.setTaxRate(MathUtil.divide(taxRate,MathUtil.BigDecimal_100));
                 }
             }else {
-                if (Objects.isNull(priceDTO)){
-                    String error = String.format("SKU【%s】,数量【%s】报价单价未找到", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
-                    throw new ServiceException(new ApiResult(1,error));
-                }
                 //单价
-                BigDecimal taxPrice = Objects.nonNull(priceDTO.getTaxPrice()) ? priceDTO.getTaxPrice() : BigDecimal.ZERO;
-                if (MathUtil.compareTo(taxPrice,purchaseChangeDetailEntity.getPrice()) != MathUtil.ZERO) {
-                    String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
-                    throw new ServiceException(new ApiResult(1,error));
-                }
+//                BigDecimal taxPrice = Objects.nonNull(priceDTO.getTaxPrice()) ? priceDTO.getTaxPrice() : BigDecimal.ZERO;
+//                if (MathUtil.compareTo(taxPrice,purchaseChangeDetailEntity.getPrice()) != MathUtil.ZERO) {
+//                    String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
+//                    throw new ServiceException(new ApiResult(1,error));
+//                }
                 purchaseChangeDetailEntity.setTaxRate(MathUtil.divide(priceDTO.getTaxRate(),MathUtil.BigDecimal_100));
             }
 
