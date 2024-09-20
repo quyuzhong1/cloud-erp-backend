@@ -424,13 +424,15 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
 
         }
         if(inventoryQty + transactionDTO.getQty() < 0) {
-            return StrUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{}\n"
+            return StrUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
                     , transactionDTO.getSkuNo()
                     , transactionDTO.getWarehouseName()
                     , transactionDTO.getWarehouseLocationName()
                     , transactionDTO.getInventoryStatusName()
                     , inventoryQty
-                    , transactionDTO.getQty());
+                    , transactionDTO.getQty()
+                    , inventoryQty - transactionDTO.getQty()
+            );
         }
         return "";
     }
