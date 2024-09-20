@@ -44,4 +44,11 @@ public interface DmpCfgInputService extends SuperService<DmpCfgInputEntity> {
     List<DmpCfgInputDTO.ListDmpCfgInputDTO> listDmpCfgInput(String id);
 
 
+    /**
+     * 通过systemId和明细taskType查询任务
+     * @param systemId 系统ID
+     * @param taskTypeList DmpInputTaskTaskTypeEnum 任务类型列表
+     * @return 任务IDS
+     */
+    List<String> listBySystemIdAndTaskType(String systemId, List<String> taskTypeList);
 }
