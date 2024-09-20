@@ -393,9 +393,9 @@ public class PilotApplicationController extends BaseController {
      * @author tmj
      */
     @PostMapping("/pushAndSubmitPurchaseApplication")
-    public ApiResult<BatchResultDTO> pushAndSubmitPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
-        BatchResultDTO resultDTO = pilotApplicationService.pushAndSubmitPurchaseApplication(dtoList);
-        return resultDTO.getSuccess() ? success(resultDTO) : failure(resultDTO);
+    public ApiResult<List<BatchResultDTO>> pushAndSubmitPurchaseApplication(@RequestBody @Validated List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList){
+        List<BatchResultDTO> resultList = pilotApplicationService.pushAndSubmitPurchaseApplication(dtoList);
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
     }
 
     /**

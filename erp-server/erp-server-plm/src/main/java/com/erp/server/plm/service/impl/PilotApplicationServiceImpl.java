@@ -581,7 +581,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         PilotApplicationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到试产申请数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException("只有待提交或审核不通过数据支持删除");
+            throw new ServiceException("只有待提交并且未作废数据支持删除");
         }
         pilotApplicationDetailService.lambdaUpdate().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).remove();
         pilotApplicationRefTaskService.lambdaUpdate().eq(PilotApplicationRefTaskEntity::getMainId, entity.getId()).remove();
@@ -928,10 +928,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 item.setActualTaxCost("无价目表");
             }
             //采购申请量
-            PurchaseApplicationDetailEntity purchaseApplicationDetailEntity = purchaseApplicationDetailList.stream().filter(r -> null!=r.getSourceDetailId() && r.getSourceDetailId().equals(item.getDetailId())).findFirst().orElse(null);
-            if(null != purchaseApplicationDetailEntity){
-                item.setPurchaseApplyQty(null == purchaseApplicationDetailEntity.getApplyQty() ? 0 : purchaseApplicationDetailEntity.getApplyQty());
+            int applyQty = 0;
+            List<PurchaseApplicationDetailEntity> detailEntityList = purchaseApplicationDetailList.stream().filter(r -> null != r.getSourceDetailId() && r.getSourceDetailId().equals(item.getDetailId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(detailEntityList)){
+
+                for (PurchaseApplicationDetailEntity entity : detailEntityList) {
+                    applyQty += null == entity.getApplyQty() ? 0 : entity.getApplyQty();
+                }
             }
+            item.setPurchaseApplyQty(applyQty);
 //            List<PurchaseApplicationEntity> collect = purchaseApplicationList.stream().filter(obj -> obj.getSourceId().equals(item.getId())).collect(Collectors.toList());
 //            if(!collect.isEmpty()){
 //                List<String> purchaseAppIds = collect.stream().map(obj -> obj.getId()).collect(Collectors.toList());
@@ -942,10 +947,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 //                item.setPurchaseApplyQty(sum);
 //            }
             //采购入库量
-            PurchaseApplicationDTO.ListDTO listDTO = purchaseList.stream().filter(r -> null!=r.getSourceDetailId() && r.getSourceDetailId().equals(item.getDetailId())).findFirst().orElse(null);
-            if(null != listDTO){
-                item.setStockInQty(null == listDTO.getStockInQty() ? 0 : listDTO.getStockInQty());
+            int stockInQty = 0;
+            List<PurchaseApplicationDTO.ListDTO> paList = purchaseList.stream().filter(r -> null != r.getSourceDetailId() && r.getSourceDetailId().equals(item.getDetailId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(paList)){
+                for (PurchaseApplicationDTO.ListDTO entity : paList) {
+                    stockInQty += null == entity.getStockInQty() ? 0 : entity.getStockInQty();
+                }
             }
+            item.setStockInQty(stockInQty);
         }
     }
     /**
@@ -995,38 +1004,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> pushPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
-        List<String> pilotApplicationIds = applicationDTOList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-        List<PilotApplicationEntity> entityList = this.lambdaQuery().in(PilotApplicationEntity::getId, pilotApplicationIds).list();
-        List<String> detailIds = applicationDTOList.stream().map(item -> item.getDetailId()).distinct().collect(Collectors.toList());
-        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getId, detailIds).list();
-        for (PilotApplicationEntity entity : entityList) {
-            if(ObjectUtil.notEqual(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)){
-                throw new ServiceException("只有已审核的单据允许下推采购申请单");
-            }
-        }
-        for (PilotApplicationDetailEntity detailEntity : detailList) {
-            if(ObjectUtil.equal(detailEntity.getOrderStatus(), PilotPushPurchaseStatusEnum.ORDER.getCode())){
-                throw new ServiceException("只有未下单或部分下单的SKU允许下推采购申请单");
-            }
-        }
-
-        //根据单号拆分后下推
-        List<BatchResultDTO> resultList = new ArrayList<>();
-        Map<String, List<PilotApplicationDTO.PushPurchaseApplicationDTO>> map = applicationDTOList.stream().collect(Collectors.groupingBy(item -> item.getId()));
-        for (Map.Entry<String, List<PilotApplicationDTO.PushPurchaseApplicationDTO>> entry : map.entrySet()) {
-            PilotApplicationEntity entity = entityList.stream().filter(item -> item.getId().equals(entry.getKey())).findFirst().orElse(new PilotApplicationEntity());
-            //下推
-            PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(entry.getValue());
-            BatchResultDTO resultDTO = purchaseApplicationFeign.add(paramDto);
-            //记录日志
-            String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据下推采购申请单，单号为：【%s】", UserContext.getNonLoginUser().getUserName(), entity.getCode(), resultDTO.getCode());
-            this.addLog(entity.getId(), "下推操作", format, null, null, null);
-            resultList.add(resultDTO);
-        }
-        return resultList;
+        return this.addAndSubmit(applicationDTOList,false);
     }
 
-    private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
+    private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList,List<PilotApplicationDetailEntity> padList) {
         LoginUser loginUser = UserContext.getNonLoginUser();
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(loginUser.getUid());
         List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -1058,8 +1039,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseDTO.setSourceDetailId(dto.getDetailId());
             detailList.add(purchaseDTO);
             //更新采购申请数量
+            PilotApplicationDetailEntity pilotApplicationDetailEntity = padList.stream().filter(r -> r.getId().equals(dto.getDetailId())).findFirst().orElse(null);
+            int purchaseApplyQty = 0;
+            if(null != pilotApplicationDetailEntity){
+                purchaseApplyQty = pilotApplicationDetailEntity.getPurchaseApplyQty();
+            }
             pilotApplicationDetailService.lambdaUpdate()
-                    .set(PilotApplicationDetailEntity::getPurchaseApplyQty, dto.getPurchaseApplyQty())
+                    .set(PilotApplicationDetailEntity::getPurchaseApplyQty, dto.getPurchaseApplyQty() + purchaseApplyQty)
                     .set(PilotApplicationDetailEntity::getOrderStatus, dto.getPurchaseApplyQty() < dto.getSpareApplyQty() ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.ORDER.getCode())
                     .eq(PilotApplicationDetailEntity::getId, dto.getDetailId())
                     .update();
@@ -1257,9 +1243,44 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO pushAndSubmitPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> dtoList) {
-        PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(dtoList);
-        return purchaseApplicationFeign.addAndSubmit(paramDto);
+    public List<BatchResultDTO> pushAndSubmitPurchaseApplication(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList) {
+        return this.addAndSubmit(applicationDTOList,true);
+    }
+
+    public List<BatchResultDTO> addAndSubmit(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList,Boolean submit){
+        List<String> pilotApplicationIds = applicationDTOList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+        List<PilotApplicationEntity> entityList = this.lambdaQuery().in(PilotApplicationEntity::getId, pilotApplicationIds).list();
+        List<String> detailIds = applicationDTOList.stream().map(item -> item.getDetailId()).distinct().collect(Collectors.toList());
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getId, detailIds).list();
+        for (PilotApplicationEntity entity : entityList) {
+            if(ObjectUtil.notEqual(entity.getApproveStatus(), ApproveStatusEnum.APPROVE)){
+                throw new ServiceException("只有已审核的单据允许下推采购申请单");
+            }
+        }
+        for (PilotApplicationDetailEntity detailEntity : detailList) {
+            if(ObjectUtil.equal(detailEntity.getOrderStatus(), PilotPushPurchaseStatusEnum.ORDER.getCode())){
+                throw new ServiceException("只有未下单或部分下单的SKU允许下推采购申请单");
+            }
+        }
+        //根据单号拆分后下推
+        List<BatchResultDTO> resultList = new ArrayList<>();
+        Map<String, List<PilotApplicationDTO.PushPurchaseApplicationDTO>> map = applicationDTOList.stream().collect(Collectors.groupingBy(item -> item.getId()));
+        for (Map.Entry<String, List<PilotApplicationDTO.PushPurchaseApplicationDTO>> entry : map.entrySet()) {
+            PilotApplicationEntity entity = entityList.stream().filter(item -> item.getId().equals(entry.getKey())).findFirst().orElse(new PilotApplicationEntity());
+            //下推
+            PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(entry.getValue(),detailList);
+            BatchResultDTO resultDTO = new BatchResultDTO();
+            if(submit){
+                resultDTO = purchaseApplicationFeign.addAndSubmit(paramDto);
+            }else {
+                resultDTO = purchaseApplicationFeign.add(paramDto);
+            }
+            //记录日志
+            String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据下推采购申请单，单号为：【%s】", UserContext.getNonLoginUser().getUserName(), entity.getCode(), resultDTO.getCode());
+            this.addLog(entity.getId(), "下推操作", format, null, null, null);
+            resultList.add(resultDTO);
+        }
+        return resultList;
     }
 
     @Override
