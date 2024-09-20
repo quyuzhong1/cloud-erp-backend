@@ -1364,6 +1364,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //根据单据id查询审核流程
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> taskIds = list.stream().map(req -> req.getTaskId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
         //查询库存sku
         List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
@@ -1384,6 +1385,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         Map<String,Integer> qtyMap = new HashMap<>();
         List<String> sourceCodeList = list.stream().map(v->v.getSourceCode()).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
+        List<WmsCartonDetailEntity> wmsCartonDetailEntityList = wmsCartonDetailService.listByTaskIds(taskIds);
        // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
             if (StringUtils.isNotBlank(data.getPackingStatus())) {
@@ -1447,10 +1449,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
                 data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
             }
+            if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType())){
+                List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailEntityList.stream().filter(v->v.getTaskId().equals(data.getTaskId()) && v.getSkuId().equals(data.getSkuId()) && v.getFnSku().equals(data.getFnSku())).collect(Collectors.toList());
+                data.setPackingQty(cartonDetailEntityList.stream().mapToInt(v->v.getPackQty()).sum());
+            }else{
+                List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailEntityList.stream().filter(v->v.getTaskId().equals(data.getTaskId()) && v.getSkuId().equals(data.getSkuId()) && v.getFnSku().equals(data.getPlatformSkuNo())).collect(Collectors.toList());
+                data.setPackingQty(cartonDetailEntityList.stream().mapToInt(v->v.getPackQty()).sum());
+            }
 
             //如果装箱数量大于发货数量，拆分处理
             if(Objects.nonNull(data.getDeliveryQty()) && Objects.nonNull(data.getPackingQty()) && data.getPackingQty() > data.getDeliveryQty()){
-                String key = data.getId() + data.getSkuId();
+                String key = data.getId() + data.getSkuId()+data.getFnSku();
                 if(qtyMap.containsKey(key)){
                     Integer reduceQty = qtyMap.get(key);
                     if(reduceQty > data.getDeliveryQty()){

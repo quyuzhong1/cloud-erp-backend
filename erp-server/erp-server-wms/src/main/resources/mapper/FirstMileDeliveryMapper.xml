@@ -36,8 +36,6 @@
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
         fdd.fba_shipment_code fbaShipmentCode,
-        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
-        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = fdd.sku_id) as packingQty,
         pt.packing_status as packingStatus,
         pt.id as taskId,
         fd.declare_status

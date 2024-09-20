@@ -258,7 +258,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.b2bDeliveryDetailToPackingTaskDetail(detailEntityList);
         taskDetailList.forEach(packingTaskDetailEntity -> {
             packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
-            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getSkuId().equals(packingTaskDetailEntity.getSkuId())).findFirst().orElse(new SoDetailEntity());
+            SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getId().equals(soDeliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             packingTaskDetailEntity.setFnSku(soDetailEntity.getPlatformSkuNo());
         });
         //新增任务明细
