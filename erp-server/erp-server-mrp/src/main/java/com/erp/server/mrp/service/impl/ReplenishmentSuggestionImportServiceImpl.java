@@ -105,9 +105,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         Pair<List<FixedSalesQtyImportExcelDTO>, List<FixedSalesQtyImportExcelDTO>> fixedSalesQtyPair = importFixedSalesQty(excelFile,platformViewList);
         //固定日销量
         Pair<List<SalesDenoisingImportExcelDTO>, List<SalesDenoisingImportExcelDTO>> salesDenoisingPair = importSalesDenoising(excelFile,platformViewList);
-
+        //导入文件名称
+        String originalFilename = excelFile.getOriginalFilename();
         //上传正确数据
-        upLoadSuccessExcel (stockUpPair.getKey(),stockingRatioPair.getKey(),defaultSalesQtyPair.getKey(),
+        upLoadSuccessExcel (originalFilename,stockUpPair.getKey(),stockingRatioPair.getKey(),defaultSalesQtyPair.getKey(),
                 dynamicSalesQtyPair.getKey(),fixedSalesQtyPair.getKey(),salesDenoisingPair.getKey());
         //导出错误数据
         exportErrorExcel (response,stockUpPair.getValue(),stockingRatioPair.getValue(),defaultSalesQtyPair.getValue(),
@@ -124,14 +125,14 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param fixedSalesQtyList
      * @param salesDenoisingList
      */
-    private void upLoadSuccessExcel (List<StockUpImportExcelDTO> stockUpList,List<StockingRatioImportExcelDTO> stockingRatioList,List<DefaultSalesQtyImportExcelDTO> defaultSalesQtyList,
+    private void upLoadSuccessExcel (String originalFilename,List<StockUpImportExcelDTO> stockUpList,List<StockingRatioImportExcelDTO> stockingRatioList,List<DefaultSalesQtyImportExcelDTO> defaultSalesQtyList,
                                    List<DynamicSalesQtyImportExcelDTO> dynamicSalesQtyList,List<FixedSalesQtyImportExcelDTO> fixedSalesQtyList,List<SalesDenoisingImportExcelDTO> salesDenoisingList) {
         //全部为空则无需处理
         if (CollectionUtils.isEmpty(stockUpList) && CollectionUtils.isEmpty(stockingRatioList)  && CollectionUtils.isEmpty(defaultSalesQtyList)
                 && CollectionUtils.isEmpty(dynamicSalesQtyList) && CollectionUtils.isEmpty(fixedSalesQtyList) && CollectionUtils.isEmpty(salesDenoisingList)) {
             return;
         }
-        String fileName = "补货规则.xlsx";
+        String fileName = StrUtil.isBlank(originalFilename) ? "补货规则.xlsx" : originalFilename;
         String pathUrl = "excel/replenishmentRule.xlsx";
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);
@@ -1218,9 +1219,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
         //处理校验导入成功数据
         handleImportSalesEstimate(successList, errorList,headList);
-
+        //导入文件名称
+        String originalFilename = excelFile.getOriginalFilename();
         //上传正确数据
-        upLoadSuccessExcel(successList,headList);
+        upLoadSuccessExcel(originalFilename,successList,headList);
 
         //导出错误数据
         exportErrorExcel (errorList,headList,response);
@@ -1249,12 +1251,12 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param headList
      */
-    private void upLoadSuccessExcel (List<JSONObject> successList,List<String> headList) {
+    private void upLoadSuccessExcel (String originalFilename,List<JSONObject> successList,List<String> headList) {
         //全部为空则无需处理
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        String fileName = "运营月销预估.xlsx";
+        String fileName = StrUtil.isBlank(originalFilename) ? "运营月销预估.xlsx" : originalFilename;
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);
         List<List<Object>> exportList = successList.stream().map(obj -> checkToList(obj.values())).collect(Collectors.toList());
