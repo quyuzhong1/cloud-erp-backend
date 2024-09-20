@@ -210,6 +210,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 	        } else {
 	            dmpSyncTaskDTO.setParentId(entity.getSoId());
 	        }
+            log.info("2.销售出库单增加旺店通的物流渠道名称："+ JSONUtil.toJsonStr(dmpSyncTaskDTO));
 	        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
         }
 
@@ -223,7 +224,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (!OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
         	wmsPushMsgEntity.setParentId(entity.getSoId());
 	    }
-
+        log.info("2.销售出库单增加旺店通的物流渠道名称："+ JSONUtil.toJsonStr(wmsPushMsgEntity));
         wmsPushMsgService.save(wmsPushMsgEntity);
 
         return null;
