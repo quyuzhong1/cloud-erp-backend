@@ -305,7 +305,8 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      * @date: 2024/1/11 15:57
      * @return List<CfgSettingEntity>
      */
-    private List<CfgSettingEntity> listCfgSetting () {
+    @Override
+    public List<CfgSettingEntity> listCfgSetting () {
         List<CfgSettingEntity> list = baseMapper.listCfgSetting();
         return list;
     }

@@ -3,23 +3,24 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
-import com.erp.server.wms.mapper.ReportOrderDemandDetailMapper;
-import com.erp.server.wms.service.ReportOrderDemandDetailService;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
+import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
+import com.erp.server.wms.mapper.ReportOrderDemandDetailMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.ReportOrderDemandDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 订单需求明细报表 服务实现类
