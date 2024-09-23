@@ -367,10 +367,14 @@
         where t.qty > 0
     </select>
     <select id="getAllOverseasHistoryInventory" resultType="com.erp.model.wms.entity.OverseasInventoryEntity">
-
+        select *
+        from ${tableName}
+        where is_deleted = false
     </select>
     <select id="getAllLocalHistoryInventory" resultType="com.erp.model.wms.entity.InventoryEntity">
-
+        select *
+        from ${tableName}
+        where is_deleted = false
     </select>
 
 </mapper>

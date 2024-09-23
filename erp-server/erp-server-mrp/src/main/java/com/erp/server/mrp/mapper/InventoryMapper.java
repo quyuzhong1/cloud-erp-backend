@@ -51,13 +51,13 @@ public interface InventoryMapper {
 
     List<SubcontractOrderDetailEntity> listSubcontractOrderDetail(@Param("detailIds") List<String> detailIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("otherTableName") String otherTableName);
 
-    List<FbaInventoryEntity> getAllFbaHistoryInventory(String tableName);
+    List<FbaInventoryEntity> getAllFbaHistoryInventory(@Param("tableName") String tableName);
 
     List<ReplenishmentResultDTO.LocalInTransitDetailDTO> getLocalInTransitDetail(@Param("isPurchase") Boolean isPurchase, @Param("isTransfer") Boolean isTransfer,
                                                                                  @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("transactionFlow") String transactionFlow, @Param("instockForcast") String instockForcast, @Param("poReceive") String poReceive,
                                                                                  @Param("poInstock") String poInstock, @Param("poReturn") String poReturn, @Param("transferOut") String transferOut, @Param("transferIn") String transferIn);
 
-    List<OverseasInventoryEntity> getAllOverseasHistoryInventory(String tableName);
+    List<OverseasInventoryEntity> getAllOverseasHistoryInventory(@Param("tableName") String tableName);
 
-    List<InventoryEntity> getAllLocalHistoryInventory(String tableName);
+    List<InventoryEntity> getAllLocalHistoryInventory(@Param("tableName") String tableName);
 }
