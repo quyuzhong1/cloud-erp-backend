@@ -9,8 +9,8 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
-import com.erp.server.wms.service.ReportOrderDemandDetailService;
+import com.erp.model.wms.dto.ReportOrderDemandDTO;
+import com.erp.server.wms.service.ReportOrderDemandService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,19 +21,19 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 订单需求明细报表
+ * 
  *
  * @author will
  * @since 2024-09-23
  */
 @Slf4j
 @RestController
-@LogSystemModule("订单需求明细报表")
-@RequestMapping("/reportOrderDemandDetail")
-public class ReportOrderDemandDetailController extends BaseController {
+@LogSystemModule("")
+@RequestMapping("/reportOrderDemand")
+public class ReportOrderDemandController extends BaseController {
 
     @Resource
-    private ReportOrderDemandDetailService reportOrderDemandDetailService;
+    private ReportOrderDemandService reportOrderDemandService;
 
     /**
      * 列表查询
@@ -44,8 +44,8 @@ public class ReportOrderDemandDetailController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery
-    public ApiResult<PagingVO<ReportOrderDemandDetailDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto) {
-        PagingVO<ReportOrderDemandDetailDTO.ListDTO> pagingVO = reportOrderDemandDetailService.paging(dto);
+    public ApiResult<PagingVO<ReportOrderDemandDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto) {
+        PagingVO<ReportOrderDemandDTO.ListDTO> pagingVO = reportOrderDemandService.paging(dto);
         return success(pagingVO);
     }
 
@@ -56,10 +56,12 @@ public class ReportOrderDemandDetailController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出订单需求明细报表")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出订单需求报表")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody ReportOrderDemandDetailDTO.PagingParamDTO dto) {
-        Boolean flag = reportOrderDemandDetailService.exportExcel(dto);
+    public ApiResult exportExcel(@RequestBody ReportOrderDemandDTO.PagingParamDTO dto) {
+        Boolean flag = reportOrderDemandService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
+
+
 }

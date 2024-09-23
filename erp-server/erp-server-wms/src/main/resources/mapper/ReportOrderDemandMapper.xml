@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.ReportOrderDemandMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.ReportOrderDemandEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="virtual_warehouse_name" property="virtualWarehouseName" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="total_qty" property="totalQty" />
+       <result column="so_qty" property="soQty" />
+       <result column="b2c_so_qty" property="b2cSoQty" />
+       <result column="first_mile_qty" property="firstMileQty" />
+       <result column="virtual_usable_qty" property="virtualUsableQty" />
+       <result column="is_virtual_scarce" property="isVirtualScarce" />
+       <result column="virtual_scarce_qty" property="virtualScarceQty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        warehouse_id, virtual_warehouse_id, virtual_warehouse_name, warehouse_name, sku_id, sku_no, product_name, total_qty, so_qty, b2c_so_qty, first_mile_qty, virtual_usable_qty, is_virtual_scarce, virtual_scarce_qty
+    </sql>
+
+
+</mapper>

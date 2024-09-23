@@ -1,19 +1,19 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.ReportOrderSalesEntity;
+import com.erp.model.wms.entity.ReportOrderDemandEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.ReportOrderSalesDTO;
+import com.erp.model.wms.dto.ReportOrderDemandDTO;
 
 /**
  * <p>
- * 订单销量表 服务类
+ *  服务类
  * </p>
  *
  * @author will
  * @since 2024-09-23
  */
-public interface ReportOrderSalesService extends SuperService<ReportOrderSalesEntity> {
+public interface ReportOrderDemandService extends SuperService<ReportOrderDemandEntity> {
 
     /**
     * 新增
@@ -22,7 +22,7 @@ public interface ReportOrderSalesService extends SuperService<ReportOrderSalesEn
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(ReportOrderSalesDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(ReportOrderDemandDTO.AddDTO dto);
 
     /**
     * 修改
@@ -31,22 +31,22 @@ public interface ReportOrderSalesService extends SuperService<ReportOrderSalesEn
     * @param dto
     * @return
     */
-    Boolean update(ReportOrderSalesDTO.UpdateDTO dto);
+    Boolean update(ReportOrderDemandDTO.UpdateDTO dto);
 
     /**
      * 分页查询
      * @author will
-     * @date 2024/9/23 18:15
+     * @date 2024/9/23 17:43
      * @param dto
      * @return PagingVO<ListDTO>
      */
-    PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+    PagingVO<ReportOrderDemandDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto);
     /**
      * 导出
      * @author will
-     * @date 2024/9/23 18:15
+     * @date 2024/9/23 17:43
      * @param dto
      * @return Boolean
      */
-    Boolean exportExcel(ReportOrderSalesDTO.PagingParamDTO dto);
+    Boolean exportExcel(ReportOrderDemandDTO.PagingParamDTO dto);
 }

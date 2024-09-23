@@ -3,9 +3,11 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -89,6 +91,16 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, reportOrderDemandDetailEntity, null, reportOrderDemandDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<ReportOrderDemandDetailDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean exportExcel(ReportOrderDemandDetailDTO.PagingParamDTO dto) {
+        return null;
     }
 
 

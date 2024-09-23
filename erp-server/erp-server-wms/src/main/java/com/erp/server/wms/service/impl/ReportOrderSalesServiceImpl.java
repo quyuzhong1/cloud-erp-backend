@@ -3,6 +3,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.ReportOrderSalesEntity;
 import com.erp.server.wms.mapper.ReportOrderSalesMapper;
 import com.erp.server.wms.service.ReportOrderSalesService;
@@ -84,6 +86,16 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, reportOrderSalesEntity, null, reportOrderSalesEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean exportExcel(ReportOrderSalesDTO.PagingParamDTO dto) {
+        return null;
     }
 
 
