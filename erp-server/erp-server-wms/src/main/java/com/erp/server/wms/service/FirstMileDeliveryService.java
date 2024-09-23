@@ -5,8 +5,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import org.apache.ibatis.annotations.Param;
@@ -218,11 +217,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * 根据来源单号查询发货记录
      *
      * @param ids
+     * @param fbaShipmentCode
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      * @Author Luo_WG
      * @Date 2023/11/1 18:06
      **/
-    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids, String fbaShipmentCode);
 
     /**
      * 根据来源单号查询发货信息
@@ -337,4 +337,10 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(List<String> deliveryCodes);
+
+    void exportPackingDetail(PackingTaskDTO.ExportDTO dto);
+
+    PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
+
+    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 }

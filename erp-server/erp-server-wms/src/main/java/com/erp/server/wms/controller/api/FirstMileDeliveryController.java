@@ -536,4 +536,23 @@ public class FirstMileDeliveryController extends BaseController {
     public ApiResult<PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO>> pagingFirstMile(@RequestBody @Validated PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
         return success(firstMileDeliveryService.pagingFirstMile(dto));
     }
+
+    /**
+     * 导出装箱清单Excel
+     */
+    @PostMapping("/exportPackingDetail")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出装箱任务Excel")
+    public ApiResult exportPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        firstMileDeliveryService.exportPackingDetail(dto);
+        return success();
+    }
+
+
+    /**
+     * 查看装箱
+     */
+    @PostMapping("/listPacking")
+    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestBody @Validated BaseIdDTO dto) {
+        return success(firstMileDeliveryService.listPacking(dto.getId()));
+    }
 }

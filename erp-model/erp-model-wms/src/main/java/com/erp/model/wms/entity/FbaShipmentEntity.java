@@ -106,6 +106,11 @@ public class FbaShipmentEntity extends BaseEntity<FbaShipmentEntity> {
     @TableField("fba_shipment_id")
     private String fbaShipmentId;
 
+    /**
+     * 装箱下载状态
+     */
+    @TableField("is_packing_download")
+    private Boolean isPackingDownload;
 
     public static final String CODE = "code";
 

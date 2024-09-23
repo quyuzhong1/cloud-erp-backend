@@ -266,17 +266,18 @@
         SELECT
         product_sku_id AS skuId,
         product_sku_no AS skuNo,
-        platform_sku_no,
+        li.platform_sku_no,
         platform_sku_name
         FROM sku_mapping sm
         INNER JOIN
         shop_info si ON sm.shop_id=si.id and si.is_deleted=FALSE
+        INNER join listing_info li on li.id = sm.listing_id and li.is_deleted = false
         WHERE sm.is_deleted=FALSE AND sm.is_expire=FALSE
         AND si.customer_code=(SELECT code FROM customer_info WHERE id=#{params.customerId})
         <if test="params.no!=null and params.no!=''">
             AND (
             sm.product_sku_no ILIKE concat('%',#{params.no}::text,'%') OR
-            sm.platform_sku_no ILIKE concat('%',#{params.no}::text,'%')
+            li.platform_sku_no ILIKE concat('%',#{params.no}::text,'%')
             )
         </if>
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
@@ -285,7 +286,7 @@
                 #{skuNo}
             </foreach>
             OR
-            sm.platform_sku_no IN
+            li.platform_sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
                 #{skuNo}
             </foreach>

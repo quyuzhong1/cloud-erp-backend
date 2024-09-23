@@ -10,6 +10,8 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.converters.ConverterKeyBuild;
 import com.alibaba.excel.converters.bytearray.ByteArrayImageConverter;
 import com.alibaba.excel.metadata.CellExtra;
+import com.alibaba.excel.write.builder.ExcelWriterBuilder;
+import com.alibaba.excel.write.handler.WriteHandler;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.excel.write.metadata.style.WriteCellStyle;
@@ -54,7 +56,7 @@ public class ExcelUtil {
      * @param response   HttpServlet响应对象
      * @param exportFields  导出的字段
      */
-    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response,List<String> exportFields) {
+    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response,List<String> exportFields, WriteHandler writeHandler) {
         response.setStatus(200);
         OutputStream outputStream = null;
         ExcelWriter excelWriter = null;
@@ -89,7 +91,7 @@ public class ExcelUtil {
             }
 
             outputStream = response.getOutputStream();
-            excelWriter = getExportExcelWriter(outputStream,excludeIndexes);
+            excelWriter = getExportExcelWriter(outputStream,excludeIndexes,writeHandler);
 
             WriteTable writeTable = EasyExcel.writerTable(0).head(clazz).needHead(true).build();
             WriteSheet writeSheet = EasyExcel.writerSheet(sheetName).build();
@@ -142,7 +144,33 @@ public class ExcelUtil {
      * @param response   HttpServlet响应对象
      */
     public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response) {
-        ExcelUtil.export(filename,sheetName,dataResult,clazz,response,null);
+        ExcelUtil.export(filename,sheetName,dataResult,clazz,response,null,null);
+    }
+
+    /**
+     * 导出数据为excel文件
+     *
+     * @param filename   文件名称
+     * @param sheetName sheet name
+     * @param dataResult 集合内的bean对象类型要与clazz参数一致
+     * @param clazz      集合内的bean对象类型要与clazz参数一致
+     * @param response   HttpServlet响应对象
+     */
+    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response,List<String> exportFields) {
+        ExcelUtil.export(filename,sheetName,dataResult,clazz,response,exportFields,null);
+    }
+
+    /**
+     * 导出数据为excel文件
+     *
+     * @param filename   文件名称
+     * @param sheetName sheet name
+     * @param dataResult 集合内的bean对象类型要与clazz参数一致
+     * @param clazz      集合内的bean对象类型要与clazz参数一致
+     * @param response   HttpServlet响应对象
+     */
+    public static void export(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response, WriteHandler writeHandler) {
+        ExcelUtil.export(filename,sheetName,dataResult,clazz,response,null,writeHandler);
     }
 
 
@@ -153,11 +181,14 @@ public class ExcelUtil {
      * @param outputStream  数据输出流
      * @return  数据导出ExcelWriter对象
      */
-    private static ExcelWriter getExportExcelWriter(OutputStream outputStream,List<Integer> excludeIndexes){
-        return EasyExcel.write(outputStream)
+    private static ExcelWriter getExportExcelWriter(OutputStream outputStream, List<Integer> excludeIndexes, WriteHandler writeHandler){
+        ExcelWriterBuilder builder =  EasyExcel.write(outputStream)
                 .registerWriteHandler(getStyleStrategy())   //字体居中策略
-                .excludeColumnIndexes(excludeIndexes)
-                .build();
+                .excludeColumnIndexes(excludeIndexes);
+        if(Objects.nonNull(writeHandler)){
+            builder.registerWriteHandler(writeHandler);
+        }
+        return builder.build();
     }
 
     /**
