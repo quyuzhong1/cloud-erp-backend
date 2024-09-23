@@ -1,18 +1,14 @@
 package com.erp.model.wms.dto;
 
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.SortDTO;
+import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -26,107 +22,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class ReportOrderDemandDetailDTO implements Serializable {
 
-    /**
-     * 列表参数
-     */
-    @Data
-    @NoArgsConstructor
-    public static class PagingParamDTO extends SortDTO {
 
-        /**
-         * 页面高级查询
-         */
-        private List<AdvanceQueryDTO> advanceQueryDTOList;
-
-        /**
-         * sqlMap 默认key default
-         */
-        private Map<String,String> sqlMap;
-    }
-
-    /**
-     * 列表
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListDTO {
-
-        /**
-         * id
-         */
-        private String id;
-
-        /**
-         * 订单类型
-         */
-        private String sourceType;
-
-        /**
-         * 订单类型名称
-         */
-        private String sourceTypeName;
-
-        /**
-         * 单据编号
-         */
-        private String sourceCode;
-
-        /**
-         * 单据状态
-         */
-        private String status;
-
-        /**
-         * 审核状态
-         */
-        private String approveStatus;
-
-        /**
-         * 单据状态名称
-         */
-        private String statusName;
-
-        /**
-         * 虚拟仓名称
-         */
-        private String virtualWarehouseName;
-
-        /**
-         * 实体仓名称
-         */
-        private String warehouseName;
-
-        /**
-         * SKU
-         */
-        private String skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 数量
-         */
-        private Integer qty;
-
-        /**
-         * 虚拟仓可用库存
-         */
-        private Integer virtualUsableQty;
-
-        /**
-         * 更新时间
-         */
-        private LocalDateTime updateTime;
-
-        /**
-         * 是否拆分
-         */
-        private Boolean isSplit;
-
-    }
 
 
     /**
@@ -174,7 +70,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         /**
         * 作废状态
         */
-        private Boolean invalidStatus;
+        private Boolean invaildStatus;
 
         /**
         * 来源单据id
@@ -189,7 +85,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         /**
         * 来源单据编号
         */
-        private String sourceCode;
+        private String souceCode;
 
         /**
         * 来源类型
@@ -271,7 +167,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         * 作废状态
         */
         @NotNull(message = "作废状态不能为空")
-        private Boolean invalidStatus;
+        private Boolean invaildStatus;
 
         /**
         * 来源单据id
@@ -292,7 +188,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         */
         @NotBlank(message = "来源单据编号不能为空")
         @Size(max = 32,message = "来源单据编号最大长度不能超过32位")
-        private String sourceCode;
+        private String souceCode;
 
         /**
         * 来源类型
@@ -309,66 +205,5 @@ public class ReportOrderDemandDetailDTO implements Serializable {
 
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class ViewBomQtyDTO {
-        /**
-         * 父级数量信息
-         */
-        private ParentQtyDTO parentQtyDTO;
-        /**
-         * bom信息
-         */
-        private List<BomDTO> bomList;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class ParentQtyDTO {
-
-        /**
-         * 需求数量
-         */
-        private Integer qty;
-
-        /**
-         * 订单数量
-         */
-        private Integer orderQty;
-
-        /**
-         * 发货通知单
-         */
-        private Integer deliveryNoticeQty;
-
-        /**
-         * 锁定数量
-         */
-        private Integer frozenQty;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class BomDTO {
-        /**
-         * 子级SKU
-         */
-        private String childSkuId;
-
-        /**
-         * 子级SKU编码
-         */
-        private String childSkuNo;
-
-        /**
-         * 用量
-         */
-        private Integer quantity;
-
-        /**
-         * 需求数量
-         */
-        private Integer qty;
-    }
 
 }

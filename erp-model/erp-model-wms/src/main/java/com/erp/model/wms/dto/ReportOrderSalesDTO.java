@@ -1,17 +1,13 @@
 package com.erp.model.wms.dto;
 
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -25,143 +21,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class ReportOrderSalesDTO implements Serializable {
 
-    /**
-     * 列表参数
-     */
-    @Data
-    @NoArgsConstructor
-    public static class PagingParamDTO extends SortDTO {
 
-        /**
-         * 页面高级查询
-         */
-        private List<AdvanceQueryDTO> advanceQueryDTOList;
-
-        /**
-         * sqlMap 默认key default
-         */
-        private Map<String,String> sqlMap;
-
-        /**
-         * 是否去除0库存
-         */
-        private Boolean isDeleteZeroInventory;
-
-        /**
-         * 仅看预警
-         */
-        private Boolean isWarn;
-
-        /**
-         * 仅看缺货
-         */
-        private Boolean isVirtualScarce;
-    }
-
-    /**
-     * 列表
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListDTO {
-        /**
-         * id
-         */
-        private String id;
-
-        /**
-         * 虚拟仓名称
-         */
-        private String virtualWarehouseName;
-        /**
-         * 实体仓名称
-         */
-        private String warehouseName;
-        /**
-         * skuId
-         */
-        private String skuId;
-        /**
-         * SKU
-         */
-        private String skuNo;
-        /**
-         * 产品名称
-         */
-        private String productName;
-        /**
-         * 今日销量
-         */
-        private Integer todaySalesQty;
-        /**
-         * 昨日销量
-         */
-        private Integer yesterdaySalesQty;
-        /**
-         * 近3天销量
-         */
-        private Integer threeDaysSalesQty;
-        /**
-         * 近7天销量
-         */
-        private Integer sevenDaysSalesQty;
-        /**
-         * 近14天销量
-         */
-        private Integer fourteenDaysSalesQty;
-        /**
-         * 30天销量
-         */
-        private Integer thirtyDaysSalesQty;
-        /**
-         * 是否缺货，true是，false否
-         */
-        private Boolean isVirtualScarce;
-        /**
-         * 是否缺货，true是，false否
-         */
-        private String isVirtualScarceName;
-        /**
-         * 是否预警，true是，false否
-         */
-        private Boolean isWarn;
-        /**
-         * 是否预警，true是，false否
-         */
-        private String isWarnName;
-        /**
-         * 缺货数量
-         */
-        private Integer virtualScarceQty;
-        /**
-         * 剩余需求总数
-         */
-        private Integer totalQty;
-        /**
-         * 虚拟仓可用库存
-         */
-        private Integer virtualUsableQty;
-        /**
-         * 虚拟仓冻结库存
-         */
-        private Integer virtualFrozenQty;
-        /**
-         * 虚拟仓库存
-         */
-        private Integer virtualTotalQty;
-        /**
-         * 已出库数量
-         */
-        private Integer deliveryQty;
-        /**
-         * 已分配数量
-         */
-        private Integer distributionQty;
-        /**
-         * 更新时间
-         */
-        private LocalDateTime updateTime;
-    }
 
 
     /**

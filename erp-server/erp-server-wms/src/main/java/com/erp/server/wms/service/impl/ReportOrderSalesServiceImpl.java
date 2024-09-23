@@ -2,32 +2,24 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.erp.model.wms.entity.ReportOrderSalesEntity;
+import com.erp.server.wms.mapper.ReportOrderSalesMapper;
+import com.erp.server.wms.service.ReportOrderSalesService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.wms.dto.ReportOrderSalesDTO;
-import com.erp.model.wms.entity.ReportOrderSalesEntity;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.wms.mapper.ReportOrderSalesMapper;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.ReportOrderSalesService;
+import com.erp.server.wms.service.CommonService;
+import com.common.core.exception.ServiceException;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_SALES;
-
+import com.erp.model.wms.dto.ReportOrderSalesDTO;
+import java.util.*;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
 /**
  * <p>
  * 订单销量表 服务实现类
@@ -41,9 +33,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
 public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSalesMapper, ReportOrderSalesEntity> implements ReportOrderSalesService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Autowired
-    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -97,24 +86,6 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
         return Boolean.TRUE;
     }
 
-    @Override
-    public PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingDTO) {
-        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<ReportOrderSalesDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
-        return new PagingVO(pageData);
-    }
-
-    @Override
-    public Boolean exportExcel(ReportOrderSalesDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("销售看板", EXPORT_WMS_REPORT_ORDER_SALES.getCode(), dto);
-        return Boolean.TRUE;
-    }
-
-    @Override
-    public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingParamDTO) {
-        PagingVO<ReportOrderSalesDTO.ListDTO> resultList = this.paging(pagingParamDTO);
-        return resultList;
-    }
 
     /**
     * 新增修改处理数据

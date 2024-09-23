@@ -1,11 +1,8 @@
 package com.erp.server.wms.mapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.entity.ReportOrderSalesEntity;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -18,13 +15,5 @@ import org.apache.ibatis.annotations.Param;
  */
 @Mapper
 public interface ReportOrderSalesMapper extends BaseMapper<ReportOrderSalesEntity> {
-    /**
-     * 分页查询
-     * @author will
-     * @date 2024/9/24 10:01
-     * @param query
-     * @param params
-     * @return IPage<ListDTO>
-     */
-    IPage<ReportOrderSalesDTO.ListDTO> paging(Page query,@Param("params") ReportOrderSalesDTO.PagingParamDTO params);
+
 }

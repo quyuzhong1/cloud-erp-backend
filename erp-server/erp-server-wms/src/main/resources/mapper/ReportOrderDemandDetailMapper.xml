@@ -1,87 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.ReportOrderDemandDetailMapper">
-
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.ReportOrderDemandDetailEntity">
-        <result column="id" property="id" />
-        <result column="create_time" property="createTime" />
-        <result column="update_time" property="updateTime" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="warehouse_id" property="warehouseId" />
-        <result column="virtual_warehouse_id" property="virtualWarehouseId" />
-        <result column="sku_id" property="skuId" />
-        <result column="qty" property="qty" />
-        <result column="approve_status" property="approveStatus" />
-        <result column="status" property="status" />
-        <result column="invalid_status" property="invalidStatus" />
-        <result column="source_id" property="sourceId" />
-        <result column="source_detail_id" property="sourceDetailId" />
-        <result column="source_code" property="sourceCode" />
-        <result column="source_type" property="sourceType" />
-        <result column="warehouse_name" property="warehouseName" />
-        <result column="virtual_warehouse_name" property="virtualWarehouseName" />
-        <result column="sku_no" property="skuNo" />
-        <result column="product_name" property="productName" />
-        <result column="virtual_usable_qty" property="virtualUsableQty" />
-        <result column="is_split" property="isSplit" />
-        <result column="delivery_notice_qty" property="deliveryNoticeQty" />
-        <result column="frozen_qty" property="frozenQty" />
-        <result column="order_qty" property="orderQty" />
-        <result column="bom_json" property="bomJson" typeHandler="com.erp.server.wms.handler.ObjectJsonArrayHandler" javaType="com.erp.model.wms.dto.ReportOrderDemandDetailDTO$BomDTO"/>
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="sku_id" property="skuId" />
+       <result column="qty" property="qty" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="status" property="status" />
+       <result column="invaild_status" property="invaildStatus" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="souce_code" property="souceCode" />
+       <result column="source_type" property="sourceType" />
+       <result column="date" property="date" />
     </resultMap>
 
-
+    <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        rodd.id,
-        rodd.create_time as createTime,
-        rodd.update_time as updateTime,
-        rodd.create_user_name as createUserName,
-        rodd.create_user_id as createUserId,
-        rodd.update_user_name as updateUserName,
-        rodd.update_user_id as updateUserId,
-        rodd.version,
-        rodd.warehouse_id as warehouseId,
-        rodd.virtual_warehouse_id as virtualWarehouseId,
-        rodd.virtual_warehouse_name as virtualWarehouseName,
-        rodd.warehouse_name,
-        rodd.sku_id as skuId,
-        rodd.sku_no as skuNo,
-        rodd.product_name as productName,
-        rodd.qty,
-        rodd.approve_status as approveStatus,
-        rodd.status,
-        rodd.invalid_status invalidStatus,
-        rodd.source_id as sourceId,
-        rodd.source_detail_id as sourceDetailId,
-        rodd.source_code as sourceCode,
-        rodd.source_type as sourceType,
-        rodd.virtual_usable_qty as virtualUsableQty,
-        rodd.is_split
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        warehouse_id, virtual_warehouse_id, sku_id, qty, approve_status, status, invaild_status, source_id, source_detail_id, souce_code, source_type, date
     </sql>
-
-    <!-- 分页查询 -->
-    <select id="paging" resultType="com.erp.model.wms.dto.ReportOrderDemandDetailDTO$ListDTO">
-        select
-            <include refid="Base_Column_List" />
-        from report_order_demand_detail rodd
-        <where>
-            ${params.sqlMap.default}
-            and rodd.is_deleted = false
-        </where>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        rodd.update_time desc
-    </select>
 
 
 </mapper>
