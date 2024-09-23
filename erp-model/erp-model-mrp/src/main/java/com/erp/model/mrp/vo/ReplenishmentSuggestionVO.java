@@ -210,6 +210,18 @@ public class ReplenishmentSuggestionVO {
          * 最长发货频率
          */
         private Integer logisticsMaxCycleDays;
+        /**
+         * 物流方式
+         */
+        private String logisticsMinMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMaxMethod;
 
         /**
          * 最短备货时效（天）
@@ -474,6 +486,18 @@ public class ReplenishmentSuggestionVO {
          * 最长发货频率
          */
         private Integer logisticsMaxCycleDays;
+        /**
+         * 物流方式
+         */
+        private String logisticsMinMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMaxMethod;
         /**
          * 最短备货时效（天）
          */

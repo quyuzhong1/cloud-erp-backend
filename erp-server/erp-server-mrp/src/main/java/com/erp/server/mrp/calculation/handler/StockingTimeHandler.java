@@ -35,6 +35,9 @@ public class StockingTimeHandler extends AbstractSkuCalculationHandler {
         replenishmentResultDTO.getReplenishmentDetail().setLogisticsMinCycleDays(stockUpResult.getLogisticsMinResult().getLogisticsCycleDays());
         replenishmentResultDTO.getReplenishmentDetail().setLogisticsCycleDays(stockUpResult.getLogisticsResult().getLogisticsCycleDays());
         replenishmentResultDTO.getReplenishmentDetail().setLogisticsMaxCycleDays(stockUpResult.getLogisticsMaxResult().getLogisticsCycleDays());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMinMethod(stockUpResult.getLogisticsMinResult().getLogisticsMethod());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMethod(stockUpResult.getLogisticsResult().getLogisticsMethod());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMaxMethod(stockUpResult.getLogisticsMaxResult().getLogisticsMethod());
         //FBA备货时长：
         //最短：本地发FBA时效（最短）+ FBA入库天数
         //默认：采购审批时长 + 生产周期 + 供应商发货时长 + 质检入库时长 + 本地发FBA时效（默认） + FBA入库天数

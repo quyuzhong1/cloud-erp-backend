@@ -314,6 +314,18 @@ public class ReplenishmentResultDTO {
          * 最长发货频率
          */
         private Integer logisticsMaxCycleDays;
+        /**
+         * 物流方式
+         */
+        private String logisticsMinMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMaxMethod;
 
         /**
          * 最短备货时效（天）
@@ -433,6 +445,9 @@ public class ReplenishmentResultDTO {
             detail.setLogisticsCycleDays(dto.getLogisticsCycleDays());
             detail.setLogisticsMinCycleDays(dto.getLogisticsMinCycleDays());
             detail.setLogisticsMaxCycleDays(dto.getLogisticsMaxCycleDays());
+            detail.setLogisticsMinMethod(dto.getLogisticsMinMethod());
+            detail.setLogisticsMethod(dto.getLogisticsMethod());
+            detail.setLogisticsMaxMethod(dto.getLogisticsMaxMethod());
             detail.setStockUpMinDays(dto.getStockUpMinDays());
             detail.setStockUpDefaultDays(dto.getStockUpDefaultDays());
             detail.setStockUpMaxDays(dto.getStockUpMaxDays());
