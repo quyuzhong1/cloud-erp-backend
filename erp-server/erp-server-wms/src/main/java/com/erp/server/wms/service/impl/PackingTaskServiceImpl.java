@@ -428,6 +428,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if (CollectionUtils.isEmpty(taskDetailEntityList)){
                 throw new ServiceException("装箱任务中SKU为空，不能装箱其他SKU");
             }
+            List<PackingTaskDetailEntity> copyTaskDetailList = BeanUtil.copyToList(taskDetailEntityList,PackingTaskDetailEntity.class);
             List<String> deliverySkuIds = taskDetailEntityList.stream().map(PackingTaskDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             Map<String,String> fnSkuMap = taskDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getFnSku())).collect(Collectors.toMap(v->v.getFnSku(),v->v.getSkuNo(),(v1,v2)->v1));
             List<WmsCartonDetailDTO.AddDTO> otherSku = addDTO.getDetailList().stream().filter(e -> Objects.nonNull(e.getSkuId()) && !deliverySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
@@ -446,7 +447,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             addDTO.getDetailList().forEach(v->{
                 if(StringUtils.isBlank(v.getFnSku())){
                     Integer totalNum = v.getPackQty();
-                    List<PackingTaskDetailEntity> taskDetailList = taskDetailEntityList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())).collect(Collectors.toList());
+                    List<PackingTaskDetailEntity> taskDetailList = copyTaskDetailList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())).collect(Collectors.toList());
                     for(PackingTaskDetailEntity packingTaskDetailEntity : taskDetailList){
                         String key = packingTaskDetailEntity.getSkuId()+packingTaskDetailEntity.getFnSku();
                         if(totalNum <= 0){
