@@ -704,7 +704,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public void createTaskHandle(DelegateTask task) {
         // 保存流程任务数据 execution 中包含实例信息,
         // 审批任务填充审批信息
-        DelegateExecution execution = task.getExecution();
+         DelegateExecution execution = task.getExecution();
         String processDefinitionId = execution.getProcessDefinitionId();
         String taskDefinitionKey = task.getTaskDefinitionKey();
         CamundaDTO.PropertiesDTO propertiesDTO = getProperties(taskDefinitionKey, processDefinitionId);

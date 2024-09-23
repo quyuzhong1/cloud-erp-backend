@@ -5335,4 +5335,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         return "操作成功";
     }
+
+    @Override
+    public List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO.ProductChargeInfoDTO> skuList = baseMapper.listProductChargeInfoByIds(skuIds);
+        return skuList;
+    }
 }

@@ -661,4 +661,58 @@ public class PilotApplicationDTO implements Serializable {
          */
         private String attachUrl;
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ApprovePilotNoticeDTO{
+        /**
+         * 试产量产主键id
+         */
+        private String id;
+        /**
+         * 任务id
+         */
+        private List<String> taskId;
+        /**
+         * 产品id
+         */
+        private String productId;
+        /**
+         *
+         */
+        private String spuNo;
+        /**
+         * 产品名称
+         */
+        private String spuName;
+        /**
+         *
+         */
+        private String skuId;
+        /**
+         *
+         */
+        private String skuNo;
+        /**
+         *
+         */
+        private String skuName;
+        /**
+         * 产品经理id
+         */
+        private String chargeId;
+        /**
+         * 产品经理
+         */
+        private String chargeName;
+        /**
+         * 项目经理id
+         */
+        private String projectChargeId;
+        /**
+         * 项目经理
+         */
+        private String projectChargeName;
+    }
 }

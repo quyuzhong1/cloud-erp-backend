@@ -9,6 +9,7 @@ import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.FlyingBookReminderDTO;
 import com.erp.model.plm.dto.NoticeMessageDTO;
+import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -300,4 +301,9 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
      * 通过ID获取通知详情
      */
     NoticeMessageEntity view(String id);
+
+    /**
+     * 试产量产审核/试产量产审核完毕 发送通知
+     */
+    Boolean approvePilotApplicationNotice(String userName, PilotApplicationDTO.ApprovePilotNoticeDTO entity,Boolean isCompeletd);
 }

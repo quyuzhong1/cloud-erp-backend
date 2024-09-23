@@ -90,16 +90,21 @@
     </select>
     <select id="listApproveHistory"
             resultType="com.erp.model.workflow.dto.ProcessTaskManagementDTO$ApproveHistoryDTO">
-        select pm.business_id   businessId,
-               ptm.id           taskId,
-               ptm.approve_id   approveUserId,
-               ptm.approve_name approveUserName,
-               ptm.approve_time approveTime,
-               ptm.task_status  approveStatus,
-               ptm.remark
-        from process_management pm
-                 left join process_task_management ptm on pm.process_instance_id = ptm.process_instance_id and ptm.is_deleted = false and ptm.approve_name = ptm.cur_approve_name
-        where pm.business_id = #{businessId}
+        SELECT
+            pm.business_id businessId,
+            ptm.ID taskId,
+            ptm.approve_id approveUserId,
+            ptm.approve_name approveUserName,
+            ptm.approve_time approveTime,
+            ptm.task_status approveStatus,
+            ptm.cur_approve_id,
+            ptm.cur_approve_name,
+            ptm.remark
+        FROM
+            (select business_id,process_instance_id from process_management where is_deleted = FALSE and business_id = #{businessId} order by create_time desc limit 1 ) pm
+                inner JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+                AND ptm.is_deleted = FALSE
+        order by ptm.id desc
     </select>
     <select id="listProcessByBusinessKey" parameterType="com.erp.model.workflow.dto.ProcessManagementDTO$TaskKeyInfoDTO" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
         SELECT

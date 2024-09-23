@@ -2,16 +2,9 @@ package com.erp.server.plm.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.erp.model.plm.dto.*;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
-import com.erp.server.plm.service.ProductDetailService;
-import com.sdk.wangdian.sdk.impl.Api;
 import lombok.extern.slf4j.Slf4j;
-
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -49,10 +42,6 @@ public class PilotApplicationController extends BaseController {
 
     @Resource
     private PilotApplicationService pilotApplicationService;
-    @Resource
-    private SysUserFeign sysUserFeign;
-    @Resource
-    private ProductDetailService productDetailService;
 
     /**
     * 新增
@@ -128,6 +117,7 @@ public class PilotApplicationController extends BaseController {
     @PostMapping("/addAndSubmit")
     public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated PilotApplicationDTO.AddDTO dto) {
         BaseResultDTO.AddDTO result = pilotApplicationService.addAndSubmit(dto);
+        pilotApplicationService.approvePilotApplicationNotice(result.getId());
         return success(result);
     }
 
@@ -146,6 +136,7 @@ public class PilotApplicationController extends BaseController {
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated PilotApplicationDTO.UpdateDTO dto) {
         pilotApplicationService.updateAndSubmit(dto);
+        pilotApplicationService.approvePilotApplicationNotice(dto.getId());
         return success();
     }
 
@@ -172,6 +163,7 @@ public class PilotApplicationController extends BaseController {
             BatchResultDTO submit;
             try {
                 submit = pilotApplicationService.submit(id);
+                pilotApplicationService.approvePilotApplicationNotice(id);
             }catch (Exception e){
                 log.error("试产申请 提交审核失败",e);
                 PilotApplicationEntity entity = idEntityMap.get(id);
@@ -210,6 +202,7 @@ public class PilotApplicationController extends BaseController {
             BatchResultDTO approveResult;
             try {
                 approveResult = pilotApplicationService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), dto);
+                pilotApplicationService.approveCompletedPilotApplicationNotice(id);
             }catch (Exception e){
                 log.error("试产申请审核失败",e);
                 PilotApplicationEntity entity = idEntityMap.get(id);

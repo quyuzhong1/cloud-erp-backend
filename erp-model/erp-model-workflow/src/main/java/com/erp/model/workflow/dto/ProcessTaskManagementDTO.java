@@ -40,6 +40,14 @@ public class ProcessTaskManagementDTO implements Serializable {
         /**
          * 审核人ID
          */
+        private String curApproveId;
+        /**
+         * 审核人ID
+         */
+        private String curApproveName;
+        /**
+         * 审核人ID
+         */
         private String approveUserId;
         /**
          * 审核人名称
