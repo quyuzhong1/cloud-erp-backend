@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -102,5 +103,18 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
     @Override
     public List<DmpCfgInputDTO.ListDmpCfgInputDTO> listDmpCfgInput(String id) {
         return baseMapper.listDmpCfgInput(id);
+    }
+
+    @Override
+    public List<String> listBySystemIdAndTaskType(String systemId, List<String> taskTypeList) {
+        return baseMapper.listBySystemIdAndTaskType(systemId, taskTypeList);
+    }
+
+    @Override
+    public List<DmpCfgInputDTO.ListDmpCfgInputDTO> allDmpCfgInput() {
+        List<DmpCfgInputEntity> list = lambdaQuery().select(DmpCfgInputEntity::getId, DmpCfgInputEntity::getName)
+                .list();
+        List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList = BeanMapperUtils.copyList(DmpCfgInputDTO.ListDmpCfgInputDTO.class, list);
+        return resultList;
     }
 }
