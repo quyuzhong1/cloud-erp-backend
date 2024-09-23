@@ -202,6 +202,14 @@ public class ReplenishmentSuggestionVO {
          * 发货频率
          */
         private Integer logisticsCycleDays;
+        /**
+         * 最短发货频率
+         */
+        private Integer logisticsMinCycleDays;
+        /**
+         * 最长发货频率
+         */
+        private Integer logisticsMaxCycleDays;
 
         /**
          * 最短备货时效（天）
@@ -458,7 +466,14 @@ public class ReplenishmentSuggestionVO {
          * 发货频率
          */
         private Integer logisticsCycleDays;
-
+        /**
+         * 最短发货频率
+         */
+        private Integer logisticsMinCycleDays;
+        /**
+         * 最长发货频率
+         */
+        private Integer logisticsMaxCycleDays;
         /**
          * 最短备货时效（天）
          */

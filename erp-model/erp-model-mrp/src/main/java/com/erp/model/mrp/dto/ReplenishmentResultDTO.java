@@ -306,6 +306,14 @@ public class ReplenishmentResultDTO {
          * 发货频率
          */
         private Integer logisticsCycleDays;
+        /**
+         * 最短发货频率
+         */
+        private Integer logisticsMinCycleDays;
+        /**
+         * 最长发货频率
+         */
+        private Integer logisticsMaxCycleDays;
 
         /**
          * 最短备货时效（天）
@@ -423,6 +431,8 @@ public class ReplenishmentResultDTO {
             detail.setDeliveryDefaultDays(dto.getDeliveryDefaultDays());
             detail.setDeliveryMaxDays(dto.getDeliveryMaxDays());
             detail.setLogisticsCycleDays(dto.getLogisticsCycleDays());
+            detail.setLogisticsMinCycleDays(dto.getLogisticsMinCycleDays());
+            detail.setLogisticsMaxCycleDays(dto.getLogisticsMaxCycleDays());
             detail.setStockUpMinDays(dto.getStockUpMinDays());
             detail.setStockUpDefaultDays(dto.getStockUpDefaultDays());
             detail.setStockUpMaxDays(dto.getStockUpMaxDays());
@@ -434,8 +444,6 @@ public class ReplenishmentResultDTO {
             detail.setLocalSellableDays(dto.getLocalSellableDays());
             detail.setTotalSellableDays(dto.getTotalSellableDays());
             detail.setCfgFbaInTransit(dto.getCfgFbaInTransit());
-            detail.setTotalSellableDays(dto.getTotalSellableDays());
-            detail.setTotalSellableDays(dto.getTotalSellableDays());
             detail.setCalcVersion(dto.getCalcVersion());
             detail.setCalcDate(dto.getCalcDate());
             detail.setCfgRule(JSON.toJSONString(cfgRuleStrategy));

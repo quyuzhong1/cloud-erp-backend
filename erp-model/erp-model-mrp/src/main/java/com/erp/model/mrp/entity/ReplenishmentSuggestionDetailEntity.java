@@ -172,6 +172,16 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
      */
     @TableField("logistics_cycle_days")
     private Integer logisticsCycleDays;
+    /**
+     * 最短发货频率
+     */
+    @TableField("logistics_min_cycle_days")
+    private Integer logisticsMinCycleDays;
+    /**
+     * 最长发货频率
+     */
+    @TableField("logistics_max_cycle_days")
+    private Integer logisticsMaxCycleDays;
 
     /**
      * 最短备货时效（天）
