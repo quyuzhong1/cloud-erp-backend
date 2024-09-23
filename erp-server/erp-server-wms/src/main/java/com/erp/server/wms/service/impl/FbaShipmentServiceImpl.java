@@ -723,28 +723,22 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
      * @Date 2023/11/2 17:35
      **/
     private void fillList(List<FbaShipmentDTO.ListDTO> records) {
-        List<String> ids = records.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-        List<String> detailIds = records.stream().map(req -> req.getDetailId()).distinct().collect(Collectors.toList());
+        List<String> codes = records.stream().map(req -> req.getCode()).distinct().collect(Collectors.toList());
         List<String> skuNos = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-        //根据来源id查询发货单
-        List<FirstMileDeliveryEntity> fbaDeliveryEntities = firstMileDeliveryService.listBySourceIds(ids);
         //根据来源详情id查询发货详情
-        List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listBySourceDetailIds(detailIds);
+        List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listByFbaShipmentCodes(codes);
         //根据sku获取产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         for (FbaShipmentDTO.ListDTO record : records) {
-            List<FirstMileDeliveryEntity> deliveryEntities = fbaDeliveryEntities.stream().filter(req -> req.getSourceId().equals(record.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(deliveryEntities)) {
-                record.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
-            }
             record.setPackingDownload(record.getIsPackingDownload()?"已下载":"未下载");
             //设置发货状态中文
             record.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(record.getDeliveryStatus()));
 
             //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
             Integer deliveryQty = fbaDeliveryDetailEntities.stream()
-                    .filter(req -> req.getSourceDetailId().equals(record.getDetailId())
-                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus()))
+                    .filter(req -> req.getFbaShipmentCode().equals(record.getCode())
+                            && req.getFnSku().equals(record.getFnSku())
+                            && req.getSkuNo().equals(record.getSkuNo()))
                     .mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty)
                     .sum();
             record.setDeliveryQty(deliveryQty);
