@@ -32,10 +32,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ExecutionStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
@@ -1404,7 +1401,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //采购入库明细ids
         List<String> podIds = records.stream().map(PoInstockDTO.ListDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
-
+        //采购退货单
+        List<String> returnIds = records.stream().filter(e -> Objects.nonNull(e) && SourceTypeEnum.PO_RETURN.getCode().equals(e.getSourceType())).map(PoInstockDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<PoReturnEntity> poReturnEntityList = null;
+        if (CollectionUtils.isNotEmpty(returnIds)){
+            poReturnEntityList = poReturnService.listByIds(returnIds);
+        }
         List<String> warehouseIds = records.stream().map(req -> req.getDeliveryWarehouseId()).distinct().collect(Collectors.toList());
 
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
@@ -1444,6 +1446,16 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getDeliveryWarehouseId())
                     && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             obj.setWarehouseLocationName(warehouseLocationEntity.getName());
+            //采购订单类型
+            obj.setPurchaseTypeName(PurchaseOrderTypeEnum.getNameByCode(obj.getPurchaseType()));
+            //退货方式
+            if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(obj.getPurchaseType()) && CollectionUtils.isNotEmpty(poReturnEntityList)){
+                PoReturnEntity poReturnEntity = poReturnEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(obj.getSourceId())).findFirst().orElse(null);
+                if (Objects.nonNull(poReturnEntity)){
+                    obj.setReturnMode(poReturnEntity.getReturnMode());
+                    obj.setReturnModeName(ReturnModeEnum.getName(poReturnEntity.getReturnMode()));
+                }
+            }
         }
     }
 

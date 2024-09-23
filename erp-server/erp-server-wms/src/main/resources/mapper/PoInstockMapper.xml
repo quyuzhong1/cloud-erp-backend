@@ -28,6 +28,8 @@
             psi.delivery_warehouse_id AS deliveryWarehouseId,
             psi.delivery_warehouse_name AS deliveryWarehouseName,
             psid.remark,
+            po.source_id as sourceId,
+            po.source_type as sourceType,
             COALESCE(pod.tax_rate,0) AS taxRate,
             COALESCE(pod.tax_price,0) AS taxPrice,
             COALESCE(pod.currency,'CNY') AS currency,
@@ -36,10 +38,9 @@
             psi.purchase_type as purchaseType,
             psid.warehouse_location AS warehouseLocation
         from po_instock psi
-        inner join po_instock_detail psid
-        on psi.id = psid.main_id and psid.is_deleted = false
-        left join purchase_order_detail pod
-        on pod.id=psid.purchase_order_detail_id and pod.is_deleted = false
+        inner join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
+        left join purchase_order po on po.id=psi.purchase_order_id and po.is_deleted = false
+        left join purchase_order_detail pod on pod.id=psid.purchase_order_detail_id and pod.is_deleted = false
         where
             ${params.sqlMap.default}
         and    psi.is_deleted = false
