@@ -179,6 +179,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             view.setCategoryName(skuVO.getCategoryName());
             view.setCountryName(dictCountry.getNameCn());
             view.setCountryImgUrl(dictCountry.getFlagUrl());
+            view.setLogisticsMethodName(LogisticsMethodEnum.getName(view.getLogisticsMethod()));
+            view.setLogisticsMinMethodName(LogisticsMethodEnum.getName(view.getLogisticsMinMethod()));
+            view.setLogisticsMaxMethodName(LogisticsMethodEnum.getName(view.getLogisticsMaxMethod()));
             List<LabelVO> vos = labelVOS.stream().filter(v -> v.getReplenishmentId().equals(view.getId())).collect(Collectors.toList());
             view.setLabels(vos);
             view.setShopName(shopInfoEntity.getName());
@@ -237,6 +240,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         view.setAvgSalesEstimateQty(JSON.parseObject(view.getAvgSalesEstimateQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>(){}));
         view.setCountryName(dictCountry.getNameCn());
         view.setShopName(shopInfoEntity.getName());
+        view.setLogisticsMethodName(LogisticsMethodEnum.getName(view.getLogisticsMethod()));
+        view.setLogisticsMinMethodName(LogisticsMethodEnum.getName(view.getLogisticsMinMethod()));
+        view.setLogisticsMaxMethodName(LogisticsMethodEnum.getName(view.getLogisticsMaxMethod()));
         List<LabelVO> labelVOS = labelInfoService.listLabelByReplenishmentId(view.getId());
         view.setLabels(labelVOS);
         return view;

@@ -215,13 +215,25 @@ public class ReplenishmentSuggestionVO {
          */
         private String logisticsMinMethod;
         /**
+         * 物流方式名
+         */
+        private String logisticsMinMethodName;
+        /**
          * 物流方式
          */
         private String logisticsMethod;
         /**
+         * 物流方式名
+         */
+        private String logisticsMethodName;
+        /**
          * 物流方式
          */
         private String logisticsMaxMethod;
+        /**
+         * 物流方式名
+         */
+        private String logisticsMaxMethodName;
 
         /**
          * 最短备货时效（天）
@@ -491,13 +503,25 @@ public class ReplenishmentSuggestionVO {
          */
         private String logisticsMinMethod;
         /**
+         * 物流方式名
+         */
+        private String logisticsMinMethodName;
+        /**
          * 物流方式
          */
         private String logisticsMethod;
         /**
+         * 物流方式名
+         */
+        private String logisticsMethodName;
+        /**
          * 物流方式
          */
         private String logisticsMaxMethod;
+        /**
+         * 物流方式名
+         */
+        private String logisticsMaxMethodName;
         /**
          * 最短备货时效（天）
          */
