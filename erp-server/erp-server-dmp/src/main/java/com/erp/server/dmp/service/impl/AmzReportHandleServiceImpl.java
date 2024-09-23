@@ -153,25 +153,122 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .eq(DmpCfgInputEntity::getDisabled, false)
                 .last(" LIMIT 1 ")
                 .one();
-        if (null == inputEntity){
-            ServiceException.runError("FBA查询配置不存在");
-        }
-        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery()
-                .eq(DmpCfgInputDetailEntity::getMainId, inputEntity.getId())
-                .in(DmpCfgInputDetailEntity::getNextLevelId, sameAccountShopIds)
-                .list();
-        if (CollectionUtils.isEmpty(list)){
-            ServiceException.runError("FBA查询配置明细不存在");
-        }
-        List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        if (null != inputEntity){
+//            ServiceException.runError("FBA查询配置不存在");
+            List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery()
+                    .eq(DmpCfgInputDetailEntity::getMainId, inputEntity.getId())
+                    .in(DmpCfgInputDetailEntity::getNextLevelId, sameAccountShopIds)
+                    .list();
+            if (CollectionUtils.isEmpty(list)){
+                ServiceException.runError("FBA查询配置明细不存在");
+            }
+            List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
-        // 创建新中台hotfix任务
-        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
-        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
-        dmpInputHotfixCreateRequest.setDetailExtendJson(JSONObject.toJSONString(dto));
-        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+            // 创建新中台hotfix任务
+            DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+            dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
+            dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
+            dmpInputHotfixCreateRequest.setDetailExtendJson(JSONObject.toJSONString(dto));
+            dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+            return true;
+        }
 
+        // 历史逻辑
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        try {
+            FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+            String queryType = AmazonFbaQueryTypeEnum.SHIPMENT.getCode();
+            String marketplaceId = marketplaceEnum.getMarketplaceId();
+            List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
+            List<String> shipmentIdList = dto.getShipmentCodeList();
+            // 请求亚马逊接口
+            GetShipmentsResponse shipments = api.getShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, null, null, null);
+
+            InboundShipmentList responseList = shipments.getPayload().getShipmentData();
+            if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())) {
+                throw new ServiceException(ApiError.FBA_SHIPMENT_ERROR);
+            }
+            // 返回下载源数据
+            List<PlatformAmazonFbaShipmentDTO> amazonFbaShipmentDTOList = responseList.stream()
+                    .map(e -> new PlatformAmazonFbaShipmentDTO(e, shopId, shopInfoDTO.getName()))
+                    .collect(Collectors.toList());
+
+            // 查询FBA货件item
+            for (PlatformAmazonFbaShipmentDTO shipmentDTO : amazonFbaShipmentDTOList) {
+                GetShipmentItemsResponse response = api.getShipmentItemsByShipmentId(shipmentDTO.getShipmentInfo().getShipmentId(), marketplaceEnum.getMarketplaceId());
+                InboundShipmentItemList itemData = response.getPayload().getItemData();
+                shipmentDTO.setDetailList(itemData);
+            }
+
+            String category = PlatformCategoryEnum.THIRD_SYSTEM.getCode();
+            String platform = PlatformDictEnum.AMAZON.getCode();
+            String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
+            for (PlatformAmazonFbaShipmentDTO amazonShipmentDTO : amazonFbaShipmentDTOList) {
+                // TODO 封装?
+                amazonShipmentDTO.setDownloadStatus(1);
+                amazonShipmentDTO.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
+                // 转换
+                PlatformFbaShipmentDTO platformFbaShipmentDTO = SdkFbaShipmentConverter.INSTANCE.downloadDtoToSaveDto(amazonShipmentDTO);
+                InboundShipmentItemList sourceDetailList = amazonShipmentDTO.getDetailList();
+                List<PlatformFbaShipmentReceiveDTO> receiveDTOList = sourceDetailList.stream()
+                        .map(SdkFbaShipmentConverter.INSTANCE::receiveDtoToSaveDto)
+                        .collect(Collectors.toList());
+
+                // 合并成详情
+                List<PlatformFbaShipmentReceiveDTO> detailListDTO = new ArrayList<>(
+                        receiveDTOList.stream()
+                                .collect(Collectors.toMap(
+                                        shipment -> shipment.getFbaShipmentId() + shipment.getFnSku() + shipment.getSellerSku(),
+                                        shipment -> shipment,
+                                        PlatformFbaShipmentReceiveDTO::merge))
+                                .values()
+                );
+                // 过滤为0
+                List<PlatformFbaShipmentReceiveDTO> saveReceiveDTO = receiveDTOList.stream().filter(e -> e.getReceiveQty() > 0).collect(Collectors.toList());
+                platformFbaShipmentDTO.setReceiveDTOList(saveReceiveDTO);
+
+                // 检查签收时间
+                detailListDTO.forEach(e -> {
+                    if (e.getReceiveQty() == 0) {
+                        e.setReceiveDate(null);
+                    }
+                });
+                platformFbaShipmentDTO.setDetailList(detailListDTO);
+
+//                businessService.pullDetailProcess(amazonShipmentDTO, platformFbaShipmentDTO, category, platform, business);
+
+                String topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC;
+                String tag = StrUtil.format("{}_{}", category, business) + "_tag";
+                BusinessTypeEnum businessType = BusinessTypeEnum.getByCodeAndThrow(business);
+
+                Class<? extends PlatformAmazonFbaShipmentDTO> tClass = amazonShipmentDTO.getClass();
+                String tableName = StrUtil.format("{}_{}_{}", category, platform, business);
+                // 保存或更新mongo数据
+                UniqueDto uniqueDto = UniqueDto.getUniqId(platformFbaShipmentDTO.getUniqueId());
+                List<? extends PlatformAmazonFbaShipmentDTO> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, tableName, tClass);
+                if (CollectionUtils.isEmpty(mongoData)) {
+                    mongoService.saveMongoData(amazonShipmentDTO, tableName);
+                } else {
+                    MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(amazonShipmentDTO), MapUtil.class);
+                    mongoService.updateMongoData(uniqueDto, mapUtil, tableName, tClass);
+                }
+
+                String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(platform, businessType.getSourceType().getCode(), platform, topic, tag, platformFbaShipmentDTO));
+                // 同步处理
+                dmpPullTaskService.updateSyncInfo(String.valueOf(modelTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
+
+                log.info("手动拉取货件推送：{}", JSONUtil.toJsonStr(platformFbaShipmentDTO));
+                ApiResult<?> apiResult = wmsShipmentFeign.consumerPullShipment(platformFbaShipmentDTO);
+                if (200 != apiResult.getCode()) {
+                    throw new ServiceException("拉取货件处理失败");
+                }
+                log.info("手动拉取货件结果：{}", JSONUtil.toJsonStr(platformFbaShipmentDTO));
+            }
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ServiceException("[Amazon SP-APi] 下载FBA货件失败" + e);
+        }
         return true;
     }
 
