@@ -126,7 +126,7 @@ public class LabelInfoController extends BaseController {
      * @param searchKeyword 关键词
      */
     @GetMapping("/search/label")
-    public ApiResult<List<LabelInfoDTO.ListDTO>> searchLabel(@RequestParam String searchKeyword) {
+    public ApiResult<List<LabelInfoDTO.ListDTO>> searchLabel(@RequestParam(required = false) String searchKeyword) {
         List<LabelInfoDTO.ListDTO> label = labelInfoService.searchLabel(searchKeyword);
         return success(label);
     }
