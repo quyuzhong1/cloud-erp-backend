@@ -4,15 +4,13 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.UniqueDto;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.*;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
@@ -26,6 +24,7 @@ import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedStatusEnum;
 import com.erp.model.dmp.enums.ReportScheduleSubscribedTypeEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopPlatformStatusEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -49,6 +48,8 @@ import com.erp.sdk.oms.amz.spapi.model.reports.*;
 import com.erp.sdk.oms.amz.spapi.model.sellers.GetMarketplaceParticipationsResponse;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiRateLimitUtils;
+import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -114,12 +115,24 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
     private PlatformApiTaskService platformApiTaskService;
     @Resource
     private CfgAmzReportTypeService cfgAmzReportTypeService;
+    @Resource
+    private DmpInputCreateFactory dmpInputCreateFactory;
+    @Resource
+    private DmpCfgInputService dmpCfgInputService;
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean pullShipment(DmpPullShipmentDTO dto) {
+        if (CollectionUtils.isEmpty(dto.getShipmentCodeList())){
+            return true;
+        }
+
         // 获取店铺信息
         String shopId = dto.getShopId();
         // 获取店铺授权信息
@@ -127,6 +140,26 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         if (null == shopInfoDTO) {
             throw new ServiceException("未找到店铺授权:" + shopId);
         }
+
+        // 查询拉取配置
+        Integer count = cfgSettingService.lambdaQuery()
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.FBA_SHIPMENT.getCode())
+                .eq(CfgSettingEntity::getType, SettingEnum.NEW_DMP_PULL_SWITCH_LIST.getType())
+                .eq(CfgSettingEntity::getValue, "1")
+                .count();
+        if (count > 1){
+            // 执行新中台拉取逻辑
+            return newDmpPullShipment(dto, shopInfoDTO);
+        } else {
+            // 执行历史逻辑
+            return oldDmpPullShipment(dto, shopInfoDTO, shopId);
+        }
+    }
+
+    /**
+     * 历史拉取逻辑
+     */
+    private boolean oldDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO, String shopId) {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         try {
             FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
@@ -616,5 +649,42 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             }
             throw new RuntimeException("请求亚马逊SP-APi报告信息异常,error=" + JSONUtil.toJsonStr(e));
         }
+    }
+
+    /**
+     * 新中台拉取逻辑
+     */
+    public boolean newDmpPullShipment(DmpPullShipmentDTO dto, AmazonShopInfoDTO shopInfoDTO) {
+        // 当前账号所有店铺ID
+        List<String> sameAccountShopIds = shopInfoDTO.getMarketplaceShopIdMap().values()
+                .stream()
+                .map(AmazonShopInfoDTO.ShopNameDTO::getShopId)
+                .distinct()
+                .collect(Collectors.toList());
+        // 校验新中台明细配置
+        DmpCfgInputEntity inputEntity = dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getCode, BusinessTypeEnum.FBA_SHIPMENT.getCode())
+                .eq(DmpCfgInputEntity::getDisabled, false)
+                .last(" LIMIT 1 ")
+                .one();
+        if (null == inputEntity) {
+            ServiceException.runError("FBA查询配置不存在");
+        }
+        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery()
+                .eq(DmpCfgInputDetailEntity::getMainId, inputEntity.getId())
+                .in(DmpCfgInputDetailEntity::getNextLevelId, sameAccountShopIds)
+                .list();
+        if (CollectionUtils.isEmpty(list)){
+            ServiceException.runError("FBA查询配置明细不存在");
+        }
+        List<String> inputDetailIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+        // 创建新中台hotfix任务
+        DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
+        dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
+        dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
+        dmpInputHotfixCreateRequest.setDetailExtendJson(JSONObject.toJSONString(dto));
+        dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+        return true;
     }
 }

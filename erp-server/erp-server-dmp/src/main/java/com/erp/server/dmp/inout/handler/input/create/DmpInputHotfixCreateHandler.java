@@ -5,6 +5,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,7 +100,12 @@ public class DmpInputHotfixCreateHandler extends DmpInputBaseCreateHandler{
 				dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
 				dmpInputTaskEntity.setTaskType(DmpInputTaskTaskTypeEnum.HOTFIX.getCode());
 				dmpInputTaskEntity.setExecTimeout(dmpInputHotfixCreateRequest.getExecTimeout());
-				dmpInputTaskEntity.setExtendJson(dmpCfgInputDetailEntity.getExtendJson());
+				// 请求参数明细ExtendJson覆盖
+				String detailExtendJson = dmpCfgInputDetailEntity.getExtendJson();
+				if (StringUtils.isNotBlank(dmpInputHotfixCreateRequest.getDetailExtendJson())){
+					detailExtendJson = dmpInputHotfixCreateRequest.getDetailExtendJson();
+				}
+				dmpInputTaskEntity.setExtendJson(detailExtendJson);
 				
 				dmpInputTaskEntityList.add(dmpInputTaskEntity);
 			}
