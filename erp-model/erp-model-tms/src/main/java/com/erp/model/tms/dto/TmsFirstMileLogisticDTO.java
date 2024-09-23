@@ -232,6 +232,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 发货单id
          */
         private String outstockId;
+        /**
+         * 搜索发货单编码
+         */
+        private String searchKey;
 
         /**
          * 渠道id
