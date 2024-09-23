@@ -137,7 +137,7 @@
                 and pa.approve_status = #{approveStatus}
             </if>
             <if test="orderStatus != null and orderStatus != ''">
-                and pa.order_status = #{orderStatus}
+                and pad.order_status = #{orderStatus}
             </if>
             <if test="approveUserId != null and approveUserId != ''">
                 and pa.approve_user_id = #{approveUserId}

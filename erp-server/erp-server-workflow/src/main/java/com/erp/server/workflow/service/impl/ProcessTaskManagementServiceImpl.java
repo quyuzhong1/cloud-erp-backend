@@ -8,6 +8,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementAttachmentDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
@@ -23,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
@@ -241,6 +243,11 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
             }
         }
         return resultList;
+    }
+
+    @Override
+    public List<ProcessTaskManagementEntity> listProcessByBusinessKey(ProcessManagementDTO.TaskKeyInfoDTO dto) {
+        return baseMapper.listProcessByBusinessKey(dto);
     }
 
 }

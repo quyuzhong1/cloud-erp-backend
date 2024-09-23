@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service;
 
 import com.common.business.enums.ApproveTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -99,4 +100,13 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * 根据业务ID查询审核记录
      */
     List<ProcessTaskManagementDTO.ApproveHistoryDTO> listApproveHistory(String businessId);
+
+    /**
+     * 根据BusinessKey,taskStatus,curApproveId获取流程信息
+     * @Author jack
+     * @Date 2024/9/19
+     * @param dto
+     * @return List<ProcessTaskManagementEntity>
+     **/
+    List<ProcessTaskManagementEntity> listProcessByBusinessKey(ProcessManagementDTO.TaskKeyInfoDTO dto);
 }

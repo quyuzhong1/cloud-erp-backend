@@ -185,6 +185,22 @@ public class PurchaseApplicationDTO implements Serializable {
          * 关闭原因
          */
         private String closeReason;
+        /**
+         *  来源id
+         */
+        private String sourceId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 来源单号
+         */
+        private String sourceType;
+        /**
+         * 来源详情表id
+         */
+        private String sourceDetailId;
     }
 
     @Data

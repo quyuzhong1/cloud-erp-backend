@@ -385,4 +385,12 @@ public class ProcessFeignController extends BaseController {
         return processBusinessService.getProcessBusiness(businessKey,"", Boolean.FALSE);
     }
 
+    /**
+     * 根据BusinessKey,taskStatus,curApproveId获取流程信息
+     */
+    @PostMapping("/listProcessByBusinessKey")
+    public List<ProcessTaskManagementEntity> listProcessByBusinessKey(@RequestBody ProcessManagementDTO.TaskKeyInfoDTO dto) {
+        return processManagementTaskService.listProcessByBusinessKey(dto);
+    }
+
 }
