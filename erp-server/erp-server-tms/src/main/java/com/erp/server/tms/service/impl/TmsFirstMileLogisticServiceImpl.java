@@ -1498,18 +1498,21 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
         List<TmsFirstMileLogisticDTO.DeliveryDTO> result = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);
         //渠道为空设置体积重
+        LogisticsChannelEntity channelEntity;
         if(StringUtils.isNotBlank(dto.getLogisticsChannelId())){
-            LogisticsChannelEntity channelEntity = logisticsChannelService.getById(dto.getLogisticsChannelId());
+            channelEntity = logisticsChannelService.getById(dto.getLogisticsChannelId());
 //            ShippingTemplateEntity shippingTemplateEntity =  shippingTemplateService.getByChannelId(dto.getLogisticsChannelId());
-            if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting()>0){
-                for (TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO : result) {
-                    if(CollectionUtil.isNotEmpty(deliveryDTO.getPackingDTOList())){
-                        deliveryDTO.getPackingDTOList().forEach(v-> {
-                            v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()),4,RoundingMode.HALF_UP));
-                        });
-                    }
-                }
-            }
+//            if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting()>0){
+//                for (TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO : result) {
+//                    if(CollectionUtil.isNotEmpty(deliveryDTO.getPackingDTOList())){
+//                        deliveryDTO.getPackingDTOList().forEach(v-> {
+//                            v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()),4,RoundingMode.HALF_UP));
+//                        });
+//                    }
+//                }
+//            }
+        } else {
+            channelEntity = null;
         }
 
         List<String> shopIdList = result.stream().map(TmsFirstMileLogisticDTO.DeliveryDTO::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
@@ -1521,6 +1524,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             }
             v.setLogisticsStatusName(FmLogisticTrackStatusEnum.WAIT_ORDER.getName());
             v.setFromCountryName("中国");
+            //渠道为空设置体积重
+            if(StringUtils.isNotBlank(dto.getLogisticsChannelId()) && CollectionUtil.isNotEmpty(v.getPackingDTOList()) && Objects.nonNull(channelEntity)){
+                v.getPackingDTOList().forEach(f-> {
+                    f.setVolumeWeight(f.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()),4,RoundingMode.HALF_UP));
+                });
+            }
         });
         return result;
     }
