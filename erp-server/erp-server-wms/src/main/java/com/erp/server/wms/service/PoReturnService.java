@@ -379,4 +379,11 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 
     PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto);
+
+    /**
+     * 获取委外订单列表
+     * @param purchaseOrderId
+     * @return
+     */
+    List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(String purchaseOrderId);
 }

@@ -199,7 +199,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
-
+    @Resource
+    private SubcontractReturnService subcontractReturnService;
+    @Resource
+    private PurchaseOrderService purchaseOrderService;
     /**
      * 主页分页查询
      *
@@ -274,7 +277,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             obj.setReturnModeName(ReturnModeEnum.getName(obj.getReturnMode()));
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream().filter(req -> req.getWarehouseId().equals(obj.getReturnWarehouseId()) && req.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             obj.setWarehouseLocationName(warehouseLocationEntity.getName());
-
         });
     }
 
@@ -899,7 +901,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //判断是否已生成采购订单
         List<PurchaseOrderEntity> poList = scmTaskFeign.listPoBySourceIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(poList)) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_REF_PO,entity.getCode());
+            List<String> poCodeList = poList.stream().map(PurchaseOrderEntity::getCode).distinct().collect(Collectors.toList());
+            throw new ServiceException(ApiError.ERROR_92245,String.join(",",poCodeList));
+        }
+        //判断是否已生成委外退料单
+        List<SubcontractReturnEntity> subcontractReturnEntityList = subcontractReturnService.listBySourceIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isNotEmpty(subcontractReturnEntityList)) {
+            List<String> subCodeList = subcontractReturnEntityList.stream().map(SubcontractReturnEntity::getCode).distinct().collect(Collectors.toList());
+            throw new ServiceException(ApiError.ERROR_92244,String.join(",",subCodeList));
         }
         List<String> poReturnDetailIdList = detailEntityList.stream().map(PoReturnDetailEntity::getId).collect(Collectors.toList());
         //对账单删除
@@ -2519,6 +2528,33 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(String poId) {
+        List<PurchaseOrderEntity> purchaseOrderEntityList = purchaseOrderService.ListPurchaseOrderEntityByIds(Collections.singletonList(poId));
+        if (CollectionUtils.isEmpty(purchaseOrderEntityList)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderEntityList.get(0);
+        if (StringUtils.isBlank(purchaseOrderEntity.getSubcontractType())) {
+            return Collections.emptyList();
+        }
+        List<PurchaseReturnOrderDTO.SubcontractOrderDTO> list =  baseMapper.listSubcontractOrder(purchaseOrderEntity.getId());
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        List<String> skuIds = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())).map(PurchaseReturnOrderDTO.SubcontractOrderDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+
+        for (PurchaseReturnOrderDTO.SubcontractOrderDTO viewSubcontractPoDTO : list) {
+            //产品名称
+            String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(viewSubcontractPoDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            viewSubcontractPoDTO.setProductName(productName);
+            //单据状态名称
+            viewSubcontractPoDTO.setApproveStatusName(ApproveStatusEnum.getName(viewSubcontractPoDTO.getApproveStatus()));
+        }
+        return list;
     }
 
     /**

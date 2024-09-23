@@ -411,5 +411,16 @@ public class PoReturnController extends BaseController {
         return success(unusualHandleUserOption);
     }
 
-
+    /**
+     * 采购退货-委外订单关联
+     * @Author zdy
+     * @Date 2024/9/23 18:59
+     * @param purchaseOrderId purchaseOrderId
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/listSubcontractOrder")
+    public ApiResult<List<PurchaseReturnOrderDTO.SubcontractOrderDTO>> listSubcontractOrder(@RequestBody @RequestParam("purchaseOrderId") String purchaseOrderId) {
+        List<PurchaseReturnOrderDTO.SubcontractOrderDTO> subcontractOrderDTOS = poReturnService.listSubcontractOrder(purchaseOrderId);
+        return success(subcontractOrderDTOS);
+    }
 }

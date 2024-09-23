@@ -459,6 +459,31 @@ public class PurchaseReturnOrderDTO {
          * 采购单号
          */
         private String purchaseOrderCode;
+        /**
+         * 采购订单类型(CGDD01_SYS标准采购订单，CGDD02_SYS委外采购订单，CGDD06-SYS补货采购订单)
+         * 地址：/scm/dict/list 字典类型：purchaseOrderType
+         */
+        private String purchaseType;
+        /**
+         * 采购订单类型名称
+         */
+        private String purchaseTypeName;
+        /**
+         * 采购订单来源id
+         */
+        private String purchaseSourceId;
+        /**
+         * 采购订单来源编码
+         */
+        private String purchaseSourceCode;
+        /**
+         * 采购订单来源类型
+         */
+        private String purchaseSourceType;
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
 
         /**
          * 供应商名称
@@ -1512,4 +1537,58 @@ public class PurchaseReturnOrderDTO {
         private List<AttachDTO> attachList;
     }
 
+    /**
+     * 委外订单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SubcontractOrderDTO {
+        /**
+         * 采购订单id
+         */
+        private String purchaseId;
+        /**
+         * 采购订单编码
+         */
+        private String purchaseCode;
+        /**
+         * 退货单id
+         */
+        private String returnId;
+        /**
+         * 退货单编码
+         */
+        private String returnCode;
+        /**
+         * 委外订单id
+         */
+        private String subcontractId;
+        /**
+         * 委外订单编码
+         */
+        private String subcontractCode;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+        private String skuId;
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+    }
 }

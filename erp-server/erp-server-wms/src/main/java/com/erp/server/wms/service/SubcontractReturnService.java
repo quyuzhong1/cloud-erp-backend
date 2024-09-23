@@ -157,4 +157,11 @@ public interface SubcontractReturnService extends SuperService<SubcontractReturn
      * @return
      */
     List<SubcontractReturnDTO.SubcontractDetailListDTO> listSubcontractDetail(SubcontractReturnDTO.DetailPagingParamDTO dto);
+
+    /**
+     * 根据来源id获取采购退料单记录
+     * @param sourceIds
+     * @return
+     */
+    List<SubcontractReturnEntity> listBySourceIds(List<String> sourceIds);
 }

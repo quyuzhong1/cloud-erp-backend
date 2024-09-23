@@ -83,4 +83,11 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
     List<String> listPoReturnAutoConfirm(@Param("params") List<CfgSettingDTO.ViewDTO> list);
 
     List<PoReturnDetailEntity> listPoReturnByPoDetailIds(@Param("podIds") List<String> podIds,@Param("approveStatusList") List<String> approveStatusList);
+
+    /**
+     * 获取委外订单列表
+     * @param purchaseOrderId
+     * @return
+     */
+    List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(@Param("purchaseOrderId") String purchaseOrderId);
 }

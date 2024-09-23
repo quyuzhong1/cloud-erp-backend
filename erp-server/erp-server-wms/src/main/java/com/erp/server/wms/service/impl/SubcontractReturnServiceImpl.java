@@ -546,6 +546,14 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     }
 
     @Override
+    public List<SubcontractReturnEntity> listBySourceIds(List<String> sourceIds) {
+        if (CollectionUtil.isEmpty(sourceIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SubcontractReturnEntity::getSourceId,sourceIds).list();
+    }
+
+    @Override
     public SubcontractReturnDTO.ViewDTO view(String id) {
         SubcontractReturnEntity subcontractReturnEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外退料单数据"));
         SubcontractReturnDTO.ViewDTO data = BeanMapperUtils.map(SubcontractReturnDTO.ViewDTO.class, subcontractReturnEntity);

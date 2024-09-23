@@ -42,8 +42,14 @@
         pro.unusual_handle_user_id,
         pro.unusual_handle_user_name,
         pro.confirm_date,
-        prod.is_combination as isCombination
+        prod.is_combination as isCombination,
+        po.type as purchaseType,
+        po.source_id as purchaseSourceId,
+        po.source_code as purchaseSourceCode,
+        po.source_type as purchaseSourceType,
+        po.subcontract_type as subcontractType
         FROM po_return_detail prod
+        LEFT JOIN purchase_order po ON pro.purchase_order_id = po.id AND po.is_deleted = FALSE
         INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         and pro.is_deleted = FALSE
@@ -382,5 +388,29 @@
             #{item}
         </foreach>
         </if>
+    </select>
+    <select id="listSubcontractOrder"
+            resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$SubcontractOrderDTO">
+        SELECT
+            po.id as purchaseId,
+            po.code as purchaseCode,
+            pr.id as returnId,
+            pr.code as returnCode,
+            po.source_id as subcontractId,
+            po.source_code as subcontractCode,
+            pr.supplier_id as supplierId,
+            pr.supplier_name as supplierName,
+            po.approve_status as approveStatus,
+            prd.sku_id,
+            prd.sku_no
+        FROM po_return pr
+        LEFT JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE
+        LEFT JOIN purchase_order po ON po.id = pr.purchase_order_id AND po.is_deleted = FALSE
+        <where>
+            po."type" = 'CGDD02_SYS' AND po.invalid_status = false
+            <if test="sourceId != null and sourceId != ''">
+                AND pr.purchase_order_id = #{purchaseOrderId}
+            </if>
+        </where>
     </select>
 </mapper>
