@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,6 +9,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -21,7 +25,86 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class ReportOrderDemandDetailDTO implements Serializable {
 
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 联合id
+         */
+        private String unionId;
+
+        /**
+         * 订单类型
+         */
+        private String orderTypeName;
+
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+
+        /**
+         * 单据状态
+         */
+        private String statusName;
+
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+
+        /**
+         * 实体仓名称
+         */
+        private String warehouseName;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+    }
 
 
     /**

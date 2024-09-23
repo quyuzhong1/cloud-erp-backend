@@ -8,7 +8,7 @@ public enum CfgSettingOrderStatisticsEnum implements EnumMessage {
 
     TODAY("today","今天"),
     YESTERDAY("yesterday","昨天"),
-    THREE_DAYS("threeDays","近3日"),
+    THREE_DAYS("threeDays","近三日"),
     SEVEN_DAYS("sevenDays","近7日"),
     FOURTEEN_DAYS("fourteenDays","近14日"),
     THIRTY_DAYS("thirtyDays","近30日")

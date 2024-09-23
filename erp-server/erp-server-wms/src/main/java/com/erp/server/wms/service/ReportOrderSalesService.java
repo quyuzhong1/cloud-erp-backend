@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.ReportOrderSalesEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -32,5 +33,20 @@ public interface ReportOrderSalesService extends SuperService<ReportOrderSalesEn
     */
     Boolean update(ReportOrderSalesDTO.UpdateDTO dto);
 
-
+    /**
+     * 分页查询
+     * @author will
+     * @date 2024/9/23 18:15
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+    /**
+     * 导出
+     * @author will
+     * @date 2024/9/23 18:15
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportExcel(ReportOrderSalesDTO.PagingParamDTO dto);
 }

@@ -21,7 +21,23 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class ReportOrderSalesDTO implements Serializable {
 
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO {
 
+    }
+
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+    }
 
 
     /**
