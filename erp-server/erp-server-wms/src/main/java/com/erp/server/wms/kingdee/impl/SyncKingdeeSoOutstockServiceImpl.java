@@ -798,7 +798,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (ObjectUtil.isNotEmpty(supplierEntity)) {
             resultMap.put("carrierCode", supplierEntity.getCode());
         }
-
+        //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
+        resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
