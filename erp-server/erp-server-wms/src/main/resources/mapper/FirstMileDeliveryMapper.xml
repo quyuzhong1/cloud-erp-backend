@@ -133,7 +133,9 @@
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatusName,
         SUM(fdd.delivery_qty) AS deliveryQty,
         fd.approve_time AS deliveryTime,
-        (SELECT owi.code from overseas_warehouse_inbound owi where owi.is_deleted = false and owi.source_code =  fd.code limit 1 ) as refCode
+        CASE WHEN fd.demand_type = 'demandPlatformWarehouse'
+            THEN (select fdd2.fba_shipment_code from first_mile_delivery_detail fdd2 where fdd2.main_id = fd.id and fdd2.is_deleted = false  limit 1)
+            ELSE(SELECT owi.code from overseas_warehouse_inbound owi where owi.is_deleted = false and owi.source_code =  fd.code limit 1 ) END as refCode
         FROM  first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
@@ -148,7 +150,9 @@
         </if>
         GROUP BY fd.code,
         deliveryStatus,
-        fd.approve_time
+        fd.approve_time,
+        fd.id,
+        fd.demand_type
         ORDER BY fd.code DESC
     </select>
 
