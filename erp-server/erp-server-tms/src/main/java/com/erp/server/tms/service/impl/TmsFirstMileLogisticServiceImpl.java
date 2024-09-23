@@ -1493,6 +1493,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(StringUtils.isNotBlank(dto.getOutstockId())){
             reqDto.setIds(Arrays.asList(dto.getOutstockId()));
         }
+        if (StrUtil.isNotBlank(dto.getSearchKey())){
+            reqDto.setSearchKey(dto.getSearchKey());
+        }
         reqDto.setPackingStatus(PackingTaskStatusEnum.PACKED.getCode());
         reqDto.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.WAIT.code);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);

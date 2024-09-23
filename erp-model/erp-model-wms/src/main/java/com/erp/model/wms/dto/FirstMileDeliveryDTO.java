@@ -1077,6 +1077,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货单ids
          */
         private List<String> ids;
+        /**
+         * 搜索发货单编码
+         */
+        private String searchKey;
     }
     /**
      * 生成物流单传的DTO
