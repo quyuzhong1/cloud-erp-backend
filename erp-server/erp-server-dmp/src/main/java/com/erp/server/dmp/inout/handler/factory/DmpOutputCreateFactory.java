@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.factory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +29,10 @@ import com.erp.server.dmp.inout.handler.chain.DmpHandlerChainImpl;
 import com.erp.server.dmp.inout.handler.output.create.DmpOutputHotfixCreateHandler;
 import com.erp.server.dmp.inout.handler.output.create.DmpOutputInputCreateHandler;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
+import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.service.DmpCfgOutputService;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +53,8 @@ public class DmpOutputCreateFactory{
 	private DmpOutputTaskFactory dmpOutputTaskFactory;
 	@Autowired
 	private DmpHandlerCache dmpHandlerCache;
+	@Autowired
+	private DmpCfgOutputService dmpCfgOutputService;
 	
 	/**
 	 * 创建输入任务类型输出任务
@@ -133,5 +138,48 @@ public class DmpOutputCreateFactory{
 		
 		DmpOutputTaskResponse dmpOutputTaskResponse = dmpOutputTaskFactory.dealOutputTask(dmpOutputTaskRequest);
 		return dmpOutputTaskResponse;
+	}
+	
+	
+	/**
+	 * 获取查询同步数据
+	 * @param dmpRequest
+	 * @return
+	 */
+	public Map<String, String> getQueryPushData(DmpOutputHotfixCreateRequest dmpRequest) {
+		dmpRequest.setThrowException(true);
+		DmpOutputTaskRequest dmpOutputTaskRequest = new DmpOutputTaskRequest();
+		
+		DmpCfgOutputEntity dmpCfgOutputEntity = dmpCfgOutputService.getById(dmpRequest.getCfgOutputId());
+		String inputConvertId = dmpCfgOutputEntity.getInputConvertId();
+		DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getId().equals(inputConvertId)).get(0);
+		String inputStatus = dmpCfgInputConvertEntity.getInputStatus();
+		if(DmpInputTaskStatusEnum.FDS.getCode().equals(inputStatus)) {
+			throw new ServiceException("推送fds数据未实现");
+		}else if(DmpInputTaskStatusEnum.MONGO.getCode().equals(inputStatus)) {
+			throw new ServiceException("推送mongo数据未实现");
+		}else if(DmpInputTaskStatusEnum.DMP.getCode().equals(inputStatus)) {
+			List<QueryParam> queryParams = dmpRequest.getQueryParams();
+			QueryWrapper<?> queryWrapper = QueryParam.getQueryWrapper(queryParams);
+			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache
+					.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(dmpCfgInputConvertEntity.getMainId()) && d.getInputStatus().equals(inputStatus));
+			dmpCfgInputConvertEntityList.sort((d1 , d2) -> d1.getOrder().compareTo(d2.getOrder()));
+			
+			DmpCfgInputConvertEntity mainDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
+			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(mainDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
+			List<BaseEntity> list = serviceImpl.list(queryWrapper);
+			dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(mainDmpCfgInputConvertEntity, list);
+			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(mainDmpCfgInputConvertEntity, list);
+			if(CollUtil.isNotEmpty(list)) {
+				String outputClass = dmpCfgOutputEntity.getOutputClass();
+				DmpOutputRocketMQTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpOutputRocketMQTaskHandler.class);
+				dmpOutputTaskHandler.getRetryPushSourceData(dmpCfgInputConvertEntityList, dmpOutputTaskRequest);
+				DmpOutputTaskResponse dmpResponse = new DmpOutputTaskResponse();
+				dmpResponse.setDmpCfgOutputEntity(dmpCfgOutputEntity);
+				return dmpOutputTaskHandler.getPushJsonDataMap(dmpOutputTaskRequest, dmpResponse);
+			}
+		}
+		
+		return null;
 	}
 }
