@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -11,22 +12,22 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
-import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.GetShipmentsResponse;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentInfo;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.service.AmazonDownloadService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -36,9 +37,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -55,14 +57,21 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
     private CfgAppClientService cfgAppClientService;
     @Resource
     private RedisUtil redisUtil;
-    @Resource
-    private AmazonDownloadService amazonDownloadService;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         String shopId = dmpCfgInputDetailEntity.getNextLevelId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        // 指定FBA货件号
+        List<String> fbaShipmentIds = new LinkedList<>();
+        String extendJson = dmpInputTaskEntity.getExtendJson();
+        if (StringUtils.isNotBlank(extendJson)) {
+            JSONArray jsonArray = JSONObject.parseObject(extendJson).getJSONArray("shipmentCodeList");
+            if (CollectionUtils.isNotEmpty(jsonArray)){
+                fbaShipmentIds = jsonArray.stream().map(Object::toString).collect(Collectors.toList());
+            }
+        }
 
         // 限流信息相关
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT;
@@ -78,17 +87,55 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
             throw new ServiceException(msg);
         }
 
+        if (CollectionUtils.isNotEmpty(fbaShipmentIds)) {
+            // 根据货件单号查询FBA货件
+            return queryListByShipmentIds(fbaShipmentIds, shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey);
+        } else {
+            // 根据时间区间查询FBA货件
+            return queryListByDateRange(shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey);
+
+        }
+
+    }
+
+    /**
+     * 根据货件单号查询FBA货件
+     */
+    private List<DmpInputTaskInitDTO> queryListByShipmentIds(List<String> shipmentIdList, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, String rateLimitStr, String limitKey) {
+        try {
+            FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
+            String queryType = AmazonFbaQueryTypeEnum.SHIPMENT.getCode();
+            String marketplaceId = marketPlaceEnum.getMarketplaceId();
+            List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
+            // 请求亚马逊接口
+            GetShipmentsResponse shipments = api.getShipments(queryType, marketplaceId, shipmentStatusList, shipmentIdList, null, null, null);
+
+            InboundShipmentList responseList = shipments.getPayload().getShipmentData();
+            List<JSONObject> curJsonList = responseList.stream()
+                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO))
+                    .collect(Collectors.toList());
+            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
+        } catch (ApiException e) {
+            if (429 == e.getCode()) {
+                // 设置动态速率，失效时间=1/limit
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
+                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+            }
+            throw new ServiceException("指定货件单号查询亚马逊FBA货件失败：API异常：" + JSONUtil.toJsonStr(e));
+        }
+
+    }
+
+    /**
+     * 根据时间区间查询FBA货件
+     */
+    private List<DmpInputTaskInitDTO> queryListByDateRange(AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, String rateLimitStr, String limitKey) {
         // 是否检查当前时间
         Boolean autoCheckNow = dmpCfgInputEntity.parseExtendAutoCheckNow();
         // 开始时间
         LocalDateTime startTime = dmpCfgInputDetailEntity.getLastTime();
         // 结束时间
         LocalDateTime endTime = checkAndConvertEntTime(autoCheckNow);
-
-        // 仓储中心配置
-        Map<String, String> centerMap = amazonDownloadService.feignQueryFulfillmentCenterlist(Collections.emptyList())
-                    .stream()
-                    .collect(Collectors.toMap(CfgAmzFulfillmentCenterEntity::getCode, CfgAmzFulfillmentCenterEntity::getCountry));
 
         try {
             FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
@@ -100,7 +147,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
             String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(endTime).toString();
             InboundShipmentList responseList = api.getAllShipments(queryType, marketplaceId, shipmentStatusList, null, lastUpdatedAfter, lastUpdatedBefore, null);
             List<JSONObject> curJsonList = responseList.stream()
-                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO, centerMap))
+                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO))
                     .collect(Collectors.toList());
             return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
         } catch (ApiException e) {
@@ -109,30 +156,18 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
-            throw new ServiceException("查询亚马逊订单详情失败：API异常：" + JSONUtil.toJsonStr(e));
+            throw new ServiceException("时间区间查询亚马逊FBA货件列表失败：API异常：" + JSONUtil.toJsonStr(e));
         }
-
     }
 
     /**
      * 设置亚马逊货件ID和转换JSON
      */
-    private JSONObject fillDataAndToJsonObject(InboundShipmentInfo item, AmazonShopInfoDTO shopInfoDTO, Map<String, String> centerMap) {
+    private JSONObject fillDataAndToJsonObject(InboundShipmentInfo item, AmazonShopInfoDTO shopInfoDTO) {
         JSONObject json = (JSONObject) JSON.toJSON(item);
         json.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
         String shopId = shopInfoDTO.getId();
         String shopName = shopInfoDTO.getName();
-        // 按仓储中心解析当前店铺
-        String centerCountry = centerMap.get(item.getDestinationFulfillmentCenterId());
-        if (StringUtils.isBlank(centerCountry)){
-            log.warn("未找到仓储中心: platformShopCode={}, center={}", shopInfoDTO.getPlatformShopCode(), item.getDestinationFulfillmentCenterId());
-        } else {
-            Map<String, AmazonShopInfoDTO.ShopNameDTO> marketplaceShopIdMap = shopInfoDTO.getMarketplaceShopIdMap();
-            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(centerCountry);
-            AmazonShopInfoDTO.ShopNameDTO shopNameDTO = marketplaceShopIdMap.get(marketplaceEnum.getMarketplaceId());
-            shopId = shopNameDTO.getShopId();
-            shopName = shopNameDTO.getShopName();
-        }
         json.put("shopId", shopId);
         json.put("shopName", shopName);
         return json;
