@@ -8,6 +8,7 @@ import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 
