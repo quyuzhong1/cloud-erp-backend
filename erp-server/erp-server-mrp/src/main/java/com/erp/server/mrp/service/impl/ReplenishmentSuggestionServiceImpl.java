@@ -661,13 +661,16 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<ReplenishmentSuggestionEntity> listCalculationData() {
+    public List<ReplenishmentSuggestionEntity> listCalculationData(String id) {
 //        return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
 //                .not(wrapper -> wrapper
 //                        .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NOT_RESTOCKING.getCode())
 //                        .eq(ReplenishmentSuggestionEntity::getIsManual, true)
 //                )
 //                .orderByAsc(ReplenishmentSuggestionEntity::getSkuId));
+        if (ObjectUtil.isNotEmpty(id)) {
+            return listByIds(Collections.singletonList(id));
+        }
         return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
                 .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
                 .orderByAsc(ReplenishmentSuggestionEntity::getSkuId));

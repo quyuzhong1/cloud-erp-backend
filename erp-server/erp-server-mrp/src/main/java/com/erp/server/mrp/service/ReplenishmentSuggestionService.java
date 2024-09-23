@@ -177,7 +177,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     /**
      * 获取所有需要计算的数据
      */
-    List<ReplenishmentSuggestionEntity> listCalculationData();
+    List<ReplenishmentSuggestionEntity> listCalculationData(String id);
     /**
      * 根据id查询标签
      * @author will

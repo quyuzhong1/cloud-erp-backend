@@ -63,7 +63,7 @@ public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
      * 父级id
      */
     @TableField("parent_id")
-    private Integer parentId;
+    private String parentId;
 
     public static final String CODE = "code";
 

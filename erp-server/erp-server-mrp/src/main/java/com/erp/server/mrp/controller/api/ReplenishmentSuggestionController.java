@@ -617,7 +617,12 @@ public class ReplenishmentSuggestionController extends BaseController {
 
     @GetMapping("/initReplenishmentSku")
     public void initReplenishmentSku(@RequestParam(required = false) LocalDate calculationDate) {
-        basicReplenishmentDataService.initReplenishmentSku(calculationDate);
+        basicReplenishmentDataService.initReplenishmentSku(calculationDate, null);
+    }
+
+    @GetMapping("/initReplenishmentSku/id")
+    public void initReplenishmentSku(@RequestParam(required = false) LocalDate calculationDate, @RequestParam String id) {
+        basicReplenishmentDataService.initReplenishmentSku(calculationDate, id);
     }
 
     @GetMapping("/calculationDetail")

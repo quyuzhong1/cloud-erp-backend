@@ -94,7 +94,7 @@ public class BasicReplenishmentDataService {
     /**
      * 增量变动建议补货基础数据
      */
-    public void initReplenishmentSku(LocalDate calculationDate) {
+    public void initReplenishmentSku(LocalDate calculationDate, String id) {
         calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
         //清洗每日库存到历史表
         List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
@@ -109,7 +109,10 @@ public class BasicReplenishmentDataService {
         if (!CollectionUtils.isEmpty(inventoryEntities)) {
             localHistoryInventoryService.saveTodayInventory(localHistoryInventory, calculationDate);
         }
-
+        if (!ObjectUtils.isEmpty(id)) {
+            cleanHistorySalesAndInventory(calculationDate, id);
+            return;
+        }
         //获取所有已审核且存在上市时间得非费用服务类sku
         List<SkuVO> vos = plmTaskFeign.listApproveAndListingSku();
         //获取已生成补货基础数据得信息
@@ -157,7 +160,7 @@ public class BasicReplenishmentDataService {
             return entity;
         }).filter(Objects::nonNull).collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
         replenishmentSuggestionService.saveOrUpdateBatch(replenishmentList);
-        cleanHistorySalesAndInventory(calculationDate);
+        cleanHistorySalesAndInventory(calculationDate, null);
     }
 
 
@@ -260,9 +263,9 @@ public class BasicReplenishmentDataService {
     }
 
 
-    private void cleanHistorySalesAndInventory(LocalDate calculationDate) {
+    private void cleanHistorySalesAndInventory(LocalDate calculationDate, String id) {
         //查询所有需要计算得数据
-        List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData();
+        List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(id);
         List<CfgRuleSalesQtyEntity> defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty();
         List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
         Map<String, List<ReplenishmentResultDTO.SalesInfoAllDTO>> salesByPlatformType = new HashMap<>();
@@ -276,7 +279,7 @@ public class BasicReplenishmentDataService {
                 // 以销售出库单出库时间计算销量
                 salesInfoAllList = salesService.listAllSalesBySoOutStock(calculation);
             }
-            salesByPlatformType.put(cfgRuleSalesQty.getPlatformType(), salesInfoAllList);
+            salesByPlatformType.put(cfgRuleSalesQty.getPlatformType() + ":" + cfgRuleSalesQty.getType(), salesInfoAllList);
         }
         List<String> skuIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> vos = plmTaskFeign.listSkuCostByIds(skuIds);
@@ -312,23 +315,24 @@ public class BasicReplenishmentDataService {
                     List<SalesInfoEntity> salesInfoList = new ArrayList<>();
                     //清洗历史销量及库存
                     if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(entity.getPlatformType())) {
-                        salesInfoList = getFbaHistorySales(salesByPlatformType.get(CfgRulePlatformTypeEnum.AMAZON.getCode()), entity, detail);
+                        salesInfoList = getFbaHistorySales(salesByPlatformType.get(CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + detail.getSkuType()), entity, detail);
                     } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(entity.getPlatformType())) {
                         //todo 后期做
                     } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(entity.getPlatformType()) ||
                             CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(entity.getPlatformType())) {
                         //todo 后期做
                     }
+                    
                     //判断是否需要补货
                     CfgSettingDTO.ReplenishmentDays replenishmentDays = JSON.parseObject(replenishmentDaysSetting.getDataJson(), CfgSettingDTO.ReplenishmentDays.class);
+                    boolean isOver180Days = sale.getListingTime().plusDays(replenishmentDays.getStart()).isAfter(calculationDate);
                     int saleQty = salesInfoList
                             .stream()
-                            .filter(v -> !sale.getListingTime().plusDays(replenishmentDays.getStart()).isAfter(v.getDate()))
                             .filter(v -> !calculationDate.minusDays(replenishmentDays.getEnd()).isAfter(v.getDate()) && !calculationDate.isBefore(v.getDate()))
                             .map(SalesInfoEntity::getOriginalSalesQty)
                             .reduce(0, Math::addExact);
                     replenishmentSuggestionDetailService.save(detail);
-                    if (saleQty == 0) {
+                    if (Boolean.TRUE.equals(isOver180Days) && saleQty == 0) {
                         replenishmentSuggestionService.notRestockingReplenishment(entity.getId(), "上市超180天，360天内无销量的商品，系统自动标记暂不补货");
                         return null;
                     } else {
