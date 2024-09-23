@@ -107,11 +107,6 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
     }
 
     @Override
-    public List<String> listBySystemIdAndTaskType(String systemId, List<String> taskTypeList) {
-        return baseMapper.listBySystemIdAndTaskType(systemId, taskTypeList);
-    }
-
-    @Override
     public List<DmpCfgInputDTO.ListDmpCfgInputDTO> allDmpCfgInput() {
         List<DmpCfgInputEntity> list = lambdaQuery().select(DmpCfgInputEntity::getId, DmpCfgInputEntity::getName)
                 .list();
