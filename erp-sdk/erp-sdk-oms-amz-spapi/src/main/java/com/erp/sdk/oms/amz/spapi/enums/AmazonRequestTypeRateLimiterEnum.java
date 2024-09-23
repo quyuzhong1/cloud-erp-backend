@@ -40,9 +40,9 @@ public enum AmazonRequestTypeRateLimiterEnum {
 
     // 报告相关
     REPORTS("0.0222", "10","reports","报告列表"),
-    REPORTS_CREATE("0.0167 ", "15","reports_create","创建报告"),
-    REPORTS_QUERY("2 ", "15","reports_query","根据ID查询报告"),
-    REPORTS_DOCUMENT_QUERY("2 ", "15","reports_query","根据报告文档ID查询报告文档"),
+    REPORTS_CREATE("0.0167", "15","reports_create","创建报告"),
+    REPORTS_QUERY("2", "15","reports_query","根据ID查询报告"),
+    REPORTS_DOCUMENT_QUERY("2", "15","reports_query","根据报告文档ID查询报告文档"),
 
     ;
 
