@@ -51,4 +51,12 @@ public interface DmpCfgInputService extends SuperService<DmpCfgInputEntity> {
      * @return 任务IDS
      */
     List<String> listBySystemIdAndTaskType(String systemId, List<String> taskTypeList);
+
+    /**
+     * 查询所有输入配置
+     * @Author Luo_WG
+     * @Date 2024/9/23 9:42
+     * @return java.util.List<com.erp.model.dmp.dto.DmpCfgInputDTO.ListDmpCfgInputDTO>
+     **/
+    List<DmpCfgInputDTO.ListDmpCfgInputDTO> allDmpCfgInput();
 }

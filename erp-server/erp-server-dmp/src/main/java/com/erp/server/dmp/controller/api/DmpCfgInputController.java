@@ -82,5 +82,17 @@ public class DmpCfgInputController extends BaseController {
         return success(resultList);
     }
 
+    /**
+     * 查询所有输入配置
+     * @Author Luo_WG
+     * @Date 2024/9/5 19:28
+     * @return com.common.core.controller.vo.ApiResult<?>
+     **/
+    @GetMapping("/allDmpCfgInput")
+    public ApiResult<List<DmpCfgInputDTO.ListDmpCfgInputDTO>> allDmpCfgInput() {
+        List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList = dmpCfgInputService.allDmpCfgInput();
+        return success(resultList);
+    }
+
 
 }
