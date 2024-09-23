@@ -462,7 +462,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         addDTO1.setPackQty(Math.min(totalNum,packingTaskDetailEntity.getDeliveryQty()));
                         totalNum = totalNum - packingTaskDetailEntity.getDeliveryQty();
                         addDTOList.add(addDTO1);
-                        packedMap.merge(key, packingTaskDetailEntity.getDeliveryQty(), Integer::sum);
+                        packedMap.merge(key, Math.min(totalNum,packingTaskDetailEntity.getDeliveryQty()), Integer::sum);
                         packingTaskDetailEntity.setDeliveryQty(Math.min(packingTaskDetailEntity.getDeliveryQty() - packedNum,0));
                     }
                 }else{
