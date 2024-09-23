@@ -277,7 +277,7 @@
         <if test="params.searchKey != null and params.searchKey != ''">
             fmd.code ILIKE concat('%', #{params.searchKey}::text ,'%')
         </if>
-        <if test="params.ids == null and params.ids.size == 0">
+        <if test="params.ids == null or params.ids.size == 0">
             limit 20
         </if>
     </select>
