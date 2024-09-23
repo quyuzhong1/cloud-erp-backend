@@ -8,6 +8,8 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -54,4 +56,8 @@ public interface InventoryMapper {
     List<ReplenishmentResultDTO.LocalInTransitDetailDTO> getLocalInTransitDetail(@Param("isPurchase") Boolean isPurchase, @Param("isTransfer") Boolean isTransfer,
                                                                                  @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("transactionFlow") String transactionFlow, @Param("instockForcast") String instockForcast, @Param("poReceive") String poReceive,
                                                                                  @Param("poInstock") String poInstock, @Param("poReturn") String poReturn, @Param("transferOut") String transferOut, @Param("transferIn") String transferIn);
+
+    List<OverseasInventoryEntity> getAllOverseasHistoryInventory(String tableName);
+
+    List<InventoryEntity> getAllLocalHistoryInventory(String tableName);
 }

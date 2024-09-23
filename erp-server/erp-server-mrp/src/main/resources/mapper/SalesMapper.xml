@@ -19,7 +19,7 @@
     <select id="listSalesBySoOutStock" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$SalesInfoDTO">
         SELECT so.bill_date        AS date,
                SUM(sod.actual_qty) AS originalSalesQty
-        FROM #{tableName} AS so
+        FROM ${tableName} AS so
                  INNER JOIN ${tableDetailName} AS sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
                  INNER JOIN ${soB2cName} AS sb ON sb.is_deleted = FALSE AND sb.id = so.so_id
         WHERE so.is_deleted = FALSE
@@ -34,7 +34,7 @@
                SUM(sod.actual_qty) AS originalSalesQty,
                sb.shop_id          AS shopId,
                sod.sku_id          AS skuId
-        FROM #{tableName} AS so
+        FROM ${tableName} AS so
                  INNER JOIN ${tableDetailName} AS sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
                  INNER JOIN ${soB2cName} AS sb ON sb.is_deleted = FALSE AND sb.id = so.so_id
         WHERE so.is_deleted = FALSE

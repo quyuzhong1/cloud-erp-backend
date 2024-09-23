@@ -14,6 +14,8 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
@@ -81,6 +83,10 @@ public class BasicReplenishmentDataService {
     @Resource
     private FbaHistoryInventoryService fbaHistoryInventoryService;
     @Resource
+    private OverseasHistoryInventoryService overseasHistoryInventoryService;
+    @Resource
+    private LocalHistoryInventoryService localHistoryInventoryService;
+    @Resource
     private SalesInfoService salesInfoService;
     @Resource
     private InventoryMapper inventoryMapper;
@@ -94,6 +100,14 @@ public class BasicReplenishmentDataService {
         List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
         if (!CollectionUtils.isEmpty(inventoryEntities)) {
             fbaHistoryInventoryService.saveTodayInventory(inventoryEntities, calculationDate);
+        }
+        List<OverseasInventoryEntity> overseasHistoryInventory = inventoryMapper.getAllOverseasHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+            overseasHistoryInventoryService.saveTodayInventory(overseasHistoryInventory, calculationDate);
+        }
+        List<InventoryEntity> localHistoryInventory = inventoryMapper.getAllLocalHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+            localHistoryInventoryService.saveTodayInventory(localHistoryInventory, calculationDate);
         }
 
         //获取所有已审核且存在上市时间得非费用服务类sku
