@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.ReportOrderSalesMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.ReportOrderSalesEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="virtual_warehouse_name" property="virtualWarehouseName" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="today_sales_qty" property="todaySalesQty" />
+       <result column="yesterday_sales_qty" property="yesterdaySalesQty" />
+       <result column="three_days_sales_qty" property="threeDaysSalesQty" />
+       <result column="seven_days_sales_qty" property="sevenDaysSalesQty" />
+       <result column="fourteen_days_sales_qty" property="fourteenDaysSalesQty" />
+       <result column="thirty_days_sales_qty" property="thirtyDaysSalesQty" />
+       <result column="is_virtual_scarce" property="isVirtualScarce" />
+       <result column="is_warn" property="isWarn" />
+       <result column="virtual_scarce_qty" property="virtualScarceQty" />
+       <result column="total_qty" property="totalQty" />
+       <result column="virtual_usable_qty" property="virtualUsableQty" />
+       <result column="virtual_frozen_qty" property="virtualFrozenQty" />
+       <result column="virtual_total_qty" property="virtualTotalQty" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="distribution_qty" property="distributionQty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        warehouse_id, virtual_warehouse_id, sku_id, sku_no, product_name, virtual_warehouse_name, warehouse_name, today_sales_qty, yesterday_sales_qty, three_days_sales_qty, seven_days_sales_qty, fourteen_days_sales_qty, thirty_days_sales_qty, is_virtual_scarce, is_warn, virtual_scarce_qty, total_qty, virtual_usable_qty, virtual_frozen_qty, virtual_total_qty, delivery_qty, distribution_qty
+    </sql>
+
+
+</mapper>
