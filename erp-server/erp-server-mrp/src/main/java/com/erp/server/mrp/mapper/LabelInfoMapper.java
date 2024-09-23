@@ -29,4 +29,10 @@ public interface LabelInfoMapper extends BaseMapper<LabelInfoEntity> {
      * @return List<LabelInfoDTO.ListDTO>
      */
     List<LabelInfoDTO.ListDTO> listLabelInfo();
+
+    /**
+     * 远程查询
+     * @param searchKeyword 关键词
+     */
+    List<LabelInfoDTO.ListDTO> searchLabel(@Param("searchKeyword") String searchKeyword);
 }

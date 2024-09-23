@@ -109,6 +109,11 @@ public class LabelInfoServiceImpl extends SuperServiceImpl<LabelInfoMapper, Labe
         return baseMapper.listLabelInfo();
     }
 
+    @Override
+    public List<LabelInfoDTO.ListDTO> searchLabel(String searchKeyword) {
+        return baseMapper.searchLabel(searchKeyword);
+    }
+
     /**
      * 查询需要删除的数据
      */

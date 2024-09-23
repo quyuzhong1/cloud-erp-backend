@@ -323,8 +323,8 @@ public class BasicReplenishmentDataService {
                     CfgSettingDTO.ReplenishmentDays replenishmentDays = JSON.parseObject(replenishmentDaysSetting.getDataJson(), CfgSettingDTO.ReplenishmentDays.class);
                     int saleQty = salesInfoList
                             .stream()
-                            .filter(v -> !sale.getListingTime().plusDays(replenishmentDays.getStart()).isAfter(v.getDate()) &&
-                                    !sale.getListingTime().plusDays(replenishmentDays.getEnd()).isBefore(v.getDate()))
+                            .filter(v -> !sale.getListingTime().plusDays(replenishmentDays.getStart()).isAfter(v.getDate()))
+                            .filter(v -> !calculationDate.minusDays(replenishmentDays.getEnd()).isAfter(v.getDate()) && !calculationDate.isBefore(v.getDate()))
                             .map(SalesInfoEntity::getOriginalSalesQty)
                             .reduce(0, Math::addExact);
                     replenishmentSuggestionDetailService.save(detail);

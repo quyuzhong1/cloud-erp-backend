@@ -59,4 +59,10 @@ public interface LabelInfoService extends SuperService<LabelInfoEntity> {
      * @return List<LabelInfoEntity>
      */
     List<LabelInfoDTO.ListDTO> listLabelInfo();
+
+    /**
+     * 远程查询
+     * @param searchKeyword 关键词
+     */
+    List<LabelInfoDTO.ListDTO> searchLabel(String searchKeyword);
 }

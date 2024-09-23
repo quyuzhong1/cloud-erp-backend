@@ -32,7 +32,7 @@ public class FbaInTransitDetailServiceImpl extends SuperServiceImpl<FbaInTransit
     public PagingVO<FbaInTransitDetailVO> fbaInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<FbaInTransitDetailVO> page = baseMapper.fbaInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         for (FbaInTransitDetailVO vo : page.getRecords()) {
-            if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(vo.getSourceCode())) {
+            if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(vo.getSourceType())) {
                 vo.setStatusName(FbaDeliveryStatusEnum.getName(vo.getStatus()));
             } else {
                 vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));

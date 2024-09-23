@@ -121,4 +121,13 @@ public class LabelInfoController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 远程搜索标签
+     * @param searchKeyword 关键词
+     */
+    @GetMapping("/search/label")
+    public ApiResult<List<LabelInfoDTO.ListDTO>> searchLabel(@RequestParam String searchKeyword) {
+        List<LabelInfoDTO.ListDTO> label = labelInfoService.searchLabel(searchKeyword);
+        return success(label);
+    }
 }

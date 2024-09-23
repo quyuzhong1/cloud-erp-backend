@@ -663,7 +663,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public List<ReplenishmentSuggestionEntity> listCalculationData() {
         return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
-                .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
+                .not(wrapper -> wrapper
+                        .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NOT_RESTOCKING.getCode())
+                        .eq(ReplenishmentSuggestionEntity::getIsManual, true)
+                )
                 .orderByAsc(ReplenishmentSuggestionEntity::getSkuId));
     }
 

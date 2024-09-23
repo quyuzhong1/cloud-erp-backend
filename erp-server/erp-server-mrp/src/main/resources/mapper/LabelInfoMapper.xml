@@ -52,8 +52,20 @@
         </where>
         order by li.id desc
     </select>
-
-
+    <select id="searchLabel" resultType="com.erp.model.mrp.dto.LabelInfoDTO$ListDTO">
+        select id , name, color, disabled
+        from label_info  where is_deleted = false
+        <if test="searchKeyword != null and searchKeyword != ''">
+            and name like concat('%',#{searchKeyword}::text ,'%')
+        </if>
+        order by
+        <if test="searchKeyword != null and searchKeyword != ''">
+            case when name ILIKE concat(#{searchKeyword}::text,'%') THEN 1
+            when name ILIKE concat('%',#{searchKeyword}::text) THEN 2
+            when name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3
+            end , name
+        </if>
+    </select>
 
 
 </mapper>
