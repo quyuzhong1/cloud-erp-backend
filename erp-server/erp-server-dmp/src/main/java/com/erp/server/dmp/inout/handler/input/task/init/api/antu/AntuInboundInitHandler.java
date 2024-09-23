@@ -55,7 +55,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
                 , OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_ANTU.getCode());
         List<AntuReceiptResp> allResult = new ArrayList<>();
 
-        if (CollUtil.isNotEmpty(receiveCodeList)) {
+        if (CollUtil.isNotEmpty(receiveCodeList)) if (CollUtil.isNotEmpty(receiveCodeList)) {
             String typeId = dmpCfgInputEntity.getTypeId();
             DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
             String apiType = dmpCfgApiEntity.getApiType();
@@ -68,7 +68,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
             if (overseasProviderEntityList.get(0).getEnableDate().compareTo(LocalDate.now()) > 0) {
                 return Collections.emptyList();
             }
-
+            Integer page = 1;
             ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
             //列表数据较多情况下，进行分割集合
             List<List<String>> partition = ListUtil.partition(receiveCodeList, MathUtil.NUMBER_100);
@@ -76,7 +76,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
             for (int i = 0; i < partition.size(); i++) {
                 //查询数据
                 AntuGetReceiptReq antuGetReceiptReq = AntuGetReceiptReq.builder()
-                        .page(i)
+                        .page(page)
                         .pageSize(MathUtil.NUMBER_100)
                         .receivingCodeArr(partition.get(i))
                         .build();
@@ -88,6 +88,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
                     List<AntuReceiptResp> receiptRespList = result.getData().stream().filter(req -> AntuEnums.ReceivingStatusEnum.COMPLETE_LISTING.getCode().equals(req.getReceivingStatus())).collect(Collectors.toList());
                     allResult.addAll(receiptRespList);
                 }
+                page++;
             }
         }
 
