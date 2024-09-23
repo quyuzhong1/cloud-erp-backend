@@ -66,7 +66,7 @@ public class WarehouseLocationReplenishJob {
 //        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
 //        searchParamDTO.setWarehouseIdList(warehouseIds);
 //        searchParamDTO.setSkuIdList(skuIds);
-        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(new InventoryDTO.SearchParamDTO(), null);
+        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(new InventoryDTO.SearchParamDTO(), null, null);
 
         Map<String, InventoryDTO.PagingViewDTO> inventoryMap = inventoryList.stream()
                 .collect(Collectors.toMap(item1 -> item1.getWarehouseId() + "#" + item1.getWarehouseLocation() + "#" + item1.getSkuId(), item2 -> item2, (o1, o2) -> o2));

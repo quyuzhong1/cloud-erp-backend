@@ -2,6 +2,7 @@ package com.erp.server.file.business.wms;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
@@ -35,7 +36,10 @@ public class ExportWmsInventoryHandler extends AbstractPageFileEventHandler<Inve
 
     @Override
     protected PagingVO<InventoryDTO.PagingViewDTO> getPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
-        return exportWmsFeign.getInventoryPageData(dto);
+        PagingVO<InventoryDTO.PagingViewDTO> inventoryPageData = exportWmsFeign.getInventoryPageData(dto);
+        List<InventoryDTO.PagingViewDTO> dataList = (List<InventoryDTO.PagingViewDTO>) inventoryPageData.getList();
+        dto.setLastId(dataList.get(dataList.size() - 1).getId());
+        return inventoryPageData;
     }
 
     @Override

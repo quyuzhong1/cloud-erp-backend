@@ -187,28 +187,28 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
     /**
      * 按仓库导出数据
      */
-    List<InventoryDTO.PagingViewDTO> exportByWarehouse(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO);
+    List<InventoryDTO.PagingViewDTO> exportByWarehouse(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("lastId") String lastId);
     /**
      * 按仓库导出数据
      */
-    Page<InventoryDTO.PagingViewDTO> exportByWarehouse(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO);
+    Page<InventoryDTO.PagingViewDTO> exportByWarehouse(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("lastId") String lastId);
 
     /**
      * 按库区导出数据
      */
-    List<InventoryDTO.PagingViewDTO> exportByArea(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseAreaCodeList") List<String> warehouseAreaCodeList);
+    List<InventoryDTO.PagingViewDTO> exportByArea(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseAreaCodeList") List<String> warehouseAreaCodeList, @Param("lastId") String lastId);
     /**
      * 按库区导出数据
      */
-    Page<InventoryDTO.PagingViewDTO> exportByArea(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseAreaCodeList") List<String> warehouseAreaCodeList);
+    Page<InventoryDTO.PagingViewDTO> exportByArea(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseAreaCodeList") List<String> warehouseAreaCodeList, @Param("lastId") String lastId);
 
     /**
      * 按仓位导出数据
      */
-    List<InventoryDTO.PagingViewDTO> exportByLocation(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList);
+    List<InventoryDTO.PagingViewDTO> exportByLocation(@Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList, @Param("lastId") String lastId);
 
     /**
      * 按仓位导出数据
      */
-    Page<InventoryDTO.PagingViewDTO> exportByLocation(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList);
+    Page<InventoryDTO.PagingViewDTO> exportByLocation(@Param("page") Page<InventoryDTO.PagingViewDTO> page, @Param("params") InventoryDTO.SearchParamDTO searchParamDTO, @Param("warehouseLocationCodeList") List<String> warehouseLocationCodeList, @Param("lastId") String lastId);
 }
