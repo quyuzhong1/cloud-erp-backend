@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -26,20 +25,16 @@ public class CfgSettingVirtualValueDTO implements Serializable {
     public static class SalesDashboardDTO{
 
         /**
-         * 订单类型，b2b,b2c
-         */
-        @NotEmpty(message = "订单类型不能为空")
-        private List<String> orderTypeList;
-
-        /**
          * b2b销售订单状态
          */
+        @NotNull(message = "B2B销售订单订单统计不能为空")
         @Valid
         private StatusDTO b2bStatusDTO;
 
         /**
          * b2c销售订单状态
          */
+        @NotNull(message = "B2C销售订单订单统计不能为空")
         @Valid
         private StatusDTO b2cStatusDTO;
 
@@ -53,7 +48,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          * 定时更新时间集合
          */
         @NotEmpty(message = "定时更新时间不能为空")
-        @JsonFormat(pattern = "HH:mm")
         private List<LocalTime> execTimeList;
 
         /**
@@ -65,6 +59,7 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         /**
          * 预警条件
          */
+        @NotNull(message = "预警条件不能为空")
         @Valid
         private WarnConditionDTO warnConditionDTO;
     }
@@ -126,7 +121,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          * 定时更新时间
          */
         @NotEmpty(message = "定时更新时间不能为空")
-        @JsonFormat(pattern = "HH:mm")
         private List<LocalTime> execTimeList;
     }
 

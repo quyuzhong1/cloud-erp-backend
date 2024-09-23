@@ -12,7 +12,7 @@ import com.erp.model.wms.dto.CfgSettingVirtualDTO;
 import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.CfgSettingEntity;
-import com.erp.model.wms.enums.CfgSettingVirtualEnum;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.server.wms.service.CfgSettingService;
 import com.erp.server.wms.service.CfgSettingVirtualService;
@@ -117,18 +117,18 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
         CfgSettingEntity entity = new CfgSettingEntity();
         //系统配置json
         JSONObject jsonObject = new JSONObject();
-        CfgSettingVirtualEnum cfgSettingEnum = CfgSettingVirtualEnum.getEnum(listDTO.getValue());
+        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(listDTO.getValue());
         if (Objects.isNull(cfgSettingEnum)){
             return null;
         }
         switch (cfgSettingEnum) {
-            case SALES_DASHBOARD:
+            case SUBCONTRACT_ISSUE:
                 jsonObject = ObjectUtil.isEmpty(addDTO.getSalesDashboardDTO()) ? null : JSONUtil.parseObj(addDTO.getSalesDashboardDTO());
                 break;
-            case SCARCE_STATISTICS:
+            case PO_RETURN:
                 jsonObject = ObjectUtil.isEmpty(addDTO.getScarceStatisticsDTO()) ? null : JSONUtil.parseObj(addDTO.getScarceStatisticsDTO());
                 break;
-            case PRODUCT_STATISTICS:
+            case PO_RECONCILIATION:
                 jsonObject = ObjectUtil.isEmpty(addDTO.getProductStatisticsDTO()) ? null : JSONUtil.parseObj(addDTO.getProductStatisticsDTO());
                 break;
             default:
@@ -155,23 +155,20 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
      * @param viewDTO
      */
     private void handleViewEnum (CfgSettingEntity cfgSetting,CfgSettingVirtualDTO.ViewDTO viewDTO) {
-        //获取枚举
-        CfgSettingVirtualEnum cfgSettingEnum = CfgSettingVirtualEnum.getEnum(cfgSetting.getKey());
-        if (ObjectUtil.isEmpty(cfgSettingEnum)) {
-            return;
-        }
+
+        CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());
         switch (cfgSettingEnum) {
-            case SALES_DASHBOARD:
-                CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.SalesDashboardDTO.class);
-                viewDTO.setSalesDashboardDTO(salesDashboardDTO);
+            case SUBCONTRACT_ISSUE:
+                CfgSettingVirtualValueDTO.SalesDashboardDTO subcontractIssueSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.SalesDashboardDTO.class);
+                viewDTO.setSalesDashboardDTO(subcontractIssueSettingDTO);
                 break;
-            case SCARCE_STATISTICS:
-                CfgSettingVirtualValueDTO.ScarceStatisticsDTO scarceStatisticsDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.ScarceStatisticsDTO.class);
-                viewDTO.setScarceStatisticsDTO(scarceStatisticsDTO);
+            case PO_RETURN:
+                CfgSettingVirtualValueDTO.ScarceStatisticsDTO poReturnSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.ScarceStatisticsDTO.class);
+                viewDTO.setScarceStatisticsDTO(poReturnSettingDTO);
                 break;
-            case PRODUCT_STATISTICS:
-                CfgSettingVirtualValueDTO.ProductStatisticsDTO productStatisticsDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.ProductStatisticsDTO.class);
-                viewDTO.setProductStatisticsDTO(productStatisticsDTO);
+            case PO_RECONCILIATION:
+                CfgSettingVirtualValueDTO.ProductStatisticsDTO poReconciliationSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.ProductStatisticsDTO.class);
+                viewDTO.setProductStatisticsDTO(poReconciliationSettingDTO);
                 break;
             default:
                 break;

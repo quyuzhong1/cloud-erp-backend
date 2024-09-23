@@ -73,4 +73,12 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return List<CfgSettingEntity>
      */
     List<CfgSettingEntity> listCfgSetting ();
+
+    /**
+     * 查询配置
+     * @author will
+     * @date 2024/9/23 16:14
+     * @return List<CfgSettingEntity>
+     */
+    List<CfgSettingEntity> listCfgSetting ();
 }
