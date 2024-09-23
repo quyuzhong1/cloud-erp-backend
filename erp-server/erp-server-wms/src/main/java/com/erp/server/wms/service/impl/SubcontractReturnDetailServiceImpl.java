@@ -291,7 +291,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
                     && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatus())).map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
             //最大可退
             Integer maxReturnQty = totalIssueQty - totalReturnQty;
-            if (MathUtil.add(totalReturnQty,entity.getReturnQty()) > maxReturnQty) {
+            if (entity.getReturnQty() > maxReturnQty) {
                 throw new ServiceException(ApiError.ERROR_SUBCONTRACT_RETURN_QTY_EXCEED,detailEntity.getSkuNo(),maxReturnQty);
             }
         }

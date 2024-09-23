@@ -95,7 +95,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
     @Autowired
     private WarehouseLocationService warehouseLocationService;
     @Autowired
-    private PoInstockService poInstockService;
+    private PoReturnService poReturnService;
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
@@ -744,7 +744,6 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         if (StrUtil.isBlank(subcontractReturnEntity.getSourceType())) {
             //页面新增时默认来源类型
             subcontractReturnEntity.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
-            subcontractReturnEntity.setSourceId(subcontractReturnEntity.getSubcontractOrderId());
         }
         if (StrUtil.isBlank(subcontractReturnEntity.getType())){
             subcontractReturnEntity.setType(SubcontractReturnTypeEnum.NORMAL.getCode());
@@ -756,15 +755,13 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         }
         subcontractReturnEntity.setSubcontractOrderCode(subcontractOrderList.get(0).getCode());
         //来源单号为委外订单时
-        if (StrUtil.equals(subcontractReturnEntity.getSourceType(),SourceTypeEnum.SUBCONTRACT_ORDER.getCode())) {
-            subcontractReturnEntity.setSourceCode(subcontractOrderList.get(0).getCode());
-        } else {
-            //来源单号是入库单
-//            PoInstockEntity poInstockEntity = poInstockService.getById(subcontractReturnEntity.getSourceId());
-//            if (ObjectUtil.isEmpty(poInstockEntity)) {
-//                throw new ServiceException(ApiError.ERROR_98050);
-//            }
-//            subcontractReturnEntity.setSourceCode(poInstockEntity.getCode());
+        if (StrUtil.equals(subcontractReturnEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {
+            if (StrUtil.isNotBlank(subcontractReturnEntity.getSourceId()) && StrUtil.isBlank(subcontractReturnEntity.getSourceCode())){
+                PoReturnEntity poReturnEntity = poReturnService.getById(subcontractReturnEntity.getSourceId());
+                if (Objects.nonNull(poReturnEntity)){
+                    subcontractReturnEntity.setSourceCode(poReturnEntity.getCode());
+                }
+            }
         }
         //供应商
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(subcontractReturnEntity.getSupplierId());

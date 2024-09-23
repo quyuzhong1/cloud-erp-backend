@@ -1043,7 +1043,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     detailDTO.setOldQty(detailEntity.getPurchaseQty());
                     detailDTO.setOldPrice(detailEntity.getTaxPrice());
                     detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
-                    detailDTO.setPrice(poReturnDetailEntity.getReturnPrice());
+                    detailDTO.setPrice(detailEntity.getTaxPrice());//退货单下推单采购订单-这里可以直接取采购订单含税单价
                     detailDTOList.add(detailDTO);
                 }
             }else {

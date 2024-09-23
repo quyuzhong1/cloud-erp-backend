@@ -326,21 +326,21 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                     .findFirst().orElse(null);
             //是否是 补货采购订单 下推的采购订单
             if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(purchaseOrderEntity.getType())){
-                PoReturnDetailEntity poReturnDetailEntity = poReturnDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())
-                        && StrUtil.isNotBlank(purchaseChangeDetailEntity.getSkuId()) && Objects.equals(e.getSkuId(), purchaseChangeDetailEntity.getSkuId())).findFirst().orElse(null);
-                if (Objects.nonNull(poReturnDetailEntity)){
-                    BigDecimal returnPrice = poReturnDetailEntity.getReturnPrice();
-                    if (MathUtil.compareTo(returnPrice,purchaseChangeDetailEntity.getPrice()) != MathUtil.ZERO) {
-                        String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
-                        throw new ServiceException(new ApiResult(1,error));
-                    }
-                    if (Objects.isNull(priceDTO)){
-                        String error = String.format("SKU【%s】,数量【%s】报价单价未找到", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
-                        throw new ServiceException(new ApiResult(1,error));
-                    }
+//                PoReturnDetailEntity poReturnDetailEntity = poReturnDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())
+//                        && StrUtil.isNotBlank(purchaseChangeDetailEntity.getSkuId()) && Objects.equals(e.getSkuId(), purchaseChangeDetailEntity.getSkuId())).findFirst().orElse(null);
+//                if (Objects.nonNull(poReturnDetailEntity)){
+//                    BigDecimal returnPrice = poReturnDetailEntity.getReturnPrice();
+//                    if (MathUtil.compareTo(returnPrice,purchaseChangeDetailEntity.getPrice()) != MathUtil.ZERO) {
+//                        String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
+//                        throw new ServiceException(new ApiResult(1,error));
+//                    }
+//                    if (Objects.isNull(priceDTO)){
+//                        String error = String.format("SKU【%s】,数量【%s】报价单价未找到", purchaseChangeDetailEntity.getSkuNo(), purchaseChangeDetailEntity.getQty());
+//                        throw new ServiceException(new ApiResult(1,error));
+//                    }
                     BigDecimal taxRate = Objects.nonNull(priceDTO.getTaxRate()) ? priceDTO.getTaxRate() : BigDecimal.ZERO;
                     purchaseChangeDetailEntity.setTaxRate(MathUtil.divide(taxRate,MathUtil.BigDecimal_100));
-                }
+//                }
             }else {
                 //单价
 //                BigDecimal taxPrice = Objects.nonNull(priceDTO.getTaxPrice()) ? priceDTO.getTaxPrice() : BigDecimal.ZERO;

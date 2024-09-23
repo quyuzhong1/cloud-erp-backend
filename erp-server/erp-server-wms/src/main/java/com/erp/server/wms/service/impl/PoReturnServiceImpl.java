@@ -354,9 +354,27 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //保存主表信息
         this.save(poReturnEntity);
-
+        //记录日志
+        String msg = "";
+        String sourceType = poReturnEntity.getSourceType();
+        if(StrUtil.isNotBlank(sourceType) && SourceTypeEnum.PURCHASE_ORDER.getCode().equals(sourceType)){
+            msg = StrUtil.format("从采购订单【{}】下推生成了采购退货单【{}】", poReturnEntity.getPurchaseOrderCode(), code);
+        }else if (StrUtil.isNotBlank(sourceType) && SourceTypeEnum.QC_INFO.getCode().equals(sourceType)){
+            QcInfoEntity qcInfoEntity = qcInfoService.getById(poReturnEntity.getSourceId());
+            if (Objects.nonNull(qcInfoEntity)){
+                msg = StrUtil.format("从质检单【{}】下推生成了采购退货单【{}】", qcInfoEntity.getCode(), code);
+            }
+        }else if (StrUtil.isNotBlank(sourceType) && SourceTypeEnum.PO_INSTOCK.getCode().equals(sourceType)){
+            PoInstockEntity poInstockEntity = poInstockService.getById(poReturnEntity.getSourceId());
+            if (Objects.nonNull(poInstockEntity)){
+                msg = StrUtil.format("从采购入库单【{}】下推生成了采购退货单【{}】", poInstockEntity.getCode(), code);
+            }
+        }
+        if (StrUtil.isBlank(msg)){
+            msg = String.format("新增了一个采购退货单【%s】", code);
+        }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("新增了一个采购退货单【%s】", code), ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), poReturnEntity.getId(), "新增操作");
 
         //保存详情信息
         poReturnDetailService.add(dto, poReturnEntity.getId());

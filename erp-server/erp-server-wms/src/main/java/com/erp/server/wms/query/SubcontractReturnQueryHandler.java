@@ -32,19 +32,19 @@ public class SubcontractReturnQueryHandler extends AbstractQueryHandler {
      */
     public String getTabSql (Object value) {
         // 待提交
-        if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(value)) {
+        if (ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(value)) {
             super.buildDefaultDTO("sr.approve_status", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
         }
         // 待审核
-        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
+        if (ApproveStatusEnum.APPROVE_ING.getCode().equals(value)) {
             super.buildDefaultDTO("sr.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
         }
         // 已审核
-        if (PageListTypeEnum.APPROVE.getCode().equals(value)) {
+        if (ApproveStatusEnum.APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("sr.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
         }
         //不通过
-        if (PageListTypeEnum.REJECT.getCode().equals(value)) {
+        if (ApproveStatusEnum.REJECT.getCode().equals(value)) {
             super.buildDefaultDTO("sr.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
         }
         return super.getSplicingSQL();
