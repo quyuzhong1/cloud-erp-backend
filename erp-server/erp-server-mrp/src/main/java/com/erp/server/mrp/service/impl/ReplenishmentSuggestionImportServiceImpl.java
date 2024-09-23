@@ -1260,6 +1260,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);
         List<List<Object>> exportList = successList.stream().map(obj -> checkToList(obj.values())).collect(Collectors.toList());
+        headList.remove("错误信息");
         exportFileDTO.setCustomSheet(new FileExcelDTO.ExportFileSheetDTO("运营月销预估",exportList,null,headList));
 
         //添加导入记录
