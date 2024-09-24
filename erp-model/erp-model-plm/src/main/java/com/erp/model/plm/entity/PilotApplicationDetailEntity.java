@@ -77,7 +77,7 @@ public class PilotApplicationDetailEntity extends BaseEntity<PilotApplicationDet
      * 采购申请数量
      */
     @TableField("purchase_apply_qty")
-    private int purchaseApplyQty;
+    private Integer purchaseApplyQty;
     /**
      * 采购申请单状态
      */

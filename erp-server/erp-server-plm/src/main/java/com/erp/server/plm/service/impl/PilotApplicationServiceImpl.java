@@ -1047,9 +1047,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             if(null != pilotApplicationDetailEntity){
                 purchaseApplyQty = pilotApplicationDetailEntity.getPurchaseApplyQty();
             }
+            String status = dto.getPurchaseApplyQty() < dto.getSpareApplyQty() ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.ORDER.getCode();
             pilotApplicationDetailService.lambdaUpdate()
-                    .set(PilotApplicationDetailEntity::getPurchaseApplyQty, dto.getPurchaseApplyQty() + purchaseApplyQty)
-                    .set(PilotApplicationDetailEntity::getOrderStatus, dto.getPurchaseApplyQty() < dto.getSpareApplyQty() ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.ORDER.getCode())
+                    .set(PilotApplicationDetailEntity::getPurchaseApplyQty, (dto.getPurchaseApplyQty() + purchaseApplyQty))
+                    .set(PilotApplicationDetailEntity::getOrderStatus,status)
                     .eq(PilotApplicationDetailEntity::getId, dto.getDetailId())
                     .update();
         }
