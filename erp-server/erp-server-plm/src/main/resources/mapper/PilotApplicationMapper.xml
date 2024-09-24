@@ -130,14 +130,13 @@
     <select id="tabList" resultType="java.lang.Integer">
         select count(1)
         from pilot_application pa
-            left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
         <where>
             pa.is_deleted = false
             <if test="approveStatus != null and approveStatus != ''">
                 and pa.approve_status = #{approveStatus}
             </if>
             <if test="orderStatus != null and orderStatus != ''">
-                and pad.order_status = #{orderStatus}
+                and pa.id in (SELECT DISTINCT main_id FROM pilot_application_detail WHERE is_deleted = FALSE and order_status = #{orderStatus})
             </if>
             <if test="approveUserId != null and approveUserId != ''">
                 and pa.approve_user_id = #{approveUserId}

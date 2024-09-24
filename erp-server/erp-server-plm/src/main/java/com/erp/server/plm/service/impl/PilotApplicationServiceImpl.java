@@ -341,18 +341,27 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         queryWrapper.eq("approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
         int waitSubmitCount = this.baseMapper.selectCount(queryWrapper);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
+        //待我审核
         //根据单据id查询审核流程
+        int waitMeApproveCount = 0;
         ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
         dto.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
         dto.setCurApproveId(user.getUid());
         List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
-        int waitMeApproveCount = processTaskManagementList.size();
-        //待我审核
+        if(CollectionUtils.isNotEmpty(processTaskManagementList)){
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            queryWrapper.clear();
+            queryWrapper.in("id",ids);
+            waitMeApproveCount = this.baseMapper.selectCount(queryWrapper);
+        }
 //        int waitMeApproveCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE_ING.getCode(), null, user.getUid());
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_ME_APPROVE.getCode(), PilotApplicationTabEnum.WAIT_ME_APPROVE.getName(), waitMeApproveCount));
         //不通过
-        int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null);
+        queryWrapper.clear();
+        queryWrapper.eq("approve_status", ApproveStatusEnum.REJECT.getCode());
+        int rejectCount = this.baseMapper.selectCount(queryWrapper);
+//        int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.REJECT.getCode(), PilotApplicationTabEnum.REJECT.getName(), rejectCount));
         //未下单
         int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null);
