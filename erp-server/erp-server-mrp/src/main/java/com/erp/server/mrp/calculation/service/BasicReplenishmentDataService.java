@@ -362,7 +362,7 @@ public class BasicReplenishmentDataService {
         LocalDate startDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(360);
         List<LocalDate> dateList = new ArrayList<>();
         // 遍历每一天
-        while (startDate.isBefore(endDate)) {
+        while (!startDate.isAfter(endDate)) {
             dateList.add(startDate);
             startDate = startDate.plusDays(1);
         }
