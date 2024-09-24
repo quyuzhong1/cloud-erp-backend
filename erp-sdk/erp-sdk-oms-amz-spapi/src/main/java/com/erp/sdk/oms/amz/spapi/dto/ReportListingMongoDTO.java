@@ -6,9 +6,12 @@ import cn.hutool.crypto.digest.DigestUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.ReflectUtils;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonIdentifiersTypeEnum;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -108,6 +111,31 @@ public class ReportListingMongoDTO extends ReportSuperMongoDTO  {
 
     @Panno(findType = PannoEnum.EQ, field = "status")
     private String status;
+
+    @Panno(findType = PannoEnum.EQ, field = "supportsDetailDownload")
+    private Boolean supportsDetailDownload = true;
+
+
+    /**
+     * 转换IdentifiersType
+     */
+    public AmazonIdentifiersTypeEnum convertIdentifiersType() {
+        if ("3".equals(this.productIdType)){
+            return AmazonIdentifiersTypeEnum.UPC;
+        } else {
+            return AmazonIdentifiersTypeEnum.ASIN;
+        }
+    }
+
+    /**
+     * 检查IdentifiersType
+     */
+    public String checkAndGetIdentifier() {
+        if (("4".equals(this.productIdType) || "2".equals(this.productIdType))&& StringUtils.isNotBlank(this.getAsin1())){
+            return this.getAsin1();
+        }
+        return this.getProductId();
+    }
 
     @Override
     public String convertBusinessUniqueKey() {

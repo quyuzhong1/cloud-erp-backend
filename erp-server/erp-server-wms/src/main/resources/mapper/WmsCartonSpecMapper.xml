@@ -30,6 +30,7 @@
         wcs.main_id as id,
         wcd.sku_id,
         wcd.sku_no,
+        wcd.fn_sku,
         SUM(wcd.pack_qty) AS packQty,
         SUM(wcs.box_qty) AS boxQty
         FROM wms_carton_spec wcs
@@ -44,7 +45,8 @@
         </if>
         GROUP BY wcs.main_id,
         wcd.sku_id,
-        wcd.sku_no
+        wcd.sku_no,
+        wcd.fn_sku
     </select>
     <select id="listPackingQtyByMainIds" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingQtyDTO">
         SELECT
@@ -75,6 +77,7 @@
             wcs.main_id as taskId,
             wcd.sku_id,
             wcd.sku_no,
+            wcd.fn_sku,
             SUM(wcd.pack_qty) AS packQty,
             SUM(wcd.gross_weight) AS grossWeight,
             SUM(wcs.box_qty) AS boxQty,
@@ -91,6 +94,7 @@
             wcs.main_id,
             wcd.sku_id,
             wcd.sku_no,
+            wcd.fn_sku,
             wcs.box_spec_no,
             wc.box_no
     </select>

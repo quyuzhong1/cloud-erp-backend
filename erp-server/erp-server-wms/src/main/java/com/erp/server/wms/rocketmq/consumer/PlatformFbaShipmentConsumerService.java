@@ -10,7 +10,6 @@ import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -31,7 +30,8 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
-import com.erp.server.wms.service.*;
+import com.erp.server.wms.service.CfgAmzFulfillmentCenterService;
+import com.erp.server.wms.service.FbaShipmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -78,8 +78,8 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
 
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
-        dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpTaskFeign.updateSyncInfo(paramDTO);
     }
 
     @Override

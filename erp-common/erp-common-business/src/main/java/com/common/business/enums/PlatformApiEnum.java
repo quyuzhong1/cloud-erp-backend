@@ -128,6 +128,8 @@ public enum PlatformApiEnum {
      * 亚马逊api
      */
     FBA_SHIPMENT_DETAIL(65, "fba_shipment_detail", MongoTableNameContant.THIRD_SYSTEM_AMAZON_FBA_SHIPMENT, ""),
+    AMZ_LISTING_REPORT(66, "listingReport", MongoTableNameContant.THIRD_SYSTEM_AMAZON_LISTING, ""),
+
 
     //----------------------------------------------------------旺店通----------------------------------------------------------------------------
     WDT_SELL_STOCK_OUT_ORDER(100, "wdt.wms.stockout.Sales.queryWithDetail", MongoTableNameContant.THIRD_SYSTEM_WDT_SELL_STOCK_OUT_ORDER, TaskConstant.WDT_PULL_DATA_TASK),

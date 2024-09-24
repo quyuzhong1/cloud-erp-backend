@@ -27,8 +27,8 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.mapper.DmpPushTaskHistoryMapper;
 import com.erp.server.dmp.service.DmpPushTaskHistoryService;
@@ -129,10 +129,11 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
         return dmpPushTaskService.batchSync(idList);
     }
 
-    public static void sendMq(String mqData2, String id, MQProducerService mqProducerService, String mqTopic, String mqTag, String sourceId) {
+    public static void sendMq(String mqData2, String id,Integer version, MQProducerService mqProducerService, String mqTopic, String mqTag, String sourceId) {
         String mqData = mqData2;
         JSONObject jsonObject = JSONUtil.parseObj(mqData);
         jsonObject.set("dmpSyncTaskId", id);
+        jsonObject.set("version", version);
         SendResult result = mqProducerService.syncClassMsg(mqTopic, mqTag, JSONUtil.toJsonStr(jsonObject), sourceId);
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));

@@ -40,9 +40,8 @@ public class KingdeeUserPostConsumer <T extends DmpSyncTaskIdDTO> extends Abstra
     private KingdeeUserPostConsumerService kingdeeUserPostConsumerService;
 
     @Override
-    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
-        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
-
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpPushTaskService.updateStatus(paramDTO);
     }
 
     @Override

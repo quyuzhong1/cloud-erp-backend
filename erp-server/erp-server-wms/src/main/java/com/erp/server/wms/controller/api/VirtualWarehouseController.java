@@ -162,4 +162,12 @@ public class VirtualWarehouseController extends BaseController {
     public ApiResult<List<VirtualWarehouseDTO.SelectDTO>> warehouseSelectList(@RequestBody PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto){
         return success(virtualWarehouseService.warehouseSelectList(dto));
     }
+
+    /**
+     * 虚拟仓库列表
+     */
+    @PostMapping("/listByParam")
+    public ApiResult<List<VirtualWarehouseDTO.SelectDTO>> listByParam(@RequestBody @Validated VirtualWarehouseDTO.SearchDTO dto){
+        return success(virtualWarehouseService.listByParam(dto));
+    }
 }

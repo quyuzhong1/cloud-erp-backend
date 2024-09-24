@@ -1,6 +1,5 @@
 package com.erp.model.srm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -265,6 +264,12 @@ public class DeliveryOrderDetailDTO implements Serializable {
         private String sourceType;
 
         private String receiptStatus;
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+
         /**
          * 送货单Id
          */

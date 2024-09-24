@@ -448,6 +448,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 generateReplenish(detailList, deliveryEntity, skus);
                 //添加波次生成的缺货异常
                 updateDeliveryList.add(deliveryEntity.getId());
+                continue;
             }
             //商品总数超出最大数量后另起波次,或者发货单数量超过最大单数后另起波次
             if ((MathUtil.compareTo(entity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO && detailTotalQty + totalQty > entity.getMaxQty())

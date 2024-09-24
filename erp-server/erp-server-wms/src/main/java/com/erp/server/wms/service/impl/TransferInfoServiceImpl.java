@@ -1,15 +1,20 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.validator.ValidList;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -153,17 +158,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private DmpMqFeign dmpMqFeign;
 
     @Resource
-    private SyncWdtOtherInStockService syncWdtOtherInStockService;
-
-    @Resource
-    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
-
-    @Resource
-    private TransferInfoDetailMapper transferInfoDetailMapper;
-    @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
-    @Resource
-    private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
 
@@ -177,10 +172,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     @Resource
-    private RequisitionApplicationService requisitionApplicationService;
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     @Resource
-    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+    private RequisitionApplicationService requisitionApplicationService;
+
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
@@ -255,10 +251,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         doOpHandleDataId(entity);
         log.info("直接调拨单新增");
         if (StringUtils.isBlank(dto.getCode())) {
-
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZJDB);
-
             entity.setCode(code);
         }
         //新增主表数据
@@ -282,7 +276,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id));
+        this.submit(Arrays.asList(id), Boolean.FALSE);
         return id;
     }
 
@@ -296,11 +290,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id));
+        this.submit(Arrays.asList(id), Boolean.FALSE);
         //审核
         TransferInfoEntity entity = this.getById(id);
         if (Objects.nonNull(entity)){
-            this.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE);
+            this.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         }
         return id;
     }
@@ -344,12 +338,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Arrays.asList(dto.getId()), Boolean.TRUE);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    public Boolean submit(List<String> ids, Boolean isStartProcess) {
         //根据ids查询
         List<TransferInfoEntity> list = getList(ids);
         //待提交或审核不通过并且未作废允许提交
@@ -372,7 +366,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         log.info("直接调拨单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
-        //启动流程 TODO
+        //提交流程
+        if (isStartProcess) {
+            startProcess(list);
+        }
 
         //更新审核状态
         updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -518,8 +515,30 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
-    public BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess, Boolean isSyncKingDee){
-       //审核中允许审核
+    public BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess, Boolean isSyncKingDee, Boolean isStartProcess){
+        //调用没有审核流程的审核
+        if (!isStartProcess) {
+            return notProcessApprove(entity, type, comment, isNeedProcess, isSyncKingDee);
+        }
+
+        //审核中允许审核
+        if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
+        }
+        log.info("调拨申请单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
+
+        //调用审核流程
+        approveProcess(entity, type, comment, isSyncKingDee);
+
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个调拨申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
+    public BatchResultDTO notProcessApprove(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess, Boolean isSyncKingDee){
+        //审核中允许审核
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
@@ -569,6 +588,92 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个直接调拨单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
+
+    /**
+     * @description: 结束深审核
+     * @author Will
+     * @date: 2023/8/2 14:58
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isSyncKingDee
+     */
+    private void approveProcess(TransferInfoEntity entity, String type, String comment, Boolean isSyncKingDee) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.TRANSFER_INFO.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
+        approveDTO.setComment(comment);
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
+        Integer code = result.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = result.getData();
+        if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()){
+            approveEnd(entity, type, comment, isSyncKingDee);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(TransferInfoEntity entity, String type, String comment, Boolean isSyncKingDee) {
+        if (Objects.isNull(entity)) {
+            return Boolean.TRUE;
+        }
+
+        List<TransferInfoEntity> list = Arrays.asList(entity);
+        log.info("直接调拨单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
+        //审核通过
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
+            log.info("直接调拨单【{}】审核通过，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
+
+            //更新单据(后面有流程了调用监听可删)
+            updateApproveStatusForApprove(entity.getId(), ApproveStatusEnum.APPROVE.getStatus());
+            //直接调拨单明细
+            List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            if (CollectionUtils.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.ERROR_99048);
+            }
+            //更新库存
+            updateInventoryTransCore(Collections.singletonList(entity),detailList);
+            //更新虚拟库存
+            updateVirtualInventoryTransCore(list,detailList);
+            if (isSyncKingDee) {
+                //审核发送金蝶
+                sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+                //同时发送旺店通
+                list.forEach(item -> syncApproveInfoToWdt(item, SyncOperateEnum.OPERATE_APPROVE));
+            }
+            //发送马帮（非马帮平台的才需要推送）
+            // TODO 正式上线时需注释掉
+            log.warn("直接调拨单同步马帮开关：【{}】", transferSyncToMb);
+            if(Objects.equals(transferSyncToMb, Boolean.TRUE)) {
+                // 直接调拨单发送马帮出入库
+                log.warn("审核直接调拨单【{}】第三方平台类型：【{}】", entity.getCode(), entity.getThirdPartySystem());
+                if(!Objects.equals(entity.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_MB.getCode())) {
+                    log.warn("审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", entity.getCode(), JSONObject.toJSONString(entity));
+                    syncMabangTransferService.syncDataToMabang(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                }
+            }
+        } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
+            log.info("直接调拨单【{}】审核不通过，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
+            //中止当前审核流程
+
+            //更新单据状态
+            updateApproveStatusForApprove(entity.getId(), ApproveStatusEnum.REJECT.getStatus());
+        }
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个直接调拨单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "审核操作");
+        return Boolean.TRUE;
+    }
+
+
+
 
     /**
      * 扣减虚拟库存
@@ -670,20 +775,23 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<String> idList = pushFirstMileDeliveryList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
         List<TransferInfoDetailEntity> pushDetailList = detailList.stream().filter(obj -> idList.contains(obj.getMainId())).collect(Collectors.toList());
 
-
         //头程发货单明细
         List<String> sourceDetailIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailService.listByIds(sourceDetailIdList);
 
+        List<String> sourceIds = pushFirstMileDeliveryList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listByIds(sourceIds);
+
+        //要货申请主表数据
+        List<String> requisitionIds = firstMileDeliveryEntityList.stream().map(FirstMileDeliveryEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationService.listByIds(requisitionIds);
+
         //要货申请明细
-        List<String> applicationDetailIdList = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailList = requisitionApplicationDetailService.listByIds(applicationDetailIdList);
+        List<String> applicationMainIdList = requisitionApplicationList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailList = requisitionApplicationDetailService.listByMainIds(applicationMainIdList);
         if (CollectionUtils.isEmpty(requisitionApplicationDetailList)) {
             throw new ServiceException("未找到直接调拨单对应的要货申请明细");
         }
-        //要货申请主表数据
-        List<String> mainIdList = requisitionApplicationDetailList.stream().map(RequisitionApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationService.listByIds(mainIdList);
 
         //出冻结库存
         List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
@@ -699,7 +807,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (ObjectUtil.isEmpty(firstMileDeliveryDetailEntity)) {
                 throw new ServiceException("未找到头程发货单明细");
             }
-            RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), firstMileDeliveryDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream().filter(obj -> firstMileDeliveryDetailEntity.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(applicationDetailEntity)) {
                 throw new ServiceException("未找到要货申请明细");
             }
@@ -974,7 +1082,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         log.info("直接调拨单撤销流程，id=【{}】", ids);
 
         //撤销现有流程
-        workflowFeign.cancelProcess(ids);
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ids.forEach(obj -> {
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.TRANSFER_INFO.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
 
         //更新单据为待提交
         updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -1249,7 +1364,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<String> warehouseIdList = records.stream().flatMap(obj -> Stream.of(obj.getInWarehouseId(), obj.getOutWarehouseId())).distinct().collect(Collectors.toList());
         List<String> warehouseLocationCodeList = records.stream().flatMap(obj -> Stream.of(obj.getInWarehouseLocation(), obj.getOutWarehouseLocation())).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndCodeList(warehouseIdList,warehouseLocationCodeList);
-
+        // 获取当前审批人
+        Map<String, String> curApproveUserNameMap = getCurApproveUserNameList(records);
         for (TransferInfoDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
@@ -1269,7 +1385,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-
+            String approveUserName = curApproveUserNameMap.get(obj.getId());
+            if(StrUtil.isNotBlank(approveUserName)){
+                obj.setApproveUserName(approveUserName);
+            }
             //仓位名称
             String inWarehouseLocationName = warehouseLocationList.stream().filter(req -> req.getWarehouseId().equals(obj.getInWarehouseId()) && req.getCode().equals(obj.getInWarehouseLocation()))
                     .map(WarehouseLocationEntity::getName).findFirst().orElse("");
@@ -1279,6 +1398,33 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             obj.setOutWarehouseLocationName(outWarehouseLocationName);
         }
     }
+
+    private Map<String, String> getCurApproveUserNameList(List<TransferInfoDTO.ListDTO> records) {
+        // 如果开启工作流，且审核中，查询工作流当前审核节点审核人，如果有多个审核人使用‘，’拼接
+        List<TransferInfoDTO.ListDTO> approvingList = records.stream()
+                .filter(item -> ApproveStatusEnum.APPROVE_ING.getCode().equals(item.getApproveStatus()))
+                .collect(Collectors.toList());
+        // 当前页，是否存在审核中的单据
+        Map<String, String> curApproveUserNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(approvingList)){
+            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+            approvingList.forEach(obj -> {
+                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.TRANSFER_INFO.getCode(), obj.getId()));
+            });
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+            if (ObjectUtil.isNotEmpty(listApiResult) && 200 == listApiResult.getCode() && CollUtil.isNotEmpty(listApiResult.getData())) {
+                curApproveUserNameMap = listApiResult.getData().stream()
+                        .filter(req -> StringUtils.isNotBlank(req.getCurApproveId()) && StringUtils.isNotBlank(req.getCurApproveName()))
+                        .collect(Collectors.toMap(
+                                ProcessManagementDTO.CurApproveInfoDTO::getBusinessId,
+                                ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName,
+                                (existing, replacement) -> existing + "," + replacement));
+
+            }
+        }
+        return curApproveUserNameMap;
+    }
+
     /**
      * 处理数据id
      */
@@ -1657,5 +1803,24 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(outGoods, DmpPushWdtDetailDTO.class);
         pushWdtDTO.setDetailDTOList(detailDTOList);
         return pushWdtDTO;
+    }
+
+    private void startProcess(List<TransferInfoEntity> list) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+        list.forEach(obj -> {
+            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+            startDTO.setBusinessId(obj.getId());
+            startDTO.setBusinessCode(obj.getCode());
+            startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_INFO.getCode());
+            startDTO.setBusinessName(obj.getCode());
+            startDTO.setUserId(userInfo.getUid());
+            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            resultList.add(startDTO);
+        });
+        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
     }
 }

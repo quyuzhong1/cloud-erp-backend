@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
 
+import java.util.Map;
+
 import com.common.business.dto.DmpSyncMqDTO;
 
 public interface SyncTaskService {
@@ -9,6 +11,8 @@ public interface SyncTaskService {
      * @return void
      **/
     void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+    
+    Map<String , Map<String, Object>> newFindDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
     /**
      * 查询数据重新发送
      * @param syncParamDTO

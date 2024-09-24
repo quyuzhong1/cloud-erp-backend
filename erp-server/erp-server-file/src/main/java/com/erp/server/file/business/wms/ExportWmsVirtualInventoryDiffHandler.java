@@ -48,7 +48,7 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
         try {
             byte[] bytes = new ExcelPrintUtils().sheetPatchExport(list, sb.toString(),excelPath);
-            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
+            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString() + ".xlsx", null);
             fileTask.setFileUrl(s);
         } catch (IOException e) {
             log.error("上传文件失败{}", e.getMessage(), e);
@@ -71,14 +71,19 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         dto.setPageSize(getPageSize());
         dto.setCurrPage(1);
         boolean hasNext = true;
+        int diffExportTotalCount = 0 ;
         while (hasNext) {
             dto.setParams(searchParamDTO);
             PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> data = getListDiffExportData(dto);
             if (!CollectionUtils.isEmpty(data.getList())) {
                 list.addAll((Collection<? extends VirtualInventoryDiffDTO.ListDiffExportDataDTO>) data.getList());
             }
-            int totalCount = data.getTotalCount();
-            if (totalCount <= dto.getCurrPage() * getPageSize()) {
+
+            if (diffExportTotalCount == 0) {
+                diffExportTotalCount = data.getTotalCount();
+            }
+
+            if (diffExportTotalCount <= dto.getCurrPage() * getPageSize()) {
                 hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
@@ -88,17 +93,24 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         detailDto.setPageSize(getPageSize());
         detailDto.setCurrPage(1);
         boolean detailHasNext = true;
+
+        int totalCount = 0 ;
         while (detailHasNext) {
             detailDto.setParams(searchParamDTO);
             PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> data = getWarehouseStatisticsData(detailDto);
             if (!CollectionUtils.isEmpty(data.getList())) {
                 warehouseStatisticsList.addAll((Collection<? extends VirtualInventoryDTO.WarehouseStatisticsExcelDTO>) data.getList());
             }
-            int totalCount = data.getTotalCount();
+
+            if (totalCount == 0) {
+                totalCount = data.getTotalCount();
+            }
+
             if (totalCount <= detailDto.getCurrPage() * getPageSize()) {
                 detailHasNext = false;
             }
             detailDto.setCurrPage(detailDto.getCurrPage() + 1);
+            detailDto.setLastId(warehouseStatisticsList.get(warehouseStatisticsList.size() - 1).getInvId());
         }
         List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
         //主表数据

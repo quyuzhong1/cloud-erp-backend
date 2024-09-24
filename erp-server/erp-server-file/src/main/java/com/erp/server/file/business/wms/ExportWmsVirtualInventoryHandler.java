@@ -56,7 +56,7 @@ public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandl
         sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
         try {
             byte[] bytes = new ExcelPrintUtils().sheetPatchExport(pairList, sb.toString(),excelPath);
-            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
+            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString() + ".xlsx", null);
             fileTask.setFileUrl(s);
         } catch (IOException e) {
             log.error("上传文件失败{}", e.getMessage(), e);
@@ -78,6 +78,9 @@ public class ExportWmsVirtualInventoryHandler extends AbstractPageFileEventHandl
 
     @Override
     protected PagingVO<VirtualInventoryDTO.ListDTO>  getPageData(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
-        return exportWmsFeign.getVirtualInventory(dto);
+        PagingVO<VirtualInventoryDTO.ListDTO> virtualInventory = exportWmsFeign.getVirtualInventory(dto);
+        List<VirtualInventoryDTO.ListDTO> dataList = (List<VirtualInventoryDTO.ListDTO>) virtualInventory.getList();
+        dto.setLastId(dataList.get(dataList.size() - 1).getIndexId());
+        return virtualInventory;
     }
 }

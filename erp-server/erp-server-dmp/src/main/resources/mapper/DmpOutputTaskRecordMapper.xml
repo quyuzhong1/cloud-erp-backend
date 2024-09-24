@@ -33,5 +33,108 @@
         input_status, storage_name, data_id, status, error_message
     </sql>
 
+    <!-- 根据状态分组查询数量 -->
+    <select id="listStatusCount" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$TabListDTO">
+        SELECT
+            t.status AS tabFlag,
+            COUNT(t.id) AS count
+        FROM
+            dmp_output_task_record t
+        WHERE t.is_deleted = false
+        AND NOT EXISTS (
+            SELECT 1
+            FROM dmp_cfg_output_black b
+            WHERE b.is_deleted = FALSE
+            AND b.field_value = t.source_code AND t.main_id = b.main_id
+        )
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        GROUP BY t.status
+    </select>
 
+    <!--添加进黑名单的数量-->
+    <select id="listBlackCount" resultType="java.lang.Integer">
+        SELECT
+            COUNT(t.id) AS count
+        FROM
+        dmp_output_task_record t
+        WHERE t.is_deleted = false
+        AND EXISTS (
+            SELECT 1
+            FROM dmp_cfg_output_black b
+            WHERE b.is_deleted = FALSE
+            AND b.field_value = t.source_code
+            AND t.main_id = b.main_id
+        )
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+    </select>
+
+    <!--推送任务列表分页查询-->
+    <select id="paging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
+        SELECT
+        t.id,
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        t.source_code AS sourceCode,
+        t.status AS status,
+        t.create_time,
+        t.update_time AS lastSyncTime,
+        t.response_data AS returnMsg,
+        t.is_need_sync AS isNeedSync,
+        CASE WHEN dcob.id IS NULL OR dcob.id = '' THEN FALSE ELSE TRUE END AS isBlack
+        FROM dmp_output_task_record t
+        LEFT JOIN dmp_output_task g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+        LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
+            AND g.id = dcob.main_id
+            AND dcob.is_deleted = FALSE
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        t.create_time desc
+    </select>
+
+    <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
+        SELECT
+        t.id,
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        t.source_code AS sourceCode,
+        t.status AS status,
+        t.create_time,
+        t.update_time AS lastSyncTime,
+        t.response_data AS returnMsg,
+        t.is_need_sync AS isNeedSync
+        FROM dmp_output_task_record t
+        LEFT JOIN dmp_output_task g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+        LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+    </select>
 </mapper>

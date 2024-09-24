@@ -75,8 +75,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     @Override
     public PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<VirtualInventoryDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        IPage<VirtualInventoryDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams(), dto.getLastId());
         // 填充名称
         fillPageData(pageData.getRecords());
         return new PagingVO<>(pageData);
@@ -350,8 +349,6 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        //数据赋值处理
-        fillPageData(list);
         return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
     }
 
@@ -502,7 +499,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
 
         //虚拟库存数据
-        List<VirtualInventoryDTO.ListInventoryDTO> virtualInventoryList = this.baseMapper.listVirtualWarehouseIdListAndSkuIdList(skuIdList, virtualWarehouseIdList);
+        List<VirtualInventoryDTO.ListInventoryDTO> virtualInventoryList = this.baseMapper.listVirtualWarehouseIdListAndSkuIdList(skuIdList, Collections.EMPTY_LIST);
 
         //实际仓库
         List<String> warehouseIdList = virtualInventoryList.stream().map(VirtualInventoryDTO.ListInventoryDTO::getWarehouseId).distinct().collect(Collectors.toList());

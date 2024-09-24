@@ -286,6 +286,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("batch_no")
     private String batchNo;
 
+    /**
+     * 物流渠道名称
+     */
+    @TableField("logistics_channel_name")
+    private String logisticsChannelName;
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 

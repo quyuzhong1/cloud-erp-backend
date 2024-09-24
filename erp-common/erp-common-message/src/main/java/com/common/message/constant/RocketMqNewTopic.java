@@ -107,7 +107,7 @@ public class RocketMqNewTopic {
      * 新中台金蝶店铺
      */
     public static final String DMP_KINGDEE_SHOP_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_shop_to_dmp_topic";
-    
+
     /**
      * 新中台旺店通预入库
      */
@@ -117,5 +117,31 @@ public class RocketMqNewTopic {
      * 新中台平台库存
      */
     public static final String DMP_FBA_INVENTORY_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_topic";
+    
+    /**
+     * 新中台推送产品上架时间
+     */
+    public static final String DMP_PRODUCT_LISTING_TO_PLM_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_product_listing_to_plm_topic";
+
+
+    /**
+     * 新中台领星店铺
+     */
+    public static final String DMP_LX_SHOP_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_shop_to_dmp_topic";
+
+    /**
+     * 新中台领星FBA签收
+     */
+    public static final String DMP_LX_FBA_SHIPMENT_RECEIVE_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_fba_shipment_receive_to_dmp_topic";
+
+    /**
+     * 新中台平台FBA货件
+     */
+    public static final String DMP_FBA_SHIPMENT_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_topic";
+
+    /**
+     * 新中台平台销售出库单
+     */
+    public static final String DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_so_out_stock_to_wms_topic";
 
 }

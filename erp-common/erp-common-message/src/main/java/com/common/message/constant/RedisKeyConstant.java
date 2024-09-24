@@ -71,4 +71,9 @@ public class RedisKeyConstant {
      * 生成销售出库单key
      */
     public static final String SO_STOCK_KEY = "SO_STOCK_KEY";
+    
+    /**
+     * 更新产品上架时间
+     */
+    public static final String PRODUCT_LISTING_TIME = "product:listing:time:";
 }

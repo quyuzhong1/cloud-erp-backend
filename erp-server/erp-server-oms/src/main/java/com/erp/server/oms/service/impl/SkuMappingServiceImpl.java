@@ -1029,6 +1029,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     .map(listingInfoWithSkuMappingDTOS -> ListingInfoWithSkuMappingDTO.getActiveOne(listingInfoWithSkuMappingDTOS, dto.getLastExpireDate()))
                     .collect(Collectors.toList());
         }
+        if(CollectionUtils.isNotEmpty(dto.getWarehouseIdList())){
+            List<OverseasProviderWarehouseDTO.ViewDTO> providerWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(dto.getWarehouseIdList());
+            List<String> authIdList = providerWarehouseList.stream().map(OverseasProviderWarehouseDTO.ViewDTO::getMainId).distinct().collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(authIdList)){
+                list = list.stream().filter(v->StringUtils.isBlank(v.getAuthId()) || authIdList.contains(v.getAuthId())).collect(Collectors.toList());
+            }
+        }
 
         if (CollectionUtils.isEmpty(list) || RuleTypeEnum.WAREHOUSE.getCode().equalsIgnoreCase(dto.getType())){
             return list;

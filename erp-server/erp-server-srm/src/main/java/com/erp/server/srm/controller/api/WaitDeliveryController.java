@@ -15,7 +15,7 @@ import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
-import com.erp.rpc.wms.feign.PurchaseOrderFeign;
+import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.server.srm.query.WaitDeliveryQueryHandler;
 import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.PurchaseOrderDetailService;

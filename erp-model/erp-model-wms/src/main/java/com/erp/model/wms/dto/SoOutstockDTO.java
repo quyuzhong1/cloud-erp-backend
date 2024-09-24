@@ -376,6 +376,16 @@ public class SoOutstockDTO implements Serializable {
          * 装箱状态中文
          */
         private String packingStatusName;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
     }
 
     /**·
@@ -496,6 +506,7 @@ public class SoOutstockDTO implements Serializable {
          * 出库日期
          */
         private LocalDate billDate;
+
         /**
          * 详情
          */
@@ -907,6 +918,16 @@ public class SoOutstockDTO implements Serializable {
          */
         private String customerOrderNo;
 
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
     }
@@ -1017,8 +1038,6 @@ public class SoOutstockDTO implements Serializable {
          */
         @NotNull(message = "出库日期不能为空")
         private LocalDate billDate;
-
-
 
         /**
          * 客户订单号

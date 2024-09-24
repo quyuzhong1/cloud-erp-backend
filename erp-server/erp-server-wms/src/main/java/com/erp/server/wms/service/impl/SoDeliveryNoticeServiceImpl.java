@@ -57,8 +57,8 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeMapper;
 import com.erp.server.wms.service.*;
@@ -751,6 +751,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
         ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
         ruleDTO.setReceiveCountry(customerDTO.getCountryId());
+        ruleDTO.setFromWarehouse(entity.getWarehouseId());
         transferDTO.setMatchTransferRuleDTO(ruleDTO);
         transferDTO.setWarehouseId(entity.getWarehouseId());
         CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferAndWarehouse(transferDTO);

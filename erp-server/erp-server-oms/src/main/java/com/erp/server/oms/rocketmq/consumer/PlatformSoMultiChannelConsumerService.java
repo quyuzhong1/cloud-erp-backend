@@ -8,13 +8,11 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.DmpPullOtherOutStockDTO;
-import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -50,9 +48,9 @@ public class PlatformSoMultiChannelConsumerService<T extends DmpSyncTaskIdDTO> e
 
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         try {
-            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+            dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
             throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
         }

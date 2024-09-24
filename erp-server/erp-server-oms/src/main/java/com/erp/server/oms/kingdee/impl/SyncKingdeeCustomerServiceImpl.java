@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -112,7 +113,71 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<DmpPushTaskEntity> syncDataToKingdee(CustomerInfoEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = this.newSyncDataToKingdee(entity, operate);
+        List<DmpPushTaskEntity> contractPushEnityLsit = new ArrayList<>();
+        //生成任务
+        DmpPushTaskEntity pushTaskEntity = saveTask(entity, operate, resultMap);
+        contractPushEnityLsit.add(pushTaskEntity);
+        
+        Object object = resultMap.get("customerList");
+        if(object != null) {
+        	List<CustomerContactEntity> contactEntities = (List<CustomerContactEntity>) object;
+        	//审核通过联系人发送金蝶
+            contactEntities.forEach(obj -> {
+                DmpPushTaskEntity taskEntity = syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
+                contractPushEnityLsit.add(taskEntity);
+            });
+        }
+        return contractPushEnityLsit;
+    }
+
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (CustomerInfoEntity entity, String operate, Map<String, Object> resultMap) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.CUSTOMER_INFO.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getCode());
+            taskFeignDTO.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            taskFeignDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+    	
+    	OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        omsPushMsgEntity.setSyncOperate(operate);
+        omsPushMsgService.save(omsPushMsgEntity);
+        
+        return null;
+    }
+
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(CustomerInfoEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -124,8 +189,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            DmpPushTaskEntity pushTaskEntity = saveTask(entity, operate, resultMap);
-            return Arrays.asList(pushTaskEntity);
+            return resultMap;
         }
 
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getUseOrgId()));
@@ -186,7 +250,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             resultMap.put("FInvoiceType", viewDTO.getType());
         }
         List<CurrencyDTO.ViewDTO> viewDTOS1 = sysUserFeign.listByCurrency(Arrays.asList(entity.getCurrency()));
-
+        if(CollectionUtils.isEmpty(viewDTOS1)){
+            throw new ServiceException("币种字典表为空");
+        }
         resultMap.put("currency", viewDTOS1.get(MathUtil.ZERO).getKingdeeCode());
         resultMap.put("remark", entity.getRemark());
 
@@ -255,58 +321,6 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         //同步好客户信息后再同步客户联系人
         List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
         resultMap.put("customerList", contactEntities);
-        List<DmpPushTaskEntity> contractPushEnityLsit = new ArrayList<>();
-        //生成任务
-        DmpPushTaskEntity pushTaskEntity = saveTask(entity, operate, resultMap);
-        contractPushEnityLsit.add(pushTaskEntity);
-        //审核通过联系人发送金蝶
-        contactEntities.forEach(obj -> {
-            DmpPushTaskEntity taskEntity = syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
-            contractPushEnityLsit.add(taskEntity);
-        });
-        return contractPushEnityLsit;
-    }
-
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (CustomerInfoEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.CUSTOMER_INFO.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	//添加推送任务
-            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-            taskFeignDTO.setSourceId(entity.getId());
-            taskFeignDTO.setSourceCode(entity.getCode());
-            taskFeignDTO.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
-            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName());
-            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-            taskFeignDTO.setSyncOperate(operate);
-            return dmpMqFeign.saveTask(taskFeignDTO);
-        }
-    	
-    	OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
-        omsPushMsgEntity.setSourceId(entity.getId());
-        omsPushMsgEntity.setSourceCode(entity.getCode());
-        omsPushMsgEntity.setSourceType(SourceTypeEnum.CUSTOMER_INFO.getCode());
-        omsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        omsPushMsgEntity.setSyncOperate(operate);
-        omsPushMsgService.save(omsPushMsgEntity);
-        
-        return null;
-    }
+        return resultMap;
+	}
 }

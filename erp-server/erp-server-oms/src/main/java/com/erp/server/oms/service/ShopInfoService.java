@@ -331,4 +331,5 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * 导出店铺
      */
     PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto);
+    void saveCustom(ShopInfoEntity shopInfoEntity);
 }

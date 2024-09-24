@@ -30,6 +30,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
@@ -1026,7 +1027,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseFeign.listWarehouseByIds(warehouseIds);
         String sourceId = applicationDTOList.get(0).getId();
         String sourceCode = applicationDTOList.get(0).getCode();
-        List<String> skuIds = applicationDTOList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : applicationDTOList) {
@@ -1069,17 +1069,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         paramDto.setApplyDeptId(findUserDTO.getDepartmentId());
 
         //是否新品首批
-        List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(Collections.singletonList(sourceId));
-        if(purchaseApplicationList.isEmpty()){
+        List<String> skuIds = padList.stream().filter(r -> StringUtils.isNotBlank(r.getSkuId())).map(PilotApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        Boolean isExist = purchaseApplicationDetailFeign.existBySkuIds(skuIds);
+        if(isExist){
             paramDto.setIsFirstMassProduct(Boolean.TRUE);
         }else {
-            List<String> mainIds = purchaseApplicationList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-            List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailFeign.listByMainIds(mainIds);
-            if(purchaseApplicationDetailList.isEmpty()){
-                paramDto.setIsFirstMassProduct(Boolean.TRUE);
-            }else {
-                paramDto.setIsFirstMassProduct(purchaseApplicationDetailList.stream().anyMatch(item -> skuIds.contains(item.getSkuId())) ? Boolean.FALSE : Boolean.TRUE);
-            }
+            paramDto.setIsFirstMassProduct(Boolean.FALSE);
         }
         paramDto.setDetails(detailList);
         paramDto.setSourceId(sourceId);

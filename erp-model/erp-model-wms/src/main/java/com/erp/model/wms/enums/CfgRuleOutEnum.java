@@ -144,6 +144,7 @@ public enum CfgRuleOutEnum {
     @AllArgsConstructor
     public enum StockOutTransferFieldEnum implements EnumMessage{
         RECEIVE_COUNTRY("receiveCountry", "收货国家"),
+        FROM_WAREHOUSE("fromWarehouse", "发货仓库"),
         DEST_WAREHOUSE("destWarehouse", "目的仓库"),
         ;
         private String code;

@@ -81,7 +81,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
         //业务员
         if (ApiModuleTypeEnum.KINGDEE_OPERATOR.getCode().toString().equals(code)) {
-            kingdeeOperatorRefPostService.updateSyncKingdeeId(businessId,syncKingdeeId,syncKingdeeCode);
+            kingdeeOperatorRefPostService.updateSyncKingdeeId(businessId,syncKingdeeId);
             return;
         }
 

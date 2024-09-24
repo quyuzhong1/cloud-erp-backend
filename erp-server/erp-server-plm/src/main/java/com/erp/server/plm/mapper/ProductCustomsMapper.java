@@ -20,6 +20,7 @@ import java.util.List;
 @Mapper
 public interface ProductCustomsMapper extends BaseMapper<ProductCustomsEntity> {
 
+    List<ProductCustomsEntity> listByProductId(String productId);
 
     /**
      * 根据产品id查询目的国海关编码

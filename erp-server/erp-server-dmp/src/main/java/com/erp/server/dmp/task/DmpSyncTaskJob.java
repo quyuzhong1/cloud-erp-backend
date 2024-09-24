@@ -149,7 +149,7 @@ public class DmpSyncTaskJob {
                     //待推送的走查询推送
                     dmpPushTaskService.batchFindDataSync(Arrays.asList(recordEntity.getId()));
                 } else {
-                    DmpPushTaskHistoryServiceImpl.sendMq(recordEntity.getMqData(), recordEntity.getId(), mqProducerService, recordEntity.getMqTopic(), recordEntity.getMqTag(), recordEntity.getSourceId());
+                    DmpPushTaskHistoryServiceImpl.sendMq(recordEntity.getMqData(), recordEntity.getId(),recordEntity.getVersion(), mqProducerService, recordEntity.getMqTopic(), recordEntity.getMqTag(), recordEntity.getSourceId());
                 }
             } catch (Exception e){
                 String sourceTypeName = SourceTypeEnum.getName(recordEntity.getSourceType());

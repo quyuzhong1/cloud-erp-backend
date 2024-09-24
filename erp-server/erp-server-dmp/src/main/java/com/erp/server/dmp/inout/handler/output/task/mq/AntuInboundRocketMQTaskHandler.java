@@ -10,6 +10,8 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdInboundEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.sdk.wms.antu.dto.response.AntuReceiptResp;
+import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp.GcReceiving;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import org.springframework.context.annotation.Scope;
@@ -68,33 +70,41 @@ public class AntuInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 	/**
      * 解析订单数据
      **/
-    public PlatformInboundDTO convert(DmpThirdInboundEntity dmpThirdInboundEntity , String cfgOutputId) {
-    	if(this.validateDataBlack(dmpThirdInboundEntity, cfgOutputId)) {
-    		return null;
-    	}
-    	PlatformInboundDTO platformInboundDTO = BeanUtil.copyProperties(dmpThirdInboundEntity, PlatformInboundDTO.class);
-    	String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
+	/**
+	 * 解析订单数据
+	 **/
+	public PlatformInboundDTO convert(DmpThirdInboundEntity dmpThirdInboundEntity , String cfgOutputId) {
+		if(this.validateDataBlack(dmpThirdInboundEntity, cfgOutputId)) {
+			return null;
+		}
+		PlatformInboundDTO platformInboundDTO = BeanUtil.copyProperties(dmpThirdInboundEntity, PlatformInboundDTO.class);
+		String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
 		platformInboundDTO.setPlatform(sourcePlatform);
-    	platformInboundDTO.setProvider(sourcePlatform);
-    	platformInboundDTO.setDownloadTime(LocalDateTime.now());
-    	platformInboundDTO.setReceivingStatus(GoodCangEnums.OpenReceivingStatusEnum.getInstockByCode(Integer.valueOf(dmpThirdInboundEntity.getReceivingStatus())));
-    	List<GcReceiving> gcReceivingList = JSON.parseArray(dmpThirdInboundEntity.getDetailListJson(), GcReceiving.class);
-    	List<Receiving> receivingDataList = new ArrayList<>();
-    	
-    	LocalDateTime receiveTime = LocalDateTime.now();
-    	for(GcReceiving gcReceiving : gcReceivingList) {
-    		Receiving receiving = new Receiving();
-    		receiving.setProductSku(gcReceiving.getProductSku());
-    		receiving.setReceiveQty(gcReceiving.getReceivedQty());
-    		receiving.setReceiveTime(receiveTime);
-    		receivingDataList.add(receiving);
-    	}
+		platformInboundDTO.setProvider(sourcePlatform);
+		platformInboundDTO.setDownloadTime(LocalDateTime.now());
+
+		//不是已签收状态不推送ERP
+		if (!AntuEnums.ReceivingStatusEnum.COMPLETE_LISTING.getCode().equals(dmpThirdInboundEntity.getReceivingStatus())) {
+			return null;
+		}
+		platformInboundDTO.setReceivingStatus(AntuEnums.ReceivingStatusEnum.getInstockByCode(dmpThirdInboundEntity.getReceivingStatus()));
+		List<AntuReceiptResp.Item> itemList = JSON.parseArray(dmpThirdInboundEntity.getDetailListJson(), AntuReceiptResp.Item.class);
+		List<Receiving> receivingDataList = new ArrayList<>();
+
+		LocalDateTime receiveTime = LocalDateTime.now();
+		for(AntuReceiptResp.Item gcReceiving : itemList) {
+			Receiving receiving = new Receiving();
+			receiving.setProductSku(gcReceiving.getProductSku());
+			receiving.setReceiveQty(gcReceiving.getQuantity());
+			receiving.setReceiveTime(receiveTime);
+			receivingDataList.add(receiving);
+		}
 		platformInboundDTO.setReceivingDataList(receivingDataList);
-		
+
 		this.groupBySku(platformInboundDTO);
-    	
-        return platformInboundDTO;
-    }
+
+		return platformInboundDTO;
+	}
 
     private void groupBySku(PlatformInboundDTO dto) {
         Map<String, Integer> receivedQuantityMap = dto.getReceivingDataList().stream()

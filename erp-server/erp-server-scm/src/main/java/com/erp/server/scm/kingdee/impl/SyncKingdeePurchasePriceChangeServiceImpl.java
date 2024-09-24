@@ -1,30 +1,39 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
+import com.erp.model.scm.entity.ScmPushMsgEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
 import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
+import com.erp.server.scm.service.ScmPushMsgService;
 import com.erp.server.scm.service.SupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +69,9 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    
+    @Resource
+    private ScmPushMsgService scmPushMsgService;
 
 
     /**
@@ -69,7 +81,65 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(PurchasePriceChangeEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = this.newSyncDataToKingdee(entity, operate);
+    	String purchasePriceIdStr = "";
+        //生成任务
+        Object object = resultMap.get("purchasePriceIdStr");
+        if(object != null) {
+        	purchasePriceIdStr = object.toString();
+        }
+		return saveTask(entity,operate,resultMap, purchasePriceIdStr);
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (PurchasePriceChangeEntity entity, String operate, Map<String, Object> resultMap, String purchasePriceIdStr) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(entity.getId());
+            dmpSyncTaskDTO.setSourceCode(entity.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_PRICE_CHANGE_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operate);
+            //多个ID用','拼接
+            dmpSyncTaskDTO.setParentId(purchasePriceIdStr);
+            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
+        
+        ScmPushMsgEntity scmPushMsgEntity = new ScmPushMsgEntity();
+        scmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        scmPushMsgEntity.setSourceType(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
+        scmPushMsgEntity.setSourceId(entity.getId());
+        scmPushMsgEntity.setSourceCode(entity.getCode());
+        scmPushMsgEntity.setSyncOperate(operate);
+        scmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        scmPushMsgEntity.setParentId(purchasePriceIdStr);
+        
+        scmPushMsgService.save(scmPushMsgEntity);
+        
+        return null;
+    }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(PurchasePriceChangeEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
 
         List<PurchasePriceChangeDetailEntity> purchasePriceChangeDetailEntities = purchasePriceChangeDetailService.listByMainIdList(Arrays.asList(entity.getId()));
         List<String> purchasePriceDetailId = purchasePriceChangeDetailEntities.stream().map(req -> req.getPurchasePriceDetailId()).distinct().collect(Collectors.toList());
@@ -81,7 +151,8 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             throw new ServiceException(ApiError.ERROR_98024);
         }
         String purchasePriceIdStr = purchasePriceDetailEntities.stream().map(req -> req.getPurchasePriceId()).distinct().collect(Collectors.joining(","));
-
+        resultMap.put("purchasePriceIdStr", purchasePriceIdStr);
+        
         //业务id
         resultMap.put("id",entity.getId());
         //编码
@@ -95,7 +166,7 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap, purchasePriceIdStr);
+            return resultMap;
         }
         //调价原因
         resultMap.put("reason",entity.getReason());
@@ -163,33 +234,6 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             list.add(jsonObject);
         }
         resultMap.put("list",list);
-
-        //生成任务
-        return saveTask(entity,operate,resultMap, purchasePriceIdStr);
-    }
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (PurchasePriceChangeEntity entity, String operate, Map<String, Object> resultMap, String purchasePriceIdStr) {
-        //添加推送任务
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(entity.getId());
-        dmpSyncTaskDTO.setSourceCode(entity.getCode());
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_PURCHASE_PRICE_CHANGE_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operate);
-        //多个ID用','拼接
-        dmpSyncTaskDTO.setParentId(purchasePriceIdStr);
-        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
-    }
+        return resultMap;
+	}
 }

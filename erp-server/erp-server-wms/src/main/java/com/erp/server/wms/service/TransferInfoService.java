@@ -8,6 +8,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -79,9 +81,10 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @author Will
      * @date: 2023/5/15 11:25
      * @param ids
+     * @param isStartProcess 是否启用审核流程（系统自动审核的不需要启动审核流）
      * @return Boolean
      */
-    Boolean submit(List<String> ids);
+    Boolean submit(List<String> ids, Boolean isStartProcess);
     /**
      * @description: 查看详情
      * @author Will
@@ -116,8 +119,21 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param comment
      * @param isNeedProcess
      * @param isSyncKingDee
+     * @param isStartProcess 是否启用审核流程（系统自动审核的不需要启动审核流）
      */
-    BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess,Boolean isSyncKingDee);
+    BatchResultDTO approve(TransferInfoEntity entity, String type, String comment, Boolean isNeedProcess,Boolean isSyncKingDee, Boolean isStartProcess);
+    /**
+     * 审核结束
+     * @Author Luo_WG
+     * @Date 2024/9/6 16:57
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isSyncKingDee
+     * @return java.lang.Boolean
+     **/
+    Boolean approveEnd(TransferInfoEntity entity, String type, String comment, Boolean isSyncKingDee);
+
     /**
      * 虚拟仓库存扣减处理
      * @author will

@@ -35,4 +35,9 @@ public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
      * 是否切割时间
      */
     private boolean splitFlag = false;
+
+    /**
+     * dmp_cfg_input_detail明细扩展参数
+     */
+    private String detailExtendJson;
 }
