@@ -84,10 +84,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
                 AntuResponse<List<AntuReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {
                 }.getType());
 
-                if ("Success".equals(result.getAsk())) {
-                    List<AntuReceiptResp> receiptRespList = result.getData().stream().filter(req -> AntuEnums.ReceivingStatusEnum.COMPLETE_LISTING.getCode().equals(req.getReceivingStatus())).collect(Collectors.toList());
-                    allResult.addAll(receiptRespList);
-                }
+                allResult.addAll(result.getData());
                 page++;
             }
         }
