@@ -46,7 +46,7 @@ public class PilotApplicationQueryHandler extends AbstractQueryHandler {
                 dto.setCurApproveId(user.getUid());
                 List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
                 List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
-                if(null != ids){
+                if(CollectionUtils.isNotEmpty(ids)){
                     StringBuffer sb = new StringBuffer();
                     for (int i = 0; i < ids.size(); i++) {
                         sb.append("'");
@@ -58,6 +58,8 @@ public class PilotApplicationQueryHandler extends AbstractQueryHandler {
                         }
                     }
                     return "(pa.id in (" + sb.toString() + "))";
+                }else {
+                    return "(pa.id = '-1')";
                 }
             }
             if(value.equals("reject")){

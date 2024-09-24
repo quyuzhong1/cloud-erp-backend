@@ -71,7 +71,7 @@ public class FirstMileCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:firstMileCostAllocation:paging",
-            tableAlias = "lb"
+            tableAlias = "a"
     )
     public ApiResult<List<FirstMileCostAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<FirstMileCostAllocationDTO.TabListDTO> tabList = firstMileCostAllocationService.tabList(dto);

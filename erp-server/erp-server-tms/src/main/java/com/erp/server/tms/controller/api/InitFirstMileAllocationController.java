@@ -92,7 +92,7 @@ public class InitFirstMileAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:initFirstMileAllocation:paging",
-            tableAlias = "lb"
+            tableAlias = "a"
     )
     public ApiResult<List<InitFirstMileAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<InitFirstMileAllocationDTO.TabListDTO> tabList = initFirstMileAllocationService.tabList(dto);
