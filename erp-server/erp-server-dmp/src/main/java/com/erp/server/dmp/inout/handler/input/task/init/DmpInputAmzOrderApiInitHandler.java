@@ -23,6 +23,7 @@ import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -68,10 +69,11 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(), shopInfoDTO.getDictCountryCode(), BusinessTypeEnum.ORDER.getCode());
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj) {
-            String msg = StrUtil.format("【订单拉取】 PlatformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
-//            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-//            initDmpResponse.setDoNextChain(false);
-            throw new ServiceException(msg);
+            log.warn("【订单拉取】 PlatformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+            initDmpResponse.setDoNextChain(false);
+            return Collections.emptyList();
+//            throw new ServiceException(msg);
         }
 
         // 是否检查当前时间
@@ -126,10 +128,13 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextChain(false);
+                return Collections.emptyList();
             }
-            throw new RuntimeException("请求亚马逊SP-APi订单api异常失败,body=" + JSONUtil.toJsonStr(e));
+            throw new ServiceException("请求亚马逊SP-APi订单api异常失败,body=" + JSONUtil.toJsonStr(e));
         } catch (Exception e) {
-            throw new RuntimeException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
+            throw new ServiceException("请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
         }
     }
 
