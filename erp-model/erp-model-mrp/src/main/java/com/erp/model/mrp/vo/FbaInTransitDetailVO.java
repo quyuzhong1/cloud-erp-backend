@@ -64,5 +64,5 @@ public class FbaInTransitDetailVO {
     /**
      * 预计到货日期
      */
-    private LocalDate planArrivalDate;
+    private LocalDate estimateSalesDate;
 }
