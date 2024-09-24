@@ -198,6 +198,10 @@ public class WmsCartonDetailDTO implements Serializable {
 
         private Integer packQty;
         /**
+         * fba箱号
+         */
+        private String fbaBoxNo;
+        /**
          * 箱号
          */
         private String boxNo;

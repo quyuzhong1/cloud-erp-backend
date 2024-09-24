@@ -459,6 +459,7 @@
             fmd.id as firstMileId,
             wc.id,
             wc.packing_task_id as taskId,
+            (select fsp.box_no from fba_shipment_packing fsp where fsp.carton_id = wc.id and fsp.is_deleted = false limit 1 ) as fbaBoxNo,
             wc.box_no,
             concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
             wcs.package_weight,
