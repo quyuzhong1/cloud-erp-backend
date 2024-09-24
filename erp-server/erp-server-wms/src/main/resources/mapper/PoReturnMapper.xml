@@ -414,4 +414,51 @@
             </if>
         </where>
     </select>
+
+    <select id="batchGetTaxPrice"
+            resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$PurchaseTaxPriceBatchViewDTO">
+        SELECT supplier_id,sku_id,tax_price,tax_rate,currency,currency_symbol,approve_time,purchase_org_id
+        FROM
+        (
+        SELECT
+        pi.supplier_id,
+        pid.sku_id,
+        pid.tax_price,
+        pid.tax_rate,
+        pid.currency,
+        pid.currency_symbol,
+        pi.approve_time,
+        po.purchase_org_id,
+        ROW_NUMBER ( ) OVER ( PARTITION BY pi.supplier_id, pid.sku_id, po.purchase_org_id ORDER BY pi.approve_time DESC ) AS row_num
+        FROM
+        po_instock pi
+        LEFT JOIN po_instock_detail pid ON pi.ID = pid.main_id
+        AND pid.is_deleted =
+        FALSE INNER JOIN purchase_order po ON pi.purchase_order_id = po.ID
+        AND po."type" != 'CGDD06-SYS'
+        <where>
+            1=1
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
+                and pid.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and pi.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrgIdList != null and params.purchaseOrgIdList.size > 0">
+                and po.purchase_org_id in
+                <foreach collection="params.purchaseOrgIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ) M
+        WHERE
+        row_num = 1
+    </select>
 </mapper>

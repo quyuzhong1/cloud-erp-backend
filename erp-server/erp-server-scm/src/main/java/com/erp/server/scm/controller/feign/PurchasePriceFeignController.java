@@ -1,5 +1,6 @@
 package com.erp.server.scm.controller.feign;
 
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.server.scm.service.PurchasePriceService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,5 +45,15 @@ public class PurchasePriceFeignController {
     @PostMapping("/listAllSupplierSkuPrice")
     public List<PurchasePriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(@RequestBody List<String> ids) {
         return purchasePriceService.listAllSupplierSkuPrice(ids);
+    }
+
+    /**
+     * 批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    @PostMapping("/batchGetPurchasePrice")
+    public List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
+        return purchasePriceService.batchGetPurchasePrice(list);
     }
 }

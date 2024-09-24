@@ -12,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -422,5 +423,15 @@ public class PoReturnController extends BaseController {
     public ApiResult<List<PurchaseReturnOrderDTO.SubcontractOrderDTO>> listSubcontractOrder(@RequestBody @RequestParam("purchaseOrderId") String purchaseOrderId) {
         List<PurchaseReturnOrderDTO.SubcontractOrderDTO> subcontractOrderDTOS = poReturnService.listSubcontractOrder(purchaseOrderId);
         return success(subcontractOrderDTOS);
+    }
+
+    /**
+     * 批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    @PostMapping("/batchGetPurchasePrice")
+    public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
+        return success(poReturnService.batchGetPurchasePrice(list));
     }
 }

@@ -6,8 +6,13 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.server.wms.convert.PoReturnConverter;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -32,9 +37,6 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ExecutionStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -84,6 +86,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -799,6 +802,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
             //自动生成补货采购订单
             autoAddPurchaseOrder(Collections.singletonList(entity));
+            //审核通过-自动生成-委外退料单
+            autoAddSubcontractReturn(entity, poReturnDetailList,confirmStatus);
             //审核通过生成对账明细
             autoAddPoReconciliationDetail(Collections.singletonList(entity));
             // 更新库存信息
@@ -809,8 +814,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             //发送旺店通
             poReturnEntityList.forEach(obj -> syncApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_APPROVE));
-            //审核通过-自动生成-委外退料单
-            autoAddSubcontractReturn(entity, poReturnDetailList);
+
         } else {
             //审核不通过
             lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -825,10 +829,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     /**
      * 根据退货单类型生成委外退料单
+     *
      * @param entity
      * @param poReturnDetailList
+     * @param confirmStatus
      */
-    private void autoAddSubcontractReturn(PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList) {
+    private void autoAddSubcontractReturn(PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList, String confirmStatus) {
         if (Objects.isNull(entity) || CollectionUtils.isEmpty(poReturnDetailList) || StrUtil.isBlank(entity.getPurchaseOrderId())){
             return;
         }
@@ -915,6 +921,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 subcontractReturnService.approve(new ApproveOneDTO(addDTO.getId(), ApproveTypeEnum.PASS.getStatus(),"采购退货自动生成"));
             }
         }
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //创建子件采购退货单
         for (PurchaseReturnOrderDTO.AddDTO addDTO : returnAddDTOList){
             //新增
@@ -926,8 +933,26 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             service.submit(Collections.singletonList(id));
             //查询提交数据
             PoReturnEntity poReturnEntity = this.getById(id);
-            List<PoReturnDetailEntity> poReturnDetailEntityList = poReturnDetailService.listByMainIds(Collections.singletonList(id));
-            service.approve(poReturnEntity,ApproveTypeEnum.PASS.getStatus(),"采购退货自动生产", Boolean.FALSE, poReturnDetailEntityList);
+//            List<PoReturnDetailEntity> poReturnDetailEntityList = poReturnDetailService.listByMainIds(Collections.singletonList(id));
+//            service.approve(poReturnEntity,ApproveTypeEnum.PASS.getStatus(),"采购退货自动生产", Boolean.FALSE, poReturnDetailEntityList);
+            //审核通过
+            lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                    .set(PoReturnEntity::getApproveUserId, userInfo.getUid())
+                    .set(PoReturnEntity::getApproveUserName, userInfo.getUserName())
+                    .set(PoReturnEntity::getApproveTime, LocalDateTime.now())
+                    .set(PoReturnEntity::getConfirmStatus, confirmStatus)
+                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()), PoReturnEntity::getConfirmDate, null)
+                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.CONFIRM.getStatus()),PoReturnEntity::getConfirmDate, LocalDate.now())
+                    .eq(PoReturnEntity::getId, id)
+                    .update();
+            //审核通过生成对账明细
+            autoAddPoReconciliationDetail(Collections.singletonList(poReturnEntity));
+            // 更新库存信息
+            updateInventoryTransCore(Collections.singletonList(poReturnEntity));
+            //发送金蝶
+            sendPushTask(Collections.singletonList(poReturnEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+            //发送旺店通
+            syncApprovePoReturnToWdt(poReturnEntity, SyncOperateEnum.OPERATE_APPROVE);
         }
     }
 
@@ -1922,6 +1947,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @param replenishmentInventoryMap
      * @param replenishmentInventoryDetailList
      */
+    @Transactional(rollbackFor = Exception.class)
     public void replenishmentInventory(Map<String, PoReturnEntity> replenishmentInventoryMap,
                                        List<PoReturnDetailEntity> replenishmentInventoryDetailList) { //采购退货(库存退货，退货补货)
         if(CollUtil.isNotEmpty(replenishmentInventoryDetailList)) { //采购退货(库存退货，退货补货)明细
@@ -2841,6 +2867,72 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             viewSubcontractPoDTO.setApproveStatusName(ApproveStatusEnum.getName(viewSubcontractPoDTO.getApproveStatus()));
         }
         return list;
+    }
+
+    @Override
+    public List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list) {
+        List<PurchasePriceDTO.PriceDTO> updateList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        //采购组织Id
+        List<String> purchaseOrgIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getPurchaseOrgId())).map(PurchasePriceDTO.PriceDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIdList);
+        if (CollectionUtils.isEmpty(companyList)){
+            return Collections.emptyList();
+        }
+        //skuId
+        List<String> skuIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())).map(PurchasePriceDTO.PriceDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        if (CollectionUtils.isEmpty(skuVOList)) {
+            return Collections.emptyList();
+        }
+        //供应商Id
+        List<String> supplierIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSupplierId())).map(PurchasePriceDTO.PriceDTO::getSupplierId).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierEntityList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+        if (CollectionUtils.isEmpty(supplierEntityList)) {
+            return Collections.emptyList();
+        }
+        PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
+        dto.setSkuIdList(skuIdList);
+        dto.setSupplierIdList(supplierIdList);
+        dto.setPurchaseOrgIdList(purchaseOrgIdList);
+        //查询对应采购价目
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> viewList = baseMapper.batchGetTaxPrice(dto);
+        //获取scm采购价目记录
+        List<PurchasePriceDTO.PriceDTO> scmViewList = scmTaskFeign.batchGetPurchasePrice(list);
+
+        for (PurchasePriceDTO.PriceDTO priceDTO : list) {
+            PurchasePriceDTO.PriceDTO purchaseTaxPriceViewDTO = null;
+            if (CollectionUtils.isNotEmpty(viewList)) {
+                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> Objects.nonNull(obj)
+                                && StrUtil.isNotBlank(obj.getSkuId()) && StrUtil.isNotBlank(priceDTO.getSkuId()) && obj.getSkuId().equals(priceDTO.getSkuId())
+                                && StrUtil.isNotBlank(obj.getSupplierId()) && StrUtil.isNotBlank(priceDTO.getSupplierId()) && obj.getSupplierId().equals(priceDTO.getSupplierId())
+                                && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(priceDTO.getPurchaseOrgId()) && StrUtil.equals(obj.getPurchaseOrgId(),priceDTO.getPurchaseOrgId()))
+                        .findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(viewDTO)) {
+                    purchaseTaxPriceViewDTO = PoReturnConverter.INSTANCE.priceToViewDTO(viewDTO);
+                    purchaseTaxPriceViewDTO.setQty(priceDTO.getQty());
+                    purchaseTaxPriceViewDTO.setAmount(MathUtil.multiply(purchaseTaxPriceViewDTO.getTaxPrice(), purchaseTaxPriceViewDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
+                }
+            }
+            if (Objects.isNull(purchaseTaxPriceViewDTO) && CollectionUtils.isNotEmpty(scmViewList)){
+                //报价信息
+                PurchasePriceDTO.PriceDTO priceDTO2 = scmViewList.stream().filter(obj -> Objects.nonNull(obj)
+                                && StrUtil.isNotBlank(obj.getSkuId()) && StrUtil.isNotBlank(priceDTO.getSkuId()) && obj.getSkuId().equals(priceDTO.getSkuId())
+                                && StrUtil.isNotBlank(obj.getSupplierId()) && StrUtil.isNotBlank(priceDTO.getSupplierId()) && obj.getSupplierId().equals(priceDTO.getSupplierId())
+                                && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(priceDTO.getPurchaseOrgId()) && StrUtil.equals(obj.getPurchaseOrgId(),priceDTO.getPurchaseOrgId()))
+                        .findFirst().orElse(null);
+                if (Objects.nonNull(priceDTO2)){
+                    priceDTO2.setQty(priceDTO.getQty());
+                    priceDTO2.setAmount(MathUtil.multiply(priceDTO2.getTaxPrice(), priceDTO2.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
+                    updateList.add(priceDTO2);
+                }
+            }else {
+                updateList.add(purchaseTaxPriceViewDTO);
+            }
+        }
+        return updateList;
     }
 
     /**

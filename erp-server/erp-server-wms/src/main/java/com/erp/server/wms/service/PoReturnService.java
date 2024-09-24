@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
@@ -386,4 +387,11 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return
      */
     List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(String purchaseOrderId);
+
+    /**
+     * 批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
 }

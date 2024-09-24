@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -90,4 +91,11 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
      * @return
      */
     List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(@Param("purchaseOrderId") String purchaseOrderId);
+
+    /**
+     * 批量查询报价
+     * @param dto
+     * @return
+     */
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(@Param("params") PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO params);
 }
