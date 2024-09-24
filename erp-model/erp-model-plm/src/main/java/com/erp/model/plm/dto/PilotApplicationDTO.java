@@ -671,6 +671,10 @@ public class PilotApplicationDTO implements Serializable {
          */
         private String id;
         /**
+         * 试产量产单号
+         */
+        private String code;
+        /**
          * 任务id
          */
         private List<String> taskId;

@@ -13,6 +13,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -2717,14 +2718,14 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
             //标题
-            String title = "试产量产单已提交审核，请尽快审核";
+            String title = String.format("试产量产单【%s】已提交审核，请尽快审核",entity.getCode());
             if(isCompeletd){
-                title = "试产量产单已完成审核，请知悉";
+                title = String.format("试产量产单【%s】已完成审核，请知悉",entity.getCode());
             }
             //消息内容
             String chargeName = Arrays.asList(entity.getChargeName().split(",")).stream().distinct().collect(Collectors.joining(";"));
             String skuNo = Arrays.asList(entity.getSkuNo().split(",")).stream().distinct().collect(Collectors.joining(";"));
-            String message = String.format(NoticeMessageConstant.AUDIT_PILOT_MSG_CONTENT,NoticeEnum.AUDIT_PILOT_APPLICATION.getName(),chargeName,skuNo);
+            String message = String.format(NoticeMessageConstant.AUDIT_PILOT_MSG_CONTENT,isCompeletd ? NoticeEnum.AUDIT_COMPLETED_PILOT_APPLICATION.getName() : NoticeEnum.AUDIT_PILOT_APPLICATION.getName(),chargeName,skuNo);
             Map contentMap = getCardMessageMap(title, message, fsAppUrl);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
@@ -2774,7 +2775,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             //获取所有审核人员
             if(isCompeletd){
                 List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(entity.getId());
-                List<String> all = approveHistoryList.stream().map(ProcessTaskManagementDTO.ApproveHistoryDTO::getApproveUserId).distinct().collect(Collectors.toList());
+                approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveUserName().equals(item.getCurApproveName())).collect(Collectors.toList());
+                List<String> all = approveHistoryList.stream().filter(item -> item.getApproveUserName().equals(item.getCurApproveName())).map(ProcessTaskManagementDTO.ApproveHistoryDTO::getApproveUserId).distinct().collect(Collectors.toList());
                 resultList.addAll(all);
             }
             //项目人员
@@ -2807,8 +2809,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 //这个是审核人
                 if (!isCompeletd&&itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
                     List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(entity.getId());
-                    ProcessTaskManagementDTO.ApproveHistoryDTO approveHistoryDTO = approveHistoryList.get(approveHistoryList.size()-1);
-                    resultList.add(approveHistoryDTO.getCurApproveId());
+                    List<String> collect = approveHistoryList.stream().filter(v -> v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveId).collect(Collectors.toList());
+                    resultList.addAll(collect);
                 }
             }
         }

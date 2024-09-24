@@ -1320,31 +1320,14 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             BeanMapperUtils.copy(productChargeInfoList.get(0),approvePilotNoticeDTO);
             //试产量产主键id
             approvePilotNoticeDTO.setId(entity.getId());
+            approvePilotNoticeDTO.setCode(entity.getCode());
             //飞书消息通知
             LoginUser loginUser = UserContext.getDefaultLoginUser();
             String userName = loginUser.getUserName();
-            noticeMessageService.approvePilotApplicationNotice(userName,approvePilotNoticeDTO, Boolean.FALSE);
-        }
-    }
-
-    @Override
-    public void approveCompletedPilotApplicationNotice(String id) {
-        // 在事务提交后执行的方法
-        PilotApplicationEntity entity = this.getById(id);
-        if(entity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-            //获取试产量产明细中的skuId集合
-            List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id).eq(PilotApplicationDetailEntity::getIsDeleted, Boolean.FALSE).list();
-            List<String> skuIds = detailList.stream().map(PilotApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-            List<SkuVO.ProductChargeInfoDTO> productChargeInfoList = productDetailService.listProductChargeInfoByIds(skuIds);
-            if(CollectionUtils.isNotEmpty(productChargeInfoList)){
-                PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = new PilotApplicationDTO.ApprovePilotNoticeDTO();
-                BeanMapperUtils.copy(productChargeInfoList.get(0),approvePilotNoticeDTO);
-                //试产量产主键id
-                approvePilotNoticeDTO.setId(entity.getId());
-                //飞书消息通知
-                LoginUser loginUser = UserContext.getDefaultLoginUser();
-                String userName = loginUser.getUserName();
+            if(entity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
                 noticeMessageService.approvePilotApplicationNotice(userName,approvePilotNoticeDTO, Boolean.TRUE);
+            }else {
+                noticeMessageService.approvePilotApplicationNotice(userName,approvePilotNoticeDTO, Boolean.FALSE);
             }
         }
     }

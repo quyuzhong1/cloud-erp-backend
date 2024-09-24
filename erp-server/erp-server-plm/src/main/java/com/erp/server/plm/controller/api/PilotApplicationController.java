@@ -202,7 +202,7 @@ public class PilotApplicationController extends BaseController {
             BatchResultDTO approveResult;
             try {
                 approveResult = pilotApplicationService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), dto);
-                pilotApplicationService.approveCompletedPilotApplicationNotice(id);
+                pilotApplicationService.approvePilotApplicationNotice(id);
             }catch (Exception e){
                 log.error("试产申请审核失败",e);
                 PilotApplicationEntity entity = idEntityMap.get(id);

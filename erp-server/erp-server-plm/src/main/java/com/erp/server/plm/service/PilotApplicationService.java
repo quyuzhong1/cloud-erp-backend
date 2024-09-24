@@ -210,5 +210,4 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * @date: 2024-09-23
      */
     void approvePilotApplicationNotice(String id);
-    void approveCompletedPilotApplicationNotice(String id);
 }
