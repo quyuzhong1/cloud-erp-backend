@@ -408,6 +408,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     packedMap.merge(key, value, Integer::sum)
             );
         }
+        List<PackingTaskDetailEntity> copyTaskDetailList = new ArrayList<>();
         //新增装箱信息
         for (WmsCartonSpecDTO.AddDTO addDTO : dto.getWmsCartonList()) {
             addDTO.setTaskId(dto.getTaskId());
@@ -428,7 +429,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if (CollectionUtils.isEmpty(taskDetailEntityList)){
                 throw new ServiceException("装箱任务中SKU为空，不能装箱其他SKU");
             }
-            List<PackingTaskDetailEntity> copyTaskDetailList = BeanUtil.copyToList(taskDetailEntityList,PackingTaskDetailEntity.class);
+            if(copyTaskDetailList.stream().noneMatch(v->v.getMainId().equals(addDTO.getTaskId()))){
+                copyTaskDetailList.addAll(BeanUtil.copyToList(taskDetailEntityList,PackingTaskDetailEntity.class));
+            }
             List<String> deliverySkuIds = taskDetailEntityList.stream().map(PackingTaskDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             Map<String,String> fnSkuMap = taskDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getFnSku())).collect(Collectors.toMap(v->v.getFnSku(),v->v.getSkuNo(),(v1,v2)->v1));
             List<WmsCartonDetailDTO.AddDTO> otherSku = addDTO.getDetailList().stream().filter(e -> Objects.nonNull(e.getSkuId()) && !deliverySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
@@ -462,8 +465,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         addDTO1.setPackQty(Math.min(totalNum,packingTaskDetailEntity.getDeliveryQty()));
                         totalNum = totalNum - packingTaskDetailEntity.getDeliveryQty();
                         addDTOList.add(addDTO1);
-                        packedMap.merge(key, Math.min(totalNum,packingTaskDetailEntity.getDeliveryQty()), Integer::sum);
-                        packingTaskDetailEntity.setDeliveryQty(Math.min(packingTaskDetailEntity.getDeliveryQty() - packedNum,0));
+                        packedMap.merge(key, addDTO1.getPackQty(), Integer::sum);
+                        packingTaskDetailEntity.setDeliveryQty(Math.max(packingTaskDetailEntity.getDeliveryQty() - addDTO1.getPackQty(),0));
                     }
                 }else{
                     addDTOList.add(v);

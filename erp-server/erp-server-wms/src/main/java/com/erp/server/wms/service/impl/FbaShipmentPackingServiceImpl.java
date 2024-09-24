@@ -141,7 +141,12 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(fbaCodes);
         List<String> fbaIds = fbaShipmentEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
         if(CollectionUtil.isNotEmpty(fbaIds)){
-            return lambdaQuery().in(FbaShipmentPackingEntity::getMainId,fbaIds).list();
+            List<FbaShipmentPackingEntity> list = lambdaQuery().in(FbaShipmentPackingEntity::getMainId,fbaIds).list();
+            list.forEach(v->{
+                FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntityList.stream().filter(obj->obj.getId().equals(v.getMainId())).findFirst().orElse(new FbaShipmentEntity());
+                v.setFbaShipmenCode(fbaShipmentEntity.getCode() == null?"":fbaShipmentEntity.getCode());
+            });
+            return list;
         }else{
             return new ArrayList<>();
         }
