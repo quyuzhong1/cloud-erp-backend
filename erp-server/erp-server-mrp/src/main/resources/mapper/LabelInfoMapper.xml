@@ -58,8 +58,8 @@
         <if test="searchKeyword != null and searchKeyword != ''">
             and name like concat('%',#{searchKeyword}::text ,'%')
         </if>
-        order by
         <if test="searchKeyword != null and searchKeyword != ''">
+            order by
             case when name ILIKE concat(#{searchKeyword}::text,'%') THEN 1
             when name ILIKE concat('%',#{searchKeyword}::text) THEN 2
             when name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3

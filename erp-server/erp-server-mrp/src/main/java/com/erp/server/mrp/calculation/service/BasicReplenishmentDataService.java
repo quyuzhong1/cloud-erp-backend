@@ -62,8 +62,6 @@ public class BasicReplenishmentDataService {
     @Resource
     private SalesService salesService;
     @Resource
-    private InventoryService inventoryService;
-    @Resource
     private CfgRuleStockUpService cfgRuleStockUpService;
 
     @Resource
@@ -364,7 +362,7 @@ public class BasicReplenishmentDataService {
         LocalDate startDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(360);
         List<LocalDate> dateList = new ArrayList<>();
         // 遍历每一天
-        while (!startDate.isAfter(endDate)) {
+        while (startDate.isBefore(endDate)) {
             dateList.add(startDate);
             startDate = startDate.plusDays(1);
         }

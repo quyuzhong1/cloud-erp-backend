@@ -58,12 +58,13 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
         LocalDate endDate = now.minusDays(2);
         for (TimePeriodEnum value : TimePeriodEnum.values()) {
             BigDecimal qty = salesInfos.stream()
-                    .filter(v -> !now.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
+                    .filter(v -> endDate.minusDays(value.getDays()).isBefore(v.getDate()) && !endDate.isBefore(v.getDate()))
                     .map(ReplenishmentResultDTO.SalesInfoDTO::getSalesQty)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(0, RoundingMode.CEILING);
             timePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, qty));
             long count = salesInfos.stream()
-                    .filter(v -> !now.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
+                    .filter(v -> endDate.minusDays(value.getDays()).isBefore(v.getDate()) && !endDate.isBefore(v.getDate()))
                     .filter(v -> Boolean.FALSE.equals(v.getIsIgnoreOutOfStock()))
                     .filter(v -> !COMPLETELY.getCode().equals(v.getDenoisingType()))
                     .count();
@@ -93,6 +94,7 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                 salesInfo.setSalesQty(new BigDecimal(0));
                 salesInfo.setIsIgnoreOutOfStock(true);
             } else {
+                salesInfo.setIsIgnoreOutOfStock(false);
                 //走销量规则
                 if (ObjectUtils.isEmpty(denoisingResult)) {
                     salesInfo.setSalesQty(new BigDecimal(salesInfo.getOriginalSalesQty()));

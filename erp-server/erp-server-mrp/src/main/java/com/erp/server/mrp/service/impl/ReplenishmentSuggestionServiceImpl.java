@@ -194,7 +194,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             List<BigDecimal> salesAnalysisQty = salesInfoList.stream().map(SalesInfoEntity::getSalesQty).collect(Collectors.toList());
             //销量分析
             view.setSalesAnalysis(new ReplenishmentSuggestionVO.SalesAnalysisVO(salesAnalysisDate, salesAnalysisQty));
-            SalesEstimateManualVO estimateManualVO = salesEstimateManuals.stream().filter(v -> v.getReplenishmentId().equals(view.getDetailId()))
+            SalesEstimateManualVO estimateManualVO = salesEstimateManuals.stream().filter(v -> v.getReplenishmentId().equals(view.getId()))
                     .map(v -> new SalesEstimateManualVO(v.getCurrentMonthSalesQty(), v.getCurrentMonthSurplusSalesQty(), v.getNextMonthSales(), v.getFollowingMonthSales())).findFirst().orElse(null);
             //运营月销量预估
             view.setSalesEstimateManualVO(estimateManualVO);
