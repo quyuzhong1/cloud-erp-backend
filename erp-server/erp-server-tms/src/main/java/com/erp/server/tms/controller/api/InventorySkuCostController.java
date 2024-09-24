@@ -92,7 +92,7 @@ public class InventorySkuCostController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:inventorySkuCost:paging",
-            tableAlias = "lb"
+            tableAlias = "c"
     )
     public ApiResult<List<InventorySkuCostDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<InventorySkuCostDTO.TabListDTO> tabList = inventorySkuCostService.tabList(dto);
@@ -111,7 +111,7 @@ public class InventorySkuCostController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:inventorySkuCost:paging",
-            tableAlias = "a"
+            tableAlias = "c"
     )
     @WebAdvanceQuery(handler = InventorySkuCostQueryHandler.class)
     public ApiResult<PagingVO<InventorySkuCostDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<InventorySkuCostDTO.PagingParamDTO> dto) {
