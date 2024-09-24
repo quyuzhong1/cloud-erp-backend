@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -374,7 +375,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                     StrUtil.format("{}_{}_{}_{}", item.getWarehouseId(), item.getSkuId(),item.getWarehouseLocation(),item.getInventoryStatus()) :
                     item.getInventoryId();
             if(!checkMap.containsKey(mapKey)){
-                checkMap.put(mapKey, item);
+                InventoryTransactionDTO itemCopy = new InventoryTransactionDTO();
+                BeanUtil.copyProperties(item, itemCopy);
+                checkMap.put(mapKey, itemCopy);
             }else {
                 // 合并数量
                 InventoryTransactionDTO inventoryTransactionDTO = checkMap.get(mapKey);
@@ -431,7 +434,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                     , transactionDTO.getInventoryStatusName()
                     , inventoryQty
                     , transactionDTO.getQty()
-                    , inventoryQty - transactionDTO.getQty()
+                    , -(inventoryQty + transactionDTO.getQty())
             );
         }
         return "";
