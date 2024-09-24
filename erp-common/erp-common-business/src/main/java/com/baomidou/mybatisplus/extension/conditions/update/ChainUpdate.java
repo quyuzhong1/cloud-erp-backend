@@ -54,7 +54,7 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
     		LambdaUpdateWrapper lambdaUpdateWrapper = (LambdaUpdateWrapper)wrapper;
     		boolean emptyOfWhere = lambdaUpdateWrapper.isEmptyOfWhere();
     		if(emptyOfWhere) {
-    			throw new ServiceException("不允许没有条件更新数据，请联系实施人员");
+    			throw new ServiceException("不允许没有条件更新数据，如有需要，请联系实施人员");
     		}
     		if(entity == null) {
     			String sqlSet = lambdaUpdateWrapper.getSqlSet();
@@ -84,6 +84,14 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
      * @return 是否成功
      */
     default boolean remove() {
+    	Wrapper<T> wrapper = this.getWrapper();
+    	if(wrapper instanceof LambdaUpdateWrapper) {
+    		LambdaUpdateWrapper lambdaUpdateWrapper = (LambdaUpdateWrapper)wrapper;
+    		boolean emptyOfWhere = lambdaUpdateWrapper.isEmptyOfWhere();
+    		if(emptyOfWhere) {
+    			throw new ServiceException("不允许没有条件删除数据，如有需要，请联系实施人员");
+    		}
+    	}
         return SqlHelper.retBool(getBaseMapper().delete(getWrapper()));
     }
 }
