@@ -55,7 +55,7 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
                 , OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_ANTU.getCode());
         List<AntuReceiptResp> allResult = new ArrayList<>();
 
-        if (CollUtil.isNotEmpty(receiveCodeList)) if (CollUtil.isNotEmpty(receiveCodeList)) {
+        if (CollUtil.isNotEmpty(receiveCodeList)) {
             String typeId = dmpCfgInputEntity.getTypeId();
             DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
             String apiType = dmpCfgApiEntity.getApiType();
