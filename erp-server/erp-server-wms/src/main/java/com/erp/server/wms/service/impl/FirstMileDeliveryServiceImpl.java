@@ -1738,7 +1738,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //补充数据
         buildPackingDetailTask(page.getRecords());
         //切换为装箱清单导出
-        buildPackingDetailExportTask(page.getRecords());
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> list = buildPackingDetailExportTask(page.getRecords());
+        page.setRecords(list);
         return new PagingVO<>(page);
     }
 
@@ -2228,10 +2229,23 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         });
     }
 
-    private void buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
+    private List<WmsCartonDetailDTO.ListPackingDetailDTO> buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
         List<String> taskIds = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskId).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> taskEntityList = packingTaskService.listByIds(taskIds);
         Map<String, PackingTaskEntity> taskMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
+        //FBA货件新数据过滤掉没绑定的箱
+        List<String> fbaCodes = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getBusinessCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(fbaCodes)){
+            List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(fbaCodes);
+            listPackingDetailDTOS = listPackingDetailDTOS.stream().filter(v->{
+                List<FbaShipmentPackingEntity> fbaShipmentPackingEntity = fbaShipmentPackingEntityList.stream().filter(obj->obj.getFbaShipmenCode().equals(v.getBusinessCode())).collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(fbaShipmentPackingEntity)){
+                    return true;
+                }
+                List<String> cartonIds = fbaShipmentPackingEntity.stream().map(FbaShipmentPackingEntity::getCartonId).collect(Collectors.toList());
+                return cartonIds.contains(v.getId());
+            }).collect(Collectors.toList());
+        }
         //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
         List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(taskIds, null);
         Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
@@ -2260,6 +2274,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setPackageWeightStr("0" + UnitEnum.WeightUnitEnum.KG.getName());
             }
         });
+        return listPackingDetailDTOS;
     }
 }
 
