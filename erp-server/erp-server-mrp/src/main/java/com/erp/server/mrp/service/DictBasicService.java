@@ -64,4 +64,10 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return com.erp.model.tms.entity.DictBasicEntity
      */
     DictBasicEntity getByTypeAndValue(String type, String value);
+
+    /**
+     * 树结构
+     * @param type 类型
+     */
+    List<DictBasicDTO.TreeDTO> treeByType(String type);
 }

@@ -1,6 +1,5 @@
 package com.erp.server.mrp.calculation.strategy;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
@@ -118,9 +117,6 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
         CfgRuleLogisticsEntity entity = dto.getDefaultLogistics().stream()
                 .min(Comparator.comparing(CfgRuleLogisticsEntity::getIndex))
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_STOCK_UP_NOT_EXIST, CfgRulePlatformTypeEnum.getName(dto.getPlatformType())));
-        if (ObjectUtil.isEmpty(entity)) {
-            return null;
-        }
         //获取对应明细数据
         List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails = dto.getLogisticsDetails();
         CfgRuleLogisticsDetailEntity detail = null;

@@ -7,13 +7,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.mrp.dto.DictBasicDTO;
 import com.erp.server.mrp.service.DictBasicService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -28,7 +25,7 @@ import java.util.List;
 @RequestMapping("/dictBasic")
 public class DictBasicController extends BaseController {
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
 
@@ -45,5 +42,11 @@ public class DictBasicController extends BaseController {
     }
 
 
+
+    @GetMapping("/treeByType")
+    public ApiResult<List<DictBasicDTO.TreeDTO>> treeByType(@RequestParam String type) {
+        List<DictBasicDTO.TreeDTO> dtos = dictBasicService.treeByType(type);
+        return success(dtos);
+    }
 
 }

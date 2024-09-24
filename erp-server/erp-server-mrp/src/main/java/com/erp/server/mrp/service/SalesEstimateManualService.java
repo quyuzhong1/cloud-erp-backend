@@ -18,9 +18,9 @@ public interface SalesEstimateManualService extends SuperService<SalesEstimateMa
 
     /**
      * 查询运营销量预估
-     * @param detailIds 补货建议明细id
+     * @param ids 补货建议id
      */
-    List<SalesEstimateManualEntity> listByReplenishmentDetailIds(List<String> detailIds);
+    List<SalesEstimateManualEntity> listByReplenishmentIds(List<String> ids);
 
     /**
     * 修改

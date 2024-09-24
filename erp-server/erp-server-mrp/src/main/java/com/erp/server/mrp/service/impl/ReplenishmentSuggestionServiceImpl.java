@@ -163,7 +163,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
-        List<SalesEstimateManualEntity> salesEstimateManuals = salesEstimateManualService.listByReplenishmentDetailIds(detailIds);
+        List<SalesEstimateManualEntity> salesEstimateManuals = salesEstimateManualService.listByReplenishmentIds(ids);
         List<SalesInfoEntity> salesInfos = salesInfoService.listByReplenishmentDetailIds(detailIds, LocalDate.now().minusDays(16), LocalDate.now());
         List<RecentSuggestionDetailEntity> suggestionDetails = recentSuggestionDetailService.listByReplenishmentDetailIds(detailIds);
         List<ReplenishmentSuggestionFavoriteEntity> favoriteList = replenishmentSuggestionFavoriteService.listByReplenishmentIds(ids);

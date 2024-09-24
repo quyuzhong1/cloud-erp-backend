@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -19,10 +20,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -131,6 +134,41 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         return this.getOne(queryWrapper);
     }
 
+    @Override
+    public List<DictBasicDTO.TreeDTO> treeByType(String type) {
+        List<DictBasicEntity> list = list(Wrappers.<DictBasicEntity>lambdaQuery().eq(DictBasicEntity::getType, type));
+        return buildTree(BeanMapperUtils.copyList(DictBasicDTO.TreeDTO.class, list));
+    }
+
+    /**
+     * @return 构建好的树形结构列表
+     */
+    public List<DictBasicDTO.TreeDTO> buildTree(List<DictBasicDTO.TreeDTO> treeList) {
+        // 获取所有的根节点（没有父级的节点，通常 parentId 为 null 或空）
+        List<DictBasicDTO.TreeDTO> rootNodes = treeList.stream()
+                .filter(item -> ObjectUtils.isEmpty(item.getParentId()))
+                .collect(Collectors.toList());
+        // 递归设置子节点
+        rootNodes.forEach(root -> setChildren(root, treeList));
+        return rootNodes;
+    }
+
+    /**
+     * 递归设置子节点
+     *
+     * @param parentNode 父节点
+     * @param allNodes   所有的节点数据
+     */
+    private void setChildren(DictBasicDTO.TreeDTO parentNode, List<DictBasicDTO.TreeDTO> allNodes) {
+        // 找到所有 parentId 等于父节点 id 的节点，作为其子节点
+        List<DictBasicDTO.TreeDTO> children = allNodes.stream()
+                .filter(item -> parentNode.getId().equals(item.getParentId()))
+                .collect(Collectors.toList());
+        // 设置子节点
+        parentNode.setChildrenList(children);
+        // 对每个子节点递归查找其子节点
+        children.forEach(child -> setChildren(child, allNodes));
+    }
 
     private List<DictBasicEntity> listByKey(String key) {
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();

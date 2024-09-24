@@ -67,8 +67,8 @@ public class SalesEstimateManualServiceImpl extends SuperServiceImpl<SalesEstima
 
 
     @Override
-    public List<SalesEstimateManualEntity> listByReplenishmentDetailIds(List<String> detailIds) {
-        return list(Wrappers.<SalesEstimateManualEntity>lambdaQuery().in(SalesEstimateManualEntity::getReplenishmentId, detailIds));
+    public List<SalesEstimateManualEntity> listByReplenishmentIds(List<String> ids) {
+        return list(Wrappers.<SalesEstimateManualEntity>lambdaQuery().in(SalesEstimateManualEntity::getReplenishmentId, ids));
     }
 
     /**

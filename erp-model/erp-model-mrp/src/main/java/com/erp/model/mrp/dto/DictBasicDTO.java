@@ -1,11 +1,14 @@
 package com.erp.model.mrp.dto;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -129,5 +132,23 @@ public class DictBasicDTO implements Serializable {
 
     }
 
+    @Getter
+    @Setter
+    public static class TreeDTO {
+
+        private String id;
+
+        private String code;
+
+        private String type;
+
+        private String typeName;
+
+        private String name;
+
+        private String parentId;
+
+        private List<TreeDTO> childrenList;
+    }
 
 }
