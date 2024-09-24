@@ -107,7 +107,4 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 	
 	public abstract Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse);
 	
-	protected List<String> getSourceCodeKeys() {
-		return null;
-	}
 }

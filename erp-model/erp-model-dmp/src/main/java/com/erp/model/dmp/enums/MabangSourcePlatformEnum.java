@@ -24,6 +24,7 @@ public enum MabangSourcePlatformEnum {
     OTHER("80", "其他", "其他","Other"),
     TikTokShop("81", "TikTokShop", "TikTokShop","TikTok"),
     TikTok("82", "TikTok", "抖音小店","TikTok"),
+    MERCADOLIBRE("83", "Mercadolibre", "美客多","mercadolibre"),
     ;
 
     private final String code;

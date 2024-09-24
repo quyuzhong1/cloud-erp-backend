@@ -4,7 +4,6 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -43,8 +42,8 @@ public class B2cOrderPushDmpOrderConsumer extends AbstractPlatformConsumerHandle
     private DmpPushTaskService dmpPushTaskService;
 
     @Override
-    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
-        dmpPushTaskService.updateStatus(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpPushTaskService.updateStatus(paramDTO);
     }
 
     @Override

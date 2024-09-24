@@ -1,5 +1,7 @@
 package com.erp.server.wms.kingdee;
 
+import java.util.Map;
+
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 
@@ -14,4 +16,6 @@ public interface SyncKingdeeWarehouseService {
      * @return void
      **/
     DmpPushTaskEntity syncDataToKingdee(WarehouseEntity entity, String operate);
+    
+    Map<String , Object> newSyncDataToKingdee(WarehouseEntity entity, String operate);
 }

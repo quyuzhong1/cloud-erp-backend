@@ -173,6 +173,16 @@ public class DmpCfgInputDetailDTO implements Serializable {
         private Boolean disabled;
 
         /**
+         * 延迟时间，单位秒
+         */
+        private Integer dealyTime;
+
+        /**
+         * 任务类型：normal=正常任务，history=历史任务
+         */
+        private String taskType;
+
+        /**
         * 扩展json
         */
         private String extendJson;

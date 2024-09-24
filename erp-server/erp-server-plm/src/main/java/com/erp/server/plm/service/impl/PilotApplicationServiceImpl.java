@@ -30,6 +30,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;

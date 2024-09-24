@@ -133,6 +133,7 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
             OverseasProviderWarehouseDTO.SelectDTO selectDTO = new OverseasProviderWarehouseDTO.SelectDTO();
             selectDTO.setCode(params.getSysType());
             selectDTO.setSearchKeyword(params.getSearchKeyword());
+            selectDTO.setShortName(params.getShortName());
             page.setParams(selectDTO);
             PagingVO<ThirdWarehouseDTO.PageSelectDTO> pageData = wmsOverseasWarehouseFeign.pagingSelect(page);
             return pageData;

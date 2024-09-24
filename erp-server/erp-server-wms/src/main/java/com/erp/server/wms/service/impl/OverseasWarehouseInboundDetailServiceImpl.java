@@ -319,11 +319,11 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entry.getValue(), receiverdMap);
             if (StringUtils.isNotBlank(transferOutId)) {
                 //提交
-                transferInfoService.submit(Collections.singletonList(transferOutId));
+                transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
                 //审核
                 TransferInfoEntity entity = transferInfoService.getById(transferOutId);
                 if (Objects.nonNull(entity)){
-                    transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE);
+                    transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
                 }
             } else {
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);

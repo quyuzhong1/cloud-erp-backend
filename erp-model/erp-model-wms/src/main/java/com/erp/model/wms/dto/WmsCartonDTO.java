@@ -359,6 +359,15 @@ public class WmsCartonDTO {
          */
         private String chargeName;
         /**
+         * 装箱人
+         */
+        private String packingUserName;
+
+        /**
+         * 序号
+         */
+        private Integer index;
+        /**
          * sku*qty
          */
         private List<String> skuList;

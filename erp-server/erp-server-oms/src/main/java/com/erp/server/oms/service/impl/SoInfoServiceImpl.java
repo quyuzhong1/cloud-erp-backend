@@ -69,9 +69,16 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.*;
+import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.MachineInfoFeign;
+import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.rpc.wms.feign.VirtualInventoryFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.SoInfoConverter;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
@@ -354,6 +361,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         platformDTO.setRelationId("");
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+            entity.setVirtualWarehouseId("");
           return;
         }
         entity.setVirtualWarehouseId(virtualWarehouseList.get(0).getVirtualWarehouseId());
@@ -1204,7 +1212,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //修改 订单详情
-            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList());
+            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList(),old);
             return id;
         }
         return "";
@@ -1602,8 +1610,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public Boolean exportExcel(SoInfoDTO.ExportDTO dto) {
-        String fileName = StrUtil.format("销售订单{}.xlsx", System.currentTimeMillis());
-        downloadTaskFeign.saveDownloadTask(fileName, EXPORT_OMS_SO.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售订单", EXPORT_OMS_SO.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -3095,7 +3102,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92015);
         }
         for (SoDetailEntity soDetailEntity :soDetailList) {
-            BatchResultDTO resultDTO = soDetailService.batchUnLockVirtualInventory(soDetailEntity.getId());
+            BatchResultDTO resultDTO = soDetailService.batchUnLockVirtualInventory(soDetailEntity.getId(),null);
             if (!resultDTO.getSuccess()) {
                 throw new ServiceException(StrUtil.format("销售订单【{}】SKU【{}】库存释放失败",soInfoEntity.getCode(),soDetailEntity.getSkuNo()));
             }

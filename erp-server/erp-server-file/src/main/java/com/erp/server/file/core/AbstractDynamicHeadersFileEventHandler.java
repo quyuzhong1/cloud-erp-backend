@@ -38,7 +38,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         sb.append(name);
         try {
             byte[] bytes = new ExcelPrintUtils().exportDynamicHeadersExcel(name, header, data);
-            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
+            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString() + ".xlsx", null);
             fileTask.setFileUrl(s);
         } catch (Exception e) {
             log.error("上传文件失败{}", e.getMessage(), e);

@@ -280,6 +280,11 @@ public class InventoryDTO implements Serializable {
     public static class PagingViewDTO {
 
         /**
+         * 主键id
+         */
+        private String id;
+
+        /**
          * sku id
          */
         private String skuId;

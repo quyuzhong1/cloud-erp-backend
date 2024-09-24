@@ -53,8 +53,8 @@ import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
@@ -1394,7 +1394,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         if (CollectionUtils.isNotEmpty(ids)) {
             //提交
-            transferInfoService.submit(ids);
+            transferInfoService.submit(ids, Boolean.TRUE);
         }
     }
 

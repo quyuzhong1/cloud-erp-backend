@@ -36,7 +36,6 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -129,198 +128,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SoInfoEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
-
-        String id = entity.getId();
-        //业务id
-        resultMap.put("id", id);
-        //编码
-        resultMap.put("code", entity.getCode());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
-        }
-
-        String warehouseId = entity.getWarehouseId();
-        List<SoDetailDTO.ViewDTO> details = soDetailService.listByMainId(id, warehouseId);
-        if (CollectionUtils.isEmpty(details)) {
-            throw new ServiceException("未找到销售订单明细");
-        }
-        //交货方式
-        resultMap.put("deliveryMode", entity.getDeliveryMode());
-        //单据类型
-        resultMap.put("orderType", entity.getOrderType());
-        LocalDate createDate = entity.getCreateTime().toLocalDate();
-        LocalDate billDate = entity.getBillDate();
-        if (billDate != null) {
-            createDate = billDate;
-        }
-        //创建日期
-        resultMap.put("createDate", LocalDateTimeUtil.format(createDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
-        //是否收取运费
-        resultMap.put("isCollectShippingFee", entity.getIsCollectShippingFee());
-
-        //销售组织
-        String salesOrgId = entity.getSalesOrgId();
-        resultMap.put("seller", entity.getSellerName());
-
-        //库存组织
-        String warehouseOrgId = entity.getWarehouseOrgId();
-        List<String> orgIdList = new ArrayList<>(2);
-        orgIdList.add(warehouseOrgId);
-        orgIdList.add(salesOrgId);
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-        //销售组织的金蝶code
-        String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
-                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
-
-        //销售员
-        String sellerId = entity.getSellerId();
-        String deptCode = "";
-        //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
-            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            findBusinessOperator.setOrgId(salesOrgId);
-            findBusinessOperator.setUserId(sellerId);
-            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
-            //获取员工业务信息
-            KingdeeOperatorRefPostDTO.OperatorDTO kingdeeSeller = kingdeeFeign.getBusinessOperator(findBusinessOperator);
-            //销售员
-            if (!Objects.isNull(kingdeeSeller)) {
-                deptCode=kingdeeSeller.getDeptCode();
-                resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
-            }
-        }
-        resultMap.put("deptCode", deptCode);
-        String currency = entity.getCurrency();
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
-        //结算币别
-        String currencyCode = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
-                map(CurrencyDTO.ViewDTO::getKingdeeCode).orElse("");
-        //银行手续费
-        BigDecimal bankServiceFee = entity.getBankServiceFee();
-        resultMap.put("bankServiceFee", bankServiceFee);
-
-        //运费金额
-        BigDecimal shippingFee = entity.getShippingFee();
-        resultMap.put("shippingFee", shippingFee);
-        //是否含税
-        Boolean isTax = entity.getIsTax();
-        resultMap.put("isTax", isTax);
-        resultMap.put("currencyCode", currencyCode);
-        resultMap.put("discountAmount", Objects.nonNull(entity.getDiscountAmount()) ? entity.getDiscountAmount() : BigDecimal.ZERO);
-        if (StringUtils.isNotBlank(salesOrgCode)) {
-            resultMap.put("salesOrgCode", salesOrgCode);
-        }
-        String warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
-                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
-
-        //客户
-        String customerId = entity.getCustomerId();
-        if (StringUtils.isNotBlank(customerId)) {
-            CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
-            if (customerInfo != null) {
-                resultMap.put("customerCode", customerInfo.getCode());
-            }
-        }
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
-        String kingdeeWarehouseCode = "";
-        if (CollectionUtils.isNotEmpty(warehouseList)) {
-            kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
-        }
-        //联系电话
-        resultMap.put("telNumber", entity.getTelNumber());
-        //收货人
-        resultMap.put("receiverName", entity.getReceiverName());
-
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
-
-        // 收款方式
-        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
-        if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(entity.getReceiveMethod())) {
-            DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveMethod())).findFirst().orElse(null);
-            if (Objects.nonNull(dictBasicEntity)) {
-                resultMap.put("receiveMethod", dictBasicEntity.getRemark());
-            }
-        }
-        // 收款条件
-        KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(entity.getReceiveCondition());
-        if (Objects.nonNull(receiptCondition)) {
-            resultMap.put("receiveCondition", receiptCondition.getCode());
-        }
-
-        // 收款日期
-        if (Objects.nonNull(entity.getReceiveDate())) {
-            resultMap.put("receiveDate", LocalDateTimeUtil.format(entity.getReceiveDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
-        }
-        // 收款金额
-        if (Objects.nonNull(entity.getReceiveAmount())) {
-            resultMap.put("receiveAmount", entity.getReceiveAmount());
-        }
-        // 收款账号
-        String receiveAccount = entity.getReceiveAccount();
-        if (StrUtils.isNotEmpty(receiveAccount)) {
-            BankAccountEntity bankAccount = bankAccountService.getById(receiveAccount);
-            if (Objects.nonNull(bankAccount)) {
-                resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
-            }
-        }
-
-        //报关费 贸易条件
-        BigDecimal customsFee = entity.getCustomsFee();
-        resultMap.put("customsFee", customsFee);
-        String tradeTerm = entity.getTradeTerm();
-        resultMap.put("tradeTerm", tradeTerm);
-        String receiveAddressId = entity.getReceiveAddressId();
-        CustomerAddressEntity addressEntity = customerAddressService.getById(receiveAddressId);
-        String receiveAddressCode = addressEntity != null ? addressEntity.getCode() : "";
-        String receiveAddress = addressEntity != null ? addressEntity.getAddress() : "";
-
-        //收货地址
-        resultMap.put("receiveAddress", receiveAddress);
-        //交货地点
-        resultMap.put("receiveAddressCode", receiveAddressCode);
-        BigDecimal exchangeRate=Objects.isNull(details.get(0).getExchangeRate())||details.get(0).getExchangeRate().compareTo(BigDecimal.ZERO)==0? MathUtil.BigDecimal_1:details.get(0).getExchangeRate();
-        //汇率
-        resultMap.put("exchangeRate",exchangeRate);
-        //要货日期
-        LocalDate requireDate = entity.getRequireDate();
-        List<JSONObject> list = new ArrayList<>(details.size());
-        for (SoDetailDTO.ViewDTO item : details) {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.set("skuNo", item.getSkuNo());
-            jsonObject.set("requireDate", LocalDateTimeUtil.format(requireDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
-            jsonObject.set("qty", item.getQty());
-            jsonObject.set("baseQty", item.getQty());
-            //对应金蝶含税单价
-            jsonObject.set("taxPrice", item.getTaxPrice());
-            jsonObject.set("taxRate", item.getTaxRate());
-            jsonObject.set("isGift", item.getIsGift());
-            //结算组织
-            jsonObject.set("settleOrgCode", salesOrgCode);
-            BigDecimal discountAmount = Objects.nonNull(item.getDiscountAmount()) ? item.getDiscountAmount() : BigDecimal.ZERO;
-            jsonObject.set("amount", item.getAmount().add(discountAmount).setScale(4,BigDecimal.ROUND_HALF_UP));
-            //单位
-            String unit = item.getUnit();
-            jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
-            jsonObject.set("warehouseOrgCode", warehouseOrgCode);
-            jsonObject.set("curInventoryQty", item.getQty());
-            jsonObject.set("stockBaseQty", item.getQty());
-            jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
-            jsonObject.set("remark", item.getRemark());
-            jsonObject.set("detailDiscountAmount", discountAmount);
-            list.add(jsonObject);
-        }
-
-        resultMap.put("detailList", list);
         //生成任务
-       return saveTask(entity,operate,resultMap);
+       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
     }
 
     /**
@@ -528,5 +337,200 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         biOrderInfoEntity.setItemList(orderItemEntities);
         return biOrderInfoEntity;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(SoInfoEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+
+        String id = entity.getId();
+        //业务id
+        resultMap.put("id", id);
+        //编码
+        resultMap.put("code", entity.getCode());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return resultMap;
+        }
+
+        String warehouseId = entity.getWarehouseId();
+        List<SoDetailDTO.ViewDTO> details = soDetailService.listByMainId(id, warehouseId);
+        if (CollectionUtils.isEmpty(details)) {
+            throw new ServiceException("未找到销售订单明细");
+        }
+        //交货方式
+        resultMap.put("deliveryMode", entity.getDeliveryMode());
+        //单据类型
+        resultMap.put("orderType", entity.getOrderType());
+        LocalDate createDate = entity.getCreateTime().toLocalDate();
+        LocalDate billDate = entity.getBillDate();
+        if (billDate != null) {
+            createDate = billDate;
+        }
+        //创建日期
+        resultMap.put("createDate", LocalDateTimeUtil.format(createDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
+        //是否收取运费
+        resultMap.put("isCollectShippingFee", entity.getIsCollectShippingFee());
+
+        //销售组织
+        String salesOrgId = entity.getSalesOrgId();
+        resultMap.put("seller", entity.getSellerName());
+
+        //库存组织
+        String warehouseOrgId = entity.getWarehouseOrgId();
+        List<String> orgIdList = new ArrayList<>(2);
+        orgIdList.add(warehouseOrgId);
+        orgIdList.add(salesOrgId);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        //销售组织的金蝶code
+        String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+
+        //销售员
+        String sellerId = entity.getSellerId();
+        String deptCode = "";
+        //获取业务员信息
+        if (StringUtils.isNotBlank(sellerId)) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgId(salesOrgId);
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+            //获取员工业务信息
+            KingdeeOperatorRefPostDTO.OperatorDTO kingdeeSeller = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //销售员
+            if (!Objects.isNull(kingdeeSeller)) {
+                deptCode=kingdeeSeller.getDeptCode();
+                resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
+            }
+        }
+        resultMap.put("deptCode", deptCode);
+        String currency = entity.getCurrency();
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
+        //结算币别
+        String currencyCode = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                map(CurrencyDTO.ViewDTO::getKingdeeCode).orElse("");
+        //银行手续费
+        BigDecimal bankServiceFee = entity.getBankServiceFee();
+        resultMap.put("bankServiceFee", bankServiceFee);
+
+        //运费金额
+        BigDecimal shippingFee = entity.getShippingFee();
+        resultMap.put("shippingFee", shippingFee);
+        //是否含税
+        Boolean isTax = entity.getIsTax();
+        resultMap.put("isTax", isTax);
+        resultMap.put("currencyCode", currencyCode);
+        resultMap.put("discountAmount", Objects.nonNull(entity.getDiscountAmount()) ? entity.getDiscountAmount() : BigDecimal.ZERO);
+        if (StringUtils.isNotBlank(salesOrgCode)) {
+            resultMap.put("salesOrgCode", salesOrgCode);
+        }
+        String warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+
+        //客户
+        String customerId = entity.getCustomerId();
+        if (StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+            if (customerInfo != null) {
+                resultMap.put("customerCode", customerInfo.getCode());
+            }
+        }
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        String kingdeeWarehouseCode = "";
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
+        }
+        //联系电话
+        resultMap.put("telNumber", entity.getTelNumber());
+        //收货人
+        resultMap.put("receiverName", entity.getReceiverName());
+
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        // 收款方式
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+        if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(entity.getReceiveMethod())) {
+            DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveMethod())).findFirst().orElse(null);
+            if (Objects.nonNull(dictBasicEntity)) {
+                resultMap.put("receiveMethod", dictBasicEntity.getRemark());
+            }
+        }
+        // 收款条件
+        KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(entity.getReceiveCondition());
+        if (Objects.nonNull(receiptCondition)) {
+            resultMap.put("receiveCondition", receiptCondition.getCode());
+        }
+
+        // 收款日期
+        if (Objects.nonNull(entity.getReceiveDate())) {
+            resultMap.put("receiveDate", LocalDateTimeUtil.format(entity.getReceiveDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
+        }
+        // 收款金额
+        if (Objects.nonNull(entity.getReceiveAmount())) {
+            resultMap.put("receiveAmount", entity.getReceiveAmount());
+        }
+        // 收款账号
+        String receiveAccount = entity.getReceiveAccount();
+        if (StrUtils.isNotEmpty(receiveAccount)) {
+            BankAccountEntity bankAccount = bankAccountService.getById(receiveAccount);
+            if (Objects.nonNull(bankAccount)) {
+                resultMap.put("receiveAccount", bankAccount.getBankAccountNo());
+            }
+        }
+
+        //报关费 贸易条件
+        BigDecimal customsFee = entity.getCustomsFee();
+        resultMap.put("customsFee", customsFee);
+        String tradeTerm = entity.getTradeTerm();
+        resultMap.put("tradeTerm", tradeTerm);
+        String receiveAddressId = entity.getReceiveAddressId();
+        CustomerAddressEntity addressEntity = customerAddressService.getById(receiveAddressId);
+        String receiveAddressCode = addressEntity != null ? addressEntity.getCode() : "";
+        String receiveAddress = addressEntity != null ? addressEntity.getAddress() : "";
+
+        //收货地址
+        resultMap.put("receiveAddress", receiveAddress);
+        //交货地点
+        resultMap.put("receiveAddressCode", receiveAddressCode);
+        BigDecimal exchangeRate=Objects.isNull(details.get(0).getExchangeRate())||details.get(0).getExchangeRate().compareTo(BigDecimal.ZERO)==0? MathUtil.BigDecimal_1:details.get(0).getExchangeRate();
+        //汇率
+        resultMap.put("exchangeRate",exchangeRate);
+        //要货日期
+        LocalDate requireDate = entity.getRequireDate();
+        List<JSONObject> list = new ArrayList<>(details.size());
+        for (SoDetailDTO.ViewDTO item : details) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.set("skuNo", item.getSkuNo());
+            jsonObject.set("requireDate", LocalDateTimeUtil.format(requireDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
+            jsonObject.set("qty", item.getQty());
+            jsonObject.set("baseQty", item.getQty());
+            //对应金蝶含税单价
+            jsonObject.set("taxPrice", item.getTaxPrice());
+            jsonObject.set("taxRate", item.getTaxRate());
+            jsonObject.set("isGift", item.getIsGift());
+            //结算组织
+            jsonObject.set("settleOrgCode", salesOrgCode);
+            BigDecimal discountAmount = Objects.nonNull(item.getDiscountAmount()) ? item.getDiscountAmount() : BigDecimal.ZERO;
+            jsonObject.set("amount", item.getAmount().add(discountAmount).setScale(4,BigDecimal.ROUND_HALF_UP));
+            //单位
+            String unit = item.getUnit();
+            jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
+            jsonObject.set("warehouseOrgCode", warehouseOrgCode);
+            jsonObject.set("curInventoryQty", item.getQty());
+            jsonObject.set("stockBaseQty", item.getQty());
+            jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
+            jsonObject.set("remark", item.getRemark());
+            jsonObject.set("detailDiscountAmount", discountAmount);
+            list.add(jsonObject);
+        }
+
+        resultMap.put("detailList", list);
+        return resultMap;
+	}
 
 }

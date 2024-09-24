@@ -37,6 +37,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private WmsDeliveryPlanService wmsDeliveryPlanService;
 
+    @Resource
+    private TransferInfoService transferInfoService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -64,6 +67,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case DELIVERY_PLAN:
                 //海外发货计划
                 deliveryPlanApproveEnd(dto);
+                break;
+            case TRANSFER_INFO:
+                //直接调拨单
+                transferInfoApproveEnd(dto);
                 break;
             default:
                 break;
@@ -159,6 +166,19 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
         return wmsDeliveryPlanService.approveEnd(approveOne,entity);
+    }
+
+    /**
+     * 直接调拨单
+     * @Author Luo_WG
+     * @Date 2024/9/6 18:18
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean transferInfoApproveEnd(EndProcessDTO dto) {
+        //直接调拨单
+        TransferInfoEntity entity = transferInfoService.getById(dto.getBusinessId());
+        return transferInfoService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", Boolean.TRUE);
     }
 
 }

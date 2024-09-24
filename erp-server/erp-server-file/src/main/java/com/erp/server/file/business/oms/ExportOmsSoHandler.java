@@ -73,7 +73,7 @@ public class ExportOmsSoHandler extends AbstractPageFileEventHandler<SoInfoDTO.P
             headMap.keySet().removeIf(r -> Objects.equals("id", r));
             dataList.forEach(data -> data.keySet().removeIf(r -> Objects.equals("id", r)));
             byte[] bytes = ExcelUtil.easyUtilStr(new ArrayList<>(headMap.values()), "销售订单", dataList, sb.toString());
-            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
+            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString() + ".xlsx", null);
             fileTask.setFileUrl(s);
         } catch (Exception e) {
             log.error("上传文件失败{}", e.getMessage(), e);

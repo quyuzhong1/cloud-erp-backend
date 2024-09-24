@@ -32,5 +32,13 @@
         code, name, type, disabled
     </sql>
 
+    <select id="listDmpBasicSystem" resultType="com.erp.model.plm.dto.DictControllerDTO$DictDropDownDTO">
+        SELECT
+            id AS code,
+            name
+        FROM dmp_basic_system
+        WHERE is_deleted = FALSE
+    </select>
+
 
 </mapper>

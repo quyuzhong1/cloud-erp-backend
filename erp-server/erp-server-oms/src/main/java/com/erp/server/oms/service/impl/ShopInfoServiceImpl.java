@@ -9,9 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -758,8 +756,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-
-
         return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
     }
 
@@ -1256,6 +1252,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         authorizeUrlDTO.setShopInfoEntityList(list);
 
         String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        for (ShopInfoEntity shop : list) {
+            this.saveCustom(shop);
+        }
         return new ShopDTO.RedirectDTO(shopIds.get(0), shopAuthorizeUrl);
     }
 
@@ -1569,5 +1568,28 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<ShopInfoEntity> list = this.list();
         List<BaseDropDownDTO.DisabledDTO> resultList = ShopInfoConverter.INSTANCE.ShopInfoEntityToDisabledDTO(list);
         return resultList;
+    }
+    /**
+     * 如果没有选客户，就进行绑定
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveCustom(ShopInfoEntity shopInfoEntity) {
+        if (StringUtils.isBlank(shopInfoEntity.getCustomerId())) {
+            //店铺客户信息--如果存在则直接绑定原始的，不存在就创建并提交审核
+            CustomerInfoEntity customerInfoEntity = this.autoCreateShopCustomer(shopInfoEntity.getId());
+            if (Objects.nonNull(customerInfoEntity)) {
+                ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
+                if (Objects.isNull( approveStatus)||!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus.getStatus())) {
+                    List<String> ids = Arrays.asList(customerInfoEntity.getId());
+                    //提交
+                    Boolean submitResult = customerInfoService.submit(ids);
+                    if (submitResult) {
+                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
+                    }
+                }
+            }
+        }
     }
 }

@@ -11,6 +11,7 @@ import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.entity.DmpSoReceiverEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
@@ -18,6 +19,7 @@ import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
+import com.erp.server.dmp.service.DmpSoReceiverService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +38,8 @@ import java.util.stream.Collectors;
 public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
     @Resource
     private DmpSoInfoService dmpSoInfoService;
-
+    @Resource
+    private DmpSoReceiverService dmpSoReceiverService;
     @Resource
     private DmpSoDetailService dmpSoDetailService;
 
@@ -59,10 +62,12 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             if (CollUtil.isNotEmpty(list)) {
                 List<String> ids = list.stream().map(DmpSoInfoEntity::getId).collect(Collectors.toList());
                 dmpSoInfoService.removeByIds(ids);
+                dmpSoReceiverService.lambdaUpdate()
+                        .in(DmpSoReceiverEntity::getMainId, ids)
+                        .remove();
                 dmpSoDetailService.lambdaUpdate()
                         .in(DmpSoDetailEntity::getMainId, ids)
-                        .eq(DmpSoDetailEntity::getIsDeleted, false).set(DmpSoDetailEntity::getIsDeleted, true)
-                        .update();
+                        .remove();
             }
         }
 

@@ -1,8 +1,11 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -11,12 +14,17 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.scm.entity.ScmPushMsgEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -25,6 +33,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
+import com.erp.server.scm.service.ScmPushMsgService;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import com.erp.server.scm.service.SupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -61,6 +70,9 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    
+    @Resource
+    private ScmPushMsgService scmPushMsgService;
 
 
     /**
@@ -70,7 +82,56 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SubcontractOrderEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
+        //生成任务
+       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (SubcontractOrderEntity entity, String operate, Map<String, Object> resultMap) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SUBCONTRACT_ORDER.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(entity.getId());
+            dmpSyncTaskDTO.setSourceCode(entity.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SUBCONTRACT_ORDER_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
+        
+        ScmPushMsgEntity scmPushMsgEntity = new ScmPushMsgEntity();
+        scmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        scmPushMsgEntity.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+        scmPushMsgEntity.setSourceId(entity.getId());
+        scmPushMsgEntity.setSourceCode(entity.getCode());
+        scmPushMsgEntity.setSyncOperate(operate);
+        scmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        scmPushMsgService.save(scmPushMsgEntity);
+        
+        return null;
+    }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(SubcontractOrderEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
 
         //业务id
         resultMap.put("id",entity.getId());
@@ -82,7 +143,7 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         resultMap.put("operate", operate);
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
+            return resultMap;
         }
         //采购日期
         resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
@@ -170,31 +231,6 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             list.add(jsonObject);
         }
         resultMap.put("list",list);
-
-        //生成任务
-       return saveTask(entity,operate,resultMap);
-    }
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (SubcontractOrderEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(entity.getId());
-        dmpSyncTaskDTO.setSourceCode(entity.getCode());
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SUBCONTRACT_ORDER_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
-    }
+        return resultMap;
+	}
 }

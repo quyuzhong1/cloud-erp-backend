@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -123,4 +124,5 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
      * @return
      */
     List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(@Param("deliveryCodes") List<String> deliveryCodes);
+    Page<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@Param("query") Page<PackingTaskDTO.ExportDTO> query,@Param("params") PackingTaskDTO.ExportDTO page, @Param("ids") List<String> ids, @Param("permissionSql") String permissionSql);
 }
