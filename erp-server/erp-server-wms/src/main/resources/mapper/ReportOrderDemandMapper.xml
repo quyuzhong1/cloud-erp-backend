@@ -42,5 +42,8 @@
         warehouse_id, virtual_warehouse_id, virtual_warehouse_name, warehouse_name, sku_id, sku_no, product_name, total_qty, so_qty, b2c_so_qty, first_mile_qty, virtual_usable_qty, is_virtual_scarce, virtual_scarce_qty
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO"></select>
+
 
 </mapper>

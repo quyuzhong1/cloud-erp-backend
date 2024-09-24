@@ -201,4 +201,19 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/fbaShipmentPacking")
     PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
 
+    /**
+     * 订单需求明细导出
+     */
+    @PostMapping("/feign/export/listReportOrderDemandDetail")
+    PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto);
+    /**
+     * 缺货统计导出
+     */
+    @PostMapping("/feign/export/listReportOrderDemand")
+    PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(@RequestBody PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto);
+    /**
+     * 销售看板导出
+     */
+    @PostMapping("/feign/export/listReportOrderSales")
+    PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
 }

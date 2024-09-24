@@ -1,14 +1,10 @@
 package com.erp.model.wms.dto;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -30,11 +26,10 @@ public class CfgSettingVirtualValueDTO implements Serializable {
     public static class SalesDashboardDTO{
 
         /**
-         * 订单类型，all,b2b,b2c
+         * 订单类型，b2b,b2c
          */
-        @NotBlank(message = "订单类型不能为空")
-        @StateEnumValue(clazz = CfgSettingOrderTypeEnum.class, message = "订单类型输入值有误")
-        private String orderType;
+        @NotEmpty(message = "订单类型不能为空")
+        private List<String> orderTypeList;
 
         /**
          * b2b销售订单状态
@@ -90,8 +85,8 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         /**
          * 作废状态集合
          */
-        @NotNull(message = "作废状态不能为空")
-        private Boolean invalidStatus;
+        @NotEmpty(message = "作废状态不能为空")
+        private List<Boolean> invalidStatusList;
 
         /**
          * 审核状态集合

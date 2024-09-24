@@ -133,6 +133,10 @@ public class ExportWmsFeignController {
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
 
+
+    @Resource
+    private ReportOrderDemandDetailService reportOrderDemandDetailService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -636,5 +640,13 @@ public class ExportWmsFeignController {
     @PostMapping("/inventoryAge")
     public PagingVO<DynamicExcelDTO> exportWmsInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto){
         return inventoryService.exportWmsInventoryAge(dto);
+    }
+
+    /**
+     *
+     */
+    @PostMapping("/listReportOrderDemandDetail")
+    public PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto){
+        return reportOrderDemandDetailService.listReportOrderDemandDetail(dto);
     }
 }

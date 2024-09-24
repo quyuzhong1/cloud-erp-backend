@@ -2,6 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -11,8 +13,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderDemandDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.ReportOrderDemandDetailService;
@@ -23,6 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_DEMAND_DETAIL;
+
 /**
  * <p>
  * 订单需求明细报表 服务实现类
@@ -36,6 +43,10 @@ import java.util.Optional;
 public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportOrderDemandDetailMapper, ReportOrderDemandDetailEntity> implements ReportOrderDemandDetailService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -94,15 +105,24 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
     }
 
     @Override
-    public PagingVO<ReportOrderDemandDetailDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<ReportOrderDemandDetailDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        return new PagingVO(pageData);
     }
 
     @Override
     public Boolean exportExcel(ReportOrderDemandDetailDTO.PagingParamDTO dto) {
-        return null;
+        downloadTaskFeign.saveDownloadTask("订单需求明细", EXPORT_WMS_REPORT_ORDER_DEMAND_DETAIL.getCode(), dto);
+        return Boolean.TRUE;
     }
 
+
+    @Override
+    public PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> pagingParamDTO) {
+        PagingVO<ReportOrderDemandDetailDTO.ListDTO> resultList = this.paging(pagingParamDTO);
+        return resultList;
+    }
 
     /**
     * 新增修改处理数据
