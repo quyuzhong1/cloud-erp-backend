@@ -358,6 +358,9 @@ public class DmpInoutController extends BaseController {
 				    						dto = locationList.stream().filter(l -> l.getCode().startsWith("2") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
 				    						if(dto == null) {
 				    							dto = locationList.stream().filter(l -> l.getCode().startsWith("4") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+				    							if(dto == null) {
+					    							dto = locationList.stream().filter(l -> l.getCode().equals("") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+					    						}
 				    						}
 				    					}
 				    					if(dto != null) {

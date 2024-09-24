@@ -23,6 +23,7 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
+import com.erp.server.dmp.controller.api.DmpInoutController;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpCfgOutputService;
@@ -47,7 +48,10 @@ public class DmpOutputTaskJob {
 	private DmpCfgOutputService dmpCfgOutputService;
     @Resource
 	private DmpOutputTaskFactory dmpOutputTaskFactory;
-
+    @Autowired
+	private DmpInoutController dmpInoutController;
+	
+	
 	@XxlJob("doOutputErrorTask")
     public ReturnT doOutputErrorTask(){
 		String jobParam = XxlJobHelper.getJobParam();
@@ -105,7 +109,6 @@ public class DmpOutputTaskJob {
 		return ReturnT.SUCCESS;
 	}
 
-
 	/**
 	 * 输出任务执行
 	 */
@@ -120,6 +123,12 @@ public class DmpOutputTaskJob {
 				dmpOutputTaskFactory.dealOutputTask(dmpOutputFinishRequest);
 			}
 		}
+		return ReturnT.SUCCESS;
+	}
+	
+	@XxlJob("wdtInsufficientInventoryTask")
+    public ReturnT wdtInsufficientInventoryTask(){
+		dmpInoutController.getWdtInsufficientInventory();
 		return ReturnT.SUCCESS;
 	}
 }

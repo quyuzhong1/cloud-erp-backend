@@ -36,8 +36,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.DmpTaskMsgDTO;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.dmp.entity.DmpPushMsgEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
@@ -47,12 +50,16 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.mapper.DmpPushTaskHistoryMapper;
 import com.erp.server.dmp.mapper.DmpPushTaskMapper;
+import com.erp.server.dmp.service.DmpOutputTaskRecordService;
+import com.erp.server.dmp.service.DmpOutputTaskService;
+import com.erp.server.dmp.service.DmpPushMsgService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -104,6 +111,10 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
     private DmpPushTaskServiceImpl dmpPushTaskService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private DmpPushMsgService dmpPushMsgService;
+    @Autowired
+    private DmpOutputTaskRecordService dmpOutputTaskRecordService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -365,7 +376,16 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
         //获取数据
         List<DmpPushTaskEntity> list = this.list(new LambdaQueryWrapper<DmpPushTaskEntity>().in(DmpPushTaskEntity::getSourceId,sourceIds));
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        	List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.lambdaQuery().in(DmpPushMsgEntity::getSourceId, sourceIds).list();
+        	if(CollUtil.isEmpty(dmpPushMsgEntityList)) {
+        		throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DATA);
+        	}
+        	return dmpOutputTaskRecordService.lambdaUpdate()
+	        	.in(DmpOutputTaskRecordEntity::getDataId, dmpPushMsgEntityList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+	        	.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+	        	.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
+                .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+	        	.update();
         }
         List<String> noNeedSyncIds = list.stream().filter(obj ->
                         (!SyncStatusEnum.IN_SYNC.getCode().equals(obj.getStatus()) && !SyncStatusEnum.NO_NEED_SYNC.getCode().equals(obj.getStatus())))
