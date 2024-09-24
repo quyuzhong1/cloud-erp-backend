@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.erp.model.wms.dto.PackingTaskDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -33,4 +34,6 @@ public interface WmsCartonMapper extends BaseMapper<WmsCartonEntity> {
      * @return
      */
     List<WmsCartonEntity> listByTaskIdsAndPermission(@Param("params") PackingTaskDTO.PackedDetailDTO packedDetailDTO);
+
+    List<WmsCartonDTO.DetailDTO> listByPackingTaskId(@Param("packingTaskId") String packingTaskId);
 }

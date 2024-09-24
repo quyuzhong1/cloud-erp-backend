@@ -207,6 +207,12 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("track_query_type")
     private String trackQueryType;
 
+    /**
+     * 材积设置
+     */
+    @TableField("volume_setting")
+    private Integer volumeSetting;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String NAME = "name";

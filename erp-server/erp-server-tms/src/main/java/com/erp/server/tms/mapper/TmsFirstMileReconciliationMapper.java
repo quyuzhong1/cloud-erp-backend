@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -52,4 +53,11 @@ public interface TmsFirstMileReconciliationMapper extends BaseMapper<TmsFirstMil
     * @return
     */
     List<TmsFirstMileReconciliationDTO.TabListDTO> tabList(@Param("params") TmsFirstMileReconciliationDTO.PagingParamDTO searchParam);
+
+    /**
+     * 根据物流单获取对账单信息和费用数据
+     * @param ids
+     * @return
+     */
+    List<TmsFirstMileLogisticDTO.ReconciliationDTO> listReconciliationAndCostByBillIds(@Param("ids")List<String> ids);
 }

@@ -374,7 +374,7 @@ public class DownloadHandler {
     }
 
 
-    private static Response sendRequest(String url) throws IOException {
+    public static Response sendRequest(String url) throws IOException {
         OkHttpClient httpclient = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(url)

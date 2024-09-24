@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Pair;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -40,10 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH;
@@ -68,6 +66,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private WarehouseLocationMoveService warehouseLocationMoveService;
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+    @Resource
+    private TransactionFlowService transactionFlowService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Override
@@ -244,44 +244,65 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
             }
 
-            //所有的仓位都补货
-            List<WarehouseLocationReplenishEntity> replenishList = new ArrayList<>();
-            for (InventoryEntity inventoryEntity : pickInventoryList) {
-                WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
-                BeanMapper.copy(entity, replenishItem);
-                replenishItem.setToWarehouseLocation(inventoryEntity.getWarehouseLocation());
+            /*
+                1. 生成仓位补货时，如果缺货的SKU在拣货区有多个仓位，需要加一个筛选条件，查询SKU在多个拣货区仓位的库存流水，找出来出入库流水时间最新的一个仓位生成一条仓位补货数据
+                2. 如果都不存在流水，或单据日期一致，则默认按id升序排序，取第一个
+                备注：仓位流水查询通过“出入库流水”查询
+            */
+            List<TransactionFlowEntity> transactionFlowList = transactionFlowService.lambdaQuery()
+                    .eq(TransactionFlowEntity::getWarehouseId, dto.getWarehouseId())
+                    .eq(TransactionFlowEntity::getSkuId, dto.getSkuId())
+                    .in(TransactionFlowEntity::getWarehouseLocation, pickLocationCodeList)
+                    .orderByDesc(TransactionFlowEntity::getBillDate, TransactionFlowEntity::getId)
+                    .last("limit 1")
+                    .list();
 
-                //推荐补货库区
-                WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(inventoryEntity.getWarehouseLocation())).findAny().get();
-                WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findAny().get();
-                replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
+            InventoryEntity inventoryEntity = null;
+            if(CollectionUtils.isEmpty(transactionFlowList)){
+                pickInventoryList = pickInventoryList.stream()
+                        .sorted(Comparator.comparing(InventoryEntity::getWarehouseLocation))
+                        .collect(Collectors.toList());
+                inventoryEntity = pickInventoryList.get(0);
+            }else {
+                String warehouseLocation = transactionFlowList.get(0).getWarehouseLocation();
+                inventoryEntity = pickInventoryList.stream().
+                        filter(r -> warehouseLocation.equals(r.getWarehouseLocation())).findFirst().orElse(null);
+            }
 
-                Integer suggestQty = 0;
-                WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
-                        .eq("sku_id", dto.getSkuId())
-                        .eq("warehouse_id", dto.getWarehouseId())
-                        .eq("warehouse_location", inventoryEntity.getWarehouseLocation())
-                );
-                if(safetyInventoryEntity != null){
-                    //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
-                    if(safetyInventoryEntity.getMaxQty() != 0){
-                        suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
-                    }
-                    //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
-                    if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0){
-                        suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
-                    }
-                    //无最大补货量无安全库存时：等于缺货数量
-                    if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0){
-                        suggestQty = dto.getQty();
-                    }
-                }else {
+            WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
+            BeanMapper.copy(entity, replenishItem);
+            replenishItem.setToWarehouseLocation(inventoryEntity.getWarehouseLocation());
+
+            //推荐补货库区
+            InventoryEntity finalInventoryEntity = inventoryEntity;
+            WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(finalInventoryEntity.getWarehouseLocation())).findAny().get();
+            WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findAny().get();
+            replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
+
+            Integer suggestQty = 0;
+            WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
+                    .eq("sku_id", dto.getSkuId())
+                    .eq("warehouse_id", dto.getWarehouseId())
+                    .eq("warehouse_location", inventoryEntity.getWarehouseLocation())
+            );
+            if (safetyInventoryEntity != null) {
+                //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
+                if (safetyInventoryEntity.getMaxQty() != 0) {
+                    suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
+                }
+                //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
+                if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0) {
+                    suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
+                }
+                //无最大补货量无安全库存时：等于缺货数量
+                if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0) {
                     suggestQty = dto.getQty();
                 }
-                replenishItem.setSuggestQty(suggestQty);
-                replenishList.add(replenishItem);
+            } else {
+                suggestQty = dto.getQty();
             }
-            this.saveBatch(replenishList);
+            replenishItem.setSuggestQty(suggestQty);
+            this.save(replenishItem);
         }
 
         //安全库存补货

@@ -81,8 +81,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         ProductPurchaseEntity productPurchase = Optional.ofNullable(productPurchaseService.getBySkuId(entity.getId())).orElse(new ProductPurchaseEntity());
         ProductPackEntity productPack = productPackService.getBySkuId(entity.getId());
         GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
-        dto.setGoodsNo(info.getSpuNo());
-        dto.setGoodsName(info.getName());
+        dto.setGoodsNo(entity.getSkuNo());
+        dto.setGoodsName(entity.getName());
         dto.setGoodsType(getGoodsType(info.getSaleMethod(), info.getProperty()));
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());

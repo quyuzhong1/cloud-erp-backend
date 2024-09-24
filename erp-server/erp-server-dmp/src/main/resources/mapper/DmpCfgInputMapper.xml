@@ -44,4 +44,21 @@
         AND system_id = #{id}
     </select>
 
+    <select id="listBySystemIdAndTaskType" resultType="java.lang.String">
+        SELECT
+        dci.ID
+        FROM
+        dmp_cfg_input AS dci
+        LEFT JOIN dmp_cfg_input_detail AS dcid ON dci.ID = dcid.main_id
+        WHERE
+        dci.is_deleted = 'f'
+        AND dcid.is_deleted = 'f'
+        AND dci.system_id = #{systemId}
+        AND dcid.task_type IN
+        <foreach collection="taskTypeList" item="type" open="(" separator="," close=")">
+            #{type}
+        </foreach>
+        GROUP BY
+        dci.ID
+    </select>
 </mapper>

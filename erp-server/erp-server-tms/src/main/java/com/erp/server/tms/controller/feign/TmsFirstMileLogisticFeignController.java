@@ -1,5 +1,6 @@
 package com.erp.server.tms.controller.feign;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
@@ -41,7 +42,7 @@ public class TmsFirstMileLogisticFeignController {
      * 自动生成头程物流单
      **/
     @PostMapping("/autoGenerateFirstMileLogistic")
-    Boolean autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
+    BatchResultDTO autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO){
         return tmsFirstMileLogisticService.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
     }
 

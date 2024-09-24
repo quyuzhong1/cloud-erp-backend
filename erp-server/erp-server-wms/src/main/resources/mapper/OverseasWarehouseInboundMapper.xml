@@ -189,7 +189,36 @@
 			left join overseas_warehouse_inbound_received h on g.id = h.detail_id 
 			<include refid="OverDataCompareByCondition"/>
     </select>
-    
+    <!--签收数量汇总-->
+    <select id="countReceiveQtyByParams" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ReceiveDTO">
+        SELECT
+            owi.source_code as businessCode,
+            owid.platform_sku_no as platformSkuNo,
+            owid.sku_id,
+            SUM(CASE WHEN owir.receive_time >= DATE_TRUNC('month', #{params.month}::date - INTERVAL '1 month') AND DATE_TRUNC('month', #{params.month}::date) > owir.receive_time THEN owir.receive_qty ELSE 0 END) AS  lastMonthReceiveQty,
+            SUM(CASE WHEN EXTRACT(YEAR FROM owir.receive_time) = EXTRACT(YEAR FROM #{params.month}::date) AND EXTRACT(MONTH FROM owir.receive_time) = EXTRACT(MONTH FROM #{params.month}::date) THEN owir.receive_qty ELSE 0 END) AS  currentMonthReceiveQty,
+            SUM(CASE WHEN DATE_TRUNC('month', #{params.month}::date) >= DATE_TRUNC('month', owir.receive_time)  AND owir.receive_time >= '2024-01-01' THEN owir.receive_qty ELSE 0 END) AS  asCurrentMonthReceiveQty,
+            SUM(CASE WHEN DATE_TRUNC('month', #{params.month}::date - INTERVAL '1 month') >= DATE_TRUNC('month', owir.receive_time) AND owir.receive_time >= '2024-01-01' THEN owir.receive_qty ELSE 0 END) AS  asLastMonthReceiveQty
+        FROM
+            overseas_warehouse_inbound owi
+        LEFT JOIN overseas_warehouse_inbound_detail owid ON owi.ID = owid.main_id AND owid.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound_received owir ON owid.ID = owir.detail_id AND owir.is_deleted = FALSE
+        WHERE owi.is_deleted = FALSE AND owi.source_type = 'firstMileDelivery' AND owi.instock_status != 'canceled'
+        <if test="params.businessCodes != null and params.businessCodes.size > 0">
+            and owi.code in
+            <foreach collection="params.businessCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sourceCodes != null and params.sourceCodes.size > 0">
+            and owi.source_code in
+            <foreach collection="params.sourceCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY businessCode,owid.sku_id,owid.platform_sku_no
+    </select>
+
     <sql id="OverDataCompareByCondition">
     	where T.is_deleted = 'f' 
 			AND G.is_deleted = 'f' and h.is_deleted = 'f'

@@ -227,6 +227,11 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         return baseMapper.listByTaskIdsAndPermission(packedDetailDTO);
     }
 
+    @Override
+    public List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId) {
+        return baseMapper.listByPackingTaskId(packingTaskId);
+    }
+
     /**
     * 新增修改处理数据
     */

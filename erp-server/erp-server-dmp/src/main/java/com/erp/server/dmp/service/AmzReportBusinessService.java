@@ -2,7 +2,7 @@
 package com.erp.server.dmp.service;
 
 import cn.hutool.json.JSONArray;
-import com.erp.model.dmp.entity.AmzReportInfoEntity;
+import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.DmpMongoHandleTaskEntity;
 
@@ -19,7 +19,7 @@ public interface AmzReportBusinessService {
      * @param reportInfo 报告信息
      * @param jsonArray  解析后的记录列表
      */
-    void batchSaveMongo(AmzReportTaskEntity taskEntity, AmzReportInfoEntity reportInfo, JSONArray jsonArray);
+    void batchSaveMongo(AmzReportTaskEntity taskEntity, DmpAmzReportInfoEntity reportInfo, JSONArray jsonArray);
 
 
     /**

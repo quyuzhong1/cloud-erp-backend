@@ -246,4 +246,10 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
 
     PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(PagingDTO<LogisticsBillDTO.PagingParamDTO> dto);
 
+    /**
+     * 根据物流单跟踪号获取
+     * @param trackNoList
+     * @return
+     */
+    List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByTrackNo(List<String> trackNoList);
 }

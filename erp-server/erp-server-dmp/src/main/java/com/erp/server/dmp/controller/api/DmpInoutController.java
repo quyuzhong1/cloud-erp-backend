@@ -241,18 +241,28 @@ public class DmpInoutController extends BaseController {
 	    			}
 	    		}else {
 	    			List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
-		    		List<String> ids = list.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
 	    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
 	    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
 	    			dmpOutputHotfixCreateRequest.setQueryParams(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dataIds)));
 	    			try {
-						dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
-						dmpOutputTaskRecordService.lambdaUpdate()
-							.in(DmpOutputTaskRecordEntity::getId, ids)
-							.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
-							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-							.set(DmpOutputTaskRecordEntity::getIsNeedSync, false)
-							.update();
+						Map<String, String> queryPushData = dmpOutputCreateFactory.getQueryPushData(dmpOutputHotfixCreateRequest);
+						if(queryPushData != null) {
+							for(Map.Entry<String, String> queryData : queryPushData.entrySet()) {
+								String key = queryData.getKey();
+								List<DmpOutputTaskRecordEntity> queryDataList = list.stream().filter(l -> l.getDataId().equals(key)).collect(Collectors.toList());
+								if(CollUtil.isNotEmpty(queryDataList)) {
+									JSONObject parseObject = JSON.parseObject(queryData.getValue());
+									parseObject.put("dmpOutputTaskRecordDataId", key);
+									for(DmpOutputTaskRecordEntity  q : queryDataList) {
+										parseObject.put("dmpOutputTaskRecordId", q.getId());
+										q.setRequestData(JSON.toJSONString(parseObject));
+										q.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
+									}
+									dmpOutputTaskRecordService.updateBatchById(queryDataList);
+									dmpOutputTaskRecordService.batchSync(queryDataList);
+								}
+							}
+						}
 					} catch (Exception e) {
 						log.error("查询同步调用dmp报错" , e);
 					}
@@ -348,6 +358,9 @@ public class DmpInoutController extends BaseController {
 				    						dto = locationList.stream().filter(l -> l.getCode().startsWith("2") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
 				    						if(dto == null) {
 				    							dto = locationList.stream().filter(l -> l.getCode().startsWith("4") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+				    							if(dto == null) {
+					    							dto = locationList.stream().filter(l -> l.getCode().equals("") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+					    						}
 				    						}
 				    					}
 				    					if(dto != null) {
@@ -361,6 +374,9 @@ public class DmpInoutController extends BaseController {
 				    							position = "";
 				    						}else {
 				    							position = locationNameCodeMap.get(position);
+				    						}
+				    						if(position.equals(dto.getCode())) {
+				    							continue;
 				    						}
 											detailAddDto.setInWarehouseLocation(position);
 				    						detailAddDto.setOutInventoryStatus("usable");
@@ -386,6 +402,8 @@ public class DmpInoutController extends BaseController {
 				    					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
 				    			    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%" + warehouseName + "%'")
 				    			    	.list();
+									dealDmpOutputTaskRecordEntityList.forEach(d -> d.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode()));
+									dmpOutputTaskRecordService.updateBatchById(dealDmpOutputTaskRecordEntityList);
 									dmpOutputTaskRecordService.batchSync(dealDmpOutputTaskRecordEntityList);
 								}
 							}

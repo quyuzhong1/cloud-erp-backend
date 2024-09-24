@@ -13,8 +13,8 @@
 
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound;
 
-import com.erp.sdk.oms.amz.spapi.model.ErrorList;
-import com.erp.sdk.oms.amz.spapi.model.ErrorList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ErrorList;
+import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ErrorList;
 import com.google.gson.annotations.SerializedName;
 
 

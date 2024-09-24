@@ -122,6 +122,7 @@
             pt.id,
             ptd.sku_id,
             ptd.sku_no,
+            ptd.fn_sku,
             SUM(ptd.delivery_qty) AS deliveryQty
         FROM  packing_task_detail ptd
                   LEFT JOIN packing_task pt ON pt.id = ptd.main_id AND pt.is_deleted=FALSE
@@ -129,7 +130,8 @@
           AND ptd.main_id = #{mainId}
         GROUP BY pt.id,
             ptd.sku_id,
-            ptd.sku_no
+            ptd.sku_no,
+            ptd.fn_sku
     </select>
     <select id="listGroupSkuByMainIds" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$GroupSkuDTO">
         SELECT
@@ -175,6 +177,12 @@
             <if test="params.taskId != null and params.taskId != ''">
                 AND wc.packing_task_id = #{params.taskId}
             </if>
+        <if test="params.cartonIds != null and params.cartonIds.size > 0">
+            AND wc.id IN
+            <foreach collection="params.cartonIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
             <!-- 权限 -->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
@@ -194,17 +202,21 @@
             wc.packing_user_name,
             wcs.measure_source,
             wc.error_msg,
+        pt.source_id ,
             wcs.box_length as length,
             wcs.box_width as width,
             wcs.box_height as height,
             wcd.sku_id,
             wcd.sku_no,
-            concat(wcd.sku_no,'*',wcd.pack_qty) AS sku
+        wcd.pack_qty,
+            concat(wcd.sku_no,'*',wcd.pack_qty) AS sku,
+        fsp.box_no  as outCode
         FROM wms_carton_detail wcd
         INNER JOIN wms_carton wc ON wc.id = wcd.main_id AND wc.is_deleted = FALSE
         JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
         JOIN packing_task pt ON wc.packing_task_id = pt.id and pt.is_deleted = FALSE
-        WHERE wcd.is_deleted = FALSE
+        LEFT JOIN fba_shipment_packing fsp on  fsp.carton_id = wc.id and fsp.is_deleted =false
+        WHERE  ${params.sqlMap.default} and wcd.is_deleted = FALSE
             AND wcd.pack_qty > 0
         <if test="taskIds != null and taskIds.size > 0">
             AND wc.packing_task_id IN

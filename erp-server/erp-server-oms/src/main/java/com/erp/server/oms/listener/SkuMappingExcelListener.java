@@ -177,13 +177,13 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             return;
         }
 
-        ListingInfoWithSkuMappingDTO mappingDto = listDto.stream().filter(e -> !e.getIsExpire()).findFirst().orElseThrow(null);
-        if (null == mappingDto){
-            errorMsgList.add("平台sku信息不存在");
-            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(skuMappingImportExcelDTO);
-            return;
-        }
+        ListingInfoWithSkuMappingDTO mappingDto = listDto.stream().filter(e -> !e.getIsExpire()).findFirst().orElse(new ListingInfoWithSkuMappingDTO());
+//        if (null == mappingDto){
+//            errorMsgList.add("平台sku信息不存在");
+//            skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+//            errorList.add(skuMappingImportExcelDTO);
+//            return;
+//        }
 
         // 已存在
         if (isApiPlatform){

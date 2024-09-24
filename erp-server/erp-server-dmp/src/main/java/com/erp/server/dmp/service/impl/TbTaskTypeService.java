@@ -1,19 +1,24 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.CreateJobDTO;
 import com.common.business.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
+import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.dmp.entity.DmpBasicSystemEntity;
+import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.server.dmp.service.CfgSettingService;
-import com.erp.server.dmp.service.PlatformApiService;
-import com.erp.server.dmp.service.PlatformApiTaskService;
+import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -24,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,6 +56,21 @@ public class TbTaskTypeService {
     private Long timeoutMabangHours;
     @Resource
     private CreateRequestReportTaskService createRequestReportTaskService;
+
+    @Resource
+    private DmpBasicSystemService dmpBasicSystemService;
+
+    @Resource
+    private DmpCfgInputService dmpCfgInputService;
+
+    @Resource
+    private DmpCfgInputDetailService dmpCfgInputDetailService;
+
+    @Resource
+    private DmpCfgOutputService dmpCfgOutputService;
+
+    @Resource
+    private DmpCfgOutputDetailService dmpCfgOutputDetailService;
 
     @Value("${openApi.mabang.timeoutHour:24}")
     public void setTimeoutMabangHours(Long timeoutMabangHours) {
@@ -139,8 +160,93 @@ public class TbTaskTypeService {
     public void addTask(ShopInfoEntity shopInfo) {
         // 查询需要当前平台需要增加的任务
         platformApiTaskService.createOrEnablePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(),shopInfo.getName(),shopInfo.getDictPlatform()));
+
+        // 添加新中台任务
+        addNewDmpTask(shopInfo);
+
         // 添加完成后，修改店铺生成任务状态
         Boolean result = shopInfoFeign.updateShopInfoById(new ShopInfoEntity(shopInfo.getId(), Boolean.TRUE));
+    }
+
+    /**
+     * 添加新中台任务
+     * @Author Luo_WG
+     * @Date 2024/9/19 9:23
+     * @param shopInfo
+     * @return void
+     **/
+    private void addNewDmpTask(ShopInfoEntity shopInfo) {
+        //根据授权的系统编码查询新中台系统表
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(shopInfo.getDictPlatform());
+        if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
+            log.error("店铺授权编码【" + shopInfo.getDictPlatform() + "】 在新中台系统表中不存在！");
+            return;
+        }
+
+        //获取系统id
+        String systemId = dmpBasicSystemEntity.getId();
+
+        //根据系统id查询所有主任务
+        List<DmpCfgInputEntity> cfgInputEntityList = dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getSystemId, systemId)
+                .eq(DmpCfgInputEntity::getIsMainTask, Boolean.TRUE)
+                .list();
+
+        //每一个主任务都需要添加任务详情
+        for (DmpCfgInputEntity dmpCfgInputEntity : cfgInputEntityList) {
+
+            //添加输入任务
+            addInputDetail(shopInfo, dmpCfgInputEntity);
+        }
+
+        //根据系统id查询输出任务
+        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery()
+                .eq(DmpCfgOutputEntity::getSystemId, systemId)
+                .list();
+
+        //添加输出任务详情
+        for (DmpCfgOutputEntity dmpCfgOutputEntity : outputEntityList) {
+            DmpCfgOutputDetailDTO.AddDTO addDTO = new DmpCfgOutputDetailDTO.AddDTO();
+            addDTO.setMainId(dmpCfgOutputEntity.getId());
+            addDTO.setNextLevelId(shopInfo.getId());
+            dmpCfgOutputDetailService.add(addDTO);
+        }
+
+    }
+
+    /**
+     * 添加输入任务
+     * @param shopInfo
+     * @param dmpCfgInputEntity
+     */
+    private void addInputDetail(ShopInfoEntity shopInfo, DmpCfgInputEntity dmpCfgInputEntity) {
+        //添加基础任务
+        DmpCfgInputDetailDTO.AddDTO addDTO = new DmpCfgInputDetailDTO.AddDTO();
+        addDTO.setMainId(dmpCfgInputEntity.getId());
+        addDTO.setNextLevelId(shopInfo.getId());
+        addDTO.setLastTime(LocalDateTime.now());
+        addDTO.setNextTime(LocalDateTime.now().plusSeconds(600));
+        addDTO.setIntervalTime(600);
+        addDTO.setOverrideTime(120);
+        addDTO.setMaxRetryCount(3);
+        addDTO.setExecTimeout(1200);
+        addDTO.setDealyTime(60);
+        addDTO.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        dmpCfgInputDetailService.add(addDTO);
+
+        //添加历史任务
+        DmpCfgInputDetailDTO.AddDTO addHistoryDTO = new DmpCfgInputDetailDTO.AddDTO();
+        addHistoryDTO.setMainId(dmpCfgInputEntity.getId());
+        addHistoryDTO.setNextLevelId(shopInfo.getId());
+        addHistoryDTO.setLastTime(LocalDateTime.now().plusSeconds(3600));
+        addHistoryDTO.setNextTime(LocalDateTime.now());
+        addHistoryDTO.setIntervalTime(3600);
+        addHistoryDTO.setOverrideTime(0);
+        addHistoryDTO.setMaxRetryCount(3);
+        addHistoryDTO.setExecTimeout(1200);
+        addHistoryDTO.setDealyTime(86400);
+        addHistoryDTO.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());
+        dmpCfgInputDetailService.add(addDTO);
     }
 
 

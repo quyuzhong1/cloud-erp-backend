@@ -8,6 +8,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.sys.dto.SysCommonDTO;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -94,6 +95,25 @@ public class CommonController extends BaseController {
     public ApiResult<List<Map<String,Object>>> enumSelect(@RequestParam(value = "type")String type) {
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
         return success(enumMaps.get(type));
+    }
+
+    /**
+     * 批量上传附件
+     * @param multipartFile 文件数组
+     * @return
+     * @date: 2024-09-05
+     * @author: tanmujin
+     */
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
+    @PostMapping("/uploadBatch")
+    public ApiResult<List<SysCommonDTO.AttachmentDTO>> uploadBatch(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
+        List<SysCommonDTO.AttachmentDTO> list = new ArrayList<>();
+        for (MultipartFile file : multipartFile) {
+            String filePath = FastDFSClientUtil.uploadFile(file);
+            String fileName = file.getOriginalFilename();
+            list.add(new SysCommonDTO.AttachmentDTO(fileName, filePath));
+        }
+        return this.success(list);
     }
 
 }

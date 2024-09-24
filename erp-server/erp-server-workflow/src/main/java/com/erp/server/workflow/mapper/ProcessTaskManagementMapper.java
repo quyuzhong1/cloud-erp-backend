@@ -1,5 +1,7 @@
 package com.erp.server.workflow.mapper;
 
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -28,4 +30,11 @@ public interface ProcessTaskManagementMapper extends BaseMapper<ProcessTaskManag
      * @return
      */
     List<ProcessTaskManagementEntity> listPreActivityTask(@Param("taskManagementId") String taskManagementId, @Param("processInstanceId") String processInstanceId);
+
+    /**
+     * 获取审核记录
+     */
+    List<ProcessTaskManagementDTO.ApproveHistoryDTO> listApproveHistory(@Param("businessId") String businessId);
+
+    List<ProcessTaskManagementEntity> listProcessByBusinessKey(@Param("params")ProcessManagementDTO.TaskKeyInfoDTO params);
 }

@@ -15,23 +15,20 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
-import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
-import com.erp.server.wms.service.impl.PackingTaskServiceImpl;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -490,5 +487,56 @@ public class RequisitionApplicationController extends BaseController {
             }
         }
         return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
+    }
+
+
+    /**
+     * 下推发货单绑定货件页面
+     **/
+    @PostMapping("/fbaBindShipmentView")
+    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO>> fbaBindShipmentView(@RequestBody @Validated BaseIdDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentView(dto.getId()));
+    }
+
+    /**
+     * 下推发货单绑定货件页面 --模糊匹配货件单号
+     **/
+    @PostMapping("/fbaBindShipmentMatching")
+    public ApiResult<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentMatching(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentMatching(dto));
+    }
+
+    /**
+     * 下推发货单绑定货件页面 --点击货件号显示详情
+     **/
+    @PostMapping("/fbaBindShipmentDetailView")
+    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO>> fbaBindShipmentDetailView(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentDetailView(dto));
+    }
+
+    /**
+     * 要货申请fba 来源生成发货单
+     **/
+    @PostMapping("/generateDeliveryWithFba")
+    public ApiResult<T> generateDeliveryWithFba(@RequestBody @Validated RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
+        requisitionApplicationService.generateDeliveryWithFba(dto);
+        return success();
+    }
+    /**
+     * 查询发货记录
+     **/
+    @GetMapping("/listDeliverRecord")
+    public ApiResult<List<RequisitionApplicationDTO.DeliverRecordView>> listDeliverRecord(@RequestParam("id") String id) {
+        List<RequisitionApplicationDTO.DeliverRecordView> result = requisitionApplicationService.listDeliverRecord(id);
+        return success(result);
+    }
+
+    /**
+     * 组装清单下载
+     **/
+    @PostMapping("/assembleDownload")
+    public ApiResult assembleDownload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        requisitionApplicationService.assembleDownload(dto.getIds(), response);
+        return success();
     }
 }

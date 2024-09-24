@@ -28,7 +28,9 @@ public enum NoticeEnum {
     SCHEDULE_TASK_SUBMIT("scheduleTaskSubmit","排期任务提交通知"),
     SCHEDULE_TASK_AUDIT("scheduleTaskAudit","排期任务审核通知"),
     SCHEDULE_TASK_CHANGE("changeScheduleTask","排期变动通知"),
-    APPROVE_PRODUCT("approveProduct","审核产品")
+    APPROVE_PRODUCT("approveProduct","审核产品"),
+    AUDIT_PILOT_APPLICATION("auditPilotApplication","试产量产审核通知"),
+    AUDIT_COMPLETED_PILOT_APPLICATION("auditCompletedPilotApplication","试产量产完成通知")
     ;
 
 

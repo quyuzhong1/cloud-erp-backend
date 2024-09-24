@@ -756,8 +756,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-
-
         return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
     }
 
