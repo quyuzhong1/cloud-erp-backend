@@ -8,6 +8,7 @@ import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
@@ -17,11 +18,13 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.GetReportsResponse;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportList;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
+import com.erp.server.dmp.service.DmpAmzReportInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -49,6 +52,8 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
     private RedisUtil redisUtil;
     @Resource
     private CfgAppClientService cfgAppClientService;
+    @Resource
+    private DmpAmzReportInfoService dmpAmzReportInfoService;
 
     /**
      * 直接查询亚马逊最新Listing报告
@@ -63,11 +68,11 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
         String reportType = extendObj.getString("reportType");
 
         // 从缓存获取(已完成或结束删除)
-        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, dmpInputTaskEntity.getId(), AmzReportTaskStatusEnum.DIRECT_QUERY.getCode());
-        Object reportObj = redisUtil.get(key);
-        if (null != reportObj) {
-            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(reportObj.toString()));
-        }
+//        String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, dmpInputTaskEntity.getId(), AmzReportTaskStatusEnum.DIRECT_QUERY.getCode());
+//        Object reportObj = redisUtil.get(key);
+//        if (null != reportObj) {
+//            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(reportObj.toString()));
+//        }
 
         // 店铺信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(dmpCfgInputDetailEntity.getNextLevelId());
@@ -89,7 +94,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
         String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
 
         // 请求亚马逊接口
-        ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+        ReportsApi reportsApi = AmazonSpApiInitUtils.create(ReportsApi.class, shopInfoDTO, false);
 
         ApiResponse<GetReportsResponse> reportsWithHttpInfo;
         Report report;
@@ -104,6 +109,10 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
             reportsWithHttpInfo = reportsApi.getReportsWithHttpInfo(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
             ReportList reportList = reportsWithHttpInfo.getData().getReports();
             report = reportList.stream().findFirst().orElse(null);
+            if (null == report) {
+                log.warn("[Amazon SP-APi] 查询最新listing报告为空:{}", JSONUtil.toJsonStr(reportList));
+                return Collections.emptyList();
+            }
         } catch (ApiException e) {
             if (429 == e.getCode()) {
                 // 设置动态速率，失效时间=1/limit
@@ -118,19 +127,23 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
             throw new ServiceException("[Amazon SP-APi] 查询最新listing失败:body=" + JSONUtil.toJsonStr(e));
         }
 
+        // 校验中台是否已存在
+        DmpAmzReportInfoEntity reportInfo = dmpAmzReportInfoService.getByReportId(report.getReportId(), Report.ProcessingStatusEnum.DONE.getValue());
+        if (null != reportInfo) {
+            log.warn("[Amazon SP-APi] 查询最新listing最新报告已存在跳过:{}", report.getReportId());
+            return Collections.emptyList();
+        }
+
         JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
         // 补充其他信息
         jsonObject.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
         jsonObject.put("createdMethod", "query");
         jsonObject.put("shopId", shopInfoDTO.getId());
-        if (null != report) {
-            jsonObject.put("marketplaceIds", String.join(",", report.getMarketplaceIds()));
-        }
+
+        jsonObject.put("marketplaceIds", String.join(",", report.getMarketplaceIds()));
         String resultJson = JSONUtil.toJsonStr(jsonObject);
-        if (null != report) {
-            // 设置到缓存(已完成或结束删除)
-            redisUtil.set(key, resultJson, 600);
-        }
+        // 设置到缓存(已完成或结束删除)
+//      redisUtil.set(key, resultJson, 600);
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(resultJson));
     }
 
