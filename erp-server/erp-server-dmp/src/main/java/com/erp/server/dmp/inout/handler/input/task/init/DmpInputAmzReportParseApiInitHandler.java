@@ -12,6 +12,7 @@ import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
 import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
+import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -53,6 +54,14 @@ public class DmpInputAmzReportParseApiInitHandler extends DmpInputAmzCommonInitH
         }
         // 报告信息
         Map<String, Object> reportMongoObjectMap = findMongoData.get(0);
+        // 状态
+        String processingStatus = checkAndGetMongoValue(reportMongoObjectMap, "processingStatus");
+        // 取消状态=无数据跳过
+        if (!Report.ProcessingStatusEnum.DONE.getValue().equalsIgnoreCase(processingStatus)){
+            log.warn("亚马逊报告下载,报告状态非完成,无法解析:{}", JSONUtil.toJsonStr(reportMongoObjectMap));
+            return Collections.emptyList();
+        }
+
         // 报告文档信息
 //        Map<String, Object> reportDocumentMongoObjectMap = findMongoData.get(0);
         String reportId = checkAndGetMongoValue(reportMongoObjectMap, "reportId");

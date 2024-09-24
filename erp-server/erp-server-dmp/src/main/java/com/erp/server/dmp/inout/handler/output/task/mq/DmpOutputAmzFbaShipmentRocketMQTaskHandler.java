@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
@@ -12,12 +13,14 @@ import com.erp.model.dmp.entity.DmpFbaShipmentDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaShipmentEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpOutputAmzFbaShipmentRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
@@ -80,7 +83,9 @@ public class DmpOutputAmzFbaShipmentRocketMQTaskHandler extends DmpOutputRocketM
             DmpFbaShipmentEntity dmpMainEntity = dmpMainEntityMap.get(changId);
             List<DmpFbaShipmentDetailEntity> dmpDetailEntityList = dmpDetailEntityMap.get(changId);
             PlatformFbaShipmentDTO dto = this.convert(dmpMainEntity, dmpDetailEntityList, cfgOutputId);
-            map.put(dto.getUniqueId(), JSON.toJSONString(dto));
+            if (null != dto){
+                map.put(dto.getUniqueId(), JSON.toJSONString(dto));
+            }
         }
         return map;
     }
@@ -90,10 +95,12 @@ public class DmpOutputAmzFbaShipmentRocketMQTaskHandler extends DmpOutputRocketM
      **/
     public PlatformFbaShipmentDTO convert(DmpFbaShipmentEntity dmpMainEntity, List<DmpFbaShipmentDetailEntity> dmpDetailEntityList, String cfgOutputId) {
         if (this.validateDataBlack(dmpMainEntity, cfgOutputId)) {
-            ServiceException.runError("校验白名出错");
+            ServiceException.runError("校验参数出错");
         }
         if (CollectionUtils.isEmpty(dmpDetailEntityList)){
-            ServiceException.runError("明细不能为空");
+//            ServiceException.runError("明细不能为空");
+            log.warn("FBA货件,无明细数据:entity={}", JSONUtil.toJsonStr(dmpMainEntity));
+            return null;
         }
 
         // 主表
