@@ -2,26 +2,29 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.ReportOrderSalesEntity;
-import com.erp.server.wms.mapper.ReportOrderSalesMapper;
-import com.erp.server.wms.service.ReportOrderSalesService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.wms.dto.ReportOrderSalesDTO;
+import com.erp.model.wms.entity.ReportOrderSalesEntity;
+import com.erp.server.wms.mapper.ReportOrderSalesMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.ReportOrderSalesService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.ReportOrderSalesDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 订单销量表 服务实现类
@@ -89,8 +92,10 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
     }
 
     @Override
-    public PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingDTO) {
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        return new PagingVO(pageData);
     }
 
     @Override

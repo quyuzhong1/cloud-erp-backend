@@ -254,8 +254,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      * @param viewDTO
      */
     private void handleViewEnum (CfgSettingEntity cfgSetting,CfgSettingDTO.ViewDTO viewDTO) {
-
+        //获取枚举
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());
+        if (ObjectUtil.isEmpty(cfgSettingEnum)) {
+            return;
+        }
         switch (cfgSettingEnum) {
             case SUBCONTRACT_ISSUE:
                 CfgSettingValueDTO.SubcontractIssueSettingDTO subcontractIssueSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractIssueSettingDTO.class);
