@@ -141,7 +141,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                         });
                     }
                     List<TmsFirstMileLogisticDTO.PackingDTO> packingDTOList = deliveryDTO.getPackingDTOList();
-                    BigDecimal actualWeight = packingDTOList.stream().map(v -> BigDecimal.valueOf(new Long(v.getPackageWeight()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal actualWeight = packingDTOList.stream().filter(v -> StringUtils.isNotBlank(v.getPackageWeight())).map(v ->  new BigDecimal(v.getPackageWeight()).setScale(BigDecimal.ROUND_DOWN, RoundingMode.CEILING)).reduce(BigDecimal.ZERO, BigDecimal::add);
                     BigDecimal volumeWeight = packingDTOList.stream().map(v -> v.getVolumeWeight() == null ? BigDecimal.ZERO : v.getVolumeWeight()).reduce(BigDecimal.ZERO, BigDecimal::add);
                     item.setActualWeight(actualWeight);
                     item.setVolumeWeight(volumeWeight);
