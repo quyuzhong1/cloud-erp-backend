@@ -202,8 +202,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private PurchaseOrderService purchaseOrderService;
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
-    @Resource
-    private PoReturnService service;
+//    @Resource
+//    private PoReturnService service;
     /**
      * 主页分页查询
      *
@@ -814,7 +814,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             //发送旺店通
             poReturnEntityList.forEach(obj -> syncApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_APPROVE));
-
         } else {
             //审核不通过
             lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -834,7 +833,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @param poReturnDetailList
      * @param confirmStatus
      */
-    private void autoAddSubcontractReturn(PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList, String confirmStatus) {
+    @Transactional(rollbackFor = Exception.class)
+    public void autoAddSubcontractReturn(PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList, String confirmStatus) {
         if (Objects.isNull(entity) || CollectionUtils.isEmpty(poReturnDetailList) || StrUtil.isBlank(entity.getPurchaseOrderId())){
             return;
         }
@@ -925,34 +925,34 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //创建子件采购退货单
         for (PurchaseReturnOrderDTO.AddDTO addDTO : returnAddDTOList){
             //新增
-            String id = service.add(addDTO);
+            String id = this.add(addDTO);
             if (StringUtils.isBlank(id)) {
                 throw new ServiceException(ApiError.ERROR_1019);
             }
             //提交
-            service.submit(Collections.singletonList(id));
+            this.submit(Collections.singletonList(id));
             //查询提交数据
             PoReturnEntity poReturnEntity = this.getById(id);
-//            List<PoReturnDetailEntity> poReturnDetailEntityList = poReturnDetailService.listByMainIds(Collections.singletonList(id));
-//            service.approve(poReturnEntity,ApproveTypeEnum.PASS.getStatus(),"采购退货自动生产", Boolean.FALSE, poReturnDetailEntityList);
+            List<PoReturnDetailEntity> poReturnDetailEntityList = poReturnDetailService.listByMainIds(Collections.singletonList(id));
+            this.approve(poReturnEntity,ApproveTypeEnum.PASS.getStatus(),"采购退货自动生产", Boolean.FALSE, poReturnDetailEntityList);
             //审核通过
-            lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
-                    .set(PoReturnEntity::getApproveUserId, userInfo.getUid())
-                    .set(PoReturnEntity::getApproveUserName, userInfo.getUserName())
-                    .set(PoReturnEntity::getApproveTime, LocalDateTime.now())
-                    .set(PoReturnEntity::getConfirmStatus, confirmStatus)
-                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()), PoReturnEntity::getConfirmDate, null)
-                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.CONFIRM.getStatus()),PoReturnEntity::getConfirmDate, LocalDate.now())
-                    .eq(PoReturnEntity::getId, id)
-                    .update();
-            //审核通过生成对账明细
-            autoAddPoReconciliationDetail(Collections.singletonList(poReturnEntity));
-            // 更新库存信息
-            updateInventoryTransCore(Collections.singletonList(poReturnEntity));
-            //发送金蝶
-            sendPushTask(Collections.singletonList(poReturnEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
-            //发送旺店通
-            syncApprovePoReturnToWdt(poReturnEntity, SyncOperateEnum.OPERATE_APPROVE);
+//            lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+//                    .set(PoReturnEntity::getApproveUserId, userInfo.getUid())
+//                    .set(PoReturnEntity::getApproveUserName, userInfo.getUserName())
+//                    .set(PoReturnEntity::getApproveTime, LocalDateTime.now())
+//                    .set(PoReturnEntity::getConfirmStatus, confirmStatus)
+//                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()), PoReturnEntity::getConfirmDate, null)
+//                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.CONFIRM.getStatus()),PoReturnEntity::getConfirmDate, LocalDate.now())
+//                    .eq(PoReturnEntity::getId, id)
+//                    .update();
+//            //审核通过生成对账明细
+//            autoAddPoReconciliationDetail(Collections.singletonList(poReturnEntity));
+//            // 更新库存信息
+//            updateInventoryTransCore(Collections.singletonList(poReturnEntity));
+//            //发送金蝶
+//            sendPushTask(Collections.singletonList(poReturnEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+//            //发送旺店通
+//            syncApprovePoReturnToWdt(poReturnEntity, SyncOperateEnum.OPERATE_APPROVE);
         }
     }
 
