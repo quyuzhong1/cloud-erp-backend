@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -34,6 +35,7 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     * @return
     */
     IPage<FirstMileDeliveryDTO.ListDTO> paging(Page query, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
+    IPage<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(Page query, @Param("params") FirstMileDeliveryDTO.PagingParamDTO params);
 
     /**
     * 状态数量
@@ -102,4 +104,25 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
 
     List<TmsDeclareBillDTO.DeliveryDTO> getGenerateDeclare(@Param("params") TmsDeclareBillDTO.QuerySourceDTO dto);
 
+    /**
+     * 根据编码获取发货明细列表
+     * @param codes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(@Param("codes") List<String> codes,@Param("sourceCodes") List<String> sourceCodes);
+
+    /**
+     * 根据发货单获取业务单号
+     * @param ids
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 根据发货单获取业务单号
+     * @param deliveryCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(@Param("deliveryCodes") List<String> deliveryCodes);
+    Page<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@Param("query") Page<PackingTaskDTO.ExportDTO> query,@Param("params") PackingTaskDTO.ExportDTO page, @Param("ids") List<String> ids, @Param("permissionSql") String permissionSql);
 }

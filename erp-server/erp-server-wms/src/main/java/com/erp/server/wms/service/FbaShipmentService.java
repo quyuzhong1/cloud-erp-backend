@@ -247,4 +247,10 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * 导出
      */
     PagingVO<FbaShipmentDTO.ExportDTO> exportFbaShipment(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
+
+    boolean updatePackingStatus(List<String> ids);
+
+    PagingVO<FbaShipmentDTO.SearchResultDTO> searchByCodeWithRequisition(PagingDTO<FbaShipmentDTO.SearchDTO> dto);
+
+    List<FbaShipmentDTO.SearchResultDTO> requisitionFbaQuickPaste(FbaShipmentDTO.QuickPasteDTO dto);
 }

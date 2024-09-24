@@ -68,6 +68,7 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Nullable;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -297,7 +298,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .execute();
         }
         // 保存流程任务数据
-        updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
+        updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment(), dto.getVariablesMap());
         if(isFirst){
 
             sameApproverAutoPass(dto, processManagementList.get(0).getProcessDefinitionId(),currentTask.getProcessInstanceId());
@@ -385,7 +386,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String comment) {
+    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String comment, @Nullable Map<String, Object> variablesMap) {
         // 流程状态 此处传参支持后续其他状态的传入
         ProcessStatusEnum statusEnum =  ApproveTypeEnum.REJECT.equals(approveType) ? ProcessStatusEnum.TERMINATION : ProcessStatusEnum.RUNNING;
         // 根据流程结束时间判定流程是否结束
@@ -416,7 +417,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .update();
         // 更新流程任务数据
         ProcessManagementEntity managementEntity = getById(managementId);
-        processTaskManagementService.updateApprove(taskId, approveType, comment, "", managementEntity);
+        processTaskManagementService.updateApprove(taskId, approveType, comment, "", managementEntity, variablesMap);
         return Boolean.TRUE;
     }
 
@@ -542,7 +543,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .update();
         // 更新流程任务数据
         ProcessManagementEntity managementEntity = getById(managementId);
-        processTaskManagementService.updateApprove(taskId, approveType, comment, activityId, managementEntity);
+        processTaskManagementService.updateApprove(taskId, approveType, comment, activityId, managementEntity, null);
         return Boolean.TRUE;
     }
 
@@ -703,7 +704,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public void createTaskHandle(DelegateTask task) {
         // 保存流程任务数据 execution 中包含实例信息,
         // 审批任务填充审批信息
-        DelegateExecution execution = task.getExecution();
+         DelegateExecution execution = task.getExecution();
         String processDefinitionId = execution.getProcessDefinitionId();
         String taskDefinitionKey = task.getTaskDefinitionKey();
         CamundaDTO.PropertiesDTO propertiesDTO = getProperties(taskDefinitionKey, processDefinitionId);
@@ -832,7 +833,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .setAnnotation("审批超时，自动驳回")
                     .execute();
             // 保存流程任务数据
-            updateApprove(task.getTaskManagementId(), ApproveTypeEnum.REJECT, task.getManagementId(), task.getProcessInstanceId(), "审批超时，自动驳回");
+            updateApprove(task.getTaskManagementId(), ApproveTypeEnum.REJECT, task.getManagementId(), task.getProcessInstanceId(), "审批超时，自动驳回", null);
         }
     }
 

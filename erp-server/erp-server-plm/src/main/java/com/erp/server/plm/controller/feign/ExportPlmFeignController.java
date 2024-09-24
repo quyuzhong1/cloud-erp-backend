@@ -1,14 +1,18 @@
 package com.erp.server.plm.controller.feign;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
+import com.erp.server.plm.query.PilotApplicationQueryHandler;
 import com.erp.server.plm.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +41,8 @@ public class ExportPlmFeignController {
     private ProjectTaskTimeRecordService projectTaskTimeRecordService;
     @Resource
     private ProjectTaskViewService projectTaskViewService;
+    @Resource
+    private PilotApplicationService pilotApplicationService;
     @PostMapping("/exportBom")
     public PagingVO<BomExportExcelVO> exportBom(@RequestBody PagingDTO<SearchPagingDTO> dto) {
        return bomInfoService.exportBom(dto);
@@ -81,5 +87,10 @@ public class ExportPlmFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:task:view:exportExcel", tableAlias = "t")
     public PagingVO<ProductTaskViewDTO> exportProductTaskView(@RequestBody PagingDTO<ProductTaskViewSearchDTO> dto){
         return projectTaskViewService.exportProductTaskView(dto);
+    }
+    @PostMapping("/pilotApplication")
+    @WebAdvanceQuery(handler = PilotApplicationQueryHandler.class)
+    public PagingVO<PilotApplicationDTO.ListDTO> exportPilotApplication(@RequestBody @Validated PagingDTO<PilotApplicationDTO.PagingParamDTO> dto) {
+        return pilotApplicationService.paging(dto);
     }
 }

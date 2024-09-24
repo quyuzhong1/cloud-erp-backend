@@ -1305,22 +1305,22 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 如果是否选导出处理
         dealExportParams(dto.getParams());
         InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, dto.getParams());
-        Page<InventoryDTO.PagingViewDTO> dataList = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        Page<InventoryDTO.PagingViewDTO> dataList = new Page<>(dto.getPage(), dto.getPageSize());
         if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
-            dataList = inventoryMapper.exportByWarehouse(dataList ,searchParamDTO);
+            dataList = inventoryMapper.exportByWarehouse(dataList ,searchParamDTO, dto.getLastId());
         }
         if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
-            dataList = inventoryMapper.exportByArea( dataList, searchParamDTO, dto.getParams().getWarehouseAreaCodeList());
+            dataList = inventoryMapper.exportByArea( dataList, searchParamDTO, dto.getParams().getWarehouseAreaCodeList(), dto.getLastId());
         }
         if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
             if(StringUtils.isNotBlank(dto.getParams().getWarehouseLocationName())){
                 List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(dto.getParams().getWarehouseLocationName());
                 if(! list.isEmpty()){
                     List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());
-                    dataList = this.baseMapper.exportByLocation(dataList,searchParamDTO, codeList);
+                    dataList = this.baseMapper.exportByLocation(dataList,searchParamDTO, codeList, dto.getLastId());
                 }
             }else {
-                dataList = this.baseMapper.exportByLocation(dataList,searchParamDTO, dto.getParams().getWarehouseLocationCodeList());
+                dataList = this.baseMapper.exportByLocation(dataList,searchParamDTO, dto.getParams().getWarehouseLocationCodeList(), dto.getLastId());
             }
         }
         if (CollUtil.isEmpty(dataList.getRecords())) {

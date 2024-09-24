@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import com.common.business.dto.base.*;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -197,4 +198,6 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return
      */
     ApiResult<PurchaseApplicationDTO.SubcontractPurchasePriceDTO> batchGetSubcontractPurchasePrice(ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list);
+
+    List<PurchaseApplicationDTO.ListDTO> listStockInQty(List<PurchaseApplicationDTO.ListDTO> purchaseList);
 }

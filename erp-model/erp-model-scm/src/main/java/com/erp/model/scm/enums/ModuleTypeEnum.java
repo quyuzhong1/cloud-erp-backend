@@ -104,6 +104,10 @@ public enum ModuleTypeEnum {
     CFG_RULE_WAVE("92", "波次规则"),
     WAREHOUSE_LOCATION_REPLENISH("93", "仓位补货"),
     SUBCONTRACT_RETURN("94", "委外退料单"),
+    INIT_FIRST_MILE_ALLOCATION("94", "期初费用分摊"),
+    INVENTORY_SKU_COST("95", "SKU成本"),
+    COST_ALLOCATION("96", "费用分摊"),
+    PILOT_APPLICATION("97", "试产量产单"),
     ;
 
 

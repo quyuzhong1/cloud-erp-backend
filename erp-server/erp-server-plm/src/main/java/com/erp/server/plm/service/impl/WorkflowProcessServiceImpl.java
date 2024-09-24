@@ -2,9 +2,11 @@ package com.erp.server.plm.service.impl;
 
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.plm.service.LogisticsProductService;
+import com.erp.server.plm.service.PilotApplicationService;
 import com.erp.server.plm.service.ProductLogisticsService;
 import com.erp.server.plm.service.WorkflowProcessService;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private ProductLogisticsService productLogisticsService;
+    @Resource
+    private PilotApplicationService pilotApplicationService;
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -32,6 +36,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 //产品物流
                 productLogisticsApproveEnd(dto);
                 break;
+            case PILOT_APPLICATION:
+                //试产量产单
+                pilotApplicationApproveEnd(dto);
             default:
                 break;
         }
@@ -50,6 +57,16 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         return logisticsProductService.approveEnd(approveOne,entity);
     }
 
-
+    /**
+     * 试产量产单审核通过
+     */
+    private boolean pilotApplicationApproveEnd(EndProcessDTO dto) {
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        PilotApplicationEntity entity = new PilotApplicationEntity();
+        entity.setId(dto.getBusinessId());
+        return pilotApplicationService.approveEnd(approveOne, entity);
+    }
 
 }

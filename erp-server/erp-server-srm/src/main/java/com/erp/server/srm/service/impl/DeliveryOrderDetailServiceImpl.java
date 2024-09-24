@@ -2,25 +2,34 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.mapper.DeliveryOrderDetailMapper;
 import com.erp.server.srm.service.DeliveryOrderDetailService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +63,8 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
     @Resource
     private DeliveryOrderService deliveryOrderService;
 
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     public void add(List<DeliveryOrderDetailDTO.AddDTO> detailList, String mainId) {
@@ -87,6 +98,9 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         if(CollectionUtils.isEmpty(updateDTOList)){
             return true;
         }
+        //数据校验
+        checkDelivery(updateDTOList,mainId);
+
         List<DeliveryOrderDetailEntity> oldDetailList = this.listByMainId(mainId);
         Set<String> existDetailIds = updateDTOList.stream().map(DeliveryOrderDetailDTO.UpdateDTO::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toSet());
         //处理删除的明细
@@ -106,7 +120,6 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         for(DeliveryOrderDetailEntity deliveryOrderDetailEntity : needUpdateDetailList){
             DeliveryOrderDetailEntity old =  DeliveryOrderConverter.INSTANCE.detailConvert(deliveryOrderDetailEntity);
             DeliveryOrderDetailDTO.UpdateDTO updateDTO = updateDTOMap.get(deliveryOrderDetailEntity.getId());
-            checkDelivery(deliveryOrderDetailEntity.getSourceDetailId(),deliveryOrderDetailEntity.getId(),updateDTO.getDeliveryQty(),deliveryOrderDetailEntity.getOrderQty());
             BeanUtil.copyProperties(updateDTO,deliveryOrderDetailEntity);
             String msg = StrUtil.format("用户【{}】修改sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), deliveryOrderDetailEntity.getSkuNo());
             operateLogService.addModuleOperateLogByObj(old, deliveryOrderDetailEntity, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderDetailEntity.getMainId(), msg);
@@ -123,9 +136,6 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         if(CollectionUtils.isEmpty(needAddDTOList)){
             return true;
         }
-        needAddDTOList.forEach(v->{
-            checkDelivery(v.getSourceDetailId(),null,v.getDeliveryQty(),v.getOrderQty());
-        });
         List<DeliveryOrderDetailEntity> list = BeanMapperUtils.copyList(DeliveryOrderDetailEntity.class, needAddDTOList);
         //处理明细数据
         handleData(list,mainId);
@@ -273,6 +283,92 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         Integer nowDeliveryQty = sameSourceDetailList.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
         if(orderQty < deliveryQty + nowDeliveryQty){
             throw new ServiceException("送货数量不可超过【采购数量-累计已送货数量】");
+        }
+    }
+    /**
+     * 数据校验
+     * @author will
+     * @date 2024/9/19 11:13
+     * @param updateDTOList
+     * @param mainId
+     */
+    private void checkDelivery (List<DeliveryOrderDetailDTO.UpdateDTO> updateDTOList,String mainId) {
+        if (CollectionUtils.isEmpty(updateDTOList)) {
+            return;
+        }
+        //送货主表信息
+        DeliveryOrderEntity deliveryOrderEntity = deliveryOrderService.getById(mainId);
+        if (ObjectUtil.isEmpty(deliveryOrderEntity)) {
+            throw new ServiceException("送货单主表信息未找到");
+        }
+
+        // 采购订单明细id集合
+        List<String> podIds = updateDTOList.stream().map(DeliveryOrderDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
+        //送货信息
+        List<DeliveryOrderDetailDTO.ListDTO> deliveryOrderDetailList = this.listDetailDTOByDetailSourceIds(podIds);
+        //查询采购签收信息
+        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIds(Arrays.asList(deliveryOrderEntity.getSourceId()));
+        //入库信息
+        List<PoInstockDetailEntity> stockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        //退货信息
+        List<PoReturnDetailEntity> returnOrderDetailList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+
+        for (DeliveryOrderDetailDTO.UpdateDTO updateDTO : updateDTOList) {
+            //已送货数量
+            Integer deliveryQty = MathUtil.ZERO;
+            //有送货单的收货数量
+            Integer hasDeliveryReceiveQty = MathUtil.ZERO;
+            //无送货单收货数量
+            Integer unDeliveryReceiveQty = MathUtil.ZERO;
+            //无收货单的入库数量
+            Integer unReceiveInstockQty = MathUtil.ZERO;
+            //收发差异
+            Integer diffSendAndReceive = MathUtil.ZERO;
+            //退货补货数量
+            Integer returnQty = MathUtil.ZERO;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveList)) {
+                hasDeliveryReceiveQty = receiveList.stream().filter(e -> org.apache.commons.lang3.StringUtils.isNotEmpty(e.getSourceType())
+                                && e.getSourceType().equalsIgnoreCase(SourceTypeEnum.DELIVERY_ORDER.getCode())
+                                && e.getPurchaseOrderDetailId().equals(updateDTO.getSourceDetailId()))
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId()) && e.getPurchaseOrderDetailId().equals(updateDTO.getSourceDetailId()))
+                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //无收货单的入库数量
+            if (CollectionUtils.isNotEmpty(stockInDetailList)){
+                // 采购入库单（无收货单），只有审核通过的才占用库存数量
+                unReceiveInstockQty = stockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(updateDTO.getSourceDetailId())
+                                && Objects.equals(e.getSourceDetailId(), updateDTO.getSourceDetailId())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            }
+            // 退货单（退货补货的才会导致在途数量变化）
+            if (CollectionUtils.isNotEmpty(returnOrderDetailList)){
+                returnQty = returnOrderDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(updateDTO.getSourceDetailId())
+                                && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                                && StrUtils.isNotEmpty(e.getPurchaseOrderDetailId())
+                                && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
+                        .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //已送货数量
+            if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
+                deliveryQty = deliveryOrderDetailList.stream().filter(e -> !StrUtil.equals(updateDTO.getDetailId(),e.getDetailId()) && e.getSourceDetailId().equals(updateDTO.getSourceDetailId()))
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                //收发差异
+                //发货数量 - 已审核收货数量
+                Integer srmDeliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(updateDTO.getSourceDetailId())
+                                && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
+                        .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty)
+                        .reduce(MathUtil.ZERO, Integer::sum);
+                diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
+            }
+            //待送货数量
+            Integer unDeliveryQty = updateDTO.getOrderQty() - deliveryQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;
+            if (updateDTO.getDeliveryQty() > unDeliveryQty) {
+                throw new ServiceException(StrUtil.format("送货数量不能超过【{}】",unDeliveryQty));
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -134,6 +135,35 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
      */
     @TableField(value = "shop_charge_name")
     private String shopChargeName;
+
+    /**
+     * 费用规则
+     */
+    @TableField(value = "fee_rule")
+    private String feeRule;
+    /**
+     * 账单确认时间
+     */
+    @TableField(value = "confirm_time")
+    private LocalDateTime confirmTime;
+
+    /**
+     * 账单确认人id
+     */
+    @TableField(value = "confirm_user_id")
+    private String confirmUserId;
+
+    /**
+     * 账单确认人名称
+     */
+    @TableField(value = "confirm_user_name")
+    private String confirmUserName;
+
+    /**
+     * 对账单id
+     */
+    @TableField(value = "reconciliation_id")
+    private String reconciliationId;
 
     /**
      * 费用编辑（导入数据返回）

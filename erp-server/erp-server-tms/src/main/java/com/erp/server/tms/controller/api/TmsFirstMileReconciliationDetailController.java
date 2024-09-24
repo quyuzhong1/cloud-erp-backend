@@ -144,11 +144,11 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      * {@code @date:} 2024-03-25
      */
     @PostMapping("/waitPaging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:tmsFirstMileReconciliationDetail:waitPaging",
-            tableAlias = "tfmrd"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "logistics_supplier_id",
+//            menuCode = "tms:tmsFirstMileReconciliationDetail:waitPaging",
+//            tableAlias = "lb"
+//    )
     @WebAdvanceQuery(handler = TmsFirstMileReconciliationDetailQueryHandler.class)
     public ApiResult<PagingVO<TmsFirstMileReconciliationDetailDTO.ListDTO>> waitPaging(@RequestBody @Validated PagingDTO<TmsFirstMileReconciliationDetailDTO.PagingParamDTO> dto) {
         return success(tmsFirstMileReconciliationDetailService.waitReconciliationPaging(dto));

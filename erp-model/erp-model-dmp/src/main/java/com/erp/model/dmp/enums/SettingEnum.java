@@ -59,6 +59,7 @@ public enum SettingEnum {
     AMAZON_FBA_SHIPMENT_SKIP_LIST("amazon_fba_shipment_skip", SettingEnum.AMAZON_FBA_SHIPMENT_SKIP, "亚马逊FBA货件暂时跳过亚马逊请求列表(英文逗号拼接)"),
 
     NEW_DMP_PUSH_SWTICH_LIST("push_swtich", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台推送开关"),
+    NEW_DMP_PULL_SWITCH_LIST("pull_switch", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台拉取开关"),
 
     //支持推送仓位的金蝶仓库
     PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST("push_kingdee_warehouse_location",SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION,"支持推送仓位的金蝶仓库"),
@@ -124,6 +125,11 @@ public enum SettingEnum {
      * 新中台推送开关
      */
     public static final String NEW_DMP_PUSH_SWTICH = "new_dmp_push_swtich";
+
+    /**
+     * 新中台拉取开关
+     */
+    public static final String NEW_DMP_PULL_SWITCH = "new_dmp_push_switch";
 
     /**
      * 亚马逊报告

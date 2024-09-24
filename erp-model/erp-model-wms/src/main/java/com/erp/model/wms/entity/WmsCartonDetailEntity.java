@@ -31,6 +31,11 @@ public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
     @TableField("main_id")
     private String mainId;
     /**
+     * 装箱任务id
+     */
+    @TableField(exist = false)
+    private String taskId;
+    /**
     * 产品id
     */
     @TableField("sku_id")
@@ -55,6 +60,11 @@ public class WmsCartonDetailEntity extends BaseEntity<WmsCartonDetailEntity> {
      */
     @TableField("weight_unit")
     private String weightUnit;
+    /**
+     * fn_sku
+     */
+    @TableField("fn_sku")
+    private String fnSku;
 
     public static final String MAIN_ID = "main_id";
 

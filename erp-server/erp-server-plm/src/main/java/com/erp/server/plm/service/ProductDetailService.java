@@ -805,4 +805,14 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return
      */
     List<ProductDetailEntity> changeSkuBySpu(ChangeSkuToSpuDTO changeSkuToSpuDTO);
+
+    /**
+     * 根据skuid 集合获取到sku信息（产品信息+项目经理+产品经理）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO.ProductChargeInfoDTO>
+     * @author jack
+     * @date 2024-09-20
+     */
+    List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(List<String> skuIds);
 }

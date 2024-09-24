@@ -45,6 +45,7 @@ public interface FirstMileDeliveryConverter {
     @Mappings({
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "sku"),
+            @Mapping(target = "fnSku", source = "fnSku"),
             @Mapping(target = "packQty", source = "singleBoxQuantity"),
             @Mapping(target = "deliveryQty", source = "singleBoxQuantity"),
     })

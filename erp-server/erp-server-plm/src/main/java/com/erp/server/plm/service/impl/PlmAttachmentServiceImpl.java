@@ -1,13 +1,16 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
+import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.server.plm.mapper.PlmAttachmentMapper;
 import com.erp.server.plm.service.PlmAttachmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -136,5 +139,13 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
             resultList.add(entity);
         }
         return resultList;
+    }
+
+    @Override
+    public void removeAttachmentByUrl(AttachmentDTO.DeleteDTO dto) {
+        this.lambdaUpdate()
+                .eq(PlmAttachmentEntity::getAttachUrl, dto.getAttachUrl())
+                .eq(StringUtils.isNotBlank(dto.getBusinessId()), PlmAttachmentEntity::getBusinessId, dto.getBusinessId())
+                .remove();
     }
 }

@@ -28,7 +28,6 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -57,7 +56,6 @@ import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
-import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -112,7 +110,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -124,9 +121,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
-
-import static com.rtfparserkit.rtf.Command.list;
-import static com.rtfparserkit.rtf.Command.v;
 
 /**
  * <p>
@@ -618,6 +612,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
+    @DataIdempotent(keyIdName = "dto.id")
     public BatchResultDTO approve(ApproveOneDTO dto) {
         SoOutstockEntity entity = this.getById(dto.getId());
         if (Objects.isNull(entity)) {
@@ -913,6 +908,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     //TODO 物流单
 //    @Async("saveLogisticsBill")
+    @Override
     public void saveLogisticsBill(SoOutstockEntity entity) {
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
             addDTO.setOutstockId(entity.getId());
@@ -923,6 +919,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String orderType = entity.getOrderType();
             String b2cType = OrderTypeEnum.B2C.getCode();
             addDTO.setOrderType(orderType);
+            //平台订单号
+            addDTO.setPlatformCode(entity.getSourceCode());
             //表明是是b2b
             if (!b2cType.equals(orderType)) {
                 SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
@@ -1000,6 +998,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     addDetailDTO.setTrackNo(s);
                     detailList.add(addDetailDTO);
                 }
+            }
+            //非第三方仓和平台仓发货 则默认为自发货
+            if (StrUtil.isBlank(addDTO.getShipmentType())){
+                addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
             }
             addDTO.setDetailList(detailList);
             logisticsBillFeign.addLogisticsBill(addDTO);
@@ -1674,6 +1676,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
                 ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
                 ruleDTO.setReceiveCountry(customerDTO.getCountryId());
+                ruleDTO.setFromWarehouse(generateInfo.getWarehouseId());
                 transferDTO.setMatchTransferRuleDTO(ruleDTO);
                 transferDTO.setWarehouseId(generateInfo.getWarehouseId());
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferAndWarehouse(transferDTO);
@@ -1980,12 +1983,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<LogisticsBillDTO.BatchUpdateTrackNoDTO> batchUpdateTrackNoDTOList = new ArrayList<>();
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         List<SoOutstockEntity> updateList = new ArrayList<>();
+
         for(SoOutstockDTO.PagingUpdateDTO pagingUpdateDTO : dtoList){
             SoOutstockEntity soOutstock = list.stream().filter(v->v.getId().equals(pagingUpdateDTO.getId())).findFirst().orElse(null);
             if(Objects.isNull(soOutstock)){
                 BatchResultDTO batchResultDTO = BatchResultDTO.fail(pagingUpdateDTO.getId(),pagingUpdateDTO.getId(),ApiError.ERROR_99058.msg);
                 batchResultDTOList.add(batchResultDTO);
             }else{
+                //2024.09.11 jack 旺店通的销售出库单，不允许操作更新物流渠道字段，提示：第三方平台单据不允许修改
+                String createUserName = soOutstock.getCreateUserName();
+                String qimen = PlatformDictEnum.QI_MEN.getCode();
+                boolean isQimen = createUserName.equals(qimen);
+                if(isQimen){
+                    BatchResultDTO batchResultDTO = BatchResultDTO.fail(soOutstock.getId(),soOutstock.getCode(),ApiError.ERROR_99142.msg);
+                    batchResultDTOList.add(batchResultDTO);
+                    continue;
+                }
                 LogisticsBillDTO.BatchUpdateTrackNoDTO batchUpdateTrackNoDTO = new LogisticsBillDTO.BatchUpdateTrackNoDTO();
                 batchUpdateTrackNoDTO.setTrackNoList(pagingUpdateDTO.getTrackNoList());
                 batchUpdateTrackNoDTO.setSoOutstockEntity(soOutstock);
@@ -1999,6 +2012,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         soOutstock.setTrackNo(String.join(",", pagingUpdateDTO.getTrackNoList()));
                     }
                     soOutstock.setLogisticsChannelId(pagingUpdateDTO.getLogisticsChannelId());
+                    //2024.09.11 jack 销售出库单增加物流渠道名称logisticsChannelName
+                    soOutstock.setLogisticsChannelName(logisticsInfo.getName());
                     updateList.add(soOutstock);
                 }
             }

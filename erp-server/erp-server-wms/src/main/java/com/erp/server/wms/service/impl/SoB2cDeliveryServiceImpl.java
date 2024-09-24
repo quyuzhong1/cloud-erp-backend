@@ -1876,6 +1876,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
         dto.setType(StockOutTransferTypeEnum.B2C.getCode());
         dto.setReceiveCountry(receiverList.get(0).getCountry());
+        dto.setFromWarehouse(soB2cDeliveryDetailList.get(0).getWarehouseId());
         CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(soB2cDeliveryDetailList.get(0).getWarehouseId(),dto));
         if (resultDTO.getIsTransit()) {
             //生成直接调拨单
@@ -1939,7 +1940,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO handleErrorData(String id) {
+    public BatchResultDTO handleErrorData(String id,Boolean isAddQty) {
         SoB2cDeliveryEntity soB2cDeliveryEntity = this.getById(id);
         if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
             return BatchResultDTO.fail(id, "", "未找到b2c发货单");
@@ -1948,8 +1949,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isEmpty(detailList)) {
             return BatchResultDTO.fail(id, "", "未找到b2c发货单明细");
         }
-        //提交发货冻结虚拟库存
-        freezeVirtualInventory(soB2cDeliveryEntity,detailList);
+        if (isAddQty) {
+            //提交发货冻结虚拟库存
+            freezeVirtualInventory(soB2cDeliveryEntity,detailList);
+        }
         //发货出库
         outFreezeVirtualInventory(soB2cDeliveryEntity);
         return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), "操作成功");
@@ -2033,7 +2036,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         baseApproveParamDTO.setIds(Arrays.asList(id));
         baseApproveParamDTO.setType(ApproveType.PASS);
         TransferInfoEntity transferInfoEntity = transferInfoService.getById(id);
-        transferInfoService.approve(transferInfoEntity,ApproveType.PASS,"", null,Boolean.TRUE);
+        transferInfoService.approve(transferInfoEntity,ApproveType.PASS,"", null,Boolean.TRUE, Boolean.FALSE);
     }
 
     /**

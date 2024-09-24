@@ -56,12 +56,15 @@
         tfmr.exchange_rate AS exchangeRate,
         tfmr.total_cost AS totalCost,
         tfmr.reason AS reason,
+        tfmr.reconciliation_month AS reconciliationMonth,
         COALESCE(tfmrd.actualBillingWeight, 0) AS actualBillingWeight,
         COALESCE(tfmrd.actualWeightUnit, 'kg') AS actualWeightUnit,
         COALESCE(tfmrd.actualBillingWeightUnit, 'kg') AS actualBillingWeightUnit,
         COALESCE(tfmrd.actualShippingCost, 0) AS actualShippingCost,
         COALESCE(tfmrd.actualDeclareCost, 0) AS actualDeclareCost,
         COALESCE(tfmrd.actualOtherCost, 0) AS actualOtherCost,
+        COALESCE(tfmrd.actualOtherTaxCost, 0) AS actualOtherTaxCost,
+        tfmrd.reconciliationCount AS reconciliationCount,
         COALESCE(tfmrd.totalCost, 0) AS totalCostDetail
     </sql>
 
@@ -75,10 +78,14 @@
             SUM(billing_weight) AS actualBillingWeight,
             MAX(actual_weight_unit) AS actualWeightUnit,
             MAX(billing_weight_unit) AS actualBillingWeightUnit,
+            MAX(reconciliation_count) AS reconciliationCount,
             SUM(shipping_cost) AS actualShippingCost,
             SUM(declare_cost) AS actualDeclareCost,
             SUM(other_cost) AS actualOtherCost,
+            SUM(other_tax_cost) AS actualOtherTaxCost,
             SUM(total_logistics_cost) AS totalCost,
+            MAX(source_code) as source_code,
+            MAX(transport_no) as transport_no,
         main_id
         FROM
         tms_first_mile_reconciliation_detail
@@ -122,6 +129,8 @@
         SUM(shipping_cost) AS actualShippingCost,
         SUM(declare_cost) AS actualDeclareCost,
         SUM(other_cost) AS actualOtherCost,
+        SUM(other_tax_cost) AS actualOtherTaxCost,
+        MAX(reconciliation_count) AS reconciliationCount,
         SUM(total_logistics_cost) AS totalCost,
         main_id
         FROM
@@ -158,6 +167,33 @@
             ${params.permissionSql}
         </if>
         GROUP BY approve_status
+    </select>
+    <select id="listReconciliationAndCostByBillIds"
+            resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ReconciliationDTO">
+        select id,logistics_bill_id,reconciliation_status,actual_weight,volume_weight,weight_logistics,volume_weight_logistics,weight_unit,currency,rn
+        from (
+            select
+                bill.id,
+                bill.logistics_bill_id,
+                bill.reconciliation_status,
+                bill.actual_weight,
+                bill.volume_weight,
+                bill.weight_logistics,
+                bill.volume_weight_logistics,
+                bill.weight_unit,
+                bill.currency,
+                ROW_NUMBER() OVER (PARTITION BY bill.logistics_bill_id ORDER BY bill.create_time) AS rn
+            from logistics_bill_cost bill
+            left join tms_first_mile_reconciliation_detail tfmrd
+                on bill.reconciliation_id = tfmrd.main_id and tfmrd.is_deleted = false and tfmrd."type" = 'actual' and tfmrd.reconciliation_count = 1
+            where bill.is_deleted = false
+            <if test="ids != null and ids.size > 0">
+                AND bill.logistics_bill_id IN
+                <foreach collection="ids" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+             ) as detail where rn = 1
     </select>
 
 </mapper>

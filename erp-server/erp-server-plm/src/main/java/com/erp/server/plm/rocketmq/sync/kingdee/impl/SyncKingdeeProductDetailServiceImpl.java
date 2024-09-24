@@ -92,8 +92,58 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
+        //生成任务
+       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    }
 
-        Map<String, Object> resultMap = new HashMap<>();
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PRODUCT_DETAIL.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getSkuNo());
+            taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            taskFeignDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+        
+        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(operate);
+        plmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+        
+        return null;
+    }
+
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(ProductDetailEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
         //sku
         resultMap.put("id", entity.getId());
         //sku
@@ -107,7 +157,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
+            return resultMap;
         }
 
         //产品信息
@@ -262,52 +312,6 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             //不允许库存
             resultMap.put("allowInventory", Boolean.FALSE);
         }
-
-        //生成任务
-       return saveTask(entity,operate,resultMap);
-    }
-
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
-        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PRODUCT_DETAIL.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	//添加推送任务
-            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-            taskFeignDTO.setSourceId(entity.getId());
-            taskFeignDTO.setSourceCode(entity.getSkuNo());
-            taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
-            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName());
-            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-            taskFeignDTO.setSyncOperate(operate);
-            return dmpMqFeign.saveTask(taskFeignDTO);
-        }
-        
-        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
-        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        plmPushMsgEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
-        plmPushMsgEntity.setSourceId(entity.getId());
-        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
-        plmPushMsgEntity.setSyncOperate(operate);
-        plmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        
-        plmPushMsgService.save(plmPushMsgEntity);
-        
-        return null;
-    }
+        return resultMap;
+	}
 }

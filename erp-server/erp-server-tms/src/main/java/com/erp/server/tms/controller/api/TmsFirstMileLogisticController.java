@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -13,17 +14,19 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.EnumCacheUtils;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.enums.ReconciliationTypeEnum;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.query.TmsFirstMileLogisticQueryHandler;
-import com.erp.server.tms.schedule.FmLogisticWarnJob;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,8 +37,8 @@ import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 头程物流单
@@ -50,6 +53,8 @@ public class TmsFirstMileLogisticController extends BaseController {
 
     @Resource
     private TmsFirstMileLogisticService tmsFirstMileLogisticService;
+    @Resource
+    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
 
     /**
      * tabList
@@ -238,7 +243,32 @@ public class TmsFirstMileLogisticController extends BaseController {
     @PostMapping("/generateReconciliation")
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单生成对账单")
     public ApiResult<List<BatchResultDTO>> generateReconciliation(@RequestBody @Valid TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto) {
-        List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.generateReconciliation(dto);
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listByIds(ids);
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        // 当前添加的主账单记录
+        Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
+        for (String id : ids) {
+            BatchResultDTO updateResult;
+            LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(id, e.getId())).findFirst().orElse(null);
+            if (Objects.isNull(entity)){
+                updateResult = BatchResultDTO.fail(id, id, "物流单记录不存在");
+                resultDTOS.add(updateResult);
+                continue;
+            }
+            try {
+                updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.ACTUAL.getCode());
+            } catch (Exception e) {
+                log.error("头程对账生成失败", e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+                    resultDTOS.add(updateResult);
+                    continue;
+                }
+                updateResult = BatchResultDTO.fail(id, entity.getTransportNo(), e.getMessage());
+            }
+            resultDTOS.add(updateResult);
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -311,7 +341,22 @@ public class TmsFirstMileLogisticController extends BaseController {
             serviceClass = TmsFirstMileLogisticService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = tmsFirstMileLogisticService.delete(dto.getIds());
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<LogisticsBillEntity> entityList = tmsFirstMileLogisticService.listByIds(ids);
+        for (String id : ids) {
+            LogisticsBillEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"头程物流单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(tmsFirstMileLogisticService.delete(entity));
+            }catch (Exception e){
+                log.error("头程物流单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCounterNo(), e.getMessage()));
+            }
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -355,4 +400,42 @@ public class TmsFirstMileLogisticController extends BaseController {
     public ApiResult<List<Map<String,Object>>> getTrackStatusList() {
         return success(tmsFirstMileLogisticService.getTrackStatusList());
     }
+
+    /**
+     * 下推重量分摊
+     */
+    @PostMapping("/pushWeightAllocation")
+    public ApiResult<List<BatchResultDTO>> pushWeightAllocation(@RequestBody @Valid BaseIdsDTO.IdsDTO dto){
+        List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO = tmsFirstMileLogisticService.pushWeightAllocation(id);
+            resultList.add(resultDTO);
+        }
+        return resultList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultList) : failure(resultList);
+    }
+
+    /**
+     * 下推物流单
+     **/
+    @PostMapping("/generateLogisticsBill")
+    public ApiResult<List<BatchResultDTO>> generateLogisticsBill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> entityList = wmsFirstMileDeliveryFeign.listByIds(ids);
+        List<BatchResultDTO> result = new ArrayList<>();
+        for (String id : ids){
+            FirstMileDeliveryEntity firstMileDeliveryEntity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                result.add(BatchResultDTO.fail(id,id,"发货单为空"));
+                continue;
+            }
+            try {
+                result.add(tmsFirstMileLogisticService.generateLogisticsBill(firstMileDeliveryEntity));
+            }catch (Exception e){
+                log.error("头程发货单下推装箱任务失败>>>>>", e);
+                result.add(BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),e.getMessage()));
+            }
+        }
+        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
+    }
+
 }

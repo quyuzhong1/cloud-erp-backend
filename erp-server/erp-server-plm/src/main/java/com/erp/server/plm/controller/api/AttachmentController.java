@@ -75,4 +75,16 @@ public class AttachmentController extends BaseController {
         return success();
     }
 
+    /**
+     * 根据URL删除附件信息
+     * @param dto
+     * @return
+     */
+    @LogAction(value = LogActionEnum.DELETE, desc = "根据URL删除附件信息")
+    @PostMapping("/deleteByUrl")
+    public ApiResult removeAttachment(@RequestBody AttachmentDTO.DeleteDTO dto) {
+        plmAttachmentService.removeAttachmentByUrl(dto);
+        return success();
+    }
+
 }

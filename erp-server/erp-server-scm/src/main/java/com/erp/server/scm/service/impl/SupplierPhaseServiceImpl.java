@@ -198,7 +198,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         statusList.add(waitSubmitStatus);
         //只有待提交 和审核不通过 才能编辑
         if (!statusList.contains(phase.getApproveStatus())) {
-            new ServiceException(ApiError.ERROR_98021);
+            throw new ServiceException(ApiError.ERROR_98021);
         }
 
         //当前阶段

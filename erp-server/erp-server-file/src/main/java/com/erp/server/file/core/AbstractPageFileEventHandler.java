@@ -25,13 +25,16 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
         dto.setCurrPage(1);
         List<T> dataList = new ArrayList<>();
         boolean hasNext = true;
+        int totalCount = 0;
         while (hasNext) {
             dto.setParams(p);
             PagingVO<T> data = getPageData(dto);
             if (!CollectionUtils.isEmpty(data.getList())) {
                 dataList.addAll((Collection<? extends T>) data.getList());
             }
-            int totalCount = data.getTotalCount();
+            if (totalCount == 0) {
+                totalCount = data.getTotalCount();
+            }
             if (totalCount <= dto.getCurrPage() * getPageSize()) {
                 hasNext = false;
             }

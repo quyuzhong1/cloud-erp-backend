@@ -186,6 +186,22 @@ public class PurchaseApplicationDTO implements Serializable {
          * 关闭原因
          */
         private String closeReason;
+        /**
+         *  来源id
+         */
+        private String sourceId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 来源单号
+         */
+        private String sourceType;
+        /**
+         * 来源详情表id
+         */
+        private String sourceDetailId;
     }
 
     @Data
@@ -314,12 +330,24 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
+        /**
+         * 来源ID
+         */
+        private String sourceId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
+    public static class  AddDTO extends CommonDTO {
         /**
          * 采购申请明细
          */

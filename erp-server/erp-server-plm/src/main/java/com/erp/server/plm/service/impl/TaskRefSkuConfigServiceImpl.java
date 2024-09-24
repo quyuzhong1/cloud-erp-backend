@@ -266,7 +266,7 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
                 newFieldInfoList.add(productHeightMap);
             }
             if (prop.equals("boxSize")){
-                Map<String, Object> boxLengthMap = getParams("boxLength", "长");
+                Map<String, Object> boxLengthMap = getParams("length", "长");
                 Map<String, Object> boxWidthMap = getParams("boxWidth", "宽");
                 Map<String, Object> boxHeightMap = getParams("boxHeight", "高");
                 newFieldInfoList.add(boxLengthMap);

@@ -36,8 +36,6 @@
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
         fdd.fba_shipment_code fbaShipmentCode,
-        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
-        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = fdd.sku_id) as packingQty,
         pt.packing_status as packingStatus,
         pt.id as taskId,
         fd.declare_status
@@ -135,7 +133,9 @@
         CASE WHEN approve_status = 'approve' THEN '已发货' ELSE '未发货' END AS deliveryStatusName,
         SUM(fdd.delivery_qty) AS deliveryQty,
         fd.approve_time AS deliveryTime,
-        (SELECT owi.code from overseas_warehouse_inbound owi where owi.is_deleted = false and owi.source_code =  fd.code limit 1 ) as refCode
+        CASE WHEN fd.demand_type = 'demandPlatformWarehouse'
+            THEN (select fdd2.fba_shipment_code from first_mile_delivery_detail fdd2 where fdd2.main_id = fd.id and fdd2.is_deleted = false  limit 1)
+            ELSE(SELECT owi.code from overseas_warehouse_inbound owi where owi.is_deleted = false and owi.source_code =  fd.code limit 1 ) END as refCode
         FROM  first_mile_delivery fd
         INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         WHERE fd.is_deleted = FALSE
@@ -150,7 +150,9 @@
         </if>
         GROUP BY fd.code,
         deliveryStatus,
-        fd.approve_time
+        fd.approve_time,
+        fd.id,
+        fd.demand_type
         ORDER BY fd.code DESC
     </select>
 
@@ -180,7 +182,10 @@
 
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
-        fmd.id,
+        pt.source_id as id,
+        pt.id taskId,
+        pt.code taskCode,
+        wc.id as boxId,
         wc.box_no,
         concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
         box_length*box_width*box_height as multiplySize,
@@ -189,14 +194,16 @@
         wcs.box_length as length,
         wcs.box_width as width,
         wcs.box_height as height,
-        (select string_agg(wcd.sku_no, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
-        FROM first_mile_delivery fmd
-        INNER JOIN packing_task pt on pt.source_id = fmd.id and pt.is_deleted = false
+        wcs.size_unit as sizeUnit,
+        (select string_agg(wcd.sku_no, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku,
+        (select string_agg(wcd.sku_id, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as skuIds,
+        (select string_agg(concat(wcd.sku_no,':',wcd.sku_id), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as skuMapping
+        FROM packing_task pt
         INNER JOIN wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
         INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
-        WHERE fmd.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
-            AND fmd.id IN
+            AND pt.source_id IN
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>
@@ -242,6 +249,7 @@
             fmd.shop_id as shopId,
             fmd.shop_name as shopName,
             fmd.approve_time as approveTime,
+            fmd.delivery_warehouse_id as fromWarehouseId,
             fmd.delivery_warehouse_name as fromWarehouseName,
             fw.address as fromAddress,
             fmd.dest_warehouse_name as toWarehouseName,
@@ -265,6 +273,12 @@
             <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
                 #{id}
             </foreach>
+        </if>
+        <if test="params.searchKey != null and params.searchKey != ''">
+            fmd.code ILIKE concat('%', #{params.searchKey}::text ,'%')
+        </if>
+        <if test="params.ids == null or params.ids.size == 0">
+            limit 20
         </if>
     </select>
     <select id="logisticStatistics"
@@ -322,5 +336,173 @@
                 #{id}
             </foreach>
         </if>
+    </select>
+    <select id="pagingFirstMile" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ListFirstMileDTO">
+        SELECT
+        fd.id as sourceId,
+        fdd.id as sourceDetailId,
+        fd.code as sourceCode,
+        'delivery' as sourceType,
+        concat(fdd.fba_shipment_code,owi.code) AS businessCode,
+        fdd.fba_shipment_code as fbaShipmentCode,
+        owi.code as overseasWarehouseCode,
+        fd.demand_type AS businessType,
+        fd.shop_id AS shopId,
+        fd.shop_name AS shopName,
+        fd.delivery_warehouse_id AS warehouseId,
+        fd.delivery_warehouse_name AS warehouseName,
+        fdd.sku_id AS skuId,
+        fdd.sku_no AS skuNo,
+        fdd.platform_sku_no AS platformSkuNo,
+        fdd.stock_sku AS stockSku,
+        fdd.plan_qty AS planQty,
+        fdd.delivery_qty AS deliveryQty
+        FROM first_mile_delivery_detail fdd
+        LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
+        WHERE
+        ${params.sqlMap.default}
+        and fd.is_deleted = FALSE and fd.approve_status = 'approve'
+        <!--数据权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fd.create_time DESC, fd.code, fdd.id
+    </select>
+    <select id="listDetailByCodes" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ListFirstMileDTO">
+        SELECT
+        fd.id as sourceId,
+        fdd.id as sourceDetailId,
+        fd.code as sourceCode,
+        'delivery' as sourceType,
+        concat(fdd.fba_shipment_code,owi.code) AS businessCode,
+        fdd.fba_shipment_code as fbaShipmentCode,
+        owi.code as overseasWarehouseCode,
+        fd.demand_type AS businessType,
+        fd.shop_id AS shopId,
+        fd.shop_name AS shopName,
+        fd.delivery_warehouse_id AS warehouseId,
+        fd.delivery_warehouse_name AS warehouseName,
+        fdd.sku_id AS skuId,
+        fdd.sku_no AS skuNo,
+        fdd.platform_sku_no AS platformSkuNo,
+        fdd.product_name AS productName,
+        fdd.stock_sku AS stockSku,
+        fdd.plan_qty AS planQty,
+        fdd.delivery_qty AS deliveryQty
+        FROM first_mile_delivery_detail fdd
+        LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
+        WHERE fd.is_deleted = FALSE and fd.approve_status = 'approve'
+        <if test="codes != null and codes.size > 0">
+            and fd.code in
+            <foreach collection="codes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="sourceCodes != null and sourceCodes.size > 0">
+            and concat(fdd.fba_shipment_code,owi.code) in
+            <foreach collection="sourceCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY sourceId,sourceDetailId,sourceCode,sourceType,businessCode,overseasWarehouseCode,fbaShipmentCode,businessType,shopId,shopName,warehouseId,warehouseName,skuId,skuNo,platformSkuNo,stockSku,planQty,deliveryQty
+    </select>
+    <select id="getBusinessCodeByIds" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
+        SELECT
+            fd.id,
+            fd.code,
+            fdd.id as detailId,
+            concat(fdd.fba_shipment_code,owi.code) AS businessCode,
+            fdd.fba_shipment_code as fbaShipmentCode,
+            owi.code as overseasWarehouseCode
+        FROM first_mile_delivery fd
+         LEFT JOIN first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
+         LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
+        where fd.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            and fd.id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="getBusinessCodeByCodes" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
+        SELECT
+        fd.id,
+        fd.code,
+        fdd.id as detailId,
+        concat(fdd.fba_shipment_code,owi.code) AS businessCode,
+        fdd.fba_shipment_code as fbaShipmentCode,
+        owi.code as overseasWarehouseCode
+        FROM first_mile_delivery fd
+        LEFT JOIN first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
+        where fd.is_deleted = FALSE
+        <if test="deliveryCodes != null and deliveryCodes.size > 0">
+            and fd.code in
+            <foreach collection="deliveryCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="firstMilePackingTaskDetail"
+            resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
+        SELECT
+            distinct
+            fmd.id as firstMileId,
+            wc.id,
+            wc.packing_task_id as taskId,
+            (select fsp.box_no from fba_shipment_packing fsp where fsp.carton_id = wc.id and fsp.is_deleted = false limit 1 ) as fbaBoxNo,
+            wc.box_no,
+            concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
+            wcs.package_weight,
+            wcs.weight_unit,
+            wc.weighting_status,
+            wc.packing_status,
+            wc.packing_user_name,
+            wcs.measure_source,
+            wc.error_msg,
+            pt.source_id ,
+            wcs.box_length as length,
+            wcs.box_width as width,
+            wcs.box_height as height,
+            wcd.sku_id,
+            wcd.sku_no,
+            wcd.pack_qty,
+            concat(wcd.sku_no,'*',wcd.pack_qty) AS sku,
+            fmd.code as deliveryCode,
+            case when fmd.demand_type = 'demandPlatformWarehouse' then
+                     (SELECT fba_shipment_code from first_mile_delivery_detail fmdd where fmdd.main_id = fmd.id and fmdd.is_deleted = false limit 1 )
+                 else
+                     (SELECT code from overseas_warehouse_inbound owi where owi.source_id = fmd.id and owi.is_deleted = false limit 1)
+                end as businessCode,
+        fmdd.platform_sku_no||'*'||wcd.pack_qty as platformSku,
+        fmdd.fn_sku||'*'||wcd.pack_qty as fnSku
+            from
+            first_mile_delivery fmd
+        inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        inner join packing_task pt on (pt.source_id = fmd.id or pt.source_id = fmd.source_id) and pt.is_deleted = false
+                inner join wms_carton wc on wc.packing_task_id = pt.id and wc.is_deleted =false
+                INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+                INNER JOIN wms_carton_detail wcd ON wc.id = wcd.main_id and wcd.is_deleted = FALSE and wcd.sku_id = fmdd.sku_id
+        where ${params.sqlMap.default} and fmd.is_deleted = false
+          AND wcd.pack_qty > 0
+        <if test="ids != null and ids.size > 0">
+            AND fmd.id IN
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+        ORDER BY fmd.code
     </select>
 </mapper>

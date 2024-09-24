@@ -3,11 +3,12 @@ package com.erp.server.dmp.service;
 import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
-import com.erp.model.dmp.entity.AmzReportInfoEntity;
+import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.model.reports.ReportDocument;
 
@@ -80,7 +81,7 @@ public interface AmzReportHandleService {
      * @Author Jim
      * @since 2024-01-20
      **/
-    ReportDocument queryAmzReportDocument(AmzReportInfoEntity reportInfoEntity, AmzReportTaskEntity entity);
+    ReportDocument queryAmzReportDocument(String shopId, String reportDocumentId, String taskId, String taskStatus);
 
     /**
      * 定时任务处理
@@ -96,10 +97,11 @@ public interface AmzReportHandleService {
      *
      * @param reportsApi  报告API
      * @param reportTypes 同组报告类型
-     * @param taskEntity  当前任务
+     * @param taskId  当前任务ID
+     * @param groupId 当前任务分组ID
      * @return 预估等待时间:0=无需等待
      * @Author Jim
      * @since 2024-06-18
      */
-    Long queryProcessReportWaitTime(ReportsApi reportsApi, List<String> reportTypes, AmzReportTaskEntity taskEntity);
+    Long queryProcessReportWaitTime(ReportsApi reportsApi, List<String> reportTypes, String taskId, String groupId);
 }

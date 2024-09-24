@@ -1,13 +1,10 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.PackingTaskDTO;
-import com.erp.model.wms.dto.PackingTaskDetailDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.CartonDTO;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 
 import java.util.List;
@@ -116,4 +113,9 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
      * @return
      */
     List<WmsCartonEntity> listByTaskIdsAndPermission(PackingTaskDTO.PackedDetailDTO packedDetailDTO);
+
+    /**
+     * 根据任务id获取箱子内容物详情
+     */
+    List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId);
 }

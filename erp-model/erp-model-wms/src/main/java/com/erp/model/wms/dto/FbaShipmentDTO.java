@@ -77,6 +77,13 @@ public class FbaShipmentDTO implements Serializable {
         @ColumnWidth(20)
         @ExcelProperty(value = "发货单号", index = 5)
         private String deliveryCode;
+
+        /**
+         * 装箱清单状态
+         */
+        @ColumnWidth(20)
+        @ExcelIgnore
+        private String packingDownload;
         /**
          * 平台货件状态
          */
@@ -460,6 +467,26 @@ public class FbaShipmentDTO implements Serializable {
         private String id;
         private String code;
     }
+    /**
+     * 快粘贴dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QuickPasteDTO {
+
+        /**
+         * codes
+         */
+        @NotEmpty(message = "单号不能为空")
+        private List<String> codeList;
+
+        /**
+         * 要货申请id
+         */
+        @NotBlank(message = "要货申请不能为空")
+        private String requisitionId;
+    }
+
 
     /**
      * 列表查询返回值
@@ -469,6 +496,12 @@ public class FbaShipmentDTO implements Serializable {
     public static class SearchDTO {
         private String code;
         private String id;
+
+        /**
+         * 要货申请id
+         */
+        private String requisitionId;
+        private String shopId;
     }
 
     /**
@@ -578,6 +611,15 @@ public class FbaShipmentDTO implements Serializable {
          * 是否组合品 true 是
          */
         private Boolean isCombination;
+
+        /**
+         * 装箱清单（bool)
+         */
+        private Boolean isPackingDownload;
+        /**
+         * 装箱清单下载状态
+         */
+        private String packingDownload;
     }
 
     /**

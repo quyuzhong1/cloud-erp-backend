@@ -367,4 +367,14 @@ public class ProductDetailShowDTO implements Serializable {
      * 箱规高
      */
     private BigDecimal boxHeight;
+
+    /**
+     * 目标不含税成本
+     */
+    private BigDecimal targetNoTaxCost = BigDecimal.ZERO;
+
+    /**
+     * 实际不含税成本
+     */
+    private BigDecimal actualNoTaxCost = BigDecimal.ZERO;
 }

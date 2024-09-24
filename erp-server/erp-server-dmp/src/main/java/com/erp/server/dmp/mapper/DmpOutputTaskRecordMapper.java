@@ -34,6 +34,14 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
     List<DmpOutputTaskRecordDTO.TabListDTO> listStatusCount(@Param("permissionSql")String permissionSql);
 
     /**
+     * 添加进黑名单的数量
+     * @Author Luo_WG
+     * @Date 2024/9/11 17:22
+     * @return java.util.List<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO>
+     **/
+    Integer listBlackCount(@Param("permissionSql")String permissionSql);
+
+    /**
      * 推送任务列表分页查询
      * @Author Luo_WG
      * @Date 2024/9/3 14:35

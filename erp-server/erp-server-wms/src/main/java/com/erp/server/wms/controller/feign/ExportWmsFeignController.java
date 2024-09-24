@@ -129,6 +129,10 @@ public class ExportWmsFeignController {
     private TransferInService transferInService;
     @Resource
     private VirtualInventoryService virtualInventoryService;
+
+    @Resource
+    private FbaShipmentPackingService fbaShipmentPackingService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -249,6 +253,12 @@ public class ExportWmsFeignController {
         return fbaShipmentService.exportFbaShipment(dto);
     }
 
+    @PostMapping("/fbaShipmentPacking")
+    @WebAdvanceQuery
+    public PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        return fbaShipmentPackingService.exportFbaShipmentPacking(dto);
+    }
+
     @PostMapping("/initStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -353,6 +363,17 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetail(dto);
+    }
+
+    @PostMapping("/firstMilePackingTaskDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:paging",
+            tableAlias = "fd"
+    )
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        return firstMileDeliveryService.firstMilePackingTaskDetail(dto);
     }
 
     @PostMapping("/packingTask")

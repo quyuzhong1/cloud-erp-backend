@@ -1005,4 +1005,24 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Integer returnQty;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HandleErrorDTO {
+        /**
+         * ids
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 是否添加库存
+         */
+        @NotNull(message = "是否添加库存")
+        private Boolean isAddQty;
+    }
+
+
 }
