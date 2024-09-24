@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -383,8 +384,26 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param transactionList   交易记录列表
      */
     private void checkInventoryList(List<InventoryTransactionDTO> transactionList) {
+        Map<String, InventoryTransactionDTO> checkMap = new HashMap<>();
+        for (InventoryTransactionDTO item : transactionList) {
+            // 未找到inventory_id的数据使用仓库id，skuID，仓位，库存状态作为唯一键进行合并。
+            String mapKey = StrUtil.isBlank(item.getInventoryId()) ?
+                    StrUtil.format("{}_{}_{}_{}", item.getWarehouseId(), item.getSkuId(),item.getWarehouseLocation(),item.getInventoryStatus()) :
+                    item.getInventoryId();
+            if(!checkMap.containsKey(mapKey)){
+                InventoryTransactionDTO itemCopy = new InventoryTransactionDTO();
+                BeanUtil.copyProperties(item, itemCopy);
+                checkMap.put(mapKey, itemCopy);
+            }else {
+                // 合并数量
+                InventoryTransactionDTO inventoryTransactionDTO = checkMap.get(mapKey);
+                inventoryTransactionDTO.setQty(inventoryTransactionDTO.getQty() + item.getQty());
+                checkMap.put(mapKey, inventoryTransactionDTO);
+            }
+        }
+        List<InventoryTransactionDTO> checkList = new ArrayList<>(checkMap.values());
         StringBuilder errList = new StringBuilder();
-        for(InventoryTransactionDTO transactionDTO:transactionList) {
+        for(InventoryTransactionDTO transactionDTO : checkList) {
             errList.append(checkInventory(transactionDTO));
         }
 
@@ -424,13 +443,15 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
 
         }
         if(inventoryQty + transactionDTO.getQty() < 0) {
-            return StrUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{}\n"
+            return StrUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
                     , transactionDTO.getSkuNo()
                     , transactionDTO.getWarehouseName()
                     , transactionDTO.getWarehouseLocationName()
                     , transactionDTO.getInventoryStatusName()
                     , inventoryQty
-                    , transactionDTO.getQty());
+                    , transactionDTO.getQty()
+                    , -(inventoryQty + transactionDTO.getQty())
+            );
         }
         return "";
     }
