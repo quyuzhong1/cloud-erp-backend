@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.feign;
 
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
+import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.server.scm.service.PurchaseApplicationDetailService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,5 +33,22 @@ public class PurchaseApplicationDetailFeignController {
     @PostMapping("/listByMainIds")
     List<PurchaseApplicationDetailEntity> listByMainIds(@RequestBody List<String> mainIds){
         return purchaseApplicationDetailService.lambdaQuery().in(PurchaseApplicationDetailEntity::getPurchaseApplicationId, mainIds).list();
+    }
+
+    /**
+     * 判断是否新品
+     * @param skuIds
+     * @return Boolean
+     * @date: 2024-08-29
+     * @author: tanmujin
+     */
+    @PostMapping("/existBySkuIds")
+    Boolean existBySkuIds(@RequestBody List<String> skuIds){
+        Boolean isNew = Boolean.TRUE ;
+        Integer count = purchaseApplicationDetailService.lambdaQuery().in(PurchaseApplicationDetailEntity::getSkuId, skuIds).count();
+        if(count > 0){
+            isNew = Boolean.FALSE ;
+        }
+        return isNew;
     }
 }

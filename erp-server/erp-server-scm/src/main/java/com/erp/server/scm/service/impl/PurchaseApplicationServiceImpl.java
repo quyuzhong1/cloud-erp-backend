@@ -578,9 +578,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         for (Map.Entry<String, Integer> entry : purchaseSkuQtyMap.entrySet()) {
             String sourceDetailId = entry.getKey();
             //已申请量
-            Integer qty = entry.getValue();
+            int qty = entry.getValue() == null ? 0 : entry.getValue();
             //本次删除的申请量
-            Integer deleteQty = collect.get(sourceDetailId);
+            int deleteQty = collect.get(sourceDetailId) == null ? 0 : collect.get(sourceDetailId);
             String status = (qty - deleteQty) > 0 ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.NOT_ORDER.getCode();
             map.put(sourceDetailId,status);
         }
