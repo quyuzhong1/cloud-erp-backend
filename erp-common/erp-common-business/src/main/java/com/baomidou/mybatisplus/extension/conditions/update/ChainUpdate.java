@@ -17,16 +17,13 @@ package com.baomidou.mybatisplus.extension.conditions.update;
 
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.conditions.ChainWrapper;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
-import com.common.core.entity.BaseEntity;
-
-import cn.hutool.core.date.LocalDateTimeUtil;
+import com.common.core.exception.ServiceException;
 
 /**
  * 具有更新方法的定义
@@ -52,11 +49,15 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
      * @return 是否成功
      */
     default boolean update(T entity) {
-    	if(entity == null) {
-    		Wrapper<T> wrapper = this.getWrapper();
-        	if(wrapper instanceof LambdaUpdateWrapper) {
-        		LambdaUpdateWrapper lambdaUpdateWrapper = (LambdaUpdateWrapper)wrapper;
-        		String sqlSet = lambdaUpdateWrapper.getSqlSet();
+		Wrapper<T> wrapper = this.getWrapper();
+    	if(wrapper instanceof LambdaUpdateWrapper) {
+    		LambdaUpdateWrapper lambdaUpdateWrapper = (LambdaUpdateWrapper)wrapper;
+    		boolean emptyOfWhere = lambdaUpdateWrapper.isEmptyOfWhere();
+    		if(emptyOfWhere) {
+    			throw new ServiceException("不允许没有条件更新数据，请联系实施人员");
+    		}
+    		if(entity == null) {
+    			String sqlSet = lambdaUpdateWrapper.getSqlSet();
         		if(!sqlSet.replace(" ", "").contains("update_time=")) {
         			Object object = null;
 					try {
@@ -72,7 +73,7 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
         				sqlSetList.add("update_time='" + LocalDateTime.now()+"'");
         			}
         		}
-        	}
+    		}
     	}
         return SqlHelper.retBool(getBaseMapper().update(entity, getWrapper()));
     }
