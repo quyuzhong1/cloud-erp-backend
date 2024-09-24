@@ -3,7 +3,8 @@
 <mapper namespace="com.erp.server.tms.mapper.FirstMileEstimatedBillMapper">
 
     <select id="paging" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$View">
-        select eb.id,
+        select DISTINCT
+                eb.id,
                fd. businessCode,
                lb.outstock_id outStockId,
                lb.transport_no transportNo,
@@ -27,6 +28,7 @@
                  left join logistics_bill_cost lbc on lbc.is_deleted = FALSE AND eb.logistics_bill_id = lbc.logistics_bill_id
         LEFT JOIN (
         SELECT
+            DISTINCT
             fd.ID,
             concat ( fdd.fba_shipment_code, owi.code ) AS businessCode
         FROM
