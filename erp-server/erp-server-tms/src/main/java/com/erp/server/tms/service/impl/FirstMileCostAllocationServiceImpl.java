@@ -1128,10 +1128,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      */
     private void resetAllocationAmount(List<FirstMileSkuCostAllocationDetailEntity> firstMileSkuCostAllocationDetailEntityList, List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList) {
         //同一个发货单内不同sku使用同一个费用分类的头程金额
-        FirstMileSkuCostAllocationDetailEntity maxShippingCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(e.getFeeType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount)).orElse(null);
-        FirstMileSkuCostAllocationDetailEntity maxDeclareCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(e.getFeeType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount)).orElse(null);
-        FirstMileSkuCostAllocationDetailEntity maxOtherTaxFee = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(e.getFeeType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount)).orElse(null);
-        FirstMileSkuCostAllocationDetailEntity maxOtherFee = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(e.getFeeType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount)).orElse(null);
+        FirstMileSkuCostAllocationDetailEntity maxShippingCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(e.getFeeType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getDeliveryQty)).orElse(null);
+        FirstMileSkuCostAllocationDetailEntity maxDeclareCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(e.getFeeType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getDeliveryQty)).orElse(null);
+        FirstMileSkuCostAllocationDetailEntity maxOtherTaxFee = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(e.getFeeType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getDeliveryQty)).orElse(null);
+        FirstMileSkuCostAllocationDetailEntity maxOtherFee = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(e.getFeeType())).max(Comparator.comparing(FirstMileSkuCostAllocationDetailEntity::getDeliveryQty)).orElse(null);
         //累加各个类型头程分摊金额
         BigDecimal shippingCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(e.getFeeType())).map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal declareCost = firstMileSkuCostAllocationDetailEntityList.stream().filter(e -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(e.getFeeType())).map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -1143,8 +1143,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         Map<String, String> map = new HashMap<>();
         firstMileSkuCostAllocationDetailEntityList.forEach(e -> {
             //运费
-            if (Objects.nonNull(maxShippingCost) && Objects.nonNull(maxShippingCost.getAmount()) && maxShippingCost.getAmount().compareTo(shippingCost) != 0 && maxShippingCost.getFeeType().equals(e.getFeeType())
-                    && e.getAllocatedAmount().equals(maxShippingCost.getAllocatedAmount()) && e.getCostMainId().equals(maxShippingCost.getCostMainId())) {
+            if (Objects.nonNull(maxShippingCost) && Objects.nonNull(maxShippingCost.getAmount()) && Objects.nonNull(e.getDeliveryQty()) && maxShippingCost.getFeeType().equals(e.getFeeType())
+                    && e.getDeliveryQty().equals(maxShippingCost.getDeliveryQty()) && e.getCostMainId().equals(maxShippingCost.getCostMainId())) {
                 //只能分摊一次
                 String value = map.getOrDefault(maxShippingCost.getFeeType(), "");
                 if (StrUtil.isBlank(value)) {
@@ -1155,8 +1155,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
             }
             //报关
-            if (Objects.nonNull(maxDeclareCost) && Objects.nonNull(maxDeclareCost.getAmount()) && maxDeclareCost.getAmount().compareTo(declareCost) != 0 && maxDeclareCost.getFeeType().equals(e.getFeeType())
-                    && e.getAllocatedAmount().equals(maxDeclareCost.getAllocatedAmount()) && e.getCostMainId().equals(maxDeclareCost.getCostMainId())) {
+            if (Objects.nonNull(maxDeclareCost) && Objects.nonNull(maxDeclareCost.getAmount()) && Objects.nonNull(e.getDeliveryQty()) && maxDeclareCost.getFeeType().equals(e.getFeeType())
+                    && e.getDeliveryQty().equals(maxDeclareCost.getDeliveryQty()) && e.getCostMainId().equals(maxDeclareCost.getCostMainId())) {
                 //只能分摊一次
                 String value = map.getOrDefault(maxDeclareCost.getFeeType(), "");
                 if (StrUtil.isBlank(value)) {
@@ -1166,8 +1166,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 }
             }
             //其他税费
-            if (Objects.nonNull(maxOtherTaxFee) && Objects.nonNull(maxOtherTaxFee.getAmount()) && maxOtherTaxFee.getAmount().compareTo(otherTaxFee) != 0 && maxOtherTaxFee.getFeeType().equals(e.getFeeType())
-                    && e.getAllocatedAmount().equals(maxOtherTaxFee.getAllocatedAmount()) && e.getCostMainId().equals(maxOtherTaxFee.getCostMainId())) {
+            if (Objects.nonNull(maxOtherTaxFee) && Objects.nonNull(maxOtherTaxFee.getAmount()) && Objects.nonNull(e.getDeliveryQty()) && maxOtherTaxFee.getFeeType().equals(e.getFeeType())
+                    && e.getDeliveryQty().equals(maxOtherTaxFee.getDeliveryQty()) && e.getCostMainId().equals(maxOtherTaxFee.getCostMainId())) {
                 //只能分摊一次
                 String value = map.getOrDefault(maxOtherTaxFee.getFeeType(), "");
                 if (StrUtil.isBlank(value)) {
@@ -1177,8 +1177,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 }
             }
             //其他费用
-            if (Objects.nonNull(maxOtherFee) && Objects.nonNull(maxOtherFee.getAmount()) && maxOtherFee.getAmount().compareTo(otherFee) != 0 && maxOtherFee.getFeeType().equals(e.getFeeType())
-                    && e.getAllocatedAmount().equals(maxOtherFee.getAllocatedAmount()) && e.getCostMainId().equals(maxOtherFee.getCostMainId())) {
+            if (Objects.nonNull(maxOtherFee) && Objects.nonNull(maxOtherFee.getAmount()) && Objects.nonNull(e.getDeliveryQty()) && maxOtherFee.getFeeType().equals(e.getFeeType())
+                    && e.getDeliveryQty().equals(maxOtherFee.getDeliveryQty()) && e.getCostMainId().equals(maxOtherFee.getCostMainId())) {
                 //只能分摊一次
                 String value = map.getOrDefault(maxOtherFee.getFeeType(), "");
                 if (StrUtil.isBlank(value)) {
@@ -1212,6 +1212,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
                 .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
+                .setDeliveryQty(firstMileSkuCostAllocationEntity.getDeliveryQty())
                 .setPlatformSkuNo(firstMileSkuCostAllocationEntity.getPlatformSkuNo())
                 .setFeeType(AllocationFeeTypeEnum.OTHER_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstOtherFee());
@@ -1250,6 +1251,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
                 .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
+                .setDeliveryQty(firstMileSkuCostAllocationEntity.getDeliveryQty())
                 .setPlatformSkuNo(firstMileSkuCostAllocationEntity.getPlatformSkuNo())
                 .setFeeType(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstOtherTaxFee());
@@ -1288,6 +1290,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
                 .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
+                .setDeliveryQty(firstMileSkuCostAllocationEntity.getDeliveryQty())
                 .setPlatformSkuNo(firstMileSkuCostAllocationEntity.getPlatformSkuNo())
                 .setFeeType(AllocationFeeTypeEnum.DECLARE_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstTariffFee());
@@ -1331,6 +1334,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setMainId(firstMileSkuCostAllocationEntity.getMainId())
                 .setCostMainId(firstMileSkuCostAllocationEntity.getId())
                 .setSkuId(firstMileSkuCostAllocationEntity.getSkuId())
+                .setDeliveryQty(firstMileSkuCostAllocationEntity.getDeliveryQty())
                 .setPlatformSkuNo(firstMileSkuCostAllocationEntity.getPlatformSkuNo())
                 .setFeeType(AllocationFeeTypeEnum.SHIPPING_COST.getCode())
                 .setAllocationType(allocationSettingDTO.getFirstShippingCost());
