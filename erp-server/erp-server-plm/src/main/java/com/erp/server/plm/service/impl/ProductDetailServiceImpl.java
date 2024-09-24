@@ -2395,6 +2395,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return baseMapper.listApproveAndListingSku();
     }
 
+    @Override
+    public List<String> getCategoryByQuerySql(String compareCodeSplicingValueSql) {
+        return baseMapper.getCategoryByQuerySql(compareCodeSplicingValueSql);
+    }
+
+    @Override
+    public List<String> getBrandByQuerySql(String compareCodeSplicingValueSql) {
+        return baseMapper.getBrandByQuerySql(compareCodeSplicingValueSql);
+    }
+
     private void customDataProcess(List<ProductDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)){
             return;

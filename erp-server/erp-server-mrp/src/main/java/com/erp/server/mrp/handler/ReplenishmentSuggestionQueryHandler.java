@@ -1,25 +1,37 @@
 package com.erp.server.mrp.handler;
 
 
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.server.mrp.service.ReplenishmentRefLabelService;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Component
 public class ReplenishmentSuggestionQueryHandler extends AbstractQueryHandler {
 
     @Resource
-     private ReplenishmentRefLabelService replenishmentRefLabelService;
+     private PlmTaskFeign plmTaskFeign;
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if("category".equals(field)) {
-
+        if("category_id".equals(field)) {
+            List<String> skuIds = plmTaskFeign.getCategoryByQuerySql(compareCodeSplicingValueSql);
+            if(CollectionUtils.isEmpty(skuIds)){
+                return this.getQueryEmptySql();
+            }
+            super.buildSplicingSQLDTO("rs.sku_id", QueryConditionEnum.IN_LIST,skuIds, QueryDataTypeEnum.STRING);
         }
-        if ("brand".equals(field)) {
-
+        if ("brand_id".equals(field)) {
+            List<String> skuIds = plmTaskFeign.getBrandByQuerySql(compareCodeSplicingValueSql);
+            if(CollectionUtils.isEmpty(skuIds)){
+                return this.getQueryEmptySql();
+            }
+            super.buildSplicingSQLDTO("rs.sku_id", QueryConditionEnum.IN_LIST,skuIds, QueryDataTypeEnum.STRING);
         }
         if("label".equals(field)) {
             return "EXISTS (select ref_id from replenishment_ref_label where is_deleted = false AND label_id " + compareCodeSplicingValueSql + ")";

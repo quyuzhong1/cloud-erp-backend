@@ -343,6 +343,11 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     IPage<SkuVO> pagingSelect(Page query, @Param("params")SkuVO.SelectDTO params);
 
     List<SkuVO> listApproveAndListingSku();
+
+    List<String> getCategoryByQuerySql(@Param("compareCodeSplicingValueSql") String compareCodeSplicingValueSql);
+
+    List<String> getBrandByQuerySql(@Param("compareCodeSplicingValueSql") String compareCodeSplicingValueSql);
+
 }
 
 

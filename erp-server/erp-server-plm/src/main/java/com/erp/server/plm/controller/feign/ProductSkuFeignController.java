@@ -596,4 +596,14 @@ public class ProductSkuFeignController {
     List<SkuVO> listApproveAndListingSku(){
         return productDetailService.listApproveAndListingSku();
     }
+
+    @GetMapping("/getCategoryByQuerySql")
+    List<String> getCategoryByQuerySql(@RequestParam String compareCodeSplicingValueSql){
+        return productDetailService.getCategoryByQuerySql(compareCodeSplicingValueSql);
+    }
+
+    @GetMapping("/getBrandByQuerySql")
+    List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql){
+        return productDetailService.getBrandByQuerySql(compareCodeSplicingValueSql);
+    }
 }

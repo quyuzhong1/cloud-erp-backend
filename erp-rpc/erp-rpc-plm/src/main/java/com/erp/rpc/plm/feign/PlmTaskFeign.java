@@ -628,4 +628,10 @@ public interface PlmTaskFeign {
      */
     @GetMapping("feign/product/listApproveAndListingSku")
     List<SkuVO> listApproveAndListingSku();
+
+    @GetMapping("/feign/product/getCategoryByQuerySql")
+    List<String> getCategoryByQuerySql(@RequestParam String compareCodeSplicingValueSql);
+
+    @GetMapping("/feign/product/getBrandByQuerySql")
+    List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql);
 }

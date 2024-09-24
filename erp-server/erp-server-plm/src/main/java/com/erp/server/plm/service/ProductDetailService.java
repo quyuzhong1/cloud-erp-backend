@@ -806,6 +806,18 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<ProductDetailEntity> changeSkuBySpu(ChangeSkuToSpuDTO changeSkuToSpuDTO);
 
+    /**
+     * 获取已审核，已上市数据
+     */
     List<SkuVO> listApproveAndListingSku();
+
+    /**
+     * 获取skuId
+     */
+    List<String> getCategoryByQuerySql(String compareCodeSplicingValueSql);
+    /**
+     * 获取skuId
+     */
+    List<String> getBrandByQuerySql(String compareCodeSplicingValueSql);
 
 }
