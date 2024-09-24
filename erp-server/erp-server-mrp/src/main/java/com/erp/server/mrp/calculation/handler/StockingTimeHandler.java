@@ -57,7 +57,7 @@ public class StockingTimeHandler extends AbstractSkuCalculationHandler {
                     + stockUpResult.getQcDays() + stockUpResult.getLogisticsResult().getLogisticsDays() + stockUpResult.getInstockDays());
             replenishmentResultDTO.getReplenishmentDetail().setStockUpMaxDays(stockUpResult.getPurchaseApproveDays() +
                     stockUpResult.getProductionDays() + stockUpResult.getSupplierDeliveryDays()
-                    + stockUpResult.getQcDays() + stockUpResult.getLogisticsMaxResult().getLogisticsDays() + stockUpResult.getPurchaseCycleDays()
+                    + stockUpResult.getQcDays() + stockUpResult.getLogisticsMaxResult().getLogisticsDays() + stockUpResult.getInstockDays() + stockUpResult.getPurchaseCycleDays()
                     + stockUpResult.getSafeDays() + stockUpResult.getLogisticsMaxResult().getLogisticsCycleDays()
             );
         }
