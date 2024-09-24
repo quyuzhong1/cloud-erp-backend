@@ -101,6 +101,11 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
      */
     @TableField(exist = false)
     private String platformSkuNo;
+    /**
+     * 发货数量
+     */
+    @TableField(exist = false)
+    private Integer deliveryQty;
 
     public static final String MAIN_ID = "main_id";
 
