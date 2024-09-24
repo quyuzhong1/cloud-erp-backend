@@ -50,7 +50,6 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
     @Resource
     private CfgAppClientService cfgAppClientService;
 
-
     /**
      * 直接查询亚马逊最新Listing报告
      */
@@ -116,7 +115,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
                 initDmpResponse.setDoNextChain(false);
                 return Collections.emptyList();
             }
-            throw new ServiceException("[Amazon SP-APi] 查询最新listing失败:body=" + e.getMessage());
+            throw new ServiceException("[Amazon SP-APi] 查询最新listing失败:body=" + JSONUtil.toJsonStr(e));
         }
 
         JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
@@ -135,8 +134,4 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(resultJson));
     }
 
-    public static void main(String[] args) {
-        BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal("2"), 8, RoundingMode.DOWN);
-        System.out.println(timeOut.longValue());
-    }
 }

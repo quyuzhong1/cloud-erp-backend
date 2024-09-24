@@ -107,7 +107,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
                 InboundShipmentItemList itemData = response.getPayload().getItemData();
                 List<JSONObject> curJsonList = itemData.stream().map(e -> (JSONObject) JSON.toJSON(e)).collect(Collectors.toList());
                 // 缓存倒redis
-                redisUtil.set(shipmentIdResultKey, JSONArray.toJSONString(curJsonList), 600);
+                redisUtil.set(shipmentIdResultKey, JSONArray.toJSONString(curJsonList), 300);
                 allItemList.addAll(curJsonList);
             } catch (ApiException e) {
                 if (429 == e.getCode()) {
