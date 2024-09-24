@@ -1,9 +1,14 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -25,16 +30,21 @@ public class CfgSettingVirtualValueDTO implements Serializable {
     public static class SalesDashboardDTO{
 
         /**
+         * 订单类型，all,b2b,b2c
+         */
+        @NotBlank(message = "订单类型不能为空")
+        @StateEnumValue(clazz = CfgSettingOrderTypeEnum.class, message = "订单类型输入值有误")
+        private String orderType;
+
+        /**
          * b2b销售订单状态
          */
-        @NotNull(message = "B2B销售订单订单统计不能为空")
         @Valid
         private StatusDTO b2bStatusDTO;
 
         /**
          * b2c销售订单状态
          */
-        @NotNull(message = "B2C销售订单订单统计不能为空")
         @Valid
         private StatusDTO b2cStatusDTO;
 
@@ -48,6 +58,7 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          * 定时更新时间集合
          */
         @NotEmpty(message = "定时更新时间不能为空")
+        @JsonFormat(pattern = "HH:mm")
         private List<LocalTime> execTimeList;
 
         /**
@@ -59,7 +70,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         /**
          * 预警条件
          */
-        @NotNull(message = "预警条件不能为空")
         @Valid
         private WarnConditionDTO warnConditionDTO;
     }
@@ -80,8 +90,8 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         /**
          * 作废状态集合
          */
-        @NotEmpty(message = "作废状态不能为空")
-        private List<Boolean> invalidStatusList;
+        @NotNull(message = "作废状态不能为空")
+        private Boolean invalidStatus;
 
         /**
          * 审核状态集合
@@ -121,6 +131,7 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          * 定时更新时间
          */
         @NotEmpty(message = "定时更新时间不能为空")
+        @JsonFormat(pattern = "HH:mm")
         private List<LocalTime> execTimeList;
     }
 

@@ -50,5 +50,10 @@
         warehouse_id, virtual_warehouse_id, sku_id, sku_no, product_name, virtual_warehouse_name, warehouse_name, today_sales_qty, yesterday_sales_qty, three_days_sales_qty, seven_days_sales_qty, fourteen_days_sales_qty, thirty_days_sales_qty, is_virtual_scarce, is_warn, virtual_scarce_qty, total_qty, virtual_usable_qty, virtual_frozen_qty, virtual_total_qty, delivery_qty, distribution_qty
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
+
+    </select>
+
 
 </mapper>
