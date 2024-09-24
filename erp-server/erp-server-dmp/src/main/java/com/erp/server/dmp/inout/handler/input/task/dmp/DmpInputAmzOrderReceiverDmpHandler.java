@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.anno.ParamData;
@@ -48,7 +49,7 @@ public class DmpInputAmzOrderReceiverDmpHandler extends DmpInputAmzOrderDoChildD
         for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
             Object buyerInfoObj = dmpInputMongoChild.get("buyerInfo");
             // 订单买家信息
-            BuyerInfo buyerInfo = JSON.parseObject(buyerInfoObj.toString(), BuyerInfo.class);
+            BuyerInfo buyerInfo = JSON.parseObject(JSONObject.toJSONString(buyerInfoObj), BuyerInfo.class);
             if (null != buyerInfo) {
                 // 税号
                 String taxNo = "";
