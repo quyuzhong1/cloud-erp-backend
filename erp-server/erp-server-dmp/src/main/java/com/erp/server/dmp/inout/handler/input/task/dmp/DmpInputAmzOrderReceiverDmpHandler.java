@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.anno.ParamData;
@@ -45,17 +46,10 @@ public class DmpInputAmzOrderReceiverDmpHandler extends DmpInputAmzOrderDoChildD
         // 缓存结果key
         List<String> delKeys = new LinkedList<>();
 
-        List<ParamData> paramDataList = new ArrayList<>();
-        List<String> orderIdList = dmpInputMongoChildList.stream().map(d -> d.get("amazonOrderId").toString()).collect(Collectors.toList());
-
-        paramDataList.add(new ParamData("amazonOrderId", "amazonOrderId", PannoEnum.IN, orderIdList));
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-        List<Map<String, Object>> buyerInfoMongoData = mongoService.findMongoData(paramDataList, "amazon_buyer_info_data");
-
         for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
             Object buyerInfoObj = dmpInputMongoChild.get("buyerInfo");
             // 订单买家信息
-            BuyerInfo buyerInfo = JSON.parseObject(buyerInfoObj.toString(), BuyerInfo.class);
+            BuyerInfo buyerInfo = JSON.parseObject(JSONObject.toJSONString(buyerInfoObj), BuyerInfo.class);
             if (null != buyerInfo) {
                 // 税号
                 String taxNo = "";
@@ -92,17 +86,12 @@ public class DmpInputAmzOrderReceiverDmpHandler extends DmpInputAmzOrderDoChildD
             // 当前账号
             String platformShopCode = checkAndGetMongoValue(dmpInputMongoChild, "platformShopCode");
 
-            Map<String, Object> currentBuyInfoMongo = buyerInfoMongoData.stream()
-                    .filter(e -> amazonOrderId.equalsIgnoreCase(e.get("amazonOrderId").toString())
-                            && platformShopCode.equalsIgnoreCase(e.get("platformShopCode").toString()))
-                    .findFirst().orElse(null);
-
             String receiverName = "";
             // 买家名称为空使用发货单名称覆盖
-            if (null == currentBuyInfoMongo) {
+            if (null == buyerInfo) {
                 receiverName = shippingAddress.getName();
             }
-            if (null != currentBuyInfoMongo && StringUtils.isBlank(currentBuyInfoMongo.getOrDefault("buyerName", "").toString())
+            if (null != buyerInfo && StringUtils.isBlank(buyerInfo.getBuyerName())
             ) {
                 receiverName = shippingAddress.getName();
             }
