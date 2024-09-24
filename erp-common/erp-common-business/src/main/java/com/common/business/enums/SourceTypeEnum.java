@@ -12,6 +12,7 @@ import java.util.Objects;
 @NoArgsConstructor
 public enum SourceTypeEnum {
     SELF_ADD("selfAdd", "手动新增",""),
+    AUTO_ADD("autoAdd", "自动新增",""),
 
 
 

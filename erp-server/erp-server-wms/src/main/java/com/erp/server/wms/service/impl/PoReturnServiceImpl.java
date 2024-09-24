@@ -4,10 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.erp.model.dmp.dto.DmpPushWdtDTO;
-import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
@@ -31,7 +29,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -56,7 +53,6 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -73,8 +69,6 @@ import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -203,6 +197,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private SubcontractReturnService subcontractReturnService;
     @Resource
     private PurchaseOrderService purchaseOrderService;
+    @Resource
+    private PurchaseOrderSupplierService purchaseOrderSupplierService;
+    @Resource
+    private PoReturnService service;
     /**
      * 主页分页查询
      *
@@ -314,6 +312,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
+        if (StrUtil.isBlank(poReturnEntity.getReturnType())){
+            poReturnEntity.setReturnType(SourceTypeEnum.SELF_ADD.getCode());
+        }
         poReturnEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         poReturnEntity.setCode(code);
         if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
@@ -808,6 +809,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
             //发送旺店通
             poReturnEntityList.forEach(obj -> syncApprovePoReturnToWdt(obj, SyncOperateEnum.OPERATE_APPROVE));
+            //审核通过-自动生成-委外退料单
+            autoAddSubcontractReturn(entity, poReturnDetailList);
         } else {
             //审核不通过
             lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -818,6 +821,263 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     .update();
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    /**
+     * 根据退货单类型生成委外退料单
+     * @param entity
+     * @param poReturnDetailList
+     */
+    private void autoAddSubcontractReturn(PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList) {
+        if (Objects.isNull(entity) || CollectionUtils.isEmpty(poReturnDetailList) || StrUtil.isBlank(entity.getPurchaseOrderId())){
+            return;
+        }
+        List<PurchaseOrderEntity> orderEntityList = purchaseOrderService.ListPurchaseOrderEntityByIds(Collections.singletonList(entity.getPurchaseOrderId()));
+        if (CollectionUtils.isEmpty(orderEntityList)){
+            log.info(StrUtil.format("退货单【{}】未找到关联采购订单", entity.getCode()));
+            return;
+        }
+        PurchaseOrderEntity purchaseOrderEntity = orderEntityList.get(0);
+        //不是委外订单(成品)不进行下面操作
+        if (!PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(purchaseOrderEntity.getType()) || !SubcontractTypeEnum.ENUM_PARENT.getCode().equals(purchaseOrderEntity.getSubcontractType())){
+            return;
+        }
+        //查询委外订单记录
+        String sourceId = purchaseOrderEntity.getSourceId();
+        //全部采购订单记录
+        List<PurchaseOrderEntity> purchaseOrderEntityList = scmTaskFeign.listPoBySourceIds(Collections.singletonList(sourceId));
+        //全部采购订单明细
+        List<String> poIds = purchaseOrderEntityList.stream().map(PurchaseOrderEntity::getId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.listByPurchaseOrderIds(poIds);
+        //父级委外订单明细
+        List<SubcontractOrderDetailEntity> parentSubcontractOrderDetailEntityList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(sourceId));
+        //子件采购订单ids
+        List<String> childPoIds = purchaseOrderEntityList.stream().filter(e -> Objects.nonNull(e) && SubcontractTypeEnum.ENUM_CHILD.getCode().equals(e.getSubcontractType())).map(PurchaseOrderEntity::getId).distinct().collect(Collectors.toList());
+        //子件采购订单明细
+        List<PurchaseOrderDetailEntity> childPurchaseOrderDetailEntityList = purchaseOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e)
+                && CollectionUtils.isNotEmpty(childPoIds) && childPoIds.contains(e.getPurchaseOrderId())).collect(Collectors.toList());
+        List<String> childPoDetailIds = childPurchaseOrderDetailEntityList.stream().filter(Objects::nonNull).map(PurchaseOrderDetailEntity::getId).distinct().collect(Collectors.toList());
+        //子件采购订单
+        List<PurchaseOrderEntity> childPurchaseOrderEntity = purchaseOrderEntityList.stream().filter(e -> Objects.nonNull(e) && SubcontractTypeEnum.ENUM_CHILD.getCode().equals(e.getSubcontractType())).collect(Collectors.toList());
+        //子件的委外订单ids
+        List<String> childSubIds = purchaseOrderEntityList.stream().filter(e -> Objects.nonNull(e) && SubcontractTypeEnum.ENUM_CHILD.getCode().equals(e.getSubcontractType())
+                && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(PurchaseOrderEntity::getSourceId).distinct().collect(Collectors.toList());
+        //查询bom信息
+        List<String> skuIds = poReturnDetailList.stream().map(PoReturnDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+        //查询子件的委外订单明细
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList = scmTaskFeign.listSubcontractDetailByMainIds(childSubIds);
+        //查询子件的委外订单列表
+        List<SubcontractOrderEntity> subcontractOrderEntityList = scmTaskFeign.listSubcontractOrderByIds(childSubIds);
+        //获取采购订单关联的供应商
+        List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntityList = purchaseOrderSupplierService.listByPurchaseOrderIds(poIds);
+        //采购退货子单列表
+        List<PurchaseReturnOrderDTO.AddDTO> returnAddDTOList = new ArrayList<>();
+        //根据子件采购订单构建 委外退料记录
+        List<BaseResultDTO.AddDTO> addDTOList = new ArrayList<>();
+        for (PurchaseOrderEntity orderEntity : childPurchaseOrderEntity){
+            SubcontractReturnDTO.AddDTO addDTO = new SubcontractReturnDTO.AddDTO();
+            String subcontractType = orderEntity.getSubcontractType();
+            //排除非子件采购订单数据
+            if (!SubcontractTypeEnum.ENUM_CHILD.getCode().equals(subcontractType)){
+                continue;
+            }
+            SubcontractOrderEntity subcontractOrderEntity = subcontractOrderEntityList.stream().filter(e -> e.getId().equals(orderEntity.getSourceId())).findFirst().orElse(null);
+            if (Objects.isNull(subcontractOrderEntity)){
+                throw new ServiceException(StrUtil.format("自动生成委外退料-采购订单【{}】关联委外订单记录为空"));
+            }
+            List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList1 = subcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(orderEntity.getSourceId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(subcontractOrderDetailEntityList1)){
+                throw new ServiceException(StrUtil.format("自动生成委外退料-采购订单【{}】关联委外订单明细为空"));
+            }
+            //采购订单明细
+            List<PurchaseOrderDetailEntity> detailEntityList = childPurchaseOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getPurchaseOrderId().equals(orderEntity.getId())).collect(Collectors.toList());
+            //过滤空订单明细记录
+            if (CollectionUtils.isEmpty(detailEntityList)){
+                throw new ServiceException(StrUtil.format("自动生成委外退料-采购订单【{}】关联采购订单明细为空"));
+            }
+            //查询采购订单关联的供应商记录
+            PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierEntityList.stream().filter(e -> Objects.nonNull(e) && orderEntity.getId().equals(e.getPurchaseOrderId())).findFirst().orElse(null);
+            if (Objects.isNull(purchaseOrderSupplierEntity)){
+                throw new ServiceException(StrUtil.format("自动生成委外退料-采购订单【{}】关联供应商记录为空"));
+            }
+            //构建委外退料单
+            buildSubcontractReturnAddDTO(addDTO,entity,poReturnDetailList,orderEntity,subcontractOrderEntity,purchaseOrderSupplierEntity,detailEntityList,subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailEntityList);
+            BaseResultDTO.AddDTO add = subcontractReturnService.addAndSubmit(addDTO);
+            addDTOList.add(add);
+            //构建采购退货单
+            PurchaseReturnOrderDTO.AddDTO returnAddDTO = buildPoReturnAddDTO(entity,poReturnDetailList,orderEntity,subcontractOrderEntity,purchaseOrderSupplierEntity,detailEntityList,subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailEntityList);
+            returnAddDTOList.add(returnAddDTO);
+        }
+        //创建了委外退料记录
+        if (CollectionUtils.isNotEmpty(addDTOList)){
+            for (BaseResultDTO.AddDTO addDTO : addDTOList){
+                subcontractReturnService.approve(new ApproveOneDTO(addDTO.getId(), ApproveTypeEnum.PASS.getStatus(),"采购退货自动生成"));
+            }
+        }
+        //创建子件采购退货单
+        for (PurchaseReturnOrderDTO.AddDTO addDTO : returnAddDTOList){
+            //新增
+            String id = service.add(addDTO);
+            if (StringUtils.isBlank(id)) {
+                throw new ServiceException(ApiError.ERROR_1019);
+            }
+            //提交
+            service.submit(Collections.singletonList(id));
+            //查询提交数据
+            PoReturnEntity poReturnEntity = this.getById(id);
+            List<PoReturnDetailEntity> poReturnDetailEntityList = poReturnDetailService.listByMainIds(Collections.singletonList(id));
+            service.approve(poReturnEntity,ApproveTypeEnum.PASS.getStatus(),"采购退货自动生产", Boolean.FALSE, poReturnDetailEntityList);
+        }
+    }
+
+    /**
+     * 构建采购退货单
+     * @param entity
+     * @param poReturnDetailList
+     * @param orderEntity
+     * @param subcontractOrderEntity
+     * @param purchaseOrderSupplierEntity
+     * @param detailEntityList
+     * @param subcontractOrderDetailEntityList1
+     * @param bomList
+     * @param parentSubcontractOrderDetailEntityList
+     * @return
+     */
+    private PurchaseReturnOrderDTO.AddDTO buildPoReturnAddDTO(PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList, PurchaseOrderEntity orderEntity, SubcontractOrderEntity subcontractOrderEntity, PurchaseOrderSupplierEntity purchaseOrderSupplierEntity, List<PurchaseOrderDetailEntity> detailEntityList, List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList1, List<BomChildrenSkuDTO> bomList, List<SubcontractOrderDetailEntity> parentSubcontractOrderDetailEntityList) {
+        PurchaseReturnOrderDTO.AddDTO returnAddDTO = new PurchaseReturnOrderDTO.AddDTO();
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        returnAddDTO.setReturnType(SourceTypeEnum.AUTO_ADD.getCode());
+        returnAddDTO.setReturnMode(entity.getReturnMode());
+        returnAddDTO.setSourceType(entity.getSourceType());
+        returnAddDTO.setReturnOrgId(orderEntity.getReceiveOrgId());
+        returnAddDTO.setReturnWarehouseId(orderEntity.getDeliveryWarehouseId());
+        returnAddDTO.setBillDate(LocalDate.now());
+        returnAddDTO.setPurchaseOrderId(orderEntity.getId());
+        returnAddDTO.setPurchaseOrgId(orderEntity.getPurchaseOrgId());
+        returnAddDTO.setPurchaseUserId(orderEntity.getPurchaseUserId());
+        returnAddDTO.setReturnUserId(userInfo.getUid());
+        returnAddDTO.setSourceId(orderEntity.getId());
+        returnAddDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
+        returnAddDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+        List<PurchaseReturnOrderDetailDTO.AddDTO> purchasePriceDetailList = new ArrayList<>();
+        for (PurchaseOrderDetailEntity detail : detailEntityList){
+            SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList1.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(detail.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(subcontractOrderDetailEntity)){
+                log.error(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
+                continue;
+            }
+            //委外子单关联的父级子单id
+            String parentId = subcontractOrderDetailEntity.getParentId();
+            if (StrUtil.isBlank(parentId)){
+                log.error(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】关联成品子单明细", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
+                continue;
+            }
+            //查询父级skuId
+            SubcontractOrderDetailEntity parentSubcontractOrder = parentSubcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(subcontractOrderDetailEntity.getParentId())).findFirst().orElse(null);
+            if (Objects.isNull(parentSubcontractOrder)){
+                log.error(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到成品子单明细", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
+                continue;
+            }
+            //父级SKU和子级SKU之间的用量
+            Integer quantity = bomList.stream()
+                    .filter(obj -> subcontractOrderDetailEntity.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(subcontractOrderDetailEntity.getSkuId()) && obj.getParentSkuId().equals(parentSubcontractOrder.getSkuId()))
+                    .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
+            //成品退货单明细记录
+            PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(parentSubcontractOrder.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(poReturnDetailEntity)){
+                log.error(StrUtil.format("采购订单【{}】中SKU【{}】在退货订单【{}】未找到成品明细", orderEntity.getCode(), detail.getSkuNo(),entity.getCode()));
+                continue;
+            }
+            PurchaseReturnOrderDetailDTO.AddDTO dto = new PurchaseReturnOrderDetailDTO.AddDTO();
+            dto.setCurrency(detail.getCurrency());
+            dto.setWarehouseLocation(detail.getWarehouseLocation());
+            dto.setReturnPrice(detail.getTaxPrice());
+            dto.setReturnQty(poReturnDetailEntity.getReturnQty() * quantity);
+            dto.setCurrencySymbol(detail.getCurrencySymbol());
+            dto.setDeductAmountQty(poReturnDetailEntity.getDeductAmountQty() * quantity);
+            dto.setPurchaseOrderDetailId(detail.getId());
+            dto.setReplenishQty(poReturnDetailEntity.getReplenishQty() * quantity);
+            dto.setSkuId(detail.getSkuId());
+            dto.setSkuNo(detail.getSkuNo());
+            dto.setSourceDetailId(detail.getId());
+            purchasePriceDetailList.add(dto);
+        }
+        returnAddDTO.setPurchasePriceDetailList(purchasePriceDetailList);
+        return returnAddDTO;
+    }
+
+    /**
+     * 构建委外退料明细新增实体
+     *
+     * @param addDTO
+     * @param entity
+     * @param poReturnDetailList
+     * @param orderEntity
+     * @param subcontractOrderEntity
+     * @param purchaseOrderSupplierEntity
+     * @param detailEntityList
+     * @param subcontractOrderDetailEntityList1
+     * @param bomList
+     * @param parentSubcontractOrderDetailEntityList
+     */
+    private void buildSubcontractReturnAddDTO(SubcontractReturnDTO.AddDTO addDTO, PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList, PurchaseOrderEntity orderEntity, SubcontractOrderEntity subcontractOrderEntity, PurchaseOrderSupplierEntity purchaseOrderSupplierEntity, List<PurchaseOrderDetailEntity> detailEntityList, List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList1, List<BomChildrenSkuDTO> bomList, List<SubcontractOrderDetailEntity> parentSubcontractOrderDetailEntityList) {
+        addDTO.setBillDate(LocalDate.now());
+        addDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+        addDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+        addDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
+        //使用成品退货单生成子件退料单
+        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceCode(entity.getCode());
+        addDTO.setSubcontractOrderId(subcontractOrderEntity.getId());
+        addDTO.setSubcontractOrderCode(subcontractOrderEntity.getCode());
+        addDTO.setType(SubcontractReturnTypeEnum.NORMAL.getCode());
+        List<SubcontractReturnDetailDTO.AddDTO> detailList = new ArrayList<>(detailEntityList.size());
+        for (PurchaseOrderDetailEntity detail : detailEntityList){
+            SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList1.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(detail.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(subcontractOrderDetailEntity)){
+                log.error(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
+                continue;
+            }
+            SubcontractReturnDetailDTO.AddDTO addDTO1 = new SubcontractReturnDetailDTO.AddDTO();
+            addDTO1.setBomVersion(subcontractOrderDetailEntity.getBomVersion());
+            //委外子单关联的父级子单id
+            String parentId = subcontractOrderDetailEntity.getParentId();
+            if (StrUtil.isBlank(parentId)){
+                log.error(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】关联成品子单明细", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
+                continue;
+            }
+            //查询父级skuId
+            SubcontractOrderDetailEntity parentSubcontractOrder = parentSubcontractOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(subcontractOrderDetailEntity.getParentId())).findFirst().orElse(null);
+            if (Objects.isNull(parentSubcontractOrder)){
+                log.error(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到成品子单明细", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
+                continue;
+            }
+            //父级SKU和子级SKU之间的用量
+            Integer quantity = bomList.stream()
+                    .filter(obj -> subcontractOrderDetailEntity.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(subcontractOrderDetailEntity.getSkuId()) && obj.getParentSkuId().equals(parentSubcontractOrder.getSkuId()))
+                    .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
+            //获取退货单明细记录
+            PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(parentSubcontractOrder.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(poReturnDetailEntity)){
+                log.error(StrUtil.format("采购订单【{}】中SKU【{}】在退货订单【{}】未找到成品明细", orderEntity.getCode(), detail.getSkuNo(),entity.getCode()));
+                continue;
+            }
+            addDTO1.setReturnQty(poReturnDetailEntity.getReturnQty() * quantity);
+            addDTO1.setQuantity(quantity);
+            addDTO1.setParentSkuId(parentSubcontractOrder.getSkuId());
+            addDTO1.setParentSkuNo(parentSubcontractOrder.getSkuNo());
+            addDTO1.setParentSkuUseQty(poReturnDetailEntity.getReturnQty());
+            addDTO1.setSkuId(detail.getSkuId());
+            addDTO1.setWarehouseId(orderEntity.getDeliveryWarehouseId());
+            addDTO1.setWarehouseName(orderEntity.getDeliveryWarehouseName());
+            addDTO1.setWarehouseLocation(detail.getWarehouseLocation());
+            //成品退货单明细id
+            addDTO1.setSourceDetailId(poReturnDetailEntity.getId());
+            addDTO1.setSubcontractOrderDetailId(subcontractOrderDetailEntity.getId());
+            detailList.add(addDTO1);
+        }
+        addDTO.setDetailList(detailList);
     }
 
     /**
@@ -1665,23 +1925,31 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public void replenishmentInventory(Map<String, PoReturnEntity> replenishmentInventoryMap,
                                        List<PoReturnDetailEntity> replenishmentInventoryDetailList) { //采购退货(库存退货，退货补货)
         if(CollUtil.isNotEmpty(replenishmentInventoryDetailList)) { //采购退货(库存退货，退货补货)明细
+            List<InOutStockDTO> inList = new ArrayList<>();
+            List<InOutStockDTO> useList = new ArrayList<>();
             replenishmentInventoryDetailList.forEach(detail->{
                 PoReturnEntity poReturnEntity = replenishmentInventoryMap.get(detail.getMainId());
                 // 使用补货数量 增加的在途
                 InOutStockDTO inStockDTO = InOutStockDTO.initByReturnOrder(poReturnEntity, detail, InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, detail.getReplenishQty(), InventoryStatusEnum.IN_TRANSIT);
+                inList.add(inStockDTO);
+                // 使用实退数量 减少可用
+                InOutStockDTO inOutStockDTO = InOutStockDTO.initByReturnOrder(poReturnEntity, detail, InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, detail.getReturnQty(), InventoryStatusEnum.USABLE);
+                useList.add(inOutStockDTO);
+            });
+            if (CollectionUtils.isNotEmpty(inList)){
                 InventoryInOutStockRuleDTO inTransitRule = new InventoryInOutStockRuleDTO();
                 inTransitRule.setBusinessType(InventoryBusinessTypeEnum.PO_RETURN_REP.getCode());
-                inTransitRule.setParamList(Lists.newArrayList(inStockDTO));
+                inTransitRule.setParamList(inList);
                 inTransitRule.setRules(Lists.newArrayList(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.IN_TRANSIT, InventoryModeEnum.IN_STOCK)));
                 inventoryTransCoreService.approveByRule(inTransitRule);
-                // 使用实退数量 减少可用
+            }
+            if (CollectionUtils.isNotEmpty(useList)){
                 InventoryInOutStockRuleDTO usableRule = new InventoryInOutStockRuleDTO();
                 usableRule.setBusinessType(InventoryBusinessTypeEnum.PO_RETURN_REP.getCode());
-                InOutStockDTO inOutStockDTO = InOutStockDTO.initByReturnOrder(poReturnEntity, detail, InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, detail.getReturnQty(), InventoryStatusEnum.USABLE);
-                usableRule.setParamList(Lists.newArrayList(inOutStockDTO));
+                usableRule.setParamList(useList);
                 usableRule.setRules(Lists.newArrayList(new TransactionRuleDTO(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryStatusEnum.USABLE, InventoryModeEnum.OUT_STOCK)));
                 inventoryTransCoreService.approveByRule(usableRule);
-            });
+            }
 
         }
     }

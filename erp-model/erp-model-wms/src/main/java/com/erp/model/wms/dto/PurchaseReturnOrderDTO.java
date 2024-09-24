@@ -74,6 +74,11 @@ public class PurchaseReturnOrderDTO {
          */
         @NotBlank(message = "退货来源不能为空")
         private String sourceType;
+        /**
+         * 退货数据来源（selfAdd 手动新增 , autoAdd 自动新增）
+         * SourceTypeEnum
+         */
+        private String returnType;
 
         /**
          * 退货人id
@@ -592,9 +597,13 @@ public class PurchaseReturnOrderDTO {
         private String returnMode;
 
         /**
-         * 退货方式名称
+         * 退货单数据来源（selfAdd手动新增，autoAdd自动新增）
          */
         private String returnModeName;
+        /**
+         * 退货单数据来源
+         */
+        private String returnType;
 
         /**
          * 采购员名称

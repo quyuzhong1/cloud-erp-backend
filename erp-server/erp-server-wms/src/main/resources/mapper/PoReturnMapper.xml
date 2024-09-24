@@ -42,6 +42,7 @@
         pro.unusual_handle_user_id,
         pro.unusual_handle_user_name,
         pro.confirm_date,
+        pro.return_type,
         prod.is_combination as isCombination,
         po.type as purchaseType,
         po.source_id as purchaseSourceId,
@@ -408,7 +409,7 @@
         LEFT JOIN purchase_order po ON po.id = pr.purchase_order_id AND po.is_deleted = FALSE
         <where>
             po."type" = 'CGDD02_SYS' AND po.invalid_status = false
-            <if test="sourceId != null and sourceId != ''">
+            <if test="purchaseOrderId != null and purchaseOrderId != ''">
                 AND pr.purchase_order_id = #{purchaseOrderId}
             </if>
         </where>
