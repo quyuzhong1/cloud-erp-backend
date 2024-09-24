@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.utils.RedisUtil;
@@ -74,6 +75,10 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
 
             // 设置地址
             Address shippingAddress = amazonOrderHandler.downloadAddress(shopInfoDTO.getPlatformShopCode(), amazonOrderId, ordersVoApi);
+            if (null == shippingAddress){
+                log.warn("查询到亚马逊地址为空:amazonOrderId={}", amazonOrderId);
+                continue;
+            }
 
             // 合并转json
             JSONObject jsonObject = setAmazonOrderIdAndToJsonObject(shippingAddress, buyerInfo, amazonOrderId, shopInfoDTO.getPlatformShopCode());
