@@ -1,6 +1,5 @@
 package com.erp.model.plm.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -66,19 +65,19 @@ public class SkuVO implements Serializable {
     /**
      * sku 名称
      */
-    private String skuName = "";
+    private String skuName;
 
 
     /**
      * spu no
      */
-    private String spuNo = "";
+    private String spuNo;
 
 
     /**
      * spu 名称
      */
-    private String spuName = "";
+    private String spuName;
 
     /**
      * 报关型号
@@ -330,5 +329,51 @@ public class SkuVO implements Serializable {
          * 其他属性名
          */
         private String otherName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProductChargeInfoDTO {
+        /**
+         * 产品id
+         */
+        private String productId;
+        /**
+         *
+         */
+        private String spuNo;
+        /**
+         * 产品名称
+         */
+        private String spuName;
+        /**
+         *
+         */
+        private String skuId;
+        /**
+         *
+         */
+        private String skuNo;
+        /**
+         *
+         */
+        private String skuName;
+        /**
+         * 产品经理id
+         */
+        private String chargeId;
+        /**
+         * 产品经理
+         */
+        private String chargeName;
+        /**
+         * 项目经理id
+         */
+        private String projectChargeId;
+        /**
+         * 项目经理
+         */
+        private String projectChargeName;
+
     }
 }

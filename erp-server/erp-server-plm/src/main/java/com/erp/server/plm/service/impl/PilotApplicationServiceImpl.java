@@ -17,6 +17,7 @@ import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -42,6 +43,7 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import com.kenai.jffi.Array;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -70,6 +72,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PILOT_APPLICATION;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_ESTIMATED_BILL;
@@ -133,8 +137,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private DownloadTaskFeign downloadTaskFeign;
 //    @Resource
 //    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
-//    @Resource
-//    private NoticeMessageService noticeMessageService;
+    @Resource
+    private NoticeMessageService noticeMessageService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -338,18 +342,27 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         queryWrapper.eq("approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
         int waitSubmitCount = this.baseMapper.selectCount(queryWrapper);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
+        //待我审核
         //根据单据id查询审核流程
+        int waitMeApproveCount = 0;
         ProcessManagementDTO.TaskKeyInfoDTO dto = new ProcessManagementDTO.TaskKeyInfoDTO();
         dto.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         dto.setTaskStatus(ApproveStatusEnum.APPROVE_ING.getCode());
         dto.setCurApproveId(user.getUid());
         List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
-        int waitMeApproveCount = processTaskManagementList.size();
-        //待我审核
+        if(CollectionUtils.isNotEmpty(processTaskManagementList)){
+            List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
+            queryWrapper.clear();
+            queryWrapper.in("id",ids);
+            waitMeApproveCount = this.baseMapper.selectCount(queryWrapper);
+        }
 //        int waitMeApproveCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE_ING.getCode(), null, user.getUid());
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_ME_APPROVE.getCode(), PilotApplicationTabEnum.WAIT_ME_APPROVE.getName(), waitMeApproveCount));
         //不通过
-        int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null);
+        queryWrapper.clear();
+        queryWrapper.eq("approve_status", ApproveStatusEnum.REJECT.getCode());
+        int rejectCount = this.baseMapper.selectCount(queryWrapper);
+//        int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.REJECT.getCode(), PilotApplicationTabEnum.REJECT.getName(), rejectCount));
         //未下单
         int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null);
@@ -774,8 +787,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      */
     private List<PilotApplicationDTO.AuditorHandleDTO> getApproveProcessList(PilotApplicationEntity pilotApplicationEntity) {
         List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(pilotApplicationEntity.getId());
-        approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveTime() != null).filter(item -> !item.getRemark().contains("已将任务转移给")).collect(Collectors.toList());
-        approveHistoryList.sort(Comparator.comparing(ProcessTaskManagementDTO.CommonDTO::getApproveTime).reversed());
+        approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveUserName().equals(item.getCurApproveName())).collect(Collectors.toList());
         List<PilotApplicationDTO.AuditorHandleDTO> resultList = new ArrayList<>();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         for (ProcessTaskManagementDTO.ApproveHistoryDTO historyDTO : approveHistoryList) {
@@ -1045,9 +1057,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             if(null != pilotApplicationDetailEntity){
                 purchaseApplyQty = pilotApplicationDetailEntity.getPurchaseApplyQty();
             }
+            String status = dto.getPurchaseApplyQty() < dto.getSpareApplyQty() ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.ORDER.getCode();
             pilotApplicationDetailService.lambdaUpdate()
-                    .set(PilotApplicationDetailEntity::getPurchaseApplyQty, dto.getPurchaseApplyQty() + purchaseApplyQty)
-                    .set(PilotApplicationDetailEntity::getOrderStatus, dto.getPurchaseApplyQty() < dto.getSpareApplyQty() ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.ORDER.getCode())
+                    .set(PilotApplicationDetailEntity::getPurchaseApplyQty, (dto.getPurchaseApplyQty() + purchaseApplyQty))
+                    .set(PilotApplicationDetailEntity::getOrderStatus,status)
                     .eq(PilotApplicationDetailEntity::getId, dto.getDetailId())
                     .update();
         }
@@ -1292,6 +1305,31 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                     .set(PilotApplicationDetailEntity::getOrderStatus, entry.getValue())
                     .eq(PilotApplicationDetailEntity::getId, entry.getKey())
                     .update();
+        }
+    }
+
+    @Override
+    public void approvePilotApplicationNotice(String id) {
+        // 在事务提交后执行的方法
+        PilotApplicationEntity entity = this.getById(id);
+        //获取试产量产明细中的skuId集合
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id).eq(PilotApplicationDetailEntity::getIsDeleted, Boolean.FALSE).list();
+        List<String> skuIds = detailList.stream().map(PilotApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO.ProductChargeInfoDTO> productChargeInfoList = productDetailService.listProductChargeInfoByIds(skuIds);
+        if(CollectionUtils.isNotEmpty(productChargeInfoList)){
+            PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = new PilotApplicationDTO.ApprovePilotNoticeDTO();
+            BeanMapperUtils.copy(productChargeInfoList.get(0),approvePilotNoticeDTO);
+            //试产量产主键id
+            approvePilotNoticeDTO.setId(entity.getId());
+            approvePilotNoticeDTO.setCode(entity.getCode());
+            //飞书消息通知
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
+            String userName = loginUser.getUserName();
+            if(entity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+                noticeMessageService.approvePilotApplicationNotice(userName,approvePilotNoticeDTO, Boolean.TRUE);
+            }else {
+                noticeMessageService.approvePilotApplicationNotice(userName,approvePilotNoticeDTO, Boolean.FALSE);
+            }
         }
     }
 }

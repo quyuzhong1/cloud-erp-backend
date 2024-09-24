@@ -342,6 +342,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<ProductDetailEntity> getProductDetailByDestDeclarePrice();
     IPage<SkuVO> pagingSelect(Page query, @Param("params")SkuVO.SelectDTO params);
 
+    List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(@Param("skuIds")List<String> skuIds);
 }
 
 
