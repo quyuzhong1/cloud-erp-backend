@@ -24,4 +24,13 @@ public interface PurchaseApplicationDetailFeign {
      */
     @PostMapping("/feign/purchaseApplicationDetail/listByMainIds")
     List<PurchaseApplicationDetailEntity> listByMainIds(@RequestBody List<String> mainIds);
+    /**
+     * 判断是否新品
+     * @param skuIds
+     * @return boolean
+     * @date: 2024-09-24
+     * @author: jack
+     */
+    @PostMapping("/feign/purchaseApplicationDetail/existBySkuIds")
+    Boolean existBySkuIds(List<String> skuIds);
 }
