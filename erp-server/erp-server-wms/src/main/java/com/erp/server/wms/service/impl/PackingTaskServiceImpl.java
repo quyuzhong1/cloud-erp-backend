@@ -456,8 +456,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         if(totalNum <= 0){
                             continue;
                         }
-                        Integer packedNum = packedMap.getOrDefault(key,0);
-                        if(packedNum>=packingTaskDetailEntity.getDeliveryQty()){
+                        if(0>=packingTaskDetailEntity.getDeliveryQty()){
                             continue;
                         }
                         WmsCartonDetailDTO.AddDTO addDTO1 = BeanUtil.toBean(v,WmsCartonDetailDTO.AddDTO.class);
@@ -465,7 +464,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         addDTO1.setPackQty(Math.min(totalNum,packingTaskDetailEntity.getDeliveryQty()));
                         totalNum = totalNum - packingTaskDetailEntity.getDeliveryQty();
                         addDTOList.add(addDTO1);
-                        packedMap.merge(key, addDTO1.getPackQty(), Integer::sum);
                         packingTaskDetailEntity.setDeliveryQty(Math.max(packingTaskDetailEntity.getDeliveryQty() - addDTO1.getPackQty(),0));
                     }
                 }else{
