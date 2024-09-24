@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 订单销量表 服务类
@@ -49,4 +51,12 @@ public interface ReportOrderSalesService extends SuperService<ReportOrderSalesEn
      * @return Boolean
      */
     Boolean exportExcel(ReportOrderSalesDTO.PagingParamDTO dto);
+    /**
+     * 导出数据查询
+     * @author will
+     * @date 2024/9/24 12:21
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<ReportOrderSalesDTO.ListDTO> listReportOrderSales(ReportOrderSalesDTO.PagingParamDTO dto);
 }

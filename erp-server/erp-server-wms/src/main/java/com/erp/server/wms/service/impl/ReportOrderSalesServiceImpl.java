@@ -15,6 +15,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.entity.ReportOrderSalesEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderSalesMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.ReportOrderSalesService;
@@ -24,7 +25,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_SALES;
+
 /**
  * <p>
  * 订单销量表 服务实现类
@@ -38,6 +43,9 @@ import java.util.Optional;
 public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSalesMapper, ReportOrderSalesEntity> implements ReportOrderSalesService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -100,9 +108,19 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
     @Override
     public Boolean exportExcel(ReportOrderSalesDTO.PagingParamDTO dto) {
-        return null;
+        downloadTaskFeign.saveDownloadTask("销售看板", EXPORT_WMS_REPORT_ORDER_SALES.getCode(), dto);
+        return Boolean.TRUE;
     }
 
+    @Override
+    public List<ReportOrderSalesDTO.ListDTO> listReportOrderSales(ReportOrderSalesDTO.PagingParamDTO dto) {
+        PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingParamDTO = new PagingDTO<>();
+        pagingParamDTO.setParams(dto);
+        pagingParamDTO.setPageSize(-1);
+        PagingVO<ReportOrderSalesDTO.ListDTO> resultList = this.paging(pagingParamDTO);
+        List<ReportOrderSalesDTO.ListDTO> list = (List<ReportOrderSalesDTO.ListDTO>) resultList.getList();
+        return list;
+    }
 
     /**
     * 新增修改处理数据

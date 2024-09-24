@@ -39,6 +39,10 @@
         is_deleted,
         warehouse_id, virtual_warehouse_id, sku_id, qty, approve_status, status, invaild_status, source_id, source_detail_id, souce_code, source_type, date
     </sql>
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
+
+    </select>
 
 
 </mapper>

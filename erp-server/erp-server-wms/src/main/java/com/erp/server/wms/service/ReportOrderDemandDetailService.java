@@ -1,9 +1,10 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
+import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
 
 /**
  * <p>
@@ -49,4 +50,12 @@ public interface ReportOrderDemandDetailService extends SuperService<ReportOrder
      * @return Boolean
      */
     Boolean exportExcel(ReportOrderDemandDetailDTO.PagingParamDTO dto);
+    /**
+     * 导出查询数据
+     * @author will
+     * @date 2024/9/24 12:19
+     * @param dto
+     * @return List<ListDTO>
+     */
+    PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto);
 }
