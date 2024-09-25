@@ -1303,7 +1303,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 waybillDTOList.add(waybillDTO);
             }catch (Exception e){
                 String msg = StrUtil.format("{}获取物流面单异常->{}",dto.getDeliveryNo(),e.getMessage());
-                log.error(msg);
+                log.error(msg,e);
                 errorList.add(msg);
             }
         }
