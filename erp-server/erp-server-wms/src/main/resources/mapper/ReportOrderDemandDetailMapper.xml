@@ -27,7 +27,8 @@
         rodd.source_detail_id as sourceDetailId,
         rodd.source_code as sourceCode,
         rodd.source_type as sourceType,
-        rodd.virtual_usable_qty as virtualUsableQty
+        rodd.virtual_usable_qty as virtualUsableQty,
+        rodd.is_split,
     </sql>
 
     <!-- 分页查询 -->

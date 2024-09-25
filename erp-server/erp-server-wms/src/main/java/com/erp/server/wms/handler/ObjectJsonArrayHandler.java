@@ -13,9 +13,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * 转jsonArray
+ * JSONArray
  * @author will
- * @date 2024/8/27 15:48
+ * @date 2024/9/25 17:28
  */
 @Component
 public class ObjectJsonArrayHandler extends BaseTypeHandler<JSONArray> {

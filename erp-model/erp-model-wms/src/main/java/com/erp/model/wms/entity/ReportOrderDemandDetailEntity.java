@@ -1,7 +1,9 @@
 package com.erp.model.wms.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -21,7 +23,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("report_order_demand")
+@TableName("report_order_demand_detail")
 public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandDetailEntity> {
 
     /**
@@ -90,6 +92,30 @@ public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandD
      */
     @TableField("source_type")
     private String sourceType;
+
+    /**
+     * 是否拆分
+     */
+    @TableField("is_split")
+    private Boolean isSplit;
+
+    /**
+     * 发货通知单
+     */
+    @TableField("delivery_notice_qty")
+    private Integer deliveryNoticeQty;
+
+    /**
+     * 发货通知单
+     */
+    @TableField("frozen_qty")
+    private Integer frozenQty;
+
+    /**
+     * bom的json数据
+     */
+    @TableField(value = "bom_json", typeHandler = JacksonTypeHandler.class)
+    private JSONArray bomJson;
 
 
     public static final String WAREHOUSE_ID = "warehouse_id";

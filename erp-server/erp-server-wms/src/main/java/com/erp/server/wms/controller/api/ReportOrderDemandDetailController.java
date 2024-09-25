@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -63,4 +64,18 @@ public class ReportOrderDemandDetailController extends BaseController {
         Boolean flag = reportOrderDemandDetailService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 查询bom信息
+     * @author will
+     * @date 2024/9/25 16:51
+     * @param dto
+     * @return ApiResult<ViewBomQtyDTO>
+     */
+    @PostMapping(value = "/viewBomQty")
+    public ApiResult<ReportOrderDemandDetailDTO.ViewBomQtyDTO> viewBomQty(@RequestBody @Validated BaseIdDTO dto) {
+        ReportOrderDemandDetailDTO.ViewBomQtyDTO resultList = reportOrderDemandDetailService.viewBomQty(dto.getId());
+        return success(resultList);
+    }
+
 }

@@ -1,16 +1,22 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
+import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -34,7 +40,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
  */
 @Slf4j
 @Service
-public class ReportOrderDemandDetailServiceImpl implements ReportOrderDemandDetailService {
+public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportOrderDemandDetailMapper, ReportOrderDemandDetailEntity> implements ReportOrderDemandDetailService {
     @Autowired
     private ReportOrderDemandDetailMapper baseMapper;
 
@@ -61,6 +67,20 @@ public class ReportOrderDemandDetailServiceImpl implements ReportOrderDemandDeta
     public PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> pagingParamDTO) {
         PagingVO<ReportOrderDemandDetailDTO.ListDTO> resultList = this.paging(pagingParamDTO);
         return resultList;
+    }
+
+    @Override
+    public ReportOrderDemandDetailDTO.ViewBomQtyDTO viewBomQty(String id) {
+        ReportOrderDemandDetailEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("订单需求明细未找到");
+        }
+        ReportOrderDemandDetailDTO.ViewBomQtyDTO  viewBomQtyDTO= BeanMapperUtils.map(ReportOrderDemandDetailDTO.ViewBomQtyDTO.class,entity);
+        if (ObjectUtil.isEmpty(viewBomQtyDTO.getBomJson())) {
+            List<ReportOrderDemandDetailDTO.BomDTO> bomList = BeanUtil.copyToList(viewBomQtyDTO.getBomJson(), ReportOrderDemandDetailDTO.BomDTO.class);
+            viewBomQtyDTO.setBomList(bomList);
+        }
+        return viewBomQtyDTO;
     }
 
     /**
