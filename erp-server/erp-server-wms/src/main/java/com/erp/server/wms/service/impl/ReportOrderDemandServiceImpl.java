@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_DEMAND;
@@ -117,6 +119,26 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     public PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(PagingDTO<ReportOrderDemandDTO.PagingParamDTO> pagingParamDTO) {
         PagingVO<ReportOrderDemandDTO.ListDTO> resultList = this.paging(pagingParamDTO);
         return resultList;
+    }
+
+    @Override
+    public ReportOrderDemandDTO.ViewVirtualAllocationDTO viewAllocation(ReportOrderDemandDTO.ViewVirtualAllocationParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public Boolean addAllocation(ReportOrderDemandDTO.AddVirtualAllocationDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<ReportOrderDemandDTO.BatchViewVirtualAllocationDTO> batchViewAllocation(ValidList<ReportOrderDemandDTO.ViewVirtualAllocationParamDTO> list) {
+        return null;
+    }
+
+    @Override
+    public Boolean batchAddAllocation(ValidList<ReportOrderDemandDTO.AddVirtualAllocationDTO> list) {
+        return null;
     }
 
     /**

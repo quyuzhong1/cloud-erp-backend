@@ -58,6 +58,7 @@ public class ReportOrderDemandDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出订单需求明细报表")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody ReportOrderDemandDetailDTO.PagingParamDTO dto) {
         Boolean flag = reportOrderDemandDetailService.exportExcel(dto);
         return flag == true ? success() : failure();
