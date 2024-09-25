@@ -59,21 +59,28 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         /**
          * 订单类型
          */
-        private String orderType;
+        private String sourceType;
 
         /**
          * 订单类型名称
          */
-        private String orderTypeName;
+        private String sourceTypeName;
 
         /**
          * 单据编号
          */
         private String sourceCode;
+
         /**
          * 单据状态
          */
         private String status;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
         /**
          * 单据状态名称
          */

@@ -1,17 +1,26 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
+import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderDemandDetailMapper;
 import com.erp.server.wms.service.ReportOrderDemandDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_DEMAND_DETAIL;
 
@@ -36,6 +45,8 @@ public class ReportOrderDemandDetailServiceImpl implements ReportOrderDemandDeta
     public PagingVO<ReportOrderDemandDetailDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ReportOrderDemandDetailDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        // 填充名称
+        fillPageData(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -52,4 +63,25 @@ public class ReportOrderDemandDetailServiceImpl implements ReportOrderDemandDeta
         return resultList;
     }
 
+    /**
+     * 分页数据处理
+     * @author will
+     * @date 2024/9/25 14:31
+     * @param list
+     */
+    private void fillPageData (List<ReportOrderDemandDetailDTO.ListDTO> list) {
+        if (CollectionUtil.isEmpty(list)) {
+            return;
+        }
+        for (ReportOrderDemandDetailDTO.ListDTO listDTO : list) {
+            //订单类型
+            listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
+
+            String statusName = !StrUtil.equals(SourceTypeEnum.SO_INFO.getCode(), listDTO.getSourceType()) ?
+                    StrUtil.equals(SourceTypeEnum.SO_B2C.getCode(), listDTO.getSourceType()) ? SoB2cBillStatusEnum.getName(listDTO.getStatus()) : RequisitionApplicationStatusEnum.getName(listDTO.getStatus())
+                    : DeliveryStatusEnum.getName(listDTO.getStatus());
+            //订单状态
+            listDTO.setStatusName(StrUtil.format("{}-{}", ApproveStatusEnum.getName(listDTO.getApproveStatus()),statusName));
+        }
+    }
 }
