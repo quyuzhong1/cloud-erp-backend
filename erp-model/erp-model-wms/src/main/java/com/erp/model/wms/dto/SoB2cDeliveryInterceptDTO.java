@@ -553,6 +553,10 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         //明细处理弹窗
         private List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList;
 
+        /**
+         * 备注
+         */
+        private String resultRemark;
     }
 
     /**
@@ -567,6 +571,10 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 是否自动出库
          */
         private Boolean isAutoOut;
+        /**
+         * 备注
+         */
+        private String resultRemark;
 
     }
 

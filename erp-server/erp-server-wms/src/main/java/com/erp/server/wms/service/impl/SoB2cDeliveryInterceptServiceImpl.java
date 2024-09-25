@@ -598,7 +598,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO handleSuccess(SoB2cDeliveryEntity entity, String interceptId, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList) {
+    public BatchResultDTO handleSuccess(SoB2cDeliveryEntity entity, String interceptId, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList, String remark) {
         SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = this.getById(interceptId);
         //取消保宏预报
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
@@ -646,6 +646,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         //更新拦截单状态
         soB2cDeliveryInterceptEntity.setHandleResult(HandleResultEnum.SUCCESS.getCode());
         soB2cDeliveryInterceptEntity.setHandleUserId(userInfo.getUid());
+        soB2cDeliveryInterceptEntity.setHandleRemark(remark);
         soB2cDeliveryInterceptEntity.setHandleUserName(userInfo.getUserName());
         soB2cDeliveryInterceptEntity.setHandleTime(LocalDateTime.now());
         soB2cDeliveryInterceptEntity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
@@ -682,17 +683,18 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         interceptInventoryDTOList = interceptInventoryDTOList.stream().filter(v->v.getId().equals(id)).collect(Collectors.toList());
         SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = this.getById(id);
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSoId());
-        return service.handleSuccess(soB2cDeliveryEntity,id,interceptInventoryDTOList);
+        return service.handleSuccess(soB2cDeliveryEntity,id,interceptInventoryDTOList, dto.getResultRemark());
     }
 
     @Override
-    public BatchResultDTO interceptFailure(String id, Boolean isAutoOut) {
+    public BatchResultDTO interceptFailure(String id, Boolean isAutoOut, String remark) {
         SoB2cDeliveryInterceptEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("拦截单为空"));
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //更新拦截单状态
         entity.setHandleResult(HandleResultEnum.FAILURE.getCode());
         entity.setHandleUserId(userInfo.getUid());
         entity.setHandleUserName(userInfo.getUserName());
+        entity.setHandleRemark(remark);
         entity.setHandleTime(LocalDateTime.now());
         entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
         this.updateById(entity);

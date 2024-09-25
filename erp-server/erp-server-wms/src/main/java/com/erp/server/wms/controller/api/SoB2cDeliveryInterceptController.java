@@ -210,7 +210,7 @@ public class SoB2cDeliveryInterceptController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cDeliveryInterceptService.interceptFailure(id,dto.getIsAutoOut());
+                result = soB2cDeliveryInterceptService.interceptFailure(id,dto.getIsAutoOut(),dto.getResultRemark() );
             }catch (Exception e){
                 log.error("发货拦截单 拦截失败处理异常",e);
                 SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);

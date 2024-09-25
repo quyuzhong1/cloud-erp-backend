@@ -119,7 +119,7 @@ public class SoB2cDeliveryInterceptFeignController extends BaseController {
     @PostMapping("/handleSuccess")
     public BatchResultDTO handleSuccess(@RequestBody SoB2cDeliveryEntity soB2cDelivery, @RequestParam("id") String interceptId) {
         try {
-            return soB2cDeliveryInterceptService.handleSuccess(soB2cDelivery, interceptId, new ArrayList<>());
+            return soB2cDeliveryInterceptService.handleSuccess(soB2cDelivery, interceptId, new ArrayList<>(), "");
         }catch (Exception e){
             log.error("处理拦截成功异常",e);
             return BatchResultDTO.fail(soB2cDelivery.getId(),soB2cDelivery.getCode(),"处理异常");

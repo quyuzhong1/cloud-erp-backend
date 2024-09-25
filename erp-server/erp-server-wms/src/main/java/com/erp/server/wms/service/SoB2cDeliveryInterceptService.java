@@ -106,11 +106,11 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
 
     List<SoB2cDeliveryInterceptEntity> listByStatus(String code);
 
-    BatchResultDTO handleSuccess(SoB2cDeliveryEntity dto, String id, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList);
+    BatchResultDTO handleSuccess(SoB2cDeliveryEntity dto, String id, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList, String remark);
 
     List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptSuccessView(List<String> ids);
 
     BatchResultDTO interceptSuccess(SoB2cDeliveryInterceptDTO.InterceptSuccessDTO dto, String id);
 
-    BatchResultDTO interceptFailure(String id, Boolean isAutoOut);
+    BatchResultDTO interceptFailure(String id, Boolean isAutoOut, String remark);
 }
