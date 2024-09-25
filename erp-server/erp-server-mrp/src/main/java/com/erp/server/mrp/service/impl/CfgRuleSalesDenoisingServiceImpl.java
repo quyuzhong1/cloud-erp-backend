@@ -96,8 +96,8 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         for (CfgRuleSalesDenoisingEntity denoisingEntity : list) {
             String dateStr = StrUtil.format("{}~{}", denoisingEntity.getStartDate(), denoisingEntity.getEndDate());
             msg.append(StrUtil.format("•序号【{}】、名称【{}】、时间段【{}】、去噪类型【{}，{}】<br>", denoisingEntity.getIndex(), denoisingEntity.getName(),dateStr,CfgRuleSalesDenoisingDenoisingTypeEnum.getName(denoisingEntity.getDenoisingType()),denoisingEntity.getEffectiveValue()));
-            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(salesQtyEntity.getRefId(),salesQtyEntity.getId()), "销量");
         }
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(salesQtyEntity.getRefId(),salesQtyEntity.getId()), "销量");
         return Boolean.TRUE;
     }
 
