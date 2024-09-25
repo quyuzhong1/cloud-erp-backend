@@ -206,7 +206,12 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
     @Override
-    public Integer existBySkuIds(List<String> skuIds) {
-        return baseMapper.existBySkuIds(skuIds);
+    public Boolean existBySkuIds(List<String> skuIds) {
+        Boolean isNew = Boolean.TRUE ;
+        Integer count = baseMapper.existBySkuIds(skuIds);
+        if(count > 0){
+            isNew = Boolean.FALSE ;
+        }
+        return isNew;
     }
 }

@@ -44,11 +44,6 @@ public class PurchaseApplicationDetailFeignController {
      */
     @PostMapping("/existBySkuIds")
     Boolean existBySkuIds(@RequestBody List<String> skuIds){
-        Boolean isNew = Boolean.TRUE ;
-        Integer count = purchaseApplicationDetailService.existBySkuIds(skuIds);
-        if(count > 0){
-            isNew = Boolean.FALSE ;
-        }
-        return isNew;
+        return purchaseApplicationDetailService.existBySkuIds(skuIds);
     }
 }

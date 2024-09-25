@@ -73,5 +73,5 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
     /**
      * 试产量产是否新品
      */
-    Integer existBySkuIds( List<String> skuIds);
+    Boolean existBySkuIds( List<String> skuIds);
 }
