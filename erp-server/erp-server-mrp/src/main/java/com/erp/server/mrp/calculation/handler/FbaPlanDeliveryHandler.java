@@ -12,6 +12,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,8 +36,7 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        int qty = 0;
-
+        List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> estimatedDeliveryDetails = new ArrayList<>();
         //获取需要计算库存的FBA预计发货配置
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         //补货计划
@@ -56,8 +56,15 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
                     .filter(v -> "true".equals(v.getValue()))
                     .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
                     .collect(Collectors.toList());
-            inventoryService.getFbaPlanDelivery(replenishmentResultDTO, strategyCodes, cfgRuleStrategyDTO.getStockUpResult());
+            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getFbaPlanDelivery(replenishmentResultDTO, strategyCodes, cfgRuleStrategyDTO.getStockUpResult());
+            if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
+                estimatedDeliveryDetails.addAll(fbaPlanDelivery);
+            }
         }
+        replenishmentResultDTO.setFbaDeliveryDetails(estimatedDeliveryDetails);
+        Integer qty = estimatedDeliveryDetails.stream()
+                .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
+                .reduce(0, Math::addExact);
         replenishmentResultDTO.getReplenishmentDetail().setFbaPlanDeliveryQty(qty);
     }
 }

@@ -24,6 +24,7 @@ import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.*;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -37,6 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class BasicReplenishmentDataService {
 
     @Resource
@@ -253,6 +255,7 @@ public class BasicReplenishmentDataService {
                         stockingTimeHandler.handle(cfgRuleStrategy, dto);
                         replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, dto);
                     } catch (Exception e) {
+                        log.error("计算失败 sku{},店铺{}, 原因{}", dto.getReplenishment().getSkuNo(), dto.getReplenishment().getShopId(), e.getMessage(), e);
                         replenishmentSuggestionService.updateRemark(dto.getReplenishment().getId(), e.getMessage());
                     }
                 }

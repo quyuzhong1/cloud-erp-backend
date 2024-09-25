@@ -11,15 +11,15 @@
     </select>
     <select id="getFbaShipment"
             resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
-        select t1.id                                     as sourceId,
-               t1.code                                   as sourceCode,
-               'fbaShipment'                             as sourceType,
-               t1.delivery_status                        as status,
-               t2.declare_qty                            as declareQty,
-               t2.delivery_qty                           as deliveryQty,
-               t2.receive_qty                            as receiveQty,
-               t2.delivery_qty - t2.receive_qty          as inTransitQty,
-               #{result.replenishmentDetail.calcVersion} as calcVersion
+        select max(t1.ID)                                AS sourceId,
+               max(t1.code)                              AS sourceCode,
+               'fbaShipment'                             AS sourceType,
+               max(t1.delivery_status)                   AS status,
+               sum(t2.declare_qty)                       AS declareQty,
+               sum(t2.delivery_qty)                      AS deliveryQty,
+               sum(t2.receive_qty)                       AS receiveQty,
+               sum(t2.delivery_qty - t2.receive_qty)     AS inTransitQty,
+               #{result.replenishmentDetail.calcVersion} AS calcVersion
         from ${tableName} t1
                  INNER JOIN
              ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
@@ -28,6 +28,7 @@
           and t1.shop_id = #{result.replenishment.shopId}
           and (t2.delivery_qty - t2.receive_qty) > 0
           and t1.delivery_status = 'shipped'
+        GROUP BY t1.id
     </select>
     <select id="getFbaDelivery"
             resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
@@ -109,11 +110,11 @@
     <select id="getPlanDelivery"
             resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedDeliveryDetailDTO">
         SELECT
-        wdp.approve_status AS status,
-        wdpd.qty AS qty,
-        wdp.create_time AS estimateSalesDate,
-        wdp.id AS sourceId,
-        wdp.code AS sourceCode
+        max(wdp.approve_status) AS status,
+        sum(wdpd.qty) AS qty,
+        max(wdp.create_time) AS estimateSalesDate,
+        wdp.ID AS sourceId,
+        max(wdp.code) AS sourceCode
         FROM
         ${tableName} AS wdp
         INNER JOIN ${tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
@@ -147,6 +148,7 @@
                 </foreach>
             </if>
         </if>
+        group by wdp.id
     </select>
     <select id="getOverseasUsable" resultType="java.lang.Integer">
         select COALESCE(sum(${code}), 0)

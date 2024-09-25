@@ -33,7 +33,7 @@ public interface InventoryService {
      * @param strategyCodes          编码
      * @param stockUpResult          备货配置
      */
-    void getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, List<String> strategyCodes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult);
+    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, List<String> strategyCodes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult);
 
     /**
      * 获取海外仓可用库存

@@ -125,7 +125,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public void getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, List<String> strategyCodes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
+    public List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, List<String> strategyCodes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
         List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> estimatedDeliveryDetails = inventoryMapper.getPlanDelivery(DeliveryPlanTypeEnum.FBA.getCode(), strategyCodes, replenishmentResultDTO, SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN, calcDate), SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN_DETAIL, calcDate));
         for (ReplenishmentResultDTO.EstimatedDeliveryDetailDTO detail : estimatedDeliveryDetails) {
@@ -138,6 +138,8 @@ public class InventoryServiceImpl implements InventoryService {
         } else {
             replenishmentResultDTO.getFbaDeliveryDetails().addAll(estimatedDeliveryDetails);
         }
+
+        return estimatedDeliveryDetails;
     }
 
     @Override
