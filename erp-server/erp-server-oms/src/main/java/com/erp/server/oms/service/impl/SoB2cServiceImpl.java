@@ -8040,15 +8040,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     platformShipOrderDTO.setSubmitPlatformUniqueKey(soB2cEntity.convertSubmitPlatformUniqueKey());
                     platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
                     soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
-                    soB2cEntity.setSignOrderError("");
-                    deleteErrorIds.add(soB2cEntity.getId());
                     updateList.add(soB2cEntity);
                 }catch (Exception e){
                     resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),StrUtil.format("平台标发失败:{}",e.getMessage())));
+                    continue;
                 }
             }else{
                 updateList.add(soB2cEntity);
             }
+            soB2cEntity.setSignOrderError("");
+            deleteErrorIds.add(soB2cEntity.getId());
         }
         if(CollectionUtils.isNotEmpty(updateList)){
             List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
