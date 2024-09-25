@@ -589,7 +589,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<WarehouseOrderQuery> warehouseOrderQueries = new ArrayList<>(logisticsQueryVO.size());
         logisticsQueryVO.stream().forEach(logisticsGetLabelVO1 -> {
             WarehouseOrderQuery warehouseOrderQuery = new WarehouseOrderQuery();
-            warehouseOrderQuery.setInternational_logistics_id(logisticsGetLabelVO1.getTransportNo());
+            warehouseOrderQuery.setInternational_logistics_id(logisticsGetLabelVO1.getTrackNo());
             warehouseOrderQueries.add(warehouseOrderQuery);
         });
         LabelRequest labelRequest = LabelRequest.builder()
