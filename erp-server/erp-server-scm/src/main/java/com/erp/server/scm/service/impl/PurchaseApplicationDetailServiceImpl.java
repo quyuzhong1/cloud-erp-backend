@@ -204,4 +204,14 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     public List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds,List<String> sourceDetailIds) {
         return baseMapper.listSkuAndQty(sourceIds, sourceDetailIds);
     }
+
+    @Override
+    public Boolean existBySkuIds(List<String> skuIds) {
+        Boolean isNew = Boolean.TRUE ;
+        Integer count = baseMapper.existBySkuIds(skuIds);
+        if(count > 0){
+            isNew = Boolean.FALSE ;
+        }
+        return isNew;
+    }
 }

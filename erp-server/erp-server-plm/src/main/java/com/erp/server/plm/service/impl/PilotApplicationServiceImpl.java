@@ -489,9 +489,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(approveDTO.getProductDetailList() != null && !approveDTO.getProductDetailList().isEmpty()){
             List<PilotApplicationDetailDTO.ViewDTO> productDetailList = approveDTO.getProductDetailList();
             for (PilotApplicationDetailDTO.ViewDTO productDTO : productDetailList) {
-                if(productDTO.getApproveQty() > productDTO.getApplyQty()){
-                    throw new ServiceException("产品审核数量不能大于申请数量：" + productDTO.getSkuNo());
-                }
+                //风玲要求不做限制
+//                if(productDTO.getApproveQty() > productDTO.getApplyQty()){
+//                    throw new ServiceException("产品审核数量不能大于申请数量：" + productDTO.getSkuNo());
+//                }
                 if(Objects.equals(approveType, ApproveTypeEnum.PASS)){
                     pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, productDTO.getApproveQty()).eq(PilotApplicationDetailEntity::getId, productDTO.getId()).update();
                 }
@@ -1070,8 +1071,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
         //是否新品首批
         List<String> skuIds = padList.stream().filter(r -> StringUtils.isNotBlank(r.getSkuId())).map(PilotApplicationDetailEntity::getSkuId).collect(Collectors.toList());
-        Boolean isExist = purchaseApplicationDetailFeign.existBySkuIds(skuIds);
-        if(isExist){
+        Boolean isNew = purchaseApplicationDetailFeign.existBySkuIds(skuIds);
+        if(isNew){
             paramDto.setIsFirstMassProduct(Boolean.TRUE);
         }else {
             paramDto.setIsFirstMassProduct(Boolean.FALSE);

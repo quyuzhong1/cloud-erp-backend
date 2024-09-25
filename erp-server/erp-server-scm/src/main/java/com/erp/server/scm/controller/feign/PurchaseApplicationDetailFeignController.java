@@ -39,16 +39,11 @@ public class PurchaseApplicationDetailFeignController {
      * 判断是否新品
      * @param skuIds
      * @return Boolean
-     * @date: 2024-08-29
-     * @author: tanmujin
+     * @date: 2024-09-25
+     * @author: jack
      */
     @PostMapping("/existBySkuIds")
     Boolean existBySkuIds(@RequestBody List<String> skuIds){
-        Boolean isNew = Boolean.TRUE ;
-        Integer count = purchaseApplicationDetailService.lambdaQuery().in(PurchaseApplicationDetailEntity::getSkuId, skuIds).count();
-        if(count > 0){
-            isNew = Boolean.FALSE ;
-        }
-        return isNew;
+        return purchaseApplicationDetailService.existBySkuIds(skuIds);
     }
 }

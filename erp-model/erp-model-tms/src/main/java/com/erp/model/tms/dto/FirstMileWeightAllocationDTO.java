@@ -152,11 +152,19 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 出库重量
          */
         private BigDecimal outStockWeight;
+        /**
+         * 出库重量
+         */
+        private String outStockWeightStr;
 
         /**
         * 出库计费重【可排序】
         */
         private BigDecimal chargedWeight;
+        /**
+         * 出库计费重【可排序】
+         */
+        private String chargedWeightStr;
 
         /**
          * 体积重
@@ -167,11 +175,19 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         * 单产品重量【可排序】
         */
         private BigDecimal productWeight;
+        /**
+         * 单产品重量【可排序】
+         */
+        private String productWeightStr;
 
         /**
         * 分摊重量【可排序】
         */
         private BigDecimal allocationWeight;
+        /**
+         * 分摊重量【可排序】
+         */
+        private String allocationWeightStr;
 
         /**
         * 重量单位

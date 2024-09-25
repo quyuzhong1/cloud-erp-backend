@@ -192,7 +192,6 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             if (Objects.nonNull(skuVO)){
                 e.setProductName(skuVO.getSkuName());
             }
-            e.setProductCost(new BigDecimal(e.getProductCost()).stripTrailingZeros().toPlainString());
             e.setProductCostStr(e.getCurrencySymbol()+e.getProductCost());
         });
     }
