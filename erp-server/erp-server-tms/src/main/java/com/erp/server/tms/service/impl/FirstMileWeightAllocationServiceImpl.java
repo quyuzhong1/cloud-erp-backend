@@ -44,7 +44,10 @@ import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -416,7 +419,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO add(String logisticsBillId) {
+    public BatchResultDTO add(String logisticsBillId) throws InterruptedException {
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);
 
@@ -559,10 +562,13 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             if(cfgWeightAllocationType.equals("productWeight")){
                 entity.setAllocationType(WeightAllocationTypeEnum.PRODUCT_WEIGHT.getCode());
             }
+            Date now = new Date();
+            Instant instant = now.toInstant();
+            LocalDateTime creatTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+            entity.setCreateTime(creatTime);
             saveList.add(entity);
         }
         computeAllocationWeight(saveList, cfgWeightAllocationType, logisticsChannelEntity);
-        saveList.sort(Comparator.comparing(FirstMileWeightAllocationEntity::getBoxNo).reversed());
         //保存
         boolean success = this.saveBatch(saveList);
         if(success){

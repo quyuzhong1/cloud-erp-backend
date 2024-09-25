@@ -58,7 +58,8 @@
                  left join wms_carton_detail wcd on wc.id = wcd.main_id and wcd.is_deleted = false
                  left join wms_carton_spec wcs
                            on wc.packing_task_id = wcs.main_id and wc.spec_id = wcs.id and wcs.is_deleted = false
-        where wc.is_deleted = false and wc.packing_task_id = #{packingTaskId};
+        where wc.is_deleted = false and wc.packing_task_id = #{packingTaskId}
+        order by wc.box_no desc
     </select>
 
 

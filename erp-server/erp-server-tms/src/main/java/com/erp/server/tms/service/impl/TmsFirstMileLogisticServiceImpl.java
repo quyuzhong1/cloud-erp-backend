@@ -1758,7 +1758,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     }
 
     @Override
-    public BatchResultDTO pushWeightAllocation(String id) {
+    public BatchResultDTO pushWeightAllocation(String id) throws InterruptedException {
         //重量分摊基础数据
         List<TmsFirstMileLogisticDTO.WeightAllocationDTO> list = baseMapper.assembleFirstMileEstimatedList(Collections.singletonList(id));
         if(list.isEmpty()){

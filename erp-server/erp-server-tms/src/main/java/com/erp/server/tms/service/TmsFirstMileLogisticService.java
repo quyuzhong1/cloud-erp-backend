@@ -151,7 +151,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * 下推重量分摊
      * @param id 物流单ID
      */
-    BatchResultDTO pushWeightAllocation(String id);
+    BatchResultDTO pushWeightAllocation(String id) throws InterruptedException;
 
     BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }
