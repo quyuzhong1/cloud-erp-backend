@@ -236,6 +236,7 @@ public class InventoryServiceImpl implements InventoryService {
                     dto.setEstimateSalesDate(dto.getEstimatedPutAwayDate());
                 }
         }
+        replenishmentResultDTO.setLocalInTransitDetails(localInTransitDetails);
         return new ArrayList<>(localInTransitDetails.parallelStream()
                 .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
                 .collect(Collectors.toMap(
