@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -85,4 +86,11 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      * @return
      */
     List<VirtualWarehouseDTO.SelectDTO> warehouseSelectList(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto);
+
+    /**
+     * 通过仓库，平台，关联id 获取虚拟仓库列表
+     * @return
+     */
+    List<VirtualWarehouseDTO.SelectDTO> listByParam(VirtualWarehouseDTO.SearchDTO searchDTO);
+
 }

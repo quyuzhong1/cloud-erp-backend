@@ -11,6 +11,7 @@ import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -54,9 +55,11 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @param approveType
      * @param managementId
      * @param processInstanceId
+     * @param comment
+     * @param variablesMap
      * @return
      */
-    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String remark);
+    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String managementId, String processInstanceId, String comment, Map<String, Object> variablesMap);
 
     /**
      * 执行流程开始监听服务处理

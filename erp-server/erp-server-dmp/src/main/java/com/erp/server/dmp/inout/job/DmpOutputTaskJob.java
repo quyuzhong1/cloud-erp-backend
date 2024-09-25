@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputTaskFactory;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
+import com.erp.server.dmp.controller.api.DmpInoutController;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpCfgOutputService;
@@ -33,6 +36,8 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 
+import javax.annotation.Resource;
+
 @Component
 public class DmpOutputTaskJob {
 	@Autowired
@@ -41,6 +46,11 @@ public class DmpOutputTaskJob {
 	private DmpOutputTaskService dmpOutputTaskService;
 	@Autowired
 	private DmpCfgOutputService dmpCfgOutputService;
+    @Resource
+	private DmpOutputTaskFactory dmpOutputTaskFactory;
+    @Autowired
+	private DmpInoutController dmpInoutController;
+	
 	
 	@XxlJob("doOutputErrorTask")
     public ReturnT doOutputErrorTask(){
@@ -78,7 +88,7 @@ public class DmpOutputTaskJob {
 		
         return ReturnT.SUCCESS;
     }
-	
+
 	/**
 	 * 重推error状态数据
 	 * @return
@@ -90,12 +100,35 @@ public class DmpOutputTaskJob {
 		if(StringUtils.isNotBlank(jobParam)) {
 			offset = Long.parseLong(jobParam);
 		}
-		LocalDateTime updateTime = LocalDateTimeUtil.offset(LocalDateTime.now(), offset*-1, ChronoUnit.HOURS); 
+		LocalDateTime updateTime = LocalDateTimeUtil.offset(LocalDateTime.now(), offset*-1, ChronoUnit.HOURS);
 		dmpOutputTaskRecordService.lambdaUpdate()
 			.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
 			.le(DmpOutputTaskRecordEntity::getUpdateTime, updateTime)
 			.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
 			.update();
+		return ReturnT.SUCCESS;
+	}
+
+	/**
+	 * 输出任务执行
+	 */
+	@XxlJob("doOutputTask")
+	public ReturnT<String> doOutputTask(){
+		String idList = XxlJobHelper.getJobParam();
+		if(StringUtils.isNotBlank(idList)) {
+			String[] ids = idList.split(",");
+			for(String id : ids) {
+				DmpOutputFinishRequest dmpOutputFinishRequest = new DmpOutputFinishRequest();
+				dmpOutputFinishRequest.setOutputTaskId(id);
+				dmpOutputTaskFactory.dealOutputTask(dmpOutputFinishRequest);
+			}
+		}
+		return ReturnT.SUCCESS;
+	}
+	
+	@XxlJob("wdtInsufficientInventoryTask")
+    public ReturnT wdtInsufficientInventoryTask(){
+		dmpInoutController.getWdtInsufficientInventory();
 		return ReturnT.SUCCESS;
 	}
 }

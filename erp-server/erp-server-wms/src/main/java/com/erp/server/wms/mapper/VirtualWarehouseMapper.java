@@ -42,4 +42,6 @@ public interface VirtualWarehouseMapper extends BaseMapper<VirtualWarehouseEntit
      * @return
      */
     List<VirtualWarehouseDTO.SelectDTO> warehouseSelectList(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto);
+
+    List<VirtualWarehouseDTO.SelectDTO> listByParam(@Param("params") VirtualWarehouseDTO.SearchDTO searchDTO);
 }

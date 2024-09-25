@@ -30,12 +30,19 @@ public enum AmazonRequestTypeRateLimiterEnum {
     // 货件相关
     FBA_SHIPMENT("2", "30","fba_shipment","货件信息"),
     FBA_SHIPMENT_DETAIL("2", "30","fba_shipment_detail","货件详情信息"),
+    // 入库计划
+    FBA_INBOUND_PLAN("2", "6","fba_inbound_plan","FBA入库计划列表"),
+    FBA_INBOUND_PLAN_DETAIL("2", "6","fba_inbound_plan_detail","FBA入库计划信息"),
+    FBA_INBOUND_PLAN_BOXES("2", "6","fba_inbound_plan_boxes","FBA入库计划装箱信息"),
+    FBA_INBOUND_PLAN_SHIPMENT("2", "6","fba_inbound_plan_shipment","FBA入库计划货件信息"),
+    // FBA库存
+    FBA_INVENTORY("90", "150","fba_inventory","FBA库存"),
 
     // 报告相关
     REPORTS("0.0222", "10","reports","报告列表"),
-    REPORTS_CREATE("0.0167 ", "15","reports_create","创建报告"),
-    REPORTS_QUERY("2 ", "15","reports_query","根据ID查询报告"),
-    REPORTS_DOCUMENT_QUERY("2 ", "15","reports_query","根据报告文档ID查询报告文档"),
+    REPORTS_CREATE("0.0167", "15","reports_create","创建报告"),
+    REPORTS_QUERY("2", "15","reports_query","根据ID查询报告"),
+    REPORTS_DOCUMENT_QUERY("2", "15","reports_query","根据报告文档ID查询报告文档"),
 
     ;
 

@@ -372,4 +372,52 @@ public class WmsCartonDTO {
          */
         private List<String> skuList;
     }
+
+    @Data
+    public static class DetailDTO{
+        /**
+         * 箱子ID
+         */
+        private String boxId;
+        /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 装箱数量
+         */
+        private int packQty;
+        /**
+         * 箱子重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength = BigDecimal.ZERO;
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth = BigDecimal.ZERO;
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight = BigDecimal.ZERO;
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+    }
 }

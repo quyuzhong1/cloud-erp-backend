@@ -399,11 +399,12 @@ public class FirstMileDeliveryController extends BaseController {
      **/
     @PostMapping("/generatePackingTask")
     public ApiResult<List<BatchResultDTO>> generatePackingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(dto.getIds());
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(ids);
         List<String> sourceCodes = entityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
         List<BatchResultDTO> result = new ArrayList<>();
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             FirstMileDeliveryEntity firstMileDeliveryEntity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(firstMileDeliveryEntity)){
                 result.add(BatchResultDTO.fail(id,id,"发货单为空"));
@@ -521,5 +522,37 @@ public class FirstMileDeliveryController extends BaseController {
     public ApiResult generateStatusUpdate(@RequestBody FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         Boolean result = firstMileDeliveryService.generateStatusUpdate(dto);
         return result == true ? success() : failure();
+    }
+
+    /**
+     * 期初明细分页列表
+     * @author zdy
+     * @date: 2024-8-15
+     * @param dto
+     * @return ApiResult<PagingVO<FirstMileDeliveryDTO.ListDTO>>
+     */
+    @PostMapping("/pagingFirstMile")
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public ApiResult<PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO>> pagingFirstMile(@RequestBody @Validated PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
+        return success(firstMileDeliveryService.pagingFirstMile(dto));
+    }
+
+    /**
+     * 导出装箱清单Excel
+     */
+    @PostMapping("/exportPackingDetail")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出装箱任务Excel")
+    public ApiResult exportPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        firstMileDeliveryService.exportPackingDetail(dto);
+        return success();
+    }
+
+
+    /**
+     * 查看装箱
+     */
+    @PostMapping("/listPacking")
+    public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestBody @Validated BaseIdDTO dto) {
+        return success(firstMileDeliveryService.listPacking(dto.getId()));
     }
 }

@@ -103,4 +103,9 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
     public List<DictControllerDTO.DictDropDownDTO> listDmpBasicSystem() {
         return baseMapper.listDmpBasicSystem();
     }
+
+    @Override
+    public DmpBasicSystemEntity listByCode(String code) {
+        return lambdaQuery().eq(DmpBasicSystemEntity::getCode, code).last("LIMIT 1").one();
+    }
 }

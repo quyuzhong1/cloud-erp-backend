@@ -40,7 +40,7 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
     @TableField("type")
     private String type;
     /**
-    * 输入类型id，api取dmp_cfg_input_api表，mq取dmp_cfg_input_mq表
+    * 输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表
     */
     @TableField("type_id")
     private String typeId;

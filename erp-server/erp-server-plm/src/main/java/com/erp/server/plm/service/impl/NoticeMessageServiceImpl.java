@@ -13,15 +13,13 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.plm.dto.FlyingBookReminderDTO;
-import com.erp.model.plm.dto.NoticeMessageDTO;
-import com.erp.model.plm.dto.ProductShowDTO;
-import com.erp.model.plm.dto.UserNoticeNodeDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.NoticeEnum;
 import com.erp.model.plm.enums.NoticeItemPeopleEnum;
@@ -29,7 +27,9 @@ import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.plm.constant.NoticeMessageConstant;
@@ -44,6 +44,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -91,6 +92,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
     @Autowired
     private TaskFollowerService taskFollowerService;
+
+    @Resource
+    private ProcessTaskManagementFeign processTaskManagementFeign;
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
@@ -2690,6 +2694,127 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         elements.add(actionAllMap);
         cardMap.put("elements", elements);
         return cardMap;
+    }
+
+    @Override
+    public Boolean approvePilotApplicationNotice(String userName, PilotApplicationDTO.ApprovePilotNoticeDTO entity, Boolean isCompeletd) {
+        String flag = NoticeEnum.AUDIT_PILOT_APPLICATION.getFlag();
+        if(isCompeletd){
+            flag = NoticeEnum.AUDIT_COMPLETED_PILOT_APPLICATION.getFlag();
+        }
+        //根据节点标示获取到通知消息实体
+        NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
+        if (!Objects.isNull(notice)) {
+            String noticeMessageId = notice.getId();
+            List<String> noticeUserIds = getSetPilotNotice(notice, entity, isCompeletd);
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+            //消息通知记录
+            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            //排除关闭通知的人员 并去重
+            List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+            sendMessage.setUnionIds(unionIds);
+            //标题
+            String title = String.format("试产量产单【%s】已提交审核，请尽快审核",entity.getCode());
+            if(isCompeletd){
+                title = String.format("试产量产单【%s】已完成审核，请知悉",entity.getCode());
+            }
+            //消息内容
+            String chargeName = Arrays.asList(entity.getChargeName().split(",")).stream().distinct().collect(Collectors.joining(";"));
+            String skuNo = Arrays.asList(entity.getSkuNo().split(",")).stream().distinct().collect(Collectors.joining(";"));
+            String message = String.format(NoticeMessageConstant.AUDIT_PILOT_MSG_CONTENT,isCompeletd ? NoticeEnum.AUDIT_COMPLETED_PILOT_APPLICATION.getName() : NoticeEnum.AUDIT_PILOT_APPLICATION.getName(),chargeName,skuNo);
+            Map contentMap = getCardMessageMap(title, message, fsAppUrl);
+            sendMessage.setContentMap(contentMap);
+            //发送消息的结果
+            Boolean sendResult = fsService.sendMessage(sendMessage);
+            //当发送成功后
+            if (sendResult) {
+                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setChargeId(entity.getChargeId());
+                    recordEntity.setMessageContent(message);
+                    recordEntity.setNoticeMessageId(noticeMessageId);
+                    recordEntity.setNoticeNode(flag);
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setProductId(entity.getProductId());
+                    recordEntity.setProductName(entity.getSpuName());
+                    recordEntity.setTaskId("");
+                    recordEntity.setTaskName("");
+                    recordEntity.setIsTask(0);
+                    recordEntity.setChargeName(entity.getChargeName());
+                    messageRecordList.add(recordEntity);
+                }
+            }
+            //保存发送消息通知记录
+            noticeMessageRecordService.saveBatch(messageRecordList);
+        }
+        return true;
+    }
+
+    /**
+     * 试产量产：获取系统设置的通知人员
+     *
+     * @param
+     * @return java.util.List<java.lang.String>
+     * @author jack
+     * @date 2024-09-23
+     */
+    public List<String> getSetPilotNotice(NoticeMessageEntity notice, PilotApplicationDTO.ApprovePilotNoticeDTO entity, Boolean isCompeletd) {
+        List<String> resultList = new ArrayList<>();
+        if (!Objects.isNull(notice)) {
+            //其它人
+            String otherPeoples = notice.getOtherPeople();
+            if (StringUtils.isNotBlank(otherPeoples)) {
+                List<String> otherPeopleIds = Arrays.asList(otherPeoples.split(","));
+                resultList.addAll(otherPeopleIds);
+            }
+            //获取所有审核人员
+            if(isCompeletd){
+                List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(entity.getId());
+                approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveUserName().equals(item.getCurApproveName())).collect(Collectors.toList());
+                List<String> all = approveHistoryList.stream().filter(item -> item.getApproveUserName().equals(item.getCurApproveName())).map(ProcessTaskManagementDTO.ApproveHistoryDTO::getApproveUserId).distinct().collect(Collectors.toList());
+                resultList.addAll(all);
+            }
+            //项目人员
+            String itemPeoples = notice.getItemPeople();
+            if (StringUtils.isNotEmpty(itemPeoples)) {
+                List<String> itemPeopleList = Arrays.asList(itemPeoples.split(","));
+                //这个是项目经理
+//                if (itemPeopleList.contains(NoticeItemPeopleEnum.ITEM_MANAGER.getFlag())) {
+//                    if (!Objects.isNull(entity)) {
+//                        //项目负责人
+//                        String projectChargeId = entity.getProjectChargeId();
+//                        if (StringUtils.isNotBlank(projectChargeId)) {
+//                            List<String> projectChargeIdList = Arrays.asList(projectChargeId.split(","));
+//                            resultList.addAll(projectChargeIdList);
+//                        }
+//
+//                    }
+//                }
+                //这个是产品经理
+                if (itemPeopleList.contains(NoticeItemPeopleEnum.PRODUCT_MANAGER.getFlag())) {
+                    if (!Objects.isNull(entity)) {
+                        String productChargeId = entity.getChargeId();
+                        if (StringUtils.isNotBlank(productChargeId)) {
+                            List<String> productChargeIdList = Arrays.asList(productChargeId.split(","));
+                            resultList.addAll(productChargeIdList);
+                        }
+                    }
+                }
+
+                //这个是审核人
+                if (!isCompeletd&&itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
+                    List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(entity.getId());
+                    List<String> collect = approveHistoryList.stream().filter(v -> v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveId).collect(Collectors.toList());
+                    resultList.addAll(collect);
+                }
+            }
+        }
+        return resultList;
     }
 }
 

@@ -210,6 +210,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 	        } else {
 	            dmpSyncTaskDTO.setParentId(entity.getSoId());
 	        }
+            log.info("2.销售出库单增加旺店通的物流渠道名称："+ JSONUtil.toJsonStr(dmpSyncTaskDTO));
 	        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
         }
 
@@ -223,7 +224,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (!OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
         	wmsPushMsgEntity.setParentId(entity.getSoId());
 	    }
-
+        log.info("2.销售出库单增加旺店通的物流渠道名称："+ JSONUtil.toJsonStr(wmsPushMsgEntity));
         wmsPushMsgService.save(wmsPushMsgEntity);
 
         return null;
@@ -424,17 +425,20 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //B2B订单信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainIds(soDetailIds);
 
+        List<String> skuIdList = details.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
+        Map<String, ProductDetailEntity> idProductDetailMap = FeignQuery.getByIds(ProductDetailEntity.class , skuIdList)
+        		.stream().collect(Collectors.toMap(ProductDetailEntity::getId, c -> c));
         details.forEach(soOutstockDetailEntity -> {
             BiDeliveryDetailItemEntity dmpOrderItemEntity = SoOutstockConverter.INSTANCE.soOutstockToDmpDeliveryItem(soOutstockDetailEntity);
             dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
             dmpOrderItemEntity.setSaleOrderNo(finalSoId);
             dmpOrderItemEntity.setPlatformOrderId(finalSoCode);
-            List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(Collections.singletonList(soOutstockDetailEntity.getSkuId()));
-            if (CollectionUtils.isNotEmpty(productDetailEntityList)) {
-                dmpOrderItemEntity.setItemName(productDetailEntityList.get(0).getName());
-                dmpOrderItemEntity.setItemId(productDetailEntityList.get(0).getProductId());
-                dmpOrderItemEntity.setProductUnit(productDetailEntityList.get(0).getUnitName());
-                dmpOrderItemEntity.setSpecifics(productDetailEntityList.get(0).getVariantProperty());
+            ProductDetailEntity productDetailEntity = idProductDetailMap.get(soOutstockDetailEntity.getSkuId());
+            if (productDetailEntity != null) {
+				dmpOrderItemEntity.setItemName(productDetailEntity.getName());
+                dmpOrderItemEntity.setItemId(productDetailEntity.getProductId());
+                dmpOrderItemEntity.setProductUnit(productDetailEntity.getUnitName());
+                dmpOrderItemEntity.setSpecifics(productDetailEntity.getVariantProperty());
 
                 //B2C订单
                 SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getSoDetailId())).findFirst().orElse(null);
@@ -591,7 +595,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (ObjectUtil.isNotEmpty(supplierEntity)) {
             resultMap.put("carrierCode", supplierEntity.getCode());
         }
-
+        //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
+        resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -793,7 +798,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (ObjectUtil.isNotEmpty(supplierEntity)) {
             resultMap.put("carrierCode", supplierEntity.getCode());
         }
-
+        //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
+        resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -981,6 +987,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (ObjectUtil.isNotEmpty(supplierEntity)) {
             resultMap.put("carrierCode", supplierEntity.getCode());
         }
+        //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
+        resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
+
 
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别

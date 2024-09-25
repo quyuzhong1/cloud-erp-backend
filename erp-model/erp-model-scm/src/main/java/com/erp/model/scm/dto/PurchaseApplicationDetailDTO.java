@@ -28,6 +28,11 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         private String purchaseApplicationId;
 
         /**
+         * 来源单据详情id
+         */
+        private String sourceDetailId;
+
+        /**
          * skuId
          */
         @NotBlank(message = "SKU不能为空")
@@ -151,5 +156,25 @@ public class PurchaseApplicationDetailDTO implements Serializable {
          * 错误url
          */
         private String errorUrl;
+    }
+
+    @Data
+    public static class PurchaseSkuQtyDTO{
+        /**
+         * 来源单据id
+         */
+        private String sourceId;
+        /**
+         * 来源单据详情id
+         */
+        private String sourceDetailId;
+        /**
+         * skuID
+         */
+        private String skuId;
+        /**
+         * 该sku已申请的数量
+         */
+        private int qty;
     }
 }

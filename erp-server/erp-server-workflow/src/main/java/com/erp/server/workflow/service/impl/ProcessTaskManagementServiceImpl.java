@@ -2,26 +2,35 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementAttachmentDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
+import com.erp.model.workflow.entity.ProcessTaskManagementAttachmentEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.server.workflow.mapper.ProcessTaskManagementMapper;
 import com.erp.server.workflow.service.ProcessTaskCcService;
+import com.erp.server.workflow.service.ProcessTaskManagementAttachmentService;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.annotation.Nullable;
 import javax.annotation.Resource;
+import javax.validation.constraints.Null;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -37,9 +46,11 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
 
     @Resource
     private ProcessTaskCcService processTaskCcService;
+    @Resource
+    private ProcessTaskManagementAttachmentService attachmentService;
 
     @Override
-    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId, ProcessManagementEntity managementEntity) {
+    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId, ProcessManagementEntity managementEntity, @Nullable Map<String, Object> variablesMap) {
         ProcessTaskManagementEntity entity = getById(taskId);
         boolean update;
         if(ApproveTypeEnum.REJECT_APPOINT.equals(approveType)) {
@@ -66,6 +77,22 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
                     .eq(ProcessTaskManagementEntity::getCurActivityId, entity.getCurActivityId())
                     .update();
+
+            // 保存附件
+            if(variablesMap != null){
+                List<ProcessTaskManagementAttachmentDTO.CommonDTO> attachmentList = JSON.parseArray(JSON.toJSONString(variablesMap.get("attachmentList")), ProcessTaskManagementAttachmentDTO.CommonDTO.class);
+                if(attachmentList != null && !attachmentList.isEmpty()){
+                    List<ProcessTaskManagementAttachmentEntity> saveList = new ArrayList<>(attachmentList.size());
+                    for (ProcessTaskManagementAttachmentDTO.CommonDTO attachmentDTO : attachmentList) {
+                        ProcessTaskManagementAttachmentEntity entity1 = new ProcessTaskManagementAttachmentEntity();
+                        entity1.setAttachName(attachmentDTO.getAttachName());
+                        entity1.setAttachUrl(attachmentDTO.getAttachUrl());
+                        entity1.setMainId(entity.getId());
+                        saveList.add(entity1);
+                    }
+                    attachmentService.saveBatch(saveList);
+                }
+            }
         }
         // 发送抄送消息
         String title = StrUtil.format("【流程管理中心】审批结果抄送");
@@ -193,6 +220,34 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
     @Override
     public List<ProcessTaskManagementEntity> listPreActivityTask(String taskManagementId, String processInstanceId) {
         return baseMapper.listPreActivityTask(taskManagementId, processInstanceId);
+    }
+
+    @Override
+    public List<ProcessTaskManagementDTO.ApproveHistoryDTO> listApproveHistory(String businessId) {
+        if(StringUtils.isBlank(businessId)){
+            return Collections.emptyList();
+        }
+        List<ProcessTaskManagementDTO.ApproveHistoryDTO> resultList = baseMapper.listApproveHistory(businessId);
+        if(resultList.isEmpty()){
+            return Collections.emptyList();
+        }
+        List<String> taskIds = resultList.stream().map(item -> item.getTaskId()).distinct().collect(Collectors.toList());
+        List<ProcessTaskManagementAttachmentEntity> attachmentEntityList = attachmentService.lambdaQuery().in(ProcessTaskManagementAttachmentEntity::getMainId, taskIds).list();
+        Map<String, List<ProcessTaskManagementAttachmentEntity>> groupByTaskId = attachmentEntityList.stream().collect(Collectors.groupingBy(item -> item.getMainId()));
+        for (ProcessTaskManagementDTO.ApproveHistoryDTO taskDTO : resultList) {
+            List<ProcessTaskManagementAttachmentEntity> attachmentList = groupByTaskId.get(taskDTO.getTaskId());
+            if(attachmentList != null && !attachmentList.isEmpty()) {
+                List<ProcessTaskManagementAttachmentDTO.CommonDTO> attachCommonDTOList = new ArrayList<>();
+                attachmentList.forEach(item -> attachCommonDTOList.add(new ProcessTaskManagementAttachmentDTO.CommonDTO(item.getAttachUrl(), item.getAttachName())));
+                taskDTO.setAttachmentList(attachCommonDTOList);
+            }
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<ProcessTaskManagementEntity> listProcessByBusinessKey(ProcessManagementDTO.TaskKeyInfoDTO dto) {
+        return baseMapper.listProcessByBusinessKey(dto);
     }
 
 }

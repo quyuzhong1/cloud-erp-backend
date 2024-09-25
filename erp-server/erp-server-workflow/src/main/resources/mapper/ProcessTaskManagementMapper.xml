@@ -88,5 +88,64 @@
         and t2.cur_activity_id = t1.pre_activity_id
         order by process_instance_id
     </select>
+    <select id="listApproveHistory"
+            resultType="com.erp.model.workflow.dto.ProcessTaskManagementDTO$ApproveHistoryDTO">
+        SELECT
+            pm.business_id businessId,
+            ptm.ID taskId,
+            ptm.approve_id approveUserId,
+            ptm.approve_name approveUserName,
+            ptm.approve_time approveTime,
+            ptm.task_status approveStatus,
+            ptm.cur_approve_id,
+            ptm.cur_approve_name,
+            ptm.remark
+        FROM
+            (select business_id,process_instance_id from process_management where is_deleted = FALSE and business_id = #{businessId} order by create_time desc limit 1 ) pm
+                inner JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+                AND ptm.is_deleted = FALSE
+        order by ptm.id desc
+    </select>
+    <select id="listProcessByBusinessKey" parameterType="com.erp.model.workflow.dto.ProcessManagementDTO$TaskKeyInfoDTO" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
+        SELECT
+        ptm.id,
+        ptm.create_user_id,
+        ptm.create_user_name,
+        ptm.create_time,
+        ptm.update_user_id,
+        ptm.update_user_name,
+        ptm.update_time,
+        ptm.process_instance_id,
+        ptm.cur_activity_id,
+        ptm.task_id,
+        ptm.cur_approve_id,
+        ptm.start_time,
+        ptm.task_status,
+        ptm.timeout_status,
+        ptm.timeout_warn_time,
+        ptm.timeout_handle_time,
+        ptm.timeout_handle_type,
+        ptm.approve_time,
+        ptm.remark,
+        ptm.pre_activity_id,
+        ptm.execution_id,
+        ptm.approve_id,
+        ptm.cur_activity_name,
+        ptm.cur_approve_name,
+        ptm.approve_name,
+        pm.business_id
+        FROM process_task_management ptm
+        INNER JOIN process_management pm ON ptm.process_instance_id = pm.process_instance_id AND pm.is_deleted = false
+        WHERE ptm.is_deleted = false
+        <if test="params.taskStatus != null">
+          and ptm.task_status =#{params.taskStatus}
+        </if>
+        <if test="params.businessKey != null">
+          and pm.business_key =#{params.businessKey}
+        </if>
+        <if test="params.curApproveId != null">
+          and ptm.cur_approve_id =#{params.curApproveId}
+        </if>
+    </select>
 
 </mapper>

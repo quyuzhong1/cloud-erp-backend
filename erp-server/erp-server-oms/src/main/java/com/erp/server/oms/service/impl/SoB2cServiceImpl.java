@@ -50,6 +50,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.SoB2cDTO.TabListDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
@@ -133,6 +134,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -150,6 +152,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -352,6 +357,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private CfgRuleOutFeign cfgRuleOutFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    
+    @Autowired
+    @Qualifier("soB2cTabExecutorPool")
+    private ExecutorService soB2cTabExecutorPool;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -415,27 +424,39 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public List<SoB2cDTO.TabListDTO> tabList(PermissionsDTO param) {
         SoB2cTabEnum[] values = SoB2cTabEnum.values();
+        List<Future<TabListDTO>> futureList = new ArrayList<>();
         List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
+        SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
         for (SoB2cTabEnum item : values) {
-            SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
-            searchParamDTO.setPermissionSql(param.getPermissionSql());
-            SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
-            String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
-            HashMap<String,String> map = new HashMap<>();
-            map.put("default",tabSql);
-            searchParamDTO.setSqlMap(map);
-            //查询店铺设置权限
-            Integer count = MathUtil.ZERO;
-            SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
-            if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
-                count = MathUtil.ZERO;
-            } else {
-                count = this.baseMapper.listCount(searchParamDTO, shopAuthResultDTO);
-            }
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setTabFlag(item.getCode());
-            resultDTO.setTabFlagName(item.getName());
-            list.add(resultDTO);
+            Future<TabListDTO> submit = soB2cTabExecutorPool.submit(() -> {
+            	SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
+                searchParamDTO.setPermissionSql(param.getPermissionSql());
+                SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
+                String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
+                HashMap<String,String> map = new HashMap<>();
+                map.put("default",tabSql);
+                searchParamDTO.setSqlMap(map);
+                //查询店铺设置权限
+                Integer count = MathUtil.ZERO;
+                if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+                    count = MathUtil.ZERO;
+                } else {
+                    count = this.baseMapper.listCount(searchParamDTO, shopAuthResultDTO);
+                }
+                resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+                resultDTO.setTabFlag(item.getCode());
+                resultDTO.setTabFlagName(item.getName());
+                return resultDTO;
+            });
+            futureList.add(submit);
+        }
+        for(Future<TabListDTO> f : futureList) {
+        	try {
+				list.add(f.get());
+			} catch (InterruptedException | ExecutionException e) {
+				log.error("线程处理异常" , e);
+				throw new ServiceException("线程处理异常");
+			}
         }
         return list;
     }

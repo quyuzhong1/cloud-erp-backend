@@ -6,10 +6,12 @@ import com.common.core.exception.ServiceException;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
 import com.erp.sdk.oms.amz.spapi.client.ApiClient;
+import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -60,8 +62,22 @@ public class AmazonSpApiRateLimitUtils {
         rateLimitStr = limitArray.get(0);
         if (StringUtils.isNotBlank(rateLimitStr)){
             // 设置动态速率，失效时间=1/limit
-            BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+            BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
             redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
         }
+    }
+
+    /**
+     * 解析请求响应速率
+     */
+    public static String parseRateLimit(ApiResponse<?> apiResponse, String defaultRateLimit){
+        if (null == apiResponse){
+            return defaultRateLimit;
+        }
+        List<String> limitArray = apiResponse.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
+        if (CollectionUtils.isEmpty(limitArray)){
+            return defaultRateLimit;
+        }
+        return limitArray.get(0);
     }
 }

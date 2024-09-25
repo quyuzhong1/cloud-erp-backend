@@ -44,29 +44,35 @@ public class PackingExcelDTO implements Serializable {
     private String sku;
 
     /**
+     * fnSku
+     */
+    @ExcelProperty(value = "fnSku", index = 2)
+    @FieldValid(fieldName = "fnSku")
+    private String fnSku;
+    /**
      * 发货箱号
      */
-    @ExcelProperty(value = "发货箱号", index = 2)
+    @ExcelProperty(value = "发货箱号", index = 3)
     @FieldValid(fieldName = "发货箱号",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private Integer boxNo;
     /**
      * 单箱数量
      */
-    @ExcelProperty(value = "单箱数量", index = 3)
+    @ExcelProperty(value = "单箱数量", index = 4)
     @FieldValid(fieldName = "单箱数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private Integer singleBoxQuantity;
 
     /**
      * 每箱实重（KG）
      */
-    @ExcelProperty(value = "每箱实重(KG)", index = 4)
+    @ExcelProperty(value = "每箱实重(KG)", index = 5)
 //    @FieldValid(fieldName = "每箱实重(KG)", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private BigDecimal singleBoxWeight;
 
     /**
      * 每箱体积长（CM)
      */
-    @ExcelProperty(value = "每箱体积长(CM)",index = 5)
+    @ExcelProperty(value = "每箱体积长(CM)",index = 6)
 //    @FieldValid(fieldName = "每箱体积长(CM)", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private BigDecimal singleBoxLength;
 
@@ -74,14 +80,14 @@ public class PackingExcelDTO implements Serializable {
     /**
      * 每箱体积宽（CM)
      */
-    @ExcelProperty(value = "每箱体积宽(CM)",index = 6)
+    @ExcelProperty(value = "每箱体积宽(CM)",index = 7)
 //    @FieldValid(fieldName = "每箱体积宽(CM)", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private BigDecimal singleBoxWidth;
 
     /**
      * 每箱体积高（CM)
      */
-    @ExcelProperty(value = "每箱体积高(CM)",index = 7)
+    @ExcelProperty(value = "每箱体积高(CM)",index = 8)
 //    @FieldValid(fieldName = "每箱体积高(CM)", formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private BigDecimal singleBoxHeight;
 
@@ -89,6 +95,6 @@ public class PackingExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 8)
+    @ExcelProperty(value = "错误数据", index = 9)
     private String errorMsg;
 }

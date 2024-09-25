@@ -121,7 +121,7 @@ public class LogisticsBillController extends BaseController {
         if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(transportNo)){
             return failure("运单号和跟踪号不能同时为空");
         }
-        if (StringUtils.isBlank(trackNo) || StringUtils.isBlank(logisticsChannelId)){
+        if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(logisticsChannelId)){
             trackNo = transportNo;
         }
         if (StringUtils.isNotBlank(logisticsChannelId)){

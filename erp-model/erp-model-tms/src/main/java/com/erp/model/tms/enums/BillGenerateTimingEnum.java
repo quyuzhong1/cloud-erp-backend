@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum BillGenerateTimingEnum implements EnumMessage {
     AFTER_PACKING("afterPacking", "装箱后生成"),
     AFTER_APPROVE("afterApprove", "审核通过后生成"),
+    MANUAL_PUSH("manual_push", "手动下推"),
     ;
 
     /**

@@ -1885,5 +1885,59 @@
         </foreach>
     </update>
 
+    <select id="pagingByAdvanceQuery" resultType="com.erp.model.plm.dto.ProjectTaskDTO$SimpleViewDTO">
+        select  pt.id,
+                pt.name,
+                pt.charge_id   chargeId,
+                pt.charge_name chargeName,
+                pt.phase_id    phaseId,
+                pt.phase_name  phaseName,
+                pt.product_id  productId,
+                pt.status,
+                pi.name productName,
+                pi.spu_no spuNo
+        from project_task pt
+            left join product_info pi on pt.product_id = pi.id
+        <where>
+            ${params.sqlMap.default}
+            and pt.is_deleted = false
+            and pi.spu_no in
+                <foreach collection="spuNos" item="spuNo" open="(" separator="," close=")">
+                    #{spuNo}
+                </foreach>
+        </where>
+    </select>
+    <select id="listByTaskIds" resultType="com.erp.model.plm.dto.ProjectTaskDTO$SimpleViewDTO">
+        select  pt.id,
+                pt.name,
+                pt.charge_id   chargeId,
+                pt.charge_name chargeName,
+                pt.phase_id    phaseId,
+                pt.phase_name  phaseName,
+                pt.product_id  productId,
+                pi.name productName,
+                pt.status,
+                pi.spu_no spuNo
+        from project_task pt
+            left join product_info pi on pt.product_id = pi.id
+        <where>
+            pt.is_deleted = false
+            and pt.id in
+            <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+        </where>
+    </select>
+    <select id="listSkusBySpuNo" resultType="com.erp.model.plm.dto.ProjectTaskDTO$Spu2SkuMapping">
+        select  pi.spu_no spuNo,
+                string_agg(pd.sku_no, ';') skuNoStr
+        from product_info pi
+            left join product_detail pd on pi.id = pd.product_id and pd.is_deleted = false
+        where pi.spu_no in
+        <foreach collection="spuNos" item="spuNo" open="(" separator="," close=")">
+            #{spuNo}
+        </foreach>
+        group by pi.spu_no;
+    </select>
 
 </mapper>

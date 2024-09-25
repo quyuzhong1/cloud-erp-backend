@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
@@ -73,4 +74,11 @@ public interface FbaShipmentReceiveService extends SuperService<FbaShipmentRecei
      * 根据md5查询历史
      */
     List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate);
+
+    /**
+     * 汇总 亚马逊签收报告/第三方仓签收报告签收数量
+     * @param dto
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto);
 }

@@ -3,6 +3,7 @@ package com.erp.server.wms.rocketmq.sync.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.annotation.DataIdempotent;
@@ -314,10 +315,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 }
             }
         }
+
+        //2024.09.11 jack sdc-erp销售出库单增加旺店通的物流渠道名称
+        soOutstock.setLogisticsChannelName(entity.getLogisticsCompanyName());
+        log.info("1.销售出库单增加旺店通的物流渠道名称："+ JSONUtil.toJsonStr(soOutstock));
         //保存销售出库单
         soOutstockService.save(soOutstock);
         //保存销售出库单详情
         soOutstockDetailService.saveBatch(detailList);
+        //根据销售出库单创建物流单和自发货费用
+        soOutstockService.saveLogisticsBill(soOutstock);
         //扣减库存
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
         if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
@@ -366,6 +373,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     }
 
     /**
+     *
      * 构建库存相关数据
      */
     private static InventoryInOutStockRuleDTO getInventoryInOutStockRuleDTO(List<InOutStockDTO> inOutStockList) {

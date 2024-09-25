@@ -14,7 +14,9 @@
         fs.country_name AS countryName,
         fs.fulfillment_center AS fulfillmentCenter,
         fs.delivery_status AS deliveryStatus,
-        (SELECT fd.code FROM first_mile_delivery fd WHERE fd.source_id = fs.id AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
+        (SELECT fd.code FROM first_mile_delivery fd
+                        INNER Join first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
+                        WHERE fdd.fba_shipment_code = fs.code AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
         fs.platform_shipment_status AS platformShipmentStatus,
         fs.shipment_create_time AS shipmentCreateTime,
         fsd.receive_date AS shipmentReceiveTime,
@@ -25,7 +27,8 @@
         fsd.declare_qty AS declareQty,
         fsd.receive_qty AS receiveQty,
         fsd.diff_qty AS diffQty,
-        fsd.is_combination AS isCombination
+        fsd.is_combination AS isCombination,
+        fs.is_packing_download as isPackingDownload
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE
@@ -102,7 +105,9 @@
         fs.country_name AS countryName,
         fs.fulfillment_center AS fulfillmentCenter,
         fs.delivery_status AS deliveryStatus,
-        (SELECT string_agg(fd.code,',') FROM first_mile_delivery fd WHERE fd.source_id = fs.id AND fd.is_deleted = FALSE GROUP BY fd.source_id) AS deliveryCode,
+        (SELECT fd.code FROM first_mile_delivery fd
+        INNER Join first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
+        WHERE fdd.fba_shipment_code = fs.code AND fd.is_deleted = FALSE ORDER BY fd.create_time DESC LIMIT 1) AS deliveryCode,
         fs.platform_shipment_status AS platformShipmentStatus,
         fsd.asin,
         fsd.msku,
@@ -113,7 +118,8 @@
         fsd.diff_qty AS diffQty,
         fs.shipment_create_time AS shipmentCreateTime,
         fsd.receive_date AS shipmentReceiveTime,
-        fsd.receive_qty AS receiveQty
+        fsd.receive_qty AS receiveQty,
+        fs.is_packing_download as isPackingDownload
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE
@@ -154,6 +160,9 @@
         </if>
         <if test="params.id!=null and params.id!=''">
             and fs.id = #{params.id}
+        </if>
+        <if test="params.shopId!=null and params.shopId!=''">
+            and fs.shop_id = #{params.shopId}
         </if>
     </select>
 

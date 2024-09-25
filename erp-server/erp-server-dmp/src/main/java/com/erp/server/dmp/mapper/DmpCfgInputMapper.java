@@ -29,4 +29,12 @@ public interface DmpCfgInputMapper extends BaseMapper<DmpCfgInputEntity> {
      * @return java.util.List<com.erp.model.dmp.dto.DmpCfgInputDTO.ListDmpCfgInputDTO>
      **/
     List<DmpCfgInputDTO.ListDmpCfgInputDTO> listDmpCfgInput(@Param("id") String id);
+
+    /**
+     * 通过systemId和明细taskType查询任务
+     * @param systemId 系统ID
+     * @param taskTypeList DmpInputTaskTaskTypeEnum 任务类型列表
+     * @return 任务IDS
+     */
+    List<String> listBySystemIdAndTaskType(@Param("systemId") String systemId, @Param("taskTypeList") List<String> taskTypeList);
 }

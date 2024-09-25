@@ -21,6 +21,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.sdk.wms.antu.dto.request.AntuGetReceiptReq;
 import com.sdk.wms.antu.dto.response.AntuReceiptResp;
 import com.sdk.wms.antu.dto.response.AntuResponse;
+import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.utils.AntuUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器下的安兔api获取数据方式
@@ -66,23 +68,21 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
             if (overseasProviderEntityList.get(0).getEnableDate().compareTo(LocalDate.now()) > 0) {
                 return Collections.emptyList();
             }
-
+            Integer page = 1;
             ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
-            //列表数据较多情况下，进行分割集合
-            List<List<String>> partition = ListUtil.partition(receiveCodeList, MathUtil.NUMBER_100);
 
-            for (int i = 1; i <= partition.size(); i++) {
-                //查询数据
-                AntuGetReceiptReq antuGetReceiptReq = AntuGetReceiptReq.builder()
-                        .page(i)
-                        .pageSize(MathUtil.NUMBER_100)
-                        .receivingCodeArr(partition.get(i))
-                        .build();
-                String response = AntuUtils.callService(apiType, antuGetReceiptReq);
-                AntuResponse<List<AntuReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {
-                }.getType());
-                allResult.addAll(result.getData());
-            }
+            //查询数据
+            AntuGetReceiptReq antuGetReceiptReq = AntuGetReceiptReq.builder()
+                    .page(page)
+                    .pageSize(MathUtil.NUMBER_100)
+                    .receivingCodeArr(receiveCodeList)
+                    .build();
+            String response = AntuUtils.callService(apiType, antuGetReceiptReq);
+            AntuResponse<List<AntuReceiptResp>> result = JSONObject.parseObject(response, new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {
+            }.getType());
+
+            allResult.addAll(result.getData());
+            page++;
         }
 
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

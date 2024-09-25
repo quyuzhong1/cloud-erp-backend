@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -156,12 +157,21 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     }
 
     @Override
-    public List<FirstMileDeliveryDetailEntity> listByFbaShipmentCodes(List<String> fbaShipmentCodeList) {
+    public List<FirstMileDeliveryDetailEntity> listApprovedByFbaShipmentCodes(List<String> fbaShipmentCodeList) {
 
         if(CollectionUtils.isEmpty(fbaShipmentCodeList)){
             return new ArrayList<>();
         }
-        return lambdaQuery().in(FirstMileDeliveryDetailEntity::getFbaShipmentCode, fbaShipmentCodeList).list();
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = lambdaQuery().in(FirstMileDeliveryDetailEntity::getFbaShipmentCode, fbaShipmentCodeList).list();
+        if(CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
+            return new ArrayList<>();
+        }
+        List<String> mainIds = firstMileDeliveryDetailEntityList.stream().map(v->v.getMainId()).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listByIds(mainIds);
+        firstMileDeliveryEntityList = firstMileDeliveryEntityList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+        List<String> currentIds = firstMileDeliveryEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        firstMileDeliveryDetailEntityList = firstMileDeliveryDetailEntityList.stream().filter(v->currentIds.contains(v.getMainId())).collect(Collectors.toList());
+        return firstMileDeliveryDetailEntityList;
     }
 
     /**

@@ -4,15 +4,13 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -373,6 +371,101 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private String fbaShipmentCode;
 
+    }
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListFirstMileDTO {
+        /**
+         * 发货单id
+         */
+        private String sourceId;
+        /**
+         * 发货单号 【可排序】
+         */
+        private String sourceCode;
+        /**
+         * 发货单明细主键Id
+         */
+        private String sourceDetailId;
+        /**
+         * 发货单类型（默认 delivery）
+         */
+        private String sourceType;
+
+        /**
+         * 业务单号【可排序】
+         */
+        private String businessCode;
+        /**
+         * FBA
+         */
+        private String fbaShipmentCode;
+        /**
+         * 海外仓入库编号
+         */
+        private String overseasWarehouseCode;
+
+        /**
+         * 业务单号类型
+         */
+        private String businessType;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称【可排序】
+         */
+        private String shopName;
+
+        /**
+         * 发货仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 发货仓库名称【可排序】
+         */
+        private String warehouseName;
+
+        /**
+         * ERP的SKU主键
+         */
+        private String skuId;
+
+        /**
+         * ERP的SKU【可排序】
+         */
+        private String skuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 应发数量【可排序】
+         */
+        private Integer planQty;
+
+        /**
+         * 实发数量【可排序】
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 装箱数量
+         */
+        private Integer packingQty;
     }
 
     /**
@@ -984,6 +1077,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货单ids
          */
         private List<String> ids;
+        /**
+         * 搜索发货单编码
+         */
+        private String searchKey;
     }
     /**
      * 生成物流单传的DTO
@@ -1037,6 +1134,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private LocalDateTime approveTime;
 
+        /**
+         * 发货仓库ID
+         */
+        private String fromWarehouseId;
         /**
          * 发货仓库名称
          */
@@ -1153,5 +1254,80 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 收货地址
          */
         private String receiveToAddress;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RequestReceiveDTO {
+        /**
+         * 业务单号
+         */
+        private List<String> businessCodes;
+        /**
+         * 发货单号
+         */
+        private List<String> sourceCodes;
+        /**
+         * 发货单id集合
+         */
+        private List<String> deliveryIds;
+        /**
+         * 日期
+         */
+        private LocalDate month;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveDTO {
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+        private String skuId;
+        private String skuNo;
+        private String platformSkuNo;
+        /**
+         * 上月签收数量
+         */
+        private Integer lastMonthReceiveQty;
+        /**
+         * 本月签收数量
+         */
+        private Integer currentMonthReceiveQty;
+        /**
+         * 截止本月签收数量
+         */
+        private Integer asCurrentMonthReceiveQty;
+        /**
+         * 截止上月签收数量
+         */
+        private Integer asLastMonthReceiveQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BusinessDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        private String code;
+        /**
+         * 发货单明细id
+         */
+        private String detailId;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+        /**
+         * FBA单号
+         */
+        private String fbaShipmentCode;
+        /**
+         * 第三方发货单号
+         */
+        private String overseasWarehouseCode;
     }
 }

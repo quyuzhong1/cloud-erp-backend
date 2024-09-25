@@ -42,6 +42,24 @@
         </if>
         order by wc.box_no
     </select>
+    <select id="listByPackingTaskId" resultType="com.erp.model.wms.dto.WmsCartonDTO$DetailDTO">
+        select wc.id boxId,
+               wc.box_no boxNo,
+               wcd.sku_id skuId,
+               wcd.sku_no skuNo,
+               wcd.pack_qty packQty,
+               wcs.package_weight packageWeight,
+               wcs.box_length boxLength,
+               wcs.box_width boxWidth,
+               wcs.box_height boxHeight,
+               wcs.weight_unit weightUnit,
+               wcs.size_unit sizeUnit
+        from wms_carton wc
+                 left join wms_carton_detail wcd on wc.id = wcd.main_id and wcd.is_deleted = false
+                 left join wms_carton_spec wcs
+                           on wc.packing_task_id = wcs.main_id and wc.spec_id = wcs.id and wcs.is_deleted = false
+        where wc.is_deleted = false and wc.packing_task_id = #{packingTaskId};
+    </select>
 
 
 </mapper>

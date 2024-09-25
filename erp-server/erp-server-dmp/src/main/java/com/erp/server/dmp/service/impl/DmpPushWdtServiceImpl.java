@@ -34,11 +34,11 @@ public class DmpPushWdtServiceImpl extends SuperServiceImpl<DmpPushWdtMapper, Dm
     public String add(DmpPushWdtDTO.AddDTO addDTO) {
         DmpPushWdtEntity dmpPushWdtEntity = new DmpPushWdtEntity();
         BeanMapper.copy(addDTO, dmpPushWdtEntity);
-        this.save(dmpPushWdtEntity);
+        this.saveOrUpdate(dmpPushWdtEntity);
 
         List<DmpPushWdtDetailEntity> detailList = BeanMapper.copyList(addDTO.getDetailDTOList(), DmpPushWdtDetailEntity.class);
         detailList.forEach(detailEntity -> detailEntity.setMainId(dmpPushWdtEntity.getId()));
-        dmpPushWdtDetailService.saveBatch(detailList);
+        dmpPushWdtDetailService.saveOrUpdateBatch(detailList);
         return dmpPushWdtEntity.getId();
     }
 

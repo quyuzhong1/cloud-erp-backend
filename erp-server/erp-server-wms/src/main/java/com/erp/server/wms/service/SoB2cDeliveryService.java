@@ -418,7 +418,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO handleErrorData(String id);
+    BatchResultDTO handleErrorData(String id,Boolean isAddQty);
     /**
      * 重试发货虚拟仓库存扣减
      * @author will
