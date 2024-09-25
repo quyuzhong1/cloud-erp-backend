@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -20,6 +21,7 @@ import com.common.business.dto.base.PagingDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -76,6 +78,7 @@ import com.erp.server.dmp.service.DmpPushMsgService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -277,6 +280,8 @@ public class DmpInoutController extends BaseController {
      * 获取旺店通库存不足单据
      * @return
      */
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     @GetMapping("getWdtInsufficientInventory")
     public ApiResult<Collection<WdtInsufficientInventoryDTO>> getWdtInsufficientInventory() {
     	Collection<WdtInsufficientInventoryDTO> values = null;
@@ -285,9 +290,9 @@ public class DmpInoutController extends BaseController {
     		try {
 				List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
 				    	.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.ERROR.getCode()))
-				    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%' ")
+				    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%' and response_data not like '%虚拟库存不足%' ")
 				    	.list();
-					Map<String, WdtInsufficientInventoryDTO> map = new HashMap<>();
+					Map<String, WdtInsufficientInventoryDTO> map = new TreeMap<>();
 					if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
 						for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 							String requestData = dmpOutputTaskRecordEntity.getResponseData();
@@ -299,8 +304,8 @@ public class DmpInoutController extends BaseController {
 				                String warehouseName = split3[0].replace("[", "").replace("]", "");
 				                String[] split4 = split3[1].split(",库存状态");
 				                String position = split4[0].replace("[", "").replace("]", "");
-				                String[] split5 = split4[1].split("交易数:");
-				                String qty = split5[1].split(",")[0].trim();
+				                String[] split5 = split4[1].split("缺少数：");
+				                String qty = split5[1].replace(" 库存不足：", "").split(",")[0].trim();
 				                
 				                String key = warehouseName + "_" + position + "_" + skuNo;
 				                WdtInsufficientInventoryDTO dto = map.get(key);
@@ -310,7 +315,7 @@ public class DmpInoutController extends BaseController {
 				        			dto.setPosition(position);
 				        			dto.setSku(skuNo);
 				        		}
-				        		dto.setNum(dto.getNum() + (Integer.valueOf(qty) * -1));
+				        		dto.setNum(dto.getNum() + Integer.valueOf(qty));
 				        		map.put(key, dto);
 				            }
 						}
@@ -390,14 +395,7 @@ public class DmpInoutController extends BaseController {
 								}
 								if(CollUtil.isNotEmpty(detailList)) {
 									addDto.setDetailList(detailList);
-									String moveId = FeignQuery.invoke(String.class, "com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "pcAdd", Arrays.asList(addDto));
-									FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "submit", Arrays.asList(moveId));
-									ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-									approveOneDTO.setId(moveId);
-									approveOneDTO.setType("pass");
-									approveOneDTO.setComment("旺店通同步销售出库单库存不足自动仓位移动");
-									FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "pcApprove", Arrays.asList(approveOneDTO));
-									
+									FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "wdtAutoAdd", Arrays.asList(addDto));
 									List<DmpOutputTaskRecordEntity> dealDmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
 				    					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
 				    			    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%" + warehouseName + "%'")
