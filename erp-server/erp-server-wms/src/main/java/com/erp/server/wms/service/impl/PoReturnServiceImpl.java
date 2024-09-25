@@ -2128,7 +2128,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         ).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(returnList)) {
             log.info("采购退货单下存在采购订单或者退货扣款的采购退货单不支持自动生成");
-            return;
+            throw new ServiceException("采购退货单下存在采购订单或者退货扣款的采购退货单不支持自动生成");
+//            return;
         }
         log.info("自动生成退货采购订单，退货单号 = {}",returnList.stream().map(PoReturnEntity::getCode).collect(Collectors.joining(",")));
 
