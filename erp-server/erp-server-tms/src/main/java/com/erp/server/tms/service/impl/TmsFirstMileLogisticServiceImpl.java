@@ -22,6 +22,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -950,15 +951,19 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(logisticsMethodEnum == null){
             throw new ServiceException("运输方式为空");
         }
-        LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(dto.getLogisticsSupplierId());
-        if(Objects.isNull(supplierEntity)){
+        LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(dto.getLogisticsSupplierId());
+        if(Objects.isNull(logisticsSupplierEntity)){
             throw new ServiceException("物流供应商为空");
+        }
+        SupplierEntity supplierEntity = FeignQuery.getById(SupplierEntity.class,logisticsSupplierEntity.getSupplierId());
+        if(Objects.isNull(supplierEntity)){
+            throw new ServiceException("供应商为空");
         }
         LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(dto.getLogisticsChannelId());
         if(Objects.isNull(logisticsChannelEntity)){
             throw new ServiceException("物流渠道为空");
         }
-        if(!logisticsChannelEntity.getMainId().equals(supplierEntity.getId())){
+        if(!logisticsChannelEntity.getMainId().equals(logisticsSupplierEntity.getId())){
             throw new ServiceException("物流渠道与物流供应商不匹配");
         }
         List<String> shopIdList = logisticsBillEntityList.stream().map(LogisticsBillEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
@@ -996,6 +1001,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             logisticsBillEntity.setLogisticsSupplierId(dto.getLogisticsSupplierId());
             logisticsBillEntity.setCarrierId(dto.getCarrierId());
             updateList.add(logisticsBillEntity);
+            logisticsBillCostEntity.setCurrency(supplierEntity.getPayCurrency());
+            updateCostList.add(logisticsBillCostEntity);
             //更新体积重
             FirstMileDeliveryDTO.GenerateLogisticDTO deliveryLogisticDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(logisticsBillEntity.getOutstockId())).findFirst().orElse(null);
             if(Objects.nonNull(deliveryLogisticDto) && CollectionUtils.isNotEmpty(deliveryLogisticDto.getPackingDTOList())
@@ -1004,7 +1011,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                         .map(WmsCartonDetailDTO.ListPackingDetailDTO::getMultiplySize)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 logisticsBillCostEntity.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(logisticsChannelEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
-                updateCostList.add(logisticsBillCostEntity);
             }
             //设置消息发送
             if(Objects.nonNull(detailEntity) && detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode()) && !oldChannelId.equals(dto.getLogisticsChannelId())){
@@ -1013,7 +1019,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 if(Objects.nonNull(shopInfoEntity) && StringUtils.isNotBlank(shopInfoEntity.getChargeId())){
                     msgDTO.setShopChargeIdList(Arrays.asList(shopInfoEntity.getChargeId()));
                 }
-                String titleContent = StrUtil.format("{}将物流渠道更换为{}，请知悉", UserContext.getDefaultLoginUser().getUserName(),supplierEntity.getSupplierName()+"-"+logisticsChannelEntity.getName());
+                String titleContent = StrUtil.format("{}将物流渠道更换为{}，请知悉", UserContext.getDefaultLoginUser().getUserName(),logisticsSupplierEntity.getSupplierName()+"-"+logisticsChannelEntity.getName());
                 String msgContent = StrUtil.format("通知类型：更换渠道通知\n货件单号：{}\n发货单号: {}\n店铺:{}",logisticsBillEntity.getSourceCode(),logisticsBillEntity.getOutstockCode(),logisticsBillEntity.getShopName());
                 msgDTO.setTitleContent(titleContent);
                 msgDTO.setMessageContent(msgContent);
@@ -1616,7 +1622,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateImport(List<LogisticsBillEntity> updateList, List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList) {
+    public void updateImport(List<LogisticsBillEntity> updateList, List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList, List<LogisticsBillCostEntity> updateCostList) {
         if(CollectionUtils.isNotEmpty(updateList)){
             this.updateBatchById(updateList);
         }
@@ -1625,6 +1631,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
         if(CollectionUtils.isNotEmpty(addTrackList)){
             logisticsTrackService.saveBatch(addTrackList);
+        }
+        if(CollectionUtils.isNotEmpty(updateCostList)){
+            logisticsBillCostService.updateBatchById(updateCostList);
         }
     }
 
