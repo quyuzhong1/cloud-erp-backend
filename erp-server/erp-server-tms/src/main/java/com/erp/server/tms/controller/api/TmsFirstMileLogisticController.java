@@ -405,7 +405,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      * 下推重量分摊
      */
     @PostMapping("/pushWeightAllocation")
-    public ApiResult<List<BatchResultDTO>> pushWeightAllocation(@RequestBody @Valid BaseIdsDTO.IdsDTO dto){
+    public ApiResult<List<BatchResultDTO>> pushWeightAllocation(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) throws InterruptedException {
         List<BatchResultDTO> resultList = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO = tmsFirstMileLogisticService.pushWeightAllocation(id);
