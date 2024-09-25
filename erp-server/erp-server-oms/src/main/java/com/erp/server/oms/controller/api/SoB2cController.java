@@ -1,6 +1,5 @@
 package com.erp.server.oms.controller.api;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.Idempotent;
@@ -1024,7 +1023,7 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/cancelOrderForecast")
     public ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = soB2cService.cancelOrderForecast(dto.getIds());
+        List<BatchResultDTO> resultDTOS = soB2cService.cancelOrderForecast(dto.getIds(), true);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
     /**
@@ -1286,7 +1285,7 @@ public class SoB2cController extends BaseController {
         for (String id : idDTO.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cLogisticsService.cancelLogistic(id,soB2cEntityList,soB2cLogisticsEntityList);
+                result = soB2cLogisticsService.cancelLogistic(id,soB2cEntityList,soB2cLogisticsEntityList, true);
             } catch (Exception e) {
                 log.error("B2C销售订单取消物流单失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);

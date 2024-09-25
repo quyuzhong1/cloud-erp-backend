@@ -5,15 +5,12 @@ import java.time.LocalDateTime;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -471,6 +468,106 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 处理时间
          */
         private LocalDateTime handleTime;
+    }
+
+    /**
+     * 拦截处理仓库DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptInventoryDTO {
+
+        /**
+         * 拦截单号
+         */
+        private String interceptCode;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
+         * 拣货明细id
+         */
+        private String pickDetailId;
+
+        /**
+         * 拦截单明细Id
+         */
+        private String interceptDetailId;
+        /**
+         * 拦截单Id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 拣货仓位
+         */
+        private String pickWarehouseLocation;
+
+        /**
+         * 返还仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
+    /**
+     * 拦截结果确认DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptSuccessDTO {
+        //拦截单id
+        private List<String> ids;
+
+        //明细处理弹窗
+        private List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList;
+
+    }
+
+    /**
+     * 拦截结果确认DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptFailureDTO {
+        //拦截单id
+        private List<String> ids;
+        /**
+         * 是否自动出库
+         */
+        private Boolean isAutoOut;
+
     }
 
     /**

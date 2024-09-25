@@ -86,6 +86,7 @@ public enum InventoryBusinessTypeEnum {
     FIRST_MILE_PUSH_TRANSFER("first_mile_push_transfer", "46", "直接调拨单（头程发货单下推）"),
     ASSEMBLE_IN_PARENT_FREEZE("assemble_in_parent_freeze", "47", "加工单组装（父SKU冻结增加）"),
     ASSEMBLE_IN_CHILD_FREEZE("assemble_in_child_freeze", "48", "加工单组装（子SKU冻结减少）"),
+    SO_B2C_DELIVERY_INTERCEPT("so_b2c_delivery_intercept", "53", "发货拦截单返还库存"),
     ;
 
     private String code;

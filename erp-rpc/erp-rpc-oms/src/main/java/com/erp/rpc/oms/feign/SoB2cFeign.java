@@ -4,8 +4,10 @@ import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -615,4 +617,16 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/updateLogisticsBySoId")
     void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo);
+
+    /**
+     * 取消订单预报
+     */
+    @PostMapping("/cancelOrderForecast")
+    ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 取消物流单
+     */
+    @PostMapping("/cancelLogistic")
+    ApiResult<List<BatchResultDTO>> cancelLogistic(@RequestBody BaseIdsDTO.IdsDTO idDTO);
 }

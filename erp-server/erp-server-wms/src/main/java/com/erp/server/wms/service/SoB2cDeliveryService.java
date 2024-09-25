@@ -434,4 +434,10 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto);
+
+    /**
+     * 回滚虚拟库存
+     * @param deliveryEntityList
+     */
+    void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList);
 }
