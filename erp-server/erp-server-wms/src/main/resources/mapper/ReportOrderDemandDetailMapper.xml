@@ -2,6 +2,40 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.ReportOrderDemandDetailMapper">
 
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.ReportOrderDemandDetailEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+        <result column="sku_id" property="skuId" />
+        <result column="qty" property="qty" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="status" property="status" />
+        <result column="invalid_status" property="invalidStatus" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_detail_id" property="sourceDetailId" />
+        <result column="source_code" property="sourceCode" />
+        <result column="source_type" property="sourceType" />
+        <result column="warehouse_name" property="warehouseName" />
+        <result column="virtual_warehouse_name" property="virtualWarehouseName" />
+        <result column="sku_no" property="skuNo" />
+        <result column="product_name" property="productName" />
+        <result column="virtual_usable_qty" property="virtualUsableQty" />
+        <result column="is_split" property="isSplit" />
+        <result column="delivery_notice_qty" property="deliveryNoticeQty" />
+        <result column="frozen_qty" property="frozenQty" />
+        <result column="order_qty" property="orderQty" />
+        <result column="bom_json" property="bomJson" typeHandler="com.erp.server.wms.handler.ObjectJsonArrayHandler" javaType="com.erp.model.wms.dto.ReportOrderDemandDetailDTO$BomDTO"/>
+    </resultMap>
+
 
     <sql id="Base_Column_List">
         rodd.id,
@@ -28,7 +62,7 @@
         rodd.source_code as sourceCode,
         rodd.source_type as sourceType,
         rodd.virtual_usable_qty as virtualUsableQty,
-        rodd.is_split,
+        rodd.is_split
     </sql>
 
     <!-- 分页查询 -->
