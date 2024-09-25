@@ -1,11 +1,10 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.ReportOrderDemandEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.ReportOrderDemandDTO;
-
-import java.util.List;
+import com.erp.model.wms.entity.ReportOrderDemandEntity;
 
 /**
  * <p>
@@ -58,5 +57,5 @@ public interface ReportOrderDemandService extends SuperService<ReportOrderDemand
      * @param dto
      * @return List<ListDTO>
      */
-    List<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(ReportOrderDemandDTO.PagingParamDTO dto);
+    PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto);
 }

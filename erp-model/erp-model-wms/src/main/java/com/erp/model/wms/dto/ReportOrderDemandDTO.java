@@ -51,9 +51,9 @@ public class ReportOrderDemandDTO implements Serializable {
     public static class ListDTO {
 
         /**
-         * 联合id
+         * id
          */
-        private String unionId;
+        private String id;
 
         /**
          * 虚拟仓名称

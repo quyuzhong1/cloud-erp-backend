@@ -11,21 +11,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.entity.ReportOrderDataEntity;
-import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.mapper.ReportOrderDataMapper;
-import com.erp.server.wms.service.CfgSettingVirtualService;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.ReportOrderDataService;
-import com.erp.server.wms.service.RequisitionApplicationDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
-import java.util.List;
 import java.util.Optional;
 /**
  * <p>
@@ -40,18 +34,6 @@ import java.util.Optional;
 public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderDataMapper, ReportOrderDataEntity> implements ReportOrderDataService {
     @Autowired
     private OperateLogService operateLogService;
-
-    @Resource
-    private CfgSettingVirtualService cfgSettingVirtualService;
-
-    @Resource
-    private RequisitionApplicationDetailService requisitionApplicationDetailService;
-
-    @Resource
-    private SoB2cFeign soB2cFeign;
-
-    @Resource
-    private SoInfoFeign soInfoFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -107,18 +89,6 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, reportOrderDataEntity, null, reportOrderDataEntity.getId(), msg);
         return Boolean.TRUE;
-    }
-
-    @Override
-    public void generateReportOrderData() {
-        //b2b销售订单
-        List<ReportOrderDataDTO.ViewDTO> soDetailList = soInfoFeign.listAllVirtualSoDetail();
-
-        //b2c销售订单
-        List<ReportOrderDataDTO.ViewDTO> soB2cDetailList = soB2cFeign.listAllVirtualSoB2cDetail();
-
-        //要货申请
-        List<ReportOrderDataDTO.ViewDTO> requisitionApplicationDetailList = requisitionApplicationDetailService.listAllVirtualRequisitionApplicationDetail();
     }
 
 

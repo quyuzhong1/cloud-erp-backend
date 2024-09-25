@@ -1,19 +1,18 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
  * <p>
- * 订单需求明细报表
+ * 
  * </p>
  *
  * @author will
@@ -22,7 +21,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("report_order_demand_detail")
+@TableName("report_order_demand")
 public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandDetailEntity> {
 
     /**
@@ -36,80 +35,79 @@ public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandD
     @TableField("virtual_warehouse_id")
     private String virtualWarehouseId;
     /**
-    * sku id
+    * 虚拟出库名称
+    */
+    @TableField("virtual_warehouse_name")
+    private String virtualWarehouseName;
+    /**
+    * 实体仓名称
+    */
+    @TableField("warehouse_name")
+    private String warehouseName;
+    /**
+    * skuId
     */
     @TableField("sku_id")
     private String skuId;
     /**
-    * 数量
+    * sku
     */
-    @TableField("qty")
-    private Integer qty;
+    @TableField("sku_no")
+    private String skuNo;
     /**
-    * 审核状态
+    * 产品名称
     */
-    @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    @TableField("product_name")
+    private String productName;
     /**
-    * 单据状态
+    * 剩余需求总数
     */
-    @TableField("status")
-    private String status;
+    @TableField("total_qty")
+    private Integer totalQty;
     /**
-    * 作废状态
+    * 虚拟仓可用库存
     */
-    @TableField("invaild_status")
-    private Boolean invaildStatus;
+    @TableField("virtual_usable_qty")
+    private Integer virtualUsableQty;
+
     /**
-    * 来源单据id
-    */
+     * 来源单据id
+     */
     @TableField("source_id")
     private String sourceId;
     /**
-    * 来源单据明细id
-    */
+     * 来源单据明细id
+     */
     @TableField("source_detail_id")
     private String sourceDetailId;
     /**
-    * 来源单据编号
-    */
-    @TableField("souce_code")
-    private String souceCode;
+     * 来源单据编号
+     */
+    @TableField("source_code")
+    private String sourceCode;
     /**
-    * 来源类型
-    */
+     * 来源类型
+     */
     @TableField("source_type")
     private String sourceType;
-    /**
-    * 时间
-    */
-    @TableField("date")
-    private LocalDate date;
 
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
     public static final String VIRTUAL_WAREHOUSE_ID = "virtual_warehouse_id";
 
+    public static final String VIRTUAL_WAREHOUSE_NAME = "virtual_warehouse_name";
+
+    public static final String WAREHOUSE_NAME = "warehouse_name";
+
     public static final String SKU_ID = "sku_id";
 
-    public static final String QTY = "qty";
+    public static final String SKU_NO = "sku_no";
 
-    public static final String APPROVE_STATUS = "approve_status";
+    public static final String PRODUCT_NAME = "product_name";
 
-    public static final String STATUS = "status";
+    public static final String VIRTUAL_USABLE_QTY = "virtual_usable_qty";
 
-    public static final String INVAILD_STATUS = "invaild_status";
-
-    public static final String SOURCE_ID = "source_id";
-
-    public static final String SOURCE_DETAIL_ID = "source_detail_id";
-
-    public static final String SOUCE_CODE = "souce_code";
-
-    public static final String SOURCE_TYPE = "source_type";
-
-    public static final String DATE = "date";
 
     @Override
     public Serializable pkVal() {

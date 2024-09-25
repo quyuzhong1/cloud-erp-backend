@@ -1,11 +1,9 @@
 package com.erp.server.wms.mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.entity.ReportOrderSalesEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -28,5 +26,5 @@ public interface ReportOrderSalesMapper extends BaseMapper<ReportOrderSalesEntit
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<PurchaseOrderDTO.ListDTO> paging(Page query,@Param("params") ReportOrderSalesDTO.PagingParamDTO params);
+    IPage<ReportOrderSalesDTO.ListDTO> paging(Page query,@Param("params") ReportOrderSalesDTO.PagingParamDTO params);
 }

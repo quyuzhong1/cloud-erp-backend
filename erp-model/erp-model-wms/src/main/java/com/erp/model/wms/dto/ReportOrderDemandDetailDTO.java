@@ -51,12 +51,17 @@ public class ReportOrderDemandDetailDTO implements Serializable {
     public static class ListDTO {
 
         /**
-         * 联合id
+         * id
          */
-        private String unionId;
+        private String id;
 
         /**
          * 订单类型
+         */
+        private String orderType;
+
+        /**
+         * 订单类型名称
          */
         private String orderTypeName;
 
@@ -64,9 +69,12 @@ public class ReportOrderDemandDetailDTO implements Serializable {
          * 单据编号
          */
         private String sourceCode;
-
         /**
          * 单据状态
+         */
+        private String status;
+        /**
+         * 单据状态名称
          */
         private String statusName;
 
@@ -152,7 +160,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         /**
         * 作废状态
         */
-        private Boolean invaildStatus;
+        private Boolean invalidStatus;
 
         /**
         * 来源单据id
@@ -167,7 +175,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         /**
         * 来源单据编号
         */
-        private String souceCode;
+        private String sourceCode;
 
         /**
         * 来源类型
@@ -249,7 +257,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         * 作废状态
         */
         @NotNull(message = "作废状态不能为空")
-        private Boolean invaildStatus;
+        private Boolean invalidStatus;
 
         /**
         * 来源单据id
@@ -270,7 +278,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         */
         @NotBlank(message = "来源单据编号不能为空")
         @Size(max = 32,message = "来源单据编号最大长度不能超过32位")
-        private String souceCode;
+        private String sourceCode;
 
         /**
         * 来源类型

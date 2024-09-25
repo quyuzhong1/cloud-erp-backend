@@ -1,10 +1,7 @@
 package com.erp.server.wms.service;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
-import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
 
 /**
  * <p>
@@ -14,25 +11,8 @@ import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
  * @author will
  * @since 2024-09-23
  */
-public interface ReportOrderDemandDetailService extends SuperService<ReportOrderDemandDetailEntity> {
+public interface ReportOrderDemandDetailService {
 
-    /**
-    * 新增
-    * @author will
-    * @date: 2024-09-23
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(ReportOrderDemandDetailDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author will
-    * @date: 2024-09-23
-    * @param dto
-    * @return
-    */
-    Boolean update(ReportOrderDemandDetailDTO.UpdateDTO dto);
 
     /**
      * 列表查询

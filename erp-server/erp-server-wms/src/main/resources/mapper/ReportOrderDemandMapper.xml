@@ -30,20 +30,35 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_time,
-        update_time,
-        create_user_name,
-        create_user_id,
-        update_user_name,
-        update_user_id,
-        version,
-        is_deleted,
-        warehouse_id, virtual_warehouse_id, virtual_warehouse_name, warehouse_name, sku_id, sku_no, product_name, total_qty, so_qty, b2c_so_qty, first_mile_qty, virtual_usable_qty, is_virtual_scarce, virtual_scarce_qty
+        rod.id,
+        rod.create_time,
+        rod.update_time,
+        rod.create_user_name,
+        rod.create_user_id,
+        rod.update_user_name,
+        rod.update_user_id,
+        rod.version,
+        rod.is_deleted,
+        rod.warehouse_id, rod.virtual_warehouse_id, rod.virtual_warehouse_name, rod.warehouse_name, rod.sku_id, rod.sku_no, rod.product_name, rod.total_qty, rod.so_qty, rod.b2c_so_qty, rod.first_mile_qty, rod.virtual_usable_qty, rod.is_virtual_scarce, rod.virtual_scarce_qty
     </sql>
 
     <!-- 分页查询 -->
-    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO"></select>
+    <select id="paging" resultType="com.erp.model.wms.dto.ReportOrderDemandDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from report_order_demand rod
+        <where>
+            ${params.sqlMap.default}
+            and rod.is_deleted = false
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        rod.update_time desc
+    </select>
 
 
 </mapper>
