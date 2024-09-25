@@ -562,6 +562,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             if(cfgWeightAllocationType.equals("productWeight")){
                 entity.setAllocationType(WeightAllocationTypeEnum.PRODUCT_WEIGHT.getCode());
             }
+            Date now = new Date();
+            Instant instant = now.toInstant();
+            LocalDateTime creatTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+            entity.setCreateTime(creatTime);
             saveList.add(entity);
         }
         computeAllocationWeight(saveList, cfgWeightAllocationType, logisticsChannelEntity);
