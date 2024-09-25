@@ -44,6 +44,7 @@ import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -135,6 +136,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         if(records.isEmpty()){
             return;
         }
+        DecimalFormat decimalFormat = new DecimalFormat("0.0000");
         //仓库
         List<String> warehouseIds = records.stream().map(item -> item.getFromWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.ListDTO> warehouseList = warehouseFeign.listByIds(warehouseIds);
@@ -158,6 +160,10 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 item.setLatestCostAllocationMonth(LocalDate.parse(item.getCalculateMonth() + "-01"));
                 item.setLatestCostAllocationMonthStr(item.getCalculateMonth());
             }
+            item.setOutStockWeightStr(decimalFormat.format(item.getOutStockWeight()));
+            item.setChargedWeightStr(decimalFormat.format(item.getChargedWeight()));
+            item.setProductWeightStr(decimalFormat.format(item.getProductWeight()));
+            item.setAllocationWeightStr(decimalFormat.format(item.getAllocationWeight()));
             /*FirstMileCostAllocationDTO.LastedAllocMonthDTO lastedAllocMonthDTO = lastedAllocationMonthList.stream().filter(v -> v.getLogisticsBillId().equals(item.getLogisticsBillId())).findFirst().orElse(null);
             if(lastedAllocMonthDTO != null){
                 item.setCalculatePeriodId(lastedAllocMonthDTO.getReportPeriodId());
