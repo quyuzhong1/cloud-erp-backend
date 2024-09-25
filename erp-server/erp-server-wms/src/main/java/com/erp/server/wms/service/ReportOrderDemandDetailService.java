@@ -1,7 +1,10 @@
 package com.erp.server.wms.service;
+
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
+import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
 
 /**
  * <p>
@@ -11,7 +14,7 @@ import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
  * @author will
  * @since 2024-09-23
  */
-public interface ReportOrderDemandDetailService {
+public interface ReportOrderDemandDetailService extends SuperService<ReportOrderDemandDetailEntity> {
 
 
     /**
@@ -38,4 +41,12 @@ public interface ReportOrderDemandDetailService {
      * @return List<ListDTO>
      */
     PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto);
+    /**
+     * 查询bom信息
+     * @author will
+     * @date 2024/9/25 16:52
+     * @param id
+     * @return ViewBomQtyDTO
+     */
+    ReportOrderDemandDetailDTO.ViewBomQtyDTO viewBomQty(String id);
 }

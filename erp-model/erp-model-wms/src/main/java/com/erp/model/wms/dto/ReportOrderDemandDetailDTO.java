@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -120,6 +121,12 @@ public class ReportOrderDemandDetailDTO implements Serializable {
          * 更新时间
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 是否拆分
+         */
+        private Boolean isSplit;
+
     }
 
 
@@ -303,5 +310,65 @@ public class ReportOrderDemandDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewBomQtyDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 需求数量
+         */
+        private Integer qty;
+
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
+
+        /**
+         * 发货通知单
+         */
+        private Integer deliveryNoticeQty;
+
+        /**
+         * 锁定数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * bom信息Json
+         */
+        private JSONArray bomJson;
+
+        /**
+         * bom信息
+         */
+        private List<BomDTO> bomList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BomDTO {
+        /**
+         * 子级SKU
+         */
+        private String childSkuId;
+
+        /**
+         * 子级SKU编码
+         */
+        private String childSkuNo;
+
+        /**
+         * 用量
+         */
+        private Integer quantity;
+    }
 
 }

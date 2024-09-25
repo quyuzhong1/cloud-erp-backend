@@ -1,7 +1,9 @@
 package com.erp.model.wms.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
@@ -86,6 +88,30 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
     */
     @TableField("date")
     private LocalDate date;
+
+    /**
+     * 是否拆分
+     */
+    @TableField("is_split")
+    private Boolean isSplit;
+
+    /**
+     * 发货通知单
+     */
+    @TableField("delivery_notice_qty")
+    private Integer deliveryNoticeQty;
+
+    /**
+     * 发货通知单
+     */
+    @TableField("frozen_qty")
+    private Integer frozenQty;
+
+    /**
+     * bom的json数据
+     */
+    @TableField(value = "bom_json", typeHandler = JacksonTypeHandler.class)
+    private JSONArray bomJson;
 
 
     public static final String WAREHOUSE_ID = "warehouse_id";

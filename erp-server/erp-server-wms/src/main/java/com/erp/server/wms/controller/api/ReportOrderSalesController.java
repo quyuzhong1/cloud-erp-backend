@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 订单销量表
+ * 销售看板
  *
  * @author will
  * @since 2024-09-23
