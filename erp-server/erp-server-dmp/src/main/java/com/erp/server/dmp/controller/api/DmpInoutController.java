@@ -300,7 +300,7 @@ public class DmpInoutController extends BaseController {
 				                String[] split4 = split3[1].split(",库存状态");
 				                String position = split4[0].replace("[", "").replace("]", "");
 				                String[] split5 = split4[1].split("交易数:");
-								String qty = split5[1].substring(0, 3).replace("[", "").replace("]", "").trim();
+				                String qty = split5[1].split(",")[0].trim();
 				                
 				                String key = warehouseName + "_" + position + "_" + skuNo;
 				                WdtInsufficientInventoryDTO dto = map.get(key);
