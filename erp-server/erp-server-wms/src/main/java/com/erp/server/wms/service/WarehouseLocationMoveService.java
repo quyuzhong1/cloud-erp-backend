@@ -256,4 +256,6 @@ public interface WarehouseLocationMoveService extends SuperService<WarehouseLoca
     String updateAndApprove(WarehouseLocationMoveDTO.UpdateDTO dto);
 
     PagingVO<WarehouseLocationMoveDTO.PdaPcListDTO> exportWarehouseLocationMoveInfo(PagingDTO<WarehouseLocationMoveDTO.ExportDTO> dto);
+    
+    void wdtAutoAdd(WarehouseLocationMoveDTO.PcAddDTO pcAddDTO);
 }
