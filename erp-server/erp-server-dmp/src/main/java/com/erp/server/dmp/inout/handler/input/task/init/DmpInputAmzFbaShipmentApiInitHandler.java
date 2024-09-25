@@ -24,6 +24,7 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentList;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -83,16 +83,18 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj) {
             log.warn("【FBA货件列表拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
-            String msg = StrUtil.format("【FBA货件列表拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
-            throw new ServiceException(msg);
+            // 触发限流不执行当前
+            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+            initDmpResponse.setDoNextChain(false);
+            return Collections.emptyList();
         }
 
         if (CollectionUtils.isNotEmpty(fbaShipmentIds)) {
             // 根据货件单号查询FBA货件
-            return queryListByShipmentIds(fbaShipmentIds, shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey);
+            return queryListByShipmentIds(fbaShipmentIds, shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey, dmpResponse);
         } else {
             // 根据时间区间查询FBA货件
-            return queryListByDateRange(shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey);
+            return queryListByDateRange(shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey, dmpResponse);
 
         }
 
@@ -101,7 +103,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
     /**
      * 根据货件单号查询FBA货件
      */
-    private List<DmpInputTaskInitDTO> queryListByShipmentIds(List<String> shipmentIdList, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, String rateLimitStr, String limitKey) {
+    private List<DmpInputTaskInitDTO> queryListByShipmentIds(List<String> shipmentIdList, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, String rateLimitStr, String limitKey, DmpInputTaskResponse dmpResponse) {
         try {
             FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
             String queryType = AmazonFbaQueryTypeEnum.SHIPMENT.getCode();
@@ -120,6 +122,11 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                log.warn("【FBA货件列表拉取】按货件号 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+                // 触发限流不执行当前
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextChain(false);
+                return Collections.emptyList();
             }
             throw new ServiceException("指定货件单号查询亚马逊FBA货件失败：API异常：" + JSONUtil.toJsonStr(e));
         }
@@ -129,7 +136,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
     /**
      * 根据时间区间查询FBA货件
      */
-    private List<DmpInputTaskInitDTO> queryListByDateRange(AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, String rateLimitStr, String limitKey) {
+    private List<DmpInputTaskInitDTO> queryListByDateRange(AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, String rateLimitStr, String limitKey, DmpInputTaskResponse dmpResponse) {
         // 是否检查当前时间
         Boolean autoCheckNow = dmpCfgInputEntity.parseExtendAutoCheckNow();
         // 开始时间
@@ -155,6 +162,11 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                log.warn("【FBA货件列表拉取】 按时间区间 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+                // 触发限流不执行当前
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextChain(false);
+                return Collections.emptyList();
             }
             throw new ServiceException("时间区间查询亚马逊FBA货件列表失败：API异常：" + JSONUtil.toJsonStr(e));
         }
