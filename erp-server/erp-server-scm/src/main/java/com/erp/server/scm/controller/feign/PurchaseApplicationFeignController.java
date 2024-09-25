@@ -74,7 +74,7 @@ public class PurchaseApplicationFeignController {
      */
     @PostMapping("/listSkuAndQty")
     List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(@RequestBody List<String> sourceIds){
-        return purchaseApplicationDetailService.listSkuAndQty(sourceIds);
+        return purchaseApplicationDetailService.listSkuAndQty(sourceIds,null);
     }
 
     /**

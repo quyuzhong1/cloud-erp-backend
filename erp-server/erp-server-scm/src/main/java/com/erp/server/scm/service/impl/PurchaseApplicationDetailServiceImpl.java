@@ -201,7 +201,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
     @Override
-    public List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds) {
-        return baseMapper.listSkuAndQty(sourceIds);
+    public List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds,List<String> sourceDetailIds) {
+        return baseMapper.listSkuAndQty(sourceIds, sourceDetailIds);
     }
 }
