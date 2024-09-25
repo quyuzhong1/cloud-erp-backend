@@ -256,7 +256,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
-                if(ObjectUtil.isNotNull(flow.getWarehouseLocation())){
+                if(ObjectUtil.isNotNull(transactionDTO.getWarehouseLocation())){
                     // 在途,待检空库位跳过校验
                     if(qcTransitNotLocation){
                         transactionDTO.setWarehouseLocationName("空仓位");
