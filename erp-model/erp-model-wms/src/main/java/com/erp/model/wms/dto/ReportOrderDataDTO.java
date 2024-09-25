@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.common.business.dto.AdvanceQueryDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,110 +8,20 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
- * 订单需求明细报表请求响应实体
+ * 订单报表信息请求响应实体
  * </p>
  *
  * @author will
- * @since 2024-09-23
+ * @since 2024-09-24
 */
 @Data
 @NoArgsConstructor
-public class ReportOrderDemandDetailDTO implements Serializable {
+public class ReportOrderDataDTO implements Serializable {
 
-    /**
-     * 列表参数
-     */
-    @Data
-    @NoArgsConstructor
-    public static class PagingParamDTO {
 
-        /**
-         * 页面高级查询
-         */
-        private List<AdvanceQueryDTO> advanceQueryDTOList;
-
-        /**
-         * sqlMap 默认key default
-         */
-        private Map<String,String> sqlMap;
-    }
-
-    /**
-     * 列表
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListDTO {
-
-        /**
-         * id
-         */
-        private String id;
-
-        /**
-         * 订单类型
-         */
-        private String orderType;
-
-        /**
-         * 订单类型名称
-         */
-        private String orderTypeName;
-
-        /**
-         * 单据编号
-         */
-        private String sourceCode;
-        /**
-         * 单据状态
-         */
-        private String status;
-        /**
-         * 单据状态名称
-         */
-        private String statusName;
-
-        /**
-         * 虚拟仓名称
-         */
-        private String virtualWarehouseName;
-
-        /**
-         * 实体仓名称
-         */
-        private String warehouseName;
-
-        /**
-         * SKU
-         */
-        private String skuNo;
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 数量
-         */
-        private Integer qty;
-
-        /**
-         * 虚拟仓可用库存
-         */
-        private Integer virtualUsableQty;
-
-        /**
-         * 更新时间
-         */
-        private LocalDateTime updateTime;
-    }
 
 
     /**
@@ -252,12 +161,6 @@ public class ReportOrderDemandDetailDTO implements Serializable {
         @NotBlank(message = "单据状态不能为空")
         @Size(max = 32,message = "单据状态最大长度不能超过32位")
         private String status;
-
-        /**
-        * 作废状态
-        */
-        @NotNull(message = "作废状态不能为空")
-        private Boolean invalidStatus;
 
         /**
         * 来源单据id

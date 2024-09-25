@@ -137,6 +137,12 @@ public class ExportWmsFeignController {
     @Resource
     private ReportOrderDemandDetailService reportOrderDemandDetailService;
 
+    @Resource
+    private ReportOrderDemandService reportOrderDemandService;
+
+    @Resource
+    private ReportOrderSalesService reportOrderSalesService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -643,10 +649,24 @@ public class ExportWmsFeignController {
     }
 
     /**
-     *
+     * 订单需求明细导出
      */
     @PostMapping("/listReportOrderDemandDetail")
     public PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto){
         return reportOrderDemandDetailService.listReportOrderDemandDetail(dto);
+    }
+    /**
+     * 缺货统计数据导出
+     */
+    @PostMapping("/listReportOrderDemand")
+    public PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(@RequestBody PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto){
+        return reportOrderDemandService.listReportOrderDemand(dto);
+    }
+    /**
+     * 销售看板数据导出
+     */
+    @PostMapping("/listReportOrderSales")
+    public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto){
+        return reportOrderSalesService.listReportOrderSales(dto);
     }
 }

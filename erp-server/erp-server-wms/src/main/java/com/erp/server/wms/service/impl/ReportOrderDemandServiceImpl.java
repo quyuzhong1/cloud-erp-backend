@@ -12,7 +12,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.ReportOrderDemandDTO;
 import com.erp.model.wms.entity.ReportOrderDemandEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -25,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_DEMAND;
@@ -105,7 +103,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     @Override
     public PagingVO<ReportOrderDemandDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDTO.PagingParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<PurchaseOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        IPage<ReportOrderDemandDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         return new PagingVO(pageData);
     }
 
@@ -116,13 +114,9 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     }
 
     @Override
-    public List<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(ReportOrderDemandDTO.PagingParamDTO dto) {
-        PagingDTO<ReportOrderDemandDTO.PagingParamDTO> pagingParamDTO = new PagingDTO<>();
-        pagingParamDTO.setParams(dto);
-        pagingParamDTO.setPageSize(-1);
+    public PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(PagingDTO<ReportOrderDemandDTO.PagingParamDTO> pagingParamDTO) {
         PagingVO<ReportOrderDemandDTO.ListDTO> resultList = this.paging(pagingParamDTO);
-        List<ReportOrderDemandDTO.ListDTO> list = (List<ReportOrderDemandDTO.ListDTO>) resultList.getList();
-        return list;
+        return resultList;
     }
 
     /**

@@ -3,8 +3,7 @@ package com.erp.server.file.business.wms;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.PackingTaskDTO;
-import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -19,21 +18,21 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
 
 @Component
 @Slf4j
-public class ExportWmsReportOrderDemandDetailHandler extends AbstractPageFileEventHandler<WmsCartonDetailDTO.ListPackingDetailDTO, PackingTaskDTO.ExportDTO> {
+public class ExportWmsReportOrderDemandDetailHandler extends AbstractPageFileEventHandler<ReportOrderDemandDetailDTO.ListDTO, ReportOrderDemandDetailDTO.PagingParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
     @Override
-    protected List<WmsCartonDetailDTO.ListPackingDetailDTO> getData(FileTask fileTask) {
-        PackingTaskDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<PackingTaskDTO.ExportDTO>() {
+    protected List<ReportOrderDemandDetailDTO.ListDTO> getData(FileTask fileTask) {
+        ReportOrderDemandDetailDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<ReportOrderDemandDetailDTO.PagingParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> getPageData(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
-        return exportWmsFeign.exportPackingTaskDetail(dto);
+    protected PagingVO<ReportOrderDemandDetailDTO.ListDTO> getPageData(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto) {
+        return exportWmsFeign.listReportOrderDemandDetail(dto);
     }
 
     @Override
@@ -43,6 +42,6 @@ public class ExportWmsReportOrderDemandDetailHandler extends AbstractPageFileEve
 
     @Override
     public String getExcelPath() {
-        return "excel/wms/packingDetailExport.xlsx";
+        return "excel/wms/reportOrderDemandDetail.xlsx";
     }
 }
