@@ -465,7 +465,6 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             if (!logisticsBillMap.isEmpty()) {
                 e.setLogisticsBillId(logisticsBillMap.get(e.getSourceId()));
             }
-            e.setProductCost(new BigDecimal(e.getProductCost()).stripTrailingZeros().toPlainString());
         });
     }
 

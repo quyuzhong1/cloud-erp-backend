@@ -679,12 +679,12 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 分摊重量
          */
-        private BigDecimal allocatedWeight;
+        private String allocatedWeight;
 
         /**
          * 单位成本
          */
-        private BigDecimal productCost;
+        private String productCost;
         /**
          * 单位成本 导出使用
          */
@@ -693,7 +693,7 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 产品总成本
          */
-        private BigDecimal productTotalCost;
+        private String productTotalCost;
 
         /**
          * 期初签收数量
@@ -765,17 +765,17 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 头程总金额【可排序】
          */
-        private BigDecimal amount;
+        private String amount;
 
         /**
          * 头程分摊金额【可排序】
          */
-        private BigDecimal allocatedAmount;
+        private String allocatedAmount;
 
         /**
          * 单个产品分摊金额【可排序】
          */
-        private BigDecimal productAllocatedAmount;
+        private String productAllocatedAmount;
         /**
          * 单个产品分摊金额【导出使用】
          */
@@ -784,32 +784,32 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 期初在途费用【可排序】
          */
-        private BigDecimal initTransitCost;
+        private String initTransitCost;
 
         /**
          * 期初暂估费用【可排序】
          */
-        private BigDecimal initEstimatedCost;
+        private String initEstimatedCost;
 
         /**
          * 冲期初在途费用【可排序】
          */
-        private BigDecimal midPeriodTransitCost;
+        private String midPeriodTransitCost;
 
         /**
          * 本期分摊费用【可排序】
          */
-        private BigDecimal currentPeriodAllocatedCost;
+        private String currentPeriodAllocatedCost;
 
         /**
          * 期末在途费用【可排序】
          */
-        private BigDecimal endPeriodTransitCost;
+        private String endPeriodTransitCost;
 
         /**
          * 期末暂估费用【可排序】
          */
-        private BigDecimal endPeriodEstimatedCost;
+        private String endPeriodEstimatedCost;
         /**
          * 分摊组织id
          */
