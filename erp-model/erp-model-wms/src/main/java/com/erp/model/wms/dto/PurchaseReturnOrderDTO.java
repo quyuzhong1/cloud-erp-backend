@@ -725,6 +725,10 @@ public class PurchaseReturnOrderDTO {
          * 签收时间
          */
         private LocalDateTime receiveTime;
+        /**
+         * 委外订单
+         */
+        private String subcontractCode;
 
     }
 
