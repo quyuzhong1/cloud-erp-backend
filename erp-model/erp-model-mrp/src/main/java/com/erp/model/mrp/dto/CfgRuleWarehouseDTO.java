@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -169,11 +170,11 @@ public class CfgRuleWarehouseDTO implements Serializable {
         /**
          * 本地仓
          */
-        private List<StrategyDetailResultDTO> localWarehouseList;
+        private List<StrategyDetailResultDTO> localWarehouseList = new ArrayList<>();
         /**
          * 海外仓
          */
-        private List<StrategyDetailResultDTO> overseasWarehouseList;
+        private List<StrategyDetailResultDTO> overseasWarehouseList = new ArrayList<>();
 
     }
 
