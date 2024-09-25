@@ -69,7 +69,7 @@
         cad.id as detailId,cad.fee_type, cad.allocation_type,
         cast(cad.amount AS NUMERIC(16, 2)) as amount,
         cast(cad.allocated_amount AS NUMERIC(16, 2)) as allocatedAmount,
-        cast(cad.product_allocated_amount AS NUMERIC(16, 2)) as productAllocatedAmount,
+        cast(cad.product_allocated_amount AS NUMERIC(16, 6)) as productAllocatedAmount,
         cast(cad.init_transit_cost AS NUMERIC(16, 2)) as initTransitCost,
         cast(cad.init_estimated_cost AS NUMERIC(16, 2)) as initEstimatedCost,
         cast(cad.mid_period_transit_cost AS NUMERIC(16, 2)) as midPeriodTransitCost,
