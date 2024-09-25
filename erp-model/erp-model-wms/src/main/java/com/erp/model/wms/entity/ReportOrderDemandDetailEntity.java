@@ -3,7 +3,7 @@ package com.erp.model.wms.entity;
 import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -64,8 +64,24 @@ public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandD
     /**
     * 剩余需求总数
     */
-    @TableField("total_qty")
-    private Integer totalQty;
+    @TableField("qty")
+    private Integer qty;
+
+    /**
+     * 审核状态
+     */
+    @TableField("approve_status")
+    private ApproveStatusEnum approveStatus;
+    /**
+     * 单据状态
+     */
+    @TableField("status")
+    private String status;
+    /**
+     * 作废状态
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
     /**
     * 虚拟仓可用库存
     */
@@ -100,6 +116,12 @@ public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandD
     private Boolean isSplit;
 
     /**
+     * 订单数量
+     */
+    @TableField("order_qty")
+    private Integer orderQty;
+
+    /**
      * 发货通知单
      */
     @TableField("delivery_notice_qty")
@@ -114,7 +136,7 @@ public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandD
     /**
      * bom的json数据
      */
-    @TableField(value = "bom_json", typeHandler = JacksonTypeHandler.class)
+    @TableField(value = "bom_json", javaType = true )
     private JSONArray bomJson;
 
 

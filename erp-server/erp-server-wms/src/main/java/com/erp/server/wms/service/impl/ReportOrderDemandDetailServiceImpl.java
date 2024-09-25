@@ -13,7 +13,6 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
@@ -75,8 +74,8 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("订单需求明细未找到");
         }
-        ReportOrderDemandDetailDTO.ViewBomQtyDTO  viewBomQtyDTO= BeanMapperUtils.map(ReportOrderDemandDetailDTO.ViewBomQtyDTO.class,entity);
-        if (ObjectUtil.isEmpty(viewBomQtyDTO.getBomJson())) {
+        ReportOrderDemandDetailDTO.ViewBomQtyDTO  viewBomQtyDTO= BeanUtil.toBean(entity,ReportOrderDemandDetailDTO.ViewBomQtyDTO.class);
+        if (ObjectUtil.isNotEmpty(viewBomQtyDTO.getBomJson())) {
             List<ReportOrderDemandDetailDTO.BomDTO> bomList = BeanUtil.copyToList(viewBomQtyDTO.getBomJson(), ReportOrderDemandDetailDTO.BomDTO.class);
             viewBomQtyDTO.setBomList(bomList);
         }
