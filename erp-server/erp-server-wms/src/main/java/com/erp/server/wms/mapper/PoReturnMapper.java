@@ -87,10 +87,10 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
 
     /**
      * 获取委外订单列表
-     * @param purchaseOrderId
+     * @param poIds
      * @return
      */
-    List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(@Param("purchaseOrderId") String purchaseOrderId);
+    List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(@Param("poIds") List<String> poIds);
 
     /**
      * 批量查询报价
