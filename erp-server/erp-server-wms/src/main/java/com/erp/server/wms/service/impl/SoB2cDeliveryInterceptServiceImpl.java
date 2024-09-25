@@ -674,6 +674,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         List<String> filterDeliveryIds = deliveryEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
         soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptEntityList.stream().filter(v->filterDeliveryIds.contains(v.getDeliveryId())).collect(Collectors.toList());
         List<String> queryIds = soB2cDeliveryInterceptEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(queryIds)){
+            return new ArrayList<>();
+        }
         return baseMapper.getInterceptInventoryDTOList(queryIds);
     }
 
