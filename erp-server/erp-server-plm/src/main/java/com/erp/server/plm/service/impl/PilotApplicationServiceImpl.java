@@ -1070,8 +1070,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
         //是否新品首批
         List<String> skuIds = padList.stream().filter(r -> StringUtils.isNotBlank(r.getSkuId())).map(PilotApplicationDetailEntity::getSkuId).collect(Collectors.toList());
-        Boolean isExist = purchaseApplicationDetailFeign.existBySkuIds(skuIds);
-        if(isExist){
+        Boolean isNew = purchaseApplicationDetailFeign.existBySkuIds(skuIds);
+        if(isNew){
             paramDto.setIsFirstMassProduct(Boolean.TRUE);
         }else {
             paramDto.setIsFirstMassProduct(Boolean.FALSE);
