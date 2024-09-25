@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 
@@ -58,10 +60,63 @@ public class ReportOrderDemandController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出订单需求报表")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody ReportOrderDemandDTO.PagingParamDTO dto) {
         Boolean flag = reportOrderDemandService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 单个分货查看
+     * @author will
+     * @date 2024/9/25 10:48
+     * @param dto
+     * @return ApiResult<ViewAllocationDTO>
+     */
+    @PostMapping(value = "/viewAllocation")
+    public ApiResult<ReportOrderDemandDTO.ViewVirtualAllocationDTO> viewAllocation(@RequestBody ReportOrderDemandDTO.ViewVirtualAllocationParamDTO dto) {
+        ReportOrderDemandDTO.ViewVirtualAllocationDTO viewVirtualAllocationDTO = reportOrderDemandService.viewAllocation(dto);
+        return success(viewVirtualAllocationDTO);
+    }
 
+    /**
+     * 单个分货保存
+     * @author will
+     * @date 2024/9/25 11:02
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "单个分货保存")
+    @PostMapping(value = "/addAllocation")
+    public ApiResult addAllocation(@RequestBody ReportOrderDemandDTO.AddVirtualAllocationDTO dto) {
+        Boolean flag = reportOrderDemandService.addAllocation(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 批量分货查看
+     * @author will
+     * @date 2024/9/25 11:23
+     * @param list
+     * @return ApiResult<BatchViewVirtualAllocationDTO>
+     */
+    @PostMapping(value = "/batchViewAllocation")
+    public ApiResult<List<ReportOrderDemandDTO.BatchViewVirtualAllocationDTO>> batchViewAllocation(@RequestBody ValidList<ReportOrderDemandDTO.ViewVirtualAllocationParamDTO> list) {
+        List<ReportOrderDemandDTO.BatchViewVirtualAllocationDTO> resultList = reportOrderDemandService.batchViewAllocation(list);
+        return success(resultList);
+    }
+
+    /**
+     * 批量分货保存
+     * @author will
+     * @date 2024/9/25 11:02
+     * @param list
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "批量分货保存")
+    @PostMapping(value = "/batchAddAllocation")
+    public ApiResult batchAddAllocation(@RequestBody ValidList<ReportOrderDemandDTO.AddVirtualAllocationDTO> list) {
+        Boolean flag = reportOrderDemandService.batchAddAllocation(list);
+        return flag == true ? success() : failure();
+    }
 }
