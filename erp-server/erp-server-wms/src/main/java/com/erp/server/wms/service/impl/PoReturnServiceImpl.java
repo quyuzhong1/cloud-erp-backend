@@ -2929,7 +2929,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     priceDTO2.setAmount(MathUtil.multiply(priceDTO2.getTaxPrice(), priceDTO2.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
                     updateList.add(priceDTO2);
                 }
-            }else {
+            }
+            if (Objects.nonNull(purchaseTaxPriceViewDTO)){
                 updateList.add(purchaseTaxPriceViewDTO);
             }
         }
