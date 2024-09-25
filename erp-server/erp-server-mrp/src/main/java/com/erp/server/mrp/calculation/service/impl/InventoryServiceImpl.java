@@ -129,16 +129,10 @@ public class InventoryServiceImpl implements InventoryService {
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
         List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> estimatedDeliveryDetails = inventoryMapper.getPlanDelivery(DeliveryPlanTypeEnum.FBA.getCode(), strategyCodes, replenishmentResultDTO, SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN, calcDate), SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN_DETAIL, calcDate));
         for (ReplenishmentResultDTO.EstimatedDeliveryDetailDTO detail : estimatedDeliveryDetails) {
-            detail.setType(CfgRulePlatformTypeEnum.AMAZON.getCode());
+            detail.setType(ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY.getCode());
             detail.setEstimateSalesDate(detail.getEstimateSalesDate().plusDays(stockUpResult.getInstockDays()).plusDays(stockUpResult.getLogisticsResult().getLogisticsDays()).plusDays(stockUpResult.getLogisticsResult().getLogisticsCycleDays()));
             detail.setSourceType(SourceTypeEnum.DELIVERY_PLAN.getCode());
         }
-        if (CollectionUtils.isEmpty(replenishmentResultDTO.getFbaDeliveryDetails())) {
-            replenishmentResultDTO.setFbaDeliveryDetails(estimatedDeliveryDetails);
-        } else {
-            replenishmentResultDTO.getFbaDeliveryDetails().addAll(estimatedDeliveryDetails);
-        }
-
         return estimatedDeliveryDetails;
     }
 
