@@ -266,7 +266,7 @@ public class InventoryServiceImpl implements InventoryService {
                 qty = getInventoryQty(replenishmentResultDTO, qty, localPurchaseDetail, dto, result, ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY);
             }
         }
-        replenishmentResultDTO.setLocalInTransitDetail(localPurchaseDetail);
+        replenishmentResultDTO.setLocalPurchaseDetail(localPurchaseDetail);
         return qty;
     }
 
@@ -384,7 +384,11 @@ public class InventoryServiceImpl implements InventoryService {
             // 计算每个店铺的占比
             List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
             for (LocalInventoryDTO.ShopSalesDTO shopSale : shopSales) {
-                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSale.getShopId(), new BigDecimal(dto.getQty()).multiply(new BigDecimal(shopSale.getQty()).divide(new BigDecimal(0 == total ? 1 : total), 2, RoundingMode.HALF_UP))));
+                BigDecimal shopQty = new BigDecimal(dto.getQty()).multiply(new BigDecimal(shopSale.getQty()).divide(new BigDecimal(0 == total ? 1 : total), 2, RoundingMode.HALF_UP)).setScale(0, RoundingMode.FLOOR);
+                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSale.getShopId(), shopQty));
+                if (shopSale.getShopId().equals(replenishmentResultDTO.getReplenishment().getShopId())) {
+                    qty += shopQty.intValue();
+                }
             }
             localUsableDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
                     .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, dto.getQty(), detailDTOS));

@@ -1036,7 +1036,8 @@ public class ReplenishmentResultDTO {
             entity.setReplenishmentDetailId(replenishmentDetailId);
             entity.setQty(dto.getQty());
             entity.setQty(dto.getQty());
-            entity.setPlanArrivalDate(dto.getEstimateSalesDate());
+            entity.setPlanArrivalDate(dto.getEstimatedPutAwayDate());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
             entity.setSourceId(dto.getSourceId());
             entity.setSourceCode(dto.getSourceCode());
             entity.setSourceType(dto.getSourceType());
