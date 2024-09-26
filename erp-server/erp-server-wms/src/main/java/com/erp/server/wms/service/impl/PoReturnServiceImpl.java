@@ -1018,7 +1018,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             //按照采购订单明细进行构建退货单
             SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList1.stream().filter(e -> Objects.nonNull(e)
                     && StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(detail.getSkuId())
-                    && StrUtil.isNotBlank(e.getSourceDetailId()) && e.getSourceDetailId().equals(detail.getId())
+                    && StrUtil.isNotBlank(detail.getSourceDetailId()) && detail.getSourceDetailId().equals(e.getId())
             ).findFirst().orElse(null);
             if (Objects.isNull(subcontractOrderDetailEntity)){
                 throw new ServiceException(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
@@ -1034,23 +1034,23 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 throw new ServiceException(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到成品子单明细", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
             }
             //父级SKU和子级SKU之间的用量
-//            Integer quantity = bomList.stream()
-//                    .filter(obj -> subcontractOrderDetailEntity.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(subcontractOrderDetailEntity.getSkuId()) && obj.getParentSkuId().equals(parentSubcontractOrder.getSkuId()))
-//                    .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
+            Integer quantity = bomList.stream()
+                    .filter(obj -> subcontractOrderDetailEntity.getBomVersion().equals(obj.getBomVersion()) && obj.getSkuId().equals(subcontractOrderDetailEntity.getSkuId()) && obj.getParentSkuId().equals(parentSubcontractOrder.getSkuId()))
+                    .map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
             //成品退货单明细记录
-//            PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(parentSubcontractOrder.getSkuId())).findFirst().orElse(null);
-//            if (Objects.isNull(poReturnDetailEntity)){
-//                throw new ServiceException(StrUtil.format("采购订单【{}】中SKU【{}】在退货订单【{}】未找到成品明细", orderEntity.getCode(), detail.getSkuNo(),entity.getCode()));
-//            }
+            PoReturnDetailEntity poReturnDetailEntity = poReturnDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(parentSubcontractOrder.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(poReturnDetailEntity)){
+                throw new ServiceException(StrUtil.format("采购订单【{}】中SKU【{}】在退货订单【{}】未找到成品明细", orderEntity.getCode(), detail.getSkuNo(),entity.getCode()));
+            }
             PurchaseReturnOrderDetailDTO.AddDTO dto = new PurchaseReturnOrderDetailDTO.AddDTO();
             dto.setCurrency(detail.getCurrency());
             dto.setWarehouseLocation(detail.getWarehouseLocation());
             dto.setReturnPrice(detail.getTaxPrice());
-            dto.setReturnQty(parentSubcontractOrder.getQty());
+            dto.setReturnQty(subcontractOrderDetailEntity.getQty());
             dto.setCurrencySymbol(detail.getCurrencySymbol());
-            dto.setDeductAmountQty(parentSubcontractOrder.getQty());
+            dto.setDeductAmountQty(subcontractOrderDetailEntity.getQty());
             dto.setPurchaseOrderDetailId(detail.getId());
-            dto.setReplenishQty(parentSubcontractOrder.getQty());
+            dto.setReplenishQty(subcontractOrderDetailEntity.getQty());
             dto.setSkuId(detail.getSkuId());
             dto.setSkuNo(detail.getSkuNo());
             dto.setSourceDetailId(detail.getId());
@@ -1092,7 +1092,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         for (PurchaseOrderDetailEntity detail : detailEntityList){
             SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList1.stream().filter(e -> Objects.nonNull(e)
                     && StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(detail.getSkuId())
-                    && StrUtil.isNotBlank(e.getSourceDetailId()) && e.getSourceDetailId().equals(detail.getId())
+                    && StrUtil.isNotBlank(detail.getSourceDetailId()) && detail.getSourceDetailId().equals(e.getId())
             ).findFirst().orElse(null);
             if (Objects.isNull(subcontractOrderDetailEntity)){
                 throw new ServiceException(StrUtil.format("采购订单【{}】中SKU【{}】在委外订单【{}】未找到", orderEntity.getCode(), detail.getSkuNo(),subcontractOrderEntity.getCode()));
