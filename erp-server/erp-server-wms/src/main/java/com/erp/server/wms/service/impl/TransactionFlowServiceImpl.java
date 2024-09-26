@@ -398,8 +398,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId) {
-        return baseMapper.listByOrgId(startDate, orgId, inventoryId);
+    public List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId, Boolean fromTable) {
+        return baseMapper.listByOrgId(startDate, orgId, inventoryId, fromTable);
     }
 
     /**
