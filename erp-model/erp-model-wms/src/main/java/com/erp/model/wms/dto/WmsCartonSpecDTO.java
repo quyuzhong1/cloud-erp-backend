@@ -154,6 +154,7 @@ public class WmsCartonSpecDTO implements Serializable {
          * 详情
          */
         @Valid
+        @NotEmpty(message = "装箱明细不能为空")
         private List<WmsCartonDetailDTO.AddDTO> detailList;
     }
 
