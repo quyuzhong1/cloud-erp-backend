@@ -27,7 +27,8 @@
             srr.approve_user_name AS approveUserName,
             srr.create_user_name AS createUserName,
             srr.create_time AS createTime,
-            srr.warehouse_id AS warehouseId
+            srr.warehouse_id AS warehouseId,
+            srr.return_logistic_code as returnLogisticCode
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE
@@ -161,7 +162,8 @@
             srrd.receive_qty,
             srrd.return_type_dict,
             srrd.return_reason_dict,
-            srrd.remark
+            srrd.remark,
+            srr.return_logistic_code
         FROM so_return_receive srr
         INNER JOIN so_return_receive_detail srrd ON srr.id = srrd.main_id AND srr.is_deleted=FALSE
         WHERE srrd.is_deleted=FALSE

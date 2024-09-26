@@ -199,6 +199,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
         entity.setSoId(soInfoEntity.getId());
         entity.setSoCode(soInfoEntity.getCode());
+        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //获取用户信息
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
@@ -299,6 +300,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         entity.setId(dto.getId());
+        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setBillDate(soReturnEntity.getBillDate());
@@ -588,6 +590,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
             dto.setSourceId(id);
             dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
+            dto.setReturnLogisticCode(viewList.get(0).getReturnLogisticCode());
             List<SoReturnNoticeDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnDTO.GenerateSoReturnNoticeView view : viewList) {
                 dto.setWarehouseId(view.getWarehouseId());

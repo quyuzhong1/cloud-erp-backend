@@ -204,6 +204,11 @@ public class SoReturnNoticeDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**
@@ -248,6 +253,11 @@ public class SoReturnNoticeDTO {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -284,6 +294,11 @@ public class SoReturnNoticeDTO {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -408,6 +423,11 @@ public class SoReturnNoticeDTO {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -519,5 +539,10 @@ public class SoReturnNoticeDTO {
          * 审核状态
          */
         private String approveStatus;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 }
