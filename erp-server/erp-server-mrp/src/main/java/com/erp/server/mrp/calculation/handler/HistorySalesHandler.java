@@ -55,16 +55,16 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.TimePeriodSalesDTO> avgTimePeriodSales = new ArrayList<>();
         List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos = replenishmentResultDTO.getSalesInfos();
         LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
-        LocalDate endDate = now.minusDays(2);
+        LocalDate endDate = now.minusDays(1);
         for (TimePeriodEnum value : TimePeriodEnum.values()) {
             BigDecimal qty = salesInfos.stream()
-                    .filter(v -> endDate.minusDays(value.getDays()).isBefore(v.getDate()) && !endDate.isBefore(v.getDate()))
+                    .filter(v -> !endDate.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
                     .map(ReplenishmentResultDTO.SalesInfoDTO::getSalesQty)
                     .reduce(BigDecimal.ZERO, BigDecimal::add)
                     .setScale(0, RoundingMode.CEILING);
             timePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, qty));
             long count = salesInfos.stream()
-                    .filter(v -> endDate.minusDays(value.getDays()).isBefore(v.getDate()) && !endDate.isBefore(v.getDate()))
+                    .filter(v -> !endDate.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
                     .filter(v -> Boolean.FALSE.equals(v.getIsIgnoreOutOfStock()))
                     .filter(v -> !COMPLETELY.getCode().equals(v.getDenoisingType()))
                     .count();

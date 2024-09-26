@@ -362,10 +362,10 @@ public class BasicReplenishmentDataService {
         List<FbaHistoryInventoryEntity> list = fbaHistoryInventoryService.listBySkuNo(entity.getSkuNo(), entity.getFbaWarehouseId());
         String calcDate = detail.getCalcDate();
         LocalDate endDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE);
-        LocalDate startDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(360);
+        LocalDate startDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(361);
         List<LocalDate> dateList = new ArrayList<>();
         // 遍历每一天
-        while (!startDate.isAfter(endDate)) {
+        while (startDate.isBefore(endDate)) {
             dateList.add(startDate);
             startDate = startDate.plusDays(1);
         }
