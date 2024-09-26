@@ -112,7 +112,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
                 if (!StrUtil.equals(formulaEntity.getType(),CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) ) {
                     msg.append(StrUtil.format("•序号【{}】、名称【{}】、时间段【{}】<br>" ,formulaEntity.getIndex(),formulaEntity.getName(),StrUtil.format("{}~{}",formulaEntity.getStartDate(),formulaEntity.getEndDate())));
                 }
-                if (ObjectUtil.isNotEmpty(formulaEntity.getFixedValue()) && StrUtil.equals(formulaEntity.getDefaultType(),CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode())) {
+                if (ObjectUtil.isNotEmpty(formulaEntity.getFixedValue()) && (StrUtil.equals(formulaEntity.getType(),CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) || StrUtil.equals(formulaEntity.getDefaultType(),CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode())) ) {
                     msg.append(StrUtil.format("•固定值：{}<br>", formulaEntity.getFixedValue()));
                 } else {
                     JSONObject percentJson = formulaEntity.getPercentJson();
