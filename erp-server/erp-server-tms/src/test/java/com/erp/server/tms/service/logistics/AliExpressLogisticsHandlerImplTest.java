@@ -68,7 +68,7 @@ public class AliExpressLogisticsHandlerImplTest {
         //prod
         String CLIENT_CODE = "503630";
         String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
-        String token = "50000700423zHPZZqMly9iku4MQdb7h0hqR18ff9902ExugZffT7nzxEiFwFyWHdZKNC";
+        String token = "50000800908t9Fq5iBwW1439a24doPZ9ZGVgpSEzOdcggU6LU0CiIxk2Fx9t8syRFp3v";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -218,8 +218,8 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void queryOrderList(){
         LogisticsQueryBaseVO logisticsQueryVOList = new LogisticsQueryBaseVO();
-        logisticsQueryVOList.setDeliveryNo("8193045367177616");
-        logisticsQueryVOList.setTransportNo("250441247805667");
+        logisticsQueryVOList.setDeliveryNo("8189874257569996");
+        logisticsQueryVOList.setTransportNo("LP00662249706638");
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = aliExpressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println("结果输出");
