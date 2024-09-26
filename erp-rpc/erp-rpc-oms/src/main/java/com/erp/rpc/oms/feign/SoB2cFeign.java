@@ -13,6 +13,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -629,4 +630,11 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/cancelLogistic")
     ApiResult<List<BatchResultDTO>> cancelLogistic(@RequestBody BaseIdsDTO.IdsDTO idDTO);
+    /**
+     * 查询所有虚拟仓B2C`销售订单数据
+     * @author will
+     * @date 2024/9/26 14:47
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
 }

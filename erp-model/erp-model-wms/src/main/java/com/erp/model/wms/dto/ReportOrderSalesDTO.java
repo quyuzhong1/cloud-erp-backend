@@ -41,6 +41,16 @@ public class ReportOrderSalesDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 仅看预警
+         */
+        private Boolean isWarn;
+
+        /**
+         * 仅看缺货
+         */
+        private Boolean isVirtualScarce;
     }
 
     /**
