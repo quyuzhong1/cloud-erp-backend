@@ -119,9 +119,10 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
 
         log.info("开始新增委外退料单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TLD);
-        subcontractReturnEntity.setCode(code);
+        if(StrUtil.isBlank(subcontractReturnEntity.getCode())){
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TLD);
+            subcontractReturnEntity.setCode(code);
+        }
         boolean save = super.save(subcontractReturnEntity);
         if(!save) {
             throw new ServiceException("委外退料单保存失败");
@@ -134,10 +135,10 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
             msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外退料单" , subcontractReturnEntity.getCode());
         }else if (StrUtil.equals(SourceTypeEnum.PO_RETURN.getCode(),subcontractReturnEntity.getSourceType())){
             //TODO 增加子件和成品退货单记录
-            msg = StrUtil.format("用户【{}】从成品采购退货单【{}】下推生成了委外退料单【{}】，子件采购退货单【{}】", UserContext.getDefaultLoginUser().getUserName(), subcontractReturnEntity.getSourceCode(), subcontractReturnEntity.getCode());
+            msg = StrUtil.format("用户【{}】从成品采购退货单【{}】下推生成了委外退料单【{}】", UserContext.getDefaultLoginUser().getUserName(), subcontractReturnEntity.getSourceCode(), subcontractReturnEntity.getCode());
         }
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), subcontractReturnEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(subcontractReturnEntity.getId(), code);
+        return new BaseResultDTO.AddDTO(subcontractReturnEntity.getId(), subcontractReturnEntity.getCode());
     }
 
     /**

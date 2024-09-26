@@ -109,6 +109,13 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     BatchResultDTO disApprove(PoReturnEntity entity,List<PoReturnDetailEntity> detailEntityList);
 
     /**
+     * 根据采购订单获取采购退货记录
+     * @param poIds
+     * @return
+     */
+    List<PoReturnEntity> listByPurchaseOrderIds(List<String> poIds);
+
+    /**
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58

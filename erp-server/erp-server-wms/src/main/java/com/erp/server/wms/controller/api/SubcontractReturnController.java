@@ -46,8 +46,6 @@ public class SubcontractReturnController extends BaseController {
 
     @Resource
     private SubcontractReturnService subcontractReturnService;
-    @Resource
-    private SubcontractReturnDetailService subcontractReturnDetailService;
 
     /**
     * 新增

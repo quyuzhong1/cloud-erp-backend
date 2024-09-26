@@ -431,6 +431,7 @@ public class SubcontractReturnDTO implements Serializable {
 //        @NotBlank(message = "退料类型不能为空")
 //        @Size(max = 32,message = "退料类型最大长度不能超过32位")
         private String type;
+        private String code;
 
         /**
         * 退料日期

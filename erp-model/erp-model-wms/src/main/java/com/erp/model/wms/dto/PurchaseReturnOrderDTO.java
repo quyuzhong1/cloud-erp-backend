@@ -32,6 +32,14 @@ public class PurchaseReturnOrderDTO {
     public static class AddDTO {
 
         /**
+         * 成品采购退货单【日志记录使用】
+         */
+        private String parentReturnCode;
+        /**
+         * 子件委外退料单【日志记录使用】
+         */
+        private String childSubcontractCode;
+        /**
          * 采购订单id
          */
         private String purchaseOrderId;

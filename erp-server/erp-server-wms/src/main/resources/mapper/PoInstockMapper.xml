@@ -106,56 +106,6 @@
         </where>
     </select>
 
-    <select id="listExportExcel" resultType="com.erp.model.wms.dto.PoInstockDTO$ListDTO">
-        select
-            psi.id,
-            psi.code,
-            psid.purchase_order_detail_id AS purchaseOrderDetailId,
-            psi.purchase_order_code AS purchaseOrderCode,
-            psi.supplier_name AS supplierName,
-            psi.approve_status AS approveStatus,
-            psi.invalid_status AS invalidStatus,
-            psid.sku_id AS skuId,
-            psid.sku_no AS skuNo,
-            psi.stock_in_date AS stockInDate,
-            psi.purchase_user_name AS purchaseUserName,
-            psi.stock_in_user_name AS stockInUserName,
-            psi.approve_user_name AS approveUserName,
-            psi.approve_time AS approveTime,
-            psi.create_user_name AS createUserName,
-            psi.create_time AS createTime,
-            psid.purchase_qty AS purchaseQty,
-            psid.stock_in_qty AS stockInQty,
-            psid.exceed_qty AS exceedQty,
-            COALESCE(pod.tax_rate,0) AS taxRate,
-            COALESCE(pod.tax_price,0) AS taxPrice,
-            COALESCE(pod.currency,'CNY') AS currency,
-            COALESCE(pod.currency_symbol,'¥') AS currencySymbol,
-            psi.delivery_warehouse_id AS deliveryWarehouseId,
-            psi.delivery_warehouse_name AS deliveryWarehouseName,
-            psi.purchase_type as purchaseType,
-            psid.remark,
-            psid.warehouse_location AS warehouseLocation
-        from po_instock psi
-        inner join po_instock_detail psid
-        on psi.id = psid.main_id and psid.is_deleted = false
-        left join purchase_order_detail pod
-        on pod.id=psid.purchase_order_detail_id and pod.is_deleted = false
-        where
-        ${params.sqlMap.default}
-        and    psi.is_deleted = false
-                <if test="params.permissionSql != null and params.permissionSql != ''">
-                    ${params.permissionSql}
-                </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        psi.create_time desc
-    </select>
-
     <select id="viewGeneratePurchaseReturnOrder"
             resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$ViewGeneratePurchaseReturnOrderDTO">
         select
