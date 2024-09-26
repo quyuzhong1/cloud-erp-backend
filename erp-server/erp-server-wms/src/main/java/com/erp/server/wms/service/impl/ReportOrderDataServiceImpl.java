@@ -118,7 +118,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         List<ReportOrderDataDTO.ViewDTO> soB2cDetailList = soB2cFeign.listAllVirtualSoB2cDetail();
 
         //要货申请
-        //List<ReportOrderDataDTO.ViewDTO> requisitionApplicationDetailList = requisitionApplicationService.listAllVirtualRequisitionApplicationDetail();
+        List<ReportOrderDataDTO.ViewDTO> requisitionApplicationDetailList = requisitionApplicationService.listAllVirtualRequisitionApplicationDetail();
     }
 
 

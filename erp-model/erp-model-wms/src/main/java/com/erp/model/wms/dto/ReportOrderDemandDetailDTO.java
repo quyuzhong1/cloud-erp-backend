@@ -314,13 +314,19 @@ public class ReportOrderDemandDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewBomQtyDTO {
         /**
-         * skuId
+         * 父级数量信息
          */
-        private String skuId;
+        private ParentQtyDTO parentQtyDTO;
         /**
-         * SKU
+         * bom信息
          */
-        private String skuNo;
+        private List<BomDTO> bomList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ParentQtyDTO {
+
         /**
          * 需求数量
          */
@@ -340,16 +346,6 @@ public class ReportOrderDemandDetailDTO implements Serializable {
          * 锁定数量
          */
         private Integer frozenQty;
-
-        /**
-         * bom信息Json
-         */
-        private JSONArray bomJson;
-
-        /**
-         * bom信息
-         */
-        private List<BomDTO> bomList;
     }
 
     @Data
@@ -369,6 +365,11 @@ public class ReportOrderDemandDetailDTO implements Serializable {
          * 用量
          */
         private Integer quantity;
+
+        /**
+         * 需求数量
+         */
+        private Integer qty;
     }
 
 }

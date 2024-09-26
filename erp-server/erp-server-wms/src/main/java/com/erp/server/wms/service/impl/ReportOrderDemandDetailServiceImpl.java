@@ -13,6 +13,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
@@ -70,16 +71,52 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
 
     @Override
     public ReportOrderDemandDetailDTO.ViewBomQtyDTO viewBomQty(String id) {
+        ReportOrderDemandDetailDTO.ViewBomQtyDTO  viewBomQtyDTO = new ReportOrderDemandDetailDTO.ViewBomQtyDTO();
+        //查询数据
         ReportOrderDemandDetailEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("订单需求明细未找到");
         }
-        ReportOrderDemandDetailDTO.ViewBomQtyDTO  viewBomQtyDTO= BeanUtil.toBean(entity,ReportOrderDemandDetailDTO.ViewBomQtyDTO.class);
-        if (ObjectUtil.isNotEmpty(viewBomQtyDTO.getBomJson())) {
-            List<ReportOrderDemandDetailDTO.BomDTO> bomList = BeanUtil.copyToList(viewBomQtyDTO.getBomJson(), ReportOrderDemandDetailDTO.BomDTO.class);
-            viewBomQtyDTO.setBomList(bomList);
+        List<ReportOrderDemandDetailEntity> reportOrderDemandDetailList = listBySourceDetailId(entity.getSourceDetailId());
+        if (CollectionUtil.isEmpty(reportOrderDemandDetailList)) {
+            throw new ServiceException("订单需求明细未找到");
         }
+
+        //用量初始化
+        Integer quantity = MathUtil.ONE;
+        //bom子级需求量
+        if (entity.getIsSplit() && ObjectUtil.isNotEmpty(entity.getBomJson())) {
+            List<ReportOrderDemandDetailDTO.BomDTO> bomList = BeanUtil.copyToList(entity.getBomJson(), ReportOrderDemandDetailDTO.BomDTO.class);
+           for (ReportOrderDemandDetailDTO.BomDTO bomDTO : bomList) {
+               ReportOrderDemandDetailEntity reportOrderDemandDetailEntity = reportOrderDemandDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomDTO.getChildSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(reportOrderDemandDetailEntity)) {
+                    throw new ServiceException(StrUtil.format("销售订单【{}】、SKU【{}】未找到",entity.getSourceCode(),bomDTO.getChildSkuNo()));
+                }
+               bomDTO.setQty(reportOrderDemandDetailEntity.getQty());
+           }
+           viewBomQtyDTO.setBomList(bomList);
+           //本条数据子级SKU用量
+           quantity = bomList.stream().filter(obj -> StrUtil.equals(obj.getChildSkuId(), entity.getSkuId())).map(ReportOrderDemandDetailDTO.BomDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
+        }
+        //父级需求量
+        ReportOrderDemandDetailDTO.ParentQtyDTO parentQtyDTO = new ReportOrderDemandDetailDTO.ParentQtyDTO();
+        parentQtyDTO.setQty(entity.getQty() / quantity);
+        parentQtyDTO.setOrderQty(entity.getOrderQty() / quantity);
+        parentQtyDTO.setDeliveryNoticeQty(entity.getDeliveryNoticeQty() / quantity);
+        parentQtyDTO.setFrozenQty(entity.getFrozenQty() / quantity);
         return viewBomQtyDTO;
+    }
+
+    /**
+     * 根据来源明细id查询
+     * @author will
+     * @date 2024/9/26 16:17
+     * @param sourceDetailId
+     * @return List<ReportOrderDemandDetailEntity>
+     */
+    private List<ReportOrderDemandDetailEntity> listBySourceDetailId(String sourceDetailId) {
+       return lambdaQuery().eq(ReportOrderDemandDetailEntity::getSourceDetailId,sourceDetailId)
+                .list();
     }
 
     /**

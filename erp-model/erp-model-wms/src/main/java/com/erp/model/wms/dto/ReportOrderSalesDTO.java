@@ -43,6 +43,11 @@ public class ReportOrderSalesDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         /**
+         * 是否去除0库存
+         */
+        private Boolean isDeleteZeroInventory;
+
+        /**
          * 仅看预警
          */
         private Boolean isWarn;

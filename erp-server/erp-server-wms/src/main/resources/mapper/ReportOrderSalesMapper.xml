@@ -58,6 +58,15 @@
         <where>
             ${params.sqlMap.default}
             and ros.is_deleted = false
+            <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory">
+                and  ros.thirty_days_sales_qty = 0
+            </if>
+            <if test="params.isWarn != null and params.isWarn">
+                and  ros.is_warn = true
+            </if>
+            <if test="params.isVirtualScarce != null and params.isVirtualScarce">
+                and  ros.is_virtual_scarce = true
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
