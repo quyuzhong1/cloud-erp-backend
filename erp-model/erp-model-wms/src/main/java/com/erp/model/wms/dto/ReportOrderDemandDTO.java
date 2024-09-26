@@ -58,14 +58,29 @@ public class ReportOrderDemandDTO implements Serializable {
         private String id;
 
         /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+
+        /**
          * 虚拟仓名称
          */
         private String virtualWarehouseName;
 
         /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
          * 实体仓名称
          */
         private String warehouseName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
 
         /**
          * SKU
