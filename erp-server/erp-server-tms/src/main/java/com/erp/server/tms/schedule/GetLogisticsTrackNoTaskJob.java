@@ -1,7 +1,11 @@
 package com.erp.server.tms.schedule;
 
+import cn.hutool.core.util.IdUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -47,6 +51,8 @@ public class GetLogisticsTrackNoTaskJob {
 
     @Resource
     private LogisticsAuthService logisticsAuthService;
+    @Resource
+    private MQProducerService mqProducerService;
 
     @XxlJob("getLogisticsTrackNo")
     public void getLogisticsTrackNo() {
@@ -87,8 +93,11 @@ public class GetLogisticsTrackNoTaskJob {
                     }
                     List<LogisticsBillDTO.TrackDTO> updateList = new ArrayList<>(resultList.size());
                     for (LogisticsOrderResponseVO item : resultList) {
-                        String b2cLogisticsId = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
-                                map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
+                        SoB2cLogisticsDTO.TrackNoDTO trackNoDTO = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).findFirst().orElse(null);
+
+                        String b2cLogisticsId = Objects.nonNull(trackNoDTO) ? trackNoDTO.getId() : "";
+//                                finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
+//                                map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
                         if (StringUtils.isNotBlank(b2cLogisticsId) && StringUtils.isNotBlank(item.getTrackNo())){
                             LogisticsBillDTO.TrackDTO dto = LogisticsBillDTO.TrackDTO.builder()
                                     .transportNo(item.getTransportNo())
@@ -96,7 +105,18 @@ public class GetLogisticsTrackNoTaskJob {
                                     .id(b2cLogisticsId)
                                     .build();
                             updateList.add(dto);
+                            //下单成功发送异步请求保存面单
+                            if (Objects.nonNull(isAliExpress) && isAliExpress){
+                                LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
+                                waybillDTO.setChannelId(trackNoDTO.getLogisticsChannelId());
+                                waybillDTO.setB2cSoId(trackNoDTO.getSoB2cId());
+                                waybillDTO.setDeliveryNo(trackNoDTO.getSoCode());
+                                waybillDTO.setShopId(trackNoDTO.getShopId());
+                                waybillDTO.setTransportNo(trackNoDTO.getTransportNo());
+                                mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
+                            }
                         }
+
                     }
                     if (CollectionUtils.isNotEmpty(updateList)) {
                         soB2cFeign.updateTrackNoByTransportNo(updateList);
