@@ -103,20 +103,8 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.*;
-import com.erp.rpc.wms.feign.AliexpressDeliveryFeign;
-import com.erp.rpc.wms.feign.CfgRuleOutFeign;
 import com.erp.rpc.wms.feign.CfgSettingFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.OverseasProviderFeign;
-import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
-import com.erp.rpc.wms.feign.SoB2cDeliveryInterceptFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.ThirdWarehouseFeign;
-import com.erp.rpc.wms.feign.VirtualInventoryFeign;
-import com.erp.rpc.wms.feign.WarehouseLocationFeign;
-import com.erp.rpc.wms.feign.WarehouseMappingFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
@@ -6973,6 +6961,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         fillProductSalesList(page.getRecords(), diffDays);
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail() {
+        return null;
     }
 
     @Override

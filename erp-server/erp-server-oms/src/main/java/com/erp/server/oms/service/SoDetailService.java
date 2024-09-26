@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -344,4 +345,11 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param soParamList
      */
     void updateFrozenQty(List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList);
+    /**
+     * 查询所有虚拟仓B2B销售订单数据
+     * @author will
+     * @date 2024/9/26 16:58
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
 }

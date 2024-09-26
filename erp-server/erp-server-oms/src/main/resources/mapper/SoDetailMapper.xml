@@ -209,4 +209,19 @@
         </if>
         GROUP BY tt."type"
     </select>
+
+    <!-- 查询所有虚拟仓B2B销售订单数据 -->
+    <select id="listAllVirtualSoDetail" resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO">
+        select
+            si.warehouse_id,
+            si.virtual_warehouse_id,
+            sd.sku_id,
+            sd.qty,
+            si.approve_status
+        from so_info si
+        left join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        <where>
+            si.is_deleted = false si.virtual_warehouse_id != ''
+        </where>
+    </select>
 </mapper>

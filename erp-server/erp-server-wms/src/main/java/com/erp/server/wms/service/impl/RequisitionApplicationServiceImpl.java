@@ -1463,6 +1463,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     }
 
+    @Override
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail() {
+        return null;
+    }
+
     /**
      * 处理申请单
      */

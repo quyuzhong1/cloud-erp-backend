@@ -17,6 +17,7 @@ import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.server.oms.service.*;
@@ -836,5 +837,16 @@ public class SoB2cFeignController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 查询所有虚拟仓B2C销售订单数据
+     * @author will
+     * @date 2024/9/26 17:10
+     * @return List<ViewDTO>
+     */
+    @GetMapping("/listAllVirtualSoB2cDetail")
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail(){
+        return soB2cService.listAllVirtualSoB2cDetail();
     }
 }

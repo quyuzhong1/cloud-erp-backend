@@ -631,10 +631,11 @@ public interface SoB2cFeign {
     @PostMapping("/feign/soB2c/cancelLogistic")
     ApiResult<List<BatchResultDTO>> cancelLogistic(@RequestBody BaseIdsDTO.IdsDTO idDTO);
     /**
-     * 查询所有虚拟仓B2C`销售订单数据
+     * 查询所有虚拟仓B2C销售订单数据
      * @author will
      * @date 2024/9/26 14:47
      * @return List<ViewDTO>
      */
+    @GetMapping("feign/soB2c/listAllVirtualSoB2cDetail")
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
 }

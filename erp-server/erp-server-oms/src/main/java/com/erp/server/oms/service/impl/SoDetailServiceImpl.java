@@ -1728,6 +1728,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         this.updateBatchById(soDetailEntityList);
     }
 
+    @Override
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail() {
+        return baseMapper.listAllVirtualSoDetail();
+    }
+
     /**
      * 锁定库存
      * @author will
