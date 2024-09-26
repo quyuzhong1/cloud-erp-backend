@@ -6023,7 +6023,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             msgSb.append(StrUtil.format(" 冻结状态为{}，",interceptUpdateOrderDTO.getIsFrozen()?"已冻结":"未冻结"));
         }
         if(interceptUpdateOrderDTO.getIsIntercept()!=null){
-            msgSb.append(StrUtil.format(" 拦截状态为{}，",interceptUpdateOrderDTO.getIsIntercept()?"拦截成功":"取消拦截（拦截失败）"));
+            msgSb.append(StrUtil.format(" 拦截状态为{}，",interceptUpdateOrderDTO.getIsIntercept()?"打标拦截":"取消拦截标记"));
         }
         if(StringUtils.isNotBlank(interceptUpdateOrderDTO.getApproveStatus())){
             msgSb.append(StrUtil.format(" 审核状态为{}，", EnumMessage.getNameByCode(ApproveStatusEnum.class,interceptUpdateOrderDTO.getApproveStatus())));
