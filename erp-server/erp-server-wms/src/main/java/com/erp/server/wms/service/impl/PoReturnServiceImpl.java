@@ -885,11 +885,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //采购退货子单列表
         List<PurchaseReturnOrderDTO.AddDTO> returnAddDTOList = new ArrayList<>();
         //根据子件采购订单构建 委外退料记录
-        List<BaseResultDTO.AddDTO> addDTOList = new ArrayList<>();
         List<SubcontractReturnDTO.AddDTO> addDTOS = new ArrayList<>();
         List<PoReturnEntity> poReturnEntityList = new ArrayList<>();
         for (PurchaseOrderEntity orderEntity : childPurchaseOrderEntity){
-            SubcontractReturnDTO.AddDTO addDTO = new SubcontractReturnDTO.AddDTO();
             String subcontractType = orderEntity.getSubcontractType();
             //排除非子件采购订单数据
             if (!SubcontractTypeEnum.ENUM_CHILD.getCode().equals(subcontractType)){
@@ -915,14 +913,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 throw new ServiceException(StrUtil.format("自动生成委外退料-采购订单【{}】关联供应商记录为空"));
             }
             //构建委外退料单
-            buildSubcontractReturnAddDTO(addDTO,entity,poReturnDetailList,orderEntity,subcontractOrderEntity,purchaseOrderSupplierEntity,detailEntityList,subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailEntityList);
+            SubcontractReturnDTO.AddDTO addDTO = buildSubcontractReturnAddDTO(entity,poReturnDetailList,orderEntity,subcontractOrderEntity,purchaseOrderSupplierEntity,detailEntityList,subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailEntityList);
             addDTOS.add(addDTO);
             //构建采购退货单
             PurchaseReturnOrderDTO.AddDTO addDTO1 = buildPoReturnAddDTO(entity, poReturnDetailList, orderEntity, subcontractOrderEntity, purchaseOrderSupplierEntity, detailEntityList, subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailEntityList);
             returnAddDTOList.add(addDTO1);
         }
         //创建了委外退料记录
-        if (CollectionUtils.isNotEmpty(addDTOList)){
+        if (CollectionUtils.isNotEmpty(addDTOS)){
             for (SubcontractReturnDTO.AddDTO addDTO : addDTOS){
                 BaseResultDTO.AddDTO add = subcontractReturnService.add(addDTO);
                 String id = add.getId();
@@ -1046,7 +1044,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
      * @param bomList
      * @param parentSubcontractOrderDetailEntityList
      */
-    private void buildSubcontractReturnAddDTO(SubcontractReturnDTO.AddDTO addDTO, PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList, PurchaseOrderEntity orderEntity, SubcontractOrderEntity subcontractOrderEntity, PurchaseOrderSupplierEntity purchaseOrderSupplierEntity, List<PurchaseOrderDetailEntity> detailEntityList, List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList1, List<BomChildrenSkuDTO> bomList, List<SubcontractOrderDetailEntity> parentSubcontractOrderDetailEntityList) {
+    private SubcontractReturnDTO.AddDTO buildSubcontractReturnAddDTO(PoReturnEntity entity, List<PoReturnDetailEntity> poReturnDetailList, PurchaseOrderEntity orderEntity, SubcontractOrderEntity subcontractOrderEntity, PurchaseOrderSupplierEntity purchaseOrderSupplierEntity, List<PurchaseOrderDetailEntity> detailEntityList, List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList1, List<BomChildrenSkuDTO> bomList, List<SubcontractOrderDetailEntity> parentSubcontractOrderDetailEntityList) {
+        SubcontractReturnDTO.AddDTO addDTO = new SubcontractReturnDTO.AddDTO();
         addDTO.setBillDate(LocalDate.now());
         addDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
         addDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
@@ -1099,6 +1098,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             detailList.add(addDTO1);
         }
         addDTO.setDetailList(detailList);
+        return addDTO;
     }
 
     /**
