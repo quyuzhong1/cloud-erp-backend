@@ -7,10 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -91,6 +88,7 @@ public class WmsCartonDTO {
          */
         @Valid
         @Size(min = 1, message = "调整装箱后，装箱数量不能为0")
+        @NotEmpty(message = "装箱明细不能为空")
         private List<AdjustDetailDTO> cartonDetailList;
     }
     @Data
