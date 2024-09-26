@@ -502,6 +502,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         List<FirstMileSkuCostAllocationEntity> firstMileSkuCostAllocationEntityList = new ArrayList<>(firstMileDeliveryDetailEntityList.size());
         //遍历计算sku分摊
         for (FirstMileDeliveryDetailEntity deliveryDetailEntity : firstMileDeliveryDetailEntityList) {
+            //上期账单是实际账单 并且对应sku所有费用分类的期末在途费用为0则不进行费用分摊
+            BatchResultDTO batchResultDTO2 = checkCostAllocationBySku(voList, entity.getReportPeriodMonth(), entity.getReconciliationMonth(),deliveryDetailEntity);
+            if (!batchResultDTO2.getSuccess()) {
+                //为创建主表记录之前都可以返回异常消息，否则就要抛出异常回退
+                continue;
+            }
             //查询是否存在发货单其他费用分摊账期
             FirstMileCostAllocationDTO.PagingVO oldAllocation = voList.stream().filter(e -> Objects.nonNull(e)
                             && StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(deliveryDetailEntity.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
@@ -612,6 +618,40 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //新增费用分摊主表  新增费用sku记录
         buildSkuAllocationDetail(entity, firstMileSkuCostAllocationEntityList, firstMileEstimatedBillEntity, reconciliationDetailEntity, allocationSettingDTO, weightAllocationEntityList, voList, initFirstMileAllocationDetailEntityList, receiveDTOS);
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), StrUtil.format("核算月份【{}】对账月份【{}】费用分摊成功", reportPeriodMonth.getMonth(), entity.getReconciliationMonth()));
+    }
+
+    /***
+     * 根据sku确定历史分摊数据是否已分摊完成
+     * @param voList
+     * @param reportPeriodMonth
+     * @param reconciliationMonth
+     * @param deliveryDetailEntity
+     * @return
+     */
+    private BatchResultDTO checkCostAllocationBySku(List<FirstMileCostAllocationDTO.PagingVO> voList, LocalDate reportPeriodMonth, LocalDate reconciliationMonth, FirstMileDeliveryDetailEntity deliveryDetailEntity) {
+        if (CollectionUtils.isEmpty(voList) || Objects.isNull(reportPeriodMonth) || Objects.isNull(reconciliationMonth) || StrUtil.isBlank(deliveryDetailEntity.getSkuId()) || StrUtil.isBlank(deliveryDetailEntity.getPlatformSkuNo())) {
+            return BatchResultDTO.success();
+        }
+        //获取发货单所有分摊记录(本核算之前的记录)
+        List<FirstMileCostAllocationDTO.PagingVO> beforeList = voList.stream().filter(e -> Objects.nonNull(e)
+                        && Objects.nonNull(e.getReportPeriodMonth()) && e.getReportPeriodMonth().isBefore(reportPeriodMonth)
+                        && StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
+                        && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo()))
+                .collect(Collectors.toList());
+        //存在对账单月份则获取对账前一个对账月份的分摊记录，不存在对账月份，则获取核算月份之前的记录(实际账单)
+        FirstMileCostAllocationDTO.PagingVO beforeVO = beforeList.stream().filter(e -> Objects.equals(e.getReconciliationMonth(), reconciliationMonth)).max(Comparator.comparing(FirstMileCostAllocationDTO.PagingVO::getReportPeriodMonth)).orElse(null);
+        if (Objects.nonNull(beforeVO) && ReconciliationBillTypeEnum.ACTUAL.getCode().equals(beforeVO.getBillSourceType())) {
+            //查询对应核算月份期末在途数据是否为0
+            List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList = firstMileSkuCostAllocationDetailService.listByMainIds(Collections.singletonList(beforeVO.getId()));
+            BigDecimal endPeriodTransitCost = skuCostAllocationDetailEntityList.stream().filter(e -> Objects.nonNull(e)
+                    && StrUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
+                    && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo()))
+                    .map(FirstMileSkuCostAllocationDetailEntity::getEndPeriodTransitCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (BigDecimal.ZERO.compareTo(endPeriodTransitCost) == 0) {
+                return BatchResultDTO.fail(beforeVO.getId(), beforeVO.getSourceCode(), "上期为实际账单，且期末在途费用为0，不进行下期费用分摊");
+            }
+        }
+        return BatchResultDTO.success();
     }
 
     /**
@@ -884,7 +924,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
              * 3.有实际账单：取值为0
              */
             if (ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(skuCostAllocationEntity.getBillSourceType())) {
-                detailEntity.setEndPeriodEstimatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(asCurrentMonthReceiveQty + initReceiveQty), 2));
+                if (receiveQty <= deliveryQty) {
+                    detailEntity.setEndPeriodEstimatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(receiveQty), 2));
+                }else {
+                    detailEntity.setEndPeriodEstimatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(deliveryQty), 2));
+                }
             } else {
                 detailEntity.setEndPeriodEstimatedCost(BigDecimal.ZERO);
             }
