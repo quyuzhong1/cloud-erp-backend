@@ -12,6 +12,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -81,7 +82,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
      * 计算分时段销量预估
      *
      * @param replenishmentResult 参数
-     * @param basicCalcDate 计算日期
+     * @param basicCalcDate       计算日期
      */
     private void calculationTimePeriodSalesEstimates(ReplenishmentResultDTO replenishmentResult, LocalDate basicCalcDate) {
         List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = replenishmentResult.getSalesEstimates();
@@ -96,32 +97,42 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         timePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(STOCKING_DATE, stockingSales));
         avgTimePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(STOCKING_DATE,
-                stockingSales.divide(BigDecimal.valueOf(replenishmentResult.getReplenishmentDetail().getStockUpDefaultDays()), 2 , RoundingMode.HALF_UP)));
+                stockingSales.divide(BigDecimal.valueOf(replenishmentResult.getReplenishmentDetail().getStockUpDefaultDays()), 2, RoundingMode.HALF_UP)));
         // 计算当前月
-        getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, basicCalcDate, basicCalcDate, CURRENT_MONTH);
+        getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, basicCalcDate, basicCalcDate.with(TemporalAdjusters.lastDayOfMonth()), CURRENT_MONTH);
         // 计算下月
         // 获取下个月的第一天
         LocalDate firstDayOfNextMonth = basicCalcDate.plusMonths(1).withDayOfMonth(1);
         // 获取下个月的最后一天
-        getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, firstDayOfNextMonth, firstDayOfNextMonth, NEXT_MONTH);
+        getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, firstDayOfNextMonth, firstDayOfNextMonth.with(TemporalAdjusters.lastDayOfMonth()), NEXT_MONTH);
         //计算下下月
         // 获取下下个月的第一天
         LocalDate firstDayOfFollowingMonth = basicCalcDate.plusMonths(2).withDayOfMonth(1);
-        // 获取下下个月的最后一天
-        getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, firstDayOfNextMonth, firstDayOfFollowingMonth, FOLLOWING_MONTH);
+        getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, firstDayOfFollowingMonth, firstDayOfFollowingMonth.with(TemporalAdjusters.lastDayOfMonth()), FOLLOWING_MONTH);
         replenishmentResult.setTimePeriodSalesEstimates(timePeriodSalesEstimates);
         replenishmentResult.setAvgTimePeriodSalesEstimates(avgTimePeriodSalesEstimates);
     }
 
 
-    private void getSalesByTime(List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates, List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> timePeriodSalesEstimates, List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates, LocalDate firstDayOfNextMonth, LocalDate firstDayOfFollowingMonth, RecentTimePeriodEnum recentTimePeriodEnum) {
-        LocalDate lastDayOfFollowingMonth = firstDayOfNextMonth.withDayOfMonth(firstDayOfNextMonth.lengthOfMonth());
+    /**
+     * 分时段销量
+     *
+     * @param salesEstimates              销量预估
+     * @param timePeriodSalesEstimates    分时段预估销量
+     * @param avgTimePeriodSalesEstimates 分时段预估日销量
+     * @param startDate                   开始时间
+     * @param endDate                     结束时间
+     * @param recentTimePeriodEnum        枚举
+     */
+    private void getSalesByTime(List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates, List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> timePeriodSalesEstimates,
+                                List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates, LocalDate startDate,
+                                LocalDate endDate, RecentTimePeriodEnum recentTimePeriodEnum) {
         BigDecimal followingSales = salesEstimates.stream()
-                .filter(v -> !firstDayOfFollowingMonth.isAfter(v.getDate()) && !lastDayOfFollowingMonth.isBefore(v.getDate()))
+                .filter(v -> !startDate.isAfter(v.getDate()) && !endDate.isBefore(v.getDate()))
                 .map(ReplenishmentResultDTO.SalesEstimateDTO::getSalesQty)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         timePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(recentTimePeriodEnum, followingSales));
-        avgTimePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(recentTimePeriodEnum, followingSales.divide(BigDecimal.valueOf( ChronoUnit.DAYS.between(firstDayOfFollowingMonth, lastDayOfFollowingMonth)), 2 , RoundingMode.HALF_UP)));
+        avgTimePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(recentTimePeriodEnum, followingSales.divide(BigDecimal.valueOf(ChronoUnit.DAYS.between(startDate, endDate)), 2, RoundingMode.HALF_UP)));
     }
 
     /**
@@ -151,23 +162,23 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
 
         List<SalesForecastCalculatorDTO> salesDataList = new ArrayList<>();
         // 3天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 3), MathUtil.valueOf(dto.getThreeDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP) , getIsExcluded(salesInfos, basicCalcDate, 3)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 3), MathUtil.valueOf(dto.getThreeDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 3)));
         // 7天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 7),  MathUtil.valueOf(dto.getSevenDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 7)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 7), MathUtil.valueOf(dto.getSevenDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 7)));
         // 14天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 14),  MathUtil.valueOf(dto.getFourteenDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 14)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 14), MathUtil.valueOf(dto.getFourteenDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 14)));
         // 30天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 30),  MathUtil.valueOf(dto.getThirtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 30)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 30), MathUtil.valueOf(dto.getThirtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 30)));
         // 60天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 60),  MathUtil.valueOf(dto.getSixtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 60)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 60), MathUtil.valueOf(dto.getSixtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 60)));
         // 90天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 90),  MathUtil.valueOf(dto.getNinetyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 90)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 90), MathUtil.valueOf(dto.getNinetyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 90)));
         // 180天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 180),  MathUtil.valueOf(dto.getOneHundredEightyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 180)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 180), MathUtil.valueOf(dto.getOneHundredEightyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 180)));
         // 270天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 270),  MathUtil.valueOf(dto.getTwoHundredSeventyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 270)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 270), MathUtil.valueOf(dto.getTwoHundredSeventyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 270)));
         // 360天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 360),  MathUtil.valueOf(dto.getThreeHundredSixtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 360)));
+        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, basicCalcDate, 360), MathUtil.valueOf(dto.getThreeHundredSixtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, basicCalcDate, 360)));
         // 计算预估日销量
         return SalesForecastCalculatorDTO.calculateForecastedSales(salesDataList);
     }
