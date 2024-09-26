@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 公共配置（规则设置），库存，建议
@@ -61,8 +62,8 @@ public class CfgRuleCommonController extends BaseController {
      * 获取备注描述
      */
     @GetMapping("/description")
-    public ApiResult<List<CfgRuleCommonDTO.DescriptionDTO>> description(@RequestParam("platformType") String platformType) {
-        List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = cfgRuleCommonService.description(platformType);
+    public ApiResult<Map<String, CfgRuleCommonDTO.DescriptionDTO>> description(@RequestParam("platformType") String platformType) {
+        Map<String, CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = cfgRuleCommonService.description(platformType);
         return success(descriptionDTOS);
     }
 }

@@ -4,6 +4,7 @@ import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.entity.CfgRuleCommonEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -46,5 +47,5 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
      * 获取描述
      * @param platformType 平台类型
      */
-    List<CfgRuleCommonDTO.DescriptionDTO> description(String platformType);
+    Map<String, CfgRuleCommonDTO.DescriptionDTO> description(String platformType);
 }

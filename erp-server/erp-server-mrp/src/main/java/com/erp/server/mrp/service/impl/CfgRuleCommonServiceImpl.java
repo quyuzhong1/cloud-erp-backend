@@ -134,9 +134,15 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     }
 
     @Override
-    public List<CfgRuleCommonDTO.DescriptionDTO> description(String platformType) {
+    public Map<String, CfgRuleCommonDTO.DescriptionDTO> description(String platformType) {
         List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
-                .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode()));
+                .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
+                .eq(CfgRuleCommonEntity::getIsDefault, false));
+        if (CollectionUtils.isEmpty(list)) {
+             list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
+                     .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
+                     .eq(CfgRuleCommonEntity::getIsDefault, true));
+        }
         //过滤出value为true的数据
         Map<String, List<CfgRuleCommonEntity>> ruleMap = list.stream()
                 .filter(v -> "true".equals(v.getValue()))
@@ -147,19 +153,16 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
                 .collect(Collectors.groupingBy(CfgRuleCommonEntity::getParentId));
         return list.stream()
                 .filter(v -> parentMap.containsKey(v.getId()))
-                .map(v -> {
+                .collect(Collectors.toMap(CfgRuleCommonEntity::getCode, v -> {
                     CfgRuleCommonDTO.DescriptionDTO dto = new CfgRuleCommonDTO.DescriptionDTO();
-                    dto.setCode(v.getCode());
                     dto.setCodeName(v.getName());
                     List<CfgRuleCommonDTO.DescriptionDTO> dtos = parentMap.get(v.getId()).stream()
                             .map(e -> {
                                 CfgRuleCommonDTO.DescriptionDTO descriptionDTO = new CfgRuleCommonDTO.DescriptionDTO();
-                                descriptionDTO.setCode(e.getCode());
                                 descriptionDTO.setCodeName(e.getName());
                                 List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = ruleMap.get(e.getId())
                                         .stream().map(k -> {
                                             CfgRuleCommonDTO.DescriptionDTO description = new CfgRuleCommonDTO.DescriptionDTO();
-                                            description.setCode(k.getCode());
                                             description.setCodeName(k.getName());
                                             return description;
                                         }).collect(Collectors.toList());
@@ -168,7 +171,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
                             }).collect(Collectors.toList());
                     dto.setDetails(dtos);
                     return dto;
-                }).collect(Collectors.toList());
+                }));
     }
 
 

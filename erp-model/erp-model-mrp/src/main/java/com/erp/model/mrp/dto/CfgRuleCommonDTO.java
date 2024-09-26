@@ -316,8 +316,6 @@ public class CfgRuleCommonDTO implements Serializable {
     @Setter
     public static class DescriptionDTO {
 
-        private String code;
-
         private String codeName;
 
         private List<DescriptionDTO> details;
