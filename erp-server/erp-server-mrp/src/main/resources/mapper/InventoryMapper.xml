@@ -197,7 +197,8 @@
         pad.apply_qty AS qty,
         pad.create_po_type AS createPoType,
         COALESCE(pa.approve_time,pa.create_time) AS estimatedPutAwayDate,
-        pad.id AS detailId
+        pad.id AS detailId,
+        'purchaseApplication' AS sourceType
         FROM
         ${tableName} AS pa
         INNER JOIN ${tableDetailName} AS pad ON pad.is_deleted = FALSE
@@ -241,7 +242,8 @@
         po.create_time AS estimatedPutAwayDate,
         po.approve_status AS status,
         pod.purchase_qty AS qty,
-        po.delivery_warehouse_id AS warehouseId
+        po.delivery_warehouse_id AS warehouseId,
+        'purchaseOrder' AS sourceType
         FROM
         ${tableName} AS po
         INNER JOIN ${tableDetailName} AS pod ON pod.is_deleted = FALSE

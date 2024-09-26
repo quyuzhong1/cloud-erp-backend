@@ -324,7 +324,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
         CfgRuleCommonDTO.StrategyResultDTO localPurchaseOrder = TreeUtils.findByCode(localPurchase, LOCAL_PURCHASE_ORDER.getCode());
         if (!ObjectUtils.isEmpty(localPurchaseOrder) && !CollectionUtils.isEmpty(localPurchaseOrder.getChildrenList())) {
-            List<String> codes = localPurchasePlan.getChildrenList()
+            List<String> codes = localPurchaseOrder.getChildrenList()
                     .stream()
                     .filter(v -> "true".equals(v.getValue()))
                     .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
@@ -335,7 +335,6 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
         for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO detail : detailList) {
-            detail.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
             detail.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
             detail.setEstimatedPutAwayDate(detail.getEstimatedPutAwayDate().plusDays(stockUpResult.getPurchaseApproveDays())
                     .plusDays(stockUpResult.getProductionDays()).plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays())
