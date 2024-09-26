@@ -72,7 +72,7 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         String reportType = extendObj.getString("reportType");
 
         // 获取店铺信息
-        String shopId = dmpCfgInputDetailEntity.getNextLevelId();
+        String shopId = dmpInputTaskEntity.getNextLevelId();
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -189,11 +189,11 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         CreateReportSpecification body = new CreateReportSpecification();
         body.setReportType(reportType);
         body.setMarketplaceIds(marketplaceIdsArray);
-        String startTime = dmpCfgInputDetailEntity.getLastTime().atZone(ZoneId.systemDefault())
+        String startTime = dmpInputTaskEntity.getStartTime().atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneOffset.UTC)
                 .toOffsetDateTime()
                 .toString();
-        String endTime = dmpCfgInputDetailEntity.getNextTime().atZone(ZoneId.systemDefault())
+        String endTime = dmpInputTaskEntity.getEndTime().atZone(ZoneId.systemDefault())
                 .withZoneSameInstant(ZoneOffset.UTC)
                 .toOffsetDateTime()
                 .toString();

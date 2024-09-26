@@ -76,12 +76,10 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
 //            throw new ServiceException(msg);
         }
 
-        // 是否检查当前时间
-        Boolean autoCheckNow = dmpCfgInputEntity.parseExtendAutoCheckNow();
         // 开始时间
-        LocalDateTime startTime = dmpCfgInputDetailEntity.getLastTime();
+        LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
         // 结束时间
-        LocalDateTime endTime = checkAndConvertEntTime(autoCheckNow);
+        LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 
         String rateLimitStr = AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getRateLimit();
         // 根据亚马逊的响应时间记录下次执行开始时间
@@ -151,30 +149,4 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         return json;
     }
 
-    /**
-     * 检查并转换结束时间
-     */
-    public LocalDateTime checkAndConvertEntTime(Boolean autoCheckNow) {
-        LocalDateTime endTime = dmpCfgInputDetailEntity.getNextTime();
-
-        // 正常任务对比当前时间(最大间隙取1个小时)自动补充中断情况
-        if (DmpInputTaskTaskTypeEnum.NORMAL.getCode().equalsIgnoreCase(dmpCfgInputDetailEntity.getTaskType())
-                && null != autoCheckNow
-                && autoCheckNow
-        ) {
-            // 期望的目标时间 = 当前时间-延时时间
-            LocalDateTime targetNow = LocalDateTime.now().minusSeconds(dmpCfgInputDetailEntity.getDealyTime());
-            // 间隔分钟
-            long minutesDifference = Duration.between(targetNow, dmpCfgInputDetailEntity.getNextTime()).toMinutes();
-
-            if (minutesDifference >= 60) {
-                // 间隔时间超过480分钟按480分钟间隔拉取
-                endTime = dmpCfgInputDetailEntity.getNextTime().plusMinutes(60);
-            } else if (minutesDifference > dmpCfgInputDetailEntity.getIntervalTime() * 2) {
-                // 正常任务结束时间超过间隔时间2倍按当时期望时间
-                endTime = targetNow;
-            }
-        }
-        return endTime;
-    }
 }
