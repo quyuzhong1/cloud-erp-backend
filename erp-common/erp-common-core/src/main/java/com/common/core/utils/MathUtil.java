@@ -71,7 +71,7 @@ public class MathUtil {
      * @param val
      * @return
      */
-    public Integer valueOf(Integer val) {
+    public Integer valueOfZero(Integer val) {
         if (val == null) {
             return 0;
         }

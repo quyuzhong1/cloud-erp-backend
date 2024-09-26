@@ -164,7 +164,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         ReportOrderDemandDTO.AddAllocationViewDTO addAllocationViewDTO = new ReportOrderDemandDTO.AddAllocationViewDTO();
         addAllocationViewDTO.setWarehouseId(entity.getWarehouseId());
         addAllocationViewDTO.setWarehouseName(entity.getWarehouseName());
-        Integer unDistributionQty = MathUtil.valueOf(realTotal) - MathUtil.valueOf(virtualRealTotal);
+        Integer unDistributionQty = MathUtil.valueOfZero(realTotal) - MathUtil.valueOfZero(virtualRealTotal);
         addAllocationViewDTO.setUnDistributionQty(unDistributionQty);
         //可分配库存大于0则添加数据
         if (MathUtil.compareTo(unDistributionQty,MathUtil.ZERO) > MathUtil.ZERO) {
