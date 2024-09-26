@@ -10,6 +10,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.entity.CfgRuleCommonEntity;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleCommonMapper;
 import com.erp.server.mrp.service.CfgRuleCommonService;
@@ -22,11 +23,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -134,7 +133,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     }
 
     @Override
-    public Map<String, CfgRuleCommonDTO.DescriptionDTO> description(String platformType) {
+    public Map<String, List<CfgRuleCommonDTO.DescriptionDTO>> description(String platformType) {
         List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
                 .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
                 .eq(CfgRuleCommonEntity::getIsDefault, false));
@@ -143,35 +142,41 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
                      .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
                      .eq(CfgRuleCommonEntity::getIsDefault, true));
         }
-        //过滤出value为true的数据
-        Map<String, List<CfgRuleCommonEntity>> ruleMap = list.stream()
-                .filter(v -> "true".equals(v.getValue()))
-                .collect(Collectors.groupingBy(CfgRuleCommonEntity::getParentId));
-        //过滤id为过滤数据的父id的数据
-        Map<String, List<CfgRuleCommonEntity>> parentMap = list.stream()
-                .filter(v -> ruleMap.containsKey(v.getId()))
-                .collect(Collectors.groupingBy(CfgRuleCommonEntity::getParentId));
-        return list.stream()
-                .filter(v -> parentMap.containsKey(v.getId()))
-                .collect(Collectors.toMap(CfgRuleCommonEntity::getCode, v -> {
-                    CfgRuleCommonDTO.DescriptionDTO dto = new CfgRuleCommonDTO.DescriptionDTO();
-                    dto.setCodeName(v.getName());
-                    List<CfgRuleCommonDTO.DescriptionDTO> dtos = parentMap.get(v.getId()).stream()
-                            .map(e -> {
-                                CfgRuleCommonDTO.DescriptionDTO descriptionDTO = new CfgRuleCommonDTO.DescriptionDTO();
-                                descriptionDTO.setCodeName(e.getName());
-                                List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = ruleMap.get(e.getId())
-                                        .stream().map(k -> {
-                                            CfgRuleCommonDTO.DescriptionDTO description = new CfgRuleCommonDTO.DescriptionDTO();
-                                            description.setCodeName(k.getName());
-                                            return description;
-                                        }).collect(Collectors.toList());
-                                descriptionDTO.setDetails(descriptionDTOS);
-                                return descriptionDTO;
-                            }).collect(Collectors.toList());
-                    dto.setDetails(dtos);
-                    return dto;
-                }));
+        List<String> parentNodes = CfgRuleInventoryNodeEnum.getNodes();
+        Map<String, List<CfgRuleCommonDTO.DescriptionDTO>> map = new HashMap<>();
+        for (String node : parentNodes) {
+            CfgRuleCommonEntity entity = list.stream()
+                    .filter(v -> v.getCode().equals(node))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            List<CfgRuleCommonEntity> collect = list.stream()
+                    .filter(v -> v.getParentId().equals(entity.getId()))
+                    .collect(Collectors.toList());
+            List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = new ArrayList<>();
+            if (CfgRuleInventoryNodeEnum.getParentNodes().contains(node)) {
+                for (CfgRuleCommonEntity common : collect) {
+                    List<CfgRuleCommonDTO.DescriptionDTO> dtos = list.stream()
+                            .filter(v -> v.getParentId().equals(common.getId()))
+                            .filter(e -> "true".equals(e.getValue()))
+                            .map(e -> new CfgRuleCommonDTO.DescriptionDTO(e.getName()))
+                            .collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(dtos)) {
+                        descriptionDTOS.add(new CfgRuleCommonDTO.DescriptionDTO(common.getName(), dtos));
+                    }
+                }
+            }else {
+                descriptionDTOS = collect.stream()
+                        .filter(e -> "true".equals(e.getValue()))
+                        .map(e -> new CfgRuleCommonDTO.DescriptionDTO(e.getName()))
+                        .collect(Collectors.toList());
+            }
+            map.put(node, descriptionDTOS);
+        }
+
+        return map;
     }
 
 

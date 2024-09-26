@@ -47,5 +47,5 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
      * 获取描述
      * @param platformType 平台类型
      */
-    Map<String, CfgRuleCommonDTO.DescriptionDTO> description(String platformType);
+    Map<String, List<CfgRuleCommonDTO.DescriptionDTO>> description(String platformType);
 }

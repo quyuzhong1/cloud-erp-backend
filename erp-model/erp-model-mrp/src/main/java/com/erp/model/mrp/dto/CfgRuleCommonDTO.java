@@ -314,11 +314,17 @@ public class CfgRuleCommonDTO implements Serializable {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class DescriptionDTO {
 
         private String codeName;
 
         private List<DescriptionDTO> details;
+
+        public DescriptionDTO(String codeName) {
+            this.codeName = codeName;
+        }
 
     }
 }
