@@ -1,12 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.lang.Pair;
-import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.lang.Pair;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -19,23 +16,22 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.mapper.WarehouseLocationReplenishMapper;
 import com.erp.server.wms.service.*;
-import io.seata.spring.boot.autoconfigure.properties.SagaAsyncThreadPoolProperties;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +66,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private TransactionFlowService transactionFlowService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private InventoryMapper inventoryMapper;
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> paging(PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO) {
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
@@ -330,6 +328,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .eq("dict_inventory_status", "usable")
                     .eq("is_deleted", false)
             );
+            if(inventoryEntity == null){
+                return BatchResultDTO.fail(dto.getSkuId(), dto.getSkuNo(), "没有找到仓位即时库存");
+            }
             //有设置补货上限量时：等于补货上限量-当前可用库存
             if(safetyInventoryEntity.getMaxQty() != 0){
                 suggestQty = safetyInventoryEntity.getMaxQty() - inventoryEntity.getQty();
@@ -601,5 +602,88 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                     .in("id", waitHandleIds));
         }
         return new PagingVO<>(viewList, (int) entityList.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+
+    @Override
+    public List<BatchResultDTO> generateReplenishBill(){
+//        this.generateReplenishBillOld();
+        return this.generateReplenishBillNew();
+    }
+
+    public List<BatchResultDTO> generateReplenishBillNew() {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        List<WarehouseLocationReplenishDTO.AddDTO> replenishBillList = this.baseMapper.generateReplenishBill();
+        if(CollectionUtils.isNotEmpty(replenishBillList)){
+            for (WarehouseLocationReplenishDTO.AddDTO entity : replenishBillList) {
+                entity.setSourceType(ReplenishTypeEnum.SAFETY_INVENTORY);
+                try{
+                    resultDTOS.add(this.add(entity));
+                }catch (Exception e){
+                    log.error("新增补货单失败",e);
+                    resultDTOS.add(BatchResultDTO.fail(entity.getSkuId(), entity.getSkuNo(), e.getMessage()));
+                }
+            }
+        }
+        return resultDTOS;
+    }
+
+    public void generateReplenishBillOld() {
+        List<WarehouseLocationSafetyInventoryEntity> list = safetyInventoryService.lambdaQuery().list();
+
+        //即时库存数据
+        List<String> warehouseIds = list.stream().map(item -> item.getWarehouseId()).distinct().collect(Collectors.toList());
+        List<String> skuIds = list.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
+        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(new InventoryDTO.SearchParamDTO(), null, null);
+
+        Map<String, InventoryDTO.PagingViewDTO> inventoryMap = inventoryList.stream()
+                .collect(Collectors.toMap(item1 -> item1.getWarehouseId() + "#" + item1.getWarehouseLocation() + "#" + item1.getSkuId(), item2 -> item2, (o1, o2) -> o2));
+        List<WarehouseLocationDTO.MappingDTO> locationMappingList = new ArrayList<>();
+        for (String warehouseId : warehouseIds) {
+            List<WarehouseLocationDTO.MappingDTO> mappingDTOS = warehouseLocationService.listArea2LocationMapping(warehouseId);
+            locationMappingList.addAll(mappingDTOS);
+        }
+        //遍历仓位安全库存
+        for (WarehouseLocationSafetyInventoryEntity entity : list) {
+            String warehouseId = entity.getWarehouseId();
+            String warehouseLocation = entity.getWarehouseLocation();
+            String skuId = entity.getSkuId();
+            String skuNo = entity.getSkuNo();
+            InventoryDTO.PagingViewDTO inventory = inventoryMap.get(warehouseId + "#" + warehouseLocation + "#" + skuId);
+            if(inventory == null){
+                continue;
+            }
+
+            if(inventory.getUsableQty() < entity.getSafetyQty()){
+                WarehouseLocationReplenishDTO.AddDTO dto = new WarehouseLocationReplenishDTO.AddDTO();
+                dto.setWarehouseId(warehouseId);
+                dto.setWarehouseLocation(warehouseLocation);
+                dto.setSkuId(skuId);
+                WarehouseLocationDTO.MappingDTO mappingDTO = locationMappingList.stream()
+                        .filter(item -> item.getWarehouseId().equalsIgnoreCase(warehouseId)
+                                && item.getLocationCode().equalsIgnoreCase(warehouseLocation)).findFirst().get();
+                dto.setWarehouseArea(mappingDTO.getAreaCode());
+                dto.setSourceType(ReplenishTypeEnum.SAFETY_INVENTORY);
+                dto.setSkuNo(skuNo);
+                int qty = 0;
+                if(entity.getSafetyQty() == null || entity.getSafetyQty() == 0){
+                    //没有设置补货触发量时，不参与补货计算
+                    continue;
+                }
+                if(entity.getMaxQty() != null && entity.getMaxQty() != 0){
+                    //有设置补货上限量时：等于补货上限量-当前可用库存
+                    qty = entity.getMaxQty() - inventory.getUsableQty();
+                }
+                if(entity.getMaxQty() != null && entity.getMaxQty() == 0){
+                    //没有设置补货上限量时：等于安全库存-当前可用库存
+                    qty = entity.getSafetyQty() - inventory.getUsableQty();
+                }
+                if(inventory.getUsableQty() >= entity.getSafetyQty()){
+                    continue;
+                }
+                dto.setQty(qty);
+                this.add(dto);
+            }
+        }
     }
 }
