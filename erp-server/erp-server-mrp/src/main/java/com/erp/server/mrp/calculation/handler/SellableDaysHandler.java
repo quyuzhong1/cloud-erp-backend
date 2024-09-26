@@ -67,11 +67,11 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
         for (CfgRuleCommonDTO.StrategyResultDTO dto : localResult.getChildrenList()) {
             if ("true".equals(dto.getValue())) {
                 if (CfgRuleInventoryNodeEnum.TOTAL_LOCAL_USABLE.getCode().equals(dto.getCode())) {
-                    totalLocalQty += ObjectUtils.isEmpty(detail.getOverseasUsableQty()) ? 0 : detail.getOverseasUsableQty();
+                    totalLocalQty += ObjectUtils.isEmpty(detail.getLocalUsableQty()) ? 0 : detail.getLocalUsableQty();
                 }else if (CfgRuleInventoryNodeEnum.TOTAL_LOCAL_IN_TRANSIT.getCode().equals(dto.getCode())) {
-                    totalLocalQty += ObjectUtils.isEmpty(detail.getOverseasInTransitQty()) ? 0 : detail.getOverseasUsableQty();
+                    totalLocalQty += ObjectUtils.isEmpty(detail.getLocalInTransitQty()) ? 0 : detail.getLocalInTransitQty();
                 }else  if (CfgRuleInventoryNodeEnum.TOTAL_LOCAL_ESTIMATED_DELIVERY.getCode().equals(dto.getCode())) {
-                    totalLocalQty += ObjectUtils.isEmpty(detail.getOverseasPlanDeliveryQty()) ? 0 : detail.getOverseasUsableQty();
+                    totalLocalQty += ObjectUtils.isEmpty(detail.getLocalPlanPurchaseQty()) ? 0 : detail.getLocalPlanPurchaseQty();
                 }
             }
         }
