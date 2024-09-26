@@ -113,61 +113,6 @@
         AND pro.purchase_order_id = #{purchaseOrderId}
     </select>
 
-    <select id="listExport" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$PagingViewDTO">
-        SELECT
-        pro.id,
-        pro.code,
-        pro.purchase_order_code AS purchaseOrderCode,
-        pro.supplier_name AS supplierName,
-        pro.approve_status AS approveStatus,
-        pro.invalid_status AS invalidStatus,
-        prod.sku_id AS skuId,
-        prod.sku_no AS skuNo,
-        pro.bill_date AS billDate,
-        pro.return_warehouse_id AS returnWarehouseId,
-        pro.return_warehouse_name AS returnWarehouseName,
-        prod.return_qty AS returnQty,
-        prod.return_price AS returnPrice,
-        prod.deduct_amount_qty AS deductAmountQty,
-        prod.currency,
-        prod.currency_symbol AS currencySymbol,
-        pro.return_remark AS returnRemark,
-        pro.return_mode AS returnMode,
-        pro.purchase_user_id AS purchaseUserId,
-        pro.return_user_name AS returnUserName,
-        prod.remark,
-        pro.approve_user_name AS approveUserName,
-        pro.approve_time AS approveTime,
-        pro.create_user_name AS createUserName,
-        pro.create_time AS createTime,
-        prod.remark,
-        prod.warehouse_location AS warehouseLocation,
-        pro.source_type AS sourceType,
-        prod.purchase_order_detail_id AS purchaseOrderDetailId,
-        pro.confirm_status AS confirmStatus,
-        pro.unusual_type,
-        pro.unusual_remark,
-        pro.unusual_handle_user_id,
-        pro.unusual_handle_user_name,
-        pro.confirm_date,
-        prod.is_combination as isCombination
-        FROM po_return_detail prod
-        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE
-        ${params.sqlMap.default}
-        and pro.is_deleted = FALSE
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        pro.create_time desc,pro.id
-    </select>
-
     <select id="listCount" resultType="java.lang.Integer">
         select
         count(distinct pro.id)

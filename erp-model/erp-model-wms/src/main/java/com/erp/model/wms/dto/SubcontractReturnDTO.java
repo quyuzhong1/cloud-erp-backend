@@ -100,7 +100,8 @@ public class SubcontractReturnDTO implements Serializable {
         private String approveStatus;
 
         /**
-        * 退料类型
+        * 退料类型  selfAdd 手动新增  autoAdd 自动新增
+         *
         */
         private String type;
 

@@ -303,13 +303,19 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             userDTO =  sysUserFeign.getUserByUserId(dto.getReturnUserId());
         }
         //验证单价必填
-        if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
-            long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
-            if (count > MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+//        if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
+//            long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
+//            if (count > MathUtil.ZERO) {
+//                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+//            }
+//        }
+        //无关联采购时 退款单价不能为空
+        if (StrUtil.isBlank(dto.getPurchaseOrderId())){
+            List<PurchaseReturnOrderDetailDTO.AddDTO> collect = dto.getPurchasePriceDetailList().stream().filter(e -> Objects.nonNull(e) && Objects.isNull(e.getReturnPrice())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)){
+                throw new ServiceException(ApiError.ERROR_92261);
             }
         }
-
         //获取核算公司
         List<BaseIdDTO.CodeDTO> companyEntityList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getReturnOrgId(),dto.getPurchaseOrgId()));
         //获取仓库信息
@@ -410,13 +416,19 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
 
         //验证单价必填
-        if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
-            long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
-            if (count > MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+//        if (ReturnModeEnum.DEDUCTION.getCode().equals(dto.getReturnMode())) {
+//            long count = dto.getPurchasePriceDetailList().stream().filter(obj -> MathUtil.compareTo(obj.getReturnPrice(), MathUtil.ZERO) == MathUtil.ZERO).count();
+//            if (count > MathUtil.ZERO) {
+//                throw new ServiceException(ApiError.ERROR_PURCHASE_RETURN_ORDER_PRICE_IS_NOT_NULL);
+//            }
+//        }
+        //无关联采购时 退款单价不能为空
+        if (StrUtil.isBlank(dto.getPurchaseOrderId())){
+            List<PurchaseReturnOrderDetailDTO.UpdateDTO> collect = dto.getPurchasePriceDetailList().stream().filter(e -> Objects.nonNull(e) && Objects.isNull(e.getReturnPrice())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)){
+                throw new ServiceException(ApiError.ERROR_92261);
             }
         }
-
         //设置收货单主表
         PoReturnEntity poReturnEntity = new PoReturnEntity();
         BeanMapperUtils.copy(dto, poReturnEntity);
@@ -667,6 +679,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     errorCodes.add(StrUtil.format("采购退货单【{}】sku【{}】退货数量不能大于已收货数量-已入库数量-已提交的质检退货数量【{}】",purchaseReturnOrderEntity.getCode(),poReturnDetailEntity.getSkuNo(),receiveQty-instockQty-otherDetailQty));
                 }else{
                     samePurchaseDetailIds.add(poReturnDetailEntity);
+                }
+                //无关联采购时 退款单价不能为空
+                if (StrUtil.isBlank(purchaseReturnOrderEntity.getPurchaseOrderId())){
+                    if (Objects.isNull(poReturnDetailEntity.getReturnPrice())){
+                        throw new ServiceException(ApiError.ERROR_92262, purchaseReturnOrderEntity.getCode(), poReturnDetailEntity.getSkuNo());
+                    }
                 }
             }
         }
@@ -933,25 +951,27 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //创建子件采购退货单
-        for (PurchaseReturnOrderDTO.AddDTO addDTO : returnAddDTOList){
-            //新增
-            String id = this.add(addDTO);
-            if (StringUtils.isBlank(id)) {
-                throw new ServiceException(ApiError.ERROR_1019);
+        if (CollectionUtils.isNotEmpty(returnAddDTOList)){
+            for (PurchaseReturnOrderDTO.AddDTO addDTO : returnAddDTOList){
+                //新增
+                String id = this.add(addDTO);
+                if (StringUtils.isBlank(id)) {
+                    throw new ServiceException(ApiError.ERROR_1019);
+                }
+                //查询提交数据
+                PoReturnEntity poReturnEntity = this.getById(id);
+                //审核通过
+                lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                        .set(PoReturnEntity::getApproveUserId, userInfo.getUid())
+                        .set(PoReturnEntity::getApproveUserName, userInfo.getUserName())
+                        .set(PoReturnEntity::getApproveTime, LocalDateTime.now())
+                        .set(PoReturnEntity::getConfirmStatus, confirmStatus)
+                        .set(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()), PoReturnEntity::getConfirmDate, null)
+                        .set(confirmStatus.equals(PoReturnConfirmStatusEnum.CONFIRM.getStatus()),PoReturnEntity::getConfirmDate, LocalDate.now())
+                        .eq(PoReturnEntity::getId, id)
+                        .update();
+                poReturnEntityList.add(poReturnEntity);
             }
-            //查询提交数据
-            PoReturnEntity poReturnEntity = this.getById(id);
-            //审核通过
-            lambdaUpdate().set(PoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
-                    .set(PoReturnEntity::getApproveUserId, userInfo.getUid())
-                    .set(PoReturnEntity::getApproveUserName, userInfo.getUserName())
-                    .set(PoReturnEntity::getApproveTime, LocalDateTime.now())
-                    .set(PoReturnEntity::getConfirmStatus, confirmStatus)
-                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.WAIT_CONFIRM.getStatus()), PoReturnEntity::getConfirmDate, null)
-                    .set(confirmStatus.equals(PoReturnConfirmStatusEnum.CONFIRM.getStatus()),PoReturnEntity::getConfirmDate, LocalDate.now())
-                    .eq(PoReturnEntity::getId, id)
-                    .update();
-            poReturnEntityList.add(poReturnEntity);
         }
         return poReturnEntityList;
     }
@@ -1055,7 +1075,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         addDTO.setSourceCode(entity.getCode());
         addDTO.setSubcontractOrderId(subcontractOrderEntity.getId());
         addDTO.setSubcontractOrderCode(subcontractOrderEntity.getCode());
-        addDTO.setType(SubcontractReturnTypeEnum.NORMAL.getCode());
+        addDTO.setType(SourceTypeEnum.AUTO_ADD.getCode());
         List<SubcontractReturnDetailDTO.AddDTO> detailList = new ArrayList<>(detailEntityList.size());
         for (PurchaseOrderDetailEntity detail : detailEntityList){
             SubcontractOrderDetailEntity subcontractOrderDetailEntity = subcontractOrderDetailEntityList1.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(detail.getSkuId())).findFirst().orElse(null);
@@ -2834,7 +2854,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     @Override
     public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
 
-        Page<PurchaseReturnOrderDTO.PagingViewDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        IPage<PurchaseReturnOrderDTO.PagingViewDTO> page = this.baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理
             fillList(page.getRecords());
@@ -2876,7 +2896,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list) {
-        List<PurchasePriceDTO.PriceDTO> updateList = new ArrayList<>();
         if (CollectionUtils.isEmpty(list)){
             return Collections.emptyList();
         }
@@ -2908,20 +2927,22 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<PurchasePriceDTO.PriceDTO> scmViewList = scmTaskFeign.batchGetPurchasePrice(list);
 
         for (PurchasePriceDTO.PriceDTO priceDTO : list) {
-            PurchasePriceDTO.PriceDTO purchaseTaxPriceViewDTO = null;
+            PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = null;
             if (CollectionUtils.isNotEmpty(viewList)) {
-                PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> Objects.nonNull(obj)
+                viewDTO = viewList.stream().filter(obj -> Objects.nonNull(obj)
                                 && StrUtil.isNotBlank(obj.getSkuId()) && StrUtil.isNotBlank(priceDTO.getSkuId()) && obj.getSkuId().equals(priceDTO.getSkuId())
                                 && StrUtil.isNotBlank(obj.getSupplierId()) && StrUtil.isNotBlank(priceDTO.getSupplierId()) && obj.getSupplierId().equals(priceDTO.getSupplierId())
                                 && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(priceDTO.getPurchaseOrgId()) && StrUtil.equals(obj.getPurchaseOrgId(),priceDTO.getPurchaseOrgId()))
                         .findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(viewDTO)) {
-                    purchaseTaxPriceViewDTO = PoReturnConverter.INSTANCE.priceToViewDTO(viewDTO);
-                    purchaseTaxPriceViewDTO.setQty(priceDTO.getQty());
-                    purchaseTaxPriceViewDTO.setAmount(MathUtil.multiply(purchaseTaxPriceViewDTO.getTaxPrice(), purchaseTaxPriceViewDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
+                if (Objects.nonNull(viewDTO)) {
+                    priceDTO.setTaxPrice(viewDTO.getTaxPrice());
+                    priceDTO.setTaxRate(viewDTO.getTaxRate());
+                    priceDTO.setCurrency(viewDTO.getCurrency());
+                    priceDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                    priceDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), priceDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
                 }
             }
-            if (Objects.isNull(purchaseTaxPriceViewDTO) && CollectionUtils.isNotEmpty(scmViewList)){
+            if (Objects.isNull(viewDTO) && CollectionUtils.isNotEmpty(scmViewList)){
                 //报价信息
                 PurchasePriceDTO.PriceDTO priceDTO2 = scmViewList.stream().filter(obj -> Objects.nonNull(obj)
                                 && StrUtil.isNotBlank(obj.getSkuId()) && StrUtil.isNotBlank(priceDTO.getSkuId()) && obj.getSkuId().equals(priceDTO.getSkuId())
@@ -2929,16 +2950,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                                 && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(priceDTO.getPurchaseOrgId()) && StrUtil.equals(obj.getPurchaseOrgId(),priceDTO.getPurchaseOrgId()))
                         .findFirst().orElse(null);
                 if (Objects.nonNull(priceDTO2)){
-                    priceDTO2.setQty(priceDTO.getQty());
-                    priceDTO2.setAmount(MathUtil.multiply(priceDTO2.getTaxPrice(), priceDTO2.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
-                    updateList.add(priceDTO2);
+                    priceDTO.setTaxPrice(priceDTO2.getTaxPrice());
+                    priceDTO.setTaxRate(priceDTO2.getTaxRate());
+                    priceDTO.setCurrency(priceDTO2.getCurrency());
+                    priceDTO.setCurrencySymbol(priceDTO2.getCurrencySymbol());
+                    priceDTO.setAmount(MathUtil.multiply(priceDTO2.getTaxPrice(), priceDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
                 }
             }
-            if (Objects.nonNull(purchaseTaxPriceViewDTO)){
-                updateList.add(purchaseTaxPriceViewDTO);
-            }
         }
-        return updateList;
+        return list;
     }
 
     /**

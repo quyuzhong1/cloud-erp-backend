@@ -152,6 +152,9 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        if (SourceTypeEnum.SELF_ADD.getCode().equals(old.getType()) && StrUtil.isNotBlank(old.getSourceCode())){
+            throw new ServiceException(StrUtil.format("由采购退货单【{}】自动生成的委外退料单【{}】不支持编辑", old.getSourceCode(), old.getCode()));
+        }
         SubcontractReturnEntity subcontractReturnEntity =  BeanMapperUtils.map(SubcontractReturnEntity.class, updateDTO);
 
         //来源为委外时，验证供应商是否一致
@@ -745,8 +748,9 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
             //页面新增时默认来源类型
             subcontractReturnEntity.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
         }
+        //默认手动新增
         if (StrUtil.isBlank(subcontractReturnEntity.getType())){
-            subcontractReturnEntity.setType(SubcontractReturnTypeEnum.NORMAL.getCode());
+            subcontractReturnEntity.setType(SourceTypeEnum.SELF_ADD.getCode());
         }
         //委外订单
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(subcontractReturnEntity.getSubcontractOrderId()));
