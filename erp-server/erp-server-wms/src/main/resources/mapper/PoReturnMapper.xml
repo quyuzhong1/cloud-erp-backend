@@ -353,7 +353,7 @@
         LEFT JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE
         LEFT JOIN purchase_order po ON po.id = pr.purchase_order_id AND po.is_deleted = FALSE
         <where>
-            po.invalid_status = false
+            pr.is_deleted = FALSE and po.invalid_status = false
             <if test="poIds != null and poIds.size > 0">
                 AND pr.purchase_order_id in
                 <foreach collection="poIds" item="item" open="(" close=")" separator=",">
