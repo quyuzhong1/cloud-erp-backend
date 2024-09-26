@@ -70,14 +70,14 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
 
     public static List<String> getParentNodes() {
         return Arrays.asList(FBA_ESTIMATED_DELIVERY.getCode(),
-                 OVERSEAS_SHIPMENT_IN_TRANSIT.getCode(),
+                OVERSEAS_ESTIMATED_DELIVERY.getCode(),
                 LOCAL_ESTIMATED_DELIVERY.getCode(),
                 TOTAL_INVENTORY.getCode());
     }
 
     public static List<String> getNodes() {
         return Arrays.asList(FBA_USABLE.getCode(), FBA_IN_TRANSIT.getCode(), FBA_ESTIMATED_DELIVERY.getCode(),
-                OVERSEAS_USABLE.getCode(), OVERSEAS_IN_TRANSIT.getCode(), OVERSEAS_SHIPMENT_IN_TRANSIT.getCode(),
+                OVERSEAS_USABLE.getCode(), OVERSEAS_IN_TRANSIT.getCode(), OVERSEAS_ESTIMATED_DELIVERY.getCode(),
                 LOCAL_USABLE.getCode(), LOCAL_IN_TRANSIT.getCode(),LOCAL_ESTIMATED_DELIVERY.getCode(),
                 TOTAL_INVENTORY.getCode());
     }
