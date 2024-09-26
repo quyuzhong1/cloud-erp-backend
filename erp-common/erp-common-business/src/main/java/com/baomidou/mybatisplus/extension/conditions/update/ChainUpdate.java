@@ -19,6 +19,8 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.conditions.ChainWrapper;
@@ -58,7 +60,7 @@ public interface ChainUpdate<T> extends ChainWrapper<T> {
     		}
     		if(entity == null) {
     			String sqlSet = lambdaUpdateWrapper.getSqlSet();
-        		if(!sqlSet.replace(" ", "").contains("update_time=")) {
+        		if(StringUtils.isNotBlank(sqlSet) && !sqlSet.replace(" ", "").contains("update_time=")) {
         			Object object = null;
 					try {
 						Field field = lambdaUpdateWrapper.getClass().getDeclaredField("sqlSet");
