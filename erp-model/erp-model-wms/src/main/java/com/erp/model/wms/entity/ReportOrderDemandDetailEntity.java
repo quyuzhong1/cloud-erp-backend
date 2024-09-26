@@ -14,7 +14,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 
+ * 订单需求明细报表
  * </p>
  *
  * @author will
