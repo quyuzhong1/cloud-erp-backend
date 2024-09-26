@@ -106,7 +106,7 @@ public class GetLogisticsTrackNoTaskJob {
                                     .build();
                             updateList.add(dto);
                             //下单成功发送异步请求保存面单
-                            if (Objects.nonNull(isAliExpress) && isAliExpress){
+                            if (Objects.nonNull(isAliExpress) && isAliExpress && Objects.nonNull(trackNoDTO)){
                                 LogisticsBillDTO.PrintLogisticsWaybillDTO waybillDTO = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
                                 waybillDTO.setChannelId(trackNoDTO.getLogisticsChannelId());
                                 waybillDTO.setB2cSoId(trackNoDTO.getSoB2cId());
