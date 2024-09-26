@@ -115,7 +115,7 @@ public class ReportOrderDemandController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "批量分货保存")
     @PostMapping(value = "/batchAddAllocation")
-    public ApiResult batchAddAllocation(@RequestBody @Validated ValidList<ReportOrderDemandDTO.AddVirtualAllocationDTO> list) {
+    public ApiResult batchAddAllocation(@RequestBody @Validated ValidList<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> list) {
         Boolean flag = reportOrderDemandService.batchAddAllocation(list);
         return flag == true ? success() : failure();
     }

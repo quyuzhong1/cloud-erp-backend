@@ -92,5 +92,5 @@ public interface ReportOrderDemandService extends SuperService<ReportOrderDemand
      * @param list
      * @return Boolean
      */
-    Boolean batchAddAllocation(ValidList<ReportOrderDemandDTO.AddVirtualAllocationDTO> list);
+    Boolean batchAddAllocation(ValidList<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> list);
 }

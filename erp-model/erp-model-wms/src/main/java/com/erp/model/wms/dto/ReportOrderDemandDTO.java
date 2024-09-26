@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import cn.hutool.json.JSONObject;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -365,11 +364,11 @@ public class ReportOrderDemandDTO implements Serializable {
         /**
          * 虚拟仓可用库存
          */
-        private Integer virtualUsableTotalQty;
+        private Integer virtualUsableQty;
         /**
          * 缺货数量
          */
-        private Integer virtualScarceTotalQty;
+        private Integer virtualScarceQty;
 
         /**
          * 新增分货
@@ -423,6 +422,11 @@ public class ReportOrderDemandDTO implements Serializable {
     @NoArgsConstructor
     public static class AddVirtualAllocationDTO {
         /**
+         * SKU
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
          * 新增分货
          */
         @Valid
@@ -431,7 +435,7 @@ public class ReportOrderDemandDTO implements Serializable {
          * 虚拟仓调拨
          */
         @Valid
-        private VirtualTransferDTO virtualTransferDTO;
+        private List<VirtualTransferDTO> virtualTransferList;
     }
 
 
@@ -464,10 +468,17 @@ public class ReportOrderDemandDTO implements Serializable {
         @NotBlank(message = "仓库Id不能为空")
         private String warehouseId;
         /**
-         * 虚拟仓id
+         * 调入虚拟仓id
          */
-        @NotBlank(message = "虚拟仓Id不能为空")
-        private String virtualWarehouseId;
+        @NotBlank(message = "调入虚拟仓Id不能为空")
+        private String toVirtualWarehouseId;
+
+        /**
+         * 调出虚拟仓id
+         */
+        @NotBlank(message = "调出虚拟仓Id不能为空")
+        private String fromVirtualWarehouseId;
+
         /**
          * 分配数量
          */
@@ -491,6 +502,10 @@ public class ReportOrderDemandDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * 实体仓，新增分货是和调出仓一致
+         */
+        private String warehouseId;
+        /**
          * 虚拟仓id
          */
         private String virtualWarehouseId;
@@ -501,7 +516,7 @@ public class ReportOrderDemandDTO implements Serializable {
         /**
          * 剩余需求总数
          */
-        private Integer totalQty;
+        private Integer qty;
         /**
          * 虚拟仓可用库存
          */
@@ -526,5 +541,45 @@ public class ReportOrderDemandDTO implements Serializable {
          * 分货类型
          */
         private String type;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BatchAddVirtualAllocationDTO {
+
+        /**
+         * 分货类型
+         */
+        @NotBlank(message = "分货类型不能为空")
+        private String type;
+
+        /**
+         * skuid
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+
+        /**
+         * 虚拟仓id，调入虚拟仓
+         */
+        @NotBlank(message = "虚拟仓Id不能为空")
+        private String virtualWarehouseId;
+
+        /**
+         * 调出仓Id,新增分货为实体仓，虚拟仓调拨为虚拟仓
+         */
+        @NotBlank(message = "调出仓Id不能为空")
+        private String outWarehouseId;
+
+        /**
+         * 分配数量
+         */
+        @NotNull(message = "分配数量不能为空")
+        private Integer qty;
     }
 }
