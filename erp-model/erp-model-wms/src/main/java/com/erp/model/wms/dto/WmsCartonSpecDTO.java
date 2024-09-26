@@ -154,7 +154,7 @@ public class WmsCartonSpecDTO implements Serializable {
          * 详情
          */
         @Valid
-        @NotEmpty(message = "装箱明细不能为空")
+        @NotEmpty(message = "装箱时明细不能为空")
         private List<WmsCartonDetailDTO.AddDTO> detailList;
     }
 
@@ -372,6 +372,7 @@ public class WmsCartonSpecDTO implements Serializable {
          * 装箱信息
          */
         @Valid
+        @NotEmpty(message = "装箱明细不能为空")
         private List<WmsCartonSpecDTO.AddDTO> wmsCartonList;
     }
 
