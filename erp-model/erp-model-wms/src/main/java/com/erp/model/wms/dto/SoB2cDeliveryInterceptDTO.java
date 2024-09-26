@@ -536,6 +536,15 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 拣货仓位名称
+         */
+        private String pickWarehouseLocationName;
+
+        /**
+         * 返还仓位名称
+         */
+        private String warehouseLocationName;
+        /**
          * 数量
          */
         private Integer qty;

@@ -134,7 +134,9 @@
         pl.warehouse_id as warehouseId,
         (SELECT wh.name from warehouse wh where wh.id = pl.warehouse_id and wh.is_deleted = false ) as warehouseName,
         pd.warehouse_location as warehouseLocation,
-        pd.warehouse_location as pickWarehouseLocation
+        pd.warehouse_location as pickWarehouseLocation,
+        (SELECT wl.name from warehouse_location wl where wl.code =  pd.warehouse_location and wl.is_deleted = false limit 1 ) as warehouseLocationName,
+        (SELECT wl.name from warehouse_location wl where wl.code =  pd.warehouse_location and wl.is_deleted = false limit 1 ) as pickwarehouseLocationName
         from picking_lists pl
             inner join picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
             inner join so_b2c_delivery sbd on sbd.id = pl.source_id and sbd.is_deleted = false
