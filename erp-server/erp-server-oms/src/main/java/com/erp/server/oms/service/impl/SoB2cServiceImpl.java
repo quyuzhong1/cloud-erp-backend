@@ -2245,7 +2245,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
         if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
             //API海外物流拦截
-            BatchResultDTO resultDTO = this.overseasProviderIntercept( entity, platformEnum,detailList.get(0).getWarehouseId() );
+            BatchResultDTO resultDTO = this.overseasProviderIntercept( entity, platformEnum,detailList.get(0).getWarehouseId(), remark);
             return resultDTO;
         } else {
             List<SoB2cDeliveryEntity> soB2cDeliveryList = FeignQuery.create(SoB2cDeliveryEntity.class).eq(SoB2cDeliveryEntity::getSourceId,entity.getId()).ne(SoB2cDeliveryEntity::getStatus,SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()).list();
@@ -2293,11 +2293,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param soB2cEntity  订单信息
      * @param platformEnum 物流平台枚举
      * @param warehouseId
+     * @param remark
      * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2024/1/19 11:23
      **/
-    private BatchResultDTO overseasProviderIntercept(SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum, String warehouseId) {
+    private BatchResultDTO overseasProviderIntercept(SoB2cEntity soB2cEntity, LogisticsPlatformEnum platformEnum, String warehouseId, String remark) {
         ThirdWarehouseCancelOutboundReq req = new ThirdWarehouseCancelOutboundReq();
         req.setOrderCode(soB2cEntity.getShippingOrderNo());
         req.setThirdWarehouseProvideCode(platformEnum.getCode());
@@ -2314,12 +2315,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             soB2cEntity.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode());
             this.updateById(soB2cEntity);
-            String msg  = StrUtil.format("用户【{}】发起海外仓拦截成功", UserContext.getDefaultLoginUser().getUserName());
+            String msg  = StrUtil.format("用户【{}】发起海外仓拦截成功,备注：{}", UserContext.getDefaultLoginUser().getUserName(),remark);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
             return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截成功");
         } else {
             //自动拦截结果确认，拦截失败
-            String msg  = StrUtil.format("用户【{}】发起海外仓拦截失败", UserContext.getDefaultLoginUser().getUserName());
+            String msg  = StrUtil.format("用户【{}】发起海外仓拦截失败，备注：", UserContext.getDefaultLoginUser().getUserName(),remark);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
             return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截失败："+stringApiResult.getMsg());
         }
