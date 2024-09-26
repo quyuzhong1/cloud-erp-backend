@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
