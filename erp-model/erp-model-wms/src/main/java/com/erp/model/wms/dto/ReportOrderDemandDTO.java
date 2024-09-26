@@ -516,7 +516,7 @@ public class ReportOrderDemandDTO implements Serializable {
         /**
          * 剩余需求总数
          */
-        private Integer qty;
+        private Integer totalQty;
         /**
          * 虚拟仓可用库存
          */
@@ -533,6 +533,10 @@ public class ReportOrderDemandDTO implements Serializable {
          * 调出仓,新增分货为实体仓，虚拟仓调拨为虚拟仓
          */
         private String outWarehouseId;
+        /**
+         * 调出仓名称
+         */
+        private String outWarehouseName;
         /**
          * 分货类型名称
          */

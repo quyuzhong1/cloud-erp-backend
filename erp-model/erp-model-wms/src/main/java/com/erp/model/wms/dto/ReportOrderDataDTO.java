@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import cn.hutool.json.JSONArray;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -96,7 +97,20 @@ public class ReportOrderDataDTO implements Serializable {
         */
         private LocalDate date;
 
+        /**
+         * 发货通知数量
+         */
+        private Integer deliveryNoticeQty;
 
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * bom的json数据
+         */
+        private JSONArray bomJson;
     }
 
     /**
@@ -195,7 +209,20 @@ public class ReportOrderDataDTO implements Serializable {
         */
         private LocalDate date;
 
+        /**
+         * 发货通知数量
+         */
+        private Integer deliveryNoticeQty;
 
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+
+        /**
+         * bom的json数据
+         */
+        private JSONArray bomJson;
     }
 
 

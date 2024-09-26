@@ -90,19 +90,13 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
     private LocalDate date;
 
     /**
-     * 是否拆分
-     */
-    @TableField("is_split")
-    private Boolean isSplit;
-
-    /**
      * 发货通知单
      */
     @TableField("delivery_notice_qty")
     private Integer deliveryNoticeQty;
 
     /**
-     * 发货通知单
+     * 冻结数量
      */
     @TableField("frozen_qty")
     private Integer frozenQty;

@@ -32,5 +32,10 @@ public interface ReportOrderDataService extends SuperService<ReportOrderDataEnti
     */
     Boolean update(ReportOrderDataDTO.UpdateDTO dto);
 
-
+    /**
+     * 生成报表数据
+     * @author will
+     * @date 2024/9/26 14:18
+     */
+    void generateReportOrderData();
 }
