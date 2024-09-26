@@ -14,8 +14,8 @@ import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
 import com.erp.server.mrp.service.CfgRuleStockUpService;
 import com.erp.server.mrp.service.CfgRuleStockingRatioService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -69,47 +69,32 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
     }
 
     private CfgRuleLogisticsDTO.LogisticsResultDTO getMaxLogistics(CfgRuleStockUpDTO.StrategyDTO dto) {
-        // 获取外层所有数据
-        List<CfgRuleLogisticsEntity> logistics = dto.getDefaultLogistics();
-        //获取外层最大时效
-        CfgRuleLogisticsEntity maxLogistics = logistics.stream().max(Comparator.comparing(CfgRuleLogisticsEntity::getLogisticsDays)).orElse(new CfgRuleLogisticsEntity());
-        //获取对应明细数据
-        List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails = dto.getLogisticsDetails();
-        List<CfgRuleLogisticsDetailEntity> ruleLogisticsDetails = getCfgRuleLogisticsDetails(dto.getPlatformType(), dto.getArea(), dto.getShopId(), dto.getWarehouseId(), cfgRuleLogisticsDetails);
-        //获取最大物流时效对应数据
-        if (CollectionUtils.isEmpty(ruleLogisticsDetails)) {
-            return CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(maxLogistics);
-        } else {
-            CfgRuleLogisticsDetailEntity maxLogisticsDetail = ruleLogisticsDetails.stream().max(Comparator.comparing(CfgRuleLogisticsDetailEntity::getLogisticsDays)).orElse(new CfgRuleLogisticsDetailEntity());
-            if (maxLogistics.getLogisticsDays() > maxLogisticsDetail.getLogisticsDays()) {
-                return CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(maxLogistics);
-            } else {
-                CfgRuleLogisticsEntity cfgRuleLogisticsEntity = logistics.stream().filter(v -> v.getId().equals(maxLogisticsDetail.getMainId())).findFirst().orElse(new CfgRuleLogisticsEntity());
-                return CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(maxLogisticsDetail, cfgRuleLogisticsEntity);
+        List<CfgRuleLogisticsDTO.LogisticsResultDTO> allLogistics = getAllLogistics(dto);
+        return allLogistics.stream()
+                .max(Comparator.comparing(v -> v.getLogisticsCycleDays() + v.getLogisticsDays()))
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_LOGISTICS_NOT_EXIST));
+    }
+
+    private static List<CfgRuleLogisticsDTO.LogisticsResultDTO> getAllLogistics(CfgRuleStockUpDTO.StrategyDTO dto) {
+        List<CfgRuleLogisticsDTO.LogisticsResultDTO> dtos = new ArrayList<>();
+        for (CfgRuleLogisticsEntity logistic : dto.getDefaultLogistics()) {
+            dtos.add(CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(logistic));
+            //获取明细数据
+            List<CfgRuleLogisticsDetailEntity> ruleLogisticsDetails = getCfgRuleLogisticsDetails(dto, logistic.getId(), dto.getLogisticsDetails());
+            if (!CollectionUtils.isEmpty(ruleLogisticsDetails)) {
+                for (CfgRuleLogisticsDetailEntity detail : ruleLogisticsDetails) {
+                    dtos.add(CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(detail, logistic));
+                }
             }
         }
+        return dtos;
     }
 
     private CfgRuleLogisticsDTO.LogisticsResultDTO getMinLogistics(CfgRuleStockUpDTO.StrategyDTO dto) {
-        // 获取外层所有数据
-        List<CfgRuleLogisticsEntity> logistics = dto.getDefaultLogistics();
-        //获取外层最小时效
-        CfgRuleLogisticsEntity minLogistics = logistics.stream().min(Comparator.comparing(CfgRuleLogisticsEntity::getLogisticsDays)).orElse(new CfgRuleLogisticsEntity());
-        //获取对应明细数据
-        List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails = dto.getLogisticsDetails();
-        List<CfgRuleLogisticsDetailEntity> ruleLogisticsDetails = getCfgRuleLogisticsDetails(dto.getPlatformType(), dto.getArea(), dto.getShopId(), dto.getWarehouseId(), cfgRuleLogisticsDetails);
-        //获取最短物流时效对应数据
-        if (CollectionUtils.isEmpty(ruleLogisticsDetails)) {
-            return CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(minLogistics);
-        } else {
-            CfgRuleLogisticsDetailEntity minLogisticsDetail = ruleLogisticsDetails.stream().min(Comparator.comparing(CfgRuleLogisticsDetailEntity::getLogisticsDays)).orElse(new CfgRuleLogisticsDetailEntity());
-            if (minLogistics.getLogisticsDays() < minLogisticsDetail.getLogisticsDays()) {
-                return CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(minLogistics);
-            } else {
-                CfgRuleLogisticsEntity cfgRuleLogisticsEntity = logistics.stream().filter(v -> v.getId().equals(minLogisticsDetail.getMainId())).findFirst().orElse(new CfgRuleLogisticsEntity());
-                return CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(minLogisticsDetail, cfgRuleLogisticsEntity);
-            }
-        }
+        List<CfgRuleLogisticsDTO.LogisticsResultDTO> allLogistics = getAllLogistics(dto);
+        return allLogistics.stream()
+                .min(Comparator.comparing(v -> v.getLogisticsCycleDays() + v.getLogisticsDays()))
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_LOGISTICS_NOT_EXIST));
     }
 
     private CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(CfgRuleStockUpDTO.StrategyDTO dto) {
@@ -118,7 +103,7 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
                 .min(Comparator.comparing(CfgRuleLogisticsEntity::getIndex))
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_STOCK_UP_NOT_EXIST, CfgRulePlatformTypeEnum.getName(dto.getPlatformType())));
         //获取对应明细数据
-        List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails = dto.getLogisticsDetails();
+        List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails = dto.getLogisticsDetails().stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
         CfgRuleLogisticsDetailEntity detail = null;
         //amazon 取值店铺
         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType())) {
@@ -146,26 +131,26 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
     /**
      * 获取明细数据
      *
-     * @param platformType            平台类型
-     * @param area                    区域
-     * @param shopId                  店铺id
-     * @param warehouseId             仓库id
+     * @param dto                     参数
+     * @param logisticId              物流id
      * @param cfgRuleLogisticsDetails 配置
      */
-    private static List<CfgRuleLogisticsDetailEntity> getCfgRuleLogisticsDetails(String platformType, String area, String shopId, String warehouseId, List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails) {
+    private static List<CfgRuleLogisticsDetailEntity> getCfgRuleLogisticsDetails(CfgRuleStockUpDTO.StrategyDTO dto, String logisticId, List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails) {
         List<CfgRuleLogisticsDetailEntity> ruleLogisticsDetails = new ArrayList<>();
         //amazon 取值店铺
-        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType)) {
+        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType())) {
             //先获取区域加店铺 和 区域加全部店铺
             ruleLogisticsDetails = cfgRuleLogisticsDetails.stream()
-                    .filter(v -> v.getArea().equals(area))
-                    .filter(v -> v.getShopIdJson().contains(shopId) || v.getType().equals(ShopAuthTypeEnum.ENUM_ALL.getCode()))
+                    .filter(v -> v.getMainId().equals(logisticId))
+                    .filter(v -> v.getArea().equals(dto.getArea()))
+                    .filter(v -> v.getShopIdJson().contains(dto.getShopId()) || v.getType().equals(ShopAuthTypeEnum.ENUM_ALL.getCode()))
                     .collect(Collectors.toList());
 
-        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(platformType)) {
+        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(dto.getPlatformType())) {
             //获取海外仓
             ruleLogisticsDetails = cfgRuleLogisticsDetails.stream()
-                    .filter(v -> v.getWarehouseId().equals(warehouseId))
+                    .filter(v -> v.getMainId().equals(logisticId))
+                    .filter(v -> v.getWarehouseId().equals(dto.getWarehouseId()))
                     .collect(Collectors.toList());
         }
         return ruleLogisticsDetails;

@@ -16,4 +16,6 @@ import java.util.List;
 public interface CfgDataArchivingService extends SuperService<CfgDataArchivingEntity> {
 
     List<CfgDataArchivingEntity> getEffectiveData();
+
+    void archiveData(CfgDataArchivingEntity config);
 }

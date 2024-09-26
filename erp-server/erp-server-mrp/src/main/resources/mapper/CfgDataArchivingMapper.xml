@@ -20,5 +20,11 @@
         <result column="retention_policy" property="retentionPolicy" />
         <result column="disabled" property="disabled" />
     </resultMap>
+    <insert id="moveData">
+        INSERT INTO ${archiveTable} SELECT * FROM ${sourceTable}
+    </insert>
+    <delete id="deleteSource">
+        DELETE FROM ${sourceTable}
+    </delete>
 
 </mapper>

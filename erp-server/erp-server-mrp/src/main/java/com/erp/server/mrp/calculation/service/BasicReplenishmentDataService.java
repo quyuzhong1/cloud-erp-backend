@@ -166,7 +166,6 @@ public class BasicReplenishmentDataService {
 
     /**
      * 全量计算明细数据
-     *
      */
     public void calculationDetail(List<String> suggestionIds) {
         List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
@@ -313,30 +312,31 @@ public class BasicReplenishmentDataService {
                     } else {
                         detail.setSkuType(CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
                     }
-                    List<SalesInfoEntity> salesInfoList = new ArrayList<>();
-                    //清洗历史销量及库存
-                    if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(entity.getPlatformType())) {
-                        salesInfoList = getFbaHistorySales(salesByPlatformType.get(CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + detail.getSkuType()), entity, detail);
-                    } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(entity.getPlatformType())) {
-                        //todo 后期做
-                    } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(entity.getPlatformType()) ||
-                            CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(entity.getPlatformType())) {
-                        //todo 后期做
-                    }
-                    
                     //判断是否需要补货
                     CfgSettingDTO.ReplenishmentDays replenishmentDays = JSON.parseObject(replenishmentDaysSetting.getDataJson(), CfgSettingDTO.ReplenishmentDays.class);
                     boolean isOver180Days = sale.getListingTime().plusDays(replenishmentDays.getStart()).isAfter(calculationDate);
-                    int saleQty = salesInfoList
+                    int saleQty = salesByPlatformType.values()
                             .stream()
-                            .filter(v -> !calculationDate.minusDays(replenishmentDays.getEnd()).isAfter(v.getDate()) && !calculationDate.isBefore(v.getDate()))
-                            .map(SalesInfoEntity::getOriginalSalesQty)
+                            .flatMap(Collection::stream)
+                            .filter(v -> v.getShopId().equals(entity.getShopId()))
+                            .filter(v -> v.getSkuId().equals(entity.getSkuId()))
+                            .map(ReplenishmentResultDTO.SalesInfoAllDTO::getOriginalSalesQty)
                             .reduce(0, Math::addExact);
                     replenishmentSuggestionDetailService.save(detail);
                     if (Boolean.TRUE.equals(isOver180Days) && saleQty == 0) {
                         replenishmentSuggestionService.notRestockingReplenishment(entity.getId(), "上市超180天，360天内无销量的商品，系统自动标记暂不补货");
                         return null;
                     } else {
+                        List<SalesInfoEntity> salesInfoList = new ArrayList<>();
+                        //清洗历史销量及库存
+                        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(entity.getPlatformType())) {
+                            salesInfoList = getFbaHistorySales(salesByPlatformType.get(CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + detail.getSkuType()), entity, detail);
+                        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(entity.getPlatformType())) {
+                            //todo 后期做
+                        } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(entity.getPlatformType()) ||
+                                CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(entity.getPlatformType())) {
+                            //todo 后期做
+                        }
                         salesInfoService.saveBatch(salesInfoList);
                         return entity.getId();
                     }

@@ -89,14 +89,14 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates = new ArrayList<>();
         // 计算备货期
         List<BigDecimal> stockingData = salesEstimates.stream()
-                .filter(v -> !basicCalcDate.isAfter(v.getDate()) && !basicCalcDate.plusDays(replenishmentResult.getReplenishmentDetail().getDeliveryDefaultDays()).isBefore(v.getDate()))
+                .filter(v -> !basicCalcDate.isAfter(v.getDate()) && !basicCalcDate.plusDays(replenishmentResult.getReplenishmentDetail().getStockUpDefaultDays()).isBefore(v.getDate()))
                 .map(ReplenishmentResultDTO.SalesEstimateDTO::getSalesQty)
                 .collect(Collectors.toList());
         BigDecimal stockingSales = stockingData.stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         timePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(STOCKING_DATE, stockingSales));
         avgTimePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(STOCKING_DATE,
-                stockingSales.divide(BigDecimal.valueOf(replenishmentResult.getReplenishmentDetail().getDeliveryDefaultDays()), 2 , RoundingMode.HALF_UP)));
+                stockingSales.divide(BigDecimal.valueOf(replenishmentResult.getReplenishmentDetail().getStockUpDefaultDays()), 2 , RoundingMode.HALF_UP)));
         // 计算当前月
         getSalesByTime(salesEstimates, timePeriodSalesEstimates, avgTimePeriodSalesEstimates, basicCalcDate, basicCalcDate, CURRENT_MONTH);
         // 计算下月

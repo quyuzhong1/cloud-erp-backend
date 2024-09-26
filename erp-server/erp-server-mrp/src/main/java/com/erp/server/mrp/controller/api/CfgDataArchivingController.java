@@ -1,10 +1,13 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.erp.server.mrp.service.CfgDataArchivingService;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -18,4 +21,6 @@ import com.common.core.controller.BaseController;
 @RequestMapping("/cfg-data-archiving")
 public class CfgDataArchivingController extends BaseController {
 
+    @Resource
+    private CfgDataArchivingService cfgDataArchivingService;
 }
