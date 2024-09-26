@@ -99,13 +99,6 @@
                        WHERE tablename = #{tableName}
                          AND schemaname = 'public')
     </select>
-    <select id="getFbaOldUsable" resultType="java.lang.Integer">
-        select COALESCE(sum(fulfillable_qty), 0)
-        from ${tableName}
-        where is_deleted = false
-          and sku_no = #{result.replenishment.skuNo}
-          and warehouse_id = #{result.replenishment.fbaWarehouseId}
-    </select>
     <select id="getPlanDelivery"
             resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedDeliveryDetailDTO">
         SELECT

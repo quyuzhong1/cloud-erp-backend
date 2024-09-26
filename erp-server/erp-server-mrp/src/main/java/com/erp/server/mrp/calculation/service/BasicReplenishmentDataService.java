@@ -13,21 +13,16 @@ import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.entity.FbaInventoryEntity;
-import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
 import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
-import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -89,26 +84,14 @@ public class BasicReplenishmentDataService {
     @Resource
     private SalesInfoService salesInfoService;
     @Resource
-    private InventoryMapper inventoryMapper;
+    private InventoryService inventoryService;
 
     /**
      * 增量变动建议补货基础数据
      */
     public void initReplenishmentSku(LocalDate calculationDate, String id) {
         calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
-        //清洗每日库存到历史表
-        List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
-        if (!CollectionUtils.isEmpty(inventoryEntities)) {
-            fbaHistoryInventoryService.saveTodayInventory(inventoryEntities, calculationDate);
-        }
-        List<OverseasInventoryEntity> overseasHistoryInventory = inventoryMapper.getAllOverseasHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
-        if (!CollectionUtils.isEmpty(inventoryEntities)) {
-            overseasHistoryInventoryService.saveTodayInventory(overseasHistoryInventory, calculationDate);
-        }
-        List<InventoryEntity> localHistoryInventory = inventoryMapper.getAllLocalHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
-        if (!CollectionUtils.isEmpty(inventoryEntities)) {
-            localHistoryInventoryService.saveTodayInventory(localHistoryInventory, calculationDate);
-        }
+        inventoryService.saveAllHistoryInventory(calculationDate);
         if (!ObjectUtils.isEmpty(id)) {
             cleanHistorySalesAndInventory(calculationDate, id);
             return;

@@ -90,7 +90,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates = new ArrayList<>();
         // 计算备货期
         List<BigDecimal> stockingData = salesEstimates.stream()
-                .filter(v -> !basicCalcDate.isAfter(v.getDate()) && !basicCalcDate.plusDays(replenishmentResult.getReplenishmentDetail().getStockUpDefaultDays()).isBefore(v.getDate()))
+                .filter(v -> !basicCalcDate.isAfter(v.getDate()) && basicCalcDate.plusDays(replenishmentResult.getReplenishmentDetail().getStockUpDefaultDays()).isAfter(v.getDate()))
                 .map(ReplenishmentResultDTO.SalesEstimateDTO::getSalesQty)
                 .collect(Collectors.toList());
         BigDecimal stockingSales = stockingData.stream()

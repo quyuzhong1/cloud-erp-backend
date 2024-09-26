@@ -5,6 +5,7 @@ import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface InventoryService {
@@ -71,4 +72,10 @@ public interface InventoryService {
      */
     int getLocalPurchase(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO localPurchase, CfgRuleStrategyDTO cfgRuleStrategyDTO);
 
+
+    /**
+     * 保存所有每日库存到对应库存历史表
+     * @param calculationDate 计算日期
+     */
+    void saveAllHistoryInventory(LocalDate calculationDate);
 }

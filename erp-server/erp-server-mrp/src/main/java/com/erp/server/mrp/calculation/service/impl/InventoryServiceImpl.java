@@ -11,14 +11,19 @@ import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.calculation.service.ShopInfoService;
 import com.erp.server.mrp.calculation.utils.TreeUtils;
 import com.erp.server.mrp.mapper.InventoryMapper;
+import com.erp.server.mrp.service.FbaHistoryInventoryService;
+import com.erp.server.mrp.service.LocalHistoryInventoryService;
+import com.erp.server.mrp.service.OverseasHistoryInventoryService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -26,6 +31,8 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,9 +51,13 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Resource
     private ReplenishmentSuggestionService replenishmentSuggestionService;
-    @Resource(name = "mrpExecutor")
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
+    @Resource
+    private FbaHistoryInventoryService fbaHistoryInventoryService;
+    @Resource
+    private OverseasHistoryInventoryService overseasHistoryInventoryService;
+    @Resource
+    private LocalHistoryInventoryService localHistoryInventoryService;
     @Override
     public int getFbaUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes) {
         String code = String.join("+", codes);
@@ -264,6 +275,23 @@ public class InventoryServiceImpl implements InventoryService {
         }
         replenishmentResultDTO.setLocalPurchaseDetail(localPurchaseDetail);
         return qty;
+    }
+
+    @Override
+    public void saveAllHistoryInventory(LocalDate calculationDate) {
+        //清洗每日库存到历史表
+        List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+            fbaHistoryInventoryService.saveTodayInventory(inventoryEntities, calculationDate);
+        }
+        List<OverseasInventoryEntity> overseasHistoryInventory = inventoryMapper.getAllOverseasHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+            overseasHistoryInventoryService.saveTodayInventory(overseasHistoryInventory, calculationDate);
+        }
+        List<InventoryEntity> localHistoryInventory = inventoryMapper.getAllLocalHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+            localHistoryInventoryService.saveTodayInventory(localHistoryInventory, calculationDate);
+        }
     }
 
     /**
