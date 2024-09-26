@@ -600,21 +600,15 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO handleSuccess(SoB2cDeliveryEntity entity, String interceptId, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList, String remark) {
         SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = this.getById(interceptId);
-        //取消保宏预报
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSourceId());
         BaseIdsDTO.IdsDTO idDto = new BaseIdsDTO.IdsDTO();
         idDto.setIds(Arrays.asList(soB2cEntity.getId()));
-        if (TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())) {
-            ApiResult<List<BatchResultDTO>> cancelOrderForecastResult = soB2cFeign.cancelOrderForecast(idDto);
-            if(!cancelOrderForecastResult.isSuccess()){
-                return BatchResultDTO.fail(entity.getId(),entity.getCode(),"取消订单预报失败");
-            }
-        }
+
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //取消物流单，不管结果，继续向下执行
-        ApiResult<List<BatchResultDTO>> cancelOrderForecastResult = soB2cFeign.cancelLogistic(idDto);
+        ApiResult<List<BatchResultDTO>> cancelLogisticResult = soB2cFeign.cancelLogistic(idDto);
         String logisticLog;
-        if(cancelOrderForecastResult.isSuccess()){
+        if(cancelLogisticResult.isSuccess()){
             soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
             soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
             logisticLog = "取消物流单-发起拦截，取消物流单成功";
@@ -651,6 +645,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         soB2cDeliveryInterceptEntity.setHandleTime(LocalDateTime.now());
         soB2cDeliveryInterceptEntity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
         this.updateById(soB2cDeliveryInterceptEntity);
+        //取消保宏预报
+        if (TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())) {
+            ApiResult<List<BatchResultDTO>> cancelOrderForecastResult = soB2cFeign.cancelOrderForecast(idDto);
+            if(!cancelOrderForecastResult.isSuccess()){
+                throw new ServiceException("取消订单预报失败");
+            }
+        }
         //更新销售订单
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
