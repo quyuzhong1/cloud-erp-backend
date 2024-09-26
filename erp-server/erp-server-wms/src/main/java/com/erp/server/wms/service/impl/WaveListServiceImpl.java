@@ -177,6 +177,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PrintStatusEnum.getName(record.getPrintStatus()));
+            viewDTO.setPickingPrintStatusName(PrintStatusEnum.getName(record.getPickingPrintStatus()));
             if(CharSequenceUtil.isBlank(record.getPickingCartCode())){
                 List<WaveListCartTypeEntity> entityList = cartTypeMap.get(record.getId());
                 if(entityList != null && !entityList.isEmpty()){
