@@ -56,4 +56,13 @@ public class CfgRuleCommonController extends BaseController {
         return success(cfgRuleCommonService.view(platformType,type));
     }
 
+
+    /**
+     * 获取备注描述
+     */
+    @GetMapping("/description")
+    public ApiResult<List<CfgRuleCommonDTO.DescriptionDTO>> description(@RequestParam("platformType") String platformType) {
+        List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = cfgRuleCommonService.description(platformType);
+        return success(descriptionDTOS);
+    }
 }

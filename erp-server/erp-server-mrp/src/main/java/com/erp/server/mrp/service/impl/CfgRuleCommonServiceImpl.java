@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -129,6 +131,44 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
             strategyList  = baseMapper.listByPlatformTypeAndType(platformType,type, true);
         }
         return buildTree(strategyList);
+    }
+
+    @Override
+    public List<CfgRuleCommonDTO.DescriptionDTO> description(String platformType) {
+        List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
+                .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode()));
+        //过滤出value为true的数据
+        Map<String, List<CfgRuleCommonEntity>> ruleMap = list.stream()
+                .filter(v -> "true".equals(v.getValue()))
+                .collect(Collectors.groupingBy(CfgRuleCommonEntity::getParentId));
+        //过滤id为过滤数据的父id的数据
+        Map<String, List<CfgRuleCommonEntity>> parentMap = list.stream()
+                .filter(v -> ruleMap.containsKey(v.getId()))
+                .collect(Collectors.groupingBy(CfgRuleCommonEntity::getParentId));
+        return list.stream()
+                .filter(v -> parentMap.containsKey(v.getId()))
+                .map(v -> {
+                    CfgRuleCommonDTO.DescriptionDTO dto = new CfgRuleCommonDTO.DescriptionDTO();
+                    dto.setCode(v.getCode());
+                    dto.setCodeName(v.getName());
+                    List<CfgRuleCommonDTO.DescriptionDTO> dtos = parentMap.get(v.getId()).stream()
+                            .map(e -> {
+                                CfgRuleCommonDTO.DescriptionDTO descriptionDTO = new CfgRuleCommonDTO.DescriptionDTO();
+                                descriptionDTO.setCode(e.getCode());
+                                descriptionDTO.setCodeName(e.getName());
+                                List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = ruleMap.get(e.getId())
+                                        .stream().map(k -> {
+                                            CfgRuleCommonDTO.DescriptionDTO description = new CfgRuleCommonDTO.DescriptionDTO();
+                                            description.setCode(k.getCode());
+                                            description.setCodeName(k.getName());
+                                            return description;
+                                        }).collect(Collectors.toList());
+                                descriptionDTO.setDetails(descriptionDTOS);
+                                return descriptionDTO;
+                            }).collect(Collectors.toList());
+                    dto.setDetails(dtos);
+                    return dto;
+                }).collect(Collectors.toList());
     }
 
 

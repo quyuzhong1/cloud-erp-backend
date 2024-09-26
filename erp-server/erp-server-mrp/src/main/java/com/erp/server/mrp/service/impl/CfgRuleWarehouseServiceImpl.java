@@ -28,6 +28,7 @@ import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +67,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(cacheNames = "cache:mrp:getWarehouse", allEntries = true, beforeInvocation = true)
     public Boolean update(CfgRuleWarehouseDTO.UpdateDTO updateDTO) {
         CfgRuleWarehouseEntity cfgRuleWarehouseEntity =  BeanMapperUtils.map(CfgRuleWarehouseEntity.class, updateDTO);
         //旧数据
@@ -143,6 +145,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
     }
 
     @Override
+    @CacheEvict(cacheNames = "cache:mrp:getWarehouse", allEntries = true, beforeInvocation = true)
     public void refreshVirtual(String platformType) {
         CfgRuleWarehouseEntity ruleWarehouseEntity = getByPlatformType(platformType);
         if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {

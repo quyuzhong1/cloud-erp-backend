@@ -311,4 +311,16 @@ public class CfgRuleCommonDTO implements Serializable {
         List<StrategyResultDTO> childrenList;
     }
 
+
+    @Getter
+    @Setter
+    public static class DescriptionDTO {
+
+        private String code;
+
+        private String codeName;
+
+        private List<DescriptionDTO> details;
+
+    }
 }
