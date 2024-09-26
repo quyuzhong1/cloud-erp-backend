@@ -40,7 +40,7 @@
         SELECT
         c.id,c.code as code, c.status,c.allocated_month as allocatedMonth, to_char(C.allocated_month, 'YYYY-MM') AS allocatedMonthStr,
         c.currency, c.currency_symbol,c.exchange_rate, c.company_id, c.company_name as companyName,cd.id as detailId,cd.sku_no as skuNo, cd.sku_id,
-        cd.product_name, cd.unit, cd.product_cost as productCost,c.create_user_name as createUserName,c.create_time as createTime
+        cd.product_name, cd.unit, cast(cd.product_cost AS NUMERIC(16, 6)) as productCost,c.create_user_name as createUserName,c.create_time as createTime
         FROM  inventory_sku_cost c
         LEFT JOIN  inventory_sku_cost_detail cd ON cd.main_id=c.id and cd.is_deleted=false
         <where>

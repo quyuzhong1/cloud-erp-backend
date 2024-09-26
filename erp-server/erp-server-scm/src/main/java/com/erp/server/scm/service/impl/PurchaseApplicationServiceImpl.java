@@ -567,22 +567,24 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
         //采购申请单数据
         List<PurchaseApplicationEntity> purchaseApplicationList = this.baseMapper.selectBatchIds(ids);
-        List<String> sourceIds = purchaseApplicationList.stream().map(PurchaseApplicationEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> purchaseSkuQtyList = purchaseApplicationDetailService.listSkuAndQty(sourceIds);
-        Map<String, Integer> purchaseSkuQtyMap = purchaseSkuQtyList.stream().collect(Collectors.toMap(item -> item.getSourceDetailId(), item2 -> item2.getQty()));
         //采购申请单明细数据
         List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.lambdaQuery().in(PurchaseApplicationDetailEntity::getPurchaseApplicationId,ids).list();
         Map<String, Integer> collect = purchaseApplicationDetailList.stream()
                 .collect(Collectors.groupingBy(PurchaseApplicationDetailEntity::getSourceDetailId, Collectors.summingInt(PurchaseApplicationDetailEntity::getApplyQty)));
+        List<String> sourceDetailIds = purchaseApplicationDetailList.stream().map(PurchaseApplicationDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> purchaseSkuQtyList = purchaseApplicationDetailService.listSkuAndQty(null,sourceDetailIds);
+        Map<String, Integer> purchaseSkuQtyMap = purchaseSkuQtyList.stream().collect(Collectors.toMap(item -> item.getSourceDetailId(), item2 -> item2.getQty()));
         Map<String,String> map = new HashedMap();
         for (Map.Entry<String, Integer> entry : purchaseSkuQtyMap.entrySet()) {
             String sourceDetailId = entry.getKey();
             //已申请量
-            Integer qty = entry.getValue();
+            int qty = entry.getValue() == null ? 0 : entry.getValue();
             //本次删除的申请量
-            Integer deleteQty = collect.get(sourceDetailId);
-            String status = (qty - deleteQty) > 0 ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.NOT_ORDER.getCode();
-            map.put(sourceDetailId,status);
+            int deleteQty = collect.get(sourceDetailId) == null ? 0 : collect.get(sourceDetailId);
+            if(deleteQty>0){
+                String status = (qty - deleteQty) > 0 ? PilotPushPurchaseStatusEnum.PART_ORDER.getCode() : PilotPushPurchaseStatusEnum.NOT_ORDER.getCode();
+                map.put(sourceDetailId,status);
+            }
         }
         //删除明细数据
         purchaseApplicationDetailService.removeByPurchaseApplicationIds(ids);

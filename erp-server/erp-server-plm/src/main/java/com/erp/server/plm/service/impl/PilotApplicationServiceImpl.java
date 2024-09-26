@@ -489,9 +489,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if(approveDTO.getProductDetailList() != null && !approveDTO.getProductDetailList().isEmpty()){
             List<PilotApplicationDetailDTO.ViewDTO> productDetailList = approveDTO.getProductDetailList();
             for (PilotApplicationDetailDTO.ViewDTO productDTO : productDetailList) {
-                if(productDTO.getApproveQty() > productDTO.getApplyQty()){
-                    throw new ServiceException("产品审核数量不能大于申请数量：" + productDTO.getSkuNo());
-                }
+                //风玲要求不做限制
+//                if(productDTO.getApproveQty() > productDTO.getApplyQty()){
+//                    throw new ServiceException("产品审核数量不能大于申请数量：" + productDTO.getSkuNo());
+//                }
                 if(Objects.equals(approveType, ApproveTypeEnum.PASS)){
                     pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, productDTO.getApproveQty()).eq(PilotApplicationDetailEntity::getId, productDTO.getId()).update();
                 }
@@ -1027,7 +1028,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseFeign.listWarehouseByIds(warehouseIds);
         String sourceId = applicationDTOList.get(0).getId();
         String sourceCode = applicationDTOList.get(0).getCode();
-        List<String> skuIds = applicationDTOList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PilotApplicationDTO.PushPurchaseApplicationDTO dto : applicationDTOList) {
@@ -1070,17 +1070,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         paramDto.setApplyDeptId(findUserDTO.getDepartmentId());
 
         //是否新品首批
-        List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(Collections.singletonList(sourceId));
-        if(purchaseApplicationList.isEmpty()){
+        List<String> skuIds = padList.stream().filter(r -> StringUtils.isNotBlank(r.getSkuId())).map(PilotApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        Boolean isNew = purchaseApplicationDetailFeign.existBySkuIds(skuIds);
+        if(isNew){
             paramDto.setIsFirstMassProduct(Boolean.TRUE);
         }else {
-            List<String> mainIds = purchaseApplicationList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-            List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailFeign.listByMainIds(mainIds);
-            if(purchaseApplicationDetailList.isEmpty()){
-                paramDto.setIsFirstMassProduct(Boolean.TRUE);
-            }else {
-                paramDto.setIsFirstMassProduct(purchaseApplicationDetailList.stream().anyMatch(item -> skuIds.contains(item.getSkuId())) ? Boolean.FALSE : Boolean.TRUE);
-            }
+            paramDto.setIsFirstMassProduct(Boolean.FALSE);
         }
         paramDto.setDetails(detailList);
         paramDto.setSourceId(sourceId);

@@ -40,18 +40,41 @@
             SUM ( pad.apply_qty ) qty
         FROM
             purchase_application as pa
-            left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = FALSE
+            inner join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = FALSE
         WHERE
-            PAD.is_deleted = FALSE
+            PA.is_deleted = FALSE
             <if test="sourceIds!=null and sourceIds.size>0">
                 AND pa.source_id IN
                 <foreach collection="sourceIds" item="sourceId" open="(" separator="," close=")">
                     #{sourceId}
                 </foreach>
             </if>
+            <if test="sourceDetailIds !=null and sourceDetailIds.size>0">
+                AND pad.source_detail_id IN
+                <foreach collection="sourceDetailIds" item="sourceDetailId" open="(" separator="," close=")">
+                    #{sourceDetailId}
+                </foreach>
+            </if>
         GROUP BY
             pa.source_id,
             pad.source_detail_id
+    </select>
+
+    <select id="existBySkuIds" resultType="java.lang.Integer">
+        SELECT COUNT( 0 )
+        FROM
+            purchase_application AS pa
+            INNER JOIN purchase_application_detail PAD ON pa.ID = PAD.purchase_application_id
+            AND PAD.is_deleted = FALSE
+        WHERE
+            PA.is_deleted = FALSE
+          and pa.source_type ='pilotApplication'
+        <if test="skuIds !=null and skuIds.size>0">
+            and pad.sku_id in
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
     </select>
 
 </mapper>

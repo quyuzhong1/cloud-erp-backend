@@ -81,7 +81,7 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
     /**
      * 新增重量分摊
      */
-    BatchResultDTO add(String logisticsBillId);
+    BatchResultDTO add(String logisticsBillId) throws InterruptedException;
 
     /**
      * 根据sourceId删除

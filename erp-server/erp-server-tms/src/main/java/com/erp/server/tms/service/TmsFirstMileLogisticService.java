@@ -94,7 +94,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     List<LogisticsBillEntity> listByOutstcockCode(List<String> outstockCodeList);
 
-    void updateImport(List<LogisticsBillEntity> updateList, List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList);
+    void updateImport(List<LogisticsBillEntity> updateList, List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList, List<LogisticsBillCostEntity> updateCostList);
 
     List<LogisticsBillEntity> listByTransportNo(List<String> transportNoList);
 
@@ -151,7 +151,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * 下推重量分摊
      * @param id 物流单ID
      */
-    BatchResultDTO pushWeightAllocation(String id);
+    BatchResultDTO pushWeightAllocation(String id) throws InterruptedException;
 
     BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }

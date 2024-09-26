@@ -1226,10 +1226,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 getLabelVO.setTransportNo(dto.getTransportNo());
 
                 //物流跟踪号
-                List<LogisticsBillDTO.BaseDTO> baseDTOList = this.listLogisticsBillByTransportNos(Arrays.asList(dto.getTransportNo()));
-                if (CollectionUtils.isNotEmpty(baseDTOList)) {
-                    getLabelVO.setTrackNo(baseDTOList.get(0).getTrackNo());
+                List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId()));
+                if (CollectionUtils.isEmpty(logisticsEntityList)){
+                    throw new ServiceException("销售订单【{}】物流信息为空不能进行面单打印", soB2cEntity.getCode());
                 }
+                getLabelVO.setTransportNo(logisticsEntityList.get(0).getCode());
+                getLabelVO.setTrackNo(logisticsEntityList.get(0).getTrackNo());
 
                 //授权信息
                 getLabelVO.setAuthMap(authMap);
@@ -1303,7 +1305,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 waybillDTOList.add(waybillDTO);
             }catch (Exception e){
                 String msg = StrUtil.format("{}获取物流面单异常->{}",dto.getDeliveryNo(),e.getMessage());
-                log.error(msg);
+                log.error(msg,e);
                 errorList.add(msg);
             }
         }

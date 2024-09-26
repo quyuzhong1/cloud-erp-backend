@@ -104,7 +104,7 @@
             (select business_id,process_instance_id from process_management where is_deleted = FALSE and business_id = #{businessId} order by create_time desc limit 1 ) pm
                 inner JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
                 AND ptm.is_deleted = FALSE
-        order by ptm.id desc
+        order by ptm.id
     </select>
     <select id="listProcessByBusinessKey" parameterType="com.erp.model.workflow.dto.ProcessManagementDTO$TaskKeyInfoDTO" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
         SELECT

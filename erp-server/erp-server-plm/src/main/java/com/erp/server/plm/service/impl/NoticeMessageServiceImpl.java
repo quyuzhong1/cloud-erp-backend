@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.IsConstant;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
@@ -95,6 +96,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
     @Resource
     private ProcessTaskManagementFeign processTaskManagementFeign;
+
+    @Autowired
+    private CfgSettingService cfgSettingService;
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
@@ -2726,7 +2730,23 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             String chargeName = Arrays.asList(entity.getChargeName().split(",")).stream().distinct().collect(Collectors.joining(";"));
             String skuNo = Arrays.asList(entity.getSkuNo().split(",")).stream().distinct().collect(Collectors.joining(";"));
             String message = String.format(NoticeMessageConstant.AUDIT_PILOT_MSG_CONTENT,isCompeletd ? NoticeEnum.AUDIT_COMPLETED_PILOT_APPLICATION.getName() : NoticeEnum.AUDIT_PILOT_APPLICATION.getName(),chargeName,skuNo);
-            Map contentMap = getCardMessageMap(title, message, fsAppUrl);
+            String url =fsAppUrl;
+            PlmCfgSettingEntity pilotApplicationNoticeUrl = cfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, "pilotApplicationNoticeUrl").one();
+            if(null != pilotApplicationNoticeUrl){
+                Map<String, Object> dataJson = pilotApplicationNoticeUrl.getDataJson();
+                boolean uat = BusinessCommonConstants.hasProfile("uat");
+                boolean dev = BusinessCommonConstants.hasProfile("dev");
+                boolean test = BusinessCommonConstants.hasProfile("test");
+                boolean prod = BusinessCommonConstants.hasProfile("prod");
+                if(uat){
+                    url = String.valueOf(dataJson.get("uat"));
+                }else  if(dev||test){
+                    url = String.valueOf(dataJson.get("test"));
+                }else if(prod){
+                    url = String.valueOf(dataJson.get("prod"));
+                }
+            }
+            Map contentMap = getCardMessageMap(title, message, url);
             sendMessage.setContentMap(contentMap);
             //发送消息的结果
             Boolean sendResult = fsService.sendMessage(sendMessage);

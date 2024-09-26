@@ -246,25 +246,25 @@ public class InitFirstMileAllocationDTO implements Serializable {
         /**
          * 期初在途头程费用【可排序】
          */
-        private BigDecimal initTransitCost;
+        private String initTransitCost;
         /**
          * 期初在途头程关税【可排序】
          */
-        private BigDecimal initTransitTariff;
+        private String initTransitTariff;
         /**
          * 期初暂估头程费用【可排序】
          */
-        private BigDecimal initEstimatedCost;
+        private String initEstimatedCost;
 
         /**
          * 期初暂估头程关税【可排序】
          */
-        private BigDecimal initEstimatedTariff;
+        private String initEstimatedTariff;
 
         /**
          * 分摊重量【可排序】
          */
-        private BigDecimal weightAllocation;
+        private String weightAllocation;
 
         /**
          * 产品成本【可排序】

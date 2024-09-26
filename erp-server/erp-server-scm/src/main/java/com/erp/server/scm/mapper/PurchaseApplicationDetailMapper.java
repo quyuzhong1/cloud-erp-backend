@@ -21,5 +21,13 @@ public interface PurchaseApplicationDetailMapper extends BaseMapper<PurchaseAppl
     /**
      * 统计SKU的申请数量
      */
-    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds);
+    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds,List<String> sourceDetailIds);
+     /**
+     * 判断是否新品
+     * @param skuIds
+     * @return Boolean
+     * @date: 2024-09-25
+     * @author: jack
+     */
+    Integer existBySkuIds(List<String> skuIds);
 }

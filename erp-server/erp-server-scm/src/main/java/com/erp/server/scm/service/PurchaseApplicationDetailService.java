@@ -69,5 +69,9 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
     /**
      * 统计sku已申请的数量
      */
-    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds);
+    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds,List<String> sourceDetailIds);
+    /**
+     * 试产量产是否新品
+     */
+    Boolean existBySkuIds( List<String> skuIds);
 }
