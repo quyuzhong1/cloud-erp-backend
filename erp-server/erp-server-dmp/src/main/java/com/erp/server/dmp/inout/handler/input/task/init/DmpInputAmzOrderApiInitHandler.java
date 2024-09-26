@@ -116,9 +116,6 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
             }
             List<JSONObject> curJsonList = orderList.stream().map(e -> fillDataAndToJsonObject(e, shopInfoDTO)).collect(Collectors.toList());
 
-            // 反写下次任务开始时间
-            dmpCfgInputDetailEntity.setNextTime(nextStartTime);
-
             // 返回下载源数据
             return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSONArray.toJSONString(curJsonList)));
         } catch (ApiException e) {
