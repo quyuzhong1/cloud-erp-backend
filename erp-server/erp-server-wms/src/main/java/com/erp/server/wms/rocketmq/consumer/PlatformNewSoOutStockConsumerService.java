@@ -43,9 +43,9 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_TOPIC,
-        selectorExpression = RocketMqNewTag.DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_TAG,
-        consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_GROUP,
+@RocketMQMessageListener(topic = RocketMqNewTopic.DMP_AMZ_SO_OUT_STOCK_TO_WMS_TOPIC,
+        selectorExpression = RocketMqNewTag.DMP_AMZ_SO_OUT_STOCK_TO_WMS_TAG,
+        consumerGroup = RocketMqNewConsumerGroup.DMP_AMZ_SO_OUT_STOCK_TO_WMS_GROUP,
         consumeMode = ConsumeMode.CONCURRENTLY)
 public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformConsumerHandler {
     @Resource
