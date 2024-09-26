@@ -2175,7 +2175,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.IS_EXIST_NOT_INTERCEPT);
         }
         //根据wms是否勾选组包后不允许拦截按钮 进行校验  //若系统配置勾选则中转状态为非无需中转(包含待中转，预报成功。预报失败)
-        if (PackageStatusEnum.ALREADY.getCode().equals(entity.getPackageStatus()) && (!TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus()))){
+        if (PackageStatusEnum.ALREADY.getCode().equals(entity.getPackageStatus())){
             //已组包 配置已勾选
             CfgSettingEntity cfgSettingEntity = cfgSettingFeign.getByKey(CfgSettingEnum.DELIVERY_INTERCEPT.getCode());
             if (ObjectUtil.isNotEmpty(cfgSettingEntity) && ObjectUtil.isNotEmpty(cfgSettingEntity.getDataJson())) {
