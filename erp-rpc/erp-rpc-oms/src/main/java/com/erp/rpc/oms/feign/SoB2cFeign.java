@@ -621,12 +621,12 @@ public interface SoB2cFeign {
     /**
      * 取消订单预报
      */
-    @PostMapping("/cancelOrderForecast")
+    @PostMapping("/feign/soB2c/cancelOrderForecast")
     ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody BaseIdsDTO.IdsDTO dto);
 
     /**
      * 取消物流单
      */
-    @PostMapping("/cancelLogistic")
+    @PostMapping("/feign/soB2c/cancelLogistic")
     ApiResult<List<BatchResultDTO>> cancelLogistic(@RequestBody BaseIdsDTO.IdsDTO idDTO);
 }

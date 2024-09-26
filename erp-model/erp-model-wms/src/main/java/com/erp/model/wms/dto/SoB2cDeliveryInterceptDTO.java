@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -560,7 +561,7 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
         private List<String> ids;
 
         //明细处理弹窗
-        private List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList;
+        private List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList = new ArrayList<>();
 
         /**
          * 备注

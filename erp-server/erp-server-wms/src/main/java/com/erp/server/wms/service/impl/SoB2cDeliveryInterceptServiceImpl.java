@@ -687,6 +687,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         interceptInventoryDTOList = interceptInventoryDTOList.stream().filter(v->v.getId().equals(id)).collect(Collectors.toList());
         SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = this.getById(id);
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSoId());
+        if(Objects.isNull(soB2cDeliveryEntity)){
+            return BatchResultDTO.fail(soB2cDeliveryInterceptEntity.getId(),soB2cDeliveryInterceptEntity.getCode(),"查询不到发货单");
+        }
         return service.handleSuccess(soB2cDeliveryEntity,id,interceptInventoryDTOList, dto.getResultRemark());
     }
 
