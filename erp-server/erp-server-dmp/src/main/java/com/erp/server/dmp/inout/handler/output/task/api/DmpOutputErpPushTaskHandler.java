@@ -214,14 +214,14 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					if(!apiResult.isSuccess()) {
 						status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
 						responseData = apiResult.getMsg();
-						if(systemCode.equals(DmpBasicSystemCodeEnum.WDT.getCode()) && responseData != null && responseData.startsWith("单据推送成功，当前状态：")) {
-							dmpOutputTaskRecordService.lambdaUpdate()
-								.eq(DmpOutputTaskRecordEntity::getId, id)
-								.set(DmpOutputTaskRecordEntity::getResponseData, responseData)
-								.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-								.update();
-							return;
-						}
+//						if(systemCode.equals(DmpBasicSystemCodeEnum.WDT.getCode()) && responseData != null && responseData.startsWith("单据推送成功，当前状态：")) {
+//							dmpOutputTaskRecordService.lambdaUpdate()
+//								.eq(DmpOutputTaskRecordEntity::getId, id)
+//								.set(DmpOutputTaskRecordEntity::getResponseData, responseData)
+//								.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+//								.update();
+//							return;
+//						}
 					}
 				}
 				try {responseData = JSON.toJSONString(invoke);} catch (Exception e) {}
