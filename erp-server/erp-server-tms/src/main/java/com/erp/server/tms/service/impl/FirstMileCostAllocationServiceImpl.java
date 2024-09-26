@@ -909,13 +909,20 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 //当如果是当月无实际账单,本月也无签收的直接显示为0
                 detailEntity.setEndPeriodTransitCost(BigDecimal.ZERO);
             } else {
-                if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) == 0) {
-                    //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
-                    detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
-                } else {
-                    //期初不等于0时，期初在途费用-冲期初-本期分摊费用
-                    detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
+                //期初数据是否存在
+                if(Objects.nonNull(initEntity)){
+                    //期初在途费用-冲期初-本期分摊费用
+                    detailEntity.setEndPeriodTransitCost(MathUtil.subtract(initEntity.getInitTransitCost(), mid));
+                }else {
+                    if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) == 0) {
+                        //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
+                    } else {
+                        //期初不等于0时，期初在途费用-冲期初-本期分摊费用
+                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
+                    }
                 }
+
             }
             //期末暂估费用 计算
             /**
