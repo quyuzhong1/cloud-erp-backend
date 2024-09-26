@@ -847,6 +847,6 @@ public class SoB2cFeignController extends BaseController {
      */
     @GetMapping("/listAllVirtualSoB2cDetail")
     public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail(){
-        return soB2cService.listAllVirtualSoB2cDetail();
+        return soB2cDetailService.listAllVirtualSoB2cDetail();
     }
 }

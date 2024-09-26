@@ -8,13 +8,12 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
-import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -146,6 +145,11 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName,"")
                 .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty, MathUtil.ZERO)
                 .update();
+    }
+
+    @Override
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail() {
+        return baseMapper.listAllVirtualRequisitionApplicationDetail();
     }
 
     /**

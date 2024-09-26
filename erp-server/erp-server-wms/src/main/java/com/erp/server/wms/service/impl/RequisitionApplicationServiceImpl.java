@@ -35,6 +35,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
@@ -1463,10 +1464,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     }
 
-    @Override
-    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail() {
-        return null;
-    }
 
     /**
      * 处理申请单

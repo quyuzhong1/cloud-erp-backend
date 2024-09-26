@@ -106,11 +106,6 @@ public class ReportOrderDataDTO implements Serializable {
          * 冻结数量
          */
         private Integer frozenQty;
-
-        /**
-         * bom的json数据
-         */
-        private JSONArray bomJson;
     }
 
     /**

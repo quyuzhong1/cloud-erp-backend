@@ -3,6 +3,7 @@ import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -33,4 +34,11 @@ public interface SoB2cDetailMapper extends BaseMapper<SoB2cDetailEntity> {
     List<SoB2cDetailEntity> listContainDeleted(@Param("ids") List<String> ids);
 
     void updateContainDeleted(@Param("ids") List<String> revertDetailIds);
+    /**
+     * 查询所有虚拟仓B2C销售订单数据
+     * @author will
+     * @date 2024/9/26 17:26
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
 }

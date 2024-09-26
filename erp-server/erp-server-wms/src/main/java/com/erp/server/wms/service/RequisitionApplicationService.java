@@ -6,10 +6,10 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -224,11 +224,4 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id);
 
     void assembleDownload(List<String> ids, HttpServletResponse response);
-    /**
-     * 查询要货申请数据
-     * @author will
-     * @date 2024/9/26 16:53
-     * @return List<ViewDTO>
-     */
-    List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail();
 }

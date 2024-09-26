@@ -115,5 +115,28 @@
         </foreach>
     </select>
 
+    <!-- 查询所有虚拟仓B2C销售订单数据 -->
+    <select id="listAllVirtualSoB2cDetail" resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO">
+        select
+            sbd.warehouse_id as warehouseId,
+            sbd.virtual_warehouse_id as virtualWarehouseId,
+            sbd.sku_id as skuId,
+            sbd.qty,
+            sb.approve_status as approveStatus,
+            sb.bill_status as status,
+            sb.invalid_status as invalidStatus,
+            sb.id as sourceId,
+            sb.code as sourceCode,
+            'soB2c' as sourceType,
+            sbd.id as sourceDetailId,
+            to_char(sb.create_time, 'YYYY-MM') as date
+        from so_b2c sb
+        left join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
+        <where>
+            sbd.is_deleted = false and sbd.virtual_warehouse_id != ''
+        </where>
+        order by sb.id desc
+    </select>
+
 
 </mapper>

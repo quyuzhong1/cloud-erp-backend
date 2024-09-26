@@ -222,6 +222,7 @@
             si.invalid_status as invalidStatus,
             si.id as sourceId,
             si.code as sourceCode,
+            'soInfo' as sourceType,
             to_char(si.create_time, 'YYYY-MM') as date,
             sd.frozen_qty as frozenQty
         from so_info si
