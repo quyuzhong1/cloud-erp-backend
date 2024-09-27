@@ -634,7 +634,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if (TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())) {
             ApiResult<List<BatchResultDTO>> cancelOrderForecastResult = soB2cFeign.cancelOrderForecast(idDto);
             if(!cancelOrderForecastResult.isSuccess()){
-                throw new ServiceException("取消订单预报失败");
+                throw new ServiceException("订单取消保宏预报失败,无法处理拦截成功");
             }
         }
         //取消物流单，不管结果，继续向下执行
@@ -724,17 +724,17 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
             throw new ServiceException(ApiError.ERROR_99124);
         }
+        SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
+        interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
+        interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
+        interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
         if(!SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(soB2cDelivery.getStatus()) && isAutoOut){
             soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
             soB2cDeliveryService.updateById(soB2cDelivery);
 
             //更新销售订单,在这里修改拦截状态，冻结状态，因为下面生成销售出库单依赖这个状态
-            SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
             interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
-            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getSoId()));
-            interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
             soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
             SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
@@ -760,6 +760,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }
+        }else{
+            soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"成功");
     }
