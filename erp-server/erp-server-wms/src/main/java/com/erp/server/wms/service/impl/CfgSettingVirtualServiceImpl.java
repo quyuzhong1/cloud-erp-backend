@@ -125,11 +125,8 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             case SALES_DASHBOARD:
                 jsonObject = ObjectUtil.isEmpty(addDTO.getSalesDashboardDTO()) ? null : JSONUtil.parseObj(addDTO.getSalesDashboardDTO());
                 break;
-            case SCARCE_STATISTICS:
-                jsonObject = ObjectUtil.isEmpty(addDTO.getScarceStatisticsDTO()) ? null : JSONUtil.parseObj(addDTO.getScarceStatisticsDTO());
-                break;
-            case PRODUCT_STATISTICS:
-                jsonObject = ObjectUtil.isEmpty(addDTO.getProductStatisticsDTO()) ? null : JSONUtil.parseObj(addDTO.getProductStatisticsDTO());
+            case VIRTUAL_RULE:
+                jsonObject = ObjectUtil.isEmpty(addDTO.getVirtualRuleDTO()) ? null : JSONUtil.parseObj(addDTO.getVirtualRuleDTO());
                 break;
             default:
                 break;
@@ -165,13 +162,9 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
                 CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.SalesDashboardDTO.class);
                 viewDTO.setSalesDashboardDTO(salesDashboardDTO);
                 break;
-            case SCARCE_STATISTICS:
-                CfgSettingVirtualValueDTO.ScarceStatisticsDTO scarceStatisticsDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.ScarceStatisticsDTO.class);
-                viewDTO.setScarceStatisticsDTO(scarceStatisticsDTO);
-                break;
-            case PRODUCT_STATISTICS:
-                CfgSettingVirtualValueDTO.ProductStatisticsDTO productStatisticsDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.ProductStatisticsDTO.class);
-                viewDTO.setProductStatisticsDTO(productStatisticsDTO);
+            case VIRTUAL_RULE:
+                CfgSettingVirtualValueDTO.VirtualRuleDTO virtualRuleDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.VirtualRuleDTO.class);
+                viewDTO.setVirtualRuleDTO(virtualRuleDTO);
                 break;
             default:
                 break;

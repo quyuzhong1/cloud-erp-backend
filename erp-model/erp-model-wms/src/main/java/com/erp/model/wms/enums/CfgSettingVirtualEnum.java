@@ -7,8 +7,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum CfgSettingVirtualEnum implements EnumMessage {
 
     SALES_DASHBOARD("salesDashboard","销售看板"),
-    SCARCE_STATISTICS("scarceStatistics","缺货统计"),
-    PRODUCT_STATISTICS("productStatistics","产品统计")
+    VIRTUAL_RULE("virtualRule","规则设置"),
     ;
 
     /**

@@ -50,22 +50,16 @@ public class CfgSettingVirtualDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 虚拟仓看板
+         * 销售看板
          */
         @Valid
         private CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO;
 
         /**
-         * 缺货统计
+         * 规则设置
          */
         @Valid
-        private CfgSettingVirtualValueDTO.ScarceStatisticsDTO scarceStatisticsDTO;
-
-        /**
-         * 产品统计
-         */
-        @Valid
-        private CfgSettingVirtualValueDTO.ProductStatisticsDTO productStatisticsDTO;
+        private CfgSettingVirtualValueDTO.VirtualRuleDTO virtualRuleDTO;
 
     }
 

@@ -219,6 +219,9 @@
             <if test="params.isExceed != null and params.isExceed == false">
                 and  diff.usableQty >= diff.totalVirtualQty
             </if>
+            <if test="params.isViewVirtual != null and params.isViewVirtual == true">
+                and  vi.sku_id is not null
+            </if>
         </where>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">

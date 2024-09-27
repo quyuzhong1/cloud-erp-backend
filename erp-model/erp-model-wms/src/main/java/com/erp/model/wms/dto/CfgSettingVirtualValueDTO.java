@@ -120,7 +120,7 @@ public class CfgSettingVirtualValueDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ScarceStatisticsDTO{
+    public static class VirtualRuleDTO{
 
         /**
          * 定时更新时间
@@ -128,15 +128,7 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         @NotEmpty(message = "定时更新时间不能为空")
         @JsonFormat(pattern = "HH:mm")
         private List<LocalTime> execTimeList;
-    }
 
-
-    /**
-     * 产品统计DTO
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ProductStatisticsDTO{
 
         /**
          * 是否拆分组合品
@@ -144,5 +136,4 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         @NotNull(message = "是否拆分组合品不能为空")
         private Boolean isSplit;
     }
-
 }

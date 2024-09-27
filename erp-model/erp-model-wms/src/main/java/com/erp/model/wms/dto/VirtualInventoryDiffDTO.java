@@ -46,6 +46,16 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 超出分配,true是，false否
          */
         private Boolean isExceed;
+
+        /**
+         * 仅看虚拟仓相关
+         */
+        private Boolean isViewVirtual;
+
+        /**
+         * 去除0库存
+         */
+        private Boolean isDeleteZeroInventory;
     }
 
 

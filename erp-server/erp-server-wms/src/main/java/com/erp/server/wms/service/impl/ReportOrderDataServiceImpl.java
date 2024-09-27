@@ -101,7 +101,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //查询配置
         CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
         //是否拆分
-        boolean isSplit = ObjectUtil.isEmpty(viewDTO.getProductStatisticsDTO()) ? false : viewDTO.getProductStatisticsDTO().getIsSplit();
+        boolean isSplit = ObjectUtil.isEmpty(viewDTO.getVirtualRuleDTO()) ? false : viewDTO.getVirtualRuleDTO().getIsSplit();
 
         //生成源数据
         generateReportOrderData();
