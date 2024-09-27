@@ -34,22 +34,22 @@ public class ReplenishmentSuggestionQueryHandler extends AbstractQueryHandler {
             super.buildSplicingSQLDTO("rs.sku_id", QueryConditionEnum.IN_LIST,skuIds, QueryDataTypeEnum.STRING);
         }
         if("label".equals(field)) {
-            return "EXISTS (select ref_id from replenishment_ref_label where is_deleted = false AND label_id " + compareCodeSplicingValueSql + ")";
+            return "EXISTS (select 1 from replenishment_ref_label where ref_id = rsd.id AND is_deleted = false AND label_id " + compareCodeSplicingValueSql + ")";
         }
         if("markType".equals(field)) {
-            return "EXISTS ( SELECT replenishment_detail_id FROM recent_suggestion_detail WHERE is_deleted = false AND mark_type " + compareCodeSplicingValueSql + ")";
+            return "EXISTS ( SELECT 1 FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id AND is_deleted = false AND mark_type " + compareCodeSplicingValueSql + ")";
         }
         if("restockDate".equals(field)) {
-            return "EXISTS ((SELECT source_id FROM delivery_suggest WHERE is_deleted = FALSE AND suggest_delivery_date " + compareCodeSplicingValueSql + ")  OR (SELECT source_id FROM purchase_suggest WHERE is_deleted = FALSE AND suggest_purchase_date " + compareCodeSplicingValueSql + "))";
+            return "EXISTS ((SELECT 1 FROM delivery_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_delivery_date " + compareCodeSplicingValueSql + ")  OR (SELECT 1 FROM purchase_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_purchase_date " + compareCodeSplicingValueSql + "))";
         }
         if("outOfStockDay".equals(field)) {
-            return "EXISTS ( SELECT replenishment_detail_id FROM recent_suggestion_detail WHERE is_deleted = false AND type = 'RECENT_OUT_OF_STOCK' AND date  " + compareCodeSplicingValueSql + ")";
+            return "EXISTS ( SELECT 1 FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id AND is_deleted = false AND type = 'RECENT_OUT_OF_STOCK' AND date  " + compareCodeSplicingValueSql + ")";
         }
         if("suggestDeliveryDate".equals(field)) {
-            return "EXISTS ( SELECT replenishment_detail_id FROM recent_suggestion_detail WHERE is_deleted = false AND type = 'RECENT_DELIVERY' AND date " + compareCodeSplicingValueSql + ")";
+            return "EXISTS ( SELECT 1 FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id AND is_deleted = false AND type = 'RECENT_DELIVERY' AND date " + compareCodeSplicingValueSql + ")";
         }
         if("suggestPurchaseDate".equals(field)) {
-            return "EXISTS ( SELECT replenishment_detail_id FROM recent_suggestion_detail WHERE is_deleted = false AND type = 'RECENT_PURCHASE' AND  date " + compareCodeSplicingValueSql + ")";
+            return "EXISTS ( SELECT 1 FROM recent_suggestion_detail WHERE  replenishment_detail_id = rsd.id AND is_deleted = false AND type = 'RECENT_PURCHASE' AND  date " + compareCodeSplicingValueSql + ")";
         }
         return null;
     }
