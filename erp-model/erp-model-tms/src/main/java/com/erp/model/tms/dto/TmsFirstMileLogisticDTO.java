@@ -639,6 +639,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 明细id
          */
+        @ExcelIgnore
         private String detailId;
 
         /**
@@ -650,6 +651,8 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 跟踪号
          */
+        @ExcelProperty(value = "跟踪号")
+        @ColumnWidth(20)
         private String trackNo;
         /**
          * 柜号
@@ -660,10 +663,13 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         /**
          * 船司航司id
          */
+        @ExcelIgnore
         private String carrierId;
         /**
          * 船司航司名称
          */
+        @ExcelProperty(value = "船司航司名称")
+        @ColumnWidth(20)
         private String carrierName;
         /**
          * 业务单号
