@@ -8,6 +8,7 @@ import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
@@ -97,7 +98,13 @@ public class RefundOrderEntity extends BaseEntity<RefundOrderEntity> {
      * 退款时间
      */
     @TableField("refund_time")
-    private Date refundTime;
+    private LocalDateTime refundTime;
+
+    /**
+     * 平台创建时间
+     */
+    @TableField("platform_create_time")
+    private LocalDateTime platformCreateTime;
 
 
     public static final String CODE = "code";
