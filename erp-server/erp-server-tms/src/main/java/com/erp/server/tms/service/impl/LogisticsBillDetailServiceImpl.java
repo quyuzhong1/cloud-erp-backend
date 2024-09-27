@@ -17,10 +17,7 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsCarrierEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
 import com.erp.server.tms.service.*;
@@ -315,5 +312,21 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         List<String> oldIds = oldList.stream().map(LogisticsBillDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    @Override
+    public void updateLogisticsBillDetailByTrackNo(LogisticsTrackEntity logisticsTrackEntity) {
+        if (Objects.isNull(logisticsTrackEntity) || StrUtil.isBlank(logisticsTrackEntity.getTrackNo()) || StrUtil.isBlank(logisticsTrackEntity.getStatus())){
+            return;
+        }
+        LocalDateTime signTime = null;
+        if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
+            signTime = logisticsTrackEntity.getTrackTime();
+        }
+        this.lambdaUpdate().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo())
+                .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
+                .set(LogisticsBillDetailEntity::getTrackStatus, logisticsTrackEntity.getStatus())
+                .set(LogisticsBillDetailEntity::getSignTime, signTime)
+                .update();
     }
 }

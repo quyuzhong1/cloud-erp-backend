@@ -188,6 +188,14 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         }
     }
 
+    @Override
+    public LogisticsTrackEntity getMaxByTrackTime(String trackNo) {
+        if (StrUtil.isBlank(trackNo)){
+            return null;
+        }
+        return lambdaQuery().eq(LogisticsTrackEntity::getTrackNo, trackNo).orderByDesc(LogisticsTrackEntity::getTrackTime).last("LIMIT 1").one();
+    }
+
 
     /**
      * 新增修改处理数据

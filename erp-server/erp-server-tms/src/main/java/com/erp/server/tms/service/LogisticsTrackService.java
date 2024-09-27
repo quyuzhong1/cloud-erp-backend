@@ -63,4 +63,11 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      * @param logisticsTrackEntity
      */
     void checkTrackStatus(LogisticsTrackEntity logisticsTrackEntity);
+
+    /**
+     * 获取跟踪号最后一条记录
+     * @param trackNo
+     * @return
+     */
+    LogisticsTrackEntity getMaxByTrackTime(String trackNo);
 }

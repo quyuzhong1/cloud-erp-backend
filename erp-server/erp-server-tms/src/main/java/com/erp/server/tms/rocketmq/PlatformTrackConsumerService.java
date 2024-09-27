@@ -15,6 +15,7 @@ import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.TrackDataConverter;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import io.seata.common.util.CollectionUtils;
@@ -30,6 +31,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 下载FBA货件消费服务
@@ -50,6 +52,8 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @Override
     public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
@@ -81,21 +85,29 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     public ApiResult<?> handle(Object ext) {
         PlatformTrackDTO dto = JSONUtil.toBean(ext.toString(), PlatformTrackDTO.class);
         //根据trackNo拉取轨迹数据
-        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getDetails())) return ApiResult.success();
+        if (Objects.isNull(dto) || StrUtil.isBlank(dto.getTrackNo()) ||CollectionUtils.isEmpty(dto.getDetails())) {
+            return ApiResult.success();
+        }
+        log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
         List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
         //先物理删除  再新增
         if (CollectionUtils.isNotEmpty(logisticsTrackEntities)) {
-            //删除
-            logisticsTrackService.deleteByTrackNo(dto.getTrackNo());
-            //新增
-            logisticsTrackService.saveBatch(logisticsTrackEntities);
-            //TODO 根据记录最新状态修改订单状态
-            //Student latest = Collections.max(studentList,
-            //                                 Comparator.comparing(s -> s.getDate()));
             LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
-            logisticsTrackService.checkTrackStatus(max);
+            //比较最新记录的 md5不一致就更新
+            //获取跟踪号最新一条记录
+            LogisticsTrackEntity trackEntity = logisticsTrackService.getMaxByTrackTime(dto.getTrackNo());
+            //查询不到就保存全部
+            if (Objects.isNull(trackEntity)){
+                logisticsTrackService.saveBatch(logisticsTrackEntities);
+            }else {
+                List<LogisticsTrackEntity> lastList = logisticsTrackEntities.stream().filter(e -> Objects.nonNull(e) && Objects.nonNull(e.getTrackTime()) && e.getTrackTime().isAfter(trackEntity.getTrackTime())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(lastList)){
+                    logisticsTrackService.saveBatch(lastList);
+                }
+            }
+            logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(max);
         }
-        System.out.println(dto);
+        log.info(StrUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
         return ApiResult.success();
     }
 
