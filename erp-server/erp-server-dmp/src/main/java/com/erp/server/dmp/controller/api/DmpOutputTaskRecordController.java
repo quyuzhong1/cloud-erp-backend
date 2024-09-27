@@ -191,8 +191,8 @@ public class DmpOutputTaskRecordController extends BaseController {
     @PostMapping(value = "/batchSync")
     public ApiResult batchSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
         dmpOutputTaskRecordService.lambdaUpdate()
-                .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
-                .eq(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)
+                .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)
+                .eq(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
                 .in(DmpOutputTaskRecordEntity::getId, dto.getIds())
                 .update();
 
