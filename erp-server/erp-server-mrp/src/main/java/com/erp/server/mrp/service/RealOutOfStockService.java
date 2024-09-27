@@ -20,4 +20,7 @@ public interface RealOutOfStockService extends SuperService<RealOutOfStockEntity
      */
     LocalDate getRealStartDate(String id, LocalDate basicCalcDate);
 
+
+    void dealRealOutOfStock(LocalDate calculationDate);
+
 }
