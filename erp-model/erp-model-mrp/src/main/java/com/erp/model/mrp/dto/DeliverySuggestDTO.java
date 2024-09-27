@@ -81,6 +81,11 @@ public class DeliverySuggestDTO implements Serializable {
         private String logisticsMethod;
 
         /**
+         * 物流方式名称,LogisticsMethodEnum枚举
+         */
+        private String logisticsMethodName;
+
+        /**
          * 物流时效（天）
          */
         private Integer logisticsDays;

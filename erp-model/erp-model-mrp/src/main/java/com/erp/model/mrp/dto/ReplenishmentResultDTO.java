@@ -816,7 +816,7 @@ public class ReplenishmentResultDTO {
         public static PurchaseSuggestEntity buildPurchaseSuggest(PurchaseSuggestDTO dto) {
             PurchaseSuggestEntity entity = new PurchaseSuggestEntity();
             entity.setCode(dto.getCode());
-            entity.setCreateType(dto.getCode());
+            entity.setCreateType(dto.getCreateType());
             entity.setSuggestPurchaseQty(dto.getSuggestPurchaseQty());
             entity.setSuggestPurchaseDate(dto.getSuggestPurchaseDate());
             entity.setLogisticsMethod(dto.getLogisticsMethod());

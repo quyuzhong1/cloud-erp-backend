@@ -198,6 +198,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         }
         for (PurchaseSuggestDTO.ListDTO listDTO : list) {
             listDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(listDTO.getCreateType()));
+            listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
         }
     }
 }

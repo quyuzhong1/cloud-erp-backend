@@ -13,6 +13,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.enums.CreateTypeEnum;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
 import com.erp.server.mrp.service.DeliverySuggestService;
 import com.erp.server.mrp.service.OperateLogService;
@@ -124,6 +125,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         for (DeliverySuggestDTO.ListDTO listDTO : list) {
             listDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(listDTO.getCreateType()));
+            listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
         }
     }
 }
