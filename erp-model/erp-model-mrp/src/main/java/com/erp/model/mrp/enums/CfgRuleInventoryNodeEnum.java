@@ -68,17 +68,25 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
         return name;
     }
 
-    public static List<String> getParentNodes() {
-        return Arrays.asList(FBA_ESTIMATED_DELIVERY.getCode(),
-                OVERSEAS_ESTIMATED_DELIVERY.getCode(),
+    public static List<String> getParentNodes(Boolean isEnableOverseas) {
+        List<String> list = Arrays.asList(FBA_ESTIMATED_DELIVERY.getCode(),
                 LOCAL_ESTIMATED_DELIVERY.getCode(),
                 TOTAL_INVENTORY.getCode());
+        if (Boolean.TRUE.equals(isEnableOverseas)) {
+            list.add(OVERSEAS_ESTIMATED_DELIVERY.getCode());
+        }
+        return list;
     }
 
-    public static List<String> getNodes() {
-        return Arrays.asList(FBA_USABLE.getCode(), FBA_IN_TRANSIT.getCode(), FBA_ESTIMATED_DELIVERY.getCode(),
-                OVERSEAS_USABLE.getCode(), OVERSEAS_IN_TRANSIT.getCode(), OVERSEAS_ESTIMATED_DELIVERY.getCode(),
-                LOCAL_USABLE.getCode(), LOCAL_IN_TRANSIT.getCode(),LOCAL_ESTIMATED_DELIVERY.getCode(),
+    public static List<String> getNodes(Boolean isEnableOverseas) {
+        List<String> list = Arrays.asList(FBA_USABLE.getCode(), FBA_IN_TRANSIT.getCode(), FBA_ESTIMATED_DELIVERY.getCode(),
+                LOCAL_USABLE.getCode(), LOCAL_IN_TRANSIT.getCode(), LOCAL_ESTIMATED_DELIVERY.getCode(),
                 TOTAL_INVENTORY.getCode());
+        if (Boolean.TRUE.equals(isEnableOverseas)) {
+            list.add(OVERSEAS_USABLE.getCode());
+            list.add(OVERSEAS_IN_TRANSIT.getCode());
+            list.add(OVERSEAS_ESTIMATED_DELIVERY.getCode());
+        }
+        return list;
     }
 }

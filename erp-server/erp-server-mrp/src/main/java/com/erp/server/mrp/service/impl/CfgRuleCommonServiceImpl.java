@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,7 +44,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     private OperateLogService operateLogService;
 
 
-    @Autowired
+    @Resource
     private CfgRuleWarehouseService cgRuleWarehouseService;
 
     /**
@@ -134,6 +135,8 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
 
     @Override
     public Map<String, List<CfgRuleCommonDTO.DescriptionDTO>> description(String platformType) {
+        //查询是否开启海外仓
+        Boolean isEnableOverseas = cgRuleWarehouseService.getIsEnableOverseas(platformType);
         List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
                 .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
                 .eq(CfgRuleCommonEntity::getIsDefault, false));
@@ -142,7 +145,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
                      .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
                      .eq(CfgRuleCommonEntity::getIsDefault, true));
         }
-        List<String> parentNodes = CfgRuleInventoryNodeEnum.getNodes();
+        List<String> parentNodes = CfgRuleInventoryNodeEnum.getNodes(isEnableOverseas);
         Map<String, List<CfgRuleCommonDTO.DescriptionDTO>> map = new HashMap<>();
         for (String node : parentNodes) {
             CfgRuleCommonEntity entity = list.stream()
@@ -156,7 +159,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
                     .filter(v -> v.getParentId().equals(entity.getId()))
                     .collect(Collectors.toList());
             List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = new ArrayList<>();
-            if (CfgRuleInventoryNodeEnum.getParentNodes().contains(node)) {
+            if (CfgRuleInventoryNodeEnum.getParentNodes(isEnableOverseas).contains(node)) {
                 for (CfgRuleCommonEntity common : collect) {
                     List<CfgRuleCommonDTO.DescriptionDTO> dtos = list.stream()
                             .filter(v -> v.getParentId().equals(common.getId()))
