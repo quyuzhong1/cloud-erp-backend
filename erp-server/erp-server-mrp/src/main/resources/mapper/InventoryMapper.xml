@@ -247,7 +247,7 @@
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}
         </foreach>
-        and pad.dest_warehouse_id in
+        and po.delivery_warehouse_id in
         <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
