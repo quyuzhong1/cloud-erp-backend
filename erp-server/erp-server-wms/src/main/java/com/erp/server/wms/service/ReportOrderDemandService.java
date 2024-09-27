@@ -1,5 +1,4 @@
 package com.erp.server.wms.service;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -23,19 +22,10 @@ public interface ReportOrderDemandService extends SuperService<ReportOrderDemand
     * 新增
     * @author will
     * @date: 2024-09-23
-    * @param dto
+    * @param addOrUpdateList
     * @return
     */
-    BaseResultDTO.AddDTO add(ReportOrderDemandDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author will
-    * @date: 2024-09-23
-    * @param dto
-    * @return
-    */
-    Boolean update(ReportOrderDemandDTO.UpdateDTO dto);
+    Boolean batchAddOrUpdate(List<ReportOrderDemandDTO.AddDTO> addOrUpdateList);
 
     /**
      * 分页查询

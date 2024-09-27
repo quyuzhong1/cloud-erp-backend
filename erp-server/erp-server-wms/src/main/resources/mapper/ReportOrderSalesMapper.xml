@@ -50,6 +50,11 @@
         ros.warehouse_id, ros.virtual_warehouse_id, ros.sku_id, ros.sku_no, ros.product_name, ros.virtual_warehouse_name, ros.warehouse_name, ros.today_sales_qty, ros.yesterday_sales_qty, three_days_sales_qty, seven_days_sales_qty, ros.fourteen_days_sales_qty, ros.thirty_days_sales_qty, ros.is_virtual_scarce, ros.is_warn, ros.virtual_scarce_qty, ros.total_qty, ros.virtual_usable_qty, ros.virtual_frozen_qty, ros.virtual_total_qty, ros.delivery_qty, ros.distribution_qty
     </sql>
 
+    <!-- 删除数据 -->
+    <delete id="deleteAll">
+        delete from report_order_sales
+    </delete>
+
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.ReportOrderSalesDTO$ListDTO">
         select

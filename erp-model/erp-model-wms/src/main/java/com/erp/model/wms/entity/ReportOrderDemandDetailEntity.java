@@ -71,7 +71,7 @@ public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandD
      * 审核状态
      */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
      * 单据状态
      */

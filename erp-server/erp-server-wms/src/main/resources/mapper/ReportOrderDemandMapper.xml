@@ -42,6 +42,11 @@
         rod.warehouse_id, rod.virtual_warehouse_id, rod.virtual_warehouse_name, rod.warehouse_name, rod.sku_id, rod.sku_no, rod.product_name, rod.total_qty, rod.so_qty, rod.b2c_so_qty, rod.first_mile_qty, rod.virtual_usable_qty, rod.is_virtual_scarce, rod.virtual_scarce_qty
     </sql>
 
+    <!-- 删除 -->
+    <delete id="deleteAll">
+        delete from report_order_demand
+    </delete>
+
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.ReportOrderDemandDTO$ListDTO">
         select

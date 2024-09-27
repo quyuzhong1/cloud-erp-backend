@@ -12,9 +12,12 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
@@ -27,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_DEMAND_DETAIL;
 
@@ -46,6 +50,25 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Override
+    public Boolean batchAddOrUpdate(List<ReportOrderDemandDetailDTO.AddDTO> addOrUpdateList) {
+        List<ReportOrderDemandDetailEntity> list =  BeanMapperUtils.copyList(ReportOrderDemandDetailEntity.class, addOrUpdateList);
+        //删除原数据
+        deleteAll();
+        handleData(list);
+        //无数据则返回
+        if (CollectionUtil.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        //新增或修改有变更数据
+        boolean save = super.saveOrUpdateBatch(list);
+        if(!save) {
+            throw new ServiceException("订单报表信息保存失败");
+        }
+        return Boolean.TRUE;
+    }
+
 
     @Override
     public PagingVO<ReportOrderDemandDetailDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> pagingDTO) {
@@ -117,6 +140,37 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
     private List<ReportOrderDemandDetailEntity> listBySourceDetailId(String sourceDetailId) {
        return lambdaQuery().eq(ReportOrderDemandDetailEntity::getSourceDetailId,sourceDetailId)
                 .list();
+    }
+
+    /**
+     * 删除所有数据
+     * @author will
+     * @date 2024/9/27 10:43
+     */
+    private void deleteAll() {
+        baseMapper.deleteAll();
+    }
+
+    /**
+     * 数据格式化
+     * @author will
+     * @date 2024/9/27 10:51
+     * @param list
+     */
+    private void handleData(List<ReportOrderDemandDetailEntity> list) {
+        if (CollectionUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> skuIdList = list.stream().map(ReportOrderDemandDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+
+        for (ReportOrderDemandDetailEntity entity : list) {
+            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(productDetailEntity)) {
+                entity.setSkuNo(productDetailEntity.getSkuNo());
+                entity.setProductName(productDetailEntity.getName());
+            }
+        }
     }
 
     /**

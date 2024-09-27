@@ -27,4 +27,10 @@ public interface ReportOrderSalesMapper extends BaseMapper<ReportOrderSalesEntit
      * @return IPage<ListDTO>
      */
     IPage<ReportOrderSalesDTO.ListDTO> paging(Page query,@Param("params") ReportOrderSalesDTO.PagingParamDTO params);
+    /**
+     * 删除
+     * @author will
+     * @date 2024/9/27 14:43
+     */
+    void deleteAll();
 }

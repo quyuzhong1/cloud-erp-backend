@@ -6,6 +6,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 订单需求明细报表 服务类
@@ -15,6 +17,15 @@ import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
  * @since 2024-09-23
  */
 public interface ReportOrderDemandDetailService extends SuperService<ReportOrderDemandDetailEntity> {
+
+    /**
+     * 批量新增
+     * @author will
+     * @date 2024/9/27 10:33
+     * @param addList
+     * @return Boolean
+     */
+    Boolean batchAddOrUpdate(List<ReportOrderDemandDetailDTO.AddDTO> addList);
 
 
     /**
@@ -49,4 +60,5 @@ public interface ReportOrderDemandDetailService extends SuperService<ReportOrder
      * @return ViewBomQtyDTO
      */
     ReportOrderDemandDetailDTO.ViewBomQtyDTO viewBomQty(String id);
+
 }

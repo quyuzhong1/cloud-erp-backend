@@ -1,10 +1,12 @@
 package com.erp.server.wms.service;
-import com.common.business.dto.base.BaseResultDTO;
+
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.entity.ReportOrderSalesEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -20,19 +22,10 @@ public interface ReportOrderSalesService extends SuperService<ReportOrderSalesEn
     * 新增
     * @author will
     * @date: 2024-09-23
-    * @param dto
+    * @param addOrUpdateList
     * @return
     */
-    BaseResultDTO.AddDTO add(ReportOrderSalesDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author will
-    * @date: 2024-09-23
-    * @param dto
-    * @return
-    */
-    Boolean update(ReportOrderSalesDTO.UpdateDTO dto);
+    Boolean batchAddOrUpdate(List<ReportOrderSalesDTO.AddDTO> addOrUpdateList);
 
     /**
      * 分页查询

@@ -7,8 +7,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum CfgSettingCompareEnum implements EnumMessage {
 
     HIGHER_THAN("higherThan","高于"),
+    HIGHER_THAN_EQUAL("higherThanEqual","高于等于"),
     EQUAL_TO("equalTo","等于"),
-    LOWER_THAN("lowerThan","低于")
+    LOWER_THAN("lowerThan","低于"),
+    LOWER_THAN_EQUAL("lowerThanEqual","低于等于")
     ;
 
     /**

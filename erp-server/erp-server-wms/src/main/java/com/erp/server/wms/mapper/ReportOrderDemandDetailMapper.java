@@ -27,4 +27,10 @@ public interface ReportOrderDemandDetailMapper  extends BaseMapper<ReportOrderDe
      * @return IPage<ListDTO>
      */
     IPage<ReportOrderDemandDetailDTO.ListDTO> paging(Page query,@Param("params") ReportOrderDemandDetailDTO.PagingParamDTO params);
+    /**
+     * 删除
+     * @author will
+     * @date 2024/9/27 10:42
+     */
+    void deleteAll();
 }

@@ -1,32 +1,42 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.wms.dto.ReportOrderDataDTO;
+import com.common.core.utils.MathUtil;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.ReportOrderDataEntity;
+import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
+import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderDataMapper;
-import com.erp.server.wms.service.CfgSettingVirtualService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.ReportOrderDataService;
-import com.erp.server.wms.service.RequisitionApplicationDetailService;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 订单报表信息 服务实现类
@@ -39,7 +49,7 @@ import java.util.Optional;
 @Service
 public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderDataMapper, ReportOrderDataEntity> implements ReportOrderDataService {
     @Autowired
-    private OperateLogService operateLogService;
+    private ReportOrderDemandDetailService reportOrderDemandDetailService;
 
     @Resource
     private CfgSettingVirtualService cfgSettingVirtualService;
@@ -53,79 +63,428 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
     @Resource
     private SoInfoFeign soInfoFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(ReportOrderDataDTO.AddDTO addDTO) {
-        ReportOrderDataEntity reportOrderDataEntity = new ReportOrderDataEntity();
-        BeanMapperUtils.copy(addDTO, reportOrderDataEntity);
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
-        // 数据处理
-        handleData(reportOrderDataEntity);
+    @Resource
+    private VirtualInventoryService virtualInventoryService;
 
-        log.info("开始新增订单报表信息");
-        boolean save = super.save(reportOrderDataEntity);
-        if(!save) {
-            throw new ServiceException("订单报表信息保存失败");
-        }
+    @Resource
+    private ReportOrderDemandService reportOrderDemandService;
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单报表信息" , reportOrderDataEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, reportOrderDataEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(reportOrderDataEntity.getId(), reportOrderDataEntity.getId());
-    }
+    @Resource
+    private ReportOrderSalesService reportOrderSalesService;
 
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(ReportOrderDataDTO.UpdateDTO updateDTO) {
-        ReportOrderDataEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "订单报表信息"));
-        // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
-        }
-        ReportOrderDataEntity reportOrderDataEntity =  BeanMapperUtils.map(ReportOrderDataEntity.class, updateDTO);
-
+    public Boolean batchAddOrUpdate(List<ReportOrderDataDTO.UpdateDTO> addOrUpdateList) {
+        List<ReportOrderDataEntity> list =  BeanMapperUtils.copyList(ReportOrderDataEntity.class, addOrUpdateList);
         // 数据处理
-        handleData(reportOrderDataEntity);
-        log.info("编辑 开始修改订单报表信息数据，id：【{}】", old.getId());
-        boolean save = super.updateById(reportOrderDataEntity);
+        List<ReportOrderDataEntity> resultList =  handleData(list);
+        //存在数据的id集合
+        List<String> updateIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(ReportOrderDataEntity::getId).distinct().collect(Collectors.toList());
+        //删除多余的订单数据
+        this.removeByNotIds(updateIdList);
+        //新增或修改有变更数据
+        boolean save = super.saveOrUpdateBatch(resultList);
         if(!save) {
             throw new ServiceException("订单报表信息保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录订单报表信息日志数据，id：【{}】", reportOrderDataEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), reportOrderDataEntity.getId(), "订单报表信息");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, reportOrderDataEntity, null, reportOrderDataEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
     @Override
+    public void generateVirtualReport() {
+        //查询配置
+        CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
+        //是否拆分
+        boolean isSplit = ObjectUtil.isEmpty(viewDTO.getProductStatisticsDTO()) ? false : viewDTO.getProductStatisticsDTO().getIsSplit();
+
+        //生成源数据
+        generateReportOrderData();
+
+        //查询源数据
+        List<ReportOrderDataEntity> reportOrderDataList = baseMapper.listReportOrderData();
+        if (CollectionUtils.isEmpty(reportOrderDataList)) {
+            return;
+        }
+        //bom信息
+        List<String> skuIdList = reportOrderDataList.stream().map(ReportOrderDataEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        //子级sku
+        List<String> childSkuIdList = bomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(childSkuIdList)) {
+            skuIdList.addAll(childSkuIdList);
+        }
+        //虚拟仓可用
+        List<String> warehouseIdList = reportOrderDataList.stream().map(ReportOrderDataEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> virtualWarehouseIdList = reportOrderDataList.stream().map(ReportOrderDataEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        paramDTO.setSkuIdList(skuIdList);
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
+        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryService.listInventoryQty(paramDTO);
+
+        //生成订单需求明细数据
+        generateReportOrderDemandDetail(reportOrderDataList,bomChildrenSkuList,virtualInventoryList,isSplit);
+
+        //生成缺货统计数据
+        generateReportOrderDemand(bomChildrenSkuList,virtualInventoryList,isSplit);
+
+        //生成销售看板数据
+        generateReportOrderSales(reportOrderDataList,bomChildrenSkuList,virtualInventoryList,isSplit,viewDTO.getSalesDashboardDTO());
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void generateReportOrderData() {
+        List<ReportOrderDataDTO.ViewDTO> resultList = new ArrayList<>();
+
         //b2b销售订单
         List<ReportOrderDataDTO.ViewDTO> soDetailList = soInfoFeign.listAllVirtualSoDetail();
-
+        if (CollectionUtils.isNotEmpty(soDetailList)) {
+            resultList.addAll(soDetailList);
+        }
         //b2c销售订单
         List<ReportOrderDataDTO.ViewDTO> soB2cDetailList = soB2cFeign.listAllVirtualSoB2cDetail();
-
+        if (CollectionUtils.isNotEmpty(soB2cDetailList)) {
+            resultList.addAll(soB2cDetailList);
+        }
         //要货申请
         List<ReportOrderDataDTO.ViewDTO> requisitionApplicationDetailList = requisitionApplicationDetailService.listAllVirtualRequisitionApplicationDetail();
+        if (CollectionUtils.isNotEmpty(requisitionApplicationDetailList)) {
+            resultList.addAll(requisitionApplicationDetailList);
+        }
+        //无数据则删除所有并且返回
+        if (CollectionUtils.isEmpty(resultList)) {
+            lambdaUpdate().remove();
+            return;
+        }
+        List<ReportOrderDataDTO.UpdateDTO> addOrUpdateList = BeanMapperUtils.copyList(ReportOrderDataDTO.UpdateDTO.class, resultList);
+        this.batchAddOrUpdate(addOrUpdateList);
+    }
+
+    @Override
+    public void generateReportOrderDemandDetail(List<ReportOrderDataEntity> reportOrderDataList,List<BomChildrenSkuDTO> bomChildrenSkuList,List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,Boolean isSplit) {
+        //订单数据
+        if (CollectionUtils.isEmpty(reportOrderDataList)) {
+            return;
+        }
+        /**
+         * B2B,单据状态：待提交、审核中、已审核（排除：审核不通过） && 作废状态：未作废 && 发货状态：未发货、部分发货（排除：已发货）
+         * B2C,审核状态：待提交、审核中、已审核；（排除：审核不通过）&& 作废状态：未作废 && 订单状态：待配货、配货中、待发货、冻结中（排除：已发货）
+         * 要货申请，单据状态：待提交、待处理 && 作废状态：未作废
+         */
+        //审核状态
+        List<String> approveStatusList = Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus());
+        //发货状态
+        List<String> deliveryStatusList = Arrays.asList(DeliveryStatusEnum.UN_SHIPPED.getCode(), DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode());
+        //b2c订单状态
+        List<String> billStatusList = Arrays.asList(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode(), SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode(),
+                SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode(), SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode(), SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
+        //要货申请
+        List<String> statusList = Arrays.asList(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getCode(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getCode());
+
+        //需要添加订单需求明细数据
+        List<ReportOrderDataEntity> list = reportOrderDataList.stream().filter(obj ->
+                (StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_INFO.getCode()) && approveStatusList.contains(obj.getSourceType()) && !obj.getInvalidStatus() && deliveryStatusList.contains(obj.getStatus())
+                        || StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C.getCode()) && approveStatusList.contains(obj.getSourceType()) && !obj.getInvalidStatus() && billStatusList.contains(obj.getStatus())
+                        || StrUtil.equals(obj.getSourceType(), SourceTypeEnum.REQUISITION_APPLICATION.getCode()) && statusList.contains(obj.getStatus()) && !obj.getInvalidStatus())
+        ).collect(Collectors.toList());
+        //符合条件数据为空则返回
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+
+        List<ReportOrderDemandDetailDTO.AddDTO> addList = new ArrayList<>();
+        for (ReportOrderDataEntity entity : list) {
+            //bom信息
+            List<BomChildrenSkuDTO> skuList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), entity.getSkuId())).collect(Collectors.toList());
+            //拆分
+            List<ReportOrderDemandDetailDTO.AddDTO> splitAddList = handleReportOrderDemandDetail(entity, skuList, virtualInventoryList, isSplit);
+            addList.addAll(splitAddList);
+        }
+        if (CollectionUtils.isEmpty(addList)) {
+            return;
+        }
+        reportOrderDemandDetailService.batchAddOrUpdate(addList);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void generateReportOrderDemand (List<BomChildrenSkuDTO> bomChildrenSkuList,List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,Boolean isSplit) {
+        List<ReportOrderDemandDetailEntity> list = reportOrderDemandDetailService.list();
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        Map<String, List<ReportOrderDemandDetailEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId()).concat(obj.getVirtualWarehouseId())));
+
+        List<ReportOrderDemandDTO.AddDTO> addList = new ArrayList<>();
+        for (Map.Entry<String, List<ReportOrderDemandDetailEntity>> entry : map.entrySet()) {
+            List<ReportOrderDemandDetailEntity> value = entry.getValue();
+            ReportOrderDemandDTO.AddDTO addDTO = new ReportOrderDemandDTO.AddDTO();
+            BeanMapperUtils.copy(value.get(0),addDTO);
+
+            //b2b需求数
+            Integer soQty = value.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_INFO.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setSoQty(soQty);
+            //b2c需求数
+            Integer b2cQty = value.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setB2cSoQty(b2cQty);
+            //头程需求数
+            Integer firstMileQty = value.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.REQUISITION_APPLICATION.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setFirstMileQty(firstMileQty);
+            //剩余需求总数
+            Integer totalQty = soQty + b2cQty + firstMileQty;
+            addDTO.setTotalQty(totalQty);
+
+            //虚拟仓可用
+            Integer virtualUsableQty = value.stream().map(ReportOrderDemandDetailEntity::getVirtualUsableQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setVirtualUsableQty(virtualUsableQty);
+            //是否缺货
+            Boolean isVirtualScarce = addDTO.getTotalQty() > virtualUsableQty ? Boolean.TRUE : Boolean.FALSE;
+            addDTO.setIsVirtualScarce(isVirtualScarce);
+            //缺货数量
+            addDTO.setVirtualScarceQty(isVirtualScarce ? totalQty - virtualUsableQty : MathUtil.ZERO);
+            addList.add(addDTO);
+        }
+        reportOrderDemandService.batchAddOrUpdate(addList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void generateReportOrderSales (List<ReportOrderDataEntity> reportOrderDataList,List<BomChildrenSkuDTO> bomChildrenSkuList,List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList ,Boolean isSplit,CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO) {
+        if (CollectionUtils.isEmpty(reportOrderDataList)) {
+            return;
+        }
+        List<ReportOrderDataEntity> resultList = new ArrayList<>();
+
+        List<String> orderTypeList = salesDashboardDTO.getOrderTypeList();
+        boolean containsB2b = orderTypeList.contains(OrderTypeEnum.B2B.getCode());
+        if (containsB2b) {
+             handleB2bSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO(),resultList);
+        }
+        boolean containsB2c = orderTypeList.contains(OrderTypeEnum.B2C.getCode());
+        if (containsB2c) {
+            handleB2cSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO(),resultList);
+        }
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        //是否预警
+        Boolean isWarn = salesDashboardDTO.getIsWarn();
+        //预警条件
+        CfgSettingVirtualValueDTO.WarnConditionDTO warnConditionDTO = salesDashboardDTO.getWarnConditionDTO();
+        String compareType = warnConditionDTO.getCompareType();
+        List<String> daysTypeList = warnConditionDTO.getDaysTypeList();
+
+        List<ReportOrderSalesDTO.AddDTO> addOrUpdateList = new ArrayList<>();
+        Map<String, List<ReportOrderDataEntity>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId()).concat(obj.getVirtualWarehouseId())));
+        for (Map.Entry<String, List<ReportOrderDataEntity>> entry : map.entrySet()) {
+            List<ReportOrderDataEntity> value = entry.getValue();
+            ReportOrderDataEntity entity = value.get(0);
+            ReportOrderSalesDTO.AddDTO addDTO = new ReportOrderSalesDTO.AddDTO();
+            addDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
+            addDTO.setWarehouseId(entity.getWarehouseId());
+            addDTO.setSkuId(entity.getSkuId());
+
+            //今天销量
+            Integer todaySalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now())).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setTodaySalesQty(todaySalesQty);
+            //昨日销量
+            Integer yesterdaySalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(1L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setYesterdaySalesQty(yesterdaySalesQty);
+            //近3日销量
+            Integer threeDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(2L)) || obj.getDate().isAfter(LocalDate.now().minusDays(2L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setThreeDaysSalesQty(threeDaysSalesQty);
+            //近7日销量
+            Integer sevenDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(6L)) || obj.getDate().isAfter(LocalDate.now().minusDays(6L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setSevenDaysSalesQty(sevenDaysSalesQty);
+            //近14日销量
+            Integer fourteenDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(14L)) || obj.getDate().isAfter(LocalDate.now().minusDays(14L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setFourteenDaysSalesQty(fourteenDaysSalesQty);
+            //近30日销量
+            Integer thirtyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(30L)) || obj.getDate().isAfter(LocalDate.now().minusDays(30L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setThirtyDaysSalesQty(thirtyDaysSalesQty);
+
+            //近60日销量
+            Integer sixtyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(60L)) || obj.getDate().isAfter(LocalDate.now().minusDays(60L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            //近90日销量
+            Integer ninetyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(90L)) || obj.getDate().isAfter(LocalDate.now().minusDays(90L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            //预警
+            if (isWarn) {
+                //最大
+                addDTO.setIsWarn(Boolean.TRUE);
+            }
+            addOrUpdateList.add(addDTO);
+        }
+        reportOrderSalesService.batchAddOrUpdate(addOrUpdateList);
+    }
+
+    /**
+     * 符合条件的b2c数据
+     * @author will
+     * @date 2024/9/27 14:26
+     * @param reportOrderDataList
+     * @param statusDTO
+     * @param resultList
+     */
+    private void handleB2cSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,List<ReportOrderDataEntity> resultList) {
+        if (ObjectUtil.isEmpty(statusDTO)) {
+            return;
+        }
+        //订单状态
+        List<String> statusList =  CollectionUtils.isEmpty(statusDTO.getStatusList()) ? new ArrayList<>() : statusDTO.getStatusList();
+        //审核状态
+        List<String> approveStatusList =  CollectionUtils.isEmpty(statusDTO.getApproveStatusList()) ? new ArrayList<>() : statusDTO.getApproveStatusList();
+        //作废状态
+        List<Boolean> invalidStatusList =  CollectionUtils.isEmpty(statusDTO.getInvalidStatusList()) ? new ArrayList<>() : statusDTO.getInvalidStatusList();
+        List<ReportOrderDataEntity> list = reportOrderDataList.stream().filter(obj ->
+                SourceTypeEnum.SO_B2C.getCode().equals(obj.getSourceType())
+                        && statusList.contains(obj.getStatus())
+                        && approveStatusList.contains(obj.getApproveStatus())
+                        && invalidStatusList.contains(obj.getInvalidStatus())
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        resultList.addAll(list);
+    }
+
+    /**
+     * 符合条件的b2b数据
+     * @author will
+     * @date 2024/9/27 14:26
+     * @param reportOrderDataList
+     * @param statusDTO
+     * @param resultList
+     */
+    private void handleB2bSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,List<ReportOrderDataEntity> resultList) {
+        if (ObjectUtil.isEmpty(statusDTO)) {
+            return;
+        }
+        //发货状态
+        List<String> statusList =  CollectionUtils.isEmpty(statusDTO.getStatusList()) ? new ArrayList<>() : statusDTO.getStatusList();
+        //审核状态
+        List<String> approveStatusList =  CollectionUtils.isEmpty(statusDTO.getApproveStatusList()) ? new ArrayList<>() : statusDTO.getApproveStatusList();
+        //作废状态
+        List<Boolean> invalidStatusList =  CollectionUtils.isEmpty(statusDTO.getInvalidStatusList()) ? new ArrayList<>() : statusDTO.getInvalidStatusList();
+        List<ReportOrderDataEntity> list = reportOrderDataList.stream().filter(obj ->
+                SourceTypeEnum.SO_INFO.getCode().equals(obj.getSourceType())
+                        && statusList.contains(obj.getStatus())
+                        && approveStatusList.contains(obj.getApproveStatus())
+                        && invalidStatusList.contains(obj.getInvalidStatus())
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        resultList.addAll(list);
+    }
+
+    /**
+     * 格式化订单需求明细
+     * @author will
+     * @date 2024/9/27 10:52
+     * @param entity
+     * @param skuList
+     * @param virtualInventoryList
+     * @param isSplit
+     * @return List<AddDTO>
+     */
+    private List<ReportOrderDemandDetailDTO.AddDTO> handleReportOrderDemandDetail(ReportOrderDataEntity entity,List<BomChildrenSkuDTO> skuList,
+                                                                                  List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,Boolean isSplit) {
+        List<ReportOrderDemandDetailDTO.AddDTO> addList = new ArrayList<>();
+        ReportOrderDemandDetailDTO.AddDTO addDTO = new ReportOrderDemandDetailDTO.AddDTO();
+        BeanMapperUtils.copy(entity,addDTO);
+        if (CollectionUtils.isNotEmpty(skuList) && isSplit) {
+            //添加bom信息
+            List<ReportOrderDemandDetailDTO.BomJsonDTO> bomJsonList = BeanUtil.copyToList(skuList, ReportOrderDemandDetailDTO.BomJsonDTO.class);
+            JSONArray bomJson = JSONUtil.parseArray(bomJsonList);
+            addDTO.setBomJson(bomJson);
+            //拆分
+            for (BomChildrenSkuDTO bomChildrenSkuDTO : skuList) {
+                //子级虚拟仓可用
+                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
+                                && StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                                && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
+                        .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
+                addDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                addDTO.setVirtualUsableQty(virtualUsableQty);
+                addList.add(addDTO);
+            }
+        } else {
+            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())
+                            && StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                            && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
+                    .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setVirtualUsableQty(virtualUsableQty);
+            addList.add(addDTO);
+        }
+        return addList;
+    }
+
+    /**
+     * 删除不存在id集合中的数据
+     * @author will
+     * @date 2024/9/26 19:09
+     * @param notIdList
+     */
+    private void removeByNotIds (List<String> notIdList) {
+        if (CollectionUtils.isEmpty(notIdList)) {
+            this.lambdaUpdate().remove();
+            return;
+        }
+        this.lambdaUpdate().notIn(ReportOrderDataEntity::getId,notIdList).remove();
     }
 
 
     /**
+     * 根据来源明细id集合查询
+     * @author will
+     * @date 2024/9/26 18:28
+     * @param sourceDetailIdList
+     * @return List<ReportOrderDataEntity>
+     */
+    private List<ReportOrderDataEntity> listBySourceDetailIdList(List<String> sourceDetailIdList){
+        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+       return lambdaQuery().in(ReportOrderDataEntity::getSourceDetailId,sourceDetailIdList).list();
+    }
+
+    /**
     * 新增修改处理数据
     */
-    private void handleData(ReportOrderDataEntity reportOrderDataEntity) {
-    // TODO 验证数据 & 数据赋值
+    private  List<ReportOrderDataEntity> handleData(List<ReportOrderDataEntity> resultList) {
+        if (CollectionUtils.isEmpty(resultList)) {
+            return resultList;
+        }
+        List<String> sourceDetailIdList = resultList.stream().filter(obj -> StrUtil.isNotEmpty(obj.getSourceDetailId())).map(ReportOrderDataEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<ReportOrderDataEntity> oldList =  this.listBySourceDetailIdList(sourceDetailIdList);
+        if (CollectionUtils.isEmpty(oldList)) {
+            return resultList;
+        }
+        List<ReportOrderDataEntity> addOrUpdateList = new ArrayList<>();
+        for (ReportOrderDataEntity entity : resultList) {
+            ReportOrderDataEntity reportOrderDataEntity = oldList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), entity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(reportOrderDataEntity)) {
+                addOrUpdateList.add(entity);
+                continue;
+            }
+            //主键id赋值
+            entity.setId(reportOrderDataEntity.getId());
+            boolean equals = entity.equals(reportOrderDataEntity);
+            if (!equals) {
+                addOrUpdateList.add(entity);
+            }
+        }
+        return addOrUpdateList;
     }
 }

@@ -65,6 +65,11 @@
         rodd.is_split
     </sql>
 
+    <!-- 删除所有数据 -->
+    <delete id="deleteAll">
+        delete from report_order_demand_detail
+    </delete>
+
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.ReportOrderDemandDetailDTO$ListDTO">
         select

@@ -1,8 +1,13 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.ReportOrderDataEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.entity.ReportOrderDataEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,22 +20,20 @@ import com.erp.model.wms.dto.ReportOrderDataDTO;
 public interface ReportOrderDataService extends SuperService<ReportOrderDataEntity> {
 
     /**
-    * 新增
+    * 新增修改
     * @author will
     * @date: 2024-09-24
-    * @param dto
+    * @param list
     * @return
     */
-    BaseResultDTO.AddDTO add(ReportOrderDataDTO.AddDTO dto);
+    Boolean batchAddOrUpdate(List<ReportOrderDataDTO.UpdateDTO> list);
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-09-24
-    * @param dto
-    * @return
-    */
-    Boolean update(ReportOrderDataDTO.UpdateDTO dto);
+     * 生成虚拟仓报表
+     * @author will
+     * @date 2024/9/27 9:29
+     */
+    void generateVirtualReport();
 
     /**
      * 生成报表数据
@@ -38,4 +41,23 @@ public interface ReportOrderDataService extends SuperService<ReportOrderDataEnti
      * @date 2024/9/26 14:18
      */
     void generateReportOrderData();
+
+    /**
+     * 生成订单需求明细数据
+     * @author will
+     * @date 2024/9/26 19:18
+     */
+    void generateReportOrderDemandDetail(List<ReportOrderDataEntity> reportOrderDataList, List<BomChildrenSkuDTO> bomChildrenSkuList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, Boolean isSplit);
+    /**
+     * 生成缺货数据
+     * @author will
+     * @date 2024/9/26 19:18
+     */
+    void generateReportOrderDemand(List<BomChildrenSkuDTO> bomChildrenSkuList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, Boolean isSplit);
+    /**
+     * 生成销售看板数据
+     * @author will
+     * @date 2024/9/26 19:20
+     */
+    void generateReportOrderSales(List<ReportOrderDataEntity> reportOrderDataList, List<BomChildrenSkuDTO> bomChildrenSkuList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, Boolean isSplit, CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO);
 }

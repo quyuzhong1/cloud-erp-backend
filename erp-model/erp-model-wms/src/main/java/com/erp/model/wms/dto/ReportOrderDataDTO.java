@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import cn.hutool.json.JSONArray;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -31,11 +30,6 @@ public class ReportOrderDataDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
-
-        /**
-        * 主键id
-        */
-        private String  id;
 
         /**
         * 仓库id 
@@ -213,11 +207,6 @@ public class ReportOrderDataDTO implements Serializable {
          * 冻结数量
          */
         private Integer frozenQty;
-
-        /**
-         * bom的json数据
-         */
-        private JSONArray bomJson;
     }
 
 

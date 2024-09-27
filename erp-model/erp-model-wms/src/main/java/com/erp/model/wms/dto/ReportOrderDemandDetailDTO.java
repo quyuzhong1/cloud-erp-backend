@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -234,79 +235,152 @@ public class ReportOrderDemandDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 仓库id 
-        */
+         * 仓库id
+         */
         @NotBlank(message = "仓库id 不能为空")
         @Size(max = 19,message = "仓库id 最大长度不能超过19位")
         private String warehouseId;
 
         /**
-        * 虚拟仓库id
-        */
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 虚拟仓库id
+         */
         @NotBlank(message = "虚拟仓库id不能为空")
         @Size(max = 19,message = "虚拟仓库id最大长度不能超过19位")
         private String virtualWarehouseId;
 
         /**
-        * sku id
-        */
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+
+        /**
+         * sku id
+         */
         @NotBlank(message = "sku id不能为空")
         @Size(max = 19,message = "sku id最大长度不能超过19位")
         private String skuId;
 
         /**
-        * 数量
-        */
+         * 数量
+         */
         @NotNull(message = "数量不能为空")
         private Integer qty;
 
         /**
-        * 单据状态
-        */
+         * 单据状态
+         */
         @NotBlank(message = "单据状态不能为空")
         @Size(max = 32,message = "单据状态最大长度不能超过32位")
         private String status;
 
         /**
-        * 作废状态
-        */
+         * 审核状态
+         */
+        @NotNull(message = "审核状态不能为空")
+        private ApproveStatusEnum approveStatus;
+        /**
+         * 作废状态
+         */
         @NotNull(message = "作废状态不能为空")
         private Boolean invalidStatus;
 
         /**
-        * 来源单据id
-        */
+         * 来源单据id
+         */
         @NotBlank(message = "来源单据id不能为空")
         @Size(max = 19,message = "来源单据id最大长度不能超过19位")
         private String sourceId;
 
         /**
-        * 来源单据明细id
-        */
+         * 来源单据明细id
+         */
         @NotBlank(message = "来源单据明细id不能为空")
         @Size(max = 19,message = "来源单据明细id最大长度不能超过19位")
         private String sourceDetailId;
 
         /**
-        * 来源单据编号
-        */
+         * 来源单据编号
+         */
         @NotBlank(message = "来源单据编号不能为空")
         @Size(max = 32,message = "来源单据编号最大长度不能超过32位")
         private String sourceCode;
 
         /**
-        * 来源类型
-        */
+         * 来源类型
+         */
         @NotBlank(message = "来源类型不能为空")
         @Size(max = 32,message = "来源类型最大长度不能超过32位")
         private String sourceType;
 
         /**
-        * 时间
-        */
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+
+        /**
+         * 是否拆分
+         */
+        private Boolean isSplit;
+
+        /**
+         * 时间
+         */
         private LocalDate date;
 
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
 
+        /**
+         * 发货通知单
+         */
+        private Integer deliveryNoticeQty;
+
+        /**
+         * 发货通知单
+         */
+        private Integer frozenQty;
+
+        /**
+         * bom的json数据
+         */
+        private JSONArray bomJson;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BomJsonDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 父级skuId
+         */
+        private String parentSkuId;
+
+        /**
+         * 父级skuNo
+         */
+        private String parentSkuNo;
+
+        /**
+         * 用量
+         */
+        private Integer quantity;
     }
 
     @Data

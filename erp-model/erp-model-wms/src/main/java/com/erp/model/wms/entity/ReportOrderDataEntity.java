@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Objects;
 
 
 /**
@@ -52,7 +53,7 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
     * 审核状态
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 单据状态
     */
@@ -107,6 +108,20 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
     @TableField(value = "bom_json", typeHandler = JacksonTypeHandler.class)
     private JSONArray bomJson;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        ReportOrderDataEntity that = (ReportOrderDataEntity) o;
+        return Objects.equals(warehouseId, that.warehouseId) && Objects.equals(virtualWarehouseId, that.virtualWarehouseId) && Objects.equals(skuId, that.skuId) && Objects.equals(qty, that.qty) && approveStatus == that.approveStatus && Objects.equals(status, that.status) && Objects.equals(invalidStatus, that.invalidStatus) && Objects.equals(sourceId, that.sourceId) && Objects.equals(sourceDetailId, that.sourceDetailId) && Objects.equals(sourceCode, that.sourceCode) && Objects.equals(sourceType, that.sourceType) && Objects.equals(date, that.date) && Objects.equals(deliveryNoticeQty, that.deliveryNoticeQty) && Objects.equals(frozenQty, that.frozenQty);
+    }
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 

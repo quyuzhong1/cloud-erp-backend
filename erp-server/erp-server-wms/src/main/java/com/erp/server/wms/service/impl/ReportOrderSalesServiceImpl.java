@@ -13,6 +13,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
+import com.erp.model.wms.entity.ReportOrderDemandEntity;
 import com.erp.model.wms.entity.ReportOrderSalesEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderSalesMapper;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_SALES;
@@ -48,52 +50,15 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(ReportOrderSalesDTO.AddDTO addDTO) {
-        ReportOrderSalesEntity reportOrderSalesEntity = new ReportOrderSalesEntity();
-        BeanMapperUtils.copy(addDTO, reportOrderSalesEntity);
-
-        // 数据处理
-        handleData(reportOrderSalesEntity);
-
+    public Boolean batchAddOrUpdate(List<ReportOrderSalesDTO.AddDTO> addOrUpdateList) {
+        List<ReportOrderSalesEntity> list =  BeanMapperUtils.copyList(ReportOrderSalesEntity.class, addOrUpdateList);
+        //删除原数据
+        deleteAll();
         log.info("开始新增订单销量单");
-        boolean save = super.save(reportOrderSalesEntity);
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("订单销量单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单销量单" , reportOrderSalesEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, reportOrderSalesEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(reportOrderSalesEntity.getId(), reportOrderSalesEntity.getId());
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(ReportOrderSalesDTO.UpdateDTO updateDTO) {
-        ReportOrderSalesEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "订单销量单"));
-        ReportOrderSalesEntity reportOrderSalesEntity =  BeanMapperUtils.map(ReportOrderSalesEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(reportOrderSalesEntity);
-        log.info("编辑 开始修改订单销量单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(reportOrderSalesEntity);
-        if(!save) {
-            throw new ServiceException("订单销量单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录订单销量单日志数据，id：【{}】", reportOrderSalesEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), reportOrderSalesEntity.getId(), "订单销量单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, reportOrderSalesEntity, null, reportOrderSalesEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -114,6 +79,15 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
     public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingParamDTO) {
         PagingVO<ReportOrderSalesDTO.ListDTO> resultList = this.paging(pagingParamDTO);
         return resultList;
+    }
+
+    /**
+     * 删除所有数据
+     * @author will
+     * @date 2024/9/27 10:43
+     */
+    private void deleteAll() {
+        baseMapper.deleteAll();
     }
 
     /**

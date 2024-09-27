@@ -40,5 +40,15 @@
         warehouse_id, virtual_warehouse_id, sku_id, qty, approve_status, status, invalid_status, source_id, source_detail_id, source_code, source_type, date
     </sql>
 
+    <!-- 订单报表 -->
+    <select id="listReportOrderData" resultType="com.erp.model.wms.entity.ReportOrderDataEntity">
+            select
+                <include refid="Base_Column_List" />
+            from report_order_data rod
+            <where>
+                rod.is_deleted = false
+            </where>
+    </select>
+
 
 </mapper>
