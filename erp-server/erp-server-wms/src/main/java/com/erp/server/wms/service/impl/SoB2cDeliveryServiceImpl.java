@@ -2121,7 +2121,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
-                record.setIsIntercept(soB2cEntity.getIsIntercept());
+                record.setIsIntercept(soB2cEntity.getIsIntercept() && !record.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()));
                 record.setPackageStatus(soB2cEntity.getPackageStatus());
                 record.setTransferStatus(soB2cEntity.getTransferStatus());
                 record.setOrderRemark(soB2cEntity.getRemark());
