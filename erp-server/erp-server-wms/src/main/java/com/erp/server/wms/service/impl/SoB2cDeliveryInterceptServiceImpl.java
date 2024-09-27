@@ -668,6 +668,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     public List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptSuccessView(List<String> ids) {
         //过滤掉不需要显示
         List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = this.listByIds(ids);
+        //已处理不可重复操作
+        if (soB2cDeliveryInterceptEntityList.stream().anyMatch(v->v.getHandleStatus().equals(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus()))) {
+            throw new ServiceException("已处理不可重复操作");
+        }
         List<String> deliveryIds = soB2cDeliveryInterceptEntityList.stream().map(SoB2cDeliveryInterceptEntity::getDeliveryId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryService.listByIds(deliveryIds);
         deliveryEntityList = deliveryEntityList.stream().filter(v-> v.getStatus().equals(SoB2cDeliveryStatusEnum.PICKING.getCode())
@@ -686,6 +690,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList = dto.getInterceptInventoryDTOList();
         interceptInventoryDTOList = interceptInventoryDTOList.stream().filter(v->v.getId().equals(id)).collect(Collectors.toList());
         SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = this.getById(id);
+        //已处理不可重复操作
+        if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(soB2cDeliveryInterceptEntity.getHandleStatus())) {
+            return BatchResultDTO.fail(soB2cDeliveryInterceptEntity.getId(),soB2cDeliveryInterceptEntity.getCode(),"已处理不可重复操作");
+        }
         SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.getNotCancelBySoId(soB2cDeliveryInterceptEntity.getSoId());
         if(Objects.isNull(soB2cDeliveryEntity)){
             return BatchResultDTO.fail(soB2cDeliveryInterceptEntity.getId(),soB2cDeliveryInterceptEntity.getCode(),"查询不到发货单");
@@ -696,6 +704,10 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     @Override
     public BatchResultDTO interceptFailure(String id, Boolean isAutoOut, String remark) {
         SoB2cDeliveryInterceptEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("拦截单为空"));
+        //已处理不可重复操作
+        if (SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus().equals(entity.getHandleStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已处理不可重复操作");
+        }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         //更新拦截单状态
         entity.setHandleResult(HandleResultEnum.FAILURE.getCode());
