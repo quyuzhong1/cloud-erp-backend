@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.controller.vo.ApiResult;
@@ -164,6 +165,23 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						if(StringUtils.isNotBlank(poSyncKingdeeId)) {
 							break;
 						}
+						String soKingdeeDetailIds = parseObject.getString("soKingdeeDetailIds");
+						if(StringUtils.isNotBlank(soKingdeeDetailIds)) {
+							break;
+						}
+						String code = parseObject.getString("code");
+						if(StringUtils.isNotBlank(code) && code.startsWith("CGTJ")) {
+							JSONArray jsonArray = parseObject.getJSONArray("list");
+							if(CollUtil.isNotEmpty(jsonArray)) {
+								if(jsonArray.stream().allMatch(j -> {
+									JSONObject JSONObject = (JSONObject)j;
+									String kingdeeDetailId = JSONObject.getString("kingdeeDetailId");
+									return StringUtils.isNotBlank(kingdeeDetailId);
+								})) {
+									break;
+								}
+							}
+						}
 					} catch (Exception e) {
 					}
 					dmpOutputTaskRecordService.lambdaUpdate()
@@ -255,4 +273,5 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	protected List<String> getSourceCodeKeys() {
 		return Arrays.asList("sourceCode");
 	}
+	
 }
