@@ -109,16 +109,4 @@ public class PickingListsController extends BaseController {
         pickingListsService.initDelivery(codes);
     }
 
-
-    /**
-     * 组合清单
-     *
-     * @param idsDTO idsDTO
-     **/
-    @PostMapping("/combinationPrint")
-    public ApiResult<List<PickingListsDTO.CombinationPrintView>> combinationPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<PickingListsDTO.CombinationPrintView> views = pickingListsService.combinationPrint(idsDTO.getIds());
-        return success(views);
-    }
-
 }

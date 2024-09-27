@@ -390,17 +390,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 printView.setChannelName(soDeliveryNotice.getCustomerName());
                 printView.setHandlingUserName(soInfo.getCreateUserName());
             }
-            List<PickingListsDTO.PrintDetailView> views = detailList.stream().map(detail -> {
-                PickingListsEntity entity = pickingLists.stream()
-                        .filter(p -> p.getId().equals(detail.getMainId()))
-                        .findFirst()
-                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+            List<PickingDetailEntity> details = detailList.stream().filter(v->v.getMainId().equals(picking.getId())).collect(Collectors.toList());
+            List<PickingListsDTO.PrintDetailView> views = details.stream().map(detail -> {
                 //匹配sku信息
                 SkuVO skuVO = skuVOList.stream()
                         .filter(req -> req.getSkuId().equals(detail.getSkuId()))
                         .distinct().findFirst().orElse(new SkuVO());
                 PickingListsDTO.PrintDetailView view = new PickingListsDTO.PrintDetailView();
-                view.getPrintView(entity, detail, skuVO.getSkuName());
+                view.getPrintView(picking, detail, skuVO.getSkuName());
                 if (ObjectUtil.isEmpty(view.getWarehouseLocation())) {
                     view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                 }
@@ -457,6 +454,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     combinationPrintDetailView.setChildSkuQty(view.getPickingQty());
                     combinationPrintDetailViewList.add(combinationPrintDetailView);
                 }
+                combinationPrintDetailViewList.sort(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getParentSku));
                 printView.setCombinationPrintDetailView(combinationPrintDetailViewList);
             }
             printViews.add(printView);
@@ -929,50 +927,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             pickingDetailService.saveBatch(entities);
         }
 
-    }
-
-    @Override
-    public List<PickingListsDTO.CombinationPrintView> combinationPrint(List<String> ids) {
-        LoginUser user = UserContext.getDefaultLoginUser();
-        List<PickingListsEntity> pickingLists = listByIds(ids);
-        if (CollectionUtils.isEmpty(pickingLists)) {
-            throw new ServiceException(ApiError.ERROR_92258);
-        }
-        List<PickingDetailEntity> allDetailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, ids));
-        List<String> skuIds = allDetailList.stream().map(PickingDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<String> sourceIds = pickingLists.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<RequisitionApplicationEntity> applicationEntities = requisitionApplicationService.listByIds(sourceIds);
-        List<RequisitionApplicationDetailEntity> applicationDetails = requisitionApplicationDetailService.listByMainIds(sourceIds);
-
-        List<String> applicationDetailSkuIds = applicationDetails.stream().map(RequisitionApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(applicationDetailSkuIds);
-        //过滤出组合品的要货申请明细
-        applicationDetails = applicationDetails.stream().filter(v->{
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
-                    .filter(req -> req.getParentSkuId().equals(v.getSkuId())
-                            && req.getBomVersion().equals(v.getBomVersion())
-                    ).collect(Collectors.toList());
-            return com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isNotEmpty(sonSkuList);
-        }).collect(Collectors.toList());
-
-        List<PickingListsDTO.CombinationPrintView> list = new ArrayList<>();
-        for (PickingListsEntity picking : pickingLists) {
-            PickingListsDTO.PrintView printView = new PickingListsDTO.PrintView();
-            printView.setPrintTime(LocalDateTime.now());
-            printView.setPrintUserName(user.getUserName());
-            RequisitionApplicationEntity requisitionApplicationEntity = applicationEntities.stream().filter(v->v.getId().equals(picking.getSourceId())).findFirst().orElse(new RequisitionApplicationEntity());
-            List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = applicationDetails.stream().filter(v->v.getMainId().equals(requisitionApplicationEntity.getId())).collect(Collectors.toList());
-            printView.setCode(requisitionApplicationEntity.getCode());
-            printView.setChannelName(requisitionApplicationEntity.getChannelName());
-            printView.setHandlingUserName(requisitionApplicationEntity.getCreateUserName());
-            if(CollectionUtils.isEmpty(requisitionApplicationDetailEntityList)){
-                continue;
-            }
-        }
-
-        return list;
     }
 
 }

@@ -104,5 +104,4 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
 
     void initDelivery(List<String> codes);
 
-    List<PickingListsDTO.CombinationPrintView> combinationPrint(List<String> ids);
 }
