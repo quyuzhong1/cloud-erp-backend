@@ -1155,7 +1155,7 @@ public enum ApiError implements Serializable {
 
     ERROR_SUBCONTRACT_RETURN_NOT_EXIST(92241,"委外退料单不存在"),
     ERROR_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST(92242,"委外退料单明细不存在"),
-    ERROR_SUBCONTRACT_RETURN_QTY_EXCEED(92243,"委外退料单SKU【{}】数量不能大于【{}】"),
+    ERROR_SUBCONTRACT_RETURN_QTY_EXCEED(92243,"委外退料单SKU【{}】退料数量【{}】可退数量【{}】"),
     ERROR_92244(92244,"存在有效下推单据【委外退料单{}】,不支持反审"),
     ERROR_92245(92245,"存在有效下推单据【采购订单{}】,不支持反审"),
     ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
