@@ -376,7 +376,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .filter(v -> "true".equals(v.getValue()))
                     .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
                     .collect(Collectors.toList());
-            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> purchaseDetails = inventoryMapper.listPurchase(codes, replenishmentResultDTO.getReplenishment().getSkuId(), getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
+            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> purchaseDetails = inventoryMapper.listPurchase(codes, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds,getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
             if (!CollectionUtils.isEmpty(purchaseDetails)) {
                 detailList.addAll(purchaseDetails);
             }

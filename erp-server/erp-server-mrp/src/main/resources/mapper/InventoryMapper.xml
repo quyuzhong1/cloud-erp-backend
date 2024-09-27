@@ -246,7 +246,11 @@
         AND po.approve_status IN
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}
-        </foreach>;
+        </foreach>
+        and pad.dest_warehouse_id in
+        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
     </select>
     <select id="listPurchaseApplicationRefPo"
             resultType="com.erp.model.scm.dto.PurchaseApplicationRefPoDTO$ListDTO">

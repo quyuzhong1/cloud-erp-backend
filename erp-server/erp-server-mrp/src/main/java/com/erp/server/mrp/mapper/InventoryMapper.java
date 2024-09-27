@@ -82,7 +82,7 @@ public interface InventoryMapper {
     /**
      * 查询采购单
      */
-    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") List<String> codes, @Param("skuId") String skuId, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") List<String> codes, @Param("skuId") String skuId,  @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询采购申请关联
