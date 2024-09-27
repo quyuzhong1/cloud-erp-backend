@@ -91,6 +91,7 @@ public class BasicReplenishmentDataService {
      */
     public void initReplenishmentSku(LocalDate calculationDate, String id) {
         calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
+        inventoryService.checkAllTableExists(calculationDate);
         inventoryService.saveAllHistoryInventory(calculationDate);
         if (!ObjectUtils.isEmpty(id)) {
             cleanHistorySalesAndInventory(calculationDate, id);

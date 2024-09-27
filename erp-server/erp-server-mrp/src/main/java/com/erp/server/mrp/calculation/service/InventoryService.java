@@ -78,4 +78,10 @@ public interface InventoryService {
      * @param calculationDate 计算日期
      */
     void saveAllHistoryInventory(LocalDate calculationDate);
+
+    /**
+     * 判断表是否存在
+     * @param calculationDate 计算日
+     */
+    void checkAllTableExists(LocalDate calculationDate);
 }

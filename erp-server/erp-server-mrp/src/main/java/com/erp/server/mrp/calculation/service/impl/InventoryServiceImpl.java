@@ -3,6 +3,8 @@ package com.erp.server.mrp.calculation.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.enums.*;
@@ -295,6 +297,20 @@ public class InventoryServiceImpl implements InventoryService {
         List<VirtualInventoryEntity> virtualInventory = inventoryMapper.getAllVirtualHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.VIRTUAL_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
         if (!CollectionUtils.isEmpty(inventoryEntities)) {
             virtualInventoryHistoryService.saveTodayInventory(virtualInventory, calculationDate);
+        }
+    }
+
+    @Override
+    public void checkAllTableExists(LocalDate calculationDate) {
+        List<String> tableList = new ArrayList<>();
+        for (SnapshotTableEnum value : SnapshotTableEnum.values()) {
+            boolean exist = inventoryMapper.isTableExist(getTableName(value, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+            if (Boolean.FALSE.equals(exist)) {
+                tableList.add(value.getCode());
+            }
+        }
+        if (!CollectionUtils.isEmpty(tableList)) {
+            throw new ServiceException(ApiError.ERROR_TABLE_NOT_EXIST, String.join(",", tableList));
         }
     }
 
