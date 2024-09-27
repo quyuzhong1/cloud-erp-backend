@@ -401,6 +401,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 if (ObjectUtil.isEmpty(view.getWarehouseLocation())) {
                     view.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
                 }
+                view.setThirdSku("");
                 if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
                     RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
                             .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
@@ -412,7 +413,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 }
                 return view;
             }).collect(Collectors.toList());
-            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getThirdSku() + ":"+  v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
                     Collectors.collectingAndThen(Collectors.toList(), v -> {
                         PickingListsDTO.PrintDetailView view = v.get(0);
                         int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintDetailView::getPickingQty).sum();
