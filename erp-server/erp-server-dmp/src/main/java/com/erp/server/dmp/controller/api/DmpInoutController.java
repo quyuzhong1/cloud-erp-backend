@@ -260,7 +260,7 @@ public class DmpInoutController extends BaseController {
 										parseObject.put("dmpOutputTaskRecordId", q.getId());
 										q.setRequestData(JSON.toJSONString(parseObject));
 										q.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-										q.setIsNeedSync(Boolean.FALSE);
+										q.setIsNeedSync(Boolean.TRUE);
 									}
 									dmpOutputTaskRecordService.updateBatchById(queryDataList);
 									dmpOutputTaskRecordService.batchSync(queryDataList);
