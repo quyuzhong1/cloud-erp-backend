@@ -183,6 +183,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 							}
 						}
 					} catch (Exception e) {
+						log.error("处理上游单据失败" , e);
 					}
 					dmpOutputTaskRecordService.lambdaUpdate()
 						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
