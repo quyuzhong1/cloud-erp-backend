@@ -762,9 +762,18 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                     log.error(ApiError.ERROR_95166.msg);
                     continue;
                 }
+                //匹配对应采购订单明细记录
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = childPurchaseOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSourceDetailId()) && e.getSourceDetailId().equals(subcontractOrderDetailEntity.getId())).findFirst().orElse(null);
+                if (Objects.isNull(purchaseOrderDetailEntity)){
+                    log.error(StrUtil.format("未找到入库单【{}】中SKU【{}】对应的采购订单明细记录"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo());
+
+                    continue;
+                }
                 //应入库数量
                 int stockInQty = poDetailEntity.getStockInQty() * quantity;
-                PoInstockDetailEntity poInstockDetailEntity = childPoInstockDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(subcontractOrderDetailEntity.getSkuId()) && e.getStockInQty() == stockInQty).findFirst().orElse(null);
+                PoInstockDetailEntity poInstockDetailEntity = childPoInstockDetailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(subcontractOrderDetailEntity.getSkuId())
+                        && StrUtil.isNotBlank(e.getPurchaseOrderDetailId()) && e.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())
+                        && e.getStockInQty() == stockInQty).findFirst().orElse(null);
                 //记录要入库的委外订单
                 if (Objects.isNull(poInstockDetailEntity)){
                     log.error(StrUtil.format("未找到入库单【{}】中SKU【{}】数量【{}】的采购入库单明细"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo(),stockInQty);
