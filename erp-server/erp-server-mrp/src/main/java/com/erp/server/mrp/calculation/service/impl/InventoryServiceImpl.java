@@ -14,16 +14,14 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
+import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.calculation.service.ShopInfoService;
 import com.erp.server.mrp.calculation.utils.TreeUtils;
 import com.erp.server.mrp.mapper.InventoryMapper;
-import com.erp.server.mrp.service.FbaHistoryInventoryService;
-import com.erp.server.mrp.service.LocalHistoryInventoryService;
-import com.erp.server.mrp.service.OverseasHistoryInventoryService;
-import com.erp.server.mrp.service.ReplenishmentSuggestionService;
+import com.erp.server.mrp.service.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -58,6 +56,8 @@ public class InventoryServiceImpl implements InventoryService {
     private OverseasHistoryInventoryService overseasHistoryInventoryService;
     @Resource
     private LocalHistoryInventoryService localHistoryInventoryService;
+    @Resource
+    private VirtualInventoryHistoryService virtualInventoryHistoryService;
     @Override
     public int getFbaUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes) {
         String code = String.join("+", codes);
@@ -291,6 +291,10 @@ public class InventoryServiceImpl implements InventoryService {
         List<InventoryEntity> localHistoryInventory = inventoryMapper.getAllLocalHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
         if (!CollectionUtils.isEmpty(inventoryEntities)) {
             localHistoryInventoryService.saveTodayInventory(localHistoryInventory, calculationDate);
+        }
+        List<VirtualInventoryEntity> virtualInventory = inventoryMapper.getAllVirtualHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.VIRTUAL_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+            virtualInventoryHistoryService.saveTodayInventory(virtualInventory, calculationDate);
         }
     }
 

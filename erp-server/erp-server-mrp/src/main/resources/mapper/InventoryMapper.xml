@@ -371,5 +371,10 @@
         from ${tableName}
         where is_deleted = false
     </select>
+    <select id="getAllVirtualHistoryInventory" resultType="com.erp.model.wms.entity.VirtualInventoryEntity">
+        select *
+        from ${tableName}
+        where is_deleted = false
+    </select>
 
 </mapper>
