@@ -53,7 +53,7 @@
         INNER JOIN po_return pro ON prod.main_id = pro.id AND pro.is_deleted = FALSE
         LEFT JOIN purchase_order po ON pro.purchase_order_id = po.id AND po.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
-        and pro.is_deleted = FALSE
+        and prod.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
