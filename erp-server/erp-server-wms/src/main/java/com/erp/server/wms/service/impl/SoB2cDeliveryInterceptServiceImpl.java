@@ -605,20 +605,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         idDto.setIds(Arrays.asList(soB2cEntity.getId()));
 
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        //取消物流单，不管结果，继续向下执行
-        ApiResult<List<BatchResultDTO>> cancelLogisticResult = soB2cFeign.cancelLogistic(idDto);
-        String logisticLog;
-        if(cancelLogisticResult.isSuccess()){
-            soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
-            soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
-            logisticLog = "取消物流单-发起拦截，取消物流单成功";
-        }else{
-            soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
-            soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
-            logisticLog = "取消物流单-发起拦截，取消物流单失败";
-        }
-        // 操作日志
-        operateLogService.addModuleOperateLog(logisticLog, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), interceptId, "取消物流单");
 
         //根据发货单状态处理
         if(SoB2cDeliveryStatusEnum.GENERATE_WAVE.getCode().equals(entity.getStatus())){
@@ -644,7 +630,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         soB2cDeliveryInterceptEntity.setHandleUserName(userInfo.getUserName());
         soB2cDeliveryInterceptEntity.setHandleTime(LocalDateTime.now());
         soB2cDeliveryInterceptEntity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
-        this.updateById(soB2cDeliveryInterceptEntity);
         //取消保宏预报
         if (TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())) {
             ApiResult<List<BatchResultDTO>> cancelOrderForecastResult = soB2cFeign.cancelOrderForecast(idDto);
@@ -652,6 +637,22 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 throw new ServiceException("取消订单预报失败");
             }
         }
+        //取消物流单，不管结果，继续向下执行
+        ApiResult<List<BatchResultDTO>> cancelLogisticResult = soB2cFeign.cancelLogistic(idDto);
+        String logisticLog;
+        if(cancelLogisticResult.isSuccess()){
+            soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
+            soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
+            logisticLog = "取消物流单-发起拦截，取消物流单成功";
+        }else{
+            soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
+            soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
+            logisticLog = "取消物流单-发起拦截，取消物流单失败";
+        }
+        // 操作日志
+        operateLogService.addModuleOperateLog(logisticLog, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), interceptId, "取消物流单");
+
+        this.updateById(soB2cDeliveryInterceptEntity);
         //更新销售订单
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
