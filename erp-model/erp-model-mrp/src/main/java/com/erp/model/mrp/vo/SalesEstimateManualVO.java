@@ -40,7 +40,7 @@ public class SalesEstimateManualVO {
         this.followingMonthSales = followingMonthSales;
         LocalDate now = LocalDate.now();
         LocalDate lastDayOfMonth = now.with(TemporalAdjusters.lastDayOfMonth());
-        this.currentMonthSurplusSalesQty = currentMonthSalesQty.multiply(BigDecimal.valueOf(ChronoUnit.DAYS.between(now, lastDayOfMonth)))
-                .divide(BigDecimal.valueOf(ChronoUnit.DAYS.between(now.withDayOfMonth(1), lastDayOfMonth)), 2 , RoundingMode.HALF_UP);
+        this.currentMonthSurplusSalesQty = currentMonthSalesQty.multiply(BigDecimal.valueOf(ChronoUnit.DAYS.between(now, lastDayOfMonth) + 1))
+                .divide(BigDecimal.valueOf(ChronoUnit.DAYS.between(now.withDayOfMonth(1), lastDayOfMonth) + 1), 2 , RoundingMode.HALF_UP);
     }
 }

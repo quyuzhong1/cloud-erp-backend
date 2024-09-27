@@ -95,10 +95,11 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                         calculationDays = Math.min(calculationDays, days);
                         int suggestDeliveryQty = getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now);
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-                            suggestDTO.setSuggestPurchaseQty(suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty());
+                            suggestDeliveryQty = suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty();
                         } else {
-                            suggestDTO.setSuggestPurchaseQty(suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty());
+                            suggestDeliveryQty = suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty();
                         }
+                        suggestDTO.setSuggestPurchaseQty(Math.max(0, suggestDeliveryQty));
                     }
                     if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                             || CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
@@ -114,7 +115,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                         //建议采购量 = 预估日销*(审批时长 + 采购交期 + 供应商发货时长 + 质检天数 + 采购频率 + 本地备货安全天数) *备货系数 - ( 本地可用)
                         int calculationDays = Math.min(stockUpResult.getPurchaseApproveDays()  + stockUpResult.getProductionDays() + stockUpResult.getSupplierDeliveryDays()
                                 + stockUpResult.getQcDays() + stockUpResult.getPurchaseCycleDays() + stockUpResult.getSafeDays(), days);
-                        suggestDTO.setSuggestPurchaseQty(getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty());
+                        suggestDTO.setSuggestPurchaseQty(Math.max(0, getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty()));
                         //预计入库日期 （本地备货）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数）
                         LocalDate estimateInstockDate = suggestDeliveryDate.plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
                                 .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays());

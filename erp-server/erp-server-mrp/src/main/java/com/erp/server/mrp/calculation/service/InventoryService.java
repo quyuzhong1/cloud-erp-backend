@@ -75,13 +75,15 @@ public interface InventoryService {
 
     /**
      * 保存所有每日库存到对应库存历史表
+     *
      * @param calculationDate 计算日期
+     * @param calcDate 计算日期
      */
-    void saveAllHistoryInventory(LocalDate calculationDate);
+    void saveAllHistoryInventory(LocalDate calculationDate, String calcDate);
 
     /**
      * 判断表是否存在
      * @param calculationDate 计算日
      */
-    void checkAllTableExists(LocalDate calculationDate);
+    void checkAllTableExists(String calcDate);
 }

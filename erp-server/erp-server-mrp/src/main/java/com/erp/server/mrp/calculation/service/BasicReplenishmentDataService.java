@@ -91,10 +91,11 @@ public class BasicReplenishmentDataService {
      */
     public void initReplenishmentSku(LocalDate calculationDate, String id) {
         calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
-        inventoryService.checkAllTableExists(calculationDate);
-        inventoryService.saveAllHistoryInventory(calculationDate);
+        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+        inventoryService.checkAllTableExists(calcDate);
+        inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
         if (!ObjectUtils.isEmpty(id)) {
-            cleanHistorySalesAndInventory(calculationDate, id);
+            cleanHistorySalesAndInventory(calculationDate, calcDate, id);
             return;
         }
         //获取所有已审核且存在上市时间得非费用服务类sku
@@ -144,7 +145,7 @@ public class BasicReplenishmentDataService {
             return entity;
         }).filter(Objects::nonNull).collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
         replenishmentSuggestionService.saveOrUpdateBatch(replenishmentList);
-        cleanHistorySalesAndInventory(calculationDate, null);
+        cleanHistorySalesAndInventory(calculationDate, calcDate, null);
     }
 
 
@@ -247,21 +248,20 @@ public class BasicReplenishmentDataService {
     }
 
 
-    private void cleanHistorySalesAndInventory(LocalDate calculationDate, String id) {
+    private void cleanHistorySalesAndInventory(LocalDate calculationDate, String calcDate, String id) {
         //查询所有需要计算得数据
         List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(id);
         List<CfgRuleSalesQtyEntity> defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty();
         List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
         Map<String, List<ReplenishmentResultDTO.SalesInfoAllDTO>> salesByPlatformType = new HashMap<>();
-        String calculation = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         for (CfgRuleSalesQtyEntity cfgRuleSalesQty : defaultCfgRuleSalesQty) {
             List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList;
             // 以销售订单订单创建时间计算销量
             if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(cfgRuleSalesQty.getSalesQtyType())) {
-                salesInfoAllList = salesService.listAllSalesBySob2c(calculation);
+                salesInfoAllList = salesService.listAllSalesBySob2c(calcDate);
             } else {
                 // 以销售出库单出库时间计算销量
-                salesInfoAllList = salesService.listAllSalesBySoOutStock(calculation);
+                salesInfoAllList = salesService.listAllSalesBySoOutStock(calcDate);
             }
             salesByPlatformType.put(cfgRuleSalesQty.getPlatformType() + ":" + cfgRuleSalesQty.getType(), salesInfoAllList);
         }
@@ -289,7 +289,7 @@ public class BasicReplenishmentDataService {
                     String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ, calculationDate);
                     detail.setId(IdWorker.getIdStr());
                     detail.setCalcVersion(code);
-                    detail.setCalcDate(calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE));
+                    detail.setCalcDate(calcDate);
                     detail.setMainId(entity.getId());
                     if (sale.getListingTime().plusDays(Long.parseLong(newDaysSetting.getDataJson())).isAfter(LocalDate.now())) {
                         detail.setSkuType(CfgRuleStockingRatioTypeEnum.NEW.getCode());

@@ -32,7 +32,6 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -280,31 +279,31 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public void saveAllHistoryInventory(LocalDate calculationDate) {
+    public void saveAllHistoryInventory(LocalDate calculationDate, String calcDate) {
         //清洗每日库存到历史表
-        List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        List<FbaInventoryEntity> inventoryEntities = inventoryMapper.getAllFbaHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calcDate));
         if (!CollectionUtils.isEmpty(inventoryEntities)) {
             fbaHistoryInventoryService.saveTodayInventory(inventoryEntities, calculationDate);
         }
-        List<OverseasInventoryEntity> overseasHistoryInventory = inventoryMapper.getAllOverseasHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        List<OverseasInventoryEntity> overseasHistoryInventory = inventoryMapper.getAllOverseasHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calcDate));
         if (!CollectionUtils.isEmpty(inventoryEntities)) {
             overseasHistoryInventoryService.saveTodayInventory(overseasHistoryInventory, calculationDate);
         }
-        List<InventoryEntity> localHistoryInventory = inventoryMapper.getAllLocalHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        List<InventoryEntity> localHistoryInventory = inventoryMapper.getAllLocalHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.INVENTORY, calcDate));
         if (!CollectionUtils.isEmpty(inventoryEntities)) {
             localHistoryInventoryService.saveTodayInventory(localHistoryInventory, calculationDate);
         }
-        List<VirtualInventoryEntity> virtualInventory = inventoryMapper.getAllVirtualHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.VIRTUAL_INVENTORY, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        List<VirtualInventoryEntity> virtualInventory = inventoryMapper.getAllVirtualHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.VIRTUAL_INVENTORY, calcDate));
         if (!CollectionUtils.isEmpty(inventoryEntities)) {
             virtualInventoryHistoryService.saveTodayInventory(virtualInventory, calculationDate);
         }
     }
 
     @Override
-    public void checkAllTableExists(LocalDate calculationDate) {
+    public void checkAllTableExists(String calcDate) {
         List<String> tableList = new ArrayList<>();
         for (SnapshotTableEnum value : SnapshotTableEnum.values()) {
-            boolean exist = inventoryMapper.isTableExist(getTableName(value, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+            boolean exist = inventoryMapper.isTableExist(getTableName(value, calcDate));
             if (Boolean.FALSE.equals(exist)) {
                 tableList.add(value.getCode());
             }

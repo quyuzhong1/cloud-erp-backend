@@ -79,10 +79,11 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         calculationDays = Math.min(calculationDays, days);
                         int suggestDeliveryQty = getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now);
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-                            suggestDTO.setSuggestDeliveryQty(suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty());
+                            suggestDeliveryQty = suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty();
                         } else {
-                            suggestDTO.setSuggestDeliveryQty(suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty());
+                            suggestDeliveryQty = suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty();
                         }
+                        suggestDTO.setSuggestDeliveryQty(Math.max(0, suggestDeliveryQty));
                     }
                     if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                             || CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
@@ -92,7 +93,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setSuggestDeliveryDate(suggestDeliveryDate);
                         //建议发货量= 预估日销 * 备货系数 (累加本地备货安全天数)  - 本地可用
                         int calculationDays = Math.min(stockUpResult.getSafeDays(), days);
-                        suggestDTO.setSuggestDeliveryQty(getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty());
+                        suggestDTO.setSuggestDeliveryQty(Math.max(0, getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty()));
                     }
                     return suggestDTO;
                 }).collect(Collectors.toList());

@@ -161,7 +161,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<LabelVO> labelVOS = labelInfoService.listLabelByReplenishmentIds(ids);
         List<String> country = records.stream().map(ReplenishmentSuggestionVO.PagingView::getCountry).distinct().collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
-        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
         List<SalesEstimateManualEntity> salesEstimateManuals = salesEstimateManualService.listByReplenishmentIds(ids);
         List<SalesInfoEntity> salesInfos = salesInfoService.listByReplenishmentDetailIds(detailIds, LocalDate.now().minusDays(16), LocalDate.now());
