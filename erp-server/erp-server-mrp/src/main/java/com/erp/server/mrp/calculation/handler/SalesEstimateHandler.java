@@ -16,6 +16,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.RecentTimePeriodEnum.*;
@@ -68,7 +69,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
             if (ObjectUtils.isEmpty(formulaResult)) {
                 continue;
             }
-            BigDecimal saleQty = getSaleQty(replenishmentResultDTO.getSalesInfos(), formulaResult, basicCalcDate);
+            BigDecimal saleQty = getSaleQty(replenishmentResultDTO, formulaResult, basicCalcDate);
             ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = new ReplenishmentResultDTO.SalesEstimateDTO(calcDate, saleQty,
                     calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
             salesEstimates.add(salesEstimateDTO);
@@ -142,15 +143,15 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
      * @param formulaResult 销量计算参数
      * @param basicCalcDate 计算时间
      */
-    private BigDecimal getSaleQty(List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult, LocalDate basicCalcDate) {
+    private BigDecimal getSaleQty(ReplenishmentResultDTO replenishmentResult, CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult, LocalDate basicCalcDate) {
         BigDecimal saleQty;
         if (CfgRuleSalesFormulaTypeEnum.FIXED.getCode().equals(formulaResult.getType())) {
             saleQty = MathUtil.valueOf(formulaResult.getFixedValue());
         } else if (CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode().equals(formulaResult.getType())) {
-            saleQty = getDynamicSaleQty(formulaResult.getPercentJsonDTO(), salesInfos, basicCalcDate);
+            saleQty = getDynamicSaleQty(formulaResult.getPercentJsonDTO(), replenishmentResult, basicCalcDate);
         } else {
             if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(formulaResult.getDefaultType())) {
-                saleQty = getDynamicSaleQty(formulaResult.getPercentJsonDTO(), salesInfos, basicCalcDate);
+                saleQty = getDynamicSaleQty(formulaResult.getPercentJsonDTO(), replenishmentResult, basicCalcDate);
             } else {
                 saleQty = MathUtil.valueOf(formulaResult.getFixedValue());
             }
@@ -158,28 +159,31 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         return saleQty;
     }
 
-    private BigDecimal getDynamicSaleQty(CfgRuleSalesFormulaDTO.PercentJsonDTO dto, List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, LocalDate basicCalcDate) {
+    private BigDecimal getDynamicSaleQty(CfgRuleSalesFormulaDTO.PercentJsonDTO dto, ReplenishmentResultDTO replenishmentResult, LocalDate basicCalcDate) {
 
         List<SalesForecastCalculatorDTO> salesDataList = new ArrayList<>();
         LocalDate localDate = basicCalcDate.minusDays(1);
+        List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos = replenishmentResult.getSalesInfos();
+        Map<TimePeriodEnum, BigDecimal> timePeriodMap = replenishmentResult.getAvgTimePeriodSales()
+                .stream().collect(Collectors.toMap(ReplenishmentResultDTO.TimePeriodSalesDTO::getCode, ReplenishmentResultDTO.TimePeriodSalesDTO::getQty, (o1, o2) -> o1));
         // 3天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 3), MathUtil.valueOf(dto.getThreeDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 3)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.THREE), MathUtil.valueOf(dto.getThreeDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 3)));
         // 7天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 7), MathUtil.valueOf(dto.getSevenDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 7)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.SEVEN), MathUtil.valueOf(dto.getSevenDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 7)));
         // 14天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 14), MathUtil.valueOf(dto.getFourteenDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 14)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.FOURTEEN), MathUtil.valueOf(dto.getFourteenDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 14)));
         // 30天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 30), MathUtil.valueOf(dto.getThirtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 30)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.THIRTY), MathUtil.valueOf(dto.getThirtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 30)));
         // 60天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 60), MathUtil.valueOf(dto.getSixtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 60)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.SIXTY), MathUtil.valueOf(dto.getSixtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 60)));
         // 90天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 90), MathUtil.valueOf(dto.getNinetyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 90)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.NINETY), MathUtil.valueOf(dto.getNinetyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 90)));
         // 180天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 180), MathUtil.valueOf(dto.getOneHundredEightyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 180)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.ONE_HUNDRED_AND_EIGHTY), MathUtil.valueOf(dto.getOneHundredEightyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 180)));
         // 270天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 270), MathUtil.valueOf(dto.getTwoHundredSeventyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 270)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.TWO_HUNDRED_AND_SEVENTY), MathUtil.valueOf(dto.getTwoHundredSeventyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 270)));
         // 360天日均
-        salesDataList.add(new SalesForecastCalculatorDTO(getSaleQtyByDay(salesInfos, localDate, 360), MathUtil.valueOf(dto.getThreeHundredSixtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 360)));
+        salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.THREE_HUNDRED_AND_SIXTY), MathUtil.valueOf(dto.getThreeHundredSixtyDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 360)));
         // 计算预估日销量
         return SalesForecastCalculatorDTO.calculateForecastedSales(salesDataList);
     }
@@ -190,10 +194,4 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
                 .allMatch(v -> Boolean.TRUE.equals(v.getIsIgnoreOutOfStock()) || CfgRuleSalesDenoisingDenoisingTypeEnum.COMPLETELY.getCode().equals(v.getDenoisingType()));
     }
 
-    private BigDecimal getSaleQtyByDay(List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, LocalDate basicCalcDate, int days) {
-        return salesInfos.stream()
-                .filter(v -> !basicCalcDate.minusDays(days).isAfter(v.getDate()) && basicCalcDate.isAfter(v.getDate()))
-                .map(ReplenishmentResultDTO.SalesInfoDTO::getSalesQty)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
 }
