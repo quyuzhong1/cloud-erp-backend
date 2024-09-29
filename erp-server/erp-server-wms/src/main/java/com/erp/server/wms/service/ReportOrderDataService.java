@@ -53,7 +53,7 @@ public interface ReportOrderDataService extends SuperService<ReportOrderDataEnti
      * @author will
      * @date 2024/9/26 19:18
      */
-    void generateReportOrderDemand(List<BomChildrenSkuDTO> bomChildrenSkuList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, Boolean isSplit);
+    void generateReportOrderDemand(List<BomChildrenSkuDTO> bomChildrenSkuList, Boolean isSplit);
     /**
      * 生成销售看板数据
      * @author will

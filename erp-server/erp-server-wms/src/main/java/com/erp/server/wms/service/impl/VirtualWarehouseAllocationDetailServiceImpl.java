@@ -499,6 +499,11 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         list.forEach(this::updateDetailData);
     }
 
+    @Override
+    public List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList) {
+        return baseMapper.listAllocationData(skuIdList,warehouseIdList,virtualWarehouseIdList);
+    }
+
     /**
      * 更新历史数据
      * @param detailEntity

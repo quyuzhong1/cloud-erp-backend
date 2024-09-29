@@ -55,9 +55,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
 @Service
 public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDemandMapper, ReportOrderDemandEntity> implements ReportOrderDemandService {
     @Autowired
-    private OperateLogService operateLogService;
-
-    @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
     @Autowired
@@ -270,6 +267,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             //虚拟仓调拨
             BeanMapperUtils.copy(reportOrderDemandEntity,viewVirtualAllocationDTO);
             viewVirtualAllocationDTO.setType(VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode());
+            viewVirtualAllocationDTO.setTypeName(VirtualWarehouseAllocationTypeEnum.TRANSFER.getName());
             viewVirtualAllocationDTO.setOutWarehouseId(relationEntity.getVirtualWarehouseId());
             //名称
             String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), relationEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
@@ -304,6 +302,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         //添加分货
         BeanMapperUtils.copy(reportOrderDemandEntity,viewVirtualAllocationDTO);
         viewVirtualAllocationDTO.setType(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode());
+        viewVirtualAllocationDTO.setTypeName(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getName());
         viewVirtualAllocationDTO.setOutWarehouseId(reportOrderDemandEntity.getWarehouseId());
         viewVirtualAllocationDTO.setOutWarehouseName(reportOrderDemandEntity.getWarehouseName());
         //实体仓实际库存

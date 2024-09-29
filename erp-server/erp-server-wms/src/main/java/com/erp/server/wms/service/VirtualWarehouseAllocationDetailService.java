@@ -1,12 +1,15 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.service.SuperService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
+import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -89,4 +92,14 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * 初始化第三方编码存在异常的数据
      */
     void initFailThirdCode(String errorMsg);
+    /**
+     * 查询分货信息
+     * @author will
+     * @date 2024/9/29 14:47
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @return List<AllocationDataDTO>
+     */
+    List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList);
 }

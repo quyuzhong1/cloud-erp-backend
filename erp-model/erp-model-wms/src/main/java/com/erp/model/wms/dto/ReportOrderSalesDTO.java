@@ -68,11 +68,18 @@ public class ReportOrderSalesDTO implements Serializable {
          * id
          */
         private String id;
-
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
         /**
          * 虚拟仓名称
          */
         private String virtualWarehouseName;
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
         /**
          * 实体仓名称
          */
@@ -395,6 +402,19 @@ public class ReportOrderSalesDTO implements Serializable {
         */
         @NotNull(message = "30天销量不能为空")
         private Integer thirtyDaysSalesQty;
+
+        /**
+         * 60天销量
+         */
+        @NotNull(message = "60天销量不能为空")
+        private Integer sixtyDaysSalesQty;
+
+        /**
+         * 90天销量
+         */
+        @NotNull(message = "90天销量不能为空")
+        private Integer ninetyDaysSalesQty;
+
 
         /**
         * 是否缺货，true是，false否

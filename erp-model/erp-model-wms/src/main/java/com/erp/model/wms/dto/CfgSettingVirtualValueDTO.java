@@ -50,13 +50,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         private List<String> statDurationList;
 
         /**
-         * 定时更新时间集合
-         */
-        @NotEmpty(message = "定时更新时间不能为空")
-        @JsonFormat(pattern = "HH:mm")
-        private List<LocalTime> execTimeList;
-
-        /**
          * 是否预警
          */
         @NotNull(message = "是否预警不能为空")

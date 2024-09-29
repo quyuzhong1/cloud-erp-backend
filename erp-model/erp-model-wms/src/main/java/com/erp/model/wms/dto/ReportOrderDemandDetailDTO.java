@@ -2,7 +2,6 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -282,7 +281,7 @@ public class ReportOrderDemandDetailDTO implements Serializable {
          * 审核状态
          */
         @NotNull(message = "审核状态不能为空")
-        private ApproveStatusEnum approveStatus;
+        private String approveStatus;
         /**
          * 作废状态
          */

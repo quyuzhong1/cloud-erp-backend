@@ -47,7 +47,7 @@
         ros.update_user_id,
         ros.version,
         ros.is_deleted,
-        ros.warehouse_id, ros.virtual_warehouse_id, ros.sku_id, ros.sku_no, ros.product_name, ros.virtual_warehouse_name, ros.warehouse_name, ros.today_sales_qty, ros.yesterday_sales_qty, three_days_sales_qty, seven_days_sales_qty, ros.fourteen_days_sales_qty, ros.thirty_days_sales_qty, ros.is_virtual_scarce, ros.is_warn, ros.virtual_scarce_qty, ros.total_qty, ros.virtual_usable_qty, ros.virtual_frozen_qty, ros.virtual_total_qty, ros.delivery_qty, ros.distribution_qty
+        ros.warehouse_id, ros.virtual_warehouse_id, ros.sku_id, ros.sku_no, ros.product_name, ros.virtual_warehouse_name, ros.warehouse_name, ros.today_sales_qty, ros.yesterday_sales_qty, ros.three_days_sales_qty, ros.seven_days_sales_qty, ros.fourteen_days_sales_qty, ros.thirty_days_sales_qty, ros.is_virtual_scarce, ros.is_warn, ros.virtual_scarce_qty, ros.total_qty, ros.virtual_usable_qty, ros.virtual_frozen_qty, ros.virtual_total_qty, ros.delivery_qty, ros.distribution_qty
     </sql>
 
     <!-- 删除数据 -->
@@ -64,7 +64,7 @@
             ${params.sqlMap.default}
             and ros.is_deleted = false
             <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory">
-                and  ros.thirty_days_sales_qty = 0
+                and  ros.thirty_days_sales_qty != 0
             </if>
             <if test="params.isWarn != null and params.isWarn">
                 and  ros.is_warn = true
@@ -79,7 +79,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        rod.update_time desc
+        ros.update_time desc
     </select>
 
 

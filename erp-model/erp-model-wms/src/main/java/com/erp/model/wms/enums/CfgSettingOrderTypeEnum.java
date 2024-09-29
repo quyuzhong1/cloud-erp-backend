@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum CfgSettingOrderTypeEnum implements EnumMessage {
 
-    ALL("all","全部"),
     B2B("b2b","B2B销售订单"),
     B2C("b2c","B2C销售订单")
     ;

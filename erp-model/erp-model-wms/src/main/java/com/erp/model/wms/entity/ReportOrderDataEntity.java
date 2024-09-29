@@ -1,10 +1,7 @@
 package com.erp.model.wms.entity;
 
-import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -101,12 +98,6 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
      */
     @TableField("frozen_qty")
     private Integer frozenQty;
-
-    /**
-     * bom的json数据
-     */
-    @TableField(value = "bom_json", typeHandler = JacksonTypeHandler.class)
-    private JSONArray bomJson;
 
     @Override
     public boolean equals(Object o) {

@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -89,6 +89,16 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     */
     @TableField("thirty_days_sales_qty")
     private Integer thirtyDaysSalesQty;
+    /**
+     * 60天销量
+     */
+    @TableField("sixty_days_sales_qty")
+    private Integer sixtyDaysSalesQty;
+    /**
+     * 90天销量
+     */
+    @TableField("ninety_days_sales_qty")
+    private Integer ninetyDaysSalesQty;
     /**
     * 是否缺货，true是，false否
     */

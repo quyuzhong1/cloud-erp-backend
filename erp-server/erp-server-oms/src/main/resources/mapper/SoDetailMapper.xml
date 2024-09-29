@@ -223,10 +223,11 @@
             si.id as sourceId,
             si.code as sourceCode,
             'soInfo' as sourceType,
-            to_char(si.create_time, 'YYYY-MM') as date,
+            sd.id as sourceDetailId,
+            si.create_time as date,
             sd.frozen_qty as frozenQty
         from so_info si
-        left join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
         <where>
             si.is_deleted = false and si.virtual_warehouse_id != ''
         </where>

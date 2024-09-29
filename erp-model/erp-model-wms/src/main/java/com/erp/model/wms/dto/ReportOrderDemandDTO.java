@@ -283,6 +283,11 @@ public class ReportOrderDemandDTO implements Serializable {
         private String skuId;
 
         /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
         * 产品名称
         */
         @NotBlank(message = "产品名称不能为空")

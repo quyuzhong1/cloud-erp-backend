@@ -20,11 +20,15 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.ReportOrderDemandDetailDTO;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderDemandDetailMapper;
 import com.erp.server.wms.service.ReportOrderDemandDetailService;
+import com.erp.server.wms.service.VirtualWarehouseService;
+import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,6 +54,12 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private WarehouseService warehouseService;
+
+    @Autowired
+    private VirtualWarehouseService virtualWarehouseService;
 
     @Override
     public Boolean batchAddOrUpdate(List<ReportOrderDemandDetailDTO.AddDTO> addOrUpdateList) {
@@ -161,15 +171,32 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
         if (CollectionUtil.isEmpty(list)) {
             return;
         }
+        //SKU
         List<String> skuIdList = list.stream().map(ReportOrderDemandDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
+        //实体仓
+        List<String> warehouseIdList = list.stream().map(ReportOrderDemandDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+
+        //虚拟仓
+        List<String> virtualWarehouseIdList = list.stream().map(ReportOrderDemandDetailEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
+
         for (ReportOrderDemandDetailEntity entity : list) {
+            //产品信息
             ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDetailEntity)) {
                 entity.setSkuNo(productDetailEntity.getSkuNo());
                 entity.setProductName(productDetailEntity.getName());
             }
+            //仓库
+            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            entity.setWarehouseName(warehouseName);
+
+            //虚拟仓
+            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+            entity.setVirtualWarehouseName(virtualWarehouseName);
         }
     }
 

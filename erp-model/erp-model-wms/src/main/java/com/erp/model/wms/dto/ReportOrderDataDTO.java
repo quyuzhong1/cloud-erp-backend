@@ -166,6 +166,18 @@ public class ReportOrderDataDTO implements Serializable {
         private String status;
 
         /**
+         * 审核状态
+         */
+        @NotBlank(message = "审核状态不能为空")
+        @Size(max = 32,message = "审核状态最大长度不能超过32位")
+        private String approveStatus;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
         * 来源单据id
         */
         @NotBlank(message = "来源单据id不能为空")

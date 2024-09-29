@@ -49,11 +49,11 @@
             ra.code as sourceCode,
             'requisitionApplication' as sourceType,
             rad.id as sourceDetailId,
-            to_char(ra.create_time, 'YYYY-MM') as date
+            ra.create_time as date
         from requisition_application ra
-        left join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
+        inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
         <where>
-            ra.is_deleted = false and rad.from_virtual_warehouse_id != ''
+            ra.is_deleted = false and rad.from_virtual_warehouse_id != '' and rad.from_warehouse_id != ''
         </where>
         order by ra.id desc
     </select>
