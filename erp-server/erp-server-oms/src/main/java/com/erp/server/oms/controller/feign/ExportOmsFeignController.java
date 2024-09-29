@@ -39,6 +39,9 @@ public class ExportOmsFeignController {
     @Resource
     private SoInfoService soInfoService;
 
+    @Resource
+    private RefundOrderService refundOrderService;
+
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
@@ -115,5 +118,11 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = SoInfoQueryHandler.class)
     public PagingVO<SoInfoDTO.PagingViewDTO> exportSo(@RequestBody PagingDTO<SoInfoDTO.ExportDTO> dto) {
         return soInfoService.exportSo(dto);
+    }
+
+    @PostMapping("/exportRefund")
+    @WebAdvanceQuery
+    public PagingVO<RefundOrderDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<RefundOrderDTO.PagingParamDTO> dto) {
+        return refundOrderService.exportRefund(dto);
     }
 }

@@ -25,4 +25,8 @@ public interface RefundOrderService extends SuperService<RefundOrderEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.RefundOrderDTO.PagingViewDTO>
      */
     PagingVO<RefundOrderDTO.PagingViewDTO> paging(PagingDTO<RefundOrderDTO.PagingParamDTO> dto);
+
+    void exportExcel(RefundOrderDTO.PagingParamDTO dto);
+
+    PagingVO<RefundOrderDTO.PagingViewDTO> exportRefund(PagingDTO<RefundOrderDTO.PagingParamDTO> dto);
 }
