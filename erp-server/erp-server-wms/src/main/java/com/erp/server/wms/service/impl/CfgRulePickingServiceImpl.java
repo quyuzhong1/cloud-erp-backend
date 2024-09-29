@@ -155,7 +155,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     public List<LocationInventoryResultDTO> getRuleOrderMatchResult(CfgRulePickingDTO.CfgExecutionDataDTO dto) {
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> result = getSoB2CRuleOrderMatchResult(dto);
         if (!CollectionUtils.isEmpty(result.getSecond())) {
-            String message = result.getSecond().entrySet().stream().map(v -> String.format("{sku:%s,缺货数量:%s}", v.getKey(), v.getValue())).collect(Collectors.joining(","));
+            String message = result.getSecond().entrySet().stream().map(v -> String.format("{sku:%s,缺货数量:%s} </br>", v.getKey(), v.getValue())).collect(Collectors.joining(","));
             throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, message);
         }
         return result.getFirst();
