@@ -55,6 +55,7 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
             List<String> strategyCodes = deliveryPlan.getChildrenList().stream()
                     .filter(v -> "true".equals(v.getValue()))
                     .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
+                    .distinct()
                     .collect(Collectors.toList());
             List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getFbaPlanDelivery(replenishmentResultDTO, strategyCodes, cfgRuleStrategyDTO.getStockUpResult());
             if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {

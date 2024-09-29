@@ -336,6 +336,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .stream()
                     .filter(v -> "true".equals(v.getValue()))
                     .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
+                    .distinct()
                     .collect(Collectors.toList());
             List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> applications = inventoryMapper.listPurchasePlan(codes, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds, getTableName(PURCHASE_APPLICATION, calcDate), getTableName(PURCHASE_APPLICATION_DETAIL, calcDate));
             //查询关联采购
