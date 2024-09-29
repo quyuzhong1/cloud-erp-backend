@@ -42,4 +42,16 @@ public class CfgDataArchivingServiceImpl extends SuperServiceImpl<CfgDataArchivi
             throw new ServiceException(e.getMessage(), e);
         }
     }
+
+    @Override
+    public void archiveData(CfgDataArchivingEntity config, String detailId) {
+        try {
+            Class<?> clazz = Class.forName(config.getArchiveFullPath());
+            TableName tableName = clazz.getAnnotation(TableName.class);
+            baseMapper.moveDataByRelId(config.getTableName(), tableName.value(), config.getRefSql());
+            baseMapper.deleteSourceByRelId(config.getTableName(), config.getRefSql());
+        } catch (ClassNotFoundException e) {
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
 }

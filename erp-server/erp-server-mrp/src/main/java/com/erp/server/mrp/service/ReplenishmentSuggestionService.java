@@ -283,4 +283,10 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param params 明细id
      */
     Integer inventoryTotal(InventoryTotalDTO params);
+
+    /**
+     * 更新数据
+     * @param id 建议主表id
+     */
+    BatchResultDTO renewData(String id);
 }

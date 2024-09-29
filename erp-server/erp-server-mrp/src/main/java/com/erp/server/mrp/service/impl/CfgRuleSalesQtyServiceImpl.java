@@ -223,6 +223,11 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     }
 
     @Override
+    public CfgRuleSalesQtyEntity getDefaultByPlatformAndSkuType(String platformType, String skuType) {
+        return getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery().eq(CfgRuleSalesQtyEntity::getRefId, ""));
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByRefId(String refId) {
         //销量数据

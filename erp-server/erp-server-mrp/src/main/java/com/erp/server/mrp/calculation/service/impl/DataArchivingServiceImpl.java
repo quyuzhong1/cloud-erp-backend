@@ -25,4 +25,13 @@ public class DataArchivingServiceImpl implements DataArchivingService {
         }
         replenishmentDataService.initReplenishmentSku(null, null);
     }
+
+    @Override
+    public void dataArchiving(String detailId) {
+        List<CfgDataArchivingEntity> effectiveData = cfgDataArchivingService.getEffectiveData();
+        for (CfgDataArchivingEntity config : effectiveData) {
+            // 执行归档逻辑
+            cfgDataArchivingService.archiveData(config, detailId);
+        }
+    }
 }

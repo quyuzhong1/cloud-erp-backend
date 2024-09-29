@@ -17,6 +17,8 @@ import org.apache.ibatis.annotations.Param;
 public interface CfgDataArchivingMapper extends BaseMapper<CfgDataArchivingEntity> {
 
     void moveData(@Param("sourceTable") String sourceTable,@Param("archiveTable") String archiveTable);
+    void moveDataByRelId(@Param("sourceTable") String sourceTable,@Param("archiveTable") String archiveTable, @Param("refSql") String refSql);
 
     void deleteSource(@Param("sourceTable") String sourceTable);
+    void deleteSourceByRelId(@Param("sourceTable") String sourceTable, @Param("refSql") String refSql);
 }

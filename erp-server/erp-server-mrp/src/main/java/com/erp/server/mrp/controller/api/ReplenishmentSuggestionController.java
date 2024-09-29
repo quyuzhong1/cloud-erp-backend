@@ -629,4 +629,31 @@ public class ReplenishmentSuggestionController extends BaseController {
     public void calculationDetail() {
         basicReplenishmentDataService.calculationDetail(Collections.emptyList());
     }
+
+
+    /**
+     * 更新数据
+     * @param dto id集合
+     */
+    @PostMapping("/renewData")
+    public ApiResult<List<BatchResultDTO>> renewData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = replenishmentSuggestionService.renewData(id);
+            }catch (Exception e){
+                log.error("补货建议更新",e);
+                ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "补货建议不存在, 补货建议更新失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

@@ -53,6 +53,9 @@ public class CfgDataArchivingEntity extends BaseEntity<CfgDataArchivingEntity> {
     @TableField("retention_policy")
     private String retentionPolicy;
 
+    @TableField("ref_sql")
+    private String refSql;
+
     /**
      * 是否禁用
      */

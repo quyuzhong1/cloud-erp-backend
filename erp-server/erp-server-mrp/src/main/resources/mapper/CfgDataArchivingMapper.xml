@@ -23,8 +23,14 @@
     <insert id="moveData">
         INSERT INTO ${archiveTable} SELECT * FROM ${sourceTable}
     </insert>
+    <insert id="moveDataByRelId">
+        INSERT INTO ${archiveTable} SELECT * FROM ${sourceTable} WHERE ${refSql}
+    </insert>
     <delete id="deleteSource">
         DELETE FROM ${sourceTable}
+    </delete>
+    <delete id="deleteSourceByRelId">
+        DELETE FROM ${sourceTable} WHERE ${refSql}
     </delete>
 
 </mapper>

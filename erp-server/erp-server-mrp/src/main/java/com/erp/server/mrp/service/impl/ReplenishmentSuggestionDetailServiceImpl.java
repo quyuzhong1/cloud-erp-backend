@@ -1,8 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionDetailMapper;
 import com.erp.server.mrp.service.ReplenishmentSuggestionDetailService;
@@ -32,9 +31,11 @@ public class ReplenishmentSuggestionDetailServiceImpl extends SuperServiceImpl<R
     }
 
     @Override
-    public void saveDetail(ReplenishmentResultDTO.DetailDTO replenishmentDetail) {
-        ReplenishmentSuggestionDetailEntity entity = BeanMapperUtils.map(ReplenishmentSuggestionDetailEntity.class, replenishmentDetail);
-        entity.setId(replenishmentDetail.getDetailId());
-        save(entity);
+    public ReplenishmentSuggestionDetailEntity getByMainId(String suggestId) {
+        return getOne(Wrappers.<ReplenishmentSuggestionDetailEntity>lambdaQuery()
+                .eq(ReplenishmentSuggestionDetailEntity::getMainId, suggestId)
+                .orderByDesc(ReplenishmentSuggestionDetailEntity::getCreateTime)
+                .last("LIMIT 1"));
     }
+
 }

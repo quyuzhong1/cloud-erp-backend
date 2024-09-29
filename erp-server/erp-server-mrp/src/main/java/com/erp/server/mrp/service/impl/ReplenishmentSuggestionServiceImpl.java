@@ -39,11 +39,13 @@ import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionMapper;
 import com.erp.server.mrp.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -140,6 +142,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private PurchaseSuggestService purchaseSuggestService;
     @Resource
     private CfgRuleWarehouseService cfgRuleWarehouseService;
+
+    @Resource
+    @Lazy
+    private BasicReplenishmentDataService replenishmentDataService;
 
 
     @Override
@@ -1058,10 +1064,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
                 .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
-        //查询发货建议
-        List<DeliverySuggestEntity> deliverySuggestList = deliverySuggestService.listByReplenishmentId(detail.getId());
-        //查询采购建议
-        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByReplenishmentId(detail.getId());
         // 获取首日结余库存
         BigDecimal balanceInventory = new BigDecimal(detail.getFbaUsableQty());
         BigDecimal calcBalanceInventory = new BigDecimal(detail.getFbaUsableQty());
@@ -1089,7 +1091,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             if (Boolean.TRUE.equals(dto.getIsSimulated())) {
                 BigDecimal calcTemp = calcBalanceInventory;
                 //计算试算的建议库存
-                BigDecimal suggestInventory = getSuggestInventory(deliverySuggestList, purchaseSuggestList, currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
+                BigDecimal suggestInventory = getSuggestInventory(currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
                 calcBalanceInventory = calcBalanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty)).add(suggestInventory);
                 calcInventoryQty.add(calcBalanceInventory);
                 if (calcTemp.compareTo(BigDecimal.ZERO) > 0 && calcBalanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
@@ -1109,31 +1111,20 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     /**
      * 计算试算的建议库存
-     * @param deliverySuggestList 发货建议
-     * @param purchaseSuggestList 采购建议
      * @param currentDate 当前日期
      */
-    private BigDecimal getSuggestInventory(List<DeliverySuggestEntity> deliverySuggestList, List<PurchaseSuggestEntity> purchaseSuggestList, LocalDate currentDate,
+    private BigDecimal  getSuggestInventory(LocalDate currentDate,
                                            List<DeliverySuggestDTO.ListDTO> calcDeliverySuggestList, List<PurchaseSuggestDTO.ListDTO> calcPurchaseSuggestList) {
         BigDecimal suggestInventory = BigDecimal.ZERO;
-        int oldDeliverySuggestQty = deliverySuggestList.stream()
-                .filter(v -> v.getEstimateSalesDate().equals(currentDate))
-                .map(DeliverySuggestEntity::getSuggestDeliveryQty)
-                .reduce(0, Math::addExact);
         int calcDeliverySuggests = calcDeliverySuggestList.stream()
                 .filter(v -> v.getEstimateSalesDate().equals(currentDate))
                 .map(DeliverySuggestDTO.ListDTO::getSuggestDeliveryQty)
-                .reduce(0, Math::addExact);
-        int oldPurchaseSuggests = purchaseSuggestList.stream()
-                .filter(v -> v.getEstimateSalesDate().equals(currentDate))
-                .map(PurchaseSuggestEntity::getSuggestPurchaseQty)
                 .reduce(0, Math::addExact);
         int calcPurchaseSuggests = calcPurchaseSuggestList.stream()
                 .filter(v -> v.getEstimateSalesDate().equals(currentDate))
                 .map(PurchaseSuggestDTO.ListDTO::getSuggestPurchaseQty)
                 .reduce(0, Math::addExact);
-        return suggestInventory.subtract(new BigDecimal(oldDeliverySuggestQty).add(new BigDecimal(calcDeliverySuggests)))
-                .subtract(new BigDecimal(oldPurchaseSuggests).add(new BigDecimal(calcPurchaseSuggests)));
+        return suggestInventory.add(new BigDecimal(calcDeliverySuggests)).add(new BigDecimal(calcPurchaseSuggests));
     }
 
 
@@ -1196,6 +1187,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return totalQty;
     }
 
+    @Override
+    public BatchResultDTO renewData(String id) {
+        return replenishmentDataService.renewData(id);
+    }
+
     private EstimationDetailResultDTO handlerLocalEstimateDetail(ReplenishmentSuggestionDetailEntity detail, Map<LocalDate, BigDecimal> salesEstimateMap, InventoryEstimationDetailDTO dto, long days) {
         return null;
     }
@@ -1232,10 +1228,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
                 .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
-        //查询发货建议
-        List<DeliverySuggestEntity> deliverySuggestList = deliverySuggestService.listByReplenishmentId(detail.getId());
-        //查询采购建议
-        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByReplenishmentId(detail.getId());
         int fbaInTransitQty = 0;
         int fbaPlanDeliveryQty = 0;
         int overseasInTransitQty = 0;
@@ -1263,7 +1255,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             resultDTO.setPlanArrivalQty(new BigDecimal(planArrivalQty));
             if (Boolean.TRUE.equals(dto.getIsSimulated())) {
                 //计算试算的建议库存
-                BigDecimal suggestInventory = getSuggestInventory(deliverySuggestList, purchaseSuggestList, currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
+                BigDecimal suggestInventory = getSuggestInventory(currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
                 calcBalanceInventory = calcBalanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty)).add(suggestInventory);
                 resultDTO.setCalcInventoryQty(calcBalanceInventory);
                 resultDTO.setCalcPlanArrivalQty(new BigDecimal(planArrivalQty).add(suggestInventory));

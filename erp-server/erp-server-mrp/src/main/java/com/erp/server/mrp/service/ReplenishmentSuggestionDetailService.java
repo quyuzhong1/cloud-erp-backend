@@ -1,8 +1,7 @@
 package com.erp.server.mrp.service;
 
-import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
 
 import java.util.List;
 
@@ -24,5 +23,12 @@ public interface ReplenishmentSuggestionDetailService extends SuperService<Reple
      */
     List<ReplenishmentSuggestionDetailEntity> listByMainIdList(List<String> suggestIdList);
 
-    void saveDetail(ReplenishmentResultDTO.DetailDTO replenishmentDetail);
+
+
+    /**
+     * 根据主表id查询明细
+     * @date 2024/9/4 14:30
+     * @param suggestId
+     */
+    ReplenishmentSuggestionDetailEntity getByMainId(String suggestId);
 }

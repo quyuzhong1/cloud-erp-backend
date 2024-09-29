@@ -86,4 +86,11 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * 获取默认销量配置
      */
     List<CfgRuleSalesQtyEntity> getDefaultCfgRuleSalesQty();
+
+    /**
+     * 根据平台和sku类型获取销量配置
+     * @param platformType 平台类型
+     * @param skuType      sku类型
+     */
+    CfgRuleSalesQtyEntity getDefaultByPlatformAndSkuType(String platformType, String skuType);
 }

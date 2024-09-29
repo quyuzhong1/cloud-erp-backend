@@ -172,6 +172,11 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         return list(Wrappers.<CfgRuleStockUpEntity>lambdaQuery().eq(CfgRuleStockUpEntity::getRefId,""));
     }
 
+    @Override
+    public CfgRuleStockUpEntity getDefaultByPlatform(String platformType) {
+        return getDefaultByPlatformType(platformType,"");
+    }
+
     /**
      * 根据平台类型查询
      * @author will

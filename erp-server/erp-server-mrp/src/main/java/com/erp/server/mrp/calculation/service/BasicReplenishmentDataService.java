@@ -3,6 +3,7 @@ package com.erp.server.mrp.calculation.service;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -21,6 +22,7 @@ import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -85,6 +87,10 @@ public class BasicReplenishmentDataService {
     private SalesInfoService salesInfoService;
     @Resource
     private InventoryService inventoryService;
+
+    @Resource
+    @Lazy
+    private DataArchivingService dataArchivingService;
 
     /**
      * 增量变动建议补货基础数据
@@ -195,28 +201,7 @@ public class BasicReplenishmentDataService {
                         cfgRuleStrategy.setSettings(settings);
 
                         //获取仓库配置
-                        CfgRuleSettingStrategy<CfgRuleWarehouseDTO.StrategyDTO, CfgRuleWarehouseDTO.StrategyResultDTO> warehouseStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_WAREHOUSE.getCode());
-                        CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = warehouseStrategy.process(new CfgRuleWarehouseDTO.StrategyDTO(entity.getPlatformType(), entity.getPlatform(), entity.getShopId()));
-                        cfgRuleStrategy.setWarehouseResult(warehouseResult);
-                        //获取店铺对应的本地仓，海外仓
-                        List<String> localWarehouse = warehouseResult.getLocalWarehouseList()
-                                .stream()
-                                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
-                                .collect(Collectors.toList());
-                        dto.setLocalWarehouseId(localWarehouse);
-                        List<String> overseasWarehouse = warehouseResult.getOverseasWarehouseList()
-                                .stream()
-                                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
-                                .collect(Collectors.toList());
-                        dto.setOverseasWarehouseId(overseasWarehouse);
-                        //获取库存配置
-                        CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
-                        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(entity.getPlatformType()));
-                        cfgRuleStrategy.setInventoryResult(inventoryResult);
-                        //获取建议配置
-                        CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> suggestedStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SUGGESTED_AMOUNT.getCode());
-                        List<CfgRuleCommonDTO.StrategyResultDTO> suggestResult = suggestedStrategy.process(new CfgRuleCommonDTO.StrategyDTO(entity.getPlatformType()));
-                        cfgRuleStrategy.setSuggestAmountResult(suggestResult);
+                        getCfgRuleCommon(entity, cfgRuleStrategy, dto);
                         // todo 海外仓备货存在问题
                         //获取备货配置
                         CfgRuleStockUpEntity defaultStockUp = defaultStockUpList.stream()
@@ -367,5 +352,78 @@ public class BasicReplenishmentDataService {
             salesInfo.add(info);
         }
         return salesInfo;
+    }
+
+    public BatchResultDTO renewData(String id) {
+        ReplenishmentSuggestionEntity suggestion = replenishmentSuggestionService.getById(id);
+        ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getByMainId(id);
+        List<SalesInfoEntity> salesInfoList = salesInfoService.listByReplenishmentDetailIds(Collections.singletonList(detail.getId()));
+        ReplenishmentResultDTO resultDTO = new ReplenishmentResultDTO();
+        ReplenishmentResultDTO.BasicDTO basicDTO = ReplenishmentResultDTO.BasicDTO.buildBasicDTO(suggestion);
+        resultDTO.setReplenishment(basicDTO);
+        ReplenishmentResultDTO.DetailDTO detailDTO = ReplenishmentResultDTO.DetailDTO.buildDetailNotId(detail);
+        resultDTO.setReplenishmentDetail(detailDTO);
+        List<ReplenishmentResultDTO.SalesInfoDTO> salesInfoEntityList = salesInfoList.stream()
+                .map(ReplenishmentResultDTO.SalesInfoDTO::buildSalesInfoNotIdDTO)
+                .collect(Collectors.toList());
+        resultDTO.setSalesInfos(salesInfoEntityList);
+        //归档该条数据明细
+        dataArchivingService.dataArchiving(detail.getId());
+        //初始化配置
+        CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
+        //获取销量配置
+        CfgRuleSalesQtyEntity defaultSalesQty = cfgRuleSalesQtyService.getDefaultByPlatformAndSkuType(suggestion.getPlatformType(), detail.getSkuType());
+        List<CfgRuleSalesFormulaEntity> defaultFormula = cfgRuleSalesFormulaService.listBySalesQtyIdList(Collections.singletonList(defaultSalesQty.getId()));
+        List<CfgRuleSalesDenoisingEntity> defaultDenoising = cfgRuleSalesDenoisingService.listBySalesQtyIdList(Collections.singletonList(defaultSalesQty.getId()));
+        CfgRuleSettingStrategy<CfgRuleSalesQtyDTO.StrategyDTO, CfgRuleSalesQtyDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
+        CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(basicDTO, detail.getSkuType(), defaultSalesQty, defaultFormula, defaultDenoising));
+        cfgRuleStrategy.setSalesQtyResult(salesResult);
+        List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
+        cfgRuleStrategy.setSettings(settings);
+        getCfgRuleCommon(basicDTO, cfgRuleStrategy, resultDTO);
+        //获取备货配置
+        CfgRuleStockUpEntity defaultStockUp = cfgRuleStockUpService.getDefaultByPlatform(basicDTO.getPlatformType());
+        List<CfgRuleStockingRatioEntity> defaultStockingRatio = cfgRuleStockingRatioService.listByStockUpIdList(Collections.singletonList(defaultStockUp.getId()));
+        List<CfgRuleLogisticsEntity> defaultLogistics = cfgRuleLogisticsService.listByStockUpIdList(Collections.singletonList(defaultStockUp.getId()));
+        List<String> defaultLogisticsIds = defaultLogistics.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
+        List<CfgRuleLogisticsDetailEntity> defaultLogisticsDetailList = cfgRuleLogisticsDetailService.listByMainIdList(defaultLogisticsIds);
+        CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
+        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(basicDTO, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, defaultLogisticsDetailList));
+        cfgRuleStrategy.setStockUpResult(stockUpResult);
+        stockingTimeHandler.handle(cfgRuleStrategy, resultDTO);
+        replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, resultDTO);
+        return BatchResultDTO.success(basicDTO.getId(), detailDTO.getCalcVersion());
+    }
+
+    /**
+     * 获取库存，建议相关默认配置
+     * @param basicDTO 建议
+     * @param cfgRuleStrategy 配置策略
+     * @param resultDTO 结果
+     */
+    private void getCfgRuleCommon(ReplenishmentResultDTO.BasicDTO basicDTO, CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO resultDTO) {
+        //获取仓库配置
+        CfgRuleSettingStrategy<CfgRuleWarehouseDTO.StrategyDTO, CfgRuleWarehouseDTO.StrategyResultDTO> warehouseStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_WAREHOUSE.getCode());
+        CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = warehouseStrategy.process(new CfgRuleWarehouseDTO.StrategyDTO(basicDTO.getPlatformType(), basicDTO.getPlatform(), basicDTO.getShopId()));
+        cfgRuleStrategy.setWarehouseResult(warehouseResult);
+        //获取店铺对应的本地仓，海外仓
+        List<String> localWarehouse = warehouseResult.getLocalWarehouseList()
+                .stream()
+                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
+                .collect(Collectors.toList());
+        resultDTO.setLocalWarehouseId(localWarehouse);
+        List<String> overseasWarehouse = warehouseResult.getOverseasWarehouseList()
+                .stream()
+                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
+                .collect(Collectors.toList());
+        resultDTO.setOverseasWarehouseId(overseasWarehouse);
+        //获取库存配置
+        CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
+        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(basicDTO.getPlatformType()));
+        cfgRuleStrategy.setInventoryResult(inventoryResult);
+        //获取建议配置
+        CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> suggestedStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SUGGESTED_AMOUNT.getCode());
+        List<CfgRuleCommonDTO.StrategyResultDTO> suggestResult = suggestedStrategy.process(new CfgRuleCommonDTO.StrategyDTO(basicDTO.getPlatformType()));
+        cfgRuleStrategy.setSuggestAmountResult(suggestResult);
     }
 }

@@ -3,6 +3,7 @@ package com.erp.model.mrp.dto;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
@@ -400,6 +401,16 @@ public class ReplenishmentResultDTO {
             return dto;
         }
 
+        public static DetailDTO buildDetailNotId(ReplenishmentSuggestionDetailEntity entity) {
+            DetailDTO dto = new DetailDTO();
+            dto.setDetailId(IdWorker.getIdStr());
+            dto.setMainId(entity.getMainId());
+            dto.setCalcDate(entity.getCalcDate());
+            dto.setCalcVersion(entity.getCalcVersion());
+            dto.setSkuType(entity.getSkuType());
+            return dto;
+        }
+
         public static ReplenishmentSuggestionDetailEntity buildReplenishmentSuggestionDetail(DetailDTO dto, CfgRuleStrategyDTO cfgRuleStrategy, List<TimePeriodSalesEstimateDTO> timePeriodSalesEstimates,
                                                                                              List<TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates, List<TimePeriodSalesDTO> timePeriodSales,
                                                                                              List<TimePeriodSalesDTO> avgTimePeriodSales, BigDecimal purchasePrice, BigDecimal salesPrice) {
@@ -637,6 +648,14 @@ public class ReplenishmentResultDTO {
         public static SalesInfoDTO buildSalesInfoDTO(SalesInfoEntity entity) {
             SalesInfoDTO dto = new SalesInfoDTO();
             dto.setId(entity.getId());
+            dto.setDate(entity.getDate());
+            dto.setOriginalSalesQty(entity.getOriginalSalesQty());
+            dto.setOriginalInventoryQty(entity.getOriginalInventoryQty());
+            return dto;
+        }
+
+        public static SalesInfoDTO buildSalesInfoNotIdDTO(SalesInfoEntity entity) {
+            SalesInfoDTO dto = new SalesInfoDTO();
             dto.setDate(entity.getDate());
             dto.setOriginalSalesQty(entity.getOriginalSalesQty());
             dto.setOriginalInventoryQty(entity.getOriginalInventoryQty());
