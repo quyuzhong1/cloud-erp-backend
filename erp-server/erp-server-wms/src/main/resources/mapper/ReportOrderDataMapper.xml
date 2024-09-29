@@ -37,7 +37,7 @@
         update_user_id,
         version,
         is_deleted,
-        warehouse_id, virtual_warehouse_id, sku_id, qty, approve_status, status, invalid_status, source_id, source_detail_id, source_code, source_type, date,delivery_notice_qty,frozen_qty
+        warehouse_id, virtual_warehouse_id, sku_id, qty, approve_status, status, invalid_status, source_id, source_detail_id, source_code, source_type, date,delivery_notice_qty,frozen_qty,order_qty
     </sql>
 
     <!-- 订单报表 -->

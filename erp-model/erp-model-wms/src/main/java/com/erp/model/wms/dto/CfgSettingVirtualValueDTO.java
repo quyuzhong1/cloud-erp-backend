@@ -59,6 +59,7 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          * 预警条件
          */
         @Valid
+        @NotNull(message = "预警条件不能为空")
         private WarnConditionDTO warnConditionDTO;
     }
 

@@ -121,6 +121,14 @@ public class ReportOrderSalesDTO implements Serializable {
          */
         private Integer thirtyDaysSalesQty;
         /**
+         * 60天销量
+         */
+        private Integer sixtyDaysSalesQty;
+        /**
+         * 90天销量
+         */
+        private Integer ninetyDaysSalesQty;
+        /**
          * 是否缺货，true是，false否
          */
         private Boolean isVirtualScarce;

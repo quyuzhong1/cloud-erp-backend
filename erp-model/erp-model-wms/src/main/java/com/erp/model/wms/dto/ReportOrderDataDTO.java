@@ -92,6 +92,11 @@ public class ReportOrderDataDTO implements Serializable {
         private LocalDate date;
 
         /**
+         * 订单数量
+         */
+        private Integer orderQty;
+
+        /**
          * 发货通知数量
          */
         private Integer deliveryNoticeQty;
@@ -153,10 +158,10 @@ public class ReportOrderDataDTO implements Serializable {
         private String skuId;
 
         /**
-        * 数量
+        * 订单数量
         */
-        @NotNull(message = "数量不能为空")
-        private Integer qty;
+        @NotNull(message = "订单数量不能为空")
+        private Integer orderQty;
 
         /**
         * 单据状态

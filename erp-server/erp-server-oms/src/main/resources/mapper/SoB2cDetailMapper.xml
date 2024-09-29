@@ -121,7 +121,7 @@
             sbd.warehouse_id as warehouseId,
             sbd.virtual_warehouse_id as virtualWarehouseId,
             sbd.sku_id as skuId,
-            sbd.qty,
+            sbd.qty as orderQty,
             sb.approve_status as approveStatus,
             sb.bill_status as status,
             sb.invalid_status as invalidStatus,

@@ -88,6 +88,12 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
     private LocalDate date;
 
     /**
+     * 订单数量
+     */
+    @TableField("order_qty")
+    private Integer orderQty;
+
+    /**
      * 发货通知单
      */
     @TableField("delivery_notice_qty")

@@ -14,18 +14,19 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.wms.dto.CfgSettingVirtualDTO;
+import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.entity.ReportOrderSalesEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.CfgSettingCompareEnum;
+import com.erp.model.wms.enums.CfgSettingSalesStatisticsEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderSalesMapper;
-import com.erp.server.wms.service.ReportOrderSalesService;
-import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
-import com.erp.server.wms.service.VirtualWarehouseService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,8 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
     @Autowired
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
 
-
+    @Autowired
+    private CfgSettingVirtualService cfgSettingVirtualService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -127,6 +129,9 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
         List<String> virtualWarehouseIdList = list.stream().map(ReportOrderSalesDTO.ListDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> allocationDataList = virtualWarehouseAllocationDetailService.listAllocationData(skuIdList, warehouseIdList, virtualWarehouseIdList);
 
+        //虚拟仓配置
+        CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
+
         for (ReportOrderSalesDTO.ListDTO listDTO : list) {
             /**
              * 累计分配 = 【新增分货-调入虚拟仓-分配数量】+ 【虚拟仓调拨-调入虚拟仓-调拨数量】-【虚拟仓调拨-调出虚拟仓-调拨数量】-【取消分货-调出虚拟仓-取消数量】
@@ -165,7 +170,100 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
             //分配数量
             Integer distributionQty = addQty + toTransferQty - fromTransferQty - cancelQty;
             listDTO.setDistributionQty(distributionQty);
+
+            //已出库数量,累计分配 - 虚拟仓库存
+            listDTO.setDeliveryQty(distributionQty - listDTO.getVirtualTotalQty());
+            //预警
+            handleWarnData (viewDTO,listDTO);
+
         }
+    }
+
+    /**
+     * 预警
+     * @author will
+     * @date 2024/9/29 18:33
+     * @param viewDTO
+     * @param listDTO
+     */
+    private void handleWarnData (CfgSettingVirtualDTO.ViewDTO viewDTO,ReportOrderSalesDTO.ListDTO listDTO) {
+        if (ObjectUtil.isEmpty(viewDTO.getSalesDashboardDTO())) {
+            return;
+        }
+        //是否预警配置
+        Boolean isCfgWarn = viewDTO.getSalesDashboardDTO().getIsWarn();
+        if (!isCfgWarn) {
+            return;
+        }
+        //预警条件
+        CfgSettingVirtualValueDTO.WarnConditionDTO warnConditionDTO = viewDTO.getSalesDashboardDTO().getWarnConditionDTO();
+        CfgSettingCompareEnum compareEnum = CfgSettingCompareEnum.getEnum(warnConditionDTO.getCompareType());
+        //对应预警天数数量
+        List<String> daysTypeList = warnConditionDTO.getDaysTypeList();
+
+        Boolean isWarn = Boolean.FALSE;
+        for (String days : daysTypeList) {
+            Integer daysQty = handleDaysQty(days,listDTO);
+            switch (compareEnum){
+                case HIGHER_THAN:
+                    isWarn =  listDTO.getVirtualUsableQty() > daysQty;
+                    break;
+                case HIGHER_THAN_EQUAL:
+                    isWarn =  listDTO.getVirtualUsableQty() >= daysQty;
+                    break;
+                case LOWER_THAN:
+                    isWarn =  listDTO.getVirtualUsableQty() < daysQty;
+                    break;
+                case LOWER_THAN_EQUAL:
+                    isWarn =  listDTO.getVirtualUsableQty() <= daysQty;
+                    break;
+            }
+            if (!isWarn) {
+                listDTO.setIsWarn(isWarn);
+            }
+        }
+    }
+
+    /**
+     * 对应天数的数量
+     * @author will
+     * @date 2024/9/29 18:26
+     * @param days
+     * @param listDTO
+     * @return Integer
+     */
+    private Integer handleDaysQty(String days,ReportOrderSalesDTO.ListDTO listDTO) {
+        Integer daysQty = MathUtil.ZERO;
+        CfgSettingSalesStatisticsEnum statisticsEnum = CfgSettingSalesStatisticsEnum.getEnum(days);
+        switch (statisticsEnum){
+            case TODAY:
+                daysQty =  listDTO.getTodaySalesQty();
+                break;
+            case YESTERDAY:
+                daysQty =  listDTO.getYesterdaySalesQty();
+                break;
+            case THREE_DAYS:
+                daysQty =  listDTO.getThreeDaysSalesQty();
+                break;
+            case SEVEN_DAYS:
+                daysQty =  listDTO.getSevenDaysSalesQty();
+                break;
+            case FOURTEEN_DAYS:
+                daysQty =  listDTO.getFourteenDaysSalesQty();
+                break;
+            case THIRTY_DAYS:
+                daysQty =  listDTO.getThirtyDaysSalesQty();
+                break;
+            case SIXTY_DAYS:
+                daysQty =  listDTO.getSixtyDaysSalesQty();
+                break;
+            case NINETY_DAYS:
+                daysQty =  listDTO.getNinetyDaysSalesQty();
+                break;
+            default:
+                return daysQty;
+        }
+        return daysQty;
     }
 
 

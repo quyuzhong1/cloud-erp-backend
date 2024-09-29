@@ -216,7 +216,7 @@
             si.warehouse_id as warehouseId,
             si.virtual_warehouse_id as virtualWarehouseId,
             sd.sku_id as skuId,
-            sd.qty,
+            sd.qty as orderQty,
             si.approve_status as approveStatus,
             sd.delivery_status as status,
             si.invalid_status as invalidStatus,

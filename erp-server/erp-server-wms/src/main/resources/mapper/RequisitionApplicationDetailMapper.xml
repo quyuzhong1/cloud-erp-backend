@@ -42,7 +42,7 @@
             rad.from_warehouse_id as warehouseId,
             rad.from_virtual_warehouse_id as virtualWarehouseId,
             rad.sku_id as skuId,
-            rad.requisition_qty as qty,
+            rad.requisition_qty as orderQty,
             ra.status,
             ra.invalid_status as invalidStatus,
             ra.id as sourceId,
