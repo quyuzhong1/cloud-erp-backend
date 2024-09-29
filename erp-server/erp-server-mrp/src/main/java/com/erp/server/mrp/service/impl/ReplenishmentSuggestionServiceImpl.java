@@ -982,6 +982,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                             .map(ReplenishmentResultDTO.SalesInfoDTO::buildSalesInfoDTO)
                             .collect(Collectors.toList());
                     resultDTO.setSalesInfos(salesInfoEntityList);
+                    resultDTO.setSalesPrice(detail.getSalesPrice());
+                    resultDTO.setPurchasePrice(detail.getPurchasePrice());
                     return resultDTO;
                 }).filter(Objects::nonNull)
                 .collect(Collectors.toList());

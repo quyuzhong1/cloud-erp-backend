@@ -3,6 +3,8 @@ package com.erp.server.mrp.service.impl;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.mrp.dto.CfgDataArchivingDTO;
 import com.erp.model.mrp.entity.CfgDataArchivingEntity;
 import com.erp.server.mrp.mapper.CfgDataArchivingMapper;
 import com.erp.server.mrp.service.CfgDataArchivingService;
@@ -27,7 +29,9 @@ public class CfgDataArchivingServiceImpl extends SuperServiceImpl<CfgDataArchivi
     @Override
     public List<CfgDataArchivingEntity> getEffectiveData() {
         return list(Wrappers.<CfgDataArchivingEntity>lambdaQuery()
-                .eq(CfgDataArchivingEntity::getDisabled, false));
+                .eq(CfgDataArchivingEntity::getDisabled, false)
+                .orderByAsc(CfgDataArchivingEntity::getCreateTime)
+        );
     }
 
     @Override
@@ -48,10 +52,16 @@ public class CfgDataArchivingServiceImpl extends SuperServiceImpl<CfgDataArchivi
         try {
             Class<?> clazz = Class.forName(config.getArchiveFullPath());
             TableName tableName = clazz.getAnnotation(TableName.class);
-            baseMapper.moveDataByRelId(config.getTableName(), tableName.value(), config.getRefSql());
-            baseMapper.deleteSourceByRelId(config.getTableName(), config.getRefSql());
+            baseMapper.moveDataByRelId(config.getTableName(), tableName.value(), String.format(config.getRefSql(), detailId));
+            baseMapper.deleteSourceByRelId(config.getTableName(), String.format(config.getRefSql(), detailId));
         } catch (ClassNotFoundException e) {
             throw new ServiceException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void saveData(CfgDataArchivingDTO dto) {
+        CfgDataArchivingEntity entity = BeanMapperUtils.map(CfgDataArchivingEntity.class, dto);
+        save(entity);
     }
 }

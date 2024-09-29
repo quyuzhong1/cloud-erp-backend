@@ -363,6 +363,8 @@ public class BasicReplenishmentDataService {
         resultDTO.setReplenishment(basicDTO);
         ReplenishmentResultDTO.DetailDTO detailDTO = ReplenishmentResultDTO.DetailDTO.buildDetailNotId(detail);
         resultDTO.setReplenishmentDetail(detailDTO);
+        resultDTO.setSalesPrice(detail.getSalesPrice());
+        resultDTO.setPurchasePrice(detail.getPurchasePrice());
         List<ReplenishmentResultDTO.SalesInfoDTO> salesInfoEntityList = salesInfoList.stream()
                 .map(ReplenishmentResultDTO.SalesInfoDTO::buildSalesInfoNotIdDTO)
                 .collect(Collectors.toList());

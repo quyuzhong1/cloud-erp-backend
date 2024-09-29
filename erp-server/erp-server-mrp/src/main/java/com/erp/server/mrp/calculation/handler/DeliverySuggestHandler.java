@@ -77,7 +77,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         //建议发货量= 预估日销*备货系数(累加 本地仓发货时效 + 本地仓发货频率 + 海外备货安全天数) - ( 海外仓可用 + 海外仓在途)
                         int calculationDays = logisticsResult.getLogisticsDays() + logisticsResult.getLogisticsCycleDays() + stockUpResult.getSafeDays();
                         calculationDays = Math.min(calculationDays, days);
-                        int suggestDeliveryQty = getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now);
+                        int suggestDeliveryQty = getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, suggestDeliveryDate);
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
                             suggestDeliveryQty = suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty();
                         } else {
@@ -93,7 +93,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setSuggestDeliveryDate(suggestDeliveryDate);
                         //建议发货量= 预估日销 * 备货系数 (累加本地备货安全天数)  - 本地可用
                         int calculationDays = Math.min(stockUpResult.getSafeDays(), days);
-                        suggestDTO.setSuggestDeliveryQty(Math.max(0, getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty()));
+                        suggestDTO.setSuggestDeliveryQty(Math.max(0, getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, suggestDeliveryDate) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty()));
                     }
                     return suggestDTO;
                 }).collect(Collectors.toList());
@@ -107,12 +107,12 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
      * @param calculationDays      计算天数
      * @param salesEstimates       预估销量
      * @param stockingRatioResults 补货系数
-     * @param now                  计算开始日期
+     * @param suggestDeliveryDate  计算开始日期
      */
-    private int getSuggestDeliveryQty(int calculationDays, List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, BigDecimal stockingRatio, LocalDate now) {
+    private int getSuggestDeliveryQty(int calculationDays, List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, BigDecimal stockingRatio, LocalDate suggestDeliveryDate) {
         BigDecimal totalSaleQty = BigDecimal.ZERO;
         for (int i = 0; i <= calculationDays; i++) {
-            LocalDate date = now.plusDays(i);
+            LocalDate date = suggestDeliveryDate.plusDays(i);
             //获取销量
             BigDecimal saleQty = salesEstimates.parallelStream()
                     .filter(v -> v.getDate().equals(date))
