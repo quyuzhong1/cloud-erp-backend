@@ -16,6 +16,7 @@ public enum DictCostCategoryEnum implements EnumMessage {
 
     SHIPPING_COST("shippingCost", "物流运费"),
     DECLARE_COST("declareCost", "报关费"),
+    OTHER_TAX_FEE("otherTaxFee", "其他税费"),
     OTHER_COST("otherCost", "其他费用")
     ;
 

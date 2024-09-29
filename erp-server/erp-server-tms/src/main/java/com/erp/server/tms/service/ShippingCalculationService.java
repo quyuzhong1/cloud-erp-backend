@@ -2,17 +2,12 @@ package com.erp.server.tms.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
-import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
-import org.apache.commons.collections4.CollectionUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -34,14 +29,13 @@ public interface ShippingCalculationService {
      */
     PagingVO<ShippingCalculationDTO.ListDTO> paging(PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/11/10 17:36
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(ShippingCalculationDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(ShippingCalculationDTO.PagingParamDTO dto);
 
     /**
      * @description: 最终运费
@@ -146,4 +140,6 @@ public interface ShippingCalculationService {
      * @return 
      */
     ShippingCalculationDTO.CostCalculationResultDTO listChannelCost(String orderId);
+
+    PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto);
 }

@@ -31,5 +31,6 @@ public interface SupplierReportMapper {
      * @return
      */
     List<SupplierReportDTO.PagingViewDTO> exportList(@Param("params") SupplierReportDTO.ExportSearchParamDTO param);
+    Page<SupplierReportDTO.PagingViewDTO> exportList(@Param("page") Page<SupplierReportDTO.PagingViewDTO> page, @Param("params") SupplierReportDTO.ExportSearchParamDTO param);
 
 }

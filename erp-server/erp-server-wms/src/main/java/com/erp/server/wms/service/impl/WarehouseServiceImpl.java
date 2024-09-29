@@ -41,6 +41,7 @@ import com.erp.model.wms.enums.WmsRedisKeyEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -76,6 +77,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.rtfparserkit.rtf.Command.list;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE;
 
 /**
  * <p>
@@ -128,6 +131,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private VirtualWarehouseChannelService virtualWarehouseChannelService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -454,6 +459,77 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public List<WarehouseEntity> listWarehouseWithCaches() {
         return this.list();
     }
+    @Override
+    public PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto) {
+
+        //获取导出数据
+        Page<WarehouseDTO.PagingViewDTO> page = baseMapper.getExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        List<WarehouseExportExcelDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(page.getRecords())) {
+            //获取到字典数据类型
+            List<String> dictTypeList = new ArrayList<>(3);
+            dictTypeList.add(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+            dictTypeList.add(DictBasicEnum.WAREHOUSE_MANAGE_TYPE.getKey());
+            dictTypeList.add(DictBasicEnum.GEOGRAPHY_LOCATION.getKey());
+            List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(dictTypeList);
+            List<String> userIdList = page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getChargeId).distinct().collect(Collectors.toList());
+            //获取用户信息
+            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
+            List<String> orgIdList = page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
+            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+            List<String> warehouseIds = page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+            List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByWarehouseIds(warehouseIds);
+
+            for (WarehouseDTO.PagingViewDTO item : page.getRecords()) {
+                WarehouseExportExcelDTO excelDTO = new WarehouseExportExcelDTO();
+                BeanMapper.copy(item, excelDTO);
+                //类型id
+                String typeId = item.getTypeId();
+                String typeName = dictBasicList.stream().filter(d -> d.getId().equals(typeId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                excelDTO.setTypeName(typeName);
+
+                //审核名
+                ApproveStatusEnum statusEnum = item.getApproveStatus();
+                excelDTO.setApproveStatusName(statusEnum.getName());
+
+                //负责人id
+                String chargeId = item.getChargeId();
+                String userName = userList.stream().filter(u -> chargeId.equals(u.getUserId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
+                excelDTO.setChargeName(userName);
+
+                //组织id
+                String orgId = item.getOrgId();
+                String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                excelDTO.setOrgName(orgName);
+                excelDTO.setEnabled(item.getDisabled() ? "停用" : "启用");
+                excelDTO.setIsVirtual(item.getIsVirtual() ? "是" : "否");
+                excelDTO.setOnwayWarehouseName(item.getOnwayWarehouseName());
+                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> req.getWarehouseId().equals(item.getId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(mappingViewDTO)) {
+                    excelDTO.setThirdWarehouseName(mappingViewDTO.getThirdWarehouseName());
+                }
+                //经营类型
+                String warehouseManageType = item.getWarehouseManageType();
+                String warehouseManageTypeName = dictBasicList.stream().filter(d -> warehouseManageType.equals(d.getValue())).
+                        map(DictBasicEntity::getName).findFirst().orElse("");
+                excelDTO.setWarehouseManageTypeName(warehouseManageTypeName);
+
+                //地理位置
+                String geographyLocation = item.getGeographyLocation();
+                String geographyLocationName = dictBasicList.stream().filter(d -> geographyLocation.equals(d.getValue())).
+                        map(DictBasicEntity::getName).findFirst().orElse("");
+                excelDTO.setGeographyLocationName(geographyLocationName);
+
+                resultList.add(excelDTO);
+            }
+        }
+        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
 
     /**
      * @description: 分页下拉处理
@@ -933,84 +1009,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * 导出仓库数据
      *
      * @param dto
-     * @param response
      * @return void
      * @author yl
      * @date 2023-03-22 16:08
      */
     @Override
-    public void exportWarehouse(WarehouseDTO.ExportDTO dto, HttpServletResponse response) {
-        //获取导出数据
-        List<WarehouseDTO.PagingViewDTO> viewList = baseMapper.getExport(dto);
-        List<WarehouseExportExcelDTO> resultList = new ArrayList<>(viewList.size());
-        if (CollectionUtils.isNotEmpty(viewList)) {
-            //获取到字典数据类型
-            List<String> dictTypeList = new ArrayList<>(3);
-            dictTypeList.add(DictBasicEnum.WAREHOUSE_TYPE.getKey());
-            dictTypeList.add(DictBasicEnum.WAREHOUSE_MANAGE_TYPE.getKey());
-            dictTypeList.add(DictBasicEnum.GEOGRAPHY_LOCATION.getKey());
-            List<DictBasicEntity> dictBasicList = dictBasicService.getByKeyList(dictTypeList);
-            List<String> userIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getChargeId).distinct().collect(Collectors.toList());
-            //获取用户信息
-            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
-            List<String> orgIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
-            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
-            List<String> warehouseIds = viewList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-            List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByWarehouseIds(warehouseIds);
-
-            for (WarehouseDTO.PagingViewDTO item : viewList) {
-                WarehouseExportExcelDTO excelDTO = new WarehouseExportExcelDTO();
-                BeanMapper.copy(item, excelDTO);
-                //类型id
-                String typeId = item.getTypeId();
-                String typeName = dictBasicList.stream().filter(d -> d.getId().equals(typeId)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                excelDTO.setTypeName(typeName);
-
-                //审核名
-                ApproveStatusEnum statusEnum = item.getApproveStatus();
-                excelDTO.setApproveStatusName(statusEnum.getName());
-
-                //负责人id
-                String chargeId = item.getChargeId();
-                String userName = userList.stream().filter(u -> chargeId.equals(u.getUserId())).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-                excelDTO.setChargeName(userName);
-
-                //组织id
-                String orgId = item.getOrgId();
-                String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                excelDTO.setOrgName(orgName);
-                excelDTO.setEnabled(item.getDisabled() ? "停用" : "启用");
-                excelDTO.setIsVirtual(item.getIsVirtual() ? "是" : "否");
-                excelDTO.setOnwayWarehouseName(item.getOnwayWarehouseName());
-                WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> req.getWarehouseId().equals(item.getId())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(mappingViewDTO)) {
-                    excelDTO.setThirdWarehouseName(mappingViewDTO.getThirdWarehouseName());
-                }
-                //经营类型
-                String warehouseManageType = item.getWarehouseManageType();
-                String warehouseManageTypeName = dictBasicList.stream().filter(d -> warehouseManageType.equals(d.getValue())).
-                        map(DictBasicEntity::getName).findFirst().orElse("");
-                excelDTO.setWarehouseManageTypeName(warehouseManageTypeName);
-
-                //地理位置
-                String geographyLocation = item.getGeographyLocation();
-                String geographyLocationName = dictBasicList.stream().filter(d -> geographyLocation.equals(d.getValue())).
-                        map(DictBasicEntity::getName).findFirst().orElse("");
-                excelDTO.setGeographyLocationName(geographyLocationName);
-
-                resultList.add(excelDTO);
-
-
-            }
-        }
-        String fileName = "仓库数据";
-        ExcelUtil.export(fileName, "warehouse", resultList, WarehouseExportExcelDTO.class, response);
-
-
+    public void exportWarehouse(WarehouseDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("仓库数据", EXPORT_WMS_WAREHOUSE.getCode(), dto);
     }
 
 

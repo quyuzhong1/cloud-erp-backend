@@ -19,14 +19,4 @@ public interface WmsFbaInventoryFeign {
      **/
     @PostMapping("/feign/fbaInventory/allBatchSave")
     Boolean allBatchSave(@RequestBody List<FbaInventoryEntity> inventoryEntityList);
-
-
-    /**
-     * 查询FBA库存信息和预留明细列表
-     *
-     * @Author Jim
-     * @Date 2023-11-23
-     **/
-    @PostMapping("/feign/fbaInventory/list")
-    List<FbaInventoryEntity> findList(@RequestBody List<String> sellerSkuList);
 }

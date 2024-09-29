@@ -6,6 +6,7 @@ import cn.hutool.core.lang.Pair;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,17 +17,17 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.WarehouseLocationReplenishMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.boot.autoconfigure.properties.SagaAsyncThreadPoolProperties;
@@ -39,12 +40,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH;
 
 /**
  * 仓位库存预警服务类
@@ -66,7 +66,10 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     private WarehouseLocationMoveService warehouseLocationMoveService;
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
-
+    @Resource
+    private TransactionFlowService transactionFlowService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> paging(PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO) {
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
@@ -166,7 +169,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
                         .set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
                         .set("abnormal_cause", "")
-                        .eq("id", sourceId));
+                        .eq("id", sourceId)
+                        .eq("status",SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
+                        .eq("abnormal_cause", AbnormalCauseEnum.GENERATION_WAVE.getCode()));
             }
         }
 
@@ -176,31 +181,8 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     }
 
     @Override
-    public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto, HttpServletResponse response) {
-        WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
-        BeanMapper.copy(dto, searchParamDto);
-        List<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(searchParamDto);
-        List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(entityList);
-        List<String> waitHandleIds = viewList.stream()
-                .filter(item -> item.getStatus().equals(ReplenishBillStatusEnum.WAIT_HANDLE.getCode()))
-                .map(WarehouseLocationReplenishDTO.ViewDTO::getId)
-                .collect(Collectors.toList());
-        try {
-            String fileName = "仓位补货" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            String excelPath = "excel/warehouseLocationReplenishExport.xlsx";
-            new ExcelPrintUtils().patchExport(viewList, response, fileName, excelPath);
-
-            //只有勾选导出的才更新状态：处理中
-            boolean isExportById = dto.getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
-            if(isExportById && !waitHandleIds.isEmpty()){
-                this.update(new UpdateWrapper<WarehouseLocationReplenishEntity>()
-                        .set("status", ReplenishBillStatusEnum.HANDLE_ING.getCode())
-                        .in("id", waitHandleIds));
-            }
-        } catch (IOException e) {
-            log.error("导出仓位补货清单失败：{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(WarehouseLocationReplenishDTO.ExportParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("仓位补货", EXPORT_WMS_WAREHOUSE_LOCATION_REPLENISH.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -262,44 +244,65 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 return BatchResultDTO.success(entity.getId(), dto.getSkuNo(), OperationTypeEnum.ADD);
             }
 
-            //所有的仓位都补货
-            List<WarehouseLocationReplenishEntity> replenishList = new ArrayList<>();
-            for (InventoryEntity inventoryEntity : pickInventoryList) {
-                WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
-                BeanMapper.copy(entity, replenishItem);
-                replenishItem.setToWarehouseLocation(inventoryEntity.getWarehouseLocation());
+            /*
+                1. 生成仓位补货时，如果缺货的SKU在拣货区有多个仓位，需要加一个筛选条件，查询SKU在多个拣货区仓位的库存流水，找出来出入库流水时间最新的一个仓位生成一条仓位补货数据
+                2. 如果都不存在流水，或单据日期一致，则默认按id升序排序，取第一个
+                备注：仓位流水查询通过“出入库流水”查询
+            */
+            List<TransactionFlowEntity> transactionFlowList = transactionFlowService.lambdaQuery()
+                    .eq(TransactionFlowEntity::getWarehouseId, dto.getWarehouseId())
+                    .eq(TransactionFlowEntity::getSkuId, dto.getSkuId())
+                    .in(TransactionFlowEntity::getWarehouseLocation, pickLocationCodeList)
+                    .orderByDesc(TransactionFlowEntity::getBillDate, TransactionFlowEntity::getId)
+                    .last("limit 1")
+                    .list();
 
-                //推荐补货库区
-                WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(inventoryEntity.getWarehouseLocation())).findAny().get();
-                WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findAny().get();
-                replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
+            InventoryEntity inventoryEntity = null;
+            if(CollectionUtils.isEmpty(transactionFlowList)){
+                pickInventoryList = pickInventoryList.stream()
+                        .sorted(Comparator.comparing(InventoryEntity::getWarehouseLocation))
+                        .collect(Collectors.toList());
+                inventoryEntity = pickInventoryList.get(0);
+            }else {
+                String warehouseLocation = transactionFlowList.get(0).getWarehouseLocation();
+                inventoryEntity = pickInventoryList.stream().
+                        filter(r -> warehouseLocation.equals(r.getWarehouseLocation())).findFirst().orElse(null);
+            }
 
-                Integer suggestQty = 0;
-                WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
-                        .eq("sku_id", dto.getSkuId())
-                        .eq("warehouse_id", dto.getWarehouseId())
-                        .eq("warehouse_location", inventoryEntity.getWarehouseLocation())
-                );
-                if(safetyInventoryEntity != null){
-                    //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
-                    if(safetyInventoryEntity.getMaxQty() != 0){
-                        suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
-                    }
-                    //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
-                    if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0){
-                        suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
-                    }
-                    //无最大补货量无安全库存时：等于缺货数量
-                    if(safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0){
-                        suggestQty = dto.getQty();
-                    }
-                }else {
+            WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
+            BeanMapper.copy(entity, replenishItem);
+            replenishItem.setToWarehouseLocation(inventoryEntity.getWarehouseLocation());
+
+            //推荐补货库区
+            InventoryEntity finalInventoryEntity = inventoryEntity;
+            WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(finalInventoryEntity.getWarehouseLocation())).findAny().get();
+            WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findAny().get();
+            replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
+
+            Integer suggestQty = 0;
+            WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
+                    .eq("sku_id", dto.getSkuId())
+                    .eq("warehouse_id", dto.getWarehouseId())
+                    .eq("warehouse_location", inventoryEntity.getWarehouseLocation())
+            );
+            if (safetyInventoryEntity != null) {
+                //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
+                if (safetyInventoryEntity.getMaxQty() != 0) {
+                    suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();
+                }
+                //无最大补货量有安全库存时：等于安全库存+缺货数量-仓位可用库存
+                if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() != 0) {
+                    suggestQty = safetyInventoryEntity.getSafetyQty() + dto.getQty() - inventoryEntity.getQty();
+                }
+                //无最大补货量无安全库存时：等于缺货数量
+                if (safetyInventoryEntity.getMaxQty() == 0 && safetyInventoryEntity.getSafetyQty() == 0) {
                     suggestQty = dto.getQty();
                 }
-                replenishItem.setSuggestQty(suggestQty);
-                replenishList.add(replenishItem);
+            } else {
+                suggestQty = dto.getQty();
             }
-            this.saveBatch(replenishList);
+            replenishItem.setSuggestQty(suggestQty);
+            this.save(replenishItem);
         }
 
         //安全库存补货
@@ -391,7 +394,9 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 soB2cDeliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>()
                         .set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())
                         .set("abnormal_cause", "")
-                        .eq("id", fullEntity.getSourceId()));
+                        .eq("id", fullEntity.getSourceId())
+                        .eq("status",SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode())
+                        .eq("abnormal_cause", AbnormalCauseEnum.GENERATION_WAVE.getCode()));
             }
         }
 
@@ -575,5 +580,26 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         }
 
         return verifyResultList;
+    }
+
+    @Override
+    public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> exportWarehouseLocationReplenish(PagingDTO<WarehouseLocationReplenishDTO.ExportParamDTO> dto) {
+
+        WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
+        BeanMapper.copy(dto.getParams(), searchParamDto);
+        Page<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()),searchParamDto);
+        List<WarehouseLocationReplenishDTO.ViewDTO> viewList = fillViewList(entityList.getRecords());
+        List<String> waitHandleIds = viewList.stream()
+                .filter(item -> item.getStatus().equals(ReplenishBillStatusEnum.WAIT_HANDLE.getCode()))
+                .map(WarehouseLocationReplenishDTO.ViewDTO::getId)
+                .collect(Collectors.toList());
+        //只有勾选导出的才更新状态：处理中
+        boolean isExportById = dto.getParams().getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
+        if (isExportById && !waitHandleIds.isEmpty()) {
+            this.update(new UpdateWrapper<WarehouseLocationReplenishEntity>()
+                    .set("status", ReplenishBillStatusEnum.HANDLE_ING.getCode())
+                    .in("id", waitHandleIds));
+        }
+        return new PagingVO<>(viewList, (int) entityList.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 }

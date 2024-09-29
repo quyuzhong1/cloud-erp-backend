@@ -272,6 +272,12 @@ public class PackingTaskDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+
+        /**
+         * 关联单号
+         */
+        private String sourceCode;
     }
 
     /**
@@ -413,6 +419,9 @@ public class PackingTaskDTO implements Serializable {
          */
         @NotBlank(message = "任务id不能为空")
         private String taskId;
-
+        /**
+         * 装箱id
+         */
+        private List<String> cartonIds;
     }
 }

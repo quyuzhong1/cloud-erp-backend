@@ -323,19 +323,12 @@ public class SoReturnReceiveController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      * @param dto dto
-     * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售退货签收单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:paging",
-            tableAlias = "srr"
-    )
-    @WebAdvanceQuery(handler = SoReturnReceiveQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoReturnReceiveDTO.PagingParam dto, HttpServletResponse response) {
-        Boolean flag = soReturnReceiveService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody SoReturnReceiveDTO.PagingParam dto) {
+        Boolean flag = soReturnReceiveService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

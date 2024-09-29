@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -27,6 +26,249 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class RequisitionApplicationDTO implements Serializable {
+
+    /**
+     * 发货详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliverRecordView {
+
+        /**
+         * 发货单号
+         */
+        private String code;
+
+        /**
+         * 货件/入库单号
+         */
+        private String fbaShipmentCode;
+
+        /**
+         * 发货状态
+         */
+        private String status;
+
+        /**
+         * 发货量
+         */
+        private Integer qty;
+    }
+    /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDeliveryWithFbaDTO {
+
+        @NotEmpty(message = "详情不能为空")
+        @Valid
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;;
+    }
+    /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentDetailViewDTO {
+
+        /**
+         * fba货件Id
+         */
+        private String fbaShipmentId;
+
+
+        /**
+         * ASIN
+         */
+        private String asin;
+
+        /**
+         * MSKU
+         */
+        private String msku;
+
+        /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 申报数量
+         */
+        private String declareQty;
+
+        /**
+         * 关联发货数量
+         */
+        private String associatedDeliveryQty;
+
+        /**
+         * 差异
+         */
+        private String diffQty;
+    }
+
+    /**
+     * fba下推发货单绑定货件 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentDetailDTO {
+        /**
+         * fba货件Id
+         */
+        @NotBlank(message = "fba货件不能为空")
+        private String fbaShipmentId;
+
+        /**
+         * 匹配的装箱Id
+         */
+        @NotEmpty(message = "装箱不能为空")
+        private List<String> matchedCartonIds;
+
+    }
+
+    /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentMatchingDTO {
+        /**
+         * fba货件Id
+         */
+        @NotBlank(message = "fba货件不能为空")
+        private String fbaShipmentId;
+
+        /**
+         * 未匹配的装箱信息
+         */
+        @NotEmpty(message = "待匹配装箱信息不能为空")
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOList;
+    }
+
+    /**
+     * fba关系dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaRelationDTO {
+        /**
+         * Fba货件Id
+         */
+        private String fbaShipmentId;
+
+        /**
+         * Fba货件号
+         */
+        private String fbaShipmentCode;
+
+        /**
+         * Fba货件箱号
+         */
+        private List<String> fbaBoxNo;
+    }
+    /**
+     * fba下推发货单绑定货件View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentViewDTO {
+
+        /**
+         * 未匹配到的fba箱号信息
+         */
+        private FbaRelationDTO fbaRelationDTO;
+        /**
+         * 列表明细
+         */
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDetailDTOList;
+    }
+    /**
+     * fba下推发货单绑定货件详情View
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FbaBindShipmentViewDetailDTO {
+
+        /**
+         * 要货申请id
+         */
+        @NotBlank(message = "要货申请不能为空")
+        private String id;
+
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+
+        /**
+         * 装箱Id
+         */
+        private String cartonId;
+
+        /**
+         * 装箱箱号
+         */
+        private String boxNo;
+
+        /**
+         * 装箱sku
+         */
+        private String packingSku;
+
+        /**
+         * 装箱Fnsku
+         */
+        private String packingFnSku;
+
+        /**
+         * Fba货件Id
+         */
+        private String fbaShipmentId;
+
+        /**
+         * Fba货件号
+         */
+        private String fbaShipmentCode;
+
+        /**
+         * Fba货件箱号
+         */
+        private String fbaBoxNo;
+
+        /**
+         * fba装箱sku
+         */
+        private String fbaPackingSku;
+
+        /**
+         * fba装箱Fnsku
+         */
+        private String fbaPackingFnSku;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+    }
 
     /**
      * 详情
@@ -597,10 +839,6 @@ public class RequisitionApplicationDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
-         * 服务商code
-         */
-        private String provideCode;
-        /**
          * 货件号
          */
         private String fbaShipmentCode;
@@ -608,6 +846,20 @@ public class RequisitionApplicationDTO implements Serializable {
          * 货件id
          */
         private String shipmentId;
+
+        /**
+         * 装箱状态
+         */
+        private String packingStatus;
+
+        /**
+         * 装箱状态名称
+         */
+        private String packingStatusName;
+        /**
+         * 装箱数量
+         */
+        private Integer packingQty;
     }
 
     /**
@@ -620,6 +872,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 主表id
          */
         private String sourceId;
+        /**
+         * type
+         */
+        private String type;
         /**
          * 单据编号
          */

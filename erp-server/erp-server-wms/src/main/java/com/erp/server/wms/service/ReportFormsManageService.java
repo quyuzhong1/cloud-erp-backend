@@ -4,7 +4,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 public interface ReportFormsManageService {
@@ -19,11 +18,13 @@ public interface ReportFormsManageService {
 
     /**
      * 导出excel
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/6/13 19:47
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      **/
-    Boolean exportExcelPurchaseBusiness(PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcelPurchaseBusiness(PurchaseBusinessGatherTableDTO.PagingParamDTO dto);
+
+    PagingVO<PurchaseBusinessGatherTableDTO.PagingViewDTO> exportPurchaseBusiness(PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto);
 }

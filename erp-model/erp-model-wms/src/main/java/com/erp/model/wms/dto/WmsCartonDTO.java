@@ -7,10 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -91,6 +88,7 @@ public class WmsCartonDTO {
          */
         @Valid
         @Size(min = 1, message = "调整装箱后，装箱数量不能为0")
+        @NotEmpty(message = "装箱明细不能为空")
         private List<AdjustDetailDTO> cartonDetailList;
     }
     @Data
@@ -334,5 +332,90 @@ public class WmsCartonDTO {
          * 箱号
          */
         private Integer boxNo;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 国家
+         */
+        private String countryId;
+        /**
+         * 国家名称
+         */
+        private String countryName;
+        /**
+         * 负责人id
+         */
+        private String chargeId;
+        /**
+         * 负责人名称
+         */
+        private String chargeName;
+        /**
+         * 装箱人
+         */
+        private String packingUserName;
+
+        /**
+         * 序号
+         */
+        private Integer index;
+        /**
+         * sku*qty
+         */
+        private List<String> skuList;
+    }
+
+    @Data
+    public static class DetailDTO{
+        /**
+         * 箱子ID
+         */
+        private String boxId;
+        /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 装箱数量
+         */
+        private int packQty;
+        /**
+         * 箱子重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength = BigDecimal.ZERO;
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth = BigDecimal.ZERO;
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight = BigDecimal.ZERO;
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
     }
 }

@@ -111,6 +111,11 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @TableField("platform_sku_id")
     private String platformSkuId;
 
+    /**
+     * erp授权id
+     */
+    @TableField("auth_id")
+    private String authId;
 
     public static final String SKU_NO = "sku_no";
 
@@ -134,12 +139,15 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     @Override
     public String toString() {
         return "ListingInfoEntity{" +
-                ", platformSkuName='" + platformSkuName + '\'' +
+                "platformSkuNo='" + platformSkuNo + '\'' +
+                ", platformSpuNo='" + platformSpuNo + '\'' +
                 ", productImageUrl='" + productImageUrl + '\'' +
                 ", productSpec='" + productSpec + '\'' +
                 ", productPacking='" + productPacking + '\'' +
-                ", platformUpdateTime='" + platformUpdateTime + '\'' +
+                ", platformUpdateTime=" + platformUpdateTime +
+                ", platformFnSku='" + platformFnSku + '\'' +
+                ", platformStatus='" + platformStatus + '\'' +
+                ", platformSkuId='" + platformSkuId + '\'' +
                 '}';
     }
-
 }

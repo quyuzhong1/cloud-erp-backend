@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+   com.sdk.wms.antu.service.AntuService
+
+

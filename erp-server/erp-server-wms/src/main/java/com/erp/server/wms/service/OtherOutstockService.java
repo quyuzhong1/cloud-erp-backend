@@ -1,12 +1,10 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -136,14 +134,13 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      */
     Boolean cancelProcess(List<String> ids);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/5/18 17:55
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(OtherOutstockDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(OtherOutstockDTO.SearchParamDTO dto);
 
     /**
      * @description: 更新金蝶状态等信息
@@ -221,4 +218,6 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * {@code @date:} 2024/05/31
      */
     void checkAndAdd(OtherOutstockDTO.AddDTO generateDTO);
+
+    PagingVO<OtherOutstockDTO.ListDTO> exportOtherOutStock(PagingDTO<OtherOutstockDTO.SearchParamDTO> dto);
 }

@@ -1,12 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -21,13 +19,11 @@ import com.erp.server.wms.mapper.WmsCartonDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.erp.server.wms.service.WmsCartonService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,7 +72,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     }
 
     @Override
-    public List<WmsCartonSpecDTO.PackingItemDTO> boxInfoBySourceId(String sourceId) {
+    public List<WmsCartonSpecDTO.PackingItemDTO> boxInfoBySourceIds(List<String> sourceId) {
         return this.baseMapper.boxInfoBySourceId(sourceId);
     }
 
@@ -99,15 +95,16 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         List<WmsCartonDetailEntity> detailEntityList = BeanMapper.copyList(addDTO.getDetailList(), WmsCartonDetailEntity.class);
         // 数据处理
         handleData(detailEntityList, wmsCartonEntity.getId());
-
-        log.info("开始新增发货单箱子信息单");
-        boolean save = super.saveOrUpdateBatch(detailEntityList);
-        if(!save) {
-            throw new ServiceException("发货单箱子信息单保存失败");
+        if(CollectionUtils.isNotEmpty(detailEntityList)){
+            log.info("开始新增发货单箱子信息单");
+            boolean save = super.saveOrUpdateBatch(detailEntityList);
+            if(!save) {
+                throw new ServiceException("发货单箱子信息单保存失败");
+            }
+            String msg = "【"+addDTO.getContent() + "】新增装箱明细【"+wmsCartonEntity.getBoxNo()+"】【%s】";
+            List<Pair<String, String>> addPairList = detailEntityList.stream().map(obj -> new Pair<>(wmsCartonEntity.getPackingTaskId(), obj.getSkuNo() + "*"+ obj.getPackQty())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), addPairList, addDTO.getOperation());
         }
-        String msg = "【"+addDTO.getContent() + "】新增装箱明细【"+wmsCartonEntity.getBoxNo()+"】【%s】";
-        List<Pair<String, String>> addPairList = detailEntityList.stream().map(obj -> new Pair<>(wmsCartonEntity.getPackingTaskId(), obj.getSkuNo() + "*"+ obj.getPackQty())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), addPairList, addDTO.getOperation());
     }
 
     @Override

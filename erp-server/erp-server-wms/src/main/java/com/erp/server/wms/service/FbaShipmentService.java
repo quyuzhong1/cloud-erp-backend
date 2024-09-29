@@ -1,10 +1,6 @@
 package com.erp.server.wms.service;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
 
-import javax.servlet.http.HttpServletResponse;
-
+import cn.hutool.core.lang.Tuple;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -19,7 +15,9 @@ import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
-import cn.hutool.core.lang.Tuple;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -231,7 +229,7 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
 
     void generateTransfer(ShopInfoEntity shopInfoEntity, FbaShipmentEntity entity, List<FbaShipmentReceiveEntity> receiveList, Boolean isToOnwayWarehouse, String remark, LocalDate billDate, String transferDirection, Map<String, LocalDate> closedDateMap);
 
-    void export(FbaShipmentDTO.PagingParamDTO dto, HttpServletResponse response);
+    void export(FbaShipmentDTO.PagingParamDTO dto);
 
     /**
      * 检查当前Fba货件是停止生成签收记录得日期
@@ -244,4 +242,15 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     FbaShipmentEntity getByCode(String fbaShipmentCode);
 
     List<FbaShipmentEntity> listByCodes(List<String> fbaShipmentCodeList);
+
+    /**
+     * 导出
+     */
+    PagingVO<FbaShipmentDTO.ExportDTO> exportFbaShipment(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
+
+    boolean updatePackingStatus(List<String> ids);
+
+    PagingVO<FbaShipmentDTO.SearchResultDTO> searchByCodeWithRequisition(PagingDTO<FbaShipmentDTO.SearchDTO> dto);
+
+    List<FbaShipmentDTO.SearchResultDTO> requisitionFbaQuickPaste(FbaShipmentDTO.QuickPasteDTO dto);
 }

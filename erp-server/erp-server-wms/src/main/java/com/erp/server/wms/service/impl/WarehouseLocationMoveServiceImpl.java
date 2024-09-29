@@ -25,7 +25,6 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
@@ -38,16 +37,21 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO.PcAddDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
+import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -65,7 +69,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,6 +86,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PDA_WAREHOUSE_LOCATION_MOVE_INFO;
 
 /**
  * <p>
@@ -132,6 +137,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
     private DmpPushWdtFeign dmpPushWdtFeign;
@@ -691,6 +698,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         return "";
     }
 
+    @Override
+    public PagingVO<WarehouseLocationMoveDTO.PdaPcListDTO> exportWarehouseLocationMoveInfo(PagingDTO<WarehouseLocationMoveDTO.ExportDTO> dto) {
+        Page<WarehouseLocationMoveDTO.PdaPcListDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        List<String> skuList = page.getRecords().stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getSkuId).distinct().collect(Collectors.toList());
+        //feign获取产品信息
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuList);
+        List<String> warehouseIds = page.getRecords().stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        dataProcess(page.getRecords(), skuVOList, warehouseIds);
+        return new PagingVO<>(page);
+    }
+
     /**
     * 撤销
     */
@@ -1125,24 +1143,8 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     }
 
     @Override
-    public void listExport(WarehouseLocationMoveDTO.ExportDTO dto, HttpServletResponse response) {
-        List<WarehouseLocationMoveDTO.PdaPcListDTO> pdaPcListDTOS = baseMapper.listExport(dto);
-        List<String> skuList = pdaPcListDTOS.stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getSkuId).distinct().collect(Collectors.toList());
-        //feign获取产品信息
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuList);
-        List<String> warehouseIds = pdaPcListDTOS.stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        dataProcess(pdaPcListDTOS, skuVOList, warehouseIds);
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/pdaMoveInfo.xlsx";
-        String name = "仓库移动导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(pdaPcListDTOS, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void listExport(WarehouseLocationMoveDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("仓库移动导出", EXPORT_WMS_PDA_WAREHOUSE_LOCATION_MOVE_INFO.getCode(), dto);
     }
 
     private void dataProcess(List<WarehouseLocationMoveDTO.PdaPcListDTO> pdaPcListDTOS, List<SkuVO> skuVOList, List<String> warehouseIds) {
@@ -1212,4 +1214,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         pushWdtDTO.setDetailDTOList(detailDTOList);
         return pushWdtDTO;
     }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+	@Override
+	public void wdtAutoAdd(PcAddDTO pcAddDTO) {
+    	String moveId = this.pcAdd(pcAddDTO);
+    	this.submit(moveId);
+    	ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+		approveOneDTO.setId(moveId);
+		approveOneDTO.setType("pass");
+		approveOneDTO.setComment("旺店通同步销售出库单库存不足自动仓位移动");
+    	this.pcApprove(approveOneDTO);
+	}
 }

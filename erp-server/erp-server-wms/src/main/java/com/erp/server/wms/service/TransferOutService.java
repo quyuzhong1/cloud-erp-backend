@@ -10,7 +10,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -46,10 +45,10 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
 
     /**
      * 导出Excel
+     *
      * @param param
-     * @param response
      */
-    void exportList(TransferOutDTO.ExportDTO param, HttpServletResponse response);
+    void exportList(TransferOutDTO.ExportDTO param);
 
     /**
      * 状态统计
@@ -140,5 +139,7 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @return
      */
     List<TransferOutEntity> findByCodes(List<String> codes);
+
+    PagingVO<TransferOutDTO.PagingViewDTO> exportTransferOut(PagingDTO<TransferOutDTO.ExportDTO> dto);
 
 }

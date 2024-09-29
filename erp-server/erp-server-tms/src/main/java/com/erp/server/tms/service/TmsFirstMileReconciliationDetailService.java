@@ -90,7 +90,7 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @author Jim
      * @date: 2024-03-25
      */
-    void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(TmsFirstMileReconciliationDetailDTO.ExportDTO dto);
 
 
     /**
@@ -125,11 +125,24 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      */
     List<TmsFirstMileReconciliationDetailDTO.ListDTO> addWaitReconciliation(List<String> sourceIds);
 
-    List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO);
+    /**
+     * 生成实际和差异记录
+     * @param sourceListDTO
+     * @param reconciliationCount
+     * @param keepActual 是否保留实际账单
+     * @return
+     */
+    List<TmsFirstMileReconciliationDetailDTO.ListDTO> generateAllTypeDTO(TmsFirstMileReconciliationDetailDTO.ListDTO sourceListDTO,int reconciliationCount,boolean keepActual);
 
     Map<String, TmsFirstMileReconciliationDetailEntity> handleUpdateData(List<TmsFirstMileReconciliationDetailEntity> list, String mainId, List<TmsFirstMileReconciliationDetailEntity> oldList);
 
-    void fillWaitReconciliationList(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records);
+    void fillWaitReconciliationList(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records, String mainId);
+
+    /**
+     * 分页数据填充
+     * @param records
+     */
+    void fillWaitReconciliationData(List<? extends TmsFirstMileReconciliationDetailDTO.ListDTO> records);
 
     CurrencyDTO.ViewDTO getCurrencyView(String currency);
 
@@ -157,4 +170,32 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     String getCurrencyById(String mainId);
 
     List<TmsFirstMileReconciliationDetailEntity> listByMainIdsBySort(List<String> mainIds);
+
+    /**
+     * 根据明细id进行查询对账单明细
+     * @param sourceIds
+     * @param type
+     * @return
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(List<String> sourceIds, String type);
+
+    /**
+     * 根据业务单号获取对账明细
+     *
+     * @param businessCodes
+     * @param status
+     * @param type
+     * @return
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIdsAndStatus(List<String> businessCodes, String status, String type);
+
+    /**
+     * 更新对账明细
+     * @param detailList
+     * @param old
+     */
+    void updateReconciliationDetail(List<TmsFirstMileReconciliationDetailDTO.UpdateDTO> detailList, TmsFirstMileReconciliationEntity old);
+
+    PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto);
+
 }

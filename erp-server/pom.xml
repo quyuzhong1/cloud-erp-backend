@@ -30,6 +30,7 @@
         <module>erp-server-oms</module>
         <module>erp-server-tms</module>
         <module>erp-server-srm</module>
+        <module>erp-server-file</module>
     </modules>
     <dependencies>
         <dependency>

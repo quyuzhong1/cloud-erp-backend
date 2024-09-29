@@ -26,13 +26,12 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -57,13 +56,15 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.mapper.PoReturnMapper;
@@ -72,6 +73,8 @@ import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
 import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -86,13 +89,14 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PURCHASE_RETURN_ORDER;
 
 /**
  * <p>
@@ -189,6 +193,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private SyncWdtOtherInStockService syncWdtOtherInStockService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
@@ -1111,32 +1117,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     /**
      * 导出
      *
-     * @param dto      dto
-     * @param response response
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      **/
     @Override
-    public Boolean exportExcel(PurchaseReturnOrderDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<PurchaseReturnOrderDTO.PagingViewDTO> list = this.baseMapper.listExport(dto);
-        if(CollUtil.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/poReturnExport.xlsx";
-        String name = "退货单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(PurchaseReturnOrderDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("退货单", EXPORT_WMS_PURCHASE_RETURN_ORDER.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -2520,6 +2508,17 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         .eq(PoReturnEntity::getConfirmStatus, returnRequestDTO.getConfirmStatus())
                         .eq(PoReturnEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus()).count())
                 .build();
+    }
+
+    @Override
+    public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
+
+        Page<PurchaseReturnOrderDTO.PagingViewDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
     /**

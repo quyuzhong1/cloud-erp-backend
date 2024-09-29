@@ -328,19 +328,12 @@ public class SoReturnController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
      * @param dto dto
-     * @param response response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售退货订单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:soReturn:paging",
-            tableAlias = "sr"
-    )
-    @WebAdvanceQuery(handler = SoReturnQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto, HttpServletResponse response) {
-        Boolean flag = soReturnService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto) {
+        Boolean flag = soReturnService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

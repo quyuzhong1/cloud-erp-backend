@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationImportEnum;
@@ -15,6 +16,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -161,7 +163,25 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         /**
          * 计费重带单位
          */
-        private BigDecimal billingWeightWithUnit;
+        private String billingWeightWithUnit;
+
+        /**
+         * 对账次数 默认1
+         */
+        private Integer reconciliationCount;
+        /**
+         *显示为首次对账，N次对账
+         */
+        private String reconciliationCountName;
+
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        private LocalDate reconciliationMonth;
+        /**
+         * 对账月份【导出使用】
+         */
+        private String reconciliationMonthStr;
 
         public String getActualWeightWithUnit() {
             BigDecimal actualWeight = this.getActualWeight();
@@ -315,6 +335,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 币别
          */
         private String currency;
+        /**
+         * 对账单id 物流单费用表关联记录
+         */
+        private String reconciliationId;
 
         /**
          * 币别名称
@@ -375,6 +399,10 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 其他费用【预计其他费用】
          */
         private BigDecimal otherCost;
+        /**
+         * 其他税费【预计其他税费】
+         */
+        private BigDecimal otherTaxCost;
 
         /**
          * 备注
@@ -440,6 +468,24 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 物流单记录的实际重(后台用)
          */
         private BigDecimal weightLogistics;
+        /**
+         * 对账次数 默认1
+         */
+        private Integer reconciliationCount;
+        /**
+         * 显示为首次对账，N次对账
+         */
+        private String reconciliationCountName;
+
+        /**
+         * 对账月份（取值为对账周期末值所在月份）
+         */
+        private LocalDate reconciliationMonth;
+
+        /**
+         * 账单类型： actual=实际， initPeriod=期初
+         */
+        private String reconciliationType;
 
         /**
          * 费用明细详情(导入时传递)
@@ -911,6 +957,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         @Digits(integer = 12, fraction = 4, message = "实际其他费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal otherCost;
+        /**
+         * 其他税费
+         */
+        @Digits(integer = 12, fraction = 4, message = "实际其他税费整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal otherTaxCost;
 
         /**
          * 备注
@@ -955,7 +1006,14 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 渠道商ID
          */
         private String logisticsChannelId;
-
+        /**
+         * 对账次数 默认1
+         */
+        private Integer reconciliationCount;
+        /**
+         * 账单类型： actual=实际， initPeriod=期初
+         */
+        private String reconciliationType;
     }
 
     @Data

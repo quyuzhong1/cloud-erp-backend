@@ -9,9 +9,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -29,7 +29,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -356,19 +355,12 @@ public class PoInStockController extends BaseController {
      * @author Will
      * @date: 2023/4/11 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购入库单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id,stock_in_user_id",
-            menuCode = "wms:poInStock:paging",
-            tableAlias = "psi"
-    )
-    @WebAdvanceQuery(handler = PoInStockQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody PoInstockDTO.ExportParamDTO dto, HttpServletResponse response) {
-        Boolean flag = poInstockService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody PoInstockDTO.ExportParamDTO dto) {
+        Boolean flag = poInstockService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

@@ -3,6 +3,8 @@ package com.erp.sdk.third.kingdee.utils;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import lombok.extern.slf4j.Slf4j;
+
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.KingdeeParamDTO;
@@ -20,6 +22,7 @@ import java.util.*;
  * 金蝶API 处理类
  */
 @Component
+@Slf4j
 public class KingdeeApiUtils {
     public K3CloudApi client;
 
@@ -554,7 +557,10 @@ public class KingdeeApiUtils {
     public RepoResult saveKingDee(KingdeeParamDTO.SaveParamDTO data) {
         RepoResult result;
         try {
-            String resultJson = client.save(this.formId, JSONUtil.toJsonStr(data));
+        	String jsonStr = JSONUtil.toJsonStr(data);
+        	log.warn("金蝶保存请求报文：{}" , jsonStr);
+			String resultJson = client.save(this.formId, jsonStr);
+			log.warn("金蝶保存响应报文：{}" , resultJson);
             //用于记录结果
             Gson gson = new Gson();
             //对返回结果进行解析和校验

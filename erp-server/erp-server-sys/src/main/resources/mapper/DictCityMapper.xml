@@ -98,7 +98,7 @@
         FROM  dict_city dc
         LEFT JOIN dict_country c
         ON dc.country_code = c.id AND c.is_deleted = FALSE
-        WHERE c.is_deleted = FALSE AND dc.parent_id='0'
+        WHERE dc.is_deleted = FALSE AND dc.parent_id='0'
         AND
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}
@@ -128,7 +128,7 @@
         FROM  dict_city dc
         LEFT JOIN dict_city c
         ON dc.parent_id = c.id AND c.is_deleted = FALSE
-        WHERE c.is_deleted = FALSE AND dc.parent_id !='0'
+        WHERE dc.is_deleted = FALSE AND dc.parent_id !='0'
         AND
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             ${params.sqlMap.default}

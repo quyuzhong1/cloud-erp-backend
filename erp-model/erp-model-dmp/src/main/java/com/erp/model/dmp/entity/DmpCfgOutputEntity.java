@@ -40,7 +40,7 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
     @TableField("type")
     private String type;
     /**
-    * 输入类型id，api取dmp_cfg_input_api表，mq取dmp_cfg_input_mq表
+    * 输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表
     */
     @TableField("type_id")
     private String typeId;
@@ -54,6 +54,11 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
     */
     @TableField("extend_json")
     private String extendJson;
+    /**
+     * 推送速率，一秒推送个数，默认1秒推送3个，小于0不限速
+     */
+    @TableField("push_rate")
+    private Integer pushRate;
     
     /**
      * 输出处理类

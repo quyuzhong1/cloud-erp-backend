@@ -88,7 +88,12 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 				Object [] paramVarArgs = new Object[param.size()];
 				Class<?>[] parameterTypes = invokeMethod.getParameterTypes();
 				for(int i = 0; i < parameterTypes.length; i++) {
-					paramVarArgs[i] = JSON.parseObject(JSON.toJSONString(param.get(i)), parameterTypes[i]);
+					String s = "{}";
+					Object p = param.get(i);
+					if(p != null) {
+						s = p.toString();
+					}
+					paramVarArgs[i] = JSON.parseObject(s, parameterTypes[i]);
 				}
 				result = invokeMethod.invoke(bean , paramVarArgs);
 			}else {

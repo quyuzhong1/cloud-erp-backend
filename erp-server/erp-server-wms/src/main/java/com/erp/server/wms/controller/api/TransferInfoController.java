@@ -171,7 +171,7 @@ public class TransferInfoController extends BaseController {
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferInfoService.submit(dto.getIds());
+        Boolean flag = transferInfoService.submit(dto.getIds(), Boolean.TRUE);
         return flag == true ? success() : failure();
     }
 
@@ -257,7 +257,7 @@ public class TransferInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(transferInfoService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),Boolean.TRUE));
+                resultDTOS.add(transferInfoService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),Boolean.TRUE,Boolean.TRUE));
             }catch (Exception e){
                 log.error("直接调拨单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -323,19 +323,12 @@ public class TransferInfoController extends BaseController {
      * @author Will
      * @date: 2023/5/10 20:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出直接调拨单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferInfo:paging",
-            tableAlias = "ti"
-    )
-    @WebAdvanceQuery(handler = TransferInfoQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody TransferInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = transferInfoService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody TransferInfoDTO.SearchParamDTO dto) {
+        Boolean flag = transferInfoService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

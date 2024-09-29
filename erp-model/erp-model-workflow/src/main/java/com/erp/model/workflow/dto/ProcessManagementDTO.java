@@ -963,4 +963,26 @@ public class ProcessManagementDTO {
             this.businessKey = historyActivityDTO.getBusinessKey();
         }
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class TaskKeyInfoDTO {
+        /**
+         * 业务类型key
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
+
+        /**
+         * 最新审核人id
+         */
+        @NotBlank(message = "最新审核人id不能为空")
+        private String curApproveId;
+        /**
+         * 任务状态
+         */
+        @NotBlank(message = "任务状态不能为空")
+        private String taskStatus;
+
+    }
 }

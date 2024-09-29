@@ -21,7 +21,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PoInstockDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;

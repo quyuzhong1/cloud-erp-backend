@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -124,7 +125,7 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
             }
             return new PagingVO<>(pageData);
         }
-        if (PlatformDictEnum.IML.getCode().equals(dto.getParams().getSysType()) || PlatformDictEnum.GOOD_CANG.getCode().equals(dto.getParams().getSysType())) {
+        if (OmsPlatformEnum.isThirdWarehouse(dto.getParams().getSysType())) {
             PagingDTO<OverseasProviderWarehouseDTO.SelectDTO> page = new PagingDTO<>();
             page.setCurrPage(dto.getCurrPage());
             page.setPageSize(dto.getPageSize());
@@ -132,6 +133,7 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
             OverseasProviderWarehouseDTO.SelectDTO selectDTO = new OverseasProviderWarehouseDTO.SelectDTO();
             selectDTO.setCode(params.getSysType());
             selectDTO.setSearchKeyword(params.getSearchKeyword());
+            selectDTO.setShortName(params.getShortName());
             page.setParams(selectDTO);
             PagingVO<ThirdWarehouseDTO.PageSelectDTO> pageData = wmsOverseasWarehouseFeign.pagingSelect(page);
             return pageData;

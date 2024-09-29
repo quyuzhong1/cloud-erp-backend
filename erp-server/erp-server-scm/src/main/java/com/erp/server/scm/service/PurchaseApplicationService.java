@@ -1,6 +1,6 @@
 package com.erp.server.scm.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.*;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -11,7 +11,6 @@ import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.erp.model.scm.entity.SupplierEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -114,14 +113,13 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      */
     PurchaseApplicationDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/3/15 18:24
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(PurchaseApplicationDTO.SearchParamDTO dto);
 
 
     /**
@@ -190,4 +188,8 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
     void generateSubcontractOrder(ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list);
 
     Boolean close(PurchaseApplicationDTO.CloseDTO dto);
+
+    PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto);
+
+    List<PurchaseApplicationDTO.ListDTO> listStockInQty(List<PurchaseApplicationDTO.ListDTO> purchaseList);
 }

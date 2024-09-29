@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -50,6 +49,10 @@ public class WmsCartonDetailDTO implements Serializable {
         */
         private String skuNo;
 
+        /**
+         * fnSku
+         */
+        private String fnSku;
         /**
         * 产品名称
         */
@@ -114,6 +117,11 @@ public class WmsCartonDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
         * 装箱数量
         */
         @NotNull(message = "装箱数量不能为空")
@@ -140,6 +148,10 @@ public class WmsCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListPackingDetailDTO {
+        /**
+         * 发货单id
+         */
+        private String firstMileId;
         /**
          * 箱子id
          */
@@ -178,6 +190,17 @@ public class WmsCartonDetailDTO implements Serializable {
         private String sku;
         private String skuId;
         private String skuNo;
+
+        /**
+         * 箱子ID
+         */
+        private String boxId;
+
+        private Integer packQty;
+        /**
+         * fba箱号
+         */
+        private String fbaBoxNo;
         /**
          * 箱号
          */
@@ -248,6 +271,11 @@ public class WmsCartonDetailDTO implements Serializable {
         private BigDecimal width;
 
         private BigDecimal height;
+
+        /**
+         * 箱子尺寸单位
+         */
+        private String sizeUnit;
         /**
          * 箱规来源
          * MeasureSourceEnum
@@ -262,6 +290,34 @@ public class WmsCartonDetailDTO implements Serializable {
          * 异常原因
          */
         private String errorMsg;
+
+        private String boxDesc;
+
+        private String skuMapping;
+
+        private String skuIds;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+
+        /**
+         * 货件/海外仓单号
+         */
+        private String businessCode;
+        /**
+         * 外部箱号
+         */
+        private String outCode;
+        /**
+         * 平台sku
+         */
+        private String platformSku;
+        /**
+         * fnsku
+         */
+        private String fnSku;
     }
 
     /**

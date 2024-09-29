@@ -647,7 +647,9 @@
         </if>
         GROUP BY it.warehouse_id, it.sku_id
         ) t
-        WHERE t.realQty > 0
+        <if test="params.zeroInventory">
+            WHERE t.realQty > 0
+        </if>
     </sql>
     <select id="pageInventoryWarehouseByParam" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseDTO">
         <include refid="inventoryWarehouseByParam"/>
@@ -703,7 +705,9 @@
         </if>
         GROUP BY it.sku_id
         ) t
-        WHERE t.realQty > 0
+        <if test="params.zeroInventory">
+            WHERE t.realQty > 0
+        </if>
     </select>
     <select id="listInventoryWarehouseBySkuId"
             resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PdaInventoryWarehouseLocationDTO">
@@ -816,7 +820,9 @@
             </if>
             GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.warehouse_location
         ) t
-        WHERE t.realQty > 0
+        <if test="params.zeroInventory">
+            WHERE t.realQty > 0
+        </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.wms.entity.InventoryEntity">
         SELECT
@@ -1225,9 +1231,11 @@
                 t.frozen_qty AS frozenQty,
                 t.intransit_qty AS intransitQty,
                 t.waitqc_qty AS waitqcQty,
-                t.real_qty AS realQty
+                t.real_qty AS realQty,
+                t.id
         from (
-                select max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
+                select min(m.id) as id,
+                max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
                 sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
                     select max(it.warehouse_id) as warehouse_id,
                     max(it.org_id) as org_id,
@@ -1240,7 +1248,8 @@
                     sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
                     sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty,
                     sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransit_qty,
-                    sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqc_qty
+                    sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqc_qty,
+                    min(it.id) as id
                     from inventory it
                     left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
                     left join product_info pi on pd.product_id = pi.id  AND pi.is_deleted = FALSE
@@ -1256,12 +1265,12 @@
                     #{item}
                 </foreach>
             </if>
-            <!--<if test="params.skuIdList != null and params.skuIdList.size() > 0">
+            <if test="params.skuIdList != null and params.skuIdList.size() > 0">
                 and it.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
-            </if>-->
+            </if>
             <if test="params.spuNoList != null and params.spuNoList.size != ''">
                 and pi.spu_no in
                 <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
@@ -1298,6 +1307,10 @@
             <if test="params.hideZeroInventory">
                 and  t.real_qty != 0
             </if>
+
+            <if test="lastId != null and lastId != ''">
+                and t.id > #{lastId}
+            </if>
         </where>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -1305,7 +1318,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.warehouse_id, t.sku_no
+        t.id
     </select>
     <select id="exportByArea" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
 		select t.warehouse_id    AS warehouseId,
@@ -1320,6 +1333,7 @@
                t.frozen_qty      AS frozenQty,
                t.real_qty        AS realQty,
                t.area_code       AS warehouseArea
+              ,t.id
         from (select max(m.warehouse_id)                   as warehouse_id,
                      max(m.org_id)                         as org_id,
                      max(m.sku_id)                         as sku_id,
@@ -1332,6 +1346,7 @@
                      sum(m.usable_qty)                     as usable_qty,
                      sum(m.frozen_qty)                     as frozen_qty,
                      sum(m.usable_qty) + sum(m.frozen_qty) as real_qty
+                    ,min(m.id) AS id
               from (select max(it.warehouse_id)                                                      as warehouse_id,
                            max(it.org_id)                                                            as org_id,
                            max(it.sku_id)                                                            as sku_id,
@@ -1343,6 +1358,7 @@
                            max(wl.area_code)                                                         as area_code,
                            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
                            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty
+                           ,min(it.id) AS id
                     from inventory it
                              left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
                              left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
@@ -1412,6 +1428,9 @@
                     <if test="params.hideZeroInventory">
                         and  t.real_qty != 0
                     </if>
+                    <if test="lastId != null and lastId != ''">
+                        and t.id > #{lastId}
+                    </if>
                 </where>
         order by
             <if test="params.sortList != null and params.sortList.size > 0">
@@ -1419,7 +1438,7 @@
                     ${item.field} ${item.sort}
                 </foreach>
             </if>
-            t.warehouse_id, t.sku_no
+            t.id
     </select>
     <select id="exportByLocation" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
         select t.warehouse_id AS warehouseId,
@@ -1434,6 +1453,7 @@
                 t.frozen_qty AS frozenQty,
                 t.real_qty AS realQty,
                 t.warehouse_location AS warehouseLocation
+                ,t.id
                 from (select max(m.warehouse_location) AS warehouse_location,
                             max(m.warehouse_id) as warehouse_id,
                             max(m.org_id) as org_id,
@@ -1446,6 +1466,7 @@
                             sum(m.usable_qty) as usable_qty,
                             sum(m.frozen_qty) as frozen_qty,
                             sum(m.usable_qty) + sum(m.frozen_qty) as real_qty
+                            ,min(m.id) AS id
                         from (select max(it.warehouse_id) as warehouse_id,
                                     max(it.org_id) as org_id,
                                     max(it.sku_id) as sku_id,
@@ -1457,6 +1478,7 @@
                                     max(it.warehouse_location) AS warehouse_location,
                                     sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
                                     sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty
+                                    ,min(it.id) AS id
                                 from inventory it
                                 left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
                                 left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
@@ -1520,6 +1542,9 @@
             <if test="params.hideZeroInventory">
                 and  t.real_qty != 0
             </if>
+            <if test="lastId != null and lastId != ''">
+                and t.id > #{lastId}
+            </if>
         </where>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -1527,7 +1552,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.warehouse_id, t.sku_no
+        t.id
     </select>
 
 </mapper>

@@ -194,9 +194,9 @@ public class HttpCommonUtil {
     private static Response doSend(Request.Builder request) throws Exception {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 //设置连接超时时间
-                .connectTimeout(60, TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
                 //设置读取超时时间
-                .readTimeout(300, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
                 .build();
         Response response = okHttpClient.newCall(request.build()).execute();
         return response;

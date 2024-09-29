@@ -17,28 +17,22 @@ import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.SalesDemandEntity;
-import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
-import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.service.PurchaseChangeDetailService;
 import com.erp.server.scm.service.PurchaseChangeService;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 采购变更管理
@@ -294,18 +288,12 @@ public class PurchaseChangeController extends BaseController {
      * @author Will
      * @date: 2023/3/15 18:01
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购变更单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "change_user_id",
-            menuCode = "scm:purchaseChange:exportExcel",
-            tableAlias = "pc")
-    @WebAdvanceQuery
-    public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = purchaseChangeService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.SearchParamDTO dto) {
+        Boolean flag = purchaseChangeService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

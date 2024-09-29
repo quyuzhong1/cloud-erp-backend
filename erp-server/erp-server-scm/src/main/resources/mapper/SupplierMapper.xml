@@ -148,7 +148,6 @@
             </foreach>
         </if>
         create_time DESC
-        limit 50000
     </select>
     <select id="listSupplierByCategoryType" resultType="com.erp.model.scm.dto.SupplierDTO$SupplierSimpleDTO">
         SELECT
@@ -179,6 +178,12 @@
         </if>
         <if test="params.disabled != null">
             and sup.disabled=#{params.disabled}
+        </if>
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and sup.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")">
+                #{item}
+            </foreach>
         </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">

@@ -74,11 +74,15 @@ public class DmpInputChildCreateHandler extends DmpInputBaseCreateHandler{
 						.eq(DmpInputTaskEntity::getCfgInputId, cfgInputId)
 						.eq(DmpInputTaskEntity::getParentTaskId, parentInputTaskId)
 						.eq(DmpInputTaskEntity::getTaskType, DmpInputTaskTaskTypeEnum.CHILD.getCode())
-						.in(DmpInputTaskEntity::getNextLevelId, p)
+						.in(p.stream().anyMatch(d -> StringUtils.isNotBlank(d)) , DmpInputTaskEntity::getNextLevelId, p)
 						.list().stream().collect(Collectors.toMap(DmpInputTaskEntity::getNextLevelId, d -> d , (d1 , d2) -> d1));
 					DmpInputTaskEntity dmpInputTaskEntity = null;
 					for(String nextLevelId : p) {
-						dmpInputTaskEntity = nextIdTaskEntityMap.get(nextLevelId);
+						if(StringUtils.isNotBlank(nextLevelId)) {
+							dmpInputTaskEntity = nextIdTaskEntityMap.get(nextLevelId);
+						}else {
+							dmpInputTaskEntity = nextIdTaskEntityMap.get(parentNextLevel);
+						}
 						if(dmpInputTaskEntity == null) {
 							dmpInputTaskEntity = new DmpInputTaskEntity();
 							dmpInputTaskEntity.setCfgInputId(cfgInputId);

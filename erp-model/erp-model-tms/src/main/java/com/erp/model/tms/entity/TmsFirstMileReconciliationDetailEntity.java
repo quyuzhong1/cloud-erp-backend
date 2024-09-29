@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 
@@ -33,7 +34,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("main_id")
     private String mainId;
     /**
-     * 来源id
+     * 来源id(物流单)
      */
     @TableField("source_id")
     private String sourceId;
@@ -163,6 +164,11 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("other_cost")
     private BigDecimal otherCost;
     /**
+     * 其他税费
+     */
+    @TableField("other_tax_cost")
+    private BigDecimal otherTaxCost;
+    /**
      * 备注
      */
     @TableField("remark")
@@ -189,6 +195,25 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     private String confirmUserName;
 
     /**
+     * 对账次数 默认1
+     */
+    @TableField("reconciliation_count")
+    private Integer reconciliationCount;
+
+    /**
+     * 对账月份（取值为对账周期末值所在月份）
+     */
+    @TableField(exist = false)
+    private LocalDate reconciliationMonth;
+
+    /**
+     * 账单类型： actual=实际， initPeriod=期初
+     * ReconciliationTypeEnum
+     */
+    @TableField("reconciliation_type")
+    private String reconciliationType;
+
+    /**
      * 费用编辑（导入数据返回）
      */
     @TableField(exist = false)
@@ -196,7 +221,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
 
     public void setTotalLogisticsCost(){
-        this.setTotalLogisticsCost(this.shippingCost.add(this.declareCost).add(this.otherCost));
+        this.setTotalLogisticsCost(this.shippingCost.add(this.declareCost).add(this.otherCost).add(this.otherTaxCost));
     }
 
 

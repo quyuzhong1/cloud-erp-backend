@@ -82,4 +82,35 @@ public class ProductTaskViewDTO {
      * 是否延期(0否，1是)
      */
     private Integer isDelay;
+
+    /**
+     * id（用于前端展示）
+     */
+    private Integer id;
+
+    /**
+     * 父级id（用于前端展示）
+     */
+    private Integer parentId;
+
+    /**
+     * 是否是项目状态（0否，1是）
+     */
+    private Integer isProjectStatus;
+
+    /**
+     * skuNo
+     */
+    private String skuNo;
+
+    /**
+     * 计划上市时间
+     */
+    private String planListingTime;
+
+
+    /**
+     * 时间区间（分组条件）
+     */
+    private String timeInterval;
 }

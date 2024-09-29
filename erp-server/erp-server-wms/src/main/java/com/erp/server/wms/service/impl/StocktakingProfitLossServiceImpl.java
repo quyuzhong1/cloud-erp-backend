@@ -43,6 +43,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -70,12 +71,13 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_STOCKTAKING_PROFIT_LOSS;
 
 /**
  * <p>
@@ -143,6 +145,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private DmpPushWdtFeign dmpPushWdtFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     /**
      * tab list
      *
@@ -240,62 +244,13 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
      * 导出
      *
      * @param params
-     * @param response
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-08-11 12:10
      */
     @Override
-    public Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO params, HttpServletResponse response) {
-        //获取导出数据
-        List<StocktakingProfitLossDTO.ExportViewDTO> list = baseMapper.listExport(params);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        List<String> sourceIdList = list.stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSourceId).collect(Collectors.toList());
-        List<String> idList = list.stream().map(StocktakingProfitLossDTO.ExportViewDTO::getId).collect(Collectors.toList());
-        sourceIdList.addAll(idList);
-        //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(sourceIdList);
-        List<String> userIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
-        List<String> skuIdList = list.stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSkuId).collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
-        //填充数据
-        for (StocktakingProfitLossDTO.ExportViewDTO item : list) {
-            BillTypeEnum type = item.getBillType();
-            item.setBillTypeName(type.getName());
-            String sourceId = item.getSourceId();
-            String id = item.getId();
-            //盘点人
-            List<String> stocktakingUserIdList = taskUserList.stream().filter(t -> sourceId.equals(t.getSourceId()) || id.equals(t.getSourceId())).
-                    map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
-            String stocktakingUserName = userList.stream().filter(u -> stocktakingUserIdList.contains(u.getUserId())).
-                    map(FindUserDTO::getUserName).collect(Collectors.joining(","));
-            item.setStocktakingUserName(stocktakingUserName);
-            String skuId = item.getSkuId();
-            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
-            if (Objects.nonNull(sku)) {
-                item.setProductName(sku.getName());
-                item.setUnit(sku.getUnitName());
-            } else {
-                item.setProductName("");
-                item.setUnit("");
-            }
-        }
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/StocktakingProfitLoss.xlsx";
-        String name = "盘盈盘亏单";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            log.error("盘盈盘亏单导出 出错 >>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(StocktakingProfitLossDTO.ExportDTO params) {
+        downloadTaskFeign.saveDownloadTask("盘盈盘亏单", EXPORT_WMS_STOCKTAKING_PROFIT_LOSS.getCode(), params);
         return Boolean.TRUE;
     }
 
@@ -1077,6 +1032,48 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                     );
         }
         return false;
+    }
+
+    @Override
+    public PagingVO<StocktakingProfitLossDTO.ExportViewDTO> exportStocktakingProfitLoss(PagingDTO<StocktakingProfitLossDTO.ExportDTO> dto) {
+
+        //获取导出数据
+        Page<StocktakingProfitLossDTO.ExportViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        List<String> sourceIdList = page.getRecords().stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSourceId).collect(Collectors.toList());
+        List<String> idList = page.getRecords().stream().map(StocktakingProfitLossDTO.ExportViewDTO::getId).collect(Collectors.toList());
+        sourceIdList.addAll(idList);
+        //盘点人信息
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(sourceIdList);
+        List<String> userIdList = taskUserList.stream().map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
+        List<String> skuIdList = page.getRecords().stream().map(StocktakingProfitLossDTO.ExportViewDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
+        //填充数据
+        for (StocktakingProfitLossDTO.ExportViewDTO item : page.getRecords()) {
+            BillTypeEnum type = item.getBillType();
+            item.setBillTypeName(type.getName());
+            String sourceId = item.getSourceId();
+            String id = item.getId();
+            //盘点人
+            List<String> stocktakingUserIdList = taskUserList.stream().filter(t -> sourceId.equals(t.getSourceId()) || id.equals(t.getSourceId())).
+                    map(StocktakingTaskUserEntity::getUserId).collect(Collectors.toList());
+            String stocktakingUserName = userList.stream().filter(u -> stocktakingUserIdList.contains(u.getUserId())).
+                    map(FindUserDTO::getUserName).collect(Collectors.joining(","));
+            item.setStocktakingUserName(stocktakingUserName);
+            String skuId = item.getSkuId();
+            ProductDetailEntity sku = skuList.stream().filter(s -> s.getId().equals(skuId)).findFirst().orElse(null);
+            if (Objects.nonNull(sku)) {
+                item.setProductName(sku.getName());
+                item.setUnit(sku.getUnitName());
+            } else {
+                item.setProductName("");
+                item.setUnit("");
+            }
+        }
+        return new PagingVO<>(page);
     }
 
     /**

@@ -212,6 +212,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.dto.LogisticsProductDTO.PagingVO>
      */
     List<LogisticsProductDTO.ExportInfoDTO> listExport(@Param("params") LogisticsProductDTO.ExportDTO dto, @Param("approveStatus")Integer approvalStatus);
+    Page<LogisticsProductDTO.ExportInfoDTO> listExport(@Param("page") Page<LogisticsProductDTO.ExportInfoDTO> page,@Param("params") LogisticsProductDTO.ExportDTO dto, @Param("approveStatus")Integer approvalStatus);
 
     /**
      * 更新分页
@@ -341,6 +342,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     List<ProductDetailEntity> getProductDetailByDestDeclarePrice();
     IPage<SkuVO> pagingSelect(Page query, @Param("params")SkuVO.SelectDTO params);
 
+    List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(@Param("skuIds")List<String> skuIds);
 }
 
 

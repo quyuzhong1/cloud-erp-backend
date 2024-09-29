@@ -21,10 +21,12 @@ import com.erp.server.scm.service.PurchasePriceDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -312,18 +314,12 @@ public class PurchasePriceChangeController extends BaseController {
      * @author Will
      * @date: 2023/10/18 16:30
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购调价表数据导出")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
-            menuCode = "scm:purchase:price:change:paging",
-            tableAlias = "pp")
-    @WebAdvanceQuery(handler = PurchasePriceChangeQueryHandler.class)
-    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
-        purchasePriceChangeService.export(dto, response);
+    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.PagingParamDTO dto) {
+        purchasePriceChangeService.export(dto);
         return success();
     }
 

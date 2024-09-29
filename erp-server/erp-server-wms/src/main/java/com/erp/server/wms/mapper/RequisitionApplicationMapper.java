@@ -68,6 +68,7 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.ListDTO>
      **/
     List<RequisitionApplicationDTO.ListDTO> listExport(@Param("params") RequisitionApplicationDTO.PagingParamDTO dto);
+    Page<RequisitionApplicationDTO.ListDTO> listExport(@Param("page") Page<RequisitionApplicationDTO.ListDTO> page, @Param("params") RequisitionApplicationDTO.PagingParamDTO dto);
 
     /**
      * 下推发货单列表查询
@@ -78,4 +79,12 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
     List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(@Param("ids") List<String> ids);
 
     IPage<RequisitionApplicationDTO.PickingViewDTO> pagingPicking(@Param("page") Page<RequisitionApplicationDTO.PickingViewDTO> page,@Param("id") String id,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
+
+    List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(@Param("ids") List<String> cartonIds);
+
+    List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailView(@Param("params") RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto);
+
+    List<RequisitionApplicationDTO.DeliverRecordView> listFbaDeliverRecord(String id);
+
+    List<RequisitionApplicationDTO.DeliverRecordView> listWarehouseDeliverRecord(@Param("params") String id);
 }

@@ -8,7 +8,6 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskTimeRecordEntity;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -30,11 +29,11 @@ public interface ProjectTaskTimeRecordService extends IService<ProjectTaskTimeRe
 
     /**
      * 导出任务工时列表
+     *
      * @param dto
-     * @param response
      * @return
      */
-    Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto, HttpServletResponse response);
+    Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto);
 
     /**
      * 通过任务列表保存或更新工时
@@ -51,4 +50,6 @@ public interface ProjectTaskTimeRecordService extends IService<ProjectTaskTimeRe
      * @return java.util.List<com.erp.model.plm.dto.ProjectTaskTimeRecordDTO.TaskWorkTimeDTO>
      */
     List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> listByProductIds(List<String> productIds);
+
+    PagingVO<ProjectTaskTimeRecordPageVO> exportTaskTimeRecord(PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto);
 }

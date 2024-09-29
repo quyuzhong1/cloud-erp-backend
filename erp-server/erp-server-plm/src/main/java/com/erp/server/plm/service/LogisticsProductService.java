@@ -12,7 +12,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
@@ -53,13 +52,13 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
 
     /**
      * 导出物流产品信息
+     *
+     * @param dto
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-11-08 10:54
-     * @param dto
-     * @param response
-     * @return java.lang.Boolean
      */
-    Boolean exportExcel(LogisticsProductDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(LogisticsProductDTO.ExportDTO dto);
 
     /**
      * 导入产品信息
@@ -147,4 +146,5 @@ public interface LogisticsProductService  extends SuperService<ProductDetailEnti
      */
     List<BatchResultDTO>  pushRegistration(LogisticsProductDTO.PushRegistrationDTO dto);
 
+    PagingVO<LogisticsProductDTO.ExportInfoDTO> exportLogisticsProduct(PagingDTO<LogisticsProductDTO.ExportDTO> dto);
 }

@@ -27,7 +27,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,14 +102,8 @@ public class LogisticsBillController extends BaseController {
      * @date 2023-11-09 10:54
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "tms:logisticsBill:paging",
-            tableAlias = "lb"
-    )
-    @WebAdvanceQuery(handler = LogisticsBillQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean result = logisticsBillService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
+        Boolean result = logisticsBillService.exportExcel(dto);
         return result ? success() : failure();
     }
 
@@ -128,7 +121,7 @@ public class LogisticsBillController extends BaseController {
         if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(transportNo)){
             return failure("运单号和跟踪号不能同时为空");
         }
-        if (StringUtils.isBlank(trackNo) || StringUtils.isBlank(logisticsChannelId)){
+        if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(logisticsChannelId)){
             trackNo = transportNo;
         }
         if (StringUtils.isNotBlank(logisticsChannelId)){

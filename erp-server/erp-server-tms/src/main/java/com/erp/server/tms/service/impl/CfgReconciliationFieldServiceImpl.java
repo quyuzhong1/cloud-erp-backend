@@ -29,7 +29,8 @@ import com.erp.model.tms.dto.excel.CfgReconciliationFieldImportExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.tms.convert.CfgReconciliationFieldConverter;
 import com.erp.server.tms.listener.CfgReconciliationFieldExcelListener;
 import com.erp.server.tms.mapper.CfgReconciliationFieldMapper;
@@ -46,6 +47,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_CFG_RECONCILIATION_FIELD;
 
 /**
  * <p>
@@ -70,7 +73,8 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     private ScmTaskFeign scmTaskFeign;
     @Resource
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     /**
      * 修改
      */
@@ -125,16 +129,8 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     }
 
     @Override
-    public Boolean exportExcel(CfgReconciliationFieldDTO.PagingParamDTO dto, HttpServletResponse response) {
-        List<CfgReconciliationFieldExportDTO> sourceList = baseMapper.listExportExcel(dto);
-        // 转换
-        List<CfgReconciliationFieldExportExcelDTO> resultList = convertExcelList(sourceList);
-        String fileName = "对账字段配置数据";
-        try {
-            ExcelUtil.export(fileName, "对账字段配置数据", resultList, CfgReconciliationFieldExportExcelDTO.class, response);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportExcel(CfgReconciliationFieldDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("对账字段配置数据", EXPORT_TMS_CFG_RECONCILIATION_FIELD.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -424,6 +420,14 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         return resulList.stream()
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public PagingVO<CfgReconciliationFieldExportExcelDTO> exportCfgReconciliationField(PagingDTO<CfgReconciliationFieldDTO.PagingParamDTO> dto) {
+        Page<CfgReconciliationFieldExportDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        // 转换
+        List<CfgReconciliationFieldExportExcelDTO> resultList = convertExcelList(page.getRecords());
+        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
     private void handleImportCfgReconciliationFieldFile(List<CfgReconciliationFieldImportExcelDTO> successList, List<CfgReconciliationFieldImportExcelDTO> errorList) {

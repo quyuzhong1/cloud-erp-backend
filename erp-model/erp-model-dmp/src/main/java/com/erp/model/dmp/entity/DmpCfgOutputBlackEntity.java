@@ -57,6 +57,12 @@ public class DmpCfgOutputBlackEntity extends BaseEntity<DmpCfgOutputBlackEntity>
     @TableField(value = "disabled")
     private Boolean disabled;
 
+    /**
+     * 备注
+     */
+    @TableField(value = "remark")
+    private String remark;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String DATA_TYPE = "data_type";

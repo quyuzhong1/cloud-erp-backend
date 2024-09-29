@@ -6,6 +6,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.business.enums.*;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -18,7 +19,9 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.entity.SoMultiChannelDetailEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.FbaInventoryEntity;
@@ -28,6 +31,7 @@ import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.server.oms.convert.OmsListingConverter;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -71,12 +75,13 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
     private OperateLogService operateLogService;
 
     @Resource
-    private WmsFbaInventoryFeign wmsFbaInventoryFeign;
+    private ShopInfoService shopInfoService;
+
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         try {
-            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+            dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
             throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
         }
@@ -102,9 +107,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 dto.setPlatformSkuNo("");
             }
             ListingInfoEntity oldEntity = null;
-            if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
-                    || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
-                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo());
+            if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
+                oldEntity = listingInfoService.getByPlatformSkuNo(dto.getPlatform(), dto.getPlatformSkuNo(), dto.getAuthId());
             } else {
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
                 paramDTO.setPlatform(dto.getPlatform());
@@ -129,8 +133,18 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
             // 亚马逊保存FNSKU
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) && StringUtils.isNotBlank(dto.getPlatformSkuNo())){
+                ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
+                if (null == shopInfo){
+                    ServiceException.runError("【listing消费】店铺信息不存在:"+ dto.getShopId());
+                }
+
                 // 查询关联的FNSKU
-                List<FbaInventoryEntity> fbaInventoryEntityList = wmsFbaInventoryFeign.findList(Collections.singletonList(dto.getPlatformSkuNo()));
+                // 根据Msku和仓库ID
+                List<FbaInventoryEntity> fbaInventoryEntityList =  FeignQuery.create(FbaInventoryEntity.class)
+                        .eq(FbaInventoryEntity::getWarehouseId, shopInfo.getWarehouseId())
+                        .eq(FbaInventoryEntity::getMsku, dto.getPlatformSkuNo())
+                        .list();
+
                 FbaInventoryEntity fbaInventoryEntity = fbaInventoryEntityList.stream().findFirst().orElse(null);
                 dto.setPlatformFnSku(null == fbaInventoryEntity ? "" : fbaInventoryEntity.getFnSku());
             }
@@ -144,8 +158,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 }
                 // 添加到映射
                 SkuMappingEntity skuMappingEntity = new SkuMappingEntity(entity, dto.getShopId());
-                if (OmsPlatformEnum.OMS_GOOD_CANG.getCode().equals(dto.getPlatform())
-                        || OmsPlatformEnum.OMS_IML.getCode().equals(dto.getPlatform())) {
+                if (OmsPlatformEnum.getByCode(dto.getPlatform()) != null) {
                     skuMappingEntity.setHasMappingAll(true);
                 }
                 if (!skuMappingService.save(skuMappingEntity)) {

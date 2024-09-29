@@ -48,6 +48,7 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return
      */
     List<InventoryDTO.TransFlowPagingViewDTO> exportTransFlow(@Param("params") InventoryDTO.ExportInvFlowSearchParamDTO params);
+    Page<InventoryDTO.TransFlowPagingViewDTO> exportTransFlow(@Param("page") Page<InventoryDTO.TransFlowPagingViewDTO> page, @Param("params") InventoryDTO.ExportInvFlowSearchParamDTO params);
 
 
     /**
@@ -65,6 +66,7 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return
      */
     List<InventoryDTO.InOutStockTransFlowPagingViewDTO> exportList(@Param("params") InventoryDTO.ExportInOutStockTransFlowSearchParamDTO params);
+    Page<InventoryDTO.InOutStockTransFlowPagingViewDTO> exportList(@Param("page") Page<InventoryDTO.InOutStockTransFlowPagingViewDTO> page, @Param("params") InventoryDTO.ExportInOutStockTransFlowSearchParamDTO params);
 
 
     /**
@@ -97,6 +99,7 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return
      */
     List<InventoryReportDTO.TransportPagingDTO> exportTransport(@Param("params") InventoryReportDTO.ExportTransportSearchParamDTO params);
+    Page<InventoryReportDTO.TransportPagingDTO> exportTransport(@Param("page") Page<InventoryReportDTO.TransportPagingDTO> page, @Param("params") InventoryReportDTO.ExportTransportSearchParamDTO params);
 
     /**
      * 在途查询单据明细分页查询
@@ -125,10 +128,12 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
 
     /**
      * 查询存在流水的库存id
-     * @param startDate 执行开始时间
-     * @param orgId   组织id
+     *
+     * @param startDate   执行开始时间
+     * @param orgId       组织id
      * @param inventoryId 库存id
+     * @param fromTable
      * @return List<String>
      */
-    List<String> listByOrgId(@Param("startDate") LocalDate startDate, @Param("orgId") String orgId, @Param("inventoryId") String inventoryId);
+    List<String> listByOrgId(@Param("startDate") LocalDate startDate, @Param("orgId") String orgId, @Param("inventoryId") String inventoryId,@Param("fromTable") Boolean fromTable);
 }

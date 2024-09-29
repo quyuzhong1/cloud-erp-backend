@@ -3,17 +3,17 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.*;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackingTaskDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -135,17 +135,17 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     /**
      * 导出装箱任务
+     *
      * @param dto
-     * @param response
      */
-    void exportPacking(PackingTaskDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportPacking(PackingTaskDTO.PagingParamDTO dto);
 
     /**
      * 导出装箱清单
+     *
      * @param dto
-     * @param response
      */
-    void exportPackingDetail(PackingTaskDTO.ExportDTO dto, HttpServletResponse response);
+    void exportPackingDetail(PackingTaskDTO.ExportDTO dto);
 
     /**
      * 删除装箱任务
@@ -235,10 +235,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      */
     List<PackingTaskDTO.StatusDTO> selectPackingStatusByIds(List<String> packingTaskIds, List<String> sourceCodeList);
 
-    /**
-     * 从历史装箱数据补充装箱任务和装箱详情
-     */
-    void initPackingTaskData();
 
     /**
      * 模糊搜索-支持分页
@@ -254,10 +250,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      */
     List<WmsCartonSpecDTO.SpecDTO> getCartonSpecByTaskId(String taskId);
 
-    /**
-     * 更新历史装箱状态
-     */
-    void initPackingTaskStatus();
 
     /**
      * 更新任务状态
@@ -276,4 +268,12 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId);
+
+    void addPackingByRequisition(RequisitionApplicationEntity entity);
+
+    void updateDetailQty(Map<String, Integer> qtyMap);
+
+    PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
+
+    PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(PagingDTO<PackingTaskDTO.PagingParamDTO> dto);
 }

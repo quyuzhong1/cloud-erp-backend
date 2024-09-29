@@ -94,7 +94,6 @@
             </if>
             pr.id desc
         </where>
-        limit 50000
     </select>
 
     <!-- 列表查询统计 -->

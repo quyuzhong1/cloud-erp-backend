@@ -106,9 +106,41 @@ public class RocketMqNewTag {
      * 新中台金蝶店铺
      */
     public static final String DMP_KINGDEE_SHOP_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_kingdee_shop_to_dmp_tag";
-    
+
     /**
      * 新中台旺店通预入库
      */
     public static final String DMP_WDT_PRE_STOCK_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_wdt_pre_stock_to_wms_tag";
+
+    /**
+     * 新中台FBA库存
+     */
+    public static final String DMP_FBA_INVENTORY_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_inventory_to_wms_tag";
+    
+    /**
+     * 新中台推送产品上架时间
+     */
+    public static final String DMP_PRODUCT_LISTING_TO_PLM_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_product_listing_to_plm_tag";
+
+
+    /**
+     * 新中台领星店铺
+     */
+    public static final String DMP_LX_SHOP_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_shop_to_dmp_tag";
+
+    /**
+     * 新中台领星FBA签收
+     */
+    public static final String DMP_LX_FBA_SHIPMENT_RECEIVE_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_fba_shipment_receive_to_dmp_tag";
+
+    /**
+     * 新中台FBA货件
+     */
+    public static final String DMP_FBA_SHIPMENT_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_fba_shipment_to_wms_tag";
+
+    /**
+     * 新中台平台入库
+     */
+    public static final String DMP_AMZ_SO_OUT_STOCK_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_amz_so_out_stock_to_wms_tag";
+
 }

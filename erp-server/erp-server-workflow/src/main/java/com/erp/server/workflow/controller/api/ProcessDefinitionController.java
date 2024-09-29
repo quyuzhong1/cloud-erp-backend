@@ -108,9 +108,9 @@ public class ProcessDefinitionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "流程定义导出excel")
     @PostMapping("/exportExcel")
-    public ApiResult<Boolean> exportExcel(@RequestBody @Validated ProcessDefinitionDTO.QueryExportDTO dto, HttpServletResponse response){
+    public ApiResult<Boolean> exportExcel(@RequestBody @Validated ProcessDefinitionDTO.QueryExportDTO dto){
         // 导出excel
-        Boolean result = processDefinitionService.exportExcel(dto,response);
+        Boolean result = processDefinitionService.exportExcel(dto);
         return success(result);
     }
 

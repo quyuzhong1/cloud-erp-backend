@@ -24,15 +24,14 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -44,9 +43,12 @@ import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
@@ -56,14 +58,15 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -71,12 +74,12 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -84,6 +87,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -166,6 +172,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private FbaShipmentPackingService fbaShipmentPackingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -200,7 +210,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //新增详情信息
         firstMileDeliveryDetailService.add(addDTO, firstMileDeliveryEntity.getId());
         //新增装箱任务
-        packingTaskService.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
+//        packingTaskService.addPackingByFirstMileDelivery(firstMileDeliveryEntity);
         return new BaseResultDTO.AddDTO(firstMileDeliveryEntity.getId(), code);
     }
 
@@ -254,6 +264,44 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
+    @Override
+    public PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page<FirstMileDeliveryDTO.ListFirstMileDTO> query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<FirstMileDeliveryDTO.ListFirstMileDTO> pageData = this.baseMapper.pagingFirstMile(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillFirstMileList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillFirstMileList(List<FirstMileDeliveryDTO.ListFirstMileDTO> records) {
+        if (CollectionUtils.isEmpty(records)){
+            return;
+        }
+        List<String> skuIds = records.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSkuId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(skuIds)){
+            return;
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuVOList)){
+            return;
+        }
+        Map<String, String> skuMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+//        List<String> deliveryIds = records.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSourceId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+//        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOS = baseMapper.getBusinessCodeByIds(deliveryIds);
+        records.forEach(listFirstMileDTO -> {
+            if (StrUtil.isNotBlank(listFirstMileDTO.getSkuId())){
+                listFirstMileDTO.setProductName(skuMap.get(listFirstMileDTO.getSkuId()));
+            }
+//            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), listFirstMileDTO.getSourceId())).findFirst().orElse(null);
+//            if (Objects.nonNull(businessDTO)){
+//                listFirstMileDTO.setBusinessCode(businessDTO.getBusinessCode());
+//            }
+        });
+    }
 
     @Override
     public List<FirstMileDeliveryDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -276,25 +324,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     @Transactional
-    public void exportList(FirstMileDeliveryDTO.PagingParamDTO param, HttpServletResponse response) {
-        List<FirstMileDeliveryDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/fbaDelivery.xlsx";
-        String name = "发货单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(FirstMileDeliveryDTO.PagingParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("发货单导出", EXPORT_WMS_FBA_DELIVERY.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -361,10 +392,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //已装箱才能审核
-        PackingTaskEntity taskEntity = packingTaskService.getBySourceCode(entity.getCode());
-        if (Objects.isNull(taskEntity)) {
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Arrays.asList(entity.getCode(),entity.getSourceCode()));
+        if (CollectionUtils.isEmpty(taskEntityList)) {
             throw new ServiceException("未生成装箱任务，不允许审核");
         }
+        PackingTaskEntity taskEntity = taskEntityList.get(0);
         CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgRuleOutService.getCfgOverweightDetailDTOByType(taskEntity.getSourceType());
         if(Objects.nonNull(cfgOverweightDetailDTO) && cfgOverweightDetailDTO.isCheckStatusWhenApprove()){
             if(!(taskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode()) && taskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode()))){
@@ -561,11 +593,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //如果是FBA货件来源，反审核修改货件发货状态和发货数量
-        if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
-            FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
-            if (ObjectUtil.isNotEmpty(shipmentEntity)) {
-                fbaShipmentService.deliveryDisApprove(entity);
-            }
+        if (FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(entity.getDemandType())) {
+            fbaShipmentService.deliveryDisApprove(entity);
         }
 
         //如果是发货计划来源，反审核修改发货状态
@@ -666,6 +695,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         String id = entity.getId();
+        // 删除fba装箱信息
+        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(id);
+        List<String> fbaCodeList = detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        fbaShipmentPackingService.removeByFbaCodeList(fbaCodeList);
         // 删除明细数据
         firstMileDeliveryDetailService.removeByMainIds(Arrays.asList(id));
         // 删除主单数据
@@ -750,10 +783,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (ObjectUtil.isNotEmpty(application)) {
                 //如果是FBA货件来源，审核通过修改货件发货状态为已发货
                 if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
-                    FbaShipmentEntity shipmentEntity = fbaShipmentService.getOne(Wrappers.<FbaShipmentEntity>lambdaQuery().eq(FbaShipmentEntity::getCode, application.getFbaShipmentCode()));
-                    if (ObjectUtil.isNotEmpty(shipmentEntity)) {
-                        fbaShipmentService.deliveryStatus(entity);
-                    }
+                    fbaShipmentService.deliveryStatus(entity);
                 } else {
                     //如果是发货计划来源
                     //审核通过修改发货状态为已发货
@@ -771,13 +801,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
                 //用目的仓查询是否绑定第三方仓
                 List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
+                // 查询发货目的仓平台
+                OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
 
                 //有对接海外仓API：调用入库单的提交审核，获取审核结果，审核通过后入库单状态为待签收；审核不通过为异常，操作日志记录失败原因，并显示在备注栏
-                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities)) {
-
-                    // 查询发货目的仓平台
-                    OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
-
+                if (CollectionUtils.isNotEmpty(overseasProviderWarehouseEntities) && Objects.nonNull(providerEntity)) {
                     // 推送第三方发货单审核通过
                     ApiResult<String> resultInfo = overseasWarehouseInboundService.pullThirdOverseasPlatform(providerEntity, inboundEntity, detailEntityList, OverseasVerifyEnum.PASS.getCode());
                     if (200 != resultInfo.getCode()) {
@@ -801,6 +829,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             matchRuleDTO.setType(StockOutTransferTypeEnum.FIRST_MILE.getCode());
             matchRuleDTO.setReceiveCountry(entity.getCountryId());
             matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
+            matchRuleDTO.setFromWarehouse(entity.getDeliveryWarehouseId());
             Boolean isMatchRule = cfgRuleOutService.matchTransferRule(matchRuleDTO);
             //发货仓与中转仓一致
             CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = getTransitSettingDTO();
@@ -822,8 +851,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     .build();
             try {
                 if(FmDeliveryLogisticsStatusEnum.WAIT.equals(entity.getLogisticsStatus())){
-                   Boolean autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
-                   if(autoGenerateResult){
+                    BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
+                   if(autoGenerateResult.getSuccess()){
                        FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
                        updateStatusDTO.setIds(Arrays.asList(entity.getId()));
                        updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
@@ -1338,11 +1367,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
+    public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids, String fbaShipmentCode) {
+        ids = ids.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(ids) && StringUtils.isBlank(fbaShipmentCode)) {
             return Collections.emptyList();
         }
-        return baseMapper.listDeliveryRecordBySourceIds(ids);
+        return baseMapper.listDeliveryRecord(ids,fbaShipmentCode);
     }
 
     @Override
@@ -1350,7 +1380,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isEmpty(sourceIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(FirstMileDeliveryEntity::getSourceId, sourceIds).list();
+        return lambdaQuery().in(FirstMileDeliveryEntity::getSourceId, sourceIds).orderByDesc(FirstMileDeliveryEntity::getCreateTime).list();
     }
 
     @Override
@@ -1376,9 +1406,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //根据单据id查询审核流程
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> taskIds = list.stream().map(req -> req.getTaskId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
         //查询库存sku
         List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
+        List<DictCountryEntity> dictCountryEntityList = FeignQuery.list(DictCountryEntity.class);
         for (FirstMileDeliveryDTO.ListDTO detailEntity : list) {
             SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
             paramDTO.setSkuNo(detailEntity.getSkuNo());
@@ -1393,13 +1425,27 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String bomType = BomTypeEnum.COMBINATION.getType();
 
         Map<String,Integer> qtyMap = new HashMap<>();
+        List<String> sourceCodeList = list.stream().map(v->v.getSourceCode()).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
+        List<WmsCartonDetailEntity> wmsCartonDetailEntityList = wmsCartonDetailService.listByTaskIds(taskIds);
        // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
             if (StringUtils.isNotBlank(data.getPackingStatus())) {
                 data.setPackingStatusName(PackingTaskStatusEnum.getName(data.getPackingStatus()));
             }else{
-                data.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
-                data.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+                //回查要货申请关联的装箱
+                PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(data.getSourceCode())).findFirst().orElse(new PackingTaskEntity());
+                if(StringUtils.isBlank(packingTaskEntity.getPackingStatus())){
+                    data.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
+                    data.setPackingStatusName(PackingTaskStatusEnum.WAIT.getName());
+                }else{
+                    data.setPackingStatus(packingTaskEntity.getPackingStatus());
+                    data.setPackingStatusName(PackingTaskStatusEnum.getName(packingTaskEntity.getPackingStatus()));
+                }
+            }
+            DictCountryEntity dictCountryEntity = dictCountryEntityList.stream().filter(v->v.getId().equals(data.getCountryId())).findFirst().orElse(null);
+            if(Objects.nonNull(dictCountryEntity)){
+                data.setCountryName(dictCountryEntity.getNameCn());
             }
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
@@ -1445,10 +1491,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             if (ObjectUtils.isNotEmpty(overseasWarehouseInboundEntity)) {
                 data.setOverseasInboundCode(overseasWarehouseInboundEntity.getCode());
             }
+            if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(data.getDemandType())){
+                List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailEntityList.stream().filter(v->v.getTaskId().equals(data.getTaskId()) && v.getSkuId().equals(data.getSkuId()) && v.getFnSku().equals(data.getFnSku())).collect(Collectors.toList());
+                data.setPackingQty(cartonDetailEntityList.stream().mapToInt(v->v.getPackQty()).sum());
+            }else{
+                List<WmsCartonDetailEntity> cartonDetailEntityList = wmsCartonDetailEntityList.stream().filter(v->v.getTaskId().equals(data.getTaskId()) && v.getSkuId().equals(data.getSkuId()) && v.getFnSku().equals(data.getPlatformSkuNo())).collect(Collectors.toList());
+                data.setPackingQty(cartonDetailEntityList.stream().mapToInt(v->v.getPackQty()).sum());
+            }
 
             //如果装箱数量大于发货数量，拆分处理
             if(Objects.nonNull(data.getDeliveryQty()) && Objects.nonNull(data.getPackingQty()) && data.getPackingQty() > data.getDeliveryQty()){
-                String key = data.getId() + data.getSkuId();
+                String key = data.getId() + data.getSkuId()+data.getFnSku();
                 if(qtyMap.containsKey(key)){
                     Integer reduceQty = qtyMap.get(key);
                     if(reduceQty > data.getDeliveryQty()){
@@ -1568,10 +1621,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
 
         //未装箱不能下推入库单
-        PackingTaskEntity packingTaskEntity = packingTaskService.getBySourceCode(entity.getCode());
-
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(Arrays.asList(entity.getCode(),entity.getSourceCode()));
+        PackingTaskEntity packingTaskEntity = CollectionUtils.isEmpty(packingTaskEntityList)?null:packingTaskEntityList.get(0);
         if (Objects.isNull(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus())) {
-            throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND, entity.getCode());
+            throw new ServiceException(ApiError.NOT_PACKING_NOT_GENERATE_INBOUND);
         }
 
         // 查询关联目的仓
@@ -1681,6 +1734,117 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         return this.lambdaQuery().eq(FirstMileDeliveryEntity::getCode, code).last("limit 1").one();
     }
+
+    @Override
+    public FirstMileDeliveryEntity getBySourceCode(String code) {
+        if (StringUtils.isBlank(code)){
+            return null;
+        }
+        return this.lambdaQuery().eq(FirstMileDeliveryEntity::getSourceCode, code).last("limit 1").one();
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordByFbaCode(String fbaShipmentCode) {
+        if (StringUtils.isBlank(fbaShipmentCode)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeliveryRecord(null,fbaShipmentCode);
+    }
+
+
+    @Override
+    public List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(List<String> codes,List<String> sourceCodes) {
+        if (CollectionUtils.isEmpty(codes) && CollectionUtils.isEmpty(sourceCodes)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDetailByCodes(codes,sourceCodes);
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto) {
+        //汇总 亚马逊签收报告/第三方仓签收报告签收数量
+        List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList1 = overseasWarehouseInboundService.countReceiveQtyByParams(dto);
+        List<FirstMileDeliveryDTO.ReceiveDTO> receiveDTOList2 =fbaShipmentReceiveService.countReceiveQtyByParams(dto);
+        return Stream.concat(receiveDTOList1.stream(),receiveDTOList2.stream()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds( List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getBusinessCodeByIds(ids);
+    }
+
+
+    @Override
+    public PagingVO<FirstMileDeliveryDTO.ListDTO> exportFbaDelivery(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
+        Page<FirstMileDeliveryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if(!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(List<String> deliveryCodes) {
+        if (CollectionUtils.isEmpty(deliveryCodes)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getBusinessCodeByCodes(deliveryCodes);
+    }
+
+    @Override
+    public void exportPackingDetail(PackingTaskDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("发货单装箱清单导出", EXPORT_WMS_FIRST_MILE_PACKING_TASK_DETAIL.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+
+        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(dto.getParams().getIds())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.firstMilePackingTaskDetail(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(),dto.getParams().getIds(), dto.getParams().getPermissionSql());
+        if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //补充数据
+        buildPackingDetailTask(page.getRecords());
+        //切换为装箱清单导出
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> list = buildPackingDetailExportTask(page.getRecords());
+        page.setRecords(list);
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public WmsCartonSpecDTO.ListPackingDTO listPacking(String id) {
+        FirstMileDeliveryEntity firstMileDeliveryEntity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("发货单为空"));
+        WmsCartonSpecDTO.ListPackingDTO listPackingDTO = new WmsCartonSpecDTO.ListPackingDTO();
+        //三方仓关联装箱任务查，FBA关联货件查
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(Arrays.asList(firstMileDeliveryEntity.getCode(),firstMileDeliveryEntity.getSourceCode()));
+        if(CollectionUtils.isEmpty(packingTaskEntityList)){
+            return new WmsCartonSpecDTO.ListPackingDTO();
+        }
+        PackingTaskEntity packingTaskEntity = packingTaskEntityList.get(0);
+        PackingTaskDTO.PackedDetailDTO packedDetailDTO = new PackingTaskDTO.PackedDetailDTO();
+        if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
+            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(id);
+            String fbaShipmentCode = detailEntityList.get(0).getFbaShipmentCode();
+            List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Arrays.asList(fbaShipmentCode));
+            List<String> cartonIds = fbaShipmentPackingEntityList.stream().map(v->v.getCartonId()).distinct().collect(Collectors.toList());
+            packedDetailDTO.setTaskId(packingTaskEntity.getId());
+            packedDetailDTO.setCartonIds(cartonIds);
+        }else{
+            packedDetailDTO.setTaskId(packingTaskEntity.getId());
+        }
+        listPackingDTO = packingTaskService.listPacking(packedDetailDTO);
+        listPackingDTO.setId(firstMileDeliveryEntity.getId());
+        listPackingDTO.setCode(firstMileDeliveryEntity.getCode());
+        return listPackingDTO;
+    }
+
     @Override
     public Boolean generateStatusUpdate(FirstMileDeliveryDTO.GenerateStatusUpdateDTO dto) {
         if (CollectionUtils.isEmpty(dto.getIds()) || CollectionUtils.isEmpty(dto.getBillTypes())) {
@@ -1722,14 +1886,28 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(CollectionUtils.isEmpty(result)){
             return new ArrayList<>();
         }
-        List<String> ids = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
+        List<String> outStockIds = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getOutstockId).collect(Collectors.toList());
+        //会存在已要货申请id下推装箱任务
+        List<String> sourceIds = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getSourceId).collect(Collectors.toList());
+        List<String> ids = Stream.concat(outStockIds.stream(), sourceIds.stream()).distinct().collect(Collectors.toList());
         //箱子明细信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
         Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
+        //国家名称填充
+        List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
         //设置箱子明细信息
         result.forEach(v->{
             List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
+            if (CollectionUtils.isEmpty(list) && StrUtil.isNotBlank(v.getSourceId())){
+                list = packingDetailMap.get(v.getSourceId());
+            }
             v.setPackingDTOList(list);
+            if (StrUtil.isNotBlank(v.getToCountry())){
+                DictCountryDTO.ListDTO listDTO = listDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), v.getToCountry())).findFirst().orElse(null);
+                if (Objects.nonNull(listDTO)){
+                    v.setToCountryName(listDTO.getNameCn());
+                }
+            }
         });
         return result;
     }
@@ -2119,12 +2297,77 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
         }
         //提交
-        transferInfoService.submit(Arrays.asList(transferId));
+        transferInfoService.submit(Arrays.asList(transferId), Boolean.FALSE);
         //审核
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setIds(Arrays.asList(transferId));
         baseApproveParamDTO.setType(ApproveType.PASS);
-        transferInfoService.approve(entity,ApproveType.PASS,"", null, Boolean.TRUE);
+        transferInfoService.approve(entity,ApproveType.PASS,"", null, Boolean.TRUE, Boolean.FALSE);
+    }
+
+    /**
+     * 填充装箱任务信息
+     * @param listPackingDetailDTOS
+     */
+    private void buildPackingDetailTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
+        listPackingDetailDTOS.forEach(listPackingDetailDTO -> {
+            listPackingDetailDTO.setPackingStatusName(PackingTaskStatusEnum.getName(listPackingDetailDTO.getPackingStatus()));
+            listPackingDetailDTO.setWeightingStatusName(PackingWeightStatusEnum.getName(listPackingDetailDTO.getWeightingStatus()));
+            listPackingDetailDTO.setMeasureSourceName(MeasureSourceEnum.getName(listPackingDetailDTO.getMeasureSource()));
+            listPackingDetailDTO.setSourceTypeName(PickingSourceTypeEnum.getName(listPackingDetailDTO.getSourceType()));
+        });
+    }
+
+    private List<WmsCartonDetailDTO.ListPackingDetailDTO> buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
+        List<String> taskIds = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskId).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> taskEntityList = packingTaskService.listByIds(taskIds);
+        Map<String, PackingTaskEntity> taskMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
+        //FBA货件新数据过滤掉没绑定的箱
+        List<String> fbaCodes = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getBusinessCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(fbaCodes)){
+            List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(fbaCodes);
+            listPackingDetailDTOS = listPackingDetailDTOS.stream().filter(v->{
+                List<FbaShipmentPackingEntity> fbaShipmentPackingEntity = fbaShipmentPackingEntityList.stream().filter(obj->obj.getFbaShipmenCode().equals(v.getBusinessCode())).collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(fbaShipmentPackingEntity)){
+                    return true;
+                }
+                List<String> cartonIds = fbaShipmentPackingEntity.stream().map(FbaShipmentPackingEntity::getCartonId).collect(Collectors.toList());
+                return cartonIds.contains(v.getId());
+            }).collect(Collectors.toList());
+        }
+        //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
+        List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(taskIds, null);
+        Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
+        listPackingDetailDTOS.forEach(pagingViewDTO -> {
+            PackingTaskEntity packingTaskEntity = taskMap.get(pagingViewDTO.getTaskId());
+            PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(pagingViewDTO.getTaskId());
+            pagingViewDTO.setTaskCode(packingTaskEntity.getCode());
+            pagingViewDTO.setSourceCode(packingTaskEntity.getSourceCode());
+            pagingViewDTO.setSourceType(packingTaskEntity.getSourceType());
+            pagingViewDTO.setSourceTypeName(PickingSourceTypeEnum.getName(packingTaskEntity.getSourceType()));
+            if (Objects.nonNull(statusDTO)){
+                String packingStatus = com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(statusDTO.getPackingStatus())? PackingTaskStatusEnum.UNPACKED.getCode() : statusDTO.getPackingStatus();
+                pagingViewDTO.setPackingTotalStatus(packingStatus);
+                pagingViewDTO.setPackingTotalStatusName(PackingTaskStatusEnum.getName(packingStatus));
+                String weightingStatus = com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(statusDTO.getWeightingStatus()) ? PackingWeightStatusEnum.UNWEIGHED.getCode() : statusDTO.getWeightingStatus();
+                pagingViewDTO.setWeightingTotalStatus(weightingStatus);
+                pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.getName(weightingStatus));
+                pagingViewDTO.setErrorMsg(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
+                pagingViewDTO.setPackageWeightStr(pagingViewDTO.getPackageWeight().toPlainString() + UnitEnum.WeightUnitEnum.KG.getName());
+            }else {
+                pagingViewDTO.setPackingTotalStatus(PackingTaskStatusEnum.UNPACKED.getCode());
+                pagingViewDTO.setPackingTotalStatusName(PackingTaskStatusEnum.UNPACKED.getName());
+                pagingViewDTO.setWeightingTotalStatus(PackingWeightStatusEnum.UNWEIGHED.getCode());
+                pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.UNWEIGHED.getName());
+                pagingViewDTO.setPackageWeight(BigDecimal.ZERO);
+                pagingViewDTO.setPackageWeightStr("0" + UnitEnum.WeightUnitEnum.KG.getName());
+            }
+            if(StringUtils.isNotBlank(pagingViewDTO.getFbaBoxNo())){
+                String fbaBoxNo = StrUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(pagingViewDTO.getBusinessCode()), "U", StrUtils.leftPadding(pagingViewDTO.getFbaBoxNo(),6,"0"));
+                pagingViewDTO.setFbaBoxNo(fbaBoxNo);
+            }
+        });
+        return listPackingDetailDTOS;
     }
 }
 

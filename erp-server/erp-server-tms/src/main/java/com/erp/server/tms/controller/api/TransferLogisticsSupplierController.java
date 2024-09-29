@@ -151,13 +151,12 @@ public class TransferLogisticsSupplierController extends BaseController {
      * @Author Luo_WG
      * @Date 2024/1/19 18:04
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出excel")
-    public ApiResult export(@RequestBody @Valid TransferLogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = transferLogisticsSupplierService.export(dto,response);
+    public ApiResult export(@RequestBody @Valid TransferLogisticsSupplierDTO.ExportDTO dto) {
+        Boolean result = transferLogisticsSupplierService.export(dto);
         return result ? success() : failure();
     }
 

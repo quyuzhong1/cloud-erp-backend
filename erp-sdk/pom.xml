@@ -17,6 +17,7 @@
         <module>erp-sdk-oms-amz-aws</module>
         <module>erp-sdk-oms-walmart</module>
         <module>erp-sdk-oms-shopee</module>
+        <module>erp-sdk-wms-antu</module>
         <module>erp-sdk-wms-goodcang</module>
         <module>erp-sdk-wms-iml</module>
         <module>erp-sdk-third-lingxing</module>

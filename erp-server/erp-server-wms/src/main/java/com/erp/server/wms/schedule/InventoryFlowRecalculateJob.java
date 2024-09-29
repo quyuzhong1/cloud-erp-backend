@@ -25,8 +25,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -60,11 +59,13 @@ public class InventoryFlowRecalculateJob {
         LocalDateTime startTime = null;
         String inventoryId;
         String inventoryOrgId = null;
+        Boolean fromTable = Boolean.FALSE;
         if (StrUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             startTime = jsonParam.getLocalDateTime("startTime", LocalDateTime.parse("2023-07-06T00:00:00"));
             inventoryId = jsonParam.getStr("inventoryId");
             inventoryOrgId = jsonParam.getStr("inventoryOrgId");
+            fromTable = jsonParam.getBool("fromTable");
         } else {
             inventoryId = null;
         }
@@ -96,15 +97,20 @@ public class InventoryFlowRecalculateJob {
             XxlJobHelper.log("lastTimeOverrideMap = {} 上次重算结束时间， closedDateMap = {}组织关账时间， 都为空", lastTimeOverrideMap, closedDateMap);
             return ReturnT.SUCCESS;
         }
+        Set<Map.Entry<String, LocalDate>> entries = startTimeMap.entrySet();
+        if(fromTable){
+            entries = new HashSet<>();
+            entries.add(startTimeMap.entrySet().stream().findFirst().get());
+        }
         // 4. 执行重算逻辑
-        for (Map.Entry<String, LocalDate> orgStartTimeMap : startTimeMap.entrySet()) {
+        for (Map.Entry<String, LocalDate> orgStartTimeMap : entries) {
             sw.start("task start orgStartTimeMap = " + orgStartTimeMap);
             String orgName = orgMap.get(orgStartTimeMap.getKey());
             log.info("重算库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startTime);
             // 更新库存流水
             LocalDate startDate = ObjectUtil.isNotEmpty(startTime) ? startTime.toLocalDate() : orgStartTimeMap.getValue();
             // 1. 查询当前组织下所有存在流水的库存id
-            List<String> inventoryIdList = transactionFlowService.listByOrgId(startDate, orgStartTimeMap.getKey(), inventoryId);
+            List<String> inventoryIdList = transactionFlowService.listByOrgId(startDate, orgStartTimeMap.getKey(), inventoryId, fromTable);
             if(CollUtil.isEmpty(inventoryIdList)) {
                 log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
                 continue;
@@ -116,7 +122,7 @@ public class InventoryFlowRecalculateJob {
                                 transactionFlowService.overrideInventoryFlow(startDate, invId, orgName))
                         ).toArray(CompletableFuture[]::new));
                 allOf.thenRun(() -> log.info("###TransactionFlowServiceImpl:::overrideInventoryFlow 库存流水重算，所有任务执行完毕 组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate)).join();
-                if(StrUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(orgStartTimeMap)){
+                if(StrUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(inventoryOrgId)){
                     inventoryFlowOverrideRecordService.save(new InventoryFlowOverrideRecordEntity(LocalDateTime.of(startDate, LocalTime.MIN),LocalDateTime.now(), orgStartTimeMap.getKey(),orgName, InventoryFlowOverrideRecordTypeEnum.AUTO));
                 }
 

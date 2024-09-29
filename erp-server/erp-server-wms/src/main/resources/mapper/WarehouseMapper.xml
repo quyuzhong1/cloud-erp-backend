@@ -231,40 +231,38 @@
     </select>
     <select id="pagingProduct" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingProductViewDTO">
         SELECT
-        MAX(inv.id) as inventoryId,
-        pi.spu_no as spuNo,
-        pi.category as category,
-        pd.id as skuId,
-        pd.sku_no as skuNo,
-        pd.images_url as productImgUrl,
-        pd."name" as productName,
-        inv.warehouse_id as warehouseId,
-        wh."name" as warehouseName,
-        COALESCE(wl.code,'') as warehouseLocation,
-        COALESCE(wlt.code,'') as warehouseArea,
-        COALESCE(wlt."name",'') as warehouseAreaName,
-        SUM(CASE WHEN inv.dict_inventory_status ='usable' THEN inv.qty ELSE 0 END) as usableQty,
-        SUM(CASE WHEN inv.dict_inventory_status ='frozen' THEN inv.qty ELSE 0 END) as frozenQty,
-        inv.org_id as orgId,
-        MAX(tf.trade_time) as latestSalesTime
-        FROM product_detail pd
-        LEFT JOIN product_info pi on pd.product_id = pi."id"  and pi.is_deleted = false
-        LEFT JOIN inventory inv on pd.id = inv.sku_id and inv.is_deleted = false AND inv.dict_inventory_status IN ( 'usable', 'frozen' )
-        LEFT JOIN warehouse wh on inv.warehouse_id = wh.id and wh.is_deleted = false
-        LEFT JOIN warehouse_location wl on inv.warehouse_location = wl.code and wl.is_deleted = false AND wl.warehouse_id = inv.warehouse_id
-        LEFT JOIN warehouse_location wlt on wl.parent_id = wlt.id and wlt.is_deleted = false
-        LEFT JOIN (select inventory_id, max(trade_time) as trade_time from transaction_flow
-        where is_deleted=false
-        <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
-            AND trade_time >= #{params.saleTimeList[0]} and (#{params.saleTimeList[1]}) > trade_time
+        MAX(inv.id) AS inventoryId,
+        MAX(pi.spu_no) AS spuNo,
+        MAX(pi.category) AS category,
+        pd.id AS skuId,
+        MAX(pd.sku_no) AS skuNo,
+        MAX(pd.images_url) AS productImgUrl,
+        MAX(pd."name") AS productName,
+        inv.warehouse_id AS warehouseId,
+        MAX(wh."name") AS warehouseName,
+        COALESCE(wl.code, '') AS warehouseLocation,
+        COALESCE(wlt.code, '') AS warehouseArea,
+        MAX(COALESCE(wlt."name", '')) AS warehouseAreaName,
+        SUM(CASE WHEN inv.dict_inventory_status = 'usable' THEN inv.qty ELSE 0 END) AS usableQty,
+        SUM(CASE WHEN inv.dict_inventory_status = 'frozen' THEN inv.qty ELSE 0 END) AS frozenQty,
+        MAX(inv.org_id) AS orgId,
+        MAX(tf.bill_date) AS latestSalesTime
+        FROM
+        inventory inv
+        LEFT JOIN product_detail pd ON inv.sku_id = pd.id AND pd.is_deleted = false
+        LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = false AND pi.property NOT IN ('服务', '费用')
+        LEFT JOIN warehouse wh ON inv.warehouse_id = wh.id AND wh.is_deleted = false
+        LEFT JOIN warehouse_location wl ON inv.warehouse_location = wl.code AND wl.is_deleted = false AND wl.warehouse_id = inv.warehouse_id
+        LEFT JOIN warehouse_location wlt ON wl.parent_id = wlt.id AND wlt.is_deleted = false
+        LEFT JOIN (SELECT info_id as inventory_id, MAX(bill_date) AS bill_date FROM inventory_his WHERE is_deleted = false GROUP BY inventory_id) AS tf
+        ON inv.id = tf.inventory_id
+        WHERE inv.is_deleted = false
+        <if test="params.saleTimeList !=null and params.saleTimeList.size>1">
+            AND bill_date >= #{params.saleTimeList[0]} and  #{params.saleTimeList[1]} + INTERVAL '1 day' > bill_date
         </if>
-        group by inventory_id) as tf on inv.id = tf.inventory_id
-        where pd.is_deleted = false and wh.disabled = false and wl.is_deleted = false and wlt.is_deleted = false and wh.approve_status = 'approve'
-        and pi.property not in ('服务','费用')
-        and pd.status = 2
         AND inv.org_id is not null
         <if test="params.saleTimeList !=null and params.saleTimeList.size>0">
-            and tf.trade_time is not null
+            and tf.bill_date is not null
         </if>
         <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
             AND inv.warehouse_id IN
@@ -294,9 +292,11 @@
             AND (pd.name ILIKE concat('%', #{params.skuStr}::text ,'%')
             or  pd.sku_no ILIKE concat('%', #{params.skuStr}::text ,'%'))
         </if>
-
-        GROUP BY spuNo,category,skuId, skuNo, productImgUrl,productName,warehouseId,warehouseName,warehouseLocation,warehouseArea,warehouseAreaName,inv.org_id
-        ORDER BY skuNo ASC,warehouseName ASC, inventoryId ASC
+        GROUP BY warehouseId,skuId,warehouseArea,warehouseLocation
+        <if test="params.isZeroDisabled != null and params.isZeroDisabled">
+         HAVING SUM(CASE WHEN inv.dict_inventory_status = 'usable' THEN inv.qty ELSE 0 END) > 0 OR SUM(CASE WHEN inv.dict_inventory_status = 'frozen' THEN inv.qty ELSE 0 END) > 0
+        </if>
+        ORDER BY skuNo ASC, warehouseName ASC, inventoryId ASC
     </select>
 
     <!--根据仓库id查询映射信息-->

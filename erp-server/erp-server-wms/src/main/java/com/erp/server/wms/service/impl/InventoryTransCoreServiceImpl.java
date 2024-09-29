@@ -256,12 +256,12 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 // 设置冗余信息部分
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
-                if(ObjectUtil.isNotNull(flow.getWarehouseLocation())){
+                if(ObjectUtil.isNotNull(transactionDTO.getWarehouseLocation())){
                     // 在途,待检空库位跳过校验
                     if(qcTransitNotLocation){
                         transactionDTO.setWarehouseLocationName("空仓位");
                     }else {
-                        transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation()));
+                        transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation(), transactionDTO.getWarehouseName()));
                     }
                 }
                 transactionDTO.setInventoryStatusName(stockBaseDTO.getInventoryStatus().getName());
@@ -349,7 +349,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 transactionDTO.setOrgName(getOrgName(orgList,stockBaseDTO.getOrgId()));
                 transactionDTO.setWarehouseName(getWarehouseInfo(warehouseEntityList,stockBaseDTO.getWarehouseId()).getName());
 
-                transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation()));
+                transactionDTO.setWarehouseLocationName(getWarehouseLocationName(stockBaseDTO.getWarehouseId(),stockBaseDTO.getWarehouseLocation(), transactionDTO.getWarehouseName()));
 
                 transactionDTO.setInventoryStatusName(stockBaseDTO.getInventoryStatus().getName());
 
@@ -418,7 +418,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 if(qcTransitNotLocation){
                     transactionDTO.setWarehouseLocationName("空仓位");
                 }else {
-                    transactionDTO.setWarehouseLocationName(getWarehouseLocationName(flow.getWarehouseId(),flow.getWarehouseLocation()));
+                    transactionDTO.setWarehouseLocationName(getWarehouseLocationName(flow.getWarehouseId(),flow.getWarehouseLocation(), transactionDTO.getWarehouseName()));
                 }
             }
             transactionDTO.setInventoryStatusName(InventoryStatusEnum.getByCode(flow.getDictInventoryStatus()).getName());
@@ -533,7 +533,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
      * @param warehouseLocation 仓位编号
      * @return  仓位名称
      */
-    private String getWarehouseLocationName(String warehouseId, String warehouseLocation) {
+    private String getWarehouseLocationName(String warehouseId, String warehouseLocation,String warehouseName) {
         QueryWrapper<WarehouseLocationEntity> wrapper = new QueryWrapper<>();
         wrapper.lambda().eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
                 .eq(WarehouseLocationEntity::getCode, warehouseLocation)
@@ -544,7 +544,8 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         if(locationEntity != null) {
             return locationEntity.getName();
         }
-        throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_FOUND,warehouseLocation);
+        log.error("库位信息不存在,仓库id：{}，仓库名称:{},仓位编号:{}",warehouseId, warehouseName,warehouseLocation);
+        throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_FOUND,warehouseName, warehouseLocation);
     }
 
 }

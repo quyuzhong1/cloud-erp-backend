@@ -58,7 +58,9 @@
         sod.so_detail_id as soDetailId,
         sod.source_detail_id AS sourceDetailId,
         sod.warehouse_location AS warehouseLocation,
-        so.packing_status
+        so.packing_status,
+        so.logistics_channel_id,
+        so.logistics_channel_name
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod
         ON so.id=sod.main_id AND sod.is_deleted=FALSE
@@ -82,7 +84,7 @@
        SELECT
            so.id,
            so.code,
-            so.third_code as thirdCode,
+           so.third_code as thirdCode,
            so.so_id AS soId,
            so.so_code AS soCode,
            so.source_type AS sourceType,
@@ -145,7 +147,6 @@
             </foreach>
         </if>
             so.create_time DESC
-			limit 50000
     </select>
 
 

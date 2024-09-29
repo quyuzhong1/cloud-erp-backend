@@ -25,6 +25,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
@@ -453,5 +454,13 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
                     .or(i-> i.eq(FbaShipmentReceiveEntity::getReceiveDate, LocalDateTime.of(billDate, LocalTime.MIN))
                     ))
                 .list();
+    }
+
+    @Override
+    public List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto) {
+        if (Objects.isNull(dto) || (CollectionUtils.isEmpty(dto.getDeliveryIds()) && Objects.isNull(dto.getMonth()))){
+            return Collections.emptyList();
+        }
+        return baseMapper.countReceiveQtyByParams(dto);
     }
 }

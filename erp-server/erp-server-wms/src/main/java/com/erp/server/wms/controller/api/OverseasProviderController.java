@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,18 @@ public class OverseasProviderController extends BaseController {
     private OverseasProviderService overseasProviderService;
 
     /**
+     * 新增
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "海外物流商新增")
+    public ApiResult add(@RequestBody @Validated OverseasProviderDTO.AddDTO dto) {
+        overseasProviderService.add(dto);
+        return success();
+    }
+
+    /**
     * 修改
     * @author Luo_WG
     * @date:  2023-11-16
@@ -70,6 +83,7 @@ public class OverseasProviderController extends BaseController {
             menuCode = "wms:overseasProvider:paging",
             tableAlias = "op"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<OverseasProviderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasProviderDTO.PagingParamDTO> dto) {
         PagingVO<OverseasProviderDTO.ListDTO> result = overseasProviderService.paging(dto);
         return success(result);
@@ -145,5 +159,58 @@ public class OverseasProviderController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 授权查看
+     **/
+    @PostMapping("/authorizeView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasProvider:authorize",
+            serviceClass = OverseasProviderService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<OverseasProviderDTO.AuthorizeViewDTO> authorizeView(@RequestBody @Validated BaseIdDTO dto) {
+        return success(overseasProviderService.authorizeView(dto));
+    }
+
+
+    /**
+     * 三方仓修改
+     */
+    @PostMapping("/updateThirdWarehouse")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "三方仓修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasProvider:update",
+            serviceClass = OverseasProviderService.class,
+            keyIdName = "id")
+    public ApiResult updateThirdWarehouse(@RequestBody @Validated OverseasProviderDTO.UpdateThirdWarehouseDTO dto) {
+        overseasProviderService.updateThirdWarehouse(dto);
+        return success();
+    }
+
+
+    /**
+     * 三方仓删除
+     */
+    @PostMapping("/delete")
+    @LogAction(value = LogActionEnum.DELETE, desc = "三方仓删除")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasProvider:update",
+            serviceClass = OverseasProviderService.class,
+            keyIdName = "id")
+    public ApiResult delete(@RequestBody @Validated BaseIdDTO dto) {
+        overseasProviderService.delete(dto.getId());
+        return success();
+    }
+
+    /**
+     * 获取仓库简称
+     */
+    @GetMapping("/getShortName")
+    public ApiResult<List<String>> getShortName(@RequestParam(value = "platformCode") String platformCode) {
+        return success(overseasProviderService.getShortName(platformCode));
+    }
 
 }

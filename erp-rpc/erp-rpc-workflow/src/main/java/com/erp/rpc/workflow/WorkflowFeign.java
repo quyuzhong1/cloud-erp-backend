@@ -249,4 +249,10 @@ public interface WorkflowFeign {
      */
     @PostMapping("/feign/process/getProcessBusiness")
     ProcessBusinessEntity getProcessBusiness(@RequestBody String businessKey);
+
+    /**
+     * 根据BusinessKey,taskStatus,curApproveId获取流程信息
+     */
+    @PostMapping("/feign/process/listProcessByBusinessKey")
+    List<ProcessTaskManagementEntity> listProcessByBusinessKey(@RequestBody ProcessManagementDTO.TaskKeyInfoDTO dto);
 }

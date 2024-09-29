@@ -13,24 +13,28 @@
 
 package com.erp.sdk.oms.amz.spapi.api;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
 import com.erp.sdk.oms.amz.spapi.model.fbainventory.GetInventorySummariesResponse;
+import com.erp.sdk.oms.amz.spapi.model.fbainventory.GetInventorySummariesResult;
+import com.erp.sdk.oms.amz.spapi.model.fbainventory.InventorySummary;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.taskdefs.Sleep;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
+@Slf4j
 @Getter
 public class FbaInventoryApi {
     private ApiClient apiClient;
@@ -217,6 +221,50 @@ public class FbaInventoryApi {
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
     }
+
+
+    /**
+     * 获取所有FBA库存信息
+     * @param granularityType 查询颗粒类型：目前仅支持marketplace
+     * @param granularityId 查询颗粒ID:marketplaceId
+     * @param marketplaceIds 当前不不生效
+     * @param details 是否携带明细
+     * @param startDateTime 数据开始时间
+     * @param sellerSkus 卖家SKU
+     * @return FBA库存列表
+     */
+    public List<InventorySummary> getAllInventorySummaries( String granularityType, String granularityId, List<String> marketplaceIds, Boolean details, OffsetDateTime startDateTime, List<String> sellerSkus) throws ApiException {
+        String currentNextToken = null;
+        ApiResponse<GetInventorySummariesResponse> withHttpInfo = getInventorySummariesWithHttpInfo(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus, currentNextToken);
+        GetInventorySummariesResponse data = withHttpInfo.getData();
+
+        // 所有结果
+        List<InventorySummary> allList = new LinkedList<>(data.getPayload().getInventorySummaries());
+        if (null == data.getPagination()){
+            return allList;
+        }
+        currentNextToken = data.getPagination().getNextToken();
+        while (StringUtils.isNotBlank(currentNextToken) ) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                log.warn("睡眠异常:{}", e.getMessage());
+            }
+            withHttpInfo = getInventorySummariesWithHttpInfo(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus, currentNextToken);
+            GetInventorySummariesResponse curData = withHttpInfo.getData();
+            GetInventorySummariesResult curResult = curData.getPayload();
+            if (CollectionUtil.isNotEmpty(curResult.getInventorySummaries())){
+                allList.addAll(curResult.getInventorySummaries());
+            }
+            if (null != curData.getPagination()){
+                currentNextToken = curData.getPagination().getNextToken();
+            } else {
+                currentNextToken = "";
+            }
+        }
+        return allList;
+    }
+
 
     public static class Builder {
         private AWSAuthenticationCredentials awsAuthenticationCredentials;

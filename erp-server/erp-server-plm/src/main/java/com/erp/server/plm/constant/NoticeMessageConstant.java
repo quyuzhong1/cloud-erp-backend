@@ -189,6 +189,11 @@ public interface NoticeMessageConstant {
      */
     String SCHEDULE_TASK_CHANGE_CARD="**任务名称：**%s\n**产品名称：**%s\n**任务负责人：**%s";
 
+    /**
+     * 试产量产审核：通知内容
+     */
+    String AUDIT_PILOT_MSG_CONTENT = "**通知类型：**%s\n**产品经理：**%s\n**SKU：**%s";
+
 
 
 

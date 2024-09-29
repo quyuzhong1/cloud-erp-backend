@@ -508,18 +508,12 @@ public class PurchaseOrderController extends BaseController {
      * @author Will
      * @date: 2023/3/15 18:23
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购订单")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "purchase_user_id",
-            menuCode = "scm:purchaseOrder:paging",
-            tableAlias = "po")
-    @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = purchaseOrderService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto) {
+        Boolean flag = purchaseOrderService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 
@@ -598,13 +592,12 @@ public class PurchaseOrderController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/7/13 16:29
      * @param id
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "网采合同导出")
     @GetMapping("/exportPurchaseContract")
     public ApiResult exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
-        Boolean flag = purchaseOrderService.exportPurchaseContract(id,response);
+        Boolean flag = purchaseOrderService.exportPurchaseContract(id, response);
         return flag == true ? success() : failure();
     }
 

@@ -1,19 +1,14 @@
 package com.erp.model.wms.dto.inventory;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.common.business.validator.ValidGroup;
-import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
-import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * @Classname: InventoryTransactionDTO
@@ -22,6 +17,7 @@ import java.util.List;
  * @Author: Edison.qu
  */
 @Data
+@NoArgsConstructor
 public class InventoryTransactionDTO implements Serializable {
 
     /**
@@ -151,4 +147,12 @@ public class InventoryTransactionDTO implements Serializable {
     // 用户名称 （冗余字段）
     @NotEmpty(message = "用户姓名 不能为空", groups = {ValidGroup.Update.class})
     private String userName;
+
+    public static InventoryTransactionDTO getInventoryTransactionDTO(String inventoryId, int qty, InventoryTransactionDTO transaction) {
+        InventoryTransactionDTO inventoryTransactionDTO = new InventoryTransactionDTO();
+        BeanUtil.copyProperties(transaction,inventoryTransactionDTO);
+        inventoryTransactionDTO.setInventoryId(inventoryId);
+        inventoryTransactionDTO.setQty(qty);
+        return inventoryTransactionDTO;
+    }
 }

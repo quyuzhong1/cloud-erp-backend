@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,12 +12,10 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -30,6 +27,7 @@ import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryMapper;
 import com.erp.server.wms.service.InventoryService;
@@ -43,11 +41,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY;
 
 /**
  * <p>
@@ -68,6 +66,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private InventoryService inventoryService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -75,8 +75,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     @Override
     public PagingVO<VirtualInventoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<VirtualInventoryDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        IPage<VirtualInventoryDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams(), dto.getLastId());
         // 填充名称
         fillPageData(pageData.getRecords());
         return new PagingVO<>(pageData);
@@ -84,41 +83,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
 
 
     @Override
-    public Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto, HttpServletResponse response) {
-        //总数
-        Integer count = baseMapper.pagingCount(dto);
-        if (count > MathUtil.EXPORT_MAX_COUNT) {
-            throw new ServiceException(ApiError.ERROR_EXCEL_EXPORT_SIZE);
-        }
-        PagingDTO<VirtualInventoryDTO.SearchParamDTO> pagingParamDTO = new PagingDTO<>();
-        pagingParamDTO.setParams(dto);
-        pagingParamDTO.setPageSize(-1);
-        PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(pagingParamDTO);
-        List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        //数据赋值处理
-        fillPageData(list);
-
-        //明细数据
-        List<VirtualInventoryDTO.ListDetailDTO> detailList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().toArray(VirtualInventoryDTO.ListDetailDTO[]::new))).collect(Collectors.toList());
-        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
-        pairList.add(new Pair<>(MathUtil.ZERO, list));
-        pairList.add(new Pair<>(MathUtil.ONE, detailList));
-
-        String name = "虚拟仓库库存信息";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/virtualInventory.xlsx";
-        try {
-            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("虚拟仓库库存信息导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(VirtualInventoryDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("虚拟仓库库存信息", EXPORT_WMS_VIRTUAL_INVENTORY.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -377,6 +343,16 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     }
 
     @Override
+    public PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
+        PagingVO<VirtualInventoryDTO.ListDTO> resultList = this.paging(dto);
+        List<VirtualInventoryDTO.ListDTO> list = (List<VirtualInventoryDTO.ListDTO>) resultList.getList();
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        return new PagingVO<>(list, resultList.getTotalCount(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
     public List<VirtualInventoryDTO.BomReturnDTO> listBomVirtual(VirtualInventoryDTO.BomParamDTO bomParamDTO) {
         List<VirtualInventoryDTO.BomReturnDTO> resultList = new ArrayList<>();
         //根据SKU查询BOM判断是否是组合SKU
@@ -523,7 +499,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
 
         //虚拟库存数据
-        List<VirtualInventoryDTO.ListInventoryDTO> virtualInventoryList = this.baseMapper.listVirtualWarehouseIdListAndSkuIdList(skuIdList, virtualWarehouseIdList);
+        List<VirtualInventoryDTO.ListInventoryDTO> virtualInventoryList = this.baseMapper.listVirtualWarehouseIdListAndSkuIdList(skuIdList, Collections.EMPTY_LIST);
 
         //实际仓库
         List<String> warehouseIdList = virtualInventoryList.stream().map(VirtualInventoryDTO.ListInventoryDTO::getWarehouseId).distinct().collect(Collectors.toList());

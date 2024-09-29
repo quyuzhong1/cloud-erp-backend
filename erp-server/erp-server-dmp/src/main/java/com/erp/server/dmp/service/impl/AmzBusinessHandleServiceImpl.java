@@ -100,6 +100,7 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
 
         // 查询是否有为处理的记录来源
         List<PlatformAmazonFulfilledShipmentsDTO> list = getPlatformAmazonFulfilledShipmentsDTOS(dto, b2cError, tableName);
+
         if (CollectionUtils.isEmpty(list)) {
             // 移除历史异常
             String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
@@ -223,7 +224,8 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
                 sourceDTO.getShipmentDateLocale(),
                 Collections.singletonList(detailDTO),
                 sourceDTO.getUniqueId(),
-                PlatformDictEnum.AMAZON.getCode()
+                PlatformDictEnum.AMAZON.getCode(),
+                sourceDTO.getAmazonOrderId()
         );
     }
 

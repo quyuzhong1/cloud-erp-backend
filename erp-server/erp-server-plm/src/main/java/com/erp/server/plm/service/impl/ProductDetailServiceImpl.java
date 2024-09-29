@@ -20,7 +20,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -67,12 +66,12 @@ import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
-import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -82,7 +81,6 @@ import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailServic
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.sdk.wangdian.server.WangDianClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -112,6 +110,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
 import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
 
@@ -256,6 +255,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private InventoryFeign inventoryFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -1947,13 +1948,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * 获取数据导出excel
      *
      * @param productSkuExcelDTO
-     * @param response           response
      * @return void
      * @Author Luo_WG
      * @Date 2022/10/10 12:09
      **/
     @Override
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
+//        downloadTaskFeign.saveDownloadTask("产品sku明细表", EXPORT_PLM_PRODUCT_DETAIL.getCode(), productSkuExcelDTO);
         List<ProductDetailExcelExportDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         if(CollUtil.isNotEmpty(list)) {
             Map<String, String> userIdNameMaps = new HashMap<>();
@@ -3023,25 +3024,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (CollUtil.isNotEmpty(productPackList)) {
                 productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
             }
-            //供应商信息
-            List<String> supplierIdList = skuList.stream().map(SkuVO::getSupplierId).collect(Collectors.toList());
-            List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
-
             //产品分类
             List<String> categoryIdList = skuList.stream().map(SkuVO::getCategoryId).distinct().collect(Collectors.toList());
             List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listByIds(categoryIdList);
+
+            List<String> skuNoList = skuList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuNo())).map(SkuVO::getSkuNo).distinct().collect(Collectors.toList());
+            List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
 
             for (SkuVO skuVO : skuList) {
                 if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
                 }
-                PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(skuVO.getSupplierId()) && req.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
-                    //含税价
-                    skuVO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+                if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                    DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
+                    skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
+                    skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
                 }
-
                 //产品分类
                 String categoryName = basicCategoryList.stream().filter(obj -> obj.getId().equals(skuVO.getCategoryId())).map(BasicCategoryEntity::getName).findFirst().orElse("");
                 skuVO.setCategoryName(categoryName);
@@ -3889,6 +3888,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean deleteBatch(List<String> ids) {
         List<ProductDetailEntity> entityListt = this.listByIds(ids);
         long count = entityListt.stream().filter(req -> !req.getStatus().equals(1) && !req.getStatus().equals(2)).count();
@@ -5089,6 +5090,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return baseMapper.accessoriesSku(searchKeyword, ProductDetailStatusEnum.APPROVAL_PASS.getCode());
 
     }
+
+    @Override
+    public List<ProductDetailExcelDTO> getProductDetailExportData(String metaInfo) {
+        return null;
+    }
+
     /**
      * 获取已审核sku 未计算目的国申报价数据
      * @return
@@ -5098,14 +5105,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return baseMapper.getProductDetailByDestDeclarePrice();
     }
 
-    /**
-     * 根据skuid 集合获取到sku基础信息 + 采购信息（产品采购信息+产品采购含税单价）
-     *
-     * @param skuIds
-     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
-     * @author zdy
-     * @date 2023-03-21 12:06
-     */
     @Override
     public List<SkuVO> getSkuBaseByIds(List<String> skuIds) {
         if(CollectionUtils.isEmpty(skuIds)){
@@ -5335,5 +5334,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         return "操作成功";
+    }
+
+    @Override
+    public List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(List<String> skuIds) {
+        if(CollectionUtils.isEmpty(skuIds)){
+            return Collections.emptyList();
+        }
+        List<SkuVO.ProductChargeInfoDTO> skuList = baseMapper.listProductChargeInfoByIds(skuIds);
+        return skuList;
     }
 }

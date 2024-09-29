@@ -160,8 +160,8 @@ public class LogisticsSupplierController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出excel")
-    public ApiResult export(@RequestBody @Valid LogisticsSupplierDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = logisticsSupplierService.export(dto,response);
+    public ApiResult export(@RequestBody @Valid LogisticsSupplierDTO.ExportDTO dto) {
+        Boolean result = logisticsSupplierService.export(dto);
         return result ? success() : failure();
     }
 

@@ -154,6 +154,7 @@ public class WmsCartonSpecDTO implements Serializable {
          * 详情
          */
         @Valid
+        @NotEmpty(message = "装箱时明细不能为空")
         private List<WmsCartonDetailDTO.AddDTO> detailList;
     }
 
@@ -324,6 +325,10 @@ public class WmsCartonSpecDTO implements Serializable {
         private String skuNo;
 
         /**
+         * fn_sku
+         */
+        private String fnSku;
+        /**
          * 已装箱数量
          */
         private Integer packQty;
@@ -367,6 +372,7 @@ public class WmsCartonSpecDTO implements Serializable {
          * 装箱信息
          */
         @Valid
+        @NotEmpty(message = "装箱明细不能为空")
         private List<WmsCartonSpecDTO.AddDTO> wmsCartonList;
     }
 
@@ -436,6 +442,11 @@ public class WmsCartonSpecDTO implements Serializable {
         private String skuNo;
 
         /**
+         * fnSku
+         */
+        private String fnSku;
+
+        /**
          * 产品产品名称
          */
         private String productName;
@@ -474,7 +485,7 @@ public class WmsCartonSpecDTO implements Serializable {
          * 单据id
          */
         private String sourceId;
-
+        private String sourceType;
         /**
          * 单据单号
          */
@@ -584,6 +595,11 @@ public class WmsCartonSpecDTO implements Serializable {
          * 产品产品名称
          */
         private String productName;
+
+        /**
+         * fn_sku
+         */
+        private String fnSku;
 
         /**
          * 发货数量

@@ -7,7 +7,6 @@ import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.WdtSoOutStockDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -43,9 +42,9 @@ public class SyncQiMenSoOutStockConsumer<T extends DmpSyncTaskIdDTO> extends Abs
     private DmpTaskFeign dmpTaskFeign;
 
     @Override
-    public void updateSyncTaskStatus(String syncTaskId, SyncStatusEnum code, String msg) {
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         try {
-            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(syncTaskId, code.getCode(), msg));
+            dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
             throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
         }

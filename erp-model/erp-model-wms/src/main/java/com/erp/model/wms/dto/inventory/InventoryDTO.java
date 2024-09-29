@@ -280,6 +280,11 @@ public class InventoryDTO implements Serializable {
     public static class PagingViewDTO {
 
         /**
+         * 主键id
+         */
+        private String id;
+
+        /**
          * sku id
          */
         private String skuId;
@@ -1378,6 +1383,10 @@ public class InventoryDTO implements Serializable {
          */
         private boolean filterSelfAddFlag;
         /**
+         * 是否零库存
+         */
+        private boolean zeroInventory;
+        /**
          * 仓位
          */
         private String warehouseLocation;
@@ -1416,6 +1425,10 @@ public class InventoryDTO implements Serializable {
          * 是否需要过滤自建
          */
         private boolean filterSelfAddFlag;
+        /**
+         * 是否零库存
+         */
+        private boolean zeroInventory;
     }
 
     @Data

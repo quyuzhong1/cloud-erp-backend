@@ -21,7 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -240,19 +239,13 @@ public class SubcontractChangeController extends BaseController {
     * @author will
     * @date:  2023-06-08
     * @param dto
-    * @param response
     * @return
     */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出委外变更订单")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:export",
-            tableAlias = "sc"
-    )
-    @WebAdvanceQuery(handler = SubcontractChangeQueryHandler.class)
-    public void exportList(@RequestBody @Validated SubcontractChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
-        subcontractChangeService.exportList(dto, response);
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SubcontractChangeDTO.PagingParamDTO dto) {
+        subcontractChangeService.exportList(dto);
+        return success(true);
     }
 
 }

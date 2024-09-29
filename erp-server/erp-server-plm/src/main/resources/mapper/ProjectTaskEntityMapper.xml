@@ -204,7 +204,6 @@
         </if>
         pt.id asc,
         pt.create_time asc
-        limit 50000
     </select>
 
     <select id="pagingCount" resultType="java.lang.Integer">
@@ -419,7 +418,6 @@
         </if>
         pt.id asc,
         pt.create_time asc
-        limit 50000
     </select>
 
 
@@ -623,7 +621,6 @@
         </if>
         pt.id asc,
         pt.create_time asc
-        limit 50000
     </select>
 
     <select id="allPagingCount" resultType="java.lang.Integer">
@@ -658,7 +655,6 @@
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
         </foreach>
-        limit 50000
     </select>
 
     <select id="getTaskDetails" resultType="com.erp.model.plm.dto.ProjectTaskDetailsDTO">
@@ -923,7 +919,6 @@
             </foreach>
         </if>
         pt.create_time asc
-        limit 50000
     </select>
 
     <select id="myApprovalPagingCount" resultType="java.lang.Integer">
@@ -1811,6 +1806,60 @@
         FROM  project_task
         WHERE is_deleted = false and string_to_array( charge_id,',') &amp;&amp;  string_to_array(#{chargeId}, ',')
     </select>
+    <select id="getAllTaskInWarehouseTimeViewByPage" resultType="com.erp.model.plm.dto.ProductTaskViewDTO">
+        select
+        t.*
+        from
+        (select
+        pi.id as productId,
+        pi.name as productName,
+        pi.charge_id,
+        pi.charge_name,
+        pi.approval_status,
+        pi2.project_status,
+        pd.id as skuId,
+        pd.sku_no,
+        to_char(pd.plan_listing_time, 'yyyy-MM-dd') as plan_listing_time,
+        COALESCE(to_char(pd.plan_listing_time, 'YYYYMM'),'') as timeInterval,
+        COALESCE(pi2.project_status,pi.approval_status) as status,
+        case when COALESCE(pi2.project_status,-1) = -1 then 0
+        else 1 end as isProjectStatus
+        from product_info pi
+        inner join product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
+        left join project_info pi2 on pi.id = pi2.product_id AND pi2.is_deleted = FALSE
+        where pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
+        ) t
+        <where>
+            <if test="dto.chargeIds != null and dto.chargeIds.size() > 0">
+                and
+                <foreach collection="dto.chargeIds" item="item" open="(" close=")" separator="or">
+                    string_to_array(t.charge_id,',') &amp;&amp; string_to_array(#{item}, ',')
+                </foreach>
+            </if>
+            <if test="dto.productIds != null and dto.productIds.size() > 0">
+                and t.productId in
+                <foreach collection="dto.productIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.productStatusList != null and dto.productStatusList.size() > 0">
+                and t.approval_status in
+                <foreach collection="dto.productStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.projectStatusList != null and dto.projectStatusList.size() > 0">
+                and t.project_status in
+                <foreach collection="dto.projectStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="dto.permissionSql != '' and dto.permissionSql != null">
+                ${dto.permissionSql }
+            </if>
+        </where>
+        order by t.plan_listing_time asc nulls last, t.skuId desc
+    </select>
 
 
     <update id="updateScheduleStatus">
@@ -1836,5 +1885,59 @@
         </foreach>
     </update>
 
+    <select id="pagingByAdvanceQuery" resultType="com.erp.model.plm.dto.ProjectTaskDTO$SimpleViewDTO">
+        select  pt.id,
+                pt.name,
+                pt.charge_id   chargeId,
+                pt.charge_name chargeName,
+                pt.phase_id    phaseId,
+                pt.phase_name  phaseName,
+                pt.product_id  productId,
+                pt.status,
+                pi.name productName,
+                pi.spu_no spuNo
+        from project_task pt
+            left join product_info pi on pt.product_id = pi.id
+        <where>
+            ${params.sqlMap.default}
+            and pt.is_deleted = false
+            and pi.spu_no in
+                <foreach collection="spuNos" item="spuNo" open="(" separator="," close=")">
+                    #{spuNo}
+                </foreach>
+        </where>
+    </select>
+    <select id="listByTaskIds" resultType="com.erp.model.plm.dto.ProjectTaskDTO$SimpleViewDTO">
+        select  pt.id,
+                pt.name,
+                pt.charge_id   chargeId,
+                pt.charge_name chargeName,
+                pt.phase_id    phaseId,
+                pt.phase_name  phaseName,
+                pt.product_id  productId,
+                pi.name productName,
+                pt.status,
+                pi.spu_no spuNo
+        from project_task pt
+            left join product_info pi on pt.product_id = pi.id
+        <where>
+            pt.is_deleted = false
+            and pt.id in
+            <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+        </where>
+    </select>
+    <select id="listSkusBySpuNo" resultType="com.erp.model.plm.dto.ProjectTaskDTO$Spu2SkuMapping">
+        select  pi.spu_no spuNo,
+                string_agg(pd.sku_no, ';') skuNoStr
+        from product_info pi
+            left join product_detail pd on pi.id = pd.product_id and pd.is_deleted = false
+        where pi.spu_no in
+        <foreach collection="spuNos" item="spuNo" open="(" separator="," close=")">
+            #{spuNo}
+        </foreach>
+        group by pi.spu_no;
+    </select>
 
 </mapper>

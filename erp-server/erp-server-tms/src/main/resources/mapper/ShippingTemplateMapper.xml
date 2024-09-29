@@ -179,7 +179,6 @@
             </foreach>
         </if>
         st.id desc
-        limit 50000
     </select>
 
     <select id="listShippingTemplate" resultType="com.erp.model.tms.dto.ShippingTemplateDTO$SelectDTO">

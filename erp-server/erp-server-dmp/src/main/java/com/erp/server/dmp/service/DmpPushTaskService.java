@@ -11,7 +11,6 @@ import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -93,13 +92,12 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
 
     /**
      * @param dto
-     * @param response
      * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/10/13 15:34
      */
-    Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(DmpPushTaskDTO.ParamDTO dto);
 
     /**
      * @param ids
@@ -159,6 +157,8 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      */
     String saveOrUpdateDmpSyncTask(DmpPushTaskEntity entity);
 
+    public void updateDmpSyncTask(DmpPushTaskEntity entity);
+
     /**
      * 根据id集合删除数据
      * @param ids
@@ -190,4 +190,6 @@ public interface DmpPushTaskService extends SuperService<DmpPushTaskEntity> {
      * @return
      */
     List<DmpTaskMsgDTO> getWarnTaskReport(List<String> statusList);
+
+    PagingVO<DmpPushTaskDTO.ListDTO> exportPushTask(PagingDTO<DmpPushTaskDTO.ParamDTO> dto);
 }

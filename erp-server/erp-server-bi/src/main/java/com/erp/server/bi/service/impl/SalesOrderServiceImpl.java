@@ -28,6 +28,7 @@ import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.SkuDTO;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -107,6 +108,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
 
     @Resource
     private BiTargetStaffSettingService biTargetStaffSettingService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     @Cacheable(cacheNames = "cache:bi:getMonthSales", keyGenerator = "myKeyGenerator")
@@ -186,6 +189,67 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         } else {
             return Collections.EMPTY_MAP;
         }
+    }
+
+    @Override
+    public PagingVO<SkuSalesDTO.PagingSalesInfoDTO> exportSkuSales(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto) {
+        SkuSalesDTO.SearchSkuDTO params = dto.getParams();
+        //获取到结算汇率
+        String settleRate = getSettleRate(params.getSettleMethod());
+        LocalDateTime paramsEndTime = params.getEndTime();
+        params.setEndTime(paramsEndTime, 1);
+
+        Page<SkuSalesDTO.PagingSalesInfoDTO> resultList = baseMapper.listSkuSalesExcel(new Page<SkuSalesDTO.PagingSalesInfoDTO>(dto.getCurrPage(),dto.getPageSize()),params, settleRate);
+        List<String> skuNoList = resultList.getRecords().stream().map(SkuSalesDTO.PagingSalesInfoDTO::getSkuNo).collect(Collectors.toList());
+
+        LocalDateTime nowTime = LocalDateTime.now();
+        LocalDateTime beforeThirtyDays = LocalDateUtil.getBeforeStartTime(nowTime, 29);
+        params.setStartTime(beforeThirtyDays);
+        params.setEndTime(nowTime);
+        //查询进三十天信息
+        List<SalesBaseVO> lastThirtyDays = baseMapper.getLastDays(params, settleRate);
+
+
+        LocalDateTime beforeSevenDays = LocalDateUtil.getBeforeStartTime(nowTime, 6);
+        params.setStartTime(beforeSevenDays);
+        params.setEndTime(nowTime);
+        //查询进七天信息
+        List<SalesBaseVO> lastSevenDays = baseMapper.getLastDays(params, settleRate);
+
+
+        Integer nowYear = LocalDate.now().getYear();
+        //销售信息
+        List<SkuDTO.SalesDTO> skuList = plmTaskFeign.listSkuSalesBySkuNos(skuNoList);
+        for (SkuSalesDTO.PagingSalesInfoDTO item : resultList.getRecords()) {
+            SkuDTO.SalesDTO skuInfo = skuList.stream().filter(s -> s.getSkuNo().equals(item.getSkuNo())).
+                    findFirst().orElse(null);
+            if (Objects.nonNull(skuInfo)) {
+                //公司首单日期
+                LocalDate firstOrderDate = skuInfo.getFirstOrderDate();
+                if (firstOrderDate != null) {
+                    Integer year = firstOrderDate.getYear();
+                    if (nowYear.equals(year)) {
+                        item.setIsNewProductName("是");
+                    }
+                }
+                item.setFirstOrderDate(skuInfo.getFirstOrderDate());
+                item.setSaleStateName(skuInfo.getSaleStateName());
+            }
+
+            //近三十天
+            Integer lastThirtyDaysSalesQuantity = lastThirtyDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) && b.getFlagNo().equals(item.getSkuNo())).
+                    mapToInt(SalesBaseVO::getSalesQuantity).sum();
+            //近七天
+            Integer lastSevenDaysSalesQuantity = lastSevenDays.stream().
+                    filter(b -> StringUtils.isNotBlank(b.getFlagNo()) &&
+                            b.getFlagNo().equals(item.getSkuNo())).
+                    mapToInt(SalesBaseVO::getSalesQuantity).sum();
+
+            item.setLastSevenDaysSalesQty(lastSevenDaysSalesQuantity);
+            item.setLastThirtyDaysSalesQty(lastThirtyDaysSalesQuantity);
+        }
+        return new PagingVO<>(resultList);
     }
 
     /**
@@ -298,7 +362,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * 导出sku 销售额
      *
      * @param params
-     * @param response
      * @return
      */
     @Override
@@ -381,7 +444,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
-
     }
 
     /**

@@ -1,5 +1,7 @@
 package com.erp.model.dmp.entity;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -8,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -45,7 +48,7 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
     @TableField("type")
     private String type;
     /**
-    * 输入类型id，api取dmp_cfg_input_api表，mq取dmp_cfg_input_mq表
+    * 输入类型id，api取dmp_cfg_api表，mq取dmp_cfg_mq表
     */
     @TableField("type_id")
     private String typeId;
@@ -59,6 +62,11 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
     */
     @TableField("extend_json")
     private String extendJson;
+    /**
+    * 是否主任务：true(主任务) false(非主任务)
+    */
+    @TableField("is_main_task")
+    private String isMainTask;
     
     public static final String SYSTEM_ID = "system_id";
 
@@ -73,10 +81,5 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
     public static final String DISABLED = "disabled";
 
     public static final String EXTEND_JSON = "extend_json";
-
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
 }

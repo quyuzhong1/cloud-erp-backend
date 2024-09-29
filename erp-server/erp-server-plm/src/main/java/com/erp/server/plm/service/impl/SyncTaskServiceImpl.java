@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.BasicCategoryEntity;
@@ -24,7 +25,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -77,6 +80,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 break;
             case PRODUCT_BOM_INFO:
                 resultList = syncBomInfo(sourceDetailList);
+                break;
+            default:
                 break;
         }
         //推送金蝶
@@ -167,6 +172,81 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             }
             List<DmpPushTaskEntity> dmpPushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, syncParamDetailDTO.getSyncOperate());
             resultList.addAll(dmpPushTaskList);
+        }
+        return resultList;
+    }
+
+	@Override
+	public Map<String, Map<String, Object>> newFindDataSendSyncTask(SyncParamDTO syncParamDTO) {
+		List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList = syncParamDTO.getSourceDetailList();
+        SourceTypeEnum sourceType = syncParamDTO.getSourceType();
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        switch (sourceType) {
+            case BASIC_CATEGORY:
+                resultList = newSyncCategory(sourceDetailList);
+                break;
+            case PRODUCT_DETAIL:
+                resultList = newSyncProductDetail(sourceDetailList);
+                break;
+            case PRODUCT_BOM_INFO:
+//                resultList = newSyncBomInfo(sourceDetailList);
+                break;
+            default:
+                break;
+        }
+		return resultList;
+	}
+
+	/**
+     * @description: 同步产品分类
+     * @author Will
+     * @date: 2023/10/30 11:22
+     * @param sourceDetailList
+     */
+    private Map<String , Map<String, Object>> newSyncCategory (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<BasicCategoryEntity> list = basicCategoryService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncCategory >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+        	String sourceId = syncParamDetailDTO.getSourceId();
+            BasicCategoryEntity basicCategoryEntity = list.stream().filter(obj -> {
+				return obj.getId().equals(sourceId);
+			}).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(basicCategoryEntity)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeCategoryService.newSyncDataToKingdee(basicCategoryEntity, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
+    /**
+     * @description: 同步产品
+     * @author Will
+     * @date: 2023/10/30 11:22
+     * @param sourceDetailList
+     */
+    private Map<String , Map<String, Object>> newSyncProductDetail (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<ProductDetailEntity> list = productDetailService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncProductDetail >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+        	String sourceId = syncParamDetailDTO.getSourceId();
+            ProductDetailEntity poroductDetailEntity = list.stream().filter(obj -> {
+				return obj.getId().equals(sourceId);
+			}).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(poroductDetailEntity)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeProductDetailService.newSyncDataToKingdee(poroductDetailEntity, syncParamDetailDTO.getSyncOperate()));
         }
         return resultList;
     }

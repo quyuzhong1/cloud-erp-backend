@@ -27,6 +27,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.Response;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -716,7 +717,6 @@ public class ProductDetailController extends BaseController {
      * excel导出产品信息
      *
      * @param productSkuExcelDTO productSkuExcelDTO
-     * @param response           response
      * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 11:49
@@ -724,8 +724,9 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息")
     @PostMapping(value = "/exportProduct")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
-    public void exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
+    public ApiResult<Boolean> exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
+        return success(true);
     }
 
 

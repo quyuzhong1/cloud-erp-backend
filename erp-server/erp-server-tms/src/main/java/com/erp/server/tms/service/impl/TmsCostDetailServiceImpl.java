@@ -11,6 +11,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -68,7 +69,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 
         log.info("开始新增自发货费用明细");
 
-        boolean saveBatch = super.saveBatch(list);
+        boolean saveBatch = super.saveOrUpdateBatch(list);
         if(!saveBatch) {
             throw new ServiceException("自发货费用明细保存失败");
         }
@@ -87,6 +88,19 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         if (DictCostAttributionEnum.SELF_DELIVER.equals(dictCostAttributionEnum) && !isImport) {
             List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
 
+            List<String> deleteIds = getDeleteIds(list, oldList);
+            if (CollectionUtils.isNotEmpty(deleteIds)) {
+                List<TmsCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+                //操作日志
+                List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getCfgCostId())).collect(Collectors.toList());
+                operateLogService.batchAddModuleOperateLog("删除了一个费用【%s】", ModuleTypeEnum.LOGISTICS_BILL_COST.getCode(), pairList, "编辑操作");
+                this.removeByIds(deleteIds);
+            }
+        }
+        //头程要根据id判断删除
+        if (DictCostAttributionEnum.FIRST_MILE.equals(dictCostAttributionEnum)) {
+            List<TmsCostDetailEntity> oldList = this.listByMainIdList(Arrays.asList(mainId));
+            oldList = oldList.stream().filter(e -> DetailReconciliationTypeEnum.ACTUAL.getCode().equals(e.getType())).collect(Collectors.toList());
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
                 List<TmsCostDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -146,11 +160,11 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     }
 
     @Override
-    public List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListById(String id) {
-        if(StringUtils.isBlank(id)){
+    public List<TmsCostDetailDTO.CostCompareDTO> getCostCompareListByIds(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
             return new ArrayList<>();
         }
-        List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListById(id);
+        List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = baseMapper.getCostCompareListByIds(ids);
         costCompareDTOList.forEach(v->{
             if(Objects.nonNull(v.getActualFee()) && Objects.nonNull(v.getEstimatedFee())){
                 v.setFeeDifference(v.getActualFee().subtract(v.getEstimatedFee()));
@@ -288,5 +302,13 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                 .eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ACTUAL.getCode())
                 .in(TmsCostDetailEntity::getMainId, delActualCostIds)
                 .update();
+    }
+
+    @Override
+    public void removeByMainIds(List<String> costIds) {
+        if (CollectionUtils.isEmpty(costIds)){
+            return;
+        }
+        this.lambdaUpdate().in(TmsCostDetailEntity::getMainId, costIds).remove();
     }
 }

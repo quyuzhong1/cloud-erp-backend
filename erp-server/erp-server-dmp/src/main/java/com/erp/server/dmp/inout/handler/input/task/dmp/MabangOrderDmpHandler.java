@@ -36,9 +36,7 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                     if (platformEnum == null) {
                         platformEnum = MabangSourcePlatformEnum.getByName(platform);
                     }
-                    if (platformEnum != null) {
-                        dmpDataMap.put("sourcePlatform", platformEnum.getErpPlatformCode());
-                    }
+                    dmpDataMap.put("sourcePlatform", platformEnum == null ? platform : platformEnum.getErpPlatformCode());
                 }
                 //平台单号
                 Object thirdCodeObj = dmpDataMap.get("thirdCode");
@@ -48,7 +46,7 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                 }
 
                 //销售原始订单状态
-                Object orderStatus = dmpDataMap.get("orderstatus");
+                Object orderStatus = dmpDataMap.get("orderStatus");
                 if (orderStatus != null) {
                     MabangOriginalOrderStatusEnum orderStatusEnum = MabangOriginalOrderStatusEnum.getByCode(Integer.valueOf(orderStatus + ""));
                     if (orderStatusEnum.getCode().equals(MabangOriginalOrderStatusEnum.INVALID.getCode())) {
@@ -74,7 +72,7 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                         dmpDataMap.put("isReturned", DmpOrderReturnStatusEnum.NOT_RETURN.getCode());
                     }
                 }
-
+                dmpDataMap.put("orderStatus", "approve");
             }
         }
     }

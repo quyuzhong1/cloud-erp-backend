@@ -57,6 +57,12 @@ public enum SettingEnum {
 
     // 亚马逊货件白名单
     AMAZON_FBA_SHIPMENT_SKIP_LIST("amazon_fba_shipment_skip", SettingEnum.AMAZON_FBA_SHIPMENT_SKIP, "亚马逊FBA货件暂时跳过亚马逊请求列表(英文逗号拼接)"),
+
+    NEW_DMP_PUSH_SWTICH_LIST("push_swtich", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台推送开关"),
+    NEW_DMP_PULL_SWITCH_LIST("pull_switch", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台拉取开关"),
+
+    //支持推送仓位的金蝶仓库
+    PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST("push_kingdee_warehouse_location",SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION,"支持推送仓位的金蝶仓库"),
     ;
 
     @EnumValue
@@ -116,6 +122,16 @@ public enum SettingEnum {
     public static final String AMAZON_FBA_SHIPMENT_SKIP = "amazon_fba_shipment_skip";
 
     /**
+     * 新中台推送开关
+     */
+    public static final String NEW_DMP_PUSH_SWTICH = "new_dmp_push_swtich";
+
+    /**
+     * 新中台拉取开关
+     */
+    public static final String NEW_DMP_PULL_SWITCH = "new_dmp_push_switch";
+
+    /**
      * 亚马逊报告
      */
     public static final String AMAZON_REPORT = "amazon_report";
@@ -124,6 +140,12 @@ public enum SettingEnum {
      * 任务相关包括platform_api_task和amz_report_schedule
      */
     public static final String CFG_TASK = "cfg_task";
+
+    /**
+     * 支持推送仓位的金蝶仓库
+     */
+    public static final String PUSH_KINGDEE_WAREHOUSE_LOCATION = "push_kingdee_warehouse_location";
+
 
 
     SettingEnum(String key, String type, String value) {

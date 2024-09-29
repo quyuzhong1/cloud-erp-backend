@@ -505,6 +505,10 @@ public class VirtualInventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class WarehouseStatisticsExcelDTO {
         /**
+         * 主键id
+         */
+        private String invId;
+        /**
          * skuId
          */
         private String skuId;

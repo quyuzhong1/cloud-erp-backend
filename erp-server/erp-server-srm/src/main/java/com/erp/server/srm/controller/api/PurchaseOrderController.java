@@ -16,7 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
-import com.erp.rpc.wms.feign.PurchaseOrderFeign;
+import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.server.srm.query.OrderConfirmQueryHandler;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;

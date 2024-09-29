@@ -114,6 +114,7 @@ public class Generator {
         AUTHOR = scanner("作者");
         String tableName = scanner("表名，多个英文逗号分割");
 //        String[] tableNames = {"logistics_channel_constraint"};
+
         String[] tableNames = tableName.split(",");
         if(tableNames.length == 1) {
         	tableNames = tableName.split("，");

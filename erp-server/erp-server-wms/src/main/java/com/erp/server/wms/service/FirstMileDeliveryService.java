@@ -1,16 +1,15 @@
 package com.erp.server.wms.service;
+
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import org.apache.ibatis.annotations.Param;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -49,6 +48,13 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
       * @return PagingVO<FbaDeliveryDTO.ListDTO>>
       */
       PagingVO<FirstMileDeliveryDTO.ListDTO> paging(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 期初明细分页列表
+     * @param pagingParamDTO
+     * @return
+     */
+      PagingVO<FirstMileDeliveryDTO.ListFirstMileDTO> pagingFirstMile(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> pagingParamDTO);
 
      /**
      * 状态统计
@@ -145,14 +151,14 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     BatchResultDTO cancelProcess(String id);
 
     /**
-    * 导出Excel
-    * @author Luo_WG
-    * @date: 2023-10-30
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(FirstMileDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
+     * 导出Excel
+     *
+     * @param dto
+     * @return
+     * @author Luo_WG
+     * @date: 2023-10-30
+     */
+    void exportList(FirstMileDeliveryDTO.PagingParamDTO dto);
 
     /**
     * 审核通过回调方法
@@ -211,11 +217,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * 根据来源单号查询发货记录
      *
      * @param ids
+     * @param fbaShipmentCode
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.DeliverRecordView>
      * @Author Luo_WG
      * @Date 2023/11/1 18:06
      **/
-    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids);
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordBySourceIds(List<String> ids, String fbaShipmentCode);
 
     /**
      * 根据来源单号查询发货信息
@@ -293,4 +300,47 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     FirstMileDeliveryEntity getByCode(String key);
+
+    FirstMileDeliveryEntity getBySourceCode(String key);
+
+    List<FirstMileDeliveryDTO.DeliverRecordView> listDeliveryRecordByFbaCode(String fbaShipmentCode);
+
+    /**
+     * 根据编码获取明细列表
+     * @param codes 编码
+     * @param sourceCodes 来源编码
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ListFirstMileDTO> listDetailByCodes(List<String> codes,List<String> sourceCodes);
+
+    /**
+     * 根据业务单号统计签收数量
+     * @param dto
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto);
+
+    /**
+     * 根据发货单获取业务单号
+     * @param ids
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 导出
+     */
+    PagingVO<FirstMileDeliveryDTO.ListDTO> exportFbaDelivery(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto);
+    /**
+     * 根据发货单获取业务单号
+     * @param deliveryCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(List<String> deliveryCodes);
+
+    void exportPackingDetail(PackingTaskDTO.ExportDTO dto);
+
+    PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
+
+    WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 }

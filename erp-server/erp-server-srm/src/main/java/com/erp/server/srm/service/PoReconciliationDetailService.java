@@ -37,11 +37,10 @@ public interface PoReconciliationDetailService extends SuperService<PoReconcilia
      */
     PagingVO<PoReconciliationDetailDTO.ListDTO> paging(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto);
     /**
+     * @param dto
      * @description: 导出
      * @author Will
      * @date: 2024/1/20 12:03
-     * @param dto
-     * @param response
      */
     void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response);
 }

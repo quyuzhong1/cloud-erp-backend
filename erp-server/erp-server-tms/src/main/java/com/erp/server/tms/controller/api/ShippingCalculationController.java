@@ -12,7 +12,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -51,14 +50,13 @@ public class ShippingCalculationController extends BaseController {
      * 运费计算导出
      *
      * @param dto
-     * @param response
      * @return ApiResult
      * @author Will
      * @date: 2023/11/10 17:36
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody ShippingCalculationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = shippingCalculationService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody ShippingCalculationDTO.PagingParamDTO dto) {
+        Boolean flag = shippingCalculationService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

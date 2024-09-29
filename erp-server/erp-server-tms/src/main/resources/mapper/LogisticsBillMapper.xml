@@ -111,12 +111,16 @@
     </select>
     <select id="listLogisticsBillVoByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$LogisticsBillVo">
         SELECT
+            lb.id,
             lb.shop_id,
             lb.shop_name,
             lb.source_type,
             lb.source_id,
             lb.source_code,
+            lb.outstock_id,
+            lb.outstock_code,
             lb.transport_no,
+            lbd.id as detailId,
             lbd.track_status,
             lbd.track_no
         FROM logistics_bill lb
@@ -152,7 +156,6 @@
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.tms.dto.LogisticsBillDTO$PagingVO">
         <include refid="pagingSql"/>
-         limit 50000
     </select>
 
     <select id="getBaseByTrackNo" resultType="com.erp.model.tms.dto.LogisticsBillDTO$BaseDTO">
@@ -230,23 +233,19 @@
                lb.carrier_id as carrierId,
                lb.source_code as businessCode,
                lb.outstock_code as outstockCode,
+               lbd.id as detailId,
                lbd.track_no as trackNo,
                lbd.track_status as logisticsStatus,
         CASE WHEN lbd.track_no !=''    then
         (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false and lt.content !='' order by lt.track_time desc limit 1) else '' end  as logisticsTrack ,
                lb.invoices_status as invoicesStatus,
-               lbc.reconciliation_status as reconciliationStatus,
                lb.shipping_method as shippingMethod,
                lb.channel_id as logisticsChannelId,
                lb.logistics_supplier_id as logisticsSupplierId,
                lb.shop_name as shopName,
                lb.to_country as country,
-               lbc.actual_weight as weight,
-               lbc.volume_weight as volumeWeight,
-               lbc.weight_unit as weightUnit,
-               (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
-               (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'actual') as actualFee,
-               lbc.currency as  currency,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false and lb.id = lbc.logistics_bill_id and lbc.is_deleted = false where lbc.logistics_bill_id = lb.id and lbcd.TYPE = 'estimated') as estimatedFee,
+               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false and lb.id = lbc.logistics_bill_id and lbc.is_deleted = false where lbc.logistics_bill_id = lb.id  and lbcd.TYPE = 'actual') as actualFee,
                lb.order_time as orderTime,
                lbd.sign_time as  signTime,
                lb.remark,
@@ -254,14 +253,11 @@
                 else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from
             logistics_bill lb
-                inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
-                inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+            inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
         where
             ${params.sqlMap.default}
           and lb.order_type = #{params.orderType}
           and lb.is_deleted =false
-          and lbc.is_deleted = false
-          and lbd.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -282,33 +278,24 @@
                lb.carrier_id as carrierId,
         lb.source_code as businessCode,
         lb.invoices_status as invoicesStatus,
-        lbc.reconciliation_status as reconciliationStatus,
         lb.shipping_method as shippingMethod,
         lb.remark,
         lb.channel_id as logisticsChannelId,
         lb.logistics_supplier_id as logisticsSupplierId,
         lb.to_country as toCountryName,
-        lbc.actual_weight as weight,
-        lbc.volume_weight as volumeWeight,
-        lbc.weight_logistics as actualWeight,
-        lbc.volume_weight_logistics as actualVolumeWeight,
-        lbc.weight_unit as weightUnit,
-        (select sum(lbcd.cost_value) from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated') as estimatedFee,
-        lbc.currency as  currency,
-               lb.ship_time as shipTime,
+        (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false where lbc.logistics_bill_id = lb.id and lbcd.TYPE = 'estimated') as estimatedFee,
+        lb.ship_time as shipTime,
         lb.order_time as orderTime,
         lbd.sign_time as  signTime,
         lb.remark,
-        (select lbcd.exchange_rate from tms_cost_detail lbcd where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated' limit 1) as exchangeRate,
-               case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600) else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
+        (select lbcd.exchange_rate from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false  where lbc.id = lbcd.main_id and lbcd.is_deleted =false and lbcd.TYPE = 'estimated' limit 1) as exchangeRate,
+         case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600) else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from
         logistics_bill lb
-        inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
-        inner join logistics_bill_detail lbd on lbd.main_id = lb.id
+        inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
         where lb.id = #{id}
         and lb.is_deleted =false
-        and lbc.is_deleted = false
-        and lbd.is_deleted = false
+        limit 1
     </select>
     <select id="firstMileTabList" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$TabListDTO">
         SELECT lbd.track_status as tabFlag,
@@ -412,7 +399,6 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        limit 50000
     </select>
     <select id="hasWarnPaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
         SELECT lb.id,
@@ -484,6 +470,7 @@
                lbc.weight_logistics as weightLogistics,
                lbc.weight_unit as actualWeightUnit,
                lbc.currency as  currency,
+               lbc.reconciliation_id as  reconciliationId,
                lb.order_time as orderTime,
                lbd.track_no as trackNo,
                lbd.sign_time as receiveDate
@@ -502,6 +489,9 @@
             </if>
             <if test="reconciliationStatus!=null and reconciliationStatus!=''">
                 and lbc.reconciliation_status = #{reconciliationStatus}
+            </if>
+            <if test="reconciliationStatus==null">
+                and lbc.reconciliation_status  = 'toBeGenerated'
             </if>
             <if test="trackStatus!=null and trackStatus!=''">
                 and lbd.track_status = #{trackStatus}
@@ -548,18 +538,17 @@
             lbc.weight_unit as volumeWeightUnit,
             lbc.weight_unit as billingWeightUnit,
             lbc.currency as currency,
+            lbc.reconciliation_id as reconciliationId,
             lb.order_time as orderTime,
             lbd.track_no as trackNo,
             lbd.sign_time as receiveDate
         from
         logistics_bill lb
-        inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id
-        inner join logistics_bill_detail lbd on lbd.main_id = lb.id
-        inner join logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
+        left join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id AND lbc.is_deleted = FALSE
+        left join logistics_bill_detail lbd on lbd.main_id = lb.id AND lbd.is_deleted = FALSE
+        left join logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
         <where>
             and lb.is_deleted =false
-            and lbc.is_deleted = false
-            and lbd.is_deleted = false
             <if test="orderType!=null and orderType!=''">
                 and lb.order_type = #{orderType}
             </if>
@@ -619,5 +608,28 @@
         ON lbd.main_id=lb.id ANd lb.is_deleted = false
         WHERE lbd.is_deleted = false  and lb.source_type = 'soB2c' AND (lbd.track_no = #{logisticsCode} or lb.transport_no = #{logisticsCode})
         LIMIT 1
+    </select>
+    <select id="assembleFirstMileEstimatedList"
+            resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$WeightAllocationDTO">
+        select lb.id logisticsBillId,
+               lb.outstock_id sourceId,
+               lb.outstock_code sourceCode,
+               lb.source_id businessId,
+               lb.source_code businessCode,
+               lb.transport_no transportNo,
+               lb.logistics_supplier_id supplierId,
+               lb.shop_id shopId,
+               lb.shop_name shopName,
+               lb.to_country toCountry,
+               lb.channel_id channelId
+        from logistics_bill lb
+                 left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        where lb.is_deleted = false and lb.order_type = 'firstMile' and lbd.track_status in ('ordered', 'Inspecting', 'trackIng', 'arrived', 'sign', 'exception')
+        <if test="ids != null and ids.size() > 0">
+            and lb.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

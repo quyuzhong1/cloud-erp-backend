@@ -165,4 +165,25 @@ public class AttachmentDTO implements Serializable {
         private List<MultipartFile> multipartFileList;
 
     }
+
+    /**
+     * 删除的
+     */
+    @Data
+    @NoArgsConstructor
+    public  static class DeleteDTO {
+
+        /**
+         * 业务表id
+         */
+        private String businessId;
+
+        /**
+         * 资质附件url
+         */
+        @NotBlank(message = "附件地址不能为空")
+        private String attachUrl;
+
+
+    }
 }

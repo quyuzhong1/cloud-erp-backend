@@ -8,6 +8,9 @@ import com.lowagie.text.pdf.PdfReader;
 import lombok.Cleanup;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.python.antlr.ast.Str;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
@@ -138,5 +141,19 @@ public class PdfUtil {
         byte[] bytes = baos.toByteArray();
         String var11 = encoder.encodeBuffer(bytes).trim();
         return var11;
+    }
+
+    /**
+     * pdf提取文本，根据行分割成数组
+     * @param inputStream
+     * @return
+     * @throws Exception
+     */
+    public static String[] extractTextFromPDF(InputStream inputStream) throws Exception{
+        try (PDDocument document = PDDocument.load(inputStream)) {
+            PDFTextStripper pdfStripper = new PDFTextStripper();
+            String text = pdfStripper.getText(document);
+            return text.split("\n");
+        }
     }
 }

@@ -9,9 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -33,6 +31,7 @@ import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
@@ -78,6 +77,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 
 /**
  * <p>
@@ -135,6 +136,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private KingdeeReceiptConditionService kingdeeReceiptConditionService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 添加店铺
@@ -753,8 +756,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
-
-
         return AuthSaveHandler.shopAuthorize(dto.checkAndSetPlatform(), response);
     }
 
@@ -1251,6 +1252,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         authorizeUrlDTO.setShopInfoEntityList(list);
 
         String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        for (ShopInfoEntity shop : list) {
+            this.saveCustom(shop);
+        }
         return new ShopDTO.RedirectDTO(shopIds.get(0), shopAuthorizeUrl);
     }
 
@@ -1431,6 +1435,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto) {
+        Page<ShopDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isNotEmpty(page.getRecords())) {
+            //填充数据
+            fillDb(page.getRecords());
+        }
+        return new PagingVO<>(page);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
@@ -1470,28 +1484,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * 导出
      *
      * @param dto
-     * @param response
      * @author hyj
      * @date 2024/5/23 10:54
      */
     @Override
-    public void listExport(ShopDTO.ExportDTO dto, HttpServletResponse response) {
-        List<ShopDTO.PagingViewDTO> list = baseMapper.listExport(dto);
-        if (CollectionUtils.isNotEmpty(list)) {
-            //填充数据
-            fillDb(list);
-        }
-        StringBuffer stringBuffer = new StringBuffer();
-        String excelPath = "excel/ShopInfo.xlsx";
-        String name = "店铺导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        stringBuffer.append(date);
-        stringBuffer.append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, stringBuffer.toString(), excelPath);
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void listExport(ShopDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("店铺导出", EXPORT_OMS_SHOP.getCode(),dto);
     }
 
     private boolean verifyHmac(String data, String hmacHeader) {
@@ -1570,5 +1568,28 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<ShopInfoEntity> list = this.list();
         List<BaseDropDownDTO.DisabledDTO> resultList = ShopInfoConverter.INSTANCE.ShopInfoEntityToDisabledDTO(list);
         return resultList;
+    }
+    /**
+     * 如果没有选客户，就进行绑定
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveCustom(ShopInfoEntity shopInfoEntity) {
+        if (StringUtils.isBlank(shopInfoEntity.getCustomerId())) {
+            //店铺客户信息--如果存在则直接绑定原始的，不存在就创建并提交审核
+            CustomerInfoEntity customerInfoEntity = this.autoCreateShopCustomer(shopInfoEntity.getId());
+            if (Objects.nonNull(customerInfoEntity)) {
+                ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
+                if (Objects.isNull( approveStatus)||!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus.getStatus())) {
+                    List<String> ids = Arrays.asList(customerInfoEntity.getId());
+                    //提交
+                    Boolean submitResult = customerInfoService.submit(ids);
+                    if (submitResult) {
+                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
+                    }
+                }
+            }
+        }
     }
 }

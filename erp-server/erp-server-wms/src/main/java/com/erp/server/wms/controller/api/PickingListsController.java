@@ -16,7 +16,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -99,8 +98,15 @@ public class PickingListsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出拣货单")
     @PostMapping("/export")
-    @WebAdvanceQuery
-    public void export(@RequestBody @Validated PickingListsDTO.ExportDTO dto, HttpServletResponse response) {
-        pickingListsService.export(dto, response);
+    public ApiResult<Boolean> export(@RequestBody @Validated PickingListsDTO.ExportDTO dto) {
+        pickingListsService.export(dto);
+        return success(true);
     }
+
+
+    @PostMapping("/initDelivery")
+    public void initDelivery(@RequestBody List<String> codes) {
+        pickingListsService.initDelivery(codes);
+    }
+
 }

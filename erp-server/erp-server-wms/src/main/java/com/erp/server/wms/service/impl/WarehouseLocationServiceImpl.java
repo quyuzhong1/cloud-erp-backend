@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -31,6 +32,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.listener.WarehouseLocationExcelListener;
 import com.erp.server.wms.mapper.InventoryMapper;
@@ -58,6 +60,8 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_LOCATION;
+
 /**
  * <p>
  * 仓库仓位表 服务实现类
@@ -81,6 +85,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     private WarehouseLocationMapper warehouseLocationMapper;
     @Resource
     private WarehouseMapper warehouseMapper;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId) {
@@ -391,7 +397,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public PagingVO<WarehouseLocationDTO.LocationListDTO> pagingSelect(PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
-        WarehouseLocationDTO.SelectDTO params = searchDTO.getParams();
+        
+        WarehouseLocationDTO.SelectDTO params = JSON.parseObject(JSON.toJSONString(searchDTO.getParams()), WarehouseLocationDTO.SelectDTO.class);
         IPage<WarehouseLocationDTO.LocationListDTO> pagResult;
         if (StringUtils.isNotBlank(params.getSkuNo())){
             pagResult = baseMapper.pagingSelectBySku(query, params);
@@ -492,6 +499,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .in(CollectionUtils.isNotEmpty(warehouseIds), WarehouseLocationEntity::getWarehouseId,warehouseIds)
                 .in(CollectionUtils.isNotEmpty(warehouseLocationList), WarehouseLocationEntity::getCode, warehouseLocationList)
                 .list();
+    }
+
+    @Override
+    public PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto) {
+        Page<WarehouseLocationExportVo> page = baseMapper.listAllByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()) ,dto.getParams());
+        return new PagingVO<>(page);
     }
 
     @Override
@@ -722,9 +735,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
-    public void exportExcel(WarehouseLocationDTO.exportParamDto dto, HttpServletResponse response) {
-        List<WarehouseLocationExportVo> list = baseMapper.listAllByParam(dto);
-        ExcelUtil.export("仓位数据导出", "导出", list, WarehouseLocationExportVo.class, response);
+    public void exportExcel(WarehouseLocationDTO.exportParamDto dto) {
+        downloadTaskFeign.saveDownloadTask("仓位数据导出", EXPORT_WMS_WAREHOUSE_LOCATION.getCode(), dto);
     }
 
     @Transactional(rollbackFor = Exception.class)

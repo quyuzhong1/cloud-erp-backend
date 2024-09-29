@@ -13,6 +13,7 @@ import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -166,15 +167,14 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public OverseasProviderEntity findPlatformByWarehouseId(String warehouseId) {
-        OverseasProviderWarehouseEntity entity = getByWarehouseId(warehouseId);
-        if (null == entity) {
+        List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Arrays.asList(warehouseId));
+        if (CollectionUtils.isEmpty(entityList)) {
             return null;
         }
-        OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
-        if (null == providerEntity) {
-            throw new ServiceException("目的仓数据异常：未找到关联服务：id" + entity.getMainId());
-        }
-        return providerEntity;
+        List<String> mainIds = entityList.stream().map(v->v.getMainId()).distinct().collect(Collectors.toList());
+        List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.listByIds(mainIds);
+        overseasProviderEntityList = overseasProviderEntityList.stream().filter(v->v.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())).collect(Collectors.toList());
+        return CollectionUtils.isEmpty(overseasProviderEntityList)?null:overseasProviderEntityList.get(0);
     }
 
     @Override
@@ -269,5 +269,23 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         }
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean isApiWarehouse(String destWarehouseId) {
+        if(StringUtils.isBlank(destWarehouseId)){
+            return false;
+        }
+        OverseasProviderWarehouseEntity entity = getByWarehouseId(destWarehouseId);
+        if (null == entity || entity.getDisabled()) {
+            return false;
+        }
+
+        OverseasProviderEntity providerEntity = overseasProviderService.getById(entity.getMainId());
+        if (null == providerEntity || !AuthStatusEnum.ALREADY.getCode().equals(providerEntity.getAuthStatus())) {
+            return false;
+        }
+
+        return true;
     }
 }

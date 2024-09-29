@@ -6,10 +6,9 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 import com.erp.server.wms.service.QcEffectivenessService;
 import org.springframework.validation.annotation.Validated;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * 品质时效表
@@ -112,18 +110,12 @@ public class QcEffectivenessController extends BaseController {
      * @author Will
      * @date: 2023/4/12 12:25
      * @param dto
-     * @param response
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出品质时")
     @PostMapping(value = "/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "qc_user_id",
-            menuCode = "wms:qcEffectiveness:viewQcOverview",
-            tableAlias = "qb"
-    )
-    public ApiResult exportExcel(@RequestBody QcEffectivenessDTO.ExportExcelSearchParamDTO dto, HttpServletResponse response) {
-        Boolean flag = qcEffectivenessService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody QcEffectivenessDTO.ExportExcelSearchParamDTO dto) {
+        Boolean flag = qcEffectivenessService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

@@ -26,6 +26,7 @@ import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.ProductCertificateProjectEnum;
 import com.erp.model.plm.enums.ProductCertificateTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.plm.listener.ProductCertificateExcelListener;
 import com.erp.server.plm.mapper.ProductCertificateMapper;
 import com.erp.server.plm.service.*;
@@ -47,6 +48,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT_CERTIFICATE;
 
 /**
  * 认证实现类
@@ -74,6 +77,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<ProductCertificateDTO.ListDTO> paging(PagingDTO<ProductCertificateDTO.SearchParamDTO> pagingDTO) {
         ProductCertificateDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -542,25 +547,8 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     @Override
-    public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params, HttpServletResponse response) {
-        List<ProductCertificateDTO.ListDTO> records = this.baseMapper.exportExcel(params);
-        if (CollectionUtils.isEmpty(records)) {
-            throw new ServiceException(ApiError.ERROR_IMPORT_DATA_NOT_NULL,"产品认证");
-        }
-        //数据赋值处理
-        handlePaging(records);
-        String name = "产品认证列表";
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date);
-        sb.append(name);
-        String excelPath = "excel/productCertificate.xlsx";
-        try {
-            new ExcelPrintUtils().patchExport(records, response, sb.toString(), excelPath);
-        } catch (IOException e) {
-            log.error("产品认证列表导出出错 >>>>>{}", e);
-            return Boolean.FALSE;
-        }
+    public Boolean exportExcel(ProductCertificateDTO.ExportParamDTO params) {
+        downloadTaskFeign.saveDownloadTask("产品认证列表",EXPORT_PLM_PRODUCT_CERTIFICATE.getCode(), params);
         return Boolean.TRUE;
     }
 
@@ -628,6 +616,14 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
         }
         List<ProductCertificateEntity> list = this.lambdaQuery().in(ProductCertificateEntity::getSkuId, skuIdList).list();
         return list;
+    }
+
+    @Override
+    public PagingVO<ProductCertificateDTO.ListDTO> exportProductCertificate(PagingDTO<ProductCertificateDTO.ExportParamDTO> dto) {
+        Page<ProductCertificateDTO.ListDTO> page = this.baseMapper.exportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        //数据赋值处理
+        handlePaging(page.getRecords());
+        return new PagingVO<>(page);
     }
 
     /**

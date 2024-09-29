@@ -39,9 +39,6 @@ public class KingdeeOperatorRefPostEntity extends BaseEntity<KingdeeOperatorRefP
     @TableField("kingdee_id")
     private String kingdeeId;
 
-    @TableField("code")
-    private String code;
-
     @TableField("use_org_id")
     private String useOrgId;
 

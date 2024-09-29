@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.FirstMileCostAllocationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.FirstMileCostAllocationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="remark" property="remark" />
+       <result column="reconciliation_id" property="reconciliationId" />
+       <result column="logistics_bill_id" property="logisticsBillId" />
+       <result column="sku_cost_id" property="skuCostId" />
+       <result column="report_period_id" property="reportPeriodId" />
+       <result column="account_period" property="accountPeriod" />
+       <result column="status" property="status" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="business_code" property="businessCode" />
+       <result column="business_type" property="businessType" />
+       <result column="transport_no" property="transportNo" />
+       <result column="reconciliation_month" property="reconciliationMonth" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="from_warehouse_id" property="fromWarehouseId" />
+       <result column="from_warehouse_name" property="fromWarehouseName" />
+       <result column="to_warehouse_id" property="toWarehouseId" />
+       <result column="to_warehouse_name" property="toWarehouseName" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="org_id" property="orgId" />
+       <result column="org_name" property="orgName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        remark, reconciliation_id, logistics_bill_id, estimated_bill_id,
+        sku_cost_id, sku_cost_detail_id, weight_allocation_id, report_period_id, account_period, status, supplier_id, supplier_name,
+        business_code, business_type, transport_no, reconciliation_month, shop_id, shop_name, from_warehouse_id,
+        from_warehouse_name, to_warehouse_id, to_warehouse_name,delivery_time,source_id,source_code,org_id,org_name
+    </sql>
+    <sql id="pageSql">
+        SELECT
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.estimated_bill_id,
+        ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
+        a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
+        to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
+        a.source_id,a.source_code,a.org_id as orgId,a.org_name as orgName,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
+        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,
+        cast(ca.product_cost AS VARCHAR) as productCost,
+        cast(ca.product_total_cost AS VARCHAR) as productTotalCost,
+        ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
+        ca.as_last_month_receive_qty,ca.as_current_month_receive_qty, ca.weight_unit, ca.currency, ca.bill_source_type,lbd.sign_time as receiveTime,
+        cad.id as detailId,cad.fee_type, cad.allocation_type,
+        cast(cad.amount AS NUMERIC(16, 2)) as amount,
+        cast(cad.allocated_amount AS NUMERIC(16, 2)) as allocatedAmount,
+        cast(cad.product_allocated_amount AS NUMERIC(16, 6)) as productAllocatedAmount,
+        cast(cad.init_transit_cost AS NUMERIC(16, 2)) as initTransitCost,
+        cast(cad.init_estimated_cost AS NUMERIC(16, 2)) as initEstimatedCost,
+        cast(cad.mid_period_transit_cost AS NUMERIC(16, 2)) as midPeriodTransitCost,
+        cast(cad.current_period_allocated_cost AS NUMERIC(16, 2)) as currentPeriodAllocatedCost,
+        cast(cad.end_period_transit_cost AS NUMERIC(16, 2)) as endPeriodTransitCost,
+        cast(cad.end_period_estimated_cost AS NUMERIC(16, 2)) as endPeriodEstimatedCost,
+        a.create_time as createTime,a.create_user_name as createUserName, a.update_user_name as updateUserName,a.update_time as updateTime,
+        rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr,
+        case when cad.fee_type = 'shippingCost' then 1
+            when cad.fee_type = 'declareCost' then 2
+            when cad.fee_type = 'otherTaxFee' then 3
+            when cad.fee_type = 'otherCost' then 4
+        else 0 end as feeOrder
+        FROM first_mile_cost_allocation a
+        LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
+        LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
+        LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = a.logistics_bill_id AND lbd.is_deleted = FALSE
+        LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        <where>
+            ${params.sqlMap.default}
+            and a.is_deleted=false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        a.create_time DESC,a.id,ca.id,feeOrder
+    </sql>
+    <select id="tabList" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$TabListDTO">
+        SELECT
+            COUNT(distinct a.id) AS count,
+            a.status AS tabFlag
+        FROM  first_mile_cost_allocation a
+        WHERE  a.is_deleted=false
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY a.status
+    </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
+        <include refid="pageSql"/>
+    </select>
+    <select id="exportList" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
+        <include refid="pageSql"/>
+    </select>
+    <select id="listSkuBySourceCodes" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
+        SELECT
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.estimated_bill_id,
+        ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
+        a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
+        to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
+        a.source_id,a.source_code,a.org_id,a.org_name,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
+        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,ca.currency_symbol,
+        ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
+        ca.as_last_month_receive_qty,ca.as_current_month_receive_qty, ca.weight_unit, ca.currency, ca.bill_source_type,lbd.sign_time as receiveTime,
+        rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr
+        FROM first_mile_cost_allocation a
+        LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
+        LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = a.logistics_bill_id AND lbd.is_deleted = FALSE
+        LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        where a.is_deleted=false
+        <if test="sourceCodes != null and sourceCodes.size > 0">
+            and a.source_code in
+            <foreach collection="sourceCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="listBySourceIds" resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$PagingVO">
+        SELECT
+        a.id,a.reconciliation_id, a.logistics_bill_id, ca.estimated_bill_id,
+        ca.weight_allocation_id, a.report_period_id, a.account_period, a.status, a.supplier_id,
+        a.supplier_name, a.business_code, a.business_type, a.transport_no, a.reconciliation_month as reconciliationMonth,
+        to_char(a.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr, a.shop_id, a.shop_name,
+        a.from_warehouse_id, a.from_warehouse_name, a.to_warehouse_id, a.to_warehouse_name,
+        a.source_id,a.source_code,a.org_id,a.org_name,ca.init_first_mile_detail_id,ca.source_detail_id,ca.reconciliation_detail_id,
+        ca.id as costId,ca.sku_id, ca.sku_no, ca.platform_sku_no, ca.delivery_qty, ca.allocated_weight,ca.currency_symbol,
+        ca.product_cost, ca.product_total_cost,ca.init_receive_qty, ca.last_month_receive_qty, ca.current_month_receive_qty,
+        ca.as_last_month_receive_qty,ca.as_current_month_receive_qty, ca.weight_unit, ca.currency, ca.bill_source_type,lbd.sign_time as receiveTime,
+        rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr
+        FROM first_mile_cost_allocation a
+        LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
+        LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = a.logistics_bill_id AND lbd.is_deleted = FALSE
+        LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        where a.is_deleted=false
+        <if test="sourceIds != null and sourceIds.size > 0">
+            and a.source_id in
+            <foreach collection="sourceIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="listLastedAllocationMonth"
+            resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$LastedAllocMonthDTO">
+        select wa.logistics_bill_id logisticsBillId,
+               ca.status,
+               ca.report_period_id reportPeriodId,
+               sca.bill_source_type billSourceType,
+               scad.end_period_transit_cost endPeriodTransitCost,
+               max(rpm.month) latestMonth
+        from first_mile_weight_allocation wa
+                 left join first_mile_cost_allocation ca on wa.logistics_bill_id = ca.logistics_bill_id and ca.is_deleted = false
+                 left join report_period_month rpm on ca.report_period_id = rpm.id and rpm.is_deleted = false
+                 left join first_mile_sku_cost_allocation sca on sca.main_id = ca.id and sca.is_deleted = false
+                 left join first_mile_sku_cost_allocation_detail scad on scad.cost_main_id = sca.id and scad.is_deleted = false
+        <where>
+            wa.is_deleted = false
+            and wa.logistics_bill_id in
+            <foreach collection="logisticsBillIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </where>
+        group by wa.logistics_bill_id, ca.status, ca.report_period_id, sca.bill_source_type, scad.end_period_transit_cost
+    </select>
+    <select id="listBySourceIdsAndReportPeriodId"
+            resultType="com.erp.model.tms.entity.FirstMileCostAllocationEntity">
+        select a.*,
+               rpm.month as reportPeriodMonth
+        FROM first_mile_cost_allocation a
+        LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        where a.is_deleted=false
+        <if test="sourceIds != null and sourceIds.size > 0">
+            and a.source_id in
+            <foreach collection="sourceIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="reportPeriodId != null and reportPeriodId != ''">
+            and a.report_period_id = #{reportPeriodId}
+        </if>
+        order by rpm.month
+    </select>
+
+
+</mapper>

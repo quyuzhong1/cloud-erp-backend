@@ -156,7 +156,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
             }
 //            if (StringUtils.isNotBlank(rateLimitStr)){
 //                // 设置动态速率，失效时间=1/limit
-//                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+//                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
 //                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
 //            }
             // （临时）缓存设置根据亚马逊的响应时间记录下次执行开始时间
@@ -171,7 +171,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new RuntimeException("请求亚马逊SP-APi订单api异常失败,body=" + JSONUtil.toJsonStr(e));
@@ -266,13 +266,13 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
 //            if (StringUtils.isNotBlank(rateLimitStr)){
 //                // 设置动态速率，失效时间=1/limit
-//                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+//                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
 //                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
 //            }
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new ServiceException("查询亚马逊订单详情失败：API异常："+JSONUtil.toJsonStr(e));
@@ -292,17 +292,16 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
     /**
      * 请求RDT授权
      */
-    private String queryAndGetRDT(PlatformAmazonOrderDTO dto, AmazonShopInfoDTO shopInfoDTO) {
+    public String queryAndGetRDT(String orderId, AmazonShopInfoDTO shopInfoDTO) {
         // 生成RDT权限获取地址信息
-        // amazon-rdt-token:店铺ID:订单ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.AMAZON_RDT_TOKEN, dto.getShopId(), dto.getUniqueId());
+        // amazon-rdt-token:平台账号ID:订单ID
+        String tokenKey = StrUtil.format(RedisCacheConstants.AMAZON_RDT_TOKEN, shopInfoDTO.getPlatformShopCode(), orderId);
         Object obj = redisUtil.get(tokenKey);
         // 当前RDT
         String rdtToken = "";
         if (null != obj){
             rdtToken = (String) obj;
         } else {
-            String orderId = dto.getOrder().getAmazonOrderId();
             AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             TokensApi api = TokensApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false);
             CreateRestrictedDataTokenRequest body = CreateRestrictedDataTokenRequest.builderByOrderId(orderId);
@@ -312,11 +311,11 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
                 // 缓存到redis
                 redisUtil.set(tokenKey, rdtToken, response.getExpiresIn());
             } catch (Exception e) {
-                throw new ServiceException("获取亚马逊订单RDT token失败："+JSONUtil.toJsonStr(e));
+                throw new ServiceException("获取亚马逊订单RDT token失败："+ JSONUtil.toJsonStr(e));
             }
         }
         if (StringUtils.isBlank(rdtToken)){
-            throw new ServiceException("亚马逊RDT token异常：空："+JSONUtil.toJsonStr(dto));
+            throw new ServiceException("亚马逊RDT token异常：orderId：" + orderId);
         }
         return rdtToken;
     }
@@ -334,7 +333,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         AmazonShopInfoDTO shopInfoDTO = getAmazonShopInfoDTO(dto);
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         // 请求速率配置
-        String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
+//        String limitKey = extendObj.getString(AmazonRequestTypeRateLimiterEnum.limitKey);
 //        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS;
 //        RateLimitConfiguration rateLimitConfig = amazonSpApiRateLimitUtils.buildConfig(requestTypeRateLimiterEnum, limitKey);
 //        OrdersV0Api ordersVoApi = OrdersV0Api.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, rateLimitConfig);
@@ -343,53 +342,58 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
 
         // 生成RDT权限获取地址信息
         // amazon-rdt-token:店铺ID:订单ID
-        String rdtToken = queryAndGetRDT(dto, shopInfoDTO);
+        String rdtToken = queryAndGetRDT(dto.getOrder().getAmazonOrderId(), shopInfoDTO);
 
         // 修改x-amz-access-token的token
         ordersVoApi.getApiClient().addDefaultHeader(ApiClient.SIGNED_ACCESS_TOKEN_HEADER_NAME, rdtToken);
 
         // 设置地址
-        Address shippingAddress = downloadAddress(dto, ordersVoApi, limitKey);
+        Address shippingAddress = downloadAddress(shopInfoDTO.getPlatformShopCode(), dto.getOrder().getAmazonOrderId(), ordersVoApi);
         Order order = dto.getOrder();
         order.setShippingAddress(shippingAddress);
 
         // 设置买家信息
-        OrderBuyerInfo buyerInfo = downloadBuyer(dto, ordersVoApi, limitKey);
+        OrderBuyerInfo buyerInfo = downloadBuyer(dto.getPlatformShopCode(), dto.getOrder().getAmazonOrderId(), ordersVoApi);
         BeanUtils.copyProperties(buyerInfo, order.getBuyerInfo());
         return dto;
     }
 
-    private Address downloadAddress(PlatformAmazonOrderDTO dto, OrdersV0Api ordersVoApi, String limitKey) {
-        String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getBusinessTypeName(), dto.getUniqueId());
+    /**
+     * 下载亚马逊地址信息
+     * @param platformShopCode 平台账号
+     * @param orderId   订单ID
+     * @param ordersVoApi 订单客户端
+     * @return  亚马逊地址对象
+     */
+    public Address downloadAddress(String platformShopCode, String orderId, OrdersV0Api ordersVoApi) {
+        String uniqueId = StrUtil.format("{}_{}", platformShopCode, orderId);
+        String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getBusinessTypeName(), uniqueId);
         Object resultObj = redisUtil.get(key);
         if (null != resultObj) {
             return JSONUtil.toBean(resultObj.toString(), Address.class);
         }
         // 获取动态速率
+        // 平台请求中:平台类型:sellerId:业务类型
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS;
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(), platformShopCode, requestTypeRateLimiterEnum.getBusinessTypeName());
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj){
-            String msg = StrUtil.format("【订单地址拉取】 UniqueId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", dto.getUniqueId(), dto.getPlatformShopCode());
+            String msg = StrUtil.format("【订单地址拉取】 UniqueId={},存在429等待恢复:放弃当前请求任务", uniqueId);
             throw new ServiceException(msg);
         }
         String rateLimitStr = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getRateLimit();
         try {
-            String orderId = dto.getOrder().getAmazonOrderId();
             ApiResponse<GetOrderAddressResponse> orderAddressResp = ordersVoApi.getOrderAddressWithHttpInfo(orderId);
             List<String> limitArray = orderAddressResp.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
             rateLimitStr = limitArray.get(0);
             GetOrderAddressResponse response = orderAddressResp.getData();
-//            if (StringUtils.isNotBlank(rateLimitStr)){
-//                // 设置动态速率，失效时间=1/limit
-//                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
-//                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
-//            }
             // 结果缓存倒redis(消费完移除)
-            redisUtil.set(key, JSONUtil.toJsonStr(response.getPayload().getShippingAddress()));
+            redisUtil.set(key, JSONUtil.toJsonStr(response.getPayload().getShippingAddress()), 300);
             return response.getPayload().getShippingAddress();
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new ServiceException("查询亚马逊订单地址失败：API异常："+JSONUtil.toJsonStr(e));
@@ -398,36 +402,45 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         }
     }
 
-    private OrderBuyerInfo downloadBuyer(PlatformAmazonOrderDTO dto, OrdersV0Api ordersVoApi, String limitKey) {
-        String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getBusinessTypeName(), dto.getUniqueId());
-//        Object resultObj = redisUtil.get(key);
-//        if (null != resultObj) {
-//            return JSONUtil.toBean(resultObj.toString(), OrderBuyerInfo.class);
-//        }
+    /**
+     * 下载买家信息
+     * @param platformShopCode 平台账号
+     * @param orderId   订单ID
+     * @param ordersVoApi 订单客户端
+     * @return  亚马逊买家对象
+     */
+    public OrderBuyerInfo downloadBuyer(String platformShopCode, String orderId, OrdersV0Api ordersVoApi) {
+        String uniqueId = StrUtil.format("{}_{}", platformShopCode, orderId);
+        String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getBusinessTypeName(), uniqueId);
+        Object resultObj = redisUtil.get(key);
+        if (null != resultObj) {
+            return JSONUtil.toBean(resultObj.toString(), OrderBuyerInfo.class);
+        }
+        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.BUYER_INFO;
+        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(), platformShopCode, requestTypeRateLimiterEnum.getBusinessTypeName());
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj){
-            String msg = StrUtil.format("【订单买家信息拉取】 UniqueId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", dto.getUniqueId(), dto.getPlatformShopCode());
+            String msg = StrUtil.format("【订单买家信息拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", platformShopCode);
             throw new ServiceException(msg);
         }
         String rateLimitStr = AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getRateLimit();
         try {
-            String orderId = dto.getOrder().getAmazonOrderId();
             ApiResponse<GetOrderBuyerInfoResponse> orderBuyerInfoResp = ordersVoApi.getOrderBuyerInfoWithHttpInfo(orderId);
             List<String> limitArray = orderBuyerInfoResp.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
             rateLimitStr = limitArray.get(0);
             GetOrderBuyerInfoResponse response = orderBuyerInfoResp.getData();
             if (StringUtils.isNotBlank(rateLimitStr)){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             // 结果缓存倒redis(消费完移除)
-            redisUtil.set(key, JSONUtil.toJsonStr(response.getPayload()));
+            redisUtil.set(key, JSONUtil.toJsonStr(response.getPayload()), 300);
             return response.getPayload();
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new ServiceException("查询亚马逊订单地址失败：API异常："+JSONUtil.toJsonStr(e));
@@ -501,7 +514,7 @@ public class AmazonOrderHandler extends AbstractOrderHandler<PlatformAmazonOrder
         } catch (ApiException e) {
             if (429 == e.getCode()){
                 // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN);
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
             }
             throw new ServiceException("根据订单IDS请求亚马逊SP-APi订单失败：API异常："+JSONUtil.toJsonStr(e));

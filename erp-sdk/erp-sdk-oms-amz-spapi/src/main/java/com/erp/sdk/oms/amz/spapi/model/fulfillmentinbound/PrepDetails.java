@@ -14,6 +14,9 @@
 package com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound;
 
 import com.google.gson.annotations.SerializedName;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
 import java.util.Objects;
@@ -21,11 +24,12 @@ import java.util.Objects;
 /**
  * Preparation instructions and who is responsible for the preparation.
  */
-
+@Data
+@NoArgsConstructor
 @javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaClientCodegen", date = "2020-12-15T20:38:48.493+08:00")
 public class PrepDetails {
   @SerializedName("PrepInstruction")
-  private PrepInstruction prepInstruction = null;
+  private Object prepInstruction = null;
 
   @SerializedName("PrepOwner")
   private PrepOwner prepOwner = null;
@@ -34,38 +38,6 @@ public class PrepDetails {
     this.prepInstruction = prepInstruction;
     return this;
   }
-
-   /**
-   * Get prepInstruction
-   * @return prepInstruction
-  **/
-
-  public PrepInstruction getPrepInstruction() {
-    return prepInstruction;
-  }
-
-  public void setPrepInstruction(PrepInstruction prepInstruction) {
-    this.prepInstruction = prepInstruction;
-  }
-
-  public PrepDetails prepOwner(PrepOwner prepOwner) {
-    this.prepOwner = prepOwner;
-    return this;
-  }
-
-   /**
-   * Get prepOwner
-   * @return prepOwner
-  **/
-
-  public PrepOwner getPrepOwner() {
-    return prepOwner;
-  }
-
-  public void setPrepOwner(PrepOwner prepOwner) {
-    this.prepOwner = prepOwner;
-  }
-
 
   @Override
   public boolean equals(Object o) {

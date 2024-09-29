@@ -1,6 +1,22 @@
 package com.erp.server.wms.kingdee.impl;
 
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alibaba.fastjson.JSON;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -11,33 +27,38 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.dto.CfgSettingDTO;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
 import com.erp.server.wms.service.MachineDetailService;
 import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.WmsPushMsgService;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @description: 同步其他入库单
@@ -51,7 +72,7 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private PlmTaskFeign plmTaskFeign;
+    private DmpTaskFeign dmpTaskFeign;
 
     @Resource
     private MachineDetailService machineDetailService;
@@ -65,11 +86,63 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
     @Resource
     private MachineSubComponentsService machineSubComponentsService;
 
+    @Resource
+    private WmsPushMsgService wmsPushMsgService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(MachineInfoEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
+        //生成任务
+        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    }
+
+    /**
+     * @description: 生成任务
+     * @author Will
+     * @date: 2023/10/16 9:17
+     * @param entity
+     * @param operate
+     * @param resultMap
+     */
+    private DmpPushTaskEntity saveTask (MachineInfoEntity entity, String operate, Map<String, Object> resultMap) {
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.MACHINE_INFO.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(entity.getId());
+            dmpSyncTaskDTO.setSourceCode(entity.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_MACHINE_INFO_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+        }
+
+    	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+
+        wmsPushMsgService.save(wmsPushMsgEntity);
+
+        return null;
+    }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(MachineInfoEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -82,7 +155,7 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
 
         //删除操作
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
+            return resultMap;
         }
         //加工明细
         List<MachineDetailEntity> detailList = machineDetailService.listByMainId(entity.getId());
@@ -147,6 +220,9 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         //领料组织编码
         resultMap.put("inventoryOrgCode", inventoryOrgCode);
 
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(warehouseIds);
+
         List<JSONObject> list = new ArrayList<>();
         for (MachineDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -164,8 +240,14 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
                 //调出仓库
                 jsonObject.set("warehouseCode", warehouseCode);
             }
-            //仓位
-            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            }
+
 
             String referenceVersion = detail.getSkuNo() + "_" + detail.getReferenceVersion();
             //参照版本
@@ -209,31 +291,6 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
             list.add(jsonObject);
         }
         resultMap.put("detailList", list);
-
-        //生成任务
-        return saveTask(entity,operate,resultMap);
-    }
-
-    /**
-     * @description: 生成任务
-     * @author Will
-     * @date: 2023/10/16 9:17
-     * @param entity
-     * @param operate
-     * @param resultMap
-     */
-    private DmpPushTaskEntity saveTask (MachineInfoEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(entity.getId());
-        dmpSyncTaskDTO.setSourceCode(entity.getCode());
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.MACHINE_INFO.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_MACHINE_INFO_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
-    }
+        return resultMap;
+	}
 }

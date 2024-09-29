@@ -14,10 +14,15 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
+import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +30,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 要货申请单
@@ -40,6 +47,10 @@ public class RequisitionApplicationController extends BaseController {
 
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
+    @Resource
+    private PackingTaskService packingTaskService;
+    @Resource
+    private PickingListsService pickingListsService;
 
     /**
     * 新增
@@ -275,19 +286,12 @@ public class RequisitionApplicationController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/11/17 10:55
      * @param dto
-     * @param response
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出要货申请")
     @PostMapping("/exportExcel")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:requisitionApplication:exportExcel",
-            tableAlias = "ra"
-    )
-    @WebAdvanceQuery(handler = RequisitionApplicationQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody @Validated RequisitionApplicationDTO.PagingParamDTO dto, HttpServletResponse response) {
-        requisitionApplicationService.exportExcel(dto, response);
+    public ApiResult exportExcel(@RequestBody @Validated RequisitionApplicationDTO.PagingParamDTO dto) {
+        requisitionApplicationService.exportExcel(dto);
         return success();
     }
 
@@ -446,5 +450,93 @@ public class RequisitionApplicationController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
 
+    }
+
+    /**
+     * 下推装箱任务
+     **/
+    @PostMapping("/generatePackingTask")
+    public ApiResult<List<BatchResultDTO>> generatePackingTask(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<RequisitionApplicationEntity> entityList = requisitionApplicationService.listByIds(dto.getIds());
+        List<String> sourceCodes = entityList.stream().map(RequisitionApplicationEntity::getCode).distinct().collect(Collectors.toList());
+        List<String> sourceIds = entityList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+        List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
+        List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(sourceIds);
+        List<BatchResultDTO> result = new ArrayList<>();
+        for (String id : dto.getIds()) {
+            RequisitionApplicationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                result.add(BatchResultDTO.fail(id,id,"要货申请为空"));
+                continue;
+            }
+            try {
+                PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
+                if(Objects.nonNull(packingTaskEntity)){
+                    result.add(BatchResultDTO.fail(id,entity.getCode(),"已生成装箱任务不可重复生成"));
+                    continue;
+                }
+                PickingListsDTO.SourceView sourceView = pickingList.stream().filter(v->v.getSourceId().equals(id)).findFirst().orElse(null);
+                if(Objects.isNull(sourceView)){
+                    result.add(BatchResultDTO.fail(id,entity.getCode(),"未生成拣货单，不能下推装箱任务"));
+                    continue;
+                }
+                result.add(requisitionApplicationService.generatePackingTask(entity));
+            }catch (Exception e){
+                log.error("要货申请单下推装箱任务失败>>>>>", e);
+                result.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),e.getMessage()));
+            }
+        }
+        return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
+    }
+
+
+    /**
+     * 下推发货单绑定货件页面
+     **/
+    @PostMapping("/fbaBindShipmentView")
+    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO>> fbaBindShipmentView(@RequestBody @Validated BaseIdDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentView(dto.getId()));
+    }
+
+    /**
+     * 下推发货单绑定货件页面 --模糊匹配货件单号
+     **/
+    @PostMapping("/fbaBindShipmentMatching")
+    public ApiResult<RequisitionApplicationDTO.FbaBindShipmentViewDTO> fbaBindShipmentMatching(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentMatching(dto));
+    }
+
+    /**
+     * 下推发货单绑定货件页面 --点击货件号显示详情
+     **/
+    @PostMapping("/fbaBindShipmentDetailView")
+    public ApiResult<List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO>> fbaBindShipmentDetailView(@RequestBody @Validated RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto) {
+        return success(requisitionApplicationService.fbaBindShipmentDetailView(dto));
+    }
+
+    /**
+     * 要货申请fba 来源生成发货单
+     **/
+    @PostMapping("/generateDeliveryWithFba")
+    public ApiResult<T> generateDeliveryWithFba(@RequestBody @Validated RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
+        requisitionApplicationService.generateDeliveryWithFba(dto);
+        return success();
+    }
+    /**
+     * 查询发货记录
+     **/
+    @GetMapping("/listDeliverRecord")
+    public ApiResult<List<RequisitionApplicationDTO.DeliverRecordView>> listDeliverRecord(@RequestParam("id") String id) {
+        List<RequisitionApplicationDTO.DeliverRecordView> result = requisitionApplicationService.listDeliverRecord(id);
+        return success(result);
+    }
+
+    /**
+     * 组装清单下载
+     **/
+    @PostMapping("/assembleDownload")
+    public ApiResult assembleDownload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        requisitionApplicationService.assembleDownload(dto.getIds(), response);
+        return success();
     }
 }

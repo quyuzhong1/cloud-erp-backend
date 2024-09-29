@@ -1,12 +1,13 @@
 package com.erp.server.wms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PermissionsDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -39,6 +40,7 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @date: 2023-11-27
      */
     List<OverseasWarehouseInboundDTO.ListDTO> listExportExcel(@Param("params") OverseasWarehouseInboundDTO.ExportDTO params);
+    Page<OverseasWarehouseInboundDTO.ListDTO> listExportExcel(@Param("page") Page<OverseasWarehouseInboundDTO.ListDTO> page, @Param("params") OverseasWarehouseInboundDTO.ExportDTO params);
 
     /**
      * tab页查询状态数量
@@ -57,4 +59,11 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
     List<Map<String, String>> getDataCompareByCondition(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
     
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.OverseasInboundDTO params);
+
+    /**
+     * 签收数量
+     * @param dto
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(@Param("params") FirstMileDeliveryDTO.RequestReceiveDTO dto);
 }

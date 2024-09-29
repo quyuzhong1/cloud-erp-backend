@@ -73,4 +73,7 @@ public interface SrmDeliveryOrderFeign {
 
     @PostMapping("/feign/deliveryOrder/cancelReceive")
     Boolean cancelReceive(@RequestBody List<String> detailIds);
+
+    @PostMapping("/feign/deliveryOrder/exportSupplierDeliveryOrder")
+    PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(@RequestBody PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 }

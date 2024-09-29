@@ -136,6 +136,14 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
         return baseMapper.searchProductBySearchKey(taskId, searchKey);
     }
 
+    @Override
+    public List<PackingTaskDetailEntity> listBySourceIds(List<String> sourceDetailIds) {
+        if (CollectionUtils.isEmpty(sourceDetailIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(PackingTaskDetailEntity::getSourceDetailId, sourceDetailIds).list();
+    }
+
 
     /**
     * 新增修改处理数据

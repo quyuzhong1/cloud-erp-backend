@@ -179,5 +179,15 @@ public class TypeConversionWorker {
             return phoneSuffix.substring(phoneSuffix.length() - 4);
         }
     }
-
+    @Named("decimalToString")
+    public String decimalToString(Object obj) {
+        if (Objects.isNull(obj)) {
+            return "";
+        }
+        if (obj instanceof BigDecimal){
+            BigDecimal res = (BigDecimal) obj;
+            return res.stripTrailingZeros().toPlainString();
+        }
+        return "";
+    }
 }

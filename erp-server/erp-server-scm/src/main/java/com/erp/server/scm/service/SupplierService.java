@@ -4,10 +4,9 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierPhaseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -190,12 +189,11 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * 供应商导出
      *
      * @param dto
-     * @param response
      * @return void
      * @author yl
      * @date 2023-03-29 14:50
      */
-    void exportSupplier(SupplierDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportSupplier(SupplierDTO.PagingParamDTO dto);
 
 
     /**
@@ -338,4 +336,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     void updateCategory(SupplierDTO.BatchUpdateCategoryDTO dto);
 
     PagingVO<BaseDropDownDTO.RemarkDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto);
+
+    PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
 }

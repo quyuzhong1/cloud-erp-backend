@@ -6,7 +6,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.entity.DmpPullTaskHistoryEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -28,14 +27,13 @@ public interface DmpPullTaskHistoryService extends IService<DmpPullTaskHistoryEn
      */
     PagingVO<DmpPullTaskDTO.ListDTO> paging(PagingDTO<DmpPullTaskDTO.ParamDTO> dto);
     /**
+     * @param dto
+     * @return Boolean
      * @description: 导出
      * @author Will
      * @date: 2023/10/17 14:38
-     * @param dto
-     * @param response
-     * @return Boolean
      */
-    Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(DmpPullTaskDTO.ParamDTO dto);
     /**
      * @description: 批量同步
      * @author Will
@@ -50,4 +48,7 @@ public interface DmpPullTaskHistoryService extends IService<DmpPullTaskHistoryEn
      * 同步3个月前拉取数据到归档表
      */
     void syncPullTaskHistory(Integer month);
+
+    PagingVO<DmpPullTaskDTO.ListDTO> exportPullTaskHistory(PagingDTO<DmpPullTaskDTO.ParamDTO> dto);
+
 }

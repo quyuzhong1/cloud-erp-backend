@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.FirstMileWeightAllocationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.FirstMileWeightAllocationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_code" property="sourceCode" />
+       <result column="delivery_detail_id" property="deliveryDetailId" />
+       <result column="business_code" property="businessCode" />
+       <result column="transport_no" property="transportNo" />
+       <result column="product_name" property="productName" />
+       <result column="cost_allocation_status" property="costAllocationStatus" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="platform_sku_id" property="platformSkuId" />
+       <result column="platform_sku_no" property="platformSkuNo" />
+       <result column="box_id" property="boxId" />
+       <result column="box_no" property="boxNo" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="box_length" property="boxLength" />
+       <result column="box_width" property="boxWidth" />
+       <result column="box_height" property="boxHeight" />
+       <result column="box_size_unit" property="boxSizeUnit" />
+       <result column="charged_weight" property="chargedWeight" />
+       <result column="volume_weight" property="volumeWeight" />
+       <result column="product_weight" property="productWeight" />
+       <result column="allocation_weight" property="allocationWeight" />
+       <result column="weight_unit" property="weightUnit" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="allocation_type" property="allocationType" />
+       <result column="fee_rule" property="feeRule" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="to_country" property="toCountry" />
+       <result column="from_warehouse_id" property="fromWarehouseId" />
+       <result column="calculate_period_id" property="calculatePeriodId" />
+       <result column="calculate_month" property="calculateMonth" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        source_id, source_code, delivery_detail_id, business_code, transport_no, product_name, cost_allocation_status, sku_id, sku_no,
+        platform_sku_id, platform_sku_no, box_id, box_no, delivery_qty, box_size_unit, charged_weight,
+        volume_weight, product_weight, allocation_weight, weight_unit, supplier_id, supplier_name, fee_rule,
+        shop_id, shop_name, to_country, from_warehouse_id, calculate_period_id, calculate_month
+    </sql>
+    <select id="listBySourceIds" resultType="com.erp.model.tms.entity.FirstMileWeightAllocationEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from first_mile_weight_allocation
+        where is_deleted = false
+        <if test="sourceIds != null and sourceIds.size > 0">
+            and source_id in
+            <foreach collection="sourceIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="statusList != null and statusList.size > 0">
+            and cost_allocation_status in
+            <foreach collection="statusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+    <select id="tabCount" resultType="java.lang.Integer">
+        select count(1)
+        from first_mile_weight_allocation wa
+        <where>
+            wa.cost_allocation_status = #{status}
+            and wa.is_deleted = false
+        </where>
+    </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
+        select wa.id,
+               wa.source_id,
+               wa.source_code sourceCode,
+               wa.delivery_detail_id,
+               wa.business_code businessCode,
+               wa.transport_no transportNo,
+               wa.product_name productName,
+               wa.cost_allocation_status costAllocationStatus,
+               wa.sku_id,
+               wa.sku_no skuNo,
+               wa.platform_sku_no platformSkuNo,
+               wa.box_id,
+               wa.box_no boxNo,
+               wa.delivery_qty deliveryQty,
+               wa.box_length,
+               wa.box_width,
+               wa.box_height,
+               wa.box_size_unit,
+               wa.out_stock_weight outStockWeight,
+               wa.charged_weight chargedWeight,
+               wa.volume_weight,
+               wa.product_weight productWeight,
+               wa.allocation_weight allocationWeight,
+               wa.weight_unit,
+               wa.supplier_id,
+               wa.supplier_name supplierName,
+               wa.allocation_type allocationType,
+               wa.fee_rule feeRule,
+               wa.shop_id,
+               wa.shop_name shopName,
+               wa.to_country toCountry,
+               wa.to_country_name toCountryName,
+               wa.from_warehouse_id fromWarehouseId,
+               wa.calculate_period_id,
+               wa.calculate_month,
+               wa.logistics_bill_id,
+               wa.create_time createTime
+        from first_mile_weight_allocation wa
+        <where>
+            ${params.sqlMap.default}
+            and wa.is_deleted = false
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        wa.create_time DESC,wa.box_no
+    </select>
+    <select id="listByParamIds" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
+        select wa.id,
+                wa.source_id,
+                wa.source_code sourceCode,
+                wa.delivery_detail_id,
+                wa.business_code businessCode,
+                wa.transport_no transportNo,
+                wa.product_name productName,
+                wa.cost_allocation_status costAllocationStatus,
+                wa.sku_id,
+                wa.sku_no skuNo,
+                wa.platform_sku_no platformSkuNo,
+                wa.box_id,
+                wa.box_no boxNo,
+                wa.delivery_qty deliveryQty,
+                wa.box_length,
+                wa.box_width,
+                wa.box_height,
+                wa.box_size_unit,
+                wa.out_stock_weight outStockWeight,
+                wa.charged_weight chargedWeight,
+                wa.volume_weight,
+                wa.product_weight productWeight,
+                wa.allocation_weight allocationWeight,
+                wa.weight_unit,
+                wa.supplier_id,
+                wa.supplier_name supplierName,
+                wa.allocation_type allocationType,
+                wa.fee_rule feeRule,
+                wa.shop_id,
+                wa.shop_name shopName,
+                wa.to_country toCountry,
+                wa.from_warehouse_id fromWarehouseId,
+                wa.calculate_period_id,
+                wa.calculate_month,
+                wa.logistics_bill_id
+        from first_mile_weight_allocation wa
+        <where>
+            wa.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        wa.id DESC
+    </select>
+    <select id="listByParam" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
+        select wa.id,
+                wa.source_id,
+                wa.source_code sourceCode,
+                wa.delivery_detail_id,
+                wa.business_code businessCode,
+                wa.transport_no transportNo,
+                wa.product_name productName,
+                wa.cost_allocation_status costAllocationStatus,
+                wa.sku_id,
+                wa.sku_no skuNo,
+                wa.platform_sku_no platformSkuNo,
+                wa.box_id,
+                wa.box_no boxNo,
+                wa.delivery_qty deliveryQty,
+                wa.box_length,
+                wa.box_width,
+                wa.box_height,
+                wa.box_size_unit,
+                wa.out_stock_weight outStockWeight,
+                wa.charged_weight chargedWeight,
+                wa.volume_weight,
+                wa.product_weight productWeight,
+                wa.allocation_weight allocationWeight,
+                wa.weight_unit,
+                wa.supplier_id,
+                wa.supplier_name supplierName,
+                wa.allocation_type allocationType,
+                wa.fee_rule feeRule,
+                wa.shop_id,
+                wa.shop_name shopName,
+                wa.to_country toCountry,
+                wa.to_country_name toCountryName,
+                wa.from_warehouse_id fromWarehouseId,
+                wa.calculate_period_id,
+                wa.calculate_month,
+                wa.logistics_bill_id,
+                wa.create_time createTime
+        from first_mile_weight_allocation wa
+        <where>
+            ${params.sqlMap.default}
+            and wa.is_deleted = false
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        wa.id DESC
+    </select>
+    <select id="getLogisticsBillInfo"
+            resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$LogisticsBillInfoDTO">
+        select  lb.id logisticsBillId,
+                lb.outstock_id sourceId,
+                lb.outstock_code sourceCode,
+                lb.source_id businessId,
+                lb.source_code businessCode,
+                lb.transport_no transportNo,
+                lb.logistics_supplier_id supplierId,
+                lb.shop_id shopId,
+                lb.shop_name shopName,
+                lb.to_country toCountry,
+                lb.channel_id channelId
+        from logistics_bill lb
+            left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        where lb.is_deleted = false and lb.id = #{logisticsBillId} and lbd.track_status in ('ordered', 'Inspecting', 'trackIng', 'arrived', 'sign', 'exception')
+    </select>
+    <select id="listCostAllocation"
+            resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$CostAllocationDTO">
+        SELECT a.logistics_bill_id logisticsBillId,
+               a.report_period_id reportPeriodId,
+               a.account_period accountPeriod,
+               a.status costAllocationStatus,
+               ca.sku_id skuId,
+               ca.sku_no skuNo,
+               ca.bill_source_type billSourceType,
+               cad.end_period_transit_cost   as endPeriodTransitCost,
+               rpm.month                     AS reportPeriod
+        FROM first_mile_cost_allocation a
+                 LEFT JOIN first_mile_sku_cost_allocation ca ON ca.main_id = a.id AND ca.is_deleted = FALSE
+                 LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
+                 LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
+        where a.is_deleted = false and a.logistics_bill_id = #{logisticsBillId}
+    </select>
+
+
+</mapper>

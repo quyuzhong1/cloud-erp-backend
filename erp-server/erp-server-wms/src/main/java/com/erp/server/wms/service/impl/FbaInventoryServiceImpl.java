@@ -11,19 +11,17 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.WmsFbaInventoryConverter;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.FbaInventoryService;
 import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -34,9 +32,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_INVENTORY;
 
 /**
  * <p>
@@ -53,7 +56,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private OperateLogService operateLogService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -135,25 +139,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     }
 
     @Override
-    public void exportList(FbaInventoryDTO.ExportDTO param, HttpServletResponse response) {
-        List<FbaInventoryDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if (CollUtil.isEmpty(list)) {
-            return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/fbaInventory.xlsx";
-        String name = "FBA库存导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(FbaInventoryDTO.ExportDTO param) {
+        downloadTaskFeign.saveDownloadTask("FBA库存导出", EXPORT_WMS_FBA_INVENTORY.getCode(), param);
     }
 
     @Override
@@ -195,7 +182,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
                 newSaveBatch.add(newEntity);
             } else {
                 // 时间数据滞后忽略更新
-                if (newEntity.getDataEndTime().isBefore(oldEntity.getDataEndTime())){
+                if (null != newEntity.getDataEndTime() && newEntity.getDataEndTime().isBefore(oldEntity.getDataEndTime())){
                     log.warn("【亚马逊FBA库存数据】 DataEndTime时间滞后忽略更新: entity={}", JSONUtil.toJsonStr(newEntity));
                     continue;
                 }
@@ -246,6 +233,17 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         return lambdaQuery()
                 .in(FbaInventoryEntity::getMsku, sellerSkuList)
                 .list();
+    }
+
+    @Override
+    public PagingVO<FbaInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaInventoryDTO.ExportDTO> dto) {
+
+        Page<FbaInventoryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
     }
 
 }

@@ -53,8 +53,8 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @author Will
      * @date: 2024/1/20 12:03
      * @param dto
-     * @param response
      */
+    void exportList(PoReconciliationDetailDTO.PagingParamDTO dto);
     void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response);
     /**
      * @description: 查看详情
@@ -141,4 +141,6 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @return
      */
     Integer countSupplierUnConfirmOrderDetail(String supplierId);
+
+    PagingVO<PoReconciliationDetailDTO.ListDTO> exportPoReconciliationDetailScm(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto);
 }

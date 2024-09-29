@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.server.dmp.utils.MapCountUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,13 @@ public class MabangSoOutstockNextDmpHandler extends MabangOrderGetDetailDmpHandl
 		return detailList;
 	}
 
+	@Override
+	protected DmpCfgInputConvertEntity getMainConvertId() {
+		List<DmpCfgInputConvertEntity> list = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(dmpCfgInputConvertEntity.getMainId())
+				&& d.getInputStatus().equals(dmpCfgInputConvertEntity.getInputStatus()));
+		return list.stream().filter(l -> "dmp_so_outstock".equals(l.getStorageName())).findFirst().orElse(null);
+	}
+	
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {

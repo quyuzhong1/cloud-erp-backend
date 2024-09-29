@@ -1,25 +1,21 @@
 package com.erp.server.wms.service;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
-
 import com.common.business.dto.PlatformInboundDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -132,7 +128,7 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
      * @author Jim
      * @date: 2023-11-27
      */
-    Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportExcel(OverseasWarehouseInboundDTO.ExportDTO dto);
 
     List<String> getReceiptNumbersForStatus(List<String> statusList, String platform);
 
@@ -196,5 +192,15 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
             String verityCode);
 
     ApiResult<?> handlePlatformMessage(PlatformInboundDTO dto);
-    
+
+    /**
+     * 汇总 亚马逊签收报告/第三方仓签收报告签收数量
+     * @param dto
+     * @return
+     */
+    List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(FirstMileDeliveryDTO.RequestReceiveDTO dto);
+
+    List<BaseDropDownDTO.CommonDTO> getLogisticByTransferWarehouseId(String transferWarehouseId);
+
+    PagingVO<OverseasWarehouseInboundDTO.ListDTO> exportOverseasWarehouseInbound(PagingDTO<OverseasWarehouseInboundDTO.ExportDTO> dto);
 }

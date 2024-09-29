@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
@@ -306,6 +307,19 @@ public class FastDFSClientUtil {
 			return new ResponseEntity<byte[]>(content, headers, HttpStatus.CREATED);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * 校验文件是否存在
+	 * @param fileUrl 文件路径
+	 */
+	public static boolean exist(String fileUrl) {
+		try {
+			FileInfo fileInfo = getStorageClient().query_file_info1(fileUrl);
+			return !ObjectUtils.isEmpty(fileInfo);
+		}catch (Exception e){
+			return false;
 		}
 	}
 

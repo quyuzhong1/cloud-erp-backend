@@ -11,6 +11,7 @@ import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import feign.Request;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -147,7 +148,7 @@ public interface LogisticsBillFeign {
      * @return java.util.List<com.erp.model.oms.dto.SoB2cDTO.WaybillDTO>
      **/
     @PostMapping("/feign/logisticsBill/printLogisticsWaybill")
-    List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(@RequestBody List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list);
+    List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(Request.Options options, @RequestBody List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list);
 
     /**
      * 根据渠道id查询渠道打印类型

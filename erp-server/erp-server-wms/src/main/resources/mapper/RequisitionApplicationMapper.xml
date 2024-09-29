@@ -85,17 +85,18 @@
             ra.handle_user_name AS handleUserName,
             ra.handle_time AS handleTime,
             ra.create_time AS createTime,
-            op.code AS provideCode,
             rad.platform_sku as thirdWarehouseSku,
             rad.platform_sku as platformSku,
             rad.platform_spu as platformProductId,
             rad.platform_fn_sku as platformFnSku,
             ra.fba_shipment_code as fbaShipmentCode,
+        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
+        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = rad.sku_id) as packingQty,
+        pt.packing_status as packingStatus,
             (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
-        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = ra.channel_id and opw.is_deleted = false
-        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        LEFT JOIN packing_task pt on pt.source_id = ra.id and pt.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and ra.is_deleted = FALSE
@@ -119,6 +120,9 @@
             rad.id AS sourceDetailId,
             ra.requisition_warehouse_id AS requisitionWarehouseId,
             ra.requisition_warehouse_name AS requisitionWarehouseName,
+            ra.type,
+            rad.from_virtual_warehouse_id as fromVirtualWarehouseId,
+        rad.from_virtual_warehouse_name as fromVirtualWarehouseName,
             ra.status AS status,
             rad.sku_id,
             rad.sku_no,
@@ -170,6 +174,7 @@
     <select id="listExport" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$ListDTO">
         SELECT
         ra.id,
+        rad.id as detailId,
         ra.code,
         ra.type,
         ra.channel_id AS channelId,
@@ -182,29 +187,31 @@
         rad.requisition_qty AS requisitionQty,
         rad.approve_qty AS approveQty,
         rad.picking_qty AS pickingQty,
+        rad.virtual_frozen_qty AS virtualFrozenQty,
         ra.requisition_warehouse_id AS requisitionWarehouseId,
         ra.requisition_warehouse_name AS requisitionWarehouseName,
         rad.from_warehouse_id AS fromWarehouseId,
         rad.from_warehouse_name AS fromWarehouseName,
         rad.from_virtual_warehouse_id AS fromVirtualWarehouseId,
-        vw.name AS fromVirtualWarehouseName,
+        rad.from_virtual_warehouse_name AS fromVirtualWarehouseName,
         rad.to_warehouse_id AS toWarehouseId,
         rad.to_warehouse_name AS toWarehouseName,
         ra.create_user_name AS createUserName,
         ra.handle_user_name AS handleUserName,
         ra.handle_time AS handleTime,
         ra.create_time AS createTime,
-        op.code AS provideCode,
         rad.platform_sku as thirdWarehouseSku,
         rad.platform_sku as platformSku,
         rad.platform_spu as platformProductId,
         rad.platform_fn_sku as platformFnSku,
-        ra.fba_shipment_code as fbaShipmentCode
+        ra.fba_shipment_code as fbaShipmentCode,
+        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
+        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = rad.sku_id) as packingQty,
+        pt.packing_status as packingStatus,
+        (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId
         FROM requisition_application ra
-        LEFT JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
-        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = ra.channel_id and opw.is_deleted = false
-        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
-        left join virtual_warehouse vw on rad.from_virtual_warehouse_id = vw.id and vw.is_deleted = false
+        INNER JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
+        LEFT JOIN packing_task pt on pt.source_id = ra.id and pt.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and ra.is_deleted = FALSE
@@ -270,5 +277,97 @@
                 #{sku}
             </foreach>
         </if>
+    </select>
+    <select id="fbaBindShipmentView"
+            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$FbaBindShipmentViewDetailDTO">
+        with erp_packing as (
+            SELECT
+                DISTINCT wc.id as cartonId,
+                         wc.packing_task_id as taskId,
+                         wc.box_no as boxNo,
+                         (select string_agg(wcd.sku_no|| '*' || wcd.pack_qty, ';') from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as packingSku,
+                         (select string_agg(wcd.fn_sku|| '*' || wcd.pack_qty, ';')
+            from wms_carton_detail wcd
+            where wcd.is_deleted = false and wcd.main_id = wc.id
+                         ) as packingFnSku
+            FROM wms_carton wc
+            WHERE wc.is_deleted = FALSE and wc.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ),
+             fba_packing as (
+                 SELECT  fs.id as fbaShipmentId,fs.code as fbaShipmentCode,
+                         fsp.box_no as fbaBoxNo,
+                         fsp.carton_id as erpCartonId,
+                         string_agg(fsp.sku_no|| '*' || fsp.qty,';') AS fbaPackingSku,
+                         string_agg(fsp.fn_sku|| '*' || fsp.qty,';') AS fbaPackingFnSku,
+                         (select fmd.code from first_mile_delivery fmd
+                                                   inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+                          where fmd.is_deleted = false and fmdd.fba_shipment_code = fs.code limit 1) as deliveryCode
+                 from fba_shipment_packing fsp
+                          inner join fba_shipment fs on fsp.main_id = fs.id
+                 where fsp.is_deleted = false and fsp.carton_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+                 group by fsp.box_no,fsp.carton_id,fs.code,fs.id
+             )
+        SELECT ep.taskId,ep.cartonId,ep.boxNo,ep.packingSku,ep.packingFnSku,
+               fp.fbaShipmentCode,fp.fbaBoxNo,fp.fbaPackingSku,fp.fbaPackingFnSku,fp.deliveryCode,fp.fbaShipmentId
+        from erp_packing ep
+                 left join fba_packing fp on ep.cartonId = fp.erpCartonId
+        order by ep.boxNo
+    </select>
+    <select id="fbaBindShipmentDetailView"
+            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$FbaBindShipmentDetailViewDTO">
+        with erp_packing as (
+            SELECT
+        wcd.fn_sku,sum(wcd.pack_qty) as pack_qty
+            FROM wms_carton wc
+                     inner join wms_carton_detail wcd on wcd.main_id = wc.id
+            WHERE wc.is_deleted = FALSE and wc.id in
+        <foreach collection="params.matchedCartonIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+            group by wcd.fn_sku
+        )
+        SELECT fsd.main_id as fbaShipmentId,
+               fsd.asin,
+               fsd.msku,
+               fsd.fn_sku as fnSku,
+               fsd.sku_id as skuId,
+               fsd.sku_no as skuNo,
+               fsd.declare_qty as declareQty,
+               COALESCE(ep.pack_qty,0) as associatedDeliveryQty,
+               COALESCE(ep.pack_qty,0) - fsd.declare_qty as diffQty
+        from fba_shipment_detail fsd
+                 left join erp_packing ep on ep.fn_sku = fsd.fn_sku
+        where fsd.main_id = #{params.fbaShipmentId} and fsd.is_deleted = false
+    </select>
+    <select id="listFbaDeliverRecord"
+            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$DeliverRecordView">
+        select fmd.code,
+               fmdd.fba_shipment_code as fbaShipmentCode,
+               case when fmd.approve_status  = 'approve'then '已发货' else '未发货' end as status,
+               sum(fmdd.delivery_qty) as qty
+        from first_mile_delivery fmd
+        inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        where fmd.is_deleted = false and fmd.source_id = #{id}
+        group by fmd.code,fmd.create_time,fmdd.fba_shipment_code,fmd.approve_status
+        order by fmd.create_time desc
+    </select>
+    <select id="listWarehouseDeliverRecord"
+            resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$DeliverRecordView">
+        select fmd.code,
+               owi.code as fbaShipmentCode,
+               case when fmd.approve_status  = 'approve'then '已发货' else '未发货' end as status,
+               sum(fmdd.delivery_qty) as qty
+        from first_mile_delivery fmd
+            inner join overseas_warehouse_inbound owi on fmd.id = owi.source_id and owi.is_deleted = false
+                 inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        where fmd.is_deleted = false and fmd.source_id = #{id}
+        group by fmd.code,fmd.create_time,fmd.approve_status,owi.code
+        order by fmd.create_time desc
     </select>
 </mapper>

@@ -248,10 +248,9 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 导出列表
      *
      * @param dto
-     * @param response
      * @return
      */
-    Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto, HttpServletResponse response);
+    Boolean exportExcel(SoB2cDeliveryDTO.PagingParamDTO dto);
 
     /**
      * 手动标发(批量)
@@ -419,7 +418,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO handleErrorData(String id);
+    BatchResultDTO handleErrorData(String id,Boolean isAddQty);
     /**
      * 重试发货虚拟仓库存扣减
      * @author will
@@ -428,4 +427,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return Boolean
      */
     Boolean afreshOutFreezeVirtualInventory(String soId);
+
+    /**
+     * 导出发货单
+     * @param dto
+     * @return
+     */
+    PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto);
 }
