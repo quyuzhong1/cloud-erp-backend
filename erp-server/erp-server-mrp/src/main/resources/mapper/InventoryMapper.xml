@@ -116,23 +116,24 @@
         AND wdp."type" = #{type} AND wdp.shop_id = #{result.replenishment.shopId} AND wdpd.sku_id =
         #{result.replenishment.skuId}
         <if test="codes != null and !codes.isEmpty()">
-            <!-- 当 codes 包含 'approve' 时 -->
-            <if test="'approve' in codes">
+            <!-- 当 codes 只有 'approve' 时，单独处理 -->
+            <if test="codes.size() == 1 and 'approve' in codes">
+                AND wdp.approve_status = 'approve'
+                AND wdp.delivery_status = 'unShipped'
+            </if>
+            <!-- 当 codes 包含 'approve' 以及其他状态时 -->
+            <if test="codes.size() > 1 and 'approve' in codes">
                 AND (
                 (wdp.approve_status = 'approve' AND wdp.delivery_status = 'unShipped')
-                <!-- 检查并处理其他状态 -->
-                <if test="codes.size() > 1">
-                    OR wdp.approve_status IN
-                    <foreach item="code" collection="codes" open="(" separator="," close=")">
-                        <!-- 跳过 'approve'，因为已单独处理 -->
-                        <if test="code != 'approve'">
-                            #{code}
-                        </if>
-                    </foreach>
-                </if>
+                OR wdp.approve_status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    <if test="code != 'approve'">
+                        #{code}
+                    </if>
+                </foreach>
                 )
             </if>
-            <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
+            <!-- 当 codes 不包含 'approve' 时，直接使用 IN 查询 -->
             <if test="'approve' not in codes">
                 AND wdp.approve_status IN
                 <foreach item="code" collection="codes" open="(" separator="," close=")">
@@ -203,20 +204,21 @@
             #{item}
         </foreach>
         <if test="codes != null and !codes.isEmpty()">
-            <!-- 当 codes 包含 'approve' 时 -->
-            <if test="'approve' in codes">
+            <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
+            <if test="codes.size() == 1 and 'approve' in codes">
+                AND pa.approve_status = 'approve'
+                AND pad.create_po_type IN ('0', '1')
+            </if>
+            <!-- 当 codes 包含 'approve' 以及其他状态时 -->
+            <if test="codes.size() > 1 and 'approve' in codes">
                 AND (
                 (pa.approve_status = 'approve' AND pad.create_po_type IN ('0', '1'))
-                <!-- 检查并处理其他状态 -->
-                <if test="codes.size() > 1">
-                    OR pa.approve_status IN
-                    <foreach item="code" collection="codes" open="(" separator="," close=")">
-                        <!-- 跳过 'approve'，因为已单独处理 -->
-                        <if test="code != 'approve'">
-                            #{code}
-                        </if>
-                    </foreach>
-                </if>
+                OR pa.approve_status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    <if test="code != 'approve'">
+                        #{code}
+                    </if>
+                </foreach>
                 )
             </if>
             <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
