@@ -23,7 +23,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
 
         if("sku".equals(field)){
-            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.sku_no "+ compareCodeSplicingValueSql +" ) ";
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.sku_no "+ compareCodeSplicingValueSql +" ) ";
         }
 
         if("platformSpuNo".equals(field)){
