@@ -612,7 +612,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             waveListDetailService.moveOut(entity.getId(), true);
         }
         if(!SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(entity.getStatus())
-            && !(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus())) &&  AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause())){
+            && !(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(entity.getStatus()) &&  AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(entity.getAbnormalCause()))){
             //新增相反冻结库存,推送旺店通
             service.addReverseInventory(entity,soB2cDeliveryInterceptEntity,interceptInventoryDTOList);
             //删除拣货单
@@ -772,9 +772,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
      * @param soB2cDeliveryInterceptEntity
      * @param interceptInventoryDTOList
      */
-    private void addReverseInventory(SoB2cDeliveryEntity entity, SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList) {
+    public void addReverseInventory(SoB2cDeliveryEntity entity, SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList) {
 
-        List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> originList = baseMapper.getInterceptInventoryDTOList(Arrays.asList(soB2cDeliveryInterceptEntity.getId()));
+        List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> originList = this.baseMapper.getInterceptInventoryDTOList(Arrays.asList(soB2cDeliveryInterceptEntity.getId()));
         //为空取拣货单信息
         if(CollectionUtils.isEmpty(interceptInventoryDTOList)){
             interceptInventoryDTOList = BeanUtil.copyToList(originList,SoB2cDeliveryInterceptDTO.InterceptInventoryDTO.class);
