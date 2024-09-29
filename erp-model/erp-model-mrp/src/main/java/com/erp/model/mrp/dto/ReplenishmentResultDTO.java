@@ -475,6 +475,16 @@ public class ReplenishmentResultDTO {
             detail.setSalesPrice(salesPrice);
             return detail;
         }
+
+        public static ReplenishmentSuggestionDetailEntity buildNewDetail(DetailDTO detailDTO) {
+            ReplenishmentSuggestionDetailEntity entity = new ReplenishmentSuggestionDetailEntity();
+            entity.setId(detailDTO.getDetailId());
+            entity.setCalcVersion(detailDTO.getCalcVersion());
+            entity.setCalcDate(detailDTO.getCalcDate());
+            entity.setMainId(detailDTO.getMainId());
+            entity.setSkuType(detailDTO.getSkuType());
+            return entity;
+        }
     }
 
     @Getter

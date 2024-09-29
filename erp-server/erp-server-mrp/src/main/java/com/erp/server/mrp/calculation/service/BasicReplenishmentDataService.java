@@ -372,6 +372,18 @@ public class BasicReplenishmentDataService {
                 .map(ReplenishmentResultDTO.SalesInfoDTO::buildSalesInfoNotIdDTO)
                 .collect(Collectors.toList());
         resultDTO.setSalesInfos(salesInfoEntityList);
+        salesInfoList.forEach(v -> {
+                    v.setId(null);
+                    v.setReplenishmentDetailId(detailDTO.getDetailId());
+                    v.setCalcVersion(detailDTO.getCalcVersion());
+                    v.setSalesQty(null);
+                    v.setIsIgnoreOutOfStock(null);
+                    v.setSalesQtyType(null);
+                });
+        //保存历史销量数据到表
+        salesInfoService.saveBatch(salesInfoList);
+        ReplenishmentSuggestionDetailEntity entity = ReplenishmentResultDTO.DetailDTO.buildNewDetail(detailDTO);
+        replenishmentSuggestionDetailService.save(entity);
         //归档该条数据明细
         dataArchivingService.dataArchiving(detail.getId());
         //初始化配置
