@@ -224,7 +224,10 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
     @Override
     public CfgRuleSalesQtyEntity getDefaultByPlatformAndSkuType(String platformType, String skuType) {
-        return getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery().eq(CfgRuleSalesQtyEntity::getRefId, ""));
+        return getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery().eq(CfgRuleSalesQtyEntity::getRefId, "")
+                .eq(CfgRuleSalesQtyEntity::getPlatformType, platformType)
+                .eq(CfgRuleSalesQtyEntity::getType, skuType)
+                .last("LIMIT 1"));
     }
 
     @Override

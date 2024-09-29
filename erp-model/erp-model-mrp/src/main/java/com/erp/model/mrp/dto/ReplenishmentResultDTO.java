@@ -405,8 +405,6 @@ public class ReplenishmentResultDTO {
             DetailDTO dto = new DetailDTO();
             dto.setDetailId(IdWorker.getIdStr());
             dto.setMainId(entity.getMainId());
-            dto.setCalcDate(entity.getCalcDate());
-            dto.setCalcVersion(entity.getCalcVersion());
             dto.setSkuType(entity.getSkuType());
             return dto;
         }

@@ -362,6 +362,9 @@ public class BasicReplenishmentDataService {
         ReplenishmentResultDTO.BasicDTO basicDTO = ReplenishmentResultDTO.BasicDTO.buildBasicDTO(suggestion);
         resultDTO.setReplenishment(basicDTO);
         ReplenishmentResultDTO.DetailDTO detailDTO = ReplenishmentResultDTO.DetailDTO.buildDetailNotId(detail);
+        detailDTO.setCalcDate(LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE));
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ, LocalDate.now());
+        detailDTO.setCalcVersion(code);
         resultDTO.setReplenishmentDetail(detailDTO);
         resultDTO.setSalesPrice(detail.getSalesPrice());
         resultDTO.setPurchasePrice(detail.getPurchasePrice());
