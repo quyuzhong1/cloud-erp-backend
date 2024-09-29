@@ -96,6 +96,7 @@ public class WmsCartonDTO {
     public static class AdjustDetailDTO{
         private String skuId;
         private String skuNo;
+        private String fnSku;
         /**
          * 装箱数量（调整装箱数量）
          */
