@@ -133,7 +133,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
                 .map(ReplenishmentResultDTO.SalesEstimateDTO::getSalesQty)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         timePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(recentTimePeriodEnum, followingSales));
-        avgTimePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(recentTimePeriodEnum, followingSales.divide(BigDecimal.valueOf(ChronoUnit.DAYS.between(startDate, endDate)), 2, RoundingMode.HALF_UP)));
+        avgTimePeriodSalesEstimates.add(new ReplenishmentResultDTO.TimePeriodSalesEstimateDTO(recentTimePeriodEnum, followingSales.divide(BigDecimal.valueOf(ChronoUnit.DAYS.between(startDate, endDate) + 1), 2, RoundingMode.HALF_UP)));
     }
 
     /**
