@@ -61,6 +61,12 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     public String add(RuleOrderApprovalDTO.AddDTO addDTO) {
         RuleOrderApprovalEntity ruleOrderApprovalEntity = new RuleOrderApprovalEntity();
         List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        //去除空格
+        conditionList.forEach(v->{
+            if(StringUtils.isNotBlank(v.getValue())){
+                v.setValue(v.getValue().replaceAll(" ",""));
+            }
+        });
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
@@ -102,6 +108,11 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         RuleOrderApprovalEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+        conditionList.forEach(v->{
+            if(StringUtils.isNotBlank(v.getValue())){
+                v.setValue(v.getValue().replaceAll(" ",""));
+            }
+        });
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
                         c.getCompare(), c.getValue(),
