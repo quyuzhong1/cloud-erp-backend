@@ -1339,6 +1339,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+                && PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
                 && PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
                 && PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
         ){

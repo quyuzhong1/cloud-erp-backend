@@ -233,6 +233,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> platformSpuList = new LinkedList<>();
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.convertPlatformSpuList();
         }
