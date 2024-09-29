@@ -189,7 +189,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 									JSONObject JSONObject = (JSONObject)j;
 									JSONArray FPURMRBENTRY_Link = JSONObject.getJSONArray("FPURMRBENTRY_Link");
 									return FPURMRBENTRY_Link.stream().allMatch(f -> {
-										JSONObject link = (JSONObject)j;
+										JSONObject link = (JSONObject)f;
 										String poKingdeeDetailId = link.getString("poKingdeeDetailId");
 										return StringUtils.isNotBlank(poKingdeeDetailId);
 									});
