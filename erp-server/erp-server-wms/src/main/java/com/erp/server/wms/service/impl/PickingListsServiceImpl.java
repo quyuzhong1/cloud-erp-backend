@@ -442,6 +442,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         continue;
                     }
                     PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                    combinationPrintDetailView.setThirdSku("");
                     if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                         combinationPrintDetailView.setThirdSku((applicationDetail.getPlatformFnSku()));
                     }
@@ -455,8 +456,17 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     combinationPrintDetailView.setChildSkuQty(view.getPickingQty());
                     combinationPrintDetailViewList.add(combinationPrintDetailView);
                 }
-                combinationPrintDetailViewList.sort(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getParentSku));
-                printView.setCombinationPrintDetailView(combinationPrintDetailViewList);
+                List<PickingListsDTO.CombinationPrintDetailView> combinationList = new ArrayList<>(combinationPrintDetailViewList.stream().collect(Collectors.groupingBy(v -> v.getThirdSku() + ":"+  v.getParentSku() + ":" + v.getChildSku(),
+                        Collectors.collectingAndThen(Collectors.toList(), v -> {
+                            PickingListsDTO.CombinationPrintDetailView view = v.get(0);
+                            int totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
+                            view.setParentSkuQty(totalParentQty);
+                            int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
+                            view.setChildSkuQty(totalChildQty);
+                            return view;
+                        }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)
+                        .thenComparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)).collect(Collectors.toList());
+                printView.setCombinationPrintDetailView(combinationList);
             }
             printViews.add(printView);
         }
