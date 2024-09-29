@@ -269,16 +269,21 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         List<ReportOrderDataEntity> resultList = new ArrayList<>();
 
         List<String> orderTypeList = salesDashboardDTO.getOrderTypeList();
+        //b2b销售订单数据格式化
         boolean containsB2b = orderTypeList.contains(CfgSettingOrderTypeEnum.B2B.getCode());
         if (containsB2b) {
-            List<ReportOrderDataEntity> b2bList =  handleB2bSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO(),bomChildrenSkuList,virtualInventoryList,isSplit);
+            List<ReportOrderDataEntity> b2bList =  handleB2bSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO(),bomChildrenSkuList,isSplit);
             if (CollectionUtils.isNotEmpty(b2bList)) {
                 resultList.addAll(b2bList);
             }
         }
+        //b2c销售订单数据格式化
         boolean containsB2c = orderTypeList.contains(CfgSettingOrderTypeEnum.B2C.getCode());
         if (containsB2c) {
-            handleB2cSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO(),resultList);
+            List<ReportOrderDataEntity> b2cList =  handleB2cSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO(),bomChildrenSkuList,isSplit);
+            if (CollectionUtils.isNotEmpty(b2cList)) {
+                resultList.addAll(b2cList);
+            }
         }
         if (CollectionUtils.isEmpty(resultList)) {
             return;
@@ -328,11 +333,12 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
      * @date 2024/9/27 14:26
      * @param reportOrderDataList
      * @param statusDTO
-     * @param resultList
+     * @param bomChildrenSkuList
      */
-    private void handleB2cSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,List<ReportOrderDataEntity> resultList) {
+    private List<ReportOrderDataEntity> handleB2cSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,
+                                 List<BomChildrenSkuDTO> bomChildrenSkuList,Boolean isSplit) {
         if (ObjectUtil.isEmpty(statusDTO)) {
-            return;
+            return Collections.EMPTY_LIST;
         }
         //订单状态
         List<String> statusList =  CollectionUtils.isEmpty(statusDTO.getStatusList()) ? new ArrayList<>() : statusDTO.getStatusList();
@@ -346,11 +352,14 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                         && approveStatusList.contains(obj.getApproveStatus())
                         && invalidStatusList.contains(obj.getInvalidStatus())
         ).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(list)) {
-            return;
+        //无数据直接返回 或 无拆分直接返回
+        if (CollectionUtils.isEmpty(list) || !isSplit) {
+            return list;
         }
-        resultList.addAll(list);
+        List<ReportOrderDataEntity> resultList = splitBom(list, bomChildrenSkuList);
+        return resultList;
     }
+
 
     /**
      * 符合条件的b2b数据
@@ -360,10 +369,9 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
      * @param statusDTO
      */
     private List<ReportOrderDataEntity> handleB2bSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,
-                                 List<BomChildrenSkuDTO> bomChildrenSkuList,List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,Boolean isSplit) {
-        List<ReportOrderDataEntity> resultList = new ArrayList<>();
+                                 List<BomChildrenSkuDTO> bomChildrenSkuList,Boolean isSplit) {
         if (ObjectUtil.isEmpty(statusDTO)) {
-            return resultList;
+            return Collections.EMPTY_LIST;
         }
         //发货状态
         List<String> statusList =  CollectionUtils.isEmpty(statusDTO.getStatusList()) ? new ArrayList<>() : statusDTO.getStatusList();
@@ -377,12 +385,44 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                         && approveStatusList.contains(obj.getApproveStatus())
                         && invalidStatusList.contains(obj.getInvalidStatus())
         ).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(list)) {
-            return resultList;
+        //无数据直接返回 或 无拆分直接返回
+        if (CollectionUtils.isEmpty(list) || !isSplit) {
+            return list;
         }
-        resultList.addAll(list);
+        List<ReportOrderDataEntity> resultList = splitBom(list, bomChildrenSkuList);
         return resultList;
     }
+
+
+    /**
+     * 拆分bom信息
+     * @author will
+     * @date 2024/9/29 16:53
+     * @param list
+     * @param bomChildrenSkuList
+     * @return List<ReportOrderDataEntity>
+     */
+    private List<ReportOrderDataEntity> splitBom ( List<ReportOrderDataEntity> list,List<BomChildrenSkuDTO> bomChildrenSkuList) {
+        List<ReportOrderDataEntity> resultList = new ArrayList<>();
+        for (ReportOrderDataEntity orderDataEntity : list) {
+            //bom信息
+            List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), orderDataEntity.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(bomList)) {
+                resultList.add(orderDataEntity);
+                continue;
+            }
+            //拆分
+            for (BomChildrenSkuDTO skuDTO : bomList) {
+                ReportOrderDataEntity newEntity = new ReportOrderDataEntity();
+                BeanMapperUtils.copy(orderDataEntity,newEntity);
+                newEntity.setSkuId(skuDTO.getSkuId());
+                newEntity.setQty(orderDataEntity.getQty() * skuDTO.getQuantity());
+                resultList.add(newEntity);
+            }
+        }
+        return resultList;
+    }
+
 
     /**
      * 格式化订单需求明细
