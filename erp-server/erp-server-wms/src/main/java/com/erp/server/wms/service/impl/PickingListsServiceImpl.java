@@ -44,6 +44,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
+import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
@@ -466,6 +467,23 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             return view;
                         }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)
                         .thenComparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)).collect(Collectors.toList());
+                //清空上层相同父sku
+                String currentParentSku = "";
+                Integer parentQty = 0;
+                for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
+                    if(StringUtils.isBlank(currentParentSku)){
+                        currentParentSku = combinationPrintDetailView.getParentSku();
+                        parentQty = combinationPrintDetailView.getParentSkuQty();
+                        continue;
+                    }
+                    if(combinationPrintDetailView.getParentSku().equals(currentParentSku) && parentQty.equals(combinationPrintDetailView.getParentSkuQty())){
+                        combinationPrintDetailView.setParentSku("");
+                        combinationPrintDetailView.setParentSkuQty(null);
+                    }else{
+                        currentParentSku = combinationPrintDetailView.getParentSku();
+                        parentQty = combinationPrintDetailView.getParentSkuQty();
+                    }
+                }
                 printView.setCombinationPrintDetailView(combinationList);
             }
             printViews.add(printView);
