@@ -329,6 +329,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                 ,InventorySourceTypeEnum.MACHINE_INFO.getCode()
                 ,InventorySourceTypeEnum.PURCHASE_STOCK_IN.getCode()
                 ,InventorySourceTypeEnum.SO_RETURN_INSTOCK.getCode()
+                ,InventorySourceTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode()
         );
         //以上类型出可用时需要进行分配数量校验
         List<InventoryTransactionDTO> checkTransactionList = transactionList.stream().filter(obj ->
