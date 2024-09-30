@@ -320,6 +320,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
          * 5. 加工单：组装、拆卸
          * 6.采购入库单
          * 7.销售退货入库单
+         * 8.b2c发货拦截单
          */
         List<String> typeList = Arrays.asList(InventorySourceTypeEnum.OTHER_OUTSTOCK.getCode()
                 ,InventorySourceTypeEnum.OTHER_INSTOCK.getCode()
