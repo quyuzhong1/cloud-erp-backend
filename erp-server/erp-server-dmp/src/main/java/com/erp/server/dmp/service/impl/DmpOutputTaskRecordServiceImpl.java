@@ -25,6 +25,7 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
@@ -178,9 +179,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         int pushIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode())
                 || DmpOutputTaskRecordStatusEnum.MQERROR.getCode().equals(a.getTabFlag())
                 || DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode().equals(a.getTabFlag())
-
-        ).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        ).map(req -> req.getCount()).reduce(MathUtil.ZERO, Integer::sum);
         pushIng.setCount(pushIngCount);
         result.add(pushIng);
 

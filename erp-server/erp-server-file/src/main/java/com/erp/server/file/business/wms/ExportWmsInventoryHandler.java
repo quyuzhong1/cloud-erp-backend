@@ -1,6 +1,8 @@
 package com.erp.server.file.business.wms;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.utils.CollectionUtils;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -38,7 +40,9 @@ public class ExportWmsInventoryHandler extends AbstractPageFileEventHandler<Inve
     protected PagingVO<InventoryDTO.PagingViewDTO> getPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
         PagingVO<InventoryDTO.PagingViewDTO> inventoryPageData = exportWmsFeign.getInventoryPageData(dto);
         List<InventoryDTO.PagingViewDTO> dataList = (List<InventoryDTO.PagingViewDTO>) inventoryPageData.getList();
-        dto.setLastId(dataList.get(dataList.size() - 1).getId());
+        if (dataList.size() > 0) {
+            dto.setLastId(dataList.get(dataList.size() - 1).getId());
+        }
         return inventoryPageData;
     }
 

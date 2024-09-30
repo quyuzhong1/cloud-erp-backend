@@ -826,7 +826,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
             //清空明细中的虚拟仓
-            requisitionApplicationDetailService.cleanVirtualWarehouseIdByMianId(id);
+//            requisitionApplicationDetailService.cleanVirtualWarehouseIdByMianId(id);
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())) {
             if (entity.getHandleTime().isBefore(LocalDateTime.of(2024,07,27,0,0))) {
                 throw new ServiceException("系统升级，不支持撤销，请联系实施人员");

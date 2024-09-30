@@ -60,6 +60,9 @@ public class DmpOutputUtils{
 	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
 	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
+	        if(StringUtils.isBlank(message)) {
+	        	message = responseData;
+	        }
 	        DmpHandlerUtils.sendFeiShuMsg("输出任务记录id=【" + id + "】，单据编号=【" + code + "】处理失败：" + message);
 		}
 		return update;

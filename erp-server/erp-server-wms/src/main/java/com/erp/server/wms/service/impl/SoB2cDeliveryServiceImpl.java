@@ -89,6 +89,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import feign.Request;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
@@ -111,6 +112,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2C_DELIVERY_ORDER;
@@ -2050,7 +2052,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
             logisticsWaybillDTOList.add(printLogisticsWaybill);
         }
-        return logisticsBillFeign.printLogisticsWaybill(logisticsWaybillDTOList);
+        return logisticsBillFeign.printLogisticsWaybill(new Request.Options(90, TimeUnit.SECONDS,90,TimeUnit.SECONDS,true),logisticsWaybillDTOList);
     }
 
     /**

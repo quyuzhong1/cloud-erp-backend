@@ -1189,6 +1189,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
         List<String> soIds = list.stream().map(req -> req.getB2cSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
         List<String> errorList = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
             try {
@@ -1226,12 +1227,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 getLabelVO.setTransportNo(dto.getTransportNo());
 
                 //物流跟踪号
-                List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId()));
-                if (CollectionUtils.isEmpty(logisticsEntityList)){
+                SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+                if (Objects.isNull(soB2cLogisticsEntity)){
                     throw new ServiceException("销售订单【{}】物流信息为空不能进行面单打印", soB2cEntity.getCode());
                 }
-                getLabelVO.setTransportNo(logisticsEntityList.get(0).getCode());
-                getLabelVO.setTrackNo(logisticsEntityList.get(0).getTrackNo());
+                getLabelVO.setTransportNo(soB2cLogisticsEntity.getCode());
+                getLabelVO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
 
                 //授权信息
                 getLabelVO.setAuthMap(authMap);

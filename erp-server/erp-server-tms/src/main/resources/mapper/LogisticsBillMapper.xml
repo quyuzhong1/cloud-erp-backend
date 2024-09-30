@@ -225,44 +225,79 @@
         and  lbd.is_deleted = false
     </select>
     <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
+        with tms_cost as (
+        select lbc.logistics_bill_id,
+        SUM(CASE WHEN tcd.TYPE = 'estimated' THEN tcd.cost_value ELSE 0 END) AS estimatedFee,
+        SUM(CASE WHEN tcd.TYPE = 'actual' THEN tcd.cost_value ELSE 0 END) AS actualFee
+        from tms_cost_detail tcd
+        inner join logistics_bill_cost lbc on lbc.id = tcd.main_id
+        where tcd.is_deleted = false and lbc.is_deleted = false
+        GROUP BY
+        lbc.logistics_bill_id
+        ),
+        tms_logistics as (
         SELECT lb.id,
-                lb.shop_id as  shopId,
-               lb.outstock_id as outstockId,
-               lb.transport_no as transportNo,
-               lb.counter_no as counterNo,
-               lb.carrier_id as carrierId,
-               lb.source_code as businessCode,
-               lb.outstock_code as outstockCode,
-               lbd.id as detailId,
-               lbd.track_no as trackNo,
-               lbd.track_status as logisticsStatus,
+        lb.shop_id as  shopId,
+        lb.outstock_id as outstockId,
+        lb.transport_no as transportNo,
+        lb.counter_no as counterNo,
+        lb.carrier_id as carrierId,
+        lb.source_code as businessCode,
+        lb.outstock_code as outstockCode,
+        lbd.id as detailId,
+        lbd.track_no as trackNo,
+        lbd.track_status as logisticsStatus,
         CASE WHEN lbd.track_no !=''    then
         (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false and lt.content !='' order by lt.track_time desc limit 1) else '' end  as logisticsTrack ,
-               lb.invoices_status as invoicesStatus,
-               lb.shipping_method as shippingMethod,
-               lb.channel_id as logisticsChannelId,
-               lb.logistics_supplier_id as logisticsSupplierId,
-               lb.shop_name as shopName,
-               lb.to_country as country,
-               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false and lb.id = lbc.logistics_bill_id and lbc.is_deleted = false where lbc.logistics_bill_id = lb.id and lbcd.TYPE = 'estimated') as estimatedFee,
-               (select sum(lbcd.cost_value) from tms_cost_detail lbcd left join logistics_bill_cost lbc on lbc.id = lbcd.main_id and lbcd.is_deleted =false and lb.id = lbc.logistics_bill_id and lbc.is_deleted = false where lbc.logistics_bill_id = lb.id  and lbcd.TYPE = 'actual') as actualFee,
-               lb.order_time as orderTime,
-               lbd.sign_time as  signTime,
-               lb.remark,
-                case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
-                else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
+        lb.invoices_status as invoicesStatus,
+        lb.shipping_method as shippingMethod,
+        lb.channel_id as logisticsChannelId,
+        lb.logistics_supplier_id as logisticsSupplierId,
+        lb.shop_name as shopName,
+        lb.to_country as country,
+        lb.order_time as orderTime,
+        lbd.sign_time as  signTime,
+        lb.remark,
+        case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
+        else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from
-            logistics_bill lb
-            inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
-        where
-            ${params.sqlMap.default}
-          and lb.order_type = #{params.orderType}
-          and lb.is_deleted =false
+        logistics_bill lb
+        inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
+        where ${params.sqlMap.default}
+        and lb.order_type = #{params.orderType}
+        and lb.is_deleted =false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
         order by lb.create_time desc
+        )
+        SELECT 	  tl.id,
+        shopId,
+        outstockId,
+        transportNo,
+        counterNo,
+        carrierId,
+        businessCode,
+        outstockCode,
+        tl.detailId,
+        trackNo,
+        logisticsStatus,
+        logisticsTrack ,
+        invoicesStatus,
+        shippingMethod,
+        logisticsChannelId,
+        logisticsSupplierId,
+        shopName,
+        country,
+        orderTime,
+        signTime,
+        remark,
+        actualHour,
+        tc.estimatedFee,
+        tc.actualFee
+        from tms_logistics tl
+        left join tms_cost tc on tl.id = tc.logistics_bill_id
     </select>
     <select id="firstMileView" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ViewDTO">
         SELECT lb.id,

@@ -110,7 +110,10 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
                 detailHasNext = false;
             }
             detailDto.setCurrPage(detailDto.getCurrPage() + 1);
-            detailDto.setLastId(warehouseStatisticsList.get(warehouseStatisticsList.size() - 1).getInvId());
+            if (warehouseStatisticsList.size() > 0) {
+                detailDto.setLastId(warehouseStatisticsList.get(warehouseStatisticsList.size() - 1).getInvId());
+            }
+
         }
         List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
         //主表数据

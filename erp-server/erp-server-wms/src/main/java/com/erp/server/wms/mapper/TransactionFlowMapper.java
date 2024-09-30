@@ -128,10 +128,12 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
 
     /**
      * 查询存在流水的库存id
-     * @param startDate 执行开始时间
-     * @param orgId   组织id
+     *
+     * @param startDate   执行开始时间
+     * @param orgId       组织id
      * @param inventoryId 库存id
+     * @param fromTable
      * @return List<String>
      */
-    List<String> listByOrgId(@Param("startDate") LocalDate startDate, @Param("orgId") String orgId, @Param("inventoryId") String inventoryId);
+    List<String> listByOrgId(@Param("startDate") LocalDate startDate, @Param("orgId") String orgId, @Param("inventoryId") String inventoryId,@Param("fromTable") Boolean fromTable);
 }
