@@ -707,6 +707,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO interceptFailure(String id, Boolean isAutoOut, String remark) {
         SoB2cDeliveryInterceptEntity entity = Optional.ofNullable(this.getById(id)).orElseThrow(()->new ServiceException("拦截单为空"));
         //已处理不可重复操作
@@ -714,6 +715,12 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已处理不可重复操作");
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+
+        SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
+        if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
+                || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
+            throw new ServiceException(ApiError.ERROR_99124);
+        }
         //更新拦截单状态
         entity.setHandleResult(HandleResultEnum.FAILURE.getCode());
         entity.setHandleUserId(userInfo.getUid());
@@ -722,12 +729,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         entity.setHandleTime(LocalDateTime.now());
         entity.setHandleStatus(SoB2cDeliveryInterceptStatusEnum.HANDLE.getStatus());
         this.updateById(entity);
-        SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryService.getById(entity.getDeliveryId());
-        if (SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(soB2cDelivery.getStatus())
-                || SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(soB2cDelivery.getStatus())||
-                SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(soB2cDelivery.getStatus())){
-            throw new ServiceException(ApiError.ERROR_99124);
-        }
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
         interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
