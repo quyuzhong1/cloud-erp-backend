@@ -1144,7 +1144,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (ObjectUtils.isEmpty(platformType)) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        long days = ChronoUnit.DAYS.between(LocalDate.now(), dto.getDate());
+        long days = ChronoUnit.DAYS.between(LocalDate.now(), dto.getDate()) + 1;
         switch (platformType) {
             case AMAZON:
                 resultDTO = handlerFbaEstimateDetail(detail, salesEstimateMap, dto, days);
