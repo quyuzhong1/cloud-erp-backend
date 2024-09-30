@@ -1733,6 +1733,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         moveDto.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         moveDto.setDetailList(moveDetailList);
         warehouseLocationMoveService.addAndApprove(moveDto);
+        //取消保宏预报
+        BaseIdsDTO.IdsDTO idDto = new BaseIdsDTO.IdsDTO();
+        idDto.setIds(Arrays.asList(soB2cEntity.getId()));
+        if (TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())) {
+            ApiResult<List<BatchResultDTO>> cancelOrderForecastResult = soB2cFeign.cancelOrderForecast(idDto);
+            if(!cancelOrderForecastResult.isSuccess()){
+                throw new ServiceException("订单取消保宏预报失败,无法处理拦截成功");
+            }
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
     }
 
