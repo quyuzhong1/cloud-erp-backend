@@ -657,6 +657,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         this.updateById(soB2cDeliveryInterceptEntity);
+        operateLogService.addModuleOperateLog("操作拦截成功，备注："+remark, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), interceptId, "拦截成功");
         //更新销售订单
         SoB2cDTO.InterceptUpdateOrderDTO interceptUpdateOrderDTO = new SoB2cDTO.InterceptUpdateOrderDTO();
         interceptUpdateOrderDTO.setIsIntercept(Boolean.FALSE);
@@ -768,6 +769,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }else{
             soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
         }
+
+        operateLogService.addModuleOperateLog("操作拦截失败，备注："+remark, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), entity.getId(), "拦截失败");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"成功");
     }
 
