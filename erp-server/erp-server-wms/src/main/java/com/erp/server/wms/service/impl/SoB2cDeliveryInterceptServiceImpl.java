@@ -638,19 +638,23 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             }
         }
         //取消物流单，不管结果，继续向下执行
-        ApiResult<List<BatchResultDTO>> cancelLogisticResult = soB2cFeign.cancelLogistic(idDto);
-        String logisticLog;
-        if(cancelLogisticResult.isSuccess()){
-            soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
-            soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
-            logisticLog = "取消物流单-发起拦截，取消物流单成功";
-        }else{
-            soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
-            soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
-            logisticLog = "取消物流单-发起拦截，取消物流单失败";
+        if(!CancelStatusEnum.SUCCESS.getCode().equals(soB2cDeliveryInterceptEntity.getCancelStatus())
+         && !InterceptStatusEnum.SUCCESS.getCode().equals(soB2cDeliveryInterceptEntity.getInterceptStatus())){
+            ApiResult<List<BatchResultDTO>> cancelLogisticResult = soB2cFeign.cancelLogistic(idDto);
+            String logisticLog;
+            if(cancelLogisticResult.isSuccess()){
+                soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.SUCCESS.getCode());
+                soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.SUCCESS.getCode());
+                logisticLog = "取消物流单-发起拦截，取消物流单成功";
+            }else{
+                soB2cDeliveryInterceptEntity.setCancelStatus(CancelStatusEnum.FAILURE.getCode());
+                soB2cDeliveryInterceptEntity.setInterceptStatus(InterceptStatusEnum.FAILURE.getCode());
+                logisticLog = "取消物流单-发起拦截，取消物流单失败";
+            }
+            // 操作日志
+            operateLogService.addModuleOperateLog(logisticLog, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), interceptId, "取消物流单");
+
         }
-        // 操作日志
-        operateLogService.addModuleOperateLog(logisticLog, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), interceptId, "取消物流单");
 
         this.updateById(soB2cDeliveryInterceptEntity);
         //更新销售订单
