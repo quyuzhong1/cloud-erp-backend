@@ -171,6 +171,9 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
             Integer distributionQty = addQty + toTransferQty - fromTransferQty - cancelQty;
             listDTO.setDistributionQty(distributionQty);
 
+            //是否缺货
+            listDTO.setIsVirtualScarceName(listDTO.getIsVirtualScarce() ? "是":"否");
+
             //已出库数量,累计分配 - 虚拟仓库存
             listDTO.setDeliveryQty(distributionQty - listDTO.getVirtualTotalQty());
             //预警
@@ -222,6 +225,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
                 listDTO.setIsWarn(isWarn);
             }
         }
+        listDTO.setIsWarnName(isWarn ? "是":"否");
     }
 
     /**

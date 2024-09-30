@@ -57,7 +57,7 @@ public class ReportOrderSalesController extends BaseController {
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出订单需求报表")
-    @PostMapping(value = "/exportExcel")
+    @PostMapping(value = "/exportExcell")
     @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody ReportOrderSalesDTO.PagingParamDTO dto) {
         Boolean flag = reportOrderSalesService.exportExcel(dto);

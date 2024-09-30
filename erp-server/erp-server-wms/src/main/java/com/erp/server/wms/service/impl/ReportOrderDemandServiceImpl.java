@@ -150,6 +150,11 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
         List<ReportOrderDemandDTO.VirtualTransferViewDTO> virtualTransferViewList = new ArrayList<>();
         for (VirtualWarehouseRelationEntity relationEntity : list) {
+
+            //数据虚拟仓和调入虚拟仓一致则跳过
+            if (StrUtil.equals(dto.getVirtualWarehouseId(),relationEntity.getVirtualWarehouseId())) {
+                continue;
+            }
             ReportOrderDemandDTO.VirtualTransferViewDTO transferViewDTO = new ReportOrderDemandDTO.VirtualTransferViewDTO();
             transferViewDTO.setVirtualWarehouseId(relationEntity.getVirtualWarehouseId());
             //虚拟仓名称
