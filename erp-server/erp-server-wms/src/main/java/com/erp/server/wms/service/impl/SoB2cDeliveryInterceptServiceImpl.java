@@ -790,7 +790,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         //拣货仓库冻结扣减，返还仓库仓位可用增加
         List<TransferDTO> transferDTOList = new ArrayList<>();
         for (SoB2cDeliveryInterceptDTO.InterceptInventoryDTO interceptInventoryDTO : interceptInventoryDTOList) {
-            SoB2cDeliveryInterceptDTO.InterceptInventoryDTO origin = originList.stream().filter(v->v.getInterceptDetailId().equals(interceptInventoryDTO.getInterceptDetailId())).findFirst().orElse(null);
+            SoB2cDeliveryInterceptDTO.InterceptInventoryDTO origin = originList.stream().filter(v->v.getPickDetailId().equals(interceptInventoryDTO.getPickDetailId())).findFirst().orElse(null);
             if(Objects.isNull(origin)){
                 continue;
             }
@@ -799,7 +799,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             transferDTO.setSourceId(soB2cDeliveryInterceptEntity.getId());
             transferDTO.setSourceCode(soB2cDeliveryInterceptEntity.getCode());
             transferDTO.setBillDate(LocalDate.now());
-            transferDTO.setSourceDetailId(interceptInventoryDTO.getInterceptDetailId());
+//            transferDTO.setSourceDetailId(interceptInventoryDTO.getInterceptDetailId());
             transferDTO.setCurWarehouseId(origin.getWarehouseId());
             transferDTO.setCurWarehouseLocation(origin.getWarehouseLocation());
             transferDTO.setTargetWarehouseId(interceptInventoryDTO.getWarehouseId());
