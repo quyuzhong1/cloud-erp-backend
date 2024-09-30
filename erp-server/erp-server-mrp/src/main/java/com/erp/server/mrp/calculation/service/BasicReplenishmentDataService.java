@@ -368,8 +368,9 @@ public class BasicReplenishmentDataService {
         resultDTO.setReplenishmentDetail(detailDTO);
         resultDTO.setSalesPrice(detail.getSalesPrice());
         resultDTO.setPurchasePrice(detail.getPurchasePrice());
+        salesInfoList.forEach(salesInfo -> salesInfo.setId(IdWorker.getIdStr()));
         List<ReplenishmentResultDTO.SalesInfoDTO> salesInfoEntityList = salesInfoList.stream()
-                .map(ReplenishmentResultDTO.SalesInfoDTO::buildSalesInfoNotIdDTO)
+                .map(ReplenishmentResultDTO.SalesInfoDTO::buildSalesInfoDTO)
                 .collect(Collectors.toList());
         resultDTO.setSalesInfos(salesInfoEntityList);
         salesInfoList.forEach(v -> {
