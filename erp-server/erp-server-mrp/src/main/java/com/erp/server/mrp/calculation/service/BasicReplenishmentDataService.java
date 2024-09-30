@@ -373,7 +373,6 @@ public class BasicReplenishmentDataService {
                 .collect(Collectors.toList());
         resultDTO.setSalesInfos(salesInfoEntityList);
         salesInfoList.forEach(v -> {
-                    v.setId(null);
                     v.setReplenishmentDetailId(detailDTO.getDetailId());
                     v.setCalcVersion(detailDTO.getCalcVersion());
                     v.setSalesQty(null);
