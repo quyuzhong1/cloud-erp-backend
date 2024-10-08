@@ -112,9 +112,9 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         }
         LocalTime now = LocalTime.now();
         boolean isGenerate = virtualRuleDTO.getExecTimeList().contains(now);
-        if (!isGenerate) {
+       /* if (!isGenerate) {
             return;
-        }
+        }*/
         //是否拆分
         boolean isSplit = ObjectUtil.isEmpty(viewDTO.getVirtualRuleDTO()) ? false : viewDTO.getVirtualRuleDTO().getIsSplit();
         //生成源数据
