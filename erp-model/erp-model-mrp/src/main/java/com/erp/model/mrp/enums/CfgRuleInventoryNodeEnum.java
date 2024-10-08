@@ -89,4 +89,8 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
         }
         return list;
     }
+
+    public static String getFbaUsable() {
+        return String.join(":", FBA_INVENTORY.getCode(), FBA_USABLE.getCode());
+    }
 }

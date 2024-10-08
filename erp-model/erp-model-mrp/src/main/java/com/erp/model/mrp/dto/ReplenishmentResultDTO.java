@@ -662,14 +662,6 @@ public class ReplenishmentResultDTO {
             return dto;
         }
 
-        public static SalesInfoDTO buildSalesInfoNotIdDTO(SalesInfoEntity entity) {
-            SalesInfoDTO dto = new SalesInfoDTO();
-            dto.setDate(entity.getDate());
-            dto.setOriginalSalesQty(entity.getOriginalSalesQty());
-            dto.setOriginalInventoryQty(entity.getOriginalInventoryQty());
-            return dto;
-        }
-
         public static SalesInfoEntity buildSalesInfo(SalesInfoDTO dto, String replenishmentDetailId, String calcVersion) {
             SalesInfoEntity entity = new SalesInfoEntity();
             entity.setId(dto.getId());

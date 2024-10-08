@@ -18,9 +18,9 @@ import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -40,10 +40,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapper, CfgRuleCommonEntity> implements CfgRuleCommonService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-
+    @Resource
+    private RedisTemplate<String, String> redisTemplate;
     @Resource
     private CfgRuleWarehouseService cgRuleWarehouseService;
 
@@ -52,7 +53,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @CacheEvict(cacheNames = "cache:mrp:getCfgRuleCommon", allEntries = true, beforeInvocation = true)
+    @CacheEvict(cacheNames = {"cache:mrp:getCfgRuleCommon"}, allEntries = true, beforeInvocation = true)
     public Boolean update(List<CfgRuleCommonDTO.UpdateDTO> updateList) {
         // 数据处理
         List<CfgRuleCommonEntity> list = handleData(updateList);
@@ -157,6 +158,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
             }
             List<CfgRuleCommonEntity> collect = list.stream()
                     .filter(v -> v.getParentId().equals(entity.getId()))
+                    .filter(v -> Boolean.FALSE.equals(isEnableOverseas) && !CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_INVENTORY.getCode().equals(v.getCode()))
                     .collect(Collectors.toList());
             List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = new ArrayList<>();
             if (CfgRuleInventoryNodeEnum.getParentNodes(isEnableOverseas).contains(node)) {
@@ -181,6 +183,60 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
 
         return map;
     }
+
+    @Override
+    public Set<String> findByKey(String baseKey, List<CfgRuleCommonDTO.StrategyResultDTO> list, String findKey) {
+        //根据传入的findKey
+        Set<String> keys = redisTemplate.keys(findKey + "*");
+        if (CollectionUtils.isNotEmpty(keys)) {
+            return keys;
+        }
+        // 去掉 baseKey 前缀部分，剩下的作为查找依据
+        String remainingKey = removePrefix(findKey, baseKey);
+        // 递归匹配树结构中的节点，找到匹配的节点数据
+        keys = findAndCacheNodeByKey(list, remainingKey, findKey);
+        return keys;
+    }
+
+    // 去掉 baseKey 前缀部分的方法
+    private String removePrefix(String key, String prefix) {
+        if (key.startsWith(prefix)) {
+            return key.substring(prefix.length() + 1); // 移除前缀以及":"分隔符
+        }
+        return key;
+    }
+
+    // 递归匹配树结构中的节点，并保存符合条件的数据到 Redis
+    private Set<String> findAndCacheNodeByKey(List<CfgRuleCommonDTO.StrategyResultDTO> list, String remainingKey, String redisKeyPrefix) {
+        // 拆分 remainingKey，按 ":" 分割
+        String[] keyParts = remainingKey.split(":");
+        // 用于存储符合条件的子节点的 code
+        Set<String> matchedCodes = new HashSet<>();
+        // 遍历树的每个节点
+        for (CfgRuleCommonDTO.StrategyResultDTO node : list) {
+            // 检查当前节点的 code 是否与 keyParts 的第一部分匹配
+            if (node.getCode().equals(keyParts[0])) {
+                // 如果是最后一层，检查子节点
+                if (keyParts.length == 1) {
+                    // 遍历子节点并保存 value 为 true 的节点到 Redis
+                    if (node.getChildrenList() != null) {
+                        for (CfgRuleCommonDTO.StrategyResultDTO child : node.getChildrenList()) {
+                            if ("true".equalsIgnoreCase(child.getValue())) {
+                                String redisKey = redisKeyPrefix + ":" + child.getCode();
+                                redisTemplate.opsForValue().set(redisKey, child.getValue());
+                                matchedCodes.add(child.getCode());
+                            }
+                        }
+                    }
+                } else {
+                    // 递归调用，进入下一层
+                    matchedCodes.addAll(findAndCacheNodeByKey(node.getChildrenList(), String.join(":", Arrays.copyOfRange(keyParts, 1, keyParts.length)), redisKeyPrefix));
+                }
+            }
+        }
+        return matchedCodes;
+    }
+
 
 
     /**

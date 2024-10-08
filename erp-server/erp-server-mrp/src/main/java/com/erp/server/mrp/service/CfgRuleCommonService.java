@@ -1,10 +1,12 @@
 package com.erp.server.mrp.service;
+
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.entity.CfgRuleCommonEntity;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -48,4 +50,12 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
      * @param platformType 平台类型
      */
     Map<String, List<CfgRuleCommonDTO.DescriptionDTO>> description(String platformType);
+
+    /**
+     * 根据传入的key查询对应数据
+     * @param baseKey 基础前缀
+     * @param list 获取的树结构
+     * @param findKey key全长
+     */
+    Set<String> findByKey(String baseKey, List<CfgRuleCommonDTO.StrategyResultDTO> list, String findKey);
 }
