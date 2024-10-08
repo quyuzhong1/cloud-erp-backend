@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -37,8 +38,7 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.*;
@@ -135,6 +135,13 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     private InventoryTransCoreService inventoryTransCoreService;
     @Resource
     private AbstractWdtService abstractWdtService;
+
+    @Resource
+    private TransferInfoService transferInfoService;
+
+    @Resource
+    private WarehouseService warehouseService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -790,7 +797,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         if(CollectionUtils.isEmpty(interceptInventoryDTOList)){
             return;
         }
-        //拣货仓库冻结扣减，返还仓库仓位可用增加
+        List<String> warehouseIds = interceptInventoryDTOList.stream().map(SoB2cDeliveryInterceptDTO.InterceptInventoryDTO::getWarehouseId).collect(Collectors.toList());
+        warehouseIds.addAll(originList.stream().map(SoB2cDeliveryInterceptDTO.InterceptInventoryDTO::getWarehouseId).collect(Collectors.toList()));
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
+        //从原仓冻结到可用，如果原仓与用户选择的仓库不一致，新增调拨
+        List<TransferInfoDTO.AddDTO> transferInfoList = new ArrayList<>();
         List<TransferDTO> transferDTOList = new ArrayList<>();
         for (SoB2cDeliveryInterceptDTO.InterceptInventoryDTO interceptInventoryDTO : interceptInventoryDTOList) {
             SoB2cDeliveryInterceptDTO.InterceptInventoryDTO origin = originList.stream().filter(v->v.getPickDetailId().equals(interceptInventoryDTO.getPickDetailId())).findFirst().orElse(null);
@@ -802,17 +813,56 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             transferDTO.setSourceId(soB2cDeliveryInterceptEntity.getId());
             transferDTO.setSourceCode(soB2cDeliveryInterceptEntity.getCode());
             transferDTO.setBillDate(LocalDate.now());
-//            transferDTO.setSourceDetailId(interceptInventoryDTO.getInterceptDetailId());
             transferDTO.setCurWarehouseId(origin.getWarehouseId());
             transferDTO.setCurWarehouseLocation(origin.getWarehouseLocation());
-            transferDTO.setTargetWarehouseId(interceptInventoryDTO.getWarehouseId());
-            transferDTO.setTargetWarehouseLocation(interceptInventoryDTO.getWarehouseLocation());
-            transferDTO.setQty(interceptInventoryDTO.getQty());
-            transferDTO.setSkuId(interceptInventoryDTO.getSkuId());
-            transferDTO.setSkuNo(interceptInventoryDTO.getSkuNo());
+            transferDTO.setTargetWarehouseId(origin.getWarehouseId());
+            transferDTO.setTargetWarehouseLocation(origin.getWarehouseLocation());
+            transferDTO.setQty(origin.getQty());
+            transferDTO.setSkuId(origin.getSkuId());
+            transferDTO.setSkuNo(origin.getSkuNo());
             transferDTO.setWarehouseId(origin.getWarehouseId());
             transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
             transferDTOList.add(transferDTO);
+
+            if(!origin.getWarehouseId().equals(interceptInventoryDTO.getWarehouseId())){
+                TransferInfoDetailDTO.AddDTO transferDetailAddDTO = new TransferInfoDetailDTO.AddDTO();
+                transferDetailAddDTO.setSkuId(interceptInventoryDTO.getSkuId());
+                transferDetailAddDTO.setSkuNo(interceptInventoryDTO.getSkuNo());
+                transferDetailAddDTO.setQty(interceptInventoryDTO.getQty());
+                transferDetailAddDTO.setSourceDetailId(interceptInventoryDTO.getInterceptDetailId());
+                transferDetailAddDTO.setInWarehouseId(interceptInventoryDTO.getWarehouseId());
+                transferDetailAddDTO.setInWarehouseLocation(interceptInventoryDTO.getWarehouseLocation());
+                transferDetailAddDTO.setOutWarehouseId(origin.getWarehouseId());
+                transferDetailAddDTO.setOutWarehouseLocation(origin.getWarehouseLocation());
+                WarehouseEntity inWarehouseEntity = warehouseEntityList.stream().filter(v->v.getId().equals(interceptInventoryDTO.getWarehouseId())).findFirst().orElseThrow(()->new ServiceException("调入仓库实体为空"));
+                WarehouseEntity outWarehouseEntity = warehouseEntityList.stream().filter(v->v.getId().equals(origin.getWarehouseId())).findFirst().orElseThrow(()->new ServiceException("调出仓库实体为空"));
+
+                TransferInfoDTO.AddDTO addDTO = transferInfoList.stream().filter(v->v.getSourceId().equals(interceptInventoryDTO.getId()) && v.getInOrgId().equals(inWarehouseEntity.getOrgId())).findFirst().orElse(null);
+                if(Objects.isNull(addDTO)){
+                    addDTO = new TransferInfoDTO.AddDTO();
+                    addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode());
+                    addDTO.setBillDate(LocalDate.now());
+                    addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+                    addDTO.setInOrgId(inWarehouseEntity.getOrgId());
+                    addDTO.setOutOrgId(outWarehouseEntity.getOrgId());
+                    if (inWarehouseEntity.getOrgId().equals(outWarehouseEntity.getOrgId()))  {
+                        addDTO.setType(TransferTypeEnum.IN_ORG.getCode());
+                    } else {
+                        addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
+                    }
+                    addDTO.setSourceId(interceptInventoryDTO.getId());
+                    addDTO.setSourceCode(interceptInventoryDTO.getInterceptCode());
+                    addDTO.setRemark(String.format("发货拦截单【%s】拦截成功自动创建", interceptInventoryDTO.getInterceptCode()));
+                    List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
+                    detailList.add(transferDetailAddDTO);
+                    addDTO.setDetailList(detailList);
+                    transferInfoList.add(addDTO);
+                }else{
+                    List<TransferInfoDetailDTO.AddDTO> detailList = addDTO.getDetailList();
+                    detailList.add(transferDetailAddDTO);
+                    addDTO.setDetailList(detailList);
+                }
+            }
         }
         if(CollectionUtils.isNotEmpty(transferDTOList)){
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
@@ -821,6 +871,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
             //发送旺店通
             syncInfoToWdt(soB2cDeliveryInterceptEntity,entity,interceptInventoryDTOList,originList);
+        }
+        if(CollectionUtils.isNotEmpty(transferInfoList)){
+            transferInfoList.forEach(v->{
+                transferInfoService.addAndApprove(v);
+            });
         }
     }
 
