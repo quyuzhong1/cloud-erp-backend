@@ -4,6 +4,7 @@ import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -69,9 +70,9 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
     }
 
     public static List<String> getParentNodes(Boolean isEnableOverseas) {
-        List<String> list = Arrays.asList(FBA_ESTIMATED_DELIVERY.getCode(),
+        List<String> list = new ArrayList<>(Arrays.asList(FBA_ESTIMATED_DELIVERY.getCode(),
                 LOCAL_ESTIMATED_DELIVERY.getCode(),
-                TOTAL_INVENTORY.getCode());
+                TOTAL_INVENTORY.getCode()));
         if (Boolean.TRUE.equals(isEnableOverseas)) {
             list.add(OVERSEAS_ESTIMATED_DELIVERY.getCode());
         }
@@ -79,9 +80,9 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
     }
 
     public static List<String> getNodes(Boolean isEnableOverseas) {
-        List<String> list = Arrays.asList(FBA_USABLE.getCode(), FBA_IN_TRANSIT.getCode(), FBA_ESTIMATED_DELIVERY.getCode(),
+        List<String> list = new ArrayList<>(Arrays.asList(FBA_USABLE.getCode(), FBA_IN_TRANSIT.getCode(), FBA_ESTIMATED_DELIVERY.getCode(),
                 LOCAL_USABLE.getCode(), LOCAL_IN_TRANSIT.getCode(), LOCAL_ESTIMATED_DELIVERY.getCode(),
-                TOTAL_INVENTORY.getCode());
+                TOTAL_INVENTORY.getCode()));
         if (Boolean.TRUE.equals(isEnableOverseas)) {
             list.add(OVERSEAS_USABLE.getCode());
             list.add(OVERSEAS_IN_TRANSIT.getCode());
