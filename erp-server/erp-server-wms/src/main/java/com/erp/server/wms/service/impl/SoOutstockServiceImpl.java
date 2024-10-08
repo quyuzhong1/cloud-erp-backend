@@ -36,7 +36,9 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -2389,6 +2391,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     newDetailList.add(addDTO);
                 }
                 generateB2cDTO.setDetailList(newDetailList);
+            } else if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(generateB2cDTO.getSourceType())){
+                // 海外仓出库信息补充
+                List<DmpThirdOutboundEntity> list = FeignQuery.create(DmpThirdOutboundEntity.class)
+                        .eq(DmpThirdOutboundEntity::getReferenceNo, generateB2cDTO.getSoCode())
+                        .list();
+                if (CollectionUtils.isEmpty(list)){
+                    ServiceException.runError("未找到海外仓出库信息:ReferenceNo=" + generateB2cDTO.getSourceCode());
+                }
+                DmpThirdOutboundEntity outboundEntity = list.get(0);
+                LocalDateTime outBoundTime = outboundEntity.getDateShipping();
+                if(Objects.nonNull(outBoundTime)){
+                    generateB2cDTO.setBillDate(outBoundTime.toLocalDate());
+                }
+                //跟踪号
+                generateB2cDTO.setTrackNo(outboundEntity.getTrackingNo());
+                //运单号
+                generateB2cDTO.setTransportNo(outboundEntity.getTrackingNo());
             }
             Boolean result = createB2cSoOutstock(generateB2cDTO);
             return result;
