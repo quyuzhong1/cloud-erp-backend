@@ -127,4 +127,12 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @param max
      */
     void updateLogisticsBillDetailByTrackNo(LogisticsTrackEntity max);
+
+    /**
+     * 更新跟踪号信息
+     * @param trackNo
+     * @param status
+     * @param signTime
+     */
+    void updateTrackStatus(String trackNo, String status, LocalDateTime signTime);
 }

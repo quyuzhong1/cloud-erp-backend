@@ -330,4 +330,17 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 .set(LogisticsBillDetailEntity::getSignTime, signTime)
                 .update();
     }
+
+    @Override
+    public void updateTrackStatus(String trackNo, String status, LocalDateTime signTime) {
+        if (StrUtil.isBlank(trackNo) || StrUtil.isBlank(status)){
+            return;
+        }
+        this.lambdaUpdate().eq(LogisticsBillDetailEntity::getTrackNo, trackNo)
+                .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
+                .set(LogisticsBillDetailEntity::getTrackStatus, status)
+                .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
+                .set(Objects.nonNull(signTime), LogisticsBillDetailEntity::getSignTime, signTime)
+                .update();
+    }
 }

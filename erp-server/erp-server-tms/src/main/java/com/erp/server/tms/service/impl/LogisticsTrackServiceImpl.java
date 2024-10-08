@@ -207,13 +207,17 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     public void processTrackData(PlatformTrackDTO dto){
         log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
         List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
+        //获取跟踪号最新一条记录
+        LogisticsTrackEntity trackEntity = this.getMaxByTrackTime(dto.getTrackNo());
+        //未查询到物流轨迹 且最近一条物流轨迹是三个月前
+        // 获取当前时间
+        LocalDateTime now = LocalDateTime.now();
+        // 计算三个月前的时间
+        LocalDateTime threeMonthsAgo = now.minusMonths(3);
         //先物理删除  再新增
-        if (io.seata.common.util.CollectionUtils.isNotEmpty(logisticsTrackEntities)) {
+        if (CollectionUtils.isNotEmpty(logisticsTrackEntities)) {
             Boolean needUpdate = Boolean.FALSE;
             LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
-            //比较最新记录的 md5不一致就更新
-            //获取跟踪号最新一条记录
-            LogisticsTrackEntity trackEntity = this.getMaxByTrackTime(dto.getTrackNo());
             //查询不到就保存全部
             if (Objects.isNull(trackEntity)){
                 needUpdate = Boolean.TRUE;
@@ -225,13 +229,23 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
                         && !LogisticTrackStatusEnum.NOT_FIND.getCode().equals(e.getStatus())
                         && e.getTrackTime().isAfter(trackEntity.getTrackTime())
                 ).collect(Collectors.toList());
-                if (io.seata.common.util.CollectionUtils.isNotEmpty(lastList)){
+                if (CollectionUtils.isNotEmpty(lastList)){
                     needUpdate = Boolean.TRUE;
                     this.saveBatch(lastList);
                 }
             }
             if (needUpdate){
                 logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(max);
+            }else {
+                if (Objects.nonNull(trackEntity) && Objects.nonNull(trackEntity.getTrackTime()) && trackEntity.getTrackTime().isBefore(threeMonthsAgo)){
+                    //系统完结
+                    logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),LocalDateTime.now());
+                }
+            }
+        }else {
+            if (Objects.nonNull(trackEntity) && Objects.nonNull(trackEntity.getTrackTime()) && trackEntity.getTrackTime().isBefore(threeMonthsAgo)){
+                //系统完结
+                logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),LocalDateTime.now());
             }
         }
         log.info(StrUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
