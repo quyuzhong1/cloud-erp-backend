@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * 销售订单变更类型
  */
-public enum SoB2cLogisticTypeEnum {
+public enum SoB2cLogisticSourceSystemEnum {
     ERP("erp", "erp来源"),
     THIRD("third", "第三方"),
     ;
@@ -23,7 +23,7 @@ public enum SoB2cLogisticTypeEnum {
     private String name;
 
 
-    SoB2cLogisticTypeEnum(String code, String name) {
+    SoB2cLogisticSourceSystemEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -40,7 +40,7 @@ public enum SoB2cLogisticTypeEnum {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (SoB2cLogisticTypeEnum billTypeEnum : SoB2cLogisticTypeEnum.values()) {
+        for (SoB2cLogisticSourceSystemEnum billTypeEnum : SoB2cLogisticSourceSystemEnum.values()) {
             if (code.equals(billTypeEnum.getCode())) {
                 return billTypeEnum.getName();
             }
