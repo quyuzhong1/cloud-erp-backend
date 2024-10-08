@@ -305,7 +305,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         );
         List<BigDecimal> salesEstimates = estimateEntityList.stream().map(SalesEstimateEntity::getSalesQty).collect(Collectors.toList());
         List<LocalDate> salesEstimateDates = estimateEntityList.stream().map(SalesEstimateEntity::getDate).collect(Collectors.toList());
-        salesAnalysisVO.setDenoisingSales(new SalesAnalysisVO.SalesVO(salesEstimateDates, salesEstimates));
+        salesAnalysisVO.setEstimatesSales(new SalesAnalysisVO.SalesVO(salesEstimateDates, salesEstimates));
         return salesAnalysisVO;
     }
 
@@ -1040,7 +1040,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<LocalDate> planArrivalDate = new ArrayList<>();
         List<LocalDate> outOfStockDate = new ArrayList<>();
         List<LocalDate> calcOutOfStockDate = new ArrayList<>();
-        List<LocalDate> calcPlanArrivalDate = new ArrayList<>();
+        Set<LocalDate> calcPlanArrivalDate = new HashSet<>();
         LocalDate now = LocalDate.now();
         // 获取Fba在途
         List<FbaInTransitDetailEntity> fbaInTransitDetails = fbaInTransitDetailService.getByReplenishmentId(detail.getId());
@@ -1091,9 +1091,15 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 outOfStockDate.add(currentDate);
             }
             if (Boolean.TRUE.equals(dto.getIsSimulated())) {
+                if (0 != planArrivalQty) {
+                    calcPlanArrivalDate.add(currentDate);
+                }
                 BigDecimal calcTemp = calcBalanceInventory;
                 //计算试算的建议库存
                 BigDecimal suggestInventory = getSuggestInventory(currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
+                if (suggestInventory.compareTo(BigDecimal.ZERO) > 0) {
+                    calcPlanArrivalDate.add(currentDate);
+                }
                 calcBalanceInventory = calcBalanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty)).add(suggestInventory);
                 calcInventoryQty.add(calcBalanceInventory);
                 if (calcTemp.compareTo(BigDecimal.ZERO) > 0 && calcBalanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
@@ -1107,7 +1113,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         resultDTO.setOutOfStockDate(outOfStockDate);
         resultDTO.setCalcInventoryQty(calcInventoryQty);
         resultDTO.setCalcOutOfStockDate(calcOutOfStockDate);
-        resultDTO.setCalcPlanArrivalDate(calcPlanArrivalDate);
+        resultDTO.setCalcPlanArrivalDate(new ArrayList<>(calcPlanArrivalDate));
         return resultDTO;
     }
 
