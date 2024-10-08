@@ -163,7 +163,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
             }
             List<CfgRuleCommonEntity> collect = list.stream()
                     .filter(v -> v.getParentId().equals(entity.getId()))
-                    .filter(v -> Boolean.FALSE.equals(isEnableOverseas) && !CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_INVENTORY.getCode().equals(v.getCode()))
+                    .filter(v -> Boolean.TRUE.equals(isEnableOverseas) || (Boolean.FALSE.equals(isEnableOverseas) && !CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_INVENTORY.getCode().equals(v.getCode())))
                     .collect(Collectors.toList());
             List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = new ArrayList<>();
             if (CfgRuleInventoryNodeEnum.getParentNodes(isEnableOverseas).contains(node)) {
