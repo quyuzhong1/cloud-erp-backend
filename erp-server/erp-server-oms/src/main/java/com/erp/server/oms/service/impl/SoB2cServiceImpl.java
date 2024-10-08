@@ -1293,6 +1293,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消物流单");
                 soB2cLogisticsEntity.setCode("");
                 soB2cLogisticsEntity.setTrackNo("");
+                //清空面单信息
+                soB2cLabelService.deleteByMainIds(Arrays.asList(id));
             }
         }
         //重置物流渠道信息
