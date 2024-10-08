@@ -241,4 +241,16 @@ public class WaveListDTO implements Serializable {
         private String deliveryId;
 
     }
+
+    @Getter
+    @Setter
+    public static class WaveDeliveryStatusDTO {
+
+        private String id;
+
+        private String deliveryId;
+
+        private String status;
+
+    }
 }

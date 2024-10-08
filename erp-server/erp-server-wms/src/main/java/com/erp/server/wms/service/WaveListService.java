@@ -126,4 +126,18 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @param deliveryId 发货单id
      */
     void cleanException(String deliveryId);
+
+    /**
+     * 手动标记波次状态为完成
+     * @author jack
+     * @date 2024/9/29
+     * @param ids
+     * @return List<WaveListEntity>
+     */
+    ApiResult<?> updateWaveStatus(List<String> ids);
+
+    /**
+     * 波次列表波次状态自动变更
+     */
+    void waveListStatusAutoChange();
 }

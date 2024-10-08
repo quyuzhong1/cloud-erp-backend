@@ -107,6 +107,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         return new BaseResultDTO.AddDTO(entity.getId(), entity.getCode());
     }
 
+
     @Override
     public int countDelivery(PermissionsDTO param) {
         return baseMapper.countDelivery(param);
@@ -267,7 +268,23 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
                 .set("picking_user_name", "")
                 .set("picking_time", null)
                 .set("print_time", null)
+                .set("picking_print_status", null)
+                .set("picking_print_time", null)
         );
+        //记录日志
+        LoginUser user = UserContext.getNonLoginUser();
+        operateLogService.addModuleOperateLog(String.format("取消已打印【%s】", waveListEntity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), waveListEntity.getId(), "取消打印操作", user.getUid(), user.getUserName());
+
+        //波次状态自动变更
+        //校验波次状态是否为待拣货
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        String status = waveListEntity.getStatus();
+        if(status.equals(WaveStatusEnum.PICK_ING.getCode())){
+            update(new UpdateWrapper<WaveListEntity>()
+                    .set("status",WaveStatusEnum.AWAIT_PICK.getCode())
+                    .eq("id", waveId));
+            operateLogService.addModuleOperateLog("波次拣货单取消打印，自动变更状态为待拣货", ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), waveId, "波次列表波次状态自动变更", loginUser.getUid(), loginUser.getUserName());
+        }
         return BatchResultDTO.success(waveListEntity.getId(), waveListEntity.getCode(), "成功");
     }
 
@@ -288,14 +305,23 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO) {
         LoginUser loginUser = UserContext.getDefaultLoginUser();
-        //修改波次打印状态为已打印
+        //修改物流单打印状态为已打印
         update(new UpdateWrapper<WaveListEntity>()
                 .set("print_status", PrintStatusEnum.PRINT_FINISH.getCode())
                 .set("print_time", LocalDateTime.now())
                 .in("id", idsDTO.getIds()));
-
         for (String id : idsDTO.getIds()) {
-            operateLogService.addModuleOperateLog("标记波次已打印", ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), id, "完成打印", loginUser.getUid(), loginUser.getUserName());
+            operateLogService.addModuleOperateLog("标记物流单已打印", ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), id, "物流单完成打印", loginUser.getUid(), loginUser.getUserName());
+        }
+
+        List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(idsDTO.getIds());
+        List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);
+        for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
+            if(!deliveryEntity.getIsPrintLogistic()){
+                deliveryService.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintLogistic,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId());
+                operateLogService.addModuleOperateLog("验货完成自动打印物流单", ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), deliveryEntity.getId(), "物流单打印", loginUser.getUid(), loginUser.getUserName());
+            }
         }
         return ApiResult.success();
     }
@@ -323,6 +349,30 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             printPickingMainViewDTO.setOrderCount(Math.toIntExact(orderCount));
             printPickingMainViewDTO.setDetailList(entry.getValue());
             resultList.add(printPickingMainViewDTO);
+        }
+
+        //修改拣货单打印状态为已打印
+        update(new UpdateWrapper<WaveListEntity>()
+                .set("picking_print_status", PrintStatusEnum.PRINT_FINISH.getCode())
+                .set("picking_print_time", LocalDateTime.now())
+                .in("id", ids));
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        for (String id : ids) {
+            operateLogService.addModuleOperateLog("标记拣货单已打印", ModuleTypeEnum.WAVE_LIST.getCode(), id, "拣货单完成打印", loginUser.getUid(), loginUser.getUserName());
+        }
+
+        //波次状态自动变更
+        List<WaveListEntity> waveListEntities = this.baseMapper.selectBatchIds(ids);
+        for (WaveListEntity waveListEntity : waveListEntities) {
+            String id = waveListEntity.getId();
+            //校验波次状态是否为待拣货
+            String status = waveListEntity.getStatus();
+            if(status.equals(WaveStatusEnum.AWAIT_PICK.getCode())){
+                update(new UpdateWrapper<WaveListEntity>()
+                        .set("status",WaveStatusEnum.PICK_ING.getCode())
+                        .eq("id", id));
+                operateLogService.addModuleOperateLog("波次完成拣货单打印，自动变更状态为拣货中", ModuleTypeEnum.WAVE_LIST.getCode(), id, "波次列表波次状态自动变更", loginUser.getUid(), loginUser.getUserName());
+            }
         }
         return resultList;
     }
@@ -357,5 +407,45 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             return;
         }
         update(Wrappers.<WaveListEntity>lambdaUpdate().set(WaveListEntity::getIsOutStock, false).eq(WaveListEntity::getId, detail.getMainId()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ApiResult<?> updateWaveStatus(List<String> ids) {
+        //修改波次状态为已完成
+        lambdaUpdate()
+                .set(WaveListEntity::getStatus, WaveStatusEnum.FINISH.getCode())
+                .ne(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode())
+                .in(WaveListEntity::getId, ids);
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        for (String id : ids) {
+            operateLogService.addModuleOperateLog("手动标记波次状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), id, "手动完成", loginUser.getUid(), loginUser.getUserName());
+        }
+        return ApiResult.success();
+    }
+
+    @Override
+    public void waveListStatusAutoChange() {
+        //查询波次列表状态为待拣货和拣货中的所有数据
+        List<WaveListDTO.WaveDeliveryStatusDTO> waveDeliveryStatusList = this.baseMapper.listDeliveryStatus();
+        if(CollectionUtil.isEmpty(waveDeliveryStatusList)){
+            log.warn("波次列表波次状态自动变更任务--未找到符合状态的数据");
+            return;
+        }
+
+        //根据波次主键id分组
+        Map<String, List<WaveListDTO.WaveDeliveryStatusDTO>> map = waveDeliveryStatusList.stream().collect(Collectors.groupingBy(WaveListDTO.WaveDeliveryStatusDTO::getId));
+        for (Map.Entry<String, List<WaveListDTO.WaveDeliveryStatusDTO>> wave : map.entrySet()) {
+            String waveId = wave.getKey();
+            //发货单状态全匹配已发货
+            boolean isShipped = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getStatus()));
+            //发货单状态全匹配取消发货
+            boolean iscCancelDelivery = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus()));
+            if(isShipped||iscCancelDelivery){
+                //更新波次状态为已完成
+                this.lambdaUpdate().set(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode()).eq(WaveListEntity::getId, waveId);
+                operateLogService.addModuleOperateLog("波次下发货单完结，自动变更状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更");
+            }
+        }
     }
 }
