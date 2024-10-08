@@ -151,8 +151,8 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("transfer_logistics_channel_id")
     private String transferLogisticsChannelId;
 
-    @TableField("source_type")
-    private String sourceType;
+    @TableField("source_system")
+    private String sourceSystem;
 
     public static final String MAIN_ID = "main_id";
 
