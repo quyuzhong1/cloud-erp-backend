@@ -1,5 +1,6 @@
 package com.erp.server.msg.service;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
@@ -71,7 +72,7 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
         msgLog.setSendChannelCode(channelEnum.getCode());
         msgLog.setMsgSourceContent(JSONObject.toJSONString(noticeMsgInfo.getSourceMsgInfo()));
         msgLog.setCreateTime(LocalDateTime.now());
-        if(Objects.nonNull(sendResult)) {
+        if(ObjectUtil.isNotEmpty(sendResult)) {
             msgLog.setMsgChannelContent(sendResult.getRequestBody());
             msgLog.setChannelResultCode(StrUtils.null2EmptyWithTrim(sendResult.getCode()));
             msgLog.setChannelResultMsg(sendResult.getMsg());
