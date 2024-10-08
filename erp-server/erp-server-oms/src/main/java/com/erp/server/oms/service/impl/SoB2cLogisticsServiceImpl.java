@@ -34,6 +34,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cLogisticTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -109,6 +110,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     public Boolean update(SoB2cLogisticsDTO.UpdateDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity old = super.getById(logisticsDTO.getId());
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单物流信息表"));
+        if(StringUtils.isNotBlank(old.getCode()) && old.getSourceType().equals(SoB2cLogisticTypeEnum.THIRD.getCode())){
+            if(!old.getLogisticsChannelId().equals(logisticsDTO.getLogisticsChannelId()) || !old.getCode().equals(logisticsDTO.getCode())){
+                throw new ServiceException("请先取消物流单后修改渠道和单号信息");
+            }
+        }
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
         BeanMapperUtils.copy(logisticsDTO, entity);
         entity.setMainId(mainId);
@@ -191,6 +197,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
+                set(SoB2cLogisticsEntity::getSourceType, SoB2cLogisticTypeEnum.THIRD.getCode()).
                 update();
     }
 
