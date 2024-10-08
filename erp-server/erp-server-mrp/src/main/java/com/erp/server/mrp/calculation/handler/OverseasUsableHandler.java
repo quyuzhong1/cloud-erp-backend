@@ -3,16 +3,17 @@ package com.erp.server.mrp.calculation.handler;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
+import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
-import com.erp.server.mrp.calculation.utils.TreeUtils;
+import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 @Component
 public class OverseasUsableHandler extends AbstractSkuCalculationHandler {
@@ -20,6 +21,8 @@ public class OverseasUsableHandler extends AbstractSkuCalculationHandler {
     private OverseasInTransitHandler overseasInTransitHandler;
     @Resource
     private InventoryService inventoryService;
+    @Resource
+    private CfgRuleCommonService cfgRuleCommonService;
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
         return overseasInTransitHandler;
@@ -35,15 +38,12 @@ public class OverseasUsableHandler extends AbstractSkuCalculationHandler {
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
-        CfgRuleCommonDTO.StrategyResultDTO usable = TreeUtils.findByCode(inventoryResult, CfgRuleInventoryNodeEnum.OVERSEAS_USABLE.getCode());
-        if (ObjectUtils.isEmpty(usable)  || CollectionUtils.isEmpty(usable.getChildrenList())){
+        String baseKey = "MRP:" + CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + CfgRuleCommonTypeEnum.INVENTORY.getCode();
+        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasUsable());
+        if (CollectionUtils.isEmpty(usable)){
             replenishmentResultDTO.getReplenishmentDetail().setFbaUsableQty(0);
         }
-        List<String> codes = usable.getChildrenList().stream()
-                .filter(v -> "true".equals(v.getValue()))
-                .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
-                .collect(Collectors.toList());
-        int qty = inventoryService.getOverseasUsable(replenishmentResultDTO, codes, cfgRuleStrategyDTO);
+        int qty = inventoryService.getOverseasUsable(replenishmentResultDTO, usable, cfgRuleStrategyDTO);
         replenishmentResultDTO.getReplenishmentDetail().setOverseasUsableQty(qty);
     }
 }

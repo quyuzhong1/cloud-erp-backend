@@ -10,23 +10,23 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public enum CfgRuleInventoryNodeEnum implements EnumMessage {
-    FBA_INVENTORY("FBA_INVENTORY","FBA库存："),
-    OVERSEAS_INVENTORY("OVERSEAS_INVENTORY","海外仓库存："),
-    LOCAL_INVENTORY("LOCAL_INVENTORY","本地库存："),
-    TOTAL_ALL_INVENTORY("TOTAL_ALL_INVENTORY","总库存："),
-    FBA_USABLE("FBA_USABLE","FBA可用"),
-    FBA_IN_TRANSIT("FBA_IN_TRANSIT","FBA在途"),
-    FBA_ESTIMATED_DELIVERY("FBA_ESTIMATED_DELIVERY","FBA预计发货"),
-    FBA_REPLENISHMENT_PLAN("FBA_REPLENISHMENT_PLAN","FBA补货计划"),
-    FBA_DELIVERY_PLAN_BY_REPLENISHMENT("FBA_DELIVERY_PLAN_BY_REPLENISHMENT","FBA发货计划_补货计划下推"),
-    FBA_DELIVERY_PLAN_BY_MANUAL("FBA_DELIVERY_PLAN_BY_MANUAL","FBA发货计划_手动新增"),
+    FBA_INVENTORY("FBA_INVENTORY", "FBA库存："),
+    OVERSEAS_INVENTORY("OVERSEAS_INVENTORY", "海外仓库存："),
+    LOCAL_INVENTORY("LOCAL_INVENTORY", "本地库存："),
+    TOTAL_ALL_INVENTORY("TOTAL_ALL_INVENTORY", "总库存："),
+    FBA_USABLE("FBA_USABLE", "FBA可用"),
+    FBA_IN_TRANSIT("FBA_IN_TRANSIT", "FBA在途"),
+    FBA_ESTIMATED_DELIVERY("FBA_ESTIMATED_DELIVERY", "FBA预计发货"),
+    FBA_REPLENISHMENT_PLAN("FBA_REPLENISHMENT_PLAN", "FBA补货计划"),
+    FBA_DELIVERY_PLAN_BY_REPLENISHMENT("FBA_DELIVERY_PLAN_BY_REPLENISHMENT", "FBA发货计划_补货计划下推"),
+    FBA_DELIVERY_PLAN_BY_MANUAL("FBA_DELIVERY_PLAN_BY_MANUAL", "FBA发货计划_手动新增"),
     OVERSEAS_USABLE("OVERSEAS_USABLE", "海外仓可用"),
     OVERSEAS_IN_TRANSIT("OVERSEAS_IN_TRANSIT", "海外仓在途"),
     OVERSEAS_SHIPMENT_IN_TRANSIT("OVERSEAS_SHIPMENT_IN_TRANSIT", "海外仓发货在途"),
     OVERSEAS_ESTIMATED_DELIVERY("OVERSEAS_ESTIMATED_DELIVERY", "海外仓预计发货"),
-    OVERSEAS_REPLENISHMENT_PLAN("OVERSEAS_REPLENISHMENT_PLAN","海外仓补货计划"),
-    OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT("OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT","海外仓发货计划_补货计划下推"),
-    OVERSEAS_DELIVERY_PLAN_BY_MANUAL("OVERSEAS_DELIVERY_PLAN_BY_MANUAL","海外仓发货计划_手动新增"),
+    OVERSEAS_REPLENISHMENT_PLAN("OVERSEAS_REPLENISHMENT_PLAN", "海外仓补货计划"),
+    OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT("OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT", "海外仓发货计划_补货计划下推"),
+    OVERSEAS_DELIVERY_PLAN_BY_MANUAL("OVERSEAS_DELIVERY_PLAN_BY_MANUAL", "海外仓发货计划_手动新增"),
     LOCAL_USABLE("LOCAL_USABLE", "本地可用"),
     LOCAL_IN_TRANSIT("LOCAL_IN_TRANSIT", "本地在途"),
     LOCAL_IN_TRANSIT_PURCHASE("LOCAL_IN_TRANSIT_PURCHASE", "采购在途(采购订单:已审核)"),
@@ -37,9 +37,9 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
     LOCAL_PURCHASE_ORDER("LOCAL_PURCHASE_ORDER", "本地采购单"),
     TOTAL_INVENTORY("TOTAL_INVENTORY", "总库存"),
     TOTAL_FBA_INVENTORY("TOTAL_FBA_INVENTORY", "FBA库存(总)"),
-    TOTAL_FBA_USABLE("TOTAL_FBA_USABLE","FBA可用"),
-    TOTAL_FBA_IN_TRANSIT("TOTAL_FBA_IN_TRANSIT","FBA在途"),
-    TOTAL_FBA_ESTIMATED_DELIVERY("TOTAL_FBA_ESTIMATED_DELIVERY","FBA预计发货"),
+    TOTAL_FBA_USABLE("TOTAL_FBA_USABLE", "FBA可用"),
+    TOTAL_FBA_IN_TRANSIT("TOTAL_FBA_IN_TRANSIT", "FBA在途"),
+    TOTAL_FBA_ESTIMATED_DELIVERY("TOTAL_FBA_ESTIMATED_DELIVERY", "FBA预计发货"),
     TOTAL_OVERSEAS_INVENTORY("TOTAL_OVERSEAS_INVENTORY", "海外仓库存(总)"),
     TOTAL_OVERSEAS_USABLE("TOTAL_OVERSEAS_USABLE", "海外仓可用"),
     TOTAL_OVERSEAS_IN_TRANSIT("TOTAL_OVERSEAS_IN_TRANSIT", "海外仓在途"),
@@ -50,8 +50,8 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
     TOTAL_LOCAL_ESTIMATED_DELIVERY("TOTAL_LOCAL_ESTIMATED_DELIVERY", "预计采购"),
 
 
-    FBA_DELIVERY("FBA_DELIVERY","FBA发货单"),
-    FBA_SHIPMENT("FBA_SHIPMENT","FBA货件"),
+    FBA_DELIVERY("FBA_DELIVERY", "FBA发货单"),
+    FBA_SHIPMENT("FBA_SHIPMENT", "FBA货件"),
     ;
 
     private final String code;
@@ -92,5 +92,57 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
 
     public static String getFbaUsable() {
         return String.join(":", FBA_INVENTORY.getCode(), FBA_USABLE.getCode());
+    }
+
+    public static String getFbaInTransit() {
+        return String.join(":", FBA_INVENTORY.getCode(), FBA_IN_TRANSIT.getCode());
+    }
+
+    public static String getFbaDeliveryPlanByManual() {
+        return String.join(":", FBA_INVENTORY.getCode(), FBA_ESTIMATED_DELIVERY.getCode(), FBA_DELIVERY_PLAN_BY_MANUAL.getCode());
+    }
+
+    public static String getFbaDeliveryPlanByReplenishment() {
+        return String.join(":", FBA_INVENTORY.getCode(), FBA_ESTIMATED_DELIVERY.getCode(), FBA_DELIVERY_PLAN_BY_REPLENISHMENT.getCode());
+    }
+
+    public static String getFbaReplenishmentPlan() {
+        return String.join(":", FBA_INVENTORY.getCode(), FBA_ESTIMATED_DELIVERY.getCode(), FBA_REPLENISHMENT_PLAN.getCode());
+    }
+
+    public static String getLocalUsable() {
+        return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_USABLE.getCode());
+    }
+
+    public static String getLocalInTransit() {
+        return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_IN_TRANSIT.getCode());
+    }
+
+    public static String getLocalReplenishmentPlan() {
+        return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_ESTIMATED_DELIVERY.getCode(), LOCAL_REPLENISHMENT_PLAN.getCode());
+    }
+
+    public static String getLocalPurchasePlan() {
+        return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_ESTIMATED_DELIVERY.getCode(), LOCAL_PURCHASE_PLAN.getCode());
+    }
+
+    public static String getLocalPurchaseOrder() {
+        return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_ESTIMATED_DELIVERY.getCode(), LOCAL_PURCHASE_ORDER.getCode());
+    }
+
+    public static String getOverseasUsable() {
+        return String.join(":", OVERSEAS_INVENTORY.getCode(), OVERSEAS_USABLE.getCode());
+    }
+
+    public static String getTotalFbaInventory() {
+        return String.join(":", TOTAL_ALL_INVENTORY.getCode(), TOTAL_INVENTORY.getCode(), TOTAL_FBA_INVENTORY.getCode());
+    }
+
+    public static String getTotalOverseasInventory() {
+        return String.join(":", TOTAL_ALL_INVENTORY.getCode(), TOTAL_INVENTORY.getCode(), TOTAL_OVERSEAS_INVENTORY.getCode());
+    }
+
+    public static String getTotalLocalInventory() {
+        return String.join(":", TOTAL_ALL_INVENTORY.getCode(), TOTAL_INVENTORY.getCode(), TOTAL_LOCAL_INVENTORY.getCode());
     }
 }

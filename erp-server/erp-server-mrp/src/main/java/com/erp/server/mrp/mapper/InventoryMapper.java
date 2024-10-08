@@ -15,6 +15,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Set;
 
 @Mapper
 public interface InventoryMapper {
@@ -57,7 +58,7 @@ public interface InventoryMapper {
     /**
      * 查询发货计划
      */
-    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getPlanDelivery(@Param("type") String type, @Param("codes") List<String> strategyCodes, @Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getPlanDelivery(@Param("type") String type, @Param("codes") Set<String> strategyCodes, @Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询海外仓可用库存
@@ -67,22 +68,22 @@ public interface InventoryMapper {
     /**
      * 查询本地仓可用库存
      */
-    List<LocalInventoryDTO> getLocalUsable(@Param("skuId") String skuId, @Param("codes") List<String> codes, @Param("tableName") String tableName);
+    List<LocalInventoryDTO> getLocalUsable(@Param("skuId") String skuId, @Param("codes") Set<String> codes, @Param("tableName") String tableName);
 
     /**
      * 查询虚拟仓可用库存
      */
-    List<LocalInventoryDTO> getVirtualUsable(@Param("skuId") String skuId, @Param("codes") List<String> codes, @Param("tableName") String tableName);
+    List<LocalInventoryDTO> getVirtualUsable(@Param("skuId") String skuId, @Param("codes") Set<String> codes, @Param("tableName") String tableName);
 
     /**
      * 查询采购计划
      */
-    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchasePlan(@Param("codes") List<String> codes, @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询采购单
      */
-    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") List<String> codes, @Param("skuId") String skuId,  @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") Set<String> codes, @Param("skuId") String skuId,  @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询采购申请关联

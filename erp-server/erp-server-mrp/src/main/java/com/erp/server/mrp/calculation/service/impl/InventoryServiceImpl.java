@@ -21,7 +21,6 @@ import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.calculation.service.ShopInfoService;
-import com.erp.server.mrp.calculation.utils.TreeUtils;
 import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.*;
 import org.springframework.stereotype.Service;
@@ -35,10 +34,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum.*;
-import static com.erp.model.mrp.enums.SnapshotTableEnum.FBA_SHIPMENT;
 import static com.erp.model.mrp.enums.SnapshotTableEnum.*;
 
 @Service
@@ -59,8 +57,11 @@ public class InventoryServiceImpl implements InventoryService {
     private LocalHistoryInventoryService localHistoryInventoryService;
     @Resource
     private VirtualInventoryHistoryService virtualInventoryHistoryService;
+    @Resource
+    private CfgRuleCommonService cfgRuleCommonService;
+
     @Override
-    public int getFbaUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes) {
+    public int getFbaUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes) {
         String code = String.join("+", codes);
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
         return inventoryMapper.getFbaUsable(replenishmentResultDTO, code, SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calcDate));
@@ -137,7 +138,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, List<String> strategyCodes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
+    public List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, Set<String> strategyCodes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
         List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> estimatedDeliveryDetails = inventoryMapper.getPlanDelivery(DeliveryPlanTypeEnum.FBA.getCode(), strategyCodes, replenishmentResultDTO, SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN, calcDate), SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN_DETAIL, calcDate));
         for (ReplenishmentResultDTO.EstimatedDeliveryDetailDTO detail : estimatedDeliveryDetails) {
@@ -149,7 +150,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getOverseasUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+    public int getOverseasUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         String code = String.join("+", codes);
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
         int overseasUsable = inventoryMapper.getOverseasUsable(replenishmentResultDTO, code, getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calcDate));
@@ -167,7 +168,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+    public int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         int qty = 0;
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
@@ -202,7 +203,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+    public int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         int qty = 0;
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localInTransitDetail = new ArrayList<>();
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
@@ -221,7 +222,7 @@ public class InventoryServiceImpl implements InventoryService {
         return qty;
     }
 
-    private List<LocalInventoryDTO> getLocalInTransitInventory(ReplenishmentResultDTO replenishmentResultDTO, List<String> codes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
+    private List<LocalInventoryDTO> getLocalInTransitInventory(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
         String platformType = replenishmentResultDTO.getReplenishment().getPlatformType();
         boolean isPurchase = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode());
@@ -259,11 +260,11 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getLocalPurchase(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO localPurchase, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+    public int getLocalPurchase(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         int qty = 0;
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localPurchaseDetail = new ArrayList<>();
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
-        List<LocalInventoryDTO> invetoryList = getEstimatedPurchaseInventory(replenishmentResultDTO, localPurchase, cfgRuleStrategyDTO.getStockUpResult());
+        List<LocalInventoryDTO> invetoryList = getEstimatedPurchaseInventory(replenishmentResultDTO, cfgRuleStrategyDTO);
         for (LocalInventoryDTO dto : invetoryList) {
             for (CfgRuleWarehouseDTO.StrategyDetailResultDTO result : warehouseResult.getLocalWarehouseList()) {
                 if (!result.getWarehouseId().equals(dto.getWarehouseId()) || (VitualWarehouseChannelTypeEnum.SHOP.getCode().equals(result.getChannelType())
@@ -316,29 +317,25 @@ public class InventoryServiceImpl implements InventoryService {
     /**
      * 获取预计采购库存
      * @param replenishmentResultDTO 补货建议
-     * @param localPurchase 本地采购配置
-     * @param stockUpResult 备货配置
      */
-    private List<LocalInventoryDTO> getEstimatedPurchaseInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleCommonDTO.StrategyResultDTO localPurchase, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
+    private List<LocalInventoryDTO> getEstimatedPurchaseInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> detailList = new ArrayList<>();
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
+        String baseKey = "MRP:" + CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + CfgRuleCommonTypeEnum.INVENTORY.getCode();
+        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
         List<String> localWarehouseIds = replenishmentResultDTO.getLocalWarehouseId();
         if (CollectionUtils.isEmpty(localWarehouseIds)) {
             return Collections.emptyList();
         }
-        CfgRuleCommonDTO.StrategyResultDTO localReplenishmentPlan = TreeUtils.findByCode(localPurchase, LOCAL_REPLENISHMENT_PLAN.getCode());
-        if (!ObjectUtils.isEmpty(localReplenishmentPlan) && !CollectionUtils.isEmpty(localReplenishmentPlan.getChildrenList())) {
+        Set<String> localReplenishmentPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalReplenishmentPlan());
+        if (!CollectionUtils.isEmpty(localReplenishmentPlan)) {
             // todo 本地补货计划
         }
-        CfgRuleCommonDTO.StrategyResultDTO localPurchasePlan = TreeUtils.findByCode(localPurchase, LOCAL_PURCHASE_PLAN.getCode());
-        if (!ObjectUtils.isEmpty(localPurchasePlan) && !CollectionUtils.isEmpty(localPurchasePlan.getChildrenList())) {
-            List<String> codes = localPurchasePlan.getChildrenList()
-                    .stream()
-                    .filter(v -> "true".equals(v.getValue()))
-                    .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
-                    .distinct()
-                    .collect(Collectors.toList());
-            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> applications = inventoryMapper.listPurchasePlan(codes, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds, getTableName(PURCHASE_APPLICATION, calcDate), getTableName(PURCHASE_APPLICATION_DETAIL, calcDate));
+
+        Set<String> localPurchasePlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchasePlan());
+        if (!CollectionUtils.isEmpty(localPurchasePlan)) {
+            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> applications = inventoryMapper.listPurchasePlan(localPurchasePlan, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds, getTableName(PURCHASE_APPLICATION, calcDate), getTableName(PURCHASE_APPLICATION_DETAIL, calcDate));
             //查询关联采购
             List<String> detailIds = applications.stream().map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getDetailId).collect(Collectors.toList());
             List<PurchaseApplicationRefPoDTO.ListDTO> refList = null;
@@ -370,14 +367,9 @@ public class InventoryServiceImpl implements InventoryService {
                 detailList.addAll(applications);
             }
         }
-        CfgRuleCommonDTO.StrategyResultDTO localPurchaseOrder = TreeUtils.findByCode(localPurchase, LOCAL_PURCHASE_ORDER.getCode());
-        if (!ObjectUtils.isEmpty(localPurchaseOrder) && !CollectionUtils.isEmpty(localPurchaseOrder.getChildrenList())) {
-            List<String> codes = localPurchaseOrder.getChildrenList()
-                    .stream()
-                    .filter(v -> "true".equals(v.getValue()))
-                    .map(CfgRuleCommonDTO.StrategyResultDTO::getCode)
-                    .collect(Collectors.toList());
-            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> purchaseDetails = inventoryMapper.listPurchase(codes, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds,getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
+        Set<String> localPurchaseOrder = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchaseOrder());
+        if (!CollectionUtils.isEmpty(localPurchaseOrder)) {
+            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> purchaseDetails = inventoryMapper.listPurchase(localPurchaseOrder, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds,getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
             if (!CollectionUtils.isEmpty(purchaseDetails)) {
                 detailList.addAll(purchaseDetails);
             }

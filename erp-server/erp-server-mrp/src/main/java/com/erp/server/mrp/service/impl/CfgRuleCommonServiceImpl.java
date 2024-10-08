@@ -53,8 +53,13 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @CacheEvict(cacheNames = {"cache:mrp:getCfgRuleCommon"}, allEntries = true, beforeInvocation = true)
+    @CacheEvict(cacheNames = "cache:mrp:getCfgRuleCommon", allEntries = true, beforeInvocation = true)
     public Boolean update(List<CfgRuleCommonDTO.UpdateDTO> updateList) {
+        //清除缓存
+        Set<String> keys = redisTemplate.keys("MRP" + "*");
+        if (CollectionUtils.isNotEmpty(keys)) {
+            redisTemplate.delete(keys);
+        }
         // 数据处理
         List<CfgRuleCommonEntity> list = handleData(updateList);
         if (CollectionUtils.isEmpty(list)) {
@@ -189,7 +194,10 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         //根据传入的findKey
         Set<String> keys = redisTemplate.keys(findKey + "*");
         if (CollectionUtils.isNotEmpty(keys)) {
-            return keys;
+            // 处理前缀
+            return keys.stream()
+                    .map(key -> removePrefix(key, findKey))
+                    .collect(Collectors.toSet());
         }
         // 去掉 baseKey 前缀部分，剩下的作为查找依据
         String remainingKey = removePrefix(findKey, baseKey);

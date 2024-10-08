@@ -3,7 +3,6 @@ package com.erp.server.mrp.calculation.strategy;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleSettingEnum;
-import com.erp.server.mrp.calculation.utils.TreeUtils;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 
@@ -20,9 +19,7 @@ public class CfgRuleInventoryStrategy implements CfgRuleSettingStrategy<CfgRuleC
 
     @Override
     public List<CfgRuleCommonDTO.StrategyResultDTO> process(CfgRuleCommonDTO.StrategyDTO strategyDTO) {
-        List<CfgRuleCommonDTO.StrategyResultDTO> cfgRuleCommon = cfgRuleCommonService.getCfgRuleCommon(strategyDTO.getPlatformType(), CfgRuleCommonTypeEnum.INVENTORY.getCode());
-        TreeUtils.initCache(cfgRuleCommon);
-        return cfgRuleCommon;
+        return cfgRuleCommonService.getCfgRuleCommon(strategyDTO.getPlatformType(), CfgRuleCommonTypeEnum.INVENTORY.getCode());
     }
 
     @Override
