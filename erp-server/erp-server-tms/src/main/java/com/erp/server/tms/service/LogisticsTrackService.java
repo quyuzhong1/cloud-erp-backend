@@ -3,6 +3,7 @@ import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.sdk.tms.track123.dto.PlatformTrackDTO;
 
 import java.util.List;
 
@@ -70,4 +71,10 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      * @return
      */
     LogisticsTrackEntity getMaxByTrackTime(String trackNo);
+
+    /**
+     * 处理mongoDb同步数据
+     * @param dto
+     */
+    void processTrackData(PlatformTrackDTO dto);
 }

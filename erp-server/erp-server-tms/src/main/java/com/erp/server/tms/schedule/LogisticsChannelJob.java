@@ -12,6 +12,7 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.server.tms.service.LogisticsBaseService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -48,6 +49,8 @@ public class LogisticsChannelJob {
     private LogisticsBaseService logisticsBaseService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private DmpMongoDbFeign dmpMongoDbFeign;
 
     /**
      * 注册小包（快递）物流单号
@@ -223,5 +226,43 @@ public class LogisticsChannelJob {
         if (CollectionUtils.isNotEmpty(records)) {
             logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), records,transportType);
         }
+    }
+    /**
+     * 同步小包（快递）物流轨迹 从dmp到tms
+     */
+    @XxlJob("synLogisticsMongoTrack")
+    public ReturnT synLogisticsMongoTrack() {
+        XxlJobHelper.log("====开始同步物流轨迹====");
+        long current = 1;
+        //获取物流编号
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .size(pageSize)
+                .current(current)
+                .registerStatus(1)
+                .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .build();
+        getMongoTrackData(query);
+        XxlJobHelper.log("====结束同步物流轨迹====");
+        return ReturnT.SUCCESS;
+    }
+
+    private void getMongoTrackData(LogisticsBillDetailQueryDTO query) {
+        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
+        //列表查询
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
+        XxlJobHelper.log("获取列表数：{}", list.size());
+        if (list.size() > MathUtil.NUMBER_100){
+            //列表数据较多情况下，进行分割集合
+            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+            XxlJobHelper.log("拆分列表数：{}", partition.size());
+            //物流商数据处理
+            partition.forEach(e -> logisticsBaseService.processMongoTrackData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
+        }else {
+            //物流商数据处理
+            logisticsBaseService.processMongoTrackData(LogisticsPlatformEnum.TRACK123.getCode(),list, query.getTransportType());
+        }
+        log.info("========同步物流轨迹数据完成==========");
     }
 }

@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -13,8 +14,11 @@ import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
 import com.erp.server.tms.service.*;
+import com.sdk.tms.track123.dto.PlatformTrackDTO;
+import com.sdk.tms.track123.model.response.TrackDetail;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -22,12 +26,14 @@ import com.common.core.exception.ServiceException;
 import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -193,8 +199,45 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         if (StrUtil.isBlank(trackNo)){
             return null;
         }
-        return lambdaQuery().eq(LogisticsTrackEntity::getTrackNo, trackNo).orderByDesc(LogisticsTrackEntity::getTrackTime).last("LIMIT 1").one();
+        return baseMapper.getMaxByTrackTime(trackNo);
     }
+
+    @Override
+    @Async("tmsExecutor")
+    public void processTrackData(PlatformTrackDTO dto){
+        log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
+        List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
+        //先物理删除  再新增
+        if (io.seata.common.util.CollectionUtils.isNotEmpty(logisticsTrackEntities)) {
+            Boolean needUpdate = Boolean.FALSE;
+            LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
+            //比较最新记录的 md5不一致就更新
+            //获取跟踪号最新一条记录
+            LogisticsTrackEntity trackEntity = this.getMaxByTrackTime(dto.getTrackNo());
+            //查询不到就保存全部
+            if (Objects.isNull(trackEntity)){
+                needUpdate = Boolean.TRUE;
+                this.saveBatch(logisticsTrackEntities);
+            }else {
+                List<LogisticsTrackEntity> lastList = logisticsTrackEntities.stream().filter(e -> Objects.nonNull(e)
+                        && Objects.nonNull(e.getTrackTime())
+                        && StrUtil.isNotBlank(e.getStatus())
+                        && !LogisticTrackStatusEnum.NOT_FIND.getCode().equals(e.getStatus())
+                        && e.getTrackTime().isAfter(trackEntity.getTrackTime())
+                ).collect(Collectors.toList());
+                if (io.seata.common.util.CollectionUtils.isNotEmpty(lastList)){
+                    needUpdate = Boolean.TRUE;
+                    this.saveBatch(lastList);
+                }
+            }
+            if (needUpdate){
+                logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(max);
+            }
+        }
+        log.info(StrUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
+
+    }
+
 
 
     /**

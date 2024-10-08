@@ -12,6 +12,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.TrackDataConverter;
@@ -88,30 +89,10 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         if (Objects.isNull(dto) || StrUtil.isBlank(dto.getTrackNo()) ||CollectionUtils.isEmpty(dto.getDetails())) {
             return ApiResult.success();
         }
-        log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
-        List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
-        //先物理删除  再新增
-        if (CollectionUtils.isNotEmpty(logisticsTrackEntities)) {
-            LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
-            //比较最新记录的 md5不一致就更新
-            //获取跟踪号最新一条记录
-            LogisticsTrackEntity trackEntity = logisticsTrackService.getMaxByTrackTime(dto.getTrackNo());
-            //查询不到就保存全部
-            if (Objects.isNull(trackEntity)){
-                logisticsTrackService.saveBatch(logisticsTrackEntities);
-            }else {
-                List<LogisticsTrackEntity> lastList = logisticsTrackEntities.stream().filter(e -> Objects.nonNull(e) && Objects.nonNull(e.getTrackTime()) && e.getTrackTime().isAfter(trackEntity.getTrackTime())).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(lastList)){
-                    logisticsTrackService.saveBatch(lastList);
-                }
-            }
-            logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(max);
-        }
-        log.info(StrUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
+        //处理物流轨迹数据
+        logisticsTrackService.processTrackData(dto);
         return ApiResult.success();
     }
-
-
     /**
      * 根据平台组装表名
      * @param platform

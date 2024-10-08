@@ -34,6 +34,16 @@
     <delete id="deleteByTrackNo">
         delete from logistics_track where track_no = #{trackNo}
     </delete>
+    <select id="getMaxByTrackTime" resultType="com.erp.model.tms.entity.LogisticsTrackEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from logistics_track
+        where is_deleted = false
+        <if test="trackNo != null and trackNo != ''">
+            and track_no = #{trackNo}
+        </if>
+        order by track_time desc limit 1
+    </select>
 
 
 </mapper>
