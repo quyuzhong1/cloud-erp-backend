@@ -6449,6 +6449,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (CollectionUtils.isEmpty(erpFulfillmentForwardDto)) {
                     return Boolean.FALSE;
                 }
+                erpFulfillmentForwardDto = erpFulfillmentForwardDto.stream()
+                        .filter(e -> !e.getOrderStatus().equalsIgnoreCase("已转商家仓发货"))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(erpFulfillmentForwardDto)) {
+                    // 跳过商家转自发货生成销售出库单由ERP自发货单生成
+                    log.warn("速卖通生成销售出库单: 跳过商家转自发货生成销售出库单:{}", JSONUtil.toJsonStr(dataList.getErpFulfillmentForwardDto()));
+                    return Boolean.FALSE;
+                }
+
                 //根据SKUid+仓库去重
                 //速卖通分仓发货，可能有多个发货单，根据仓库分组生成数据
                 Map<String, List<ErpFulfillmentForwardDtoBean>> eroBeanMap = erpFulfillmentForwardDto.stream().collect(Collectors.groupingBy(ErpFulfillmentForwardDtoBean::getWarehouseName));
