@@ -121,6 +121,11 @@ public class ReportOrderDemandDTO implements Serializable {
         private Boolean isVirtualScarce;
 
         /**
+         * 是否缺货，true是，false否
+         */
+        private String isVirtualScarceName;
+
+        /**
          * 缺货数量
          */
         private Integer virtualScarceQty;

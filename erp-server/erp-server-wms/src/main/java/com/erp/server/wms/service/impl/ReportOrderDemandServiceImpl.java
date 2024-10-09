@@ -92,6 +92,8 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     public PagingVO<ReportOrderDemandDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDTO.PagingParamDTO> pagingDTO) {
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ReportOrderDemandDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        // 填充名称
+        fillPageData(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -495,10 +497,20 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         virtualWarehouseAllocationService.add(addDTO);
     }
 
+
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(ReportOrderDemandEntity reportOrderDemandEntity) {
-    // TODO 验证数据 & 数据赋值
+     * 分页数据处理
+     * @author will
+     * @date 2024/9/25 14:31
+     * @param list
+     */
+    private void fillPageData (List<ReportOrderDemandDTO.ListDTO> list) {
+        if (CollectionUtil.isEmpty(list)) {
+            return;
+        }
+        for (ReportOrderDemandDTO.ListDTO listDTO : list) {
+            //订单类型
+            listDTO.setIsVirtualScarceName(listDTO.getIsVirtualScarce() ? "是" : "否");
+        }
     }
 }
