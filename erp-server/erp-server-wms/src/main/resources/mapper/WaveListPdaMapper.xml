@@ -19,4 +19,7 @@
         </if>
         order by create_time desc
     </select>
+    <select id="listTab" resultType="com.erp.model.wms.dto.WaveListDTO$TabDTO">
+        select status as tabFlag, count(1) as count from wave_list where is_deleted = false and status is not null group by status
+    </select>
 </mapper>
