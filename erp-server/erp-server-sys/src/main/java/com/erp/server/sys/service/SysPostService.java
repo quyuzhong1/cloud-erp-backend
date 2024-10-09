@@ -19,10 +19,6 @@ import java.util.List;
  */
 public interface SysPostService extends IService<SysPostEntity> {
 
-
-
-
-
     boolean savePost(SysPostDTO postEntity);
 
     boolean updatePost(SysPostDTO postEntity);
@@ -32,4 +28,6 @@ public interface SysPostService extends IService<SysPostEntity> {
     boolean removePostByIds(List<String> ids);
 
     List<SysPostEntity> findPost(BaseSearchDTO dto);
+
+    List<SysPostEntity> listByRequisitionSetting();
 }

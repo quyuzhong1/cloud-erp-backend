@@ -236,6 +236,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private void handleViewEnum (CfgSettingEntity cfgSetting,CfgSettingDTO.ViewDTO viewDTO) {
 
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());
+        if(null == cfgSettingEnum){
+            return;
+        }
         switch (cfgSettingEnum) {
             case SUBCONTRACT_ISSUE:
                 CfgSettingValueDTO.SubcontractIssueSettingDTO subcontractIssueSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractIssueSettingDTO.class);
@@ -268,6 +271,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case CFG_PRINT:
                 CfgSettingValueDTO.CfgPrint cfgPrint = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.CfgPrint.class);
                 viewDTO.setCfgPrint(cfgPrint);
+                break;
+            case FS_REQUISITION_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionNoticeDTO(fsRequisitionNoticeDTO);
                 break;
             default:
                 break;
