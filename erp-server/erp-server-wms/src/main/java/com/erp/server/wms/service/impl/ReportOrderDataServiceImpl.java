@@ -258,7 +258,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             addDTO.setTotalQty(totalQty);
 
             //虚拟仓可用
-            Integer virtualUsableQty = value.stream().map(ReportOrderDemandDetailEntity::getVirtualUsableQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer virtualUsableQty = value.stream().map(ReportOrderDemandDetailEntity::getVirtualUsableQty).findFirst().get();
             addDTO.setVirtualUsableQty(virtualUsableQty);
             //是否缺货
             Boolean isVirtualScarce = addDTO.getTotalQty() > virtualUsableQty ? Boolean.TRUE : Boolean.FALSE;

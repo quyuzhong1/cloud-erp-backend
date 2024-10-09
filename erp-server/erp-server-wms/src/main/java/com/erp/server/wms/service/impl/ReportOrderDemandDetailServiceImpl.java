@@ -218,7 +218,11 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
                     StrUtil.equals(SourceTypeEnum.SO_B2C.getCode(), listDTO.getSourceType()) ? SoB2cBillStatusEnum.getName(listDTO.getStatus()) : RequisitionApplicationStatusEnum.getName(listDTO.getStatus())
                     : DeliveryStatusEnum.getName(listDTO.getStatus());
             //订单状态
-            listDTO.setStatusName(StrUtil.format("{}-{}", ApproveStatusEnum.getName(listDTO.getApproveStatus()),statusName));
+            if (StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode(), listDTO.getSourceType())) {
+                listDTO.setStatusName(statusName);
+            } else {
+                listDTO.setStatusName(StrUtil.format("{}-{}", ApproveStatusEnum.getName(listDTO.getApproveStatus()),statusName));
+            }
         }
     }
 }
