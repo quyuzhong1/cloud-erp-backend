@@ -322,7 +322,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> detailList = new ArrayList<>();
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
-        String baseKey = "MRP:" + CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + CfgRuleCommonTypeEnum.INVENTORY.getCode();
+        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
         List<String> localWarehouseIds = replenishmentResultDTO.getLocalWarehouseId();
         if (CollectionUtils.isEmpty(localWarehouseIds)) {

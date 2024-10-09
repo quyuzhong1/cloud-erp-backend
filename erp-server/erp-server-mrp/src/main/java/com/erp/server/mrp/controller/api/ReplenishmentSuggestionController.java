@@ -15,6 +15,7 @@ import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
 import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
+import com.erp.server.mrp.calculation.service.DataArchivingService;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.ReplenishmentSuggestionImportService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
@@ -28,7 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,6 +49,8 @@ public class ReplenishmentSuggestionController extends BaseController {
 
     @Resource
     private BasicReplenishmentDataService basicReplenishmentDataService;
+    @Resource
+    private DataArchivingService dataArchivingService;
 
 
     /**
@@ -614,22 +616,19 @@ public class ReplenishmentSuggestionController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
-    @GetMapping("/initReplenishmentSku")
-    public void initReplenishmentSku(@RequestParam(required = false) LocalDate calculationDate) {
-        basicReplenishmentDataService.initReplenishmentSku(calculationDate, null);
-    }
-
     @GetMapping("/initReplenishmentSku/id")
     public void initReplenishmentSku(@RequestParam(required = false) LocalDate calculationDate, @RequestParam String id) {
         basicReplenishmentDataService.initReplenishmentSku(calculationDate, id);
     }
 
-    @GetMapping("/calculationDetail")
-    public void calculationDetail() {
-        basicReplenishmentDataService.calculationDetail(Collections.emptyList());
-    }
 
+    /**
+     * 归档，全量更新数据
+     */
+    @GetMapping("/dataArchiving")
+    public void dataArchiving() {
+        dataArchivingService.dataArchiving();
+    }
 
     /**
      * 更新数据

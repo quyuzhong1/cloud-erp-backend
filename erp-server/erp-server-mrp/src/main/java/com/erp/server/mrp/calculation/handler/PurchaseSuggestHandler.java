@@ -2,10 +2,9 @@ package com.erp.server.mrp.calculation.handler;
 
 import com.common.business.config.DocNoGenHelper;
 import com.erp.model.mrp.dto.*;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
-import com.erp.model.mrp.enums.CfgSettingEnum;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
+import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -16,6 +15,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.BusinessNoTypeEnum.CODE_CGJY;
@@ -28,6 +28,8 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
 
     @Resource
     private RecentSuggestionHandler recentSuggestionHandler;
+    @Resource
+    private CfgRuleCommonService cfgRuleCommonService;
 
 
     @Override
@@ -45,6 +47,16 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
         CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = stockUpResult.getLogisticsResult();
         List<ReplenishmentResultDTO.RptOutOfStockDTO> rptOutOfStocks = replenishmentResultDTO.getRptOutOfStocks();
+        List<CfgRuleCommonDTO.StrategyResultDTO> suggestAmountResult = cfgRuleStrategyDTO.getSuggestAmountResult();
+        String baseKey = CfgRuleCommonTypeEnum.getBaseSuggestRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
+        Set<String> purchaseVolumeAging = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeAging());
+        Set<String> purchaseVolumeInventory = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeInventory());
+        int inventory = purchaseVolumeInventory.stream()
+                .map(v -> ReplenishmentResultDTO.DetailDTO.getAttributeValue(replenishmentResultDTO.getReplenishmentDetail(), v))
+                .reduce(0, Math::addExact);
+        int agingDays = purchaseVolumeAging.stream()
+                .map(v -> ReplenishmentResultDTO.DetailDTO.getAttributeValue(replenishmentResultDTO.getReplenishmentDetail(), v))
+                .reduce(0, Math::addExact);
         //计算天数
         int days = cfgRuleStrategyDTO.getSettings()
                 .stream().filter(v -> v.getKey().equals(CfgSettingEnum.CALCULATION_DAYS.getCode()))
@@ -56,6 +68,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         BigDecimal stockingRatio = CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode().equals(replenishmentResultDTO.getReplenishmentDetail().getSkuType()) ? stockUpResult.getStockingRatio() : stockUpResult.getNewStockingRatio();
         List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = replenishmentResultDTO.getSalesEstimates();
         LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
+        LocalDate calcDate = now.plusDays(Math.min(agingDays, days));
         //处理连续断货数据
         List<LocalDate> dates = rptOutOfStocks.stream().map(ReplenishmentResultDTO.RptOutOfStockDTO::getStartDate).distinct().collect(Collectors.toList());
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> deliverySuggests = dates.parallelStream()
@@ -88,12 +101,8 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                         LocalDate estimateInstockDate = suggestDeliveryDate.plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
                                 .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays());
                         suggestDTO.setEstimateInstockDate(estimateInstockDate);
-                        //建议采购量 = 预估日销*(审批时长 + 采购交期 + 供应商发货时长 + 质检天数 + 采购频率 + 本地发货时效 + FBA安全天数)*备货系数  -  ( FBA库存 + FBA在途 + 本地可用)
-                        //建议采购量 = 预估日销*(审批时长 + 采购交期 + 供应商发货时长 + 质检天数 + 采购频率 + 本地发货时效 + 海外备货安全天数) *备货系数-  ( 海外仓可用 + 海外仓在途 + 本地可用)
-                        int calculationDays = Math.min(stockUpResult.getPurchaseApproveDays()  + stockUpResult.getProductionDays() + stockUpResult.getSupplierDeliveryDays()
-                                + stockUpResult.getQcDays() + stockUpResult.getPurchaseCycleDays() + logisticsResult.getLogisticsDays() + stockUpResult.getSafeDays(), days);
-                        calculationDays = Math.min(calculationDays, days);
-                        int suggestDeliveryQty = getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now);
+                        //建议采购量
+                        int suggestDeliveryQty = getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now);
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
                             suggestDeliveryQty = suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty();
                         } else {
@@ -112,10 +121,8 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                                 .minusDays(stockUpResult.getSafeDays());
                         suggestDeliveryDate = suggestDeliveryDate.isBefore(now) ? now : suggestDeliveryDate;
                         suggestDTO.setSuggestPurchaseDate(suggestDeliveryDate);
-                        //建议采购量 = 预估日销*(审批时长 + 采购交期 + 供应商发货时长 + 质检天数 + 采购频率 + 本地备货安全天数) *备货系数 - ( 本地可用)
-                        int calculationDays = Math.min(stockUpResult.getPurchaseApproveDays()  + stockUpResult.getProductionDays() + stockUpResult.getSupplierDeliveryDays()
-                                + stockUpResult.getQcDays() + stockUpResult.getPurchaseCycleDays() + stockUpResult.getSafeDays(), days);
-                        suggestDTO.setSuggestPurchaseQty(Math.max(0, getSuggestDeliveryQty(calculationDays, salesEstimates, stockingRatioResults, stockingRatio, now) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty()));
+                        //建议采购量
+                        suggestDTO.setSuggestPurchaseQty(Math.max(0, getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty()));
                         //预计入库日期 （本地备货）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数）
                         LocalDate estimateInstockDate = suggestDeliveryDate.plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
                                 .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays());
@@ -138,10 +145,10 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
      * @param stockingRatioResults 补货系数
      * @param now                  计算开始日期
      */
-    private int getSuggestDeliveryQty(int calculationDays, List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, BigDecimal stockingRatio, LocalDate now) {
+    private int getSuggestDeliveryQty(LocalDate calculationDays, List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, BigDecimal stockingRatio, LocalDate now) {
         BigDecimal totalSaleQty = BigDecimal.ZERO;
-        for (int i = 0; i <= calculationDays; i++) {
-            LocalDate date = now.plusDays(i);
+        while (now.isBefore(calculationDays)) {
+            LocalDate date = now;
             //获取销量
             BigDecimal saleQty = salesEstimates.parallelStream()
                     .filter(v -> v.getDate().equals(date))
@@ -154,6 +161,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                     .map(CfgRuleStockingRatioDTO.StockingRatioResultDTO::getStockingRatio)
                     .orElse(stockingRatio);
             totalSaleQty = totalSaleQty.add(saleQty.multiply(ratio));
+            now = now.plusDays(1);
         }
         return totalSaleQty.setScale(2, RoundingMode.CEILING).intValue();
     }

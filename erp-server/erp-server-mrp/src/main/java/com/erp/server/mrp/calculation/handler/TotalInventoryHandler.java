@@ -38,7 +38,7 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
         int totalQty = 0;
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
-        String baseKey = "MRP:" + CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + CfgRuleCommonTypeEnum.INVENTORY.getCode();
+        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
         //计算FBA的库存
         totalQty = getFBATotalQty(replenishmentResultDTO, inventoryResult, baseKey, totalQty);
         //计算海外仓的库存

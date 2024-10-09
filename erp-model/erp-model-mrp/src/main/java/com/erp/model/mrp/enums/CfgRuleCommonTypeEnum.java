@@ -52,4 +52,13 @@ public enum CfgRuleCommonTypeEnum implements EnumMessage {
         }
         return "";
     }
+
+
+    public static String getBaseInventoryRedisKey(String platformType) {
+        return String.join(":", "MRP", INVENTORY.getCode(), platformType);
+    }
+
+    public static String getBaseSuggestRedisKey(String platformType) {
+        return String.join(":", "MRP", SUGGEST.getCode(), platformType);
+    }
 }

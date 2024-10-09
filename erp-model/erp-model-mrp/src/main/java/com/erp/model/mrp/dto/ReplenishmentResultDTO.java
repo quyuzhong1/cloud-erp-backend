@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.mrp.entity.*;
+import com.erp.model.mrp.enums.CfgRuleSuggestedAmountNodeEnum;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.model.mrp.enums.TimePeriodEnum;
 import com.erp.model.mrp.vo.ReplenishmentSuggestionVO;
@@ -484,6 +485,64 @@ public class ReplenishmentResultDTO {
             entity.setMainId(detailDTO.getMainId());
             entity.setSkuType(detailDTO.getSkuType());
             return entity;
+        }
+
+        public static Integer getAttributeValue(DetailDTO detail, String code) {
+            if (CfgRuleSuggestedAmountNodeEnum.FBA_USABLE_QTY.getCode().equals(code)) {
+                return detail.getFbaUsableQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.FBA_IN_TRANSIT_QTY.getCode().equals(code)) {
+                return detail.getFbaInTransitQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.FBA_PLAN_DELIVERY_QTY.getCode().equals(code)) {
+                return detail.getFbaPlanDeliveryQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_USABLE_QTY.getCode().equals(code)) {
+                return detail.getOverseasUsableQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_IN_TRANSIT_QTY.getCode().equals(code)) {
+                return detail.getOverseasInTransitQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_PLAN_DELIVERY_QTY.getCode().equals(code)) {
+                return detail.getOverseasPlanDeliveryQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.LOCAL_USABLE_QTY.getCode().equals(code)) {
+                return detail.getLocalUsableQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.LOCAL_IN_TRANSIT_QTY.getCode().equals(code)) {
+                return detail.getLocalInTransitQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.LOCAL_PLAN_PURCHASE_QTY.getCode().equals(code)) {
+                return detail.getLocalPlanPurchaseQty();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.PURCHASE_APPROVE_DAYS.getCode().equals(code)) {
+                return detail.getPurchaseApproveDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.PRODUCTION_DAYS.getCode().equals(code)) {
+                return detail.getProductionDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.SUPPLIER_DELIVERY_DAYS.getCode().equals(code)) {
+                return detail.getSupplierDeliveryDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.QC_DAYS.getCode().equals(code)) {
+                return detail.getQcDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.PURCHASE_CYCLE_DAYS.getCode().equals(code)) {
+                return detail.getPurchaseCycleDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.DELIVERY_DAYS.getCode().equals(code)) {
+                return detail.getDeliveryDefaultDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.IN_STOCK_DAYS.getCode().equals(code)) {
+                return detail.getInstockDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.LOGISTICS_CYCLE_DAYS.getCode().equals(code)) {
+                return detail.getLogisticsCycleDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.SAFE_DAYS.getCode().equals(code)) {
+                return detail.getSafeDays();
+            }
+            return 0;
         }
     }
 

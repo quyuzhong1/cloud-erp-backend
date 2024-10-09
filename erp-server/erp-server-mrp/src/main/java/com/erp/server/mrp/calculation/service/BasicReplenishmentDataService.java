@@ -283,7 +283,7 @@ public class BasicReplenishmentDataService {
                     }
                     //判断是否需要补货
                     CfgSettingDTO.ReplenishmentDays replenishmentDays = JSON.parseObject(replenishmentDaysSetting.getDataJson(), CfgSettingDTO.ReplenishmentDays.class);
-                    boolean isOver180Days = sale.getListingTime().plusDays(replenishmentDays.getStart()).isAfter(calculationDate);
+                    boolean isOver180Days = sale.getListingTime().plusDays(replenishmentDays.getStart()).isBefore(calculationDate);
                     int saleQty = salesByPlatformType.values()
                             .stream()
                             .flatMap(Collection::stream)

@@ -290,7 +290,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         SalesAnalysisVO salesAnalysisVO = new SalesAnalysisVO();
         List<SalesInfoEntity> list = salesInfoService.list(Wrappers.<SalesInfoEntity>lambdaQuery()
                 .eq(SalesInfoEntity::getReplenishmentDetailId, dto.getDetailId())
-                .between(SalesInfoEntity::getDate, dto.getStartDate(), dto.getEndDate())
+                .between(SalesInfoEntity::getDate, dto.getStartDate().minusDays(1), dto.getEndDate())
                 .orderByAsc(SalesInfoEntity::getDate)
         );
         List<BigDecimal> originalSales = list.stream().map(SalesInfoEntity::getOriginalSalesQty).map(BigDecimal::new).collect(Collectors.toList());
@@ -300,7 +300,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         salesAnalysisVO.setHistorySales(new SalesAnalysisVO.SalesVO(dates, originalSales));
         List<SalesEstimateEntity> estimateEntityList = salesEstimateService.list(Wrappers.<SalesEstimateEntity>lambdaQuery()
                 .eq(SalesEstimateEntity::getReplenishmentDetailId, dto.getDetailId())
-                .between(SalesEstimateEntity::getDate, LocalDate.now(), LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays()))
+                .between(SalesEstimateEntity::getDate, LocalDate.now(), LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1))
                 .orderByAsc(SalesEstimateEntity::getDate)
         );
         List<BigDecimal> salesEstimates = estimateEntityList.stream().map(SalesEstimateEntity::getSalesQty).collect(Collectors.toList());
@@ -314,7 +314,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
         List<SalesInfoEntity> list = salesInfoService.list(Wrappers.<SalesInfoEntity>lambdaQuery()
                 .eq(SalesInfoEntity::getReplenishmentDetailId, dto.getDetailId())
-                .between(SalesInfoEntity::getDate, dto.getStartDate(), dto.getEndDate())
+                .between(SalesInfoEntity::getDate, dto.getStartDate().minusDays(1), dto.getEndDate())
                 .orderByAsc(SalesInfoEntity::getDate)
         );
         List<LocalDate> dates = list.stream().map(SalesInfoEntity::getDate).collect(Collectors.toList());
