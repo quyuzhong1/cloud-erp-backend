@@ -235,7 +235,8 @@ public enum ApiError implements Serializable {
     PROCESS_NOT_START_USER(94030,"非流程发起人无法撤销"),
     // 下级节点无审核人，无法提交
     PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
-
+    // 流程未完成部署，请先完成流程部署
+    PROCESS_NOT_DEPLOY(94032,"流程未完成部署，请先完成流程部署"),
 
     /**
      * PLM 错误

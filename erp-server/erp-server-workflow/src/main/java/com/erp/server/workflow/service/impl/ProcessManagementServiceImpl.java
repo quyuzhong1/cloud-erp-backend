@@ -145,6 +145,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 流程定义不存在
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
+        // 流程已修改，且未发布不允许启动
+        if(!processDefinition.getIsDeploy()){
+            // 流程定义未发布，需要先发布
+            throw new ServiceException(ApiError.PROCESS_NOT_DEPLOY);
+        }
+
         // 绑定流程发起人
         identityService.setAuthenticatedUserId(dto.getUserId());
         // 启动流程
