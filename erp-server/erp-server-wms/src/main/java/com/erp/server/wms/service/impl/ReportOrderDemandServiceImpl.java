@@ -329,8 +329,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
                 .reduce(MathUtil.ZERO, Integer::sum);
         //虚拟仓实际库存
         Integer virtualRealTotalQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), viewVirtualAllocationDTO.getSkuId())
-                        && StrUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getOutWarehouseId())
-                        && StrUtil.equals(obj.getVirtualWarehouseId(), viewVirtualAllocationDTO.getVirtualWarehouseId()))
+                        && StrUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getOutWarehouseId()))
                 .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                 .reduce(MathUtil.ZERO, Integer::sum);
         viewVirtualAllocationDTO.setUnDistributionQty(realTotalQty - virtualRealTotalQty);
