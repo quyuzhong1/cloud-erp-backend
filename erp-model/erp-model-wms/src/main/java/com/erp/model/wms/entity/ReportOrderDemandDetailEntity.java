@@ -3,7 +3,7 @@ package com.erp.model.wms.entity;
 import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.business.enums.ApproveStatusEnum;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -136,7 +136,7 @@ public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandD
     /**
      * bom的json数据
      */
-    @TableField(value = "bom_json", javaType = true )
+    @TableField(value = "bom_json", typeHandler = JacksonTypeHandler.class)
     private JSONArray bomJson;
 
 

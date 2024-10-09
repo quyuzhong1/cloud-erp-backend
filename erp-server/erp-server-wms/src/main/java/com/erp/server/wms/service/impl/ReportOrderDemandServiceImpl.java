@@ -183,6 +183,9 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     public Boolean addAllocation(ReportOrderDemandDTO.AddVirtualAllocationDTO dto) {
         ReportOrderDemandDTO.AddAllocationDTO addAllocationDTO = dto.getAddAllocationDTO();
 
+        if (ObjectUtil.isEmpty(addAllocationDTO) && CollectionUtil.isNotEmpty(dto.getVirtualTransferList())) {
+            throw new ServiceException("新增分货和虚拟仓调拨未填写数据不支持分货");
+        }
         //新增分货
         if (ObjectUtil.isNotEmpty(addAllocationDTO)) {
             addVirtualAllocation(addAllocationDTO,dto.getSkuId());

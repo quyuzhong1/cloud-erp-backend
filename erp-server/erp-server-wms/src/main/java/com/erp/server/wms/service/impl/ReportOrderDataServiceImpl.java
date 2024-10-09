@@ -569,12 +569,17 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         List<ReportOrderDataEntity> addOrUpdateList = new ArrayList<>();
         for (ReportOrderDataEntity entity : resultList) {
 
-            //发货通知单数量
+            //发货通知单数量（仅b2b）
             Integer deliveryNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), entity.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             entity.setDeliveryNoticeQty(deliveryNoticeQty);
+            //冻结数量（仅b2b）
+            Integer frozenQty = ObjectUtil.isEmpty(entity.getFrozenQty()) ? MathUtil.ZERO : entity.getFrozenQty();
             //需求数量,订单数量 - 发货通知单数量 - 冻结数量
-            entity.setQty(entity.getOrderQty() - deliveryNoticeQty);
-
+            entity.setQty(entity.getOrderQty() - deliveryNoticeQty - frozenQty);
+            //需求数量小于等于0则不添加
+            if (MathUtil.compareTo(entity.getQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+                continue;
+            }
             ReportOrderDataEntity reportOrderDataEntity = oldList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), entity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(reportOrderDataEntity)) {
                 addOrUpdateList.add(entity);

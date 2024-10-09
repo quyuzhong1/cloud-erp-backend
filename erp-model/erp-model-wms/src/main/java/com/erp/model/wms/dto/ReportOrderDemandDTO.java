@@ -6,9 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -476,6 +474,8 @@ public class ReportOrderDemandDTO implements Serializable {
          * 分配数量
          */
         @NotNull(message = "分配数量不能为空")
+        @DecimalMin(value = "1", message = "分配数量最小值为1")
+        @DecimalMax(value = "999999999", message = "分配数量最大值为999999999")
         private Integer qty;
     }
 
@@ -503,6 +503,8 @@ public class ReportOrderDemandDTO implements Serializable {
          * 分配数量
          */
         @NotNull(message = "分配数量不能为空")
+        @DecimalMin(value = "1", message = "分配数量最小值为1")
+        @DecimalMax(value = "999999999", message = "分配数量最大值为999999999")
         private Integer qty;
     }
 
