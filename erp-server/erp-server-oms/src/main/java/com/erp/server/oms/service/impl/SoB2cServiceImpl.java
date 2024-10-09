@@ -343,8 +343,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private CfgRuleOutFeign cfgRuleOutFeign;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private LogisticsMappingFeign logisticsMappingFeign;
     
     @Autowired
     @Qualifier("soB2cTabExecutorPool")
@@ -1755,10 +1759,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (StringUtils.isBlank(logisticsChannelId)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_NOT_NULL, soCode);
             }
+            //物流映射列表
+            List<LogisticsMappingEntity> mappingList = logisticsMappingFeign.listDbByChannelId(logisticsChannelId);
+            if(CollectionUtils.isEmpty(mappingList)){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
+            }
         } else {
             //必须要有物流渠道和物流单号后才可以提交发货
             if (StringUtils.isBlank(logisticsChannelId) || StringUtils.isBlank(code)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_AND_CODE_NOT_NULL, soCode);
+            }
+            //物流映射列表
+            List<LogisticsMappingEntity> mappingList = logisticsMappingFeign.listDbByChannelId(logisticsChannelId);
+            if(CollectionUtils.isEmpty(mappingList)){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
             }
         }
         //库存验证

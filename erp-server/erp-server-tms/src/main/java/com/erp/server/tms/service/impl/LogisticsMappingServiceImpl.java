@@ -152,7 +152,7 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
                 .last("limit 1")
                 .one();
     }
-
+    @Override
     public List<LogisticsMappingEntity> listDbByChannelId(String channelId) {
         return this.lambdaQuery().eq(LogisticsMappingEntity::getLogisticsChannelId, channelId).list();
 
