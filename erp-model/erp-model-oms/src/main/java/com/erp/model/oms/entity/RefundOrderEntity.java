@@ -95,6 +95,18 @@ public class RefundOrderEntity extends BaseEntity<RefundOrderEntity> {
     private String reason;
 
     /**
+     * 销售订单id
+     */
+    @TableField("so_id")
+    private String soId;
+
+    /**
+     * 销售订单编号
+     */
+    @TableField("so_code")
+    private String soCode;
+
+    /**
      * 退款时间
      */
     @TableField("refund_time")
