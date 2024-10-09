@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
@@ -171,7 +172,9 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         } else {
             resultMap.put("returnType", ReturnOrderSourceEnum.OTHER.getKingdeeCode());
         }
+        //单据类型 billType 标准采购退货 TLD01_SYS 委外退货单 TLD04_SYS
 
+        String billType = "TLD01_SYS";
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
 
         //如果上游单据未发送成功则无需发送
@@ -183,7 +186,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
                 log.error("采购订单未推送成功，不支持推送采购入库单，采购订单号【{}】",purchaseOrderEntity.getCode());
                 return;
             }*/
+            if (Objects.nonNull(purchaseOrderEntity) && PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(purchaseOrderEntity.getType()) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(purchaseOrderEntity.getSubcontractType())){
+                billType = "TLD04_SYS";
+            }
         }
+        resultMap.put("billType", billType);
         //金蝶id
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //业务id

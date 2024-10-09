@@ -31,6 +31,9 @@ public enum InventorySourceTypeEnum {
     OTHER_INSTOCK("otherInstock", "其他入库单"),
     OTHER_OUTSTOCK("otherOutstock", "其他出库单"),
     INSTOCK_FORCAST("instockForcast", "入库预报"),
+    INSTOCK_FORCAST_CHANGE("instockForcastChange", "入库预报变更"),
+    // 自定义规则，无法固化
+    PURCHASE_ORDER_CHANGE("purchaseOrderChange", "采购订单变更"),
     RECEIVE_MATERIAL("receiveMaterial", "领料"),
     RETURN_MATERIAL("returnMaterial", "退料"),
     STOCKTAKING_PROFIT_LOSS("stocktakingProfitLoss", "盘盈盘亏"),

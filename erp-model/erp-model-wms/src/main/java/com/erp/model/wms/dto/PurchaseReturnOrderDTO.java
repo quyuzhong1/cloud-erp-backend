@@ -32,6 +32,14 @@ public class PurchaseReturnOrderDTO {
     public static class AddDTO {
 
         /**
+         * 成品采购退货单【日志记录使用】
+         */
+        private String parentReturnCode;
+        /**
+         * 子件委外退料单【日志记录使用】
+         */
+        private String childSubcontractCode;
+        /**
          * 采购订单id
          */
         private String purchaseOrderId;
@@ -74,6 +82,11 @@ public class PurchaseReturnOrderDTO {
          */
         @NotBlank(message = "退货来源不能为空")
         private String sourceType;
+        /**
+         * 退货数据来源（selfAdd 手动新增 , autoAdd 自动新增）
+         * SourceTypeEnum
+         */
+        private String returnType;
 
         /**
          * 退货人id
@@ -459,6 +472,31 @@ public class PurchaseReturnOrderDTO {
          * 采购单号
          */
         private String purchaseOrderCode;
+        /**
+         * 采购订单类型(CGDD01_SYS标准采购订单，CGDD02_SYS委外采购订单，CGDD06-SYS补货采购订单)
+         * 地址：/scm/dict/list 字典类型：purchaseOrderType
+         */
+        private String purchaseType;
+        /**
+         * 采购订单类型名称
+         */
+        private String purchaseTypeName;
+        /**
+         * 采购订单来源id
+         */
+        private String purchaseSourceId;
+        /**
+         * 采购订单来源编码
+         */
+        private String purchaseSourceCode;
+        /**
+         * 采购订单来源类型
+         */
+        private String purchaseSourceType;
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
 
         /**
          * 供应商名称
@@ -567,9 +605,13 @@ public class PurchaseReturnOrderDTO {
         private String returnMode;
 
         /**
-         * 退货方式名称
+         * 退货单数据来源（selfAdd手动新增，autoAdd自动新增）
          */
         private String returnModeName;
+        /**
+         * 退货单数据来源
+         */
+        private String returnType;
 
         /**
          * 采购员名称
@@ -691,6 +733,10 @@ public class PurchaseReturnOrderDTO {
          * 签收时间
          */
         private LocalDateTime receiveTime;
+        /**
+         * 委外订单
+         */
+        private String subcontractCode;
 
     }
 
@@ -1512,4 +1558,58 @@ public class PurchaseReturnOrderDTO {
         private List<AttachDTO> attachList;
     }
 
+    /**
+     * 委外订单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SubcontractOrderDTO {
+        /**
+         * 采购订单id
+         */
+        private String purchaseId;
+        /**
+         * 采购订单编码
+         */
+        private String purchaseCode;
+        /**
+         * 退货单id
+         */
+        private String returnId;
+        /**
+         * 退货单编码
+         */
+        private String returnCode;
+        /**
+         * 委外订单id
+         */
+        private String subcontractId;
+        /**
+         * 委外订单编码
+         */
+        private String subcontractCode;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+        private String skuId;
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+    }
 }

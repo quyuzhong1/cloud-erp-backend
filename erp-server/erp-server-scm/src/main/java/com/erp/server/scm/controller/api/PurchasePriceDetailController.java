@@ -139,7 +139,7 @@ public class PurchasePriceDetailController extends BaseController {
      * @date: 2023/9/14 14:09
      */
     @PostMapping("/batchGetTaxPrice")
-    public ApiResult<List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO>> batchGetTaxPrice(@RequestBody @Validated ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
+    public ApiResult<List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO>> batchGetTaxPrice(@RequestBody @Validated List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> resultList = purchasePriceDetailService.batchGetTaxPrice(list);
         return success(resultList);
     }

@@ -15,10 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.ExcelImportDTO;
-import com.erp.model.scm.dto.ListStatusCountDTO;
-import com.erp.model.scm.dto.PurchaseApplicationDTO;
-import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
@@ -494,5 +491,13 @@ public class PurchaseApplicationController extends BaseController {
         purchaseApplicationService.generateSubcontractOrder(list);
         return success();
     }
-
+    /**
+     * 下推委外订单-批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    @PostMapping("/batchGetSubcontractPurchasePrice")
+    public ApiResult<PurchaseApplicationDTO.SubcontractPurchasePriceDTO> batchGetSubcontractPurchasePrice(@RequestBody @Validated ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list) {
+        return purchaseApplicationService.batchGetSubcontractPurchasePrice(list);
+    }
 }

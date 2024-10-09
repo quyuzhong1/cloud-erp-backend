@@ -59,4 +59,10 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     Boolean getPackageSupplierSetting(String logisticsSupplierId);
 
     String getPrinterNameByPaperSize(String paperSize);
+
+    /**
+     * 获取委外入库 自动入库配置
+     * @return
+     */
+    String getSubcontractInStockSetting();
 }

@@ -244,6 +244,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
+         * 价税合计
+         */
+        private BigDecimal amount;
+
+        /**
         * 仓库id
         */
         @NotBlank(message = "仓库id不能为空")
@@ -282,6 +287,13 @@ public class SubcontractOrderDetailDTO implements Serializable {
         */
         @NotNull(message = "是否自动生成采购订单不能为空")
         private Boolean isGeneratePo;
+
+        /**
+         * 是否自动生成入库单
+         * 勾选即为当成品采购订单入库时，以相应BOM数量对子件数量自动入库。
+         */
+        @NotNull(message = "是否自动生成入库单不能为空")
+        private Boolean isGenerateInStock;
 
         /**
         * 来源明细id
