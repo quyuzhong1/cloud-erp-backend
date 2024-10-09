@@ -1,5 +1,6 @@
 package com.sdk.oms.shopify.api.graphql;
 
+import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.shopify.api.graphql.model.*;
@@ -57,8 +58,8 @@ public class ShopifyGraphQLClient {
                 .tcpConfiguration(client ->
                         client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
                                 //本地启动时设置代理
-//                                .proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP)
-//                                        .address(new InetSocketAddress("127.0.0.1", 7890)))
+                                .proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP)
+                                        .address(new InetSocketAddress("127.0.0.1", 7890)))
                                 .doOnConnected(conn -> conn
                                         .addHandlerLast(new ReadTimeoutHandler(60))
                                         .addHandlerLast(new WriteTimeoutHandler(60))));
@@ -228,4 +229,17 @@ public class ShopifyGraphQLClient {
         return objectToReturn;
     }
 
+    public String getOrderReturn(String orderId) {
+        Map<String, String> variablesMap = new HashMap<>();
+        variablesMap.put("input","gid://shopify/Refund/"+orderId);
+        String jsonString = runQuery("orderRefund", variablesMap);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return jsonString;
+        } catch (Exception e) {
+            log.error("shopify获取退货订单信息转换异常",e);
+            ServiceException.runError("shopify获取退货订单信息转换异常",e);
+            return "";
+        }
+    }
 }

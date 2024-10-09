@@ -12,7 +12,9 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClient;
 import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
+import com.sdk.oms.shopify.api.graphql.model.ShopifyOrderResponse;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.*;
@@ -350,4 +352,16 @@ public class ErpServerOmsShopifyApplicationTests {
             }
         }
     }
+
+    @Test
+    public void shopifyGraphQLReturnTest() {
+
+        ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient("jim-shop-test.myshopify.com", "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");
+        String orderReturn = shopifyGraphQLClient.getOrderReturn("5548561662144");
+        System.out.println("订单退货信息结果");
+        System.out.println(orderReturn);
+    }
+
+
+
 }

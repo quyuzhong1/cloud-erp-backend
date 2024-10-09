@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 public class ShopifyGraphQLClientService {
 
 
-    @Value("${shopify.api.rest.version:2023-07}")
+    @Value("${shopify.api.rest.version:2024-01}")
     private String apiVersion;
 
 
