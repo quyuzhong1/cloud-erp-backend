@@ -200,6 +200,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case CFG_PRINT:
                 jsonObject = JSONUtil.parseObj(addDTO.getCfgPrint());
                 break;
+            case FS_REQUISITION_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionNoticeDTO());
+                break;
             default:
                 break;
         }
