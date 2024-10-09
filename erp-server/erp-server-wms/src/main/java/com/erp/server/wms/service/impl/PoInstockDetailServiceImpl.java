@@ -177,6 +177,10 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             entity.setPurchaseQty(detailEntity.getPurchaseQty());
             entity.setVariantProperty(detailEntity.getVariantProperty());
             entity.setMainId(mainId);
+            entity.setTaxPrice(detailEntity.getTaxPrice());
+            entity.setTaxRate(detailEntity.getTaxRate());
+            entity.setCurrency(detailEntity.getCurrency());
+            entity.setCurrencySymbol(detailEntity.getCurrencySymbol());
             //修改操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
                 PoInstockDetailEntity old = this.getById(entity.getId());

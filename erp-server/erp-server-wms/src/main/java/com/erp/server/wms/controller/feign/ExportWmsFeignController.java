@@ -106,6 +106,8 @@ public class ExportWmsFeignController {
     @Resource
     private SubcontractIssueService subcontractIssueService;
     @Resource
+    private SubcontractReturnService subcontractReturnService;
+    @Resource
     private TransferApplicationService transferApplicationService;
     @Resource
     private SupplierDeliveryOrderService supplierDeliveryOrderService;
@@ -525,6 +527,16 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SubcontractIssueQueryHandler.class)
     public PagingVO<SubcontractIssueDTO.ListDTO> exportSubcontractIssue(@RequestBody PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto) {
         return subcontractIssueService.exportSubcontractIssue(dto);
+    }
+    @PostMapping("/subcontractReturn")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:subcontractReturn:export",
+            tableAlias = "sr"
+    )
+    @WebAdvanceQuery(handler = SubcontractReturnQueryHandler.class)
+    public PagingVO<SubcontractReturnDTO.ListDTO> exportSubcontractReturn(@RequestBody PagingDTO<SubcontractReturnDTO.PagingParamDTO> dto){
+        return subcontractReturnService.paging(dto);
     }
 
     @PostMapping("/supplierDeliveryOrder")

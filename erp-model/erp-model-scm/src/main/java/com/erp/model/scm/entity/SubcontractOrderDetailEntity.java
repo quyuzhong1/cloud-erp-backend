@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -155,6 +156,13 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     */
     @TableField("is_generate_po")
     private Boolean isGeneratePo;
+
+    /**
+     * 是否自动生成入库单
+     * 勾选即为当成品采购订单入库时，以相应BOM数量对子件数量自动入库。
+     */
+    @TableField("is_generate_in_stock")
+    private Boolean isGenerateInStock;
 
     /**
      * 仓位

@@ -119,4 +119,12 @@ public interface PurchaseOrderFeign {
     @PostMapping("/feign/purchaseOrder/srmWaitDeliveryPaging")
     PagingVO<PurchaseOrderDTO.ListDTO> srmWaitDeliveryPaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SrmSearchParamDTO> dto);
 
+    /**
+     *下推采购入库单弹窗显示 根据采购订单明细获取待入库信息
+     * @param purchaseDetailIdList
+     * @return
+     */
+    @PostMapping("/feign/purchaseOrder/viewGenerateStockIn")
+    List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(@RequestBody @Validated List<String>  purchaseDetailIdList);
+
 }
