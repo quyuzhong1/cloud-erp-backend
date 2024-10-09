@@ -33,10 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_DEMAND;
@@ -229,6 +226,10 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         //虚拟仓关联关系
         List<VirtualWarehouseRelationEntity> relationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
         List<String> newVirtualWarehouseIdList = relationList.stream().map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+
+        if (CollectionUtil.isEmpty(newVirtualWarehouseIdList)) {
+            return Collections.EMPTY_LIST;
+        }
         //虚拟仓
         List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(newVirtualWarehouseIdList);
 
@@ -251,8 +252,11 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             //新增分货数据
             batchViewVirtualAllocation(reportOrderDemandEntity,skuInventoryStatusList,virtualInventoryList,resultList);
 
-            //虚拟仓调拨数据
-            batchViewVirtualTransfer(reportOrderDemandEntity,relationList,virtualInventoryList,resultList,virtualWarehouseList);
+            List<VirtualWarehouseRelationEntity> newRelationList = relationList.stream().filter(obj -> !StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getVirtualWarehouseId())).collect(Collectors.toList());
+            if (CollectionUtil.isNotEmpty(newRelationList)) {
+                //虚拟仓调拨数据
+                batchViewVirtualTransfer(reportOrderDemandEntity,newRelationList,virtualInventoryList,resultList,virtualWarehouseList);
+            }
         }
         return resultList;
     }
@@ -273,6 +277,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             return;
         }
         for (VirtualWarehouseRelationEntity relationEntity : relationList) {
+
             ReportOrderDemandDTO.BatchViewVirtualAllocationDTO viewVirtualAllocationDTO = new ReportOrderDemandDTO.BatchViewVirtualAllocationDTO();
             //虚拟仓调拨
             BeanMapperUtils.copy(reportOrderDemandEntity,viewVirtualAllocationDTO);
@@ -315,6 +320,8 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         viewVirtualAllocationDTO.setTypeName(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getName());
         viewVirtualAllocationDTO.setOutWarehouseId(reportOrderDemandEntity.getWarehouseId());
         viewVirtualAllocationDTO.setOutWarehouseName(reportOrderDemandEntity.getWarehouseName());
+        viewVirtualAllocationDTO.setVirtualUsableTotalQty(reportOrderDemandEntity.getVirtualUsableQty());
+        viewVirtualAllocationDTO.setVirtualScarceTotalQty(reportOrderDemandEntity.getVirtualScarceQty());
         //实体仓实际库存
         Integer realTotalQty = skuInventoryStatusList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), viewVirtualAllocationDTO.getSkuId())
                         && StrUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getOutWarehouseId()))
