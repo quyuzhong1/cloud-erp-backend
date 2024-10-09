@@ -133,7 +133,7 @@
         from so_b2c sb
         inner join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
         <where>
-            sbd.is_deleted = false and sbd.virtual_warehouse_id != '' and sbd.sku_id != ''
+            sb.is_deleted = false and sbd.virtual_warehouse_id != '' and sbd.sku_id != ''
         </where>
         order by sb.id desc
     </select>
