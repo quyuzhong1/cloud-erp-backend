@@ -487,30 +487,29 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             addDTO.setBomJson(bomJson);
             //拆分
             for (BomChildrenSkuDTO bomChildrenSkuDTO : skuList) {
+                //添加bom数据
+                ReportOrderDemandDetailDTO.AddDTO bomAddDTO = new ReportOrderDemandDetailDTO.AddDTO();
+                BeanMapperUtils.copy(addDTO,bomAddDTO);
                 //子级虚拟仓可用
                 Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
                                 && StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
                                 && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
                                 && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
                         .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
-                addDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                bomAddDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
 
                 //订单需求数量
-                addDTO.setQty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity());
+                bomAddDTO.setQty(bomAddDTO.getQty() * bomChildrenSkuDTO.getQuantity());
                 //订单数量
-                addDTO.setOrderQty(addDTO.getOrderQty() * bomChildrenSkuDTO.getQuantity());
+                bomAddDTO.setOrderQty(bomAddDTO.getOrderQty() * bomChildrenSkuDTO.getQuantity());
                 //发货通知单数量
-                addDTO.setDeliveryNoticeQty(addDTO.getDeliveryNoticeQty() * bomChildrenSkuDTO.getQuantity());
+                bomAddDTO.setDeliveryNoticeQty(bomAddDTO.getDeliveryNoticeQty() * bomChildrenSkuDTO.getQuantity());
                 //冻结数量
-                addDTO.setFrozenQty(addDTO.getFrozenQty() * bomChildrenSkuDTO.getQuantity());
+                bomAddDTO.setFrozenQty(bomAddDTO.getFrozenQty() * bomChildrenSkuDTO.getQuantity());
 
                 //订单需求数量，订单数量 - 发货通知单数量 - 冻结数量
-                addDTO.setQty(addDTO.getOrderQty() - addDTO.getDeliveryNoticeQty() - addDTO.getFrozenQty());
-                addDTO.setVirtualUsableQty(virtualUsableQty);
-
-                //添加bom数据
-                ReportOrderDemandDetailDTO.AddDTO bomAddDTO = new ReportOrderDemandDetailDTO.AddDTO();
-                BeanMapperUtils.copy(addDTO,bomAddDTO);
+                bomAddDTO.setQty(bomAddDTO.getOrderQty() - bomAddDTO.getDeliveryNoticeQty() - bomAddDTO.getFrozenQty());
+                bomAddDTO.setVirtualUsableQty(virtualUsableQty);
                 addList.add(bomAddDTO);
             }
         } else {

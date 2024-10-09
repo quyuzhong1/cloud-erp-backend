@@ -353,7 +353,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             }
 
             //调拨分货
-            List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> addVirtualTransferList = value.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())).collect(Collectors.toList());
+            List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> addVirtualTransferList = value.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())).collect(Collectors.toList());
             if (StrUtil.equals(addVirtualAllocationDTO.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
                 batchAddVirtualTransfer(addVirtualTransferList);
             }
@@ -485,6 +485,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         addDTO.setDirection(VwAllocationDirectionEnum.FORWARD.getCode());
         addDTO.setStatus(VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode());
         addDTO.setDisabled(Boolean.FALSE);
+        List<VirtualWarehouseAllocationDTO.DetailDto> detailList = new ArrayList<>();
         for (ReportOrderDemandDTO.VirtualTransferDTO virtualTransferDTO : virtualTransferList) {
             VirtualWarehouseAllocationDTO.DetailDto detailDto = new VirtualWarehouseAllocationDTO.DetailDto();
             detailDto.setSkuId(skuId);
@@ -492,8 +493,9 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             detailDto.setToVirtualWarehouseId(virtualTransferDTO.getToVirtualWarehouseId());
             detailDto.setFromVirtualWarehouseId(virtualTransferDTO.getFromVirtualWarehouseId());
             detailDto.setQty(virtualTransferDTO.getQty());
-            addDTO.setDetailList(Arrays.asList(detailDto));
+            detailList.add(detailDto);
         }
+        addDTO.setDetailList(detailList);
         virtualWarehouseAllocationService.add(addDTO);
     }
 
