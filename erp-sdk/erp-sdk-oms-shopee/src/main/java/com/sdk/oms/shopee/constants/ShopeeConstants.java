@@ -8,15 +8,19 @@ package com.sdk.oms.shopee.constants;
  * @version: 1.0
  */
 public interface ShopeeConstants {
-     String host = "https://openplatform.shopee.cn";
+     String host = "https://partner.shopeemobile.com";
+//     long partner_id = 1070627;
+//     long partner_id = 1207995;
      long partner_id = 2006582;
     //     long shop_id = 497438607;
+//     long shop_id = 94083;
      long shop_id = 954283475;
-//     long shop_id = 954283475;
      long main_account_id = 863141;
      long merchant_id = 1315427;
      String code = "596d704f61436b46785a4c494b686363";
-     String tmp_partner_key = "436568524178574244445975595377664f574e6b536d786b7256744158715974";
+//     String tmp_partner_key = "5975757847654870727869546f436e696f4b454d466a74586f46696555466348";
+     String tmp_partner_key = "446568575a4b52694578456c4c78645969735a6f716b4b6550496754705a7a63";
+//     String tmp_partner_key = "44435168497a46624d4d6d44435a4d5a664e4178425565417a49475a466c6a72";
      String access_token = "5a686b47746a56527949796f6f745869";
      String refresh_token = "4e776c4e494949424e464d664379436c";
      String shop_refresh_token = "58666c4b58496358486265526e6f434a";
@@ -40,7 +44,7 @@ public interface ShopeeConstants {
 //     String code = "484e4a5541594a424e4a74626648684a";
 
 
-     String redirect_url = "https://5e30-43-154-173-250.ngrok-free.app/return";
+     String redirect_url = "https://c6ba-47-76-180-123.ngrok-free.app/shop/shopAuthorize";
      int pageSize = 50;
      String offset = "AAAAFA==";
      String time_range_field = "create_time";
