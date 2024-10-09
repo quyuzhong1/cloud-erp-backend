@@ -106,8 +106,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 throw new ServiceException("请先取消物流单后修改渠道和单号信息");
             }
         }
+
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
         BeanMapperUtils.copy(logisticsDTO, entity);
+        if(!old.getLogisticsChannelId().equals(logisticsDTO.getLogisticsChannelId()) || !old.getCode().equals(logisticsDTO.getCode())){
+            entity.setSourceSystem(SoB2cLogisticSourceSystemEnum.ERP.getCode());
+        }
         entity.setMainId(mainId);
         handleLogisticsData(entity);
 
