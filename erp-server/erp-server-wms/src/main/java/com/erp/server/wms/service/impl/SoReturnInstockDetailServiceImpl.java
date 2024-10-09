@@ -30,10 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -443,6 +440,14 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         }).collect(Collectors.toList());
 
         return detailEntityList;
+    }
+
+    @Override
+    public List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(List<String> returnIds) {
+        if(CollectionUtils.isEmpty(returnIds)){
+            return new ArrayList<>();
+        }
+        return baseMapper.getSoReturnInstockByReturnIds(returnIds);
     }
 
     /**

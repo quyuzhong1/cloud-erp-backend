@@ -34,4 +34,12 @@ public interface SoReturnInstockFeign {
 
     @PostMapping("feign/soReturnInstock/listDetailBySoReturnDetailIds")
     List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(@RequestBody List<String> detailIds);
+
+    /**
+     * 获取退货入库单 明细
+     * @return
+     */
+    @PostMapping("feign/soReturnInstock/getSoReturnInstockByReturnIds")
+    List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(@RequestBody List<String> returnIds);
+
 }

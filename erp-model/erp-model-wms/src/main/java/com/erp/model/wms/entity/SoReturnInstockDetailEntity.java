@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -139,6 +140,21 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
      */
     @TableField("exchange_rate")
     private BigDecimal exchangeRate;
+
+    @TableField(exist = false)
+    private String returnId;
+
+    /**
+     * 退货入库单号
+     */
+    @TableField(exist = false)
+    private String code;
+
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
 
     public static final String MAIN_ID = "main_id";
 

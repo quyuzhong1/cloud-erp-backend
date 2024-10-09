@@ -51,4 +51,14 @@ public class SoReturnInstockFeignController {
     List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(@RequestBody List<String> detailIds) {
         return soReturnInstockDetailService.listDetailBySoReturnDetailIds(detailIds);
     }
+
+    /**
+     * 获取退货入库单 明细
+     *
+     * @return
+     */
+    @PostMapping("/getSoReturnInstockByReturnIds")
+    List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(@RequestBody List<String> returnIds) {
+        return soReturnInstockDetailService.getSoReturnInstockByReturnIds(returnIds);
+    }
 }

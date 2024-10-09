@@ -82,4 +82,6 @@ public interface SoReturnInstockDetailService extends SuperService<SoReturnInsto
     List<SoReturnInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
 
     List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(List<String> soReturnDetailIds);
+
+    List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(List<String> returnIds);
 }
