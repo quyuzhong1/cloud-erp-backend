@@ -516,7 +516,9 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         } else {
             Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())
                             && StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
-                            && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
+                            && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
+                            && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
+                    )
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setVirtualUsableQty(virtualUsableQty);
             addList.add(addDTO);
