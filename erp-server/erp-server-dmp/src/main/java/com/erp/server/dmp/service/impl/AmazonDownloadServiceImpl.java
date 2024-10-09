@@ -5,6 +5,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.constant.RedisCacheConstants;
@@ -18,6 +19,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
@@ -122,13 +124,15 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             return;
         }
         for (PlatformAmazonOrderDTO dto : orderEntityList) {
-            singleHandlerOrderDetailDownload(key, platform, category, dto);
+            String handleKey = StrUtil.format("Amazon:orderDetailDownload:{}:{}", dto.getPlatformShopCode(), dto.getOrder().getAmazonOrderId());
+            singleHandlerOrderDetailDownload(key, platform, category, dto, handleKey);
         }
     }
 
 
     @Override
-    public void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto) {
+    @DataIdempotent(keyIdName = "handleKey", waitTime = 60)
+    public void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto, String handleKey) {
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
         try {
             // 动态请求配置

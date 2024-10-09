@@ -27,7 +27,7 @@ public interface AmazonDownloadService {
     /**
      * 单处理订单详情下载
      */
-    void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto);
+    void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto, String handleKey);
 
     /**
      * 处理订单地址详情下载
