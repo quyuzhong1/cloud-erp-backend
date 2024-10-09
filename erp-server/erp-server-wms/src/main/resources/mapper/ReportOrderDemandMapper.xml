@@ -39,7 +39,20 @@
         rod.update_user_id,
         rod.version,
         rod.is_deleted,
-        rod.warehouse_id, rod.virtual_warehouse_id, rod.virtual_warehouse_name, rod.warehouse_name, rod.sku_id, rod.sku_no, rod.product_name, rod.total_qty, rod.so_qty, rod.b2c_so_qty, rod.first_mile_qty, rod.virtual_usable_qty, rod.is_virtual_scarce, rod.virtual_scarce_qty
+        rod.warehouse_id as warehouseId,
+        rod.virtual_warehouse_id  as virtualWarehouseId,
+        rod.virtual_warehouse_name  as virtualWarehouseName,
+        rod.warehouse_name  as warehouseName,
+        rod.sku_id as skuId,
+        rod.sku_no as skuNo,
+        rod.product_name as productName,
+        rod.total_qty as totalQty,
+        rod.so_qty  as soQty,
+        rod.b2c_so_qty  as b2cSoQty,
+        rod.first_mile_qty  as firstMileQty,
+        rod.virtual_usable_qty as virtualUsableQty,
+        rod.is_virtual_scarce as isVirtualScarce,
+        rod.virtual_scarce_qty as virtualScarceQty
     </sql>
 
     <!-- 删除 -->

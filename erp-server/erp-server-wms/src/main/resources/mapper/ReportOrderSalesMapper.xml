@@ -40,14 +40,35 @@
     <sql id="Base_Column_List">
         ros.id,
         ros.create_time,
-        ros.update_time,
+        ros.update_time as updateTime,
         ros.create_user_name,
         ros.create_user_id,
         ros.update_user_name,
         ros.update_user_id,
         ros.version,
         ros.is_deleted,
-        ros.warehouse_id, ros.virtual_warehouse_id, ros.sku_id, ros.sku_no, ros.product_name, ros.virtual_warehouse_name, ros.warehouse_name, ros.today_sales_qty, ros.yesterday_sales_qty, ros.three_days_sales_qty, ros.seven_days_sales_qty, ros.fourteen_days_sales_qty, ros.thirty_days_sales_qty, ros.is_virtual_scarce, ros.is_warn, ros.virtual_scarce_qty, ros.total_qty, ros.virtual_usable_qty, ros.virtual_frozen_qty, ros.virtual_total_qty, ros.delivery_qty, ros.distribution_qty
+        ros.warehouse_id as warehouseId,
+        ros.virtual_warehouse_id as virtualWarehouseId,
+        ros.sku_id as skuId,
+        ros.sku_no as skuNo,
+        ros.product_name as productName,
+        ros.virtual_warehouse_name as virtualWarehouseName,
+        ros.warehouse_name as warehouseName,
+        ros.today_sales_qty as todaySalesQty,
+        ros.yesterday_sales_qty as yesterdaySalesQty,
+        ros.three_days_sales_qty as threeDaysSalesQty,
+        ros.seven_days_sales_qty as sevenDaysSalesQty,
+        ros.fourteen_days_sales_qty as fourteenDaysSalesQty,
+        ros.thirty_days_sales_qty as thirtyDaysSalesQty,
+        ros.is_virtual_scarce as isVirtualScarce,
+        ros.is_warn as isWarn,
+        ros.virtual_scarce_qty as virtualScarceQty,
+        ros.total_qty as totalQty,
+        ros.virtual_usable_qty as virtualUsableQty,
+        ros.virtual_frozen_qty as virtualFrozenQty,
+        ros.virtual_total_qty as virtualTotalQty,
+        ros.delivery_qty as deliveryQty,
+        ros.distribution_qty as distributionQty
     </sql>
 
     <!-- 删除数据 -->
