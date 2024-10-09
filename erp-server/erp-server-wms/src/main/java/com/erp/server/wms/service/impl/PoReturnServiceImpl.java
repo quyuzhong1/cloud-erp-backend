@@ -54,6 +54,8 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -1713,7 +1715,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
              * 3、退货单审核、反审
              * 执行状态变更逻辑：
              * 收货单数量并且入库单数量为0，则更新为已确认
-             * (收货单数量>0或入库单数量>0) 并且(采购数量+退货补货数量>收货数量并且入库单数量>0并且采购数量+库存退货的退货补货数量>入库数量)，则更新为送货中
+             * (收货单数量>0 并且 采购数量+退货补货数量>收货数量)或者(入库单数量>0 并且 采购数量+库存退货的退货补货数量>入库数量)，则更新为送货中
              * (收货单数量>0并且采购数量+退货补货数量=收货数量)或(入库单数量>0并且采购数量+库存退货的退货补货数量=入库数量)，则更新为已完成
              */
 
@@ -1724,9 +1726,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                //已确认
                executionStatus = ExecutionStatusEnum.CONFIRM.getCode();
             }
-            if((receiveQty > MathUtil.ZERO || inStockQty > MathUtil.ZERO)
-                    && MathUtil.add(purchaseQty,allReturnQty) > receiveQty
-                    && MathUtil.add(purchaseQty,returnQty) > inStockQty ) {
+            if((receiveQty > MathUtil.ZERO && MathUtil.add(purchaseQty,allReturnQty) > receiveQty)
+                    || (inStockQty > MathUtil.ZERO &&  MathUtil.add(purchaseQty,returnQty) > inStockQty)) {
                 //送货中
                 executionStatus = ExecutionStatusEnum.DELIVERY.getCode();
             }
