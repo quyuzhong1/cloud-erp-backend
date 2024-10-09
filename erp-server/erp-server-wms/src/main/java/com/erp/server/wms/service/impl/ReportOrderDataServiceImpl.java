@@ -507,7 +507,11 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                 //订单需求数量，订单数量 - 发货通知单数量 - 冻结数量
                 addDTO.setQty(addDTO.getOrderQty() - addDTO.getDeliveryNoticeQty() - addDTO.getFrozenQty());
                 addDTO.setVirtualUsableQty(virtualUsableQty);
-                addList.add(addDTO);
+
+                //添加bom数据
+                ReportOrderDemandDetailDTO.AddDTO bomAddDTO = new ReportOrderDemandDetailDTO.AddDTO();
+                BeanMapperUtils.copy(addDTO,bomAddDTO);
+                addList.add(bomAddDTO);
             }
         } else {
             Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())
