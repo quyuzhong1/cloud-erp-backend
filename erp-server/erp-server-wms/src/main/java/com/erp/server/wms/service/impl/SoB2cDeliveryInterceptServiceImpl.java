@@ -816,7 +816,11 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             transferDTO.setCurWarehouseId(origin.getWarehouseId());
             transferDTO.setCurWarehouseLocation(origin.getWarehouseLocation());
             transferDTO.setTargetWarehouseId(origin.getWarehouseId());
-            transferDTO.setTargetWarehouseLocation(origin.getWarehouseLocation());
+            if(origin.getWarehouseId().equals(interceptInventoryDTO.getWarehouseId())){
+                transferDTO.setTargetWarehouseLocation(interceptInventoryDTO.getWarehouseLocation());
+            }else{
+                transferDTO.setTargetWarehouseLocation(origin.getWarehouseLocation());
+            }
             transferDTO.setQty(origin.getQty());
             transferDTO.setSkuId(origin.getSkuId());
             transferDTO.setSkuNo(origin.getSkuNo());
