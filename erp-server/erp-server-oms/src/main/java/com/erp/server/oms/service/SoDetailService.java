@@ -327,7 +327,16 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param detailId
      * @return BatchResultDTO
      */
-    BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity old);
+    BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity oldEntity);
+    /**
+     * 批量释放库存
+     * @author will
+     * @date 2024/7/15 17:32
+     * @param detailIdList
+     * @param oldEntity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO batchUnLockVirtualInventory(List<String> detailIdList,SoInfoEntity oldEntity);
     /**
      * 扣减冻结数量
      * @author will
