@@ -15,7 +15,9 @@ public class WaveListPdaAdvanceQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if(field.equals("status")){
             for (WaveStatusEnum statusEnum : WaveStatusEnum.values()) {
-                if(value.equals(statusEnum.getCode())){
+                if(value.equals(WaveStatusEnum.HANG_UP.getCode()) || value.equals(WaveStatusEnum.PICK_ING.getCode())){
+                    return "and status in ('hangUp','pickIng')";
+                }else {
                     super.buildDefaultDTO("status", value);
                     return super.getSplicingSQL();
                 }

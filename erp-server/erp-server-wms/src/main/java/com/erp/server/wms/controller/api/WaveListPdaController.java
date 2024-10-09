@@ -48,7 +48,7 @@ public class WaveListPdaController {
      */
     @GetMapping("/tabList")
     public ApiResult<List<WaveListDTO.TabDTO>> tabList() {
-        List<WaveListDTO.TabDTO> list = waveListService.tabList();
+        List<WaveListDTO.TabDTO> list = waveListPdaService.tabList();
         return ApiResult.success(list);
     }
 
