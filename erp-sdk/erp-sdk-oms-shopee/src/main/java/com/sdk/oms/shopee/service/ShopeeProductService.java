@@ -77,7 +77,7 @@ public class ShopeeProductService {
         if (StringUtils.isNotEmpty(error)) {
             return;
         }
-        JSONArray jsonArray = (JSONArray) response.get("item");
+        JSONArray jsonArray = JSONArray.parseArray(response.get("item").toString());
         if (Objects.isNull(jsonArray)){
             return;
         }

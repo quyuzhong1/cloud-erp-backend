@@ -63,7 +63,7 @@ public class ShopeeOrderService {
         if (StringUtils.isNotEmpty(error)) {
             return;
         }
-        JSONArray jsonArray = (JSONArray) response.get("order_list");
+        JSONArray jsonArray = JSONArray.parseArray(response.get("order_list").toString());
         if (Objects.isNull(jsonArray)){
             return;
         }
