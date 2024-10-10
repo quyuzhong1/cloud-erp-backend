@@ -1487,6 +1487,7 @@ public enum ApiError implements Serializable {
     ERROR_DETAIL_NOT_EXIST(97012,"明细数据不存在"),
     ERROR_LOGISTICS_NOT_EXIST(97013,"物流配置不存在"),
     ERROR_TABLE_NOT_EXIST(97014,"表{}不存在"),
+    ERROR_TIME_FRAME_NOT_EXIST(97015,"*建议时间范围规则配置不存在"),
 
 
 

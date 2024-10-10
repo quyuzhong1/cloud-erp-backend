@@ -5,12 +5,14 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.entity.CfgRuleCommonEntity;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
+import com.erp.model.mrp.enums.CfgRuleSuggestedAmountNodeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleCommonMapper;
 import com.erp.server.mrp.service.CfgRuleCommonService;
@@ -204,6 +206,28 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         // 递归匹配树结构中的节点，找到匹配的节点数据
         keys = findAndCacheNodeByKey(list, remainingKey, findKey);
         return keys;
+    }
+
+    @Override
+    public String timeFrame(String platformType) {
+        List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
+                .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
+                .eq(CfgRuleCommonEntity::getIsDefault, false));
+        if (CollectionUtils.isEmpty(list)) {
+            list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
+                    .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
+                    .eq(CfgRuleCommonEntity::getIsDefault, true));
+        }
+        CfgRuleCommonEntity entity = list.stream()
+                .filter(v -> v.getCode().equals(CfgRuleSuggestedAmountNodeEnum.TIME_FRAME.getCode()))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_TIME_FRAME_NOT_EXIST));
+        return list.stream()
+                .filter(v -> v.getParentId().equals(entity.getId()))
+                .filter(v -> "true".equals(v.getValue()))
+                .map(CfgRuleCommonEntity::getCode)
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_TIME_FRAME_NOT_EXIST));
     }
 
     // 去掉 baseKey 前缀部分的方法

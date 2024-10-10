@@ -66,4 +66,13 @@ public class CfgRuleCommonController extends BaseController {
         Map<String, List<CfgRuleCommonDTO.DescriptionDTO>> descriptionDTOS = cfgRuleCommonService.description(platformType);
         return success(descriptionDTOS);
     }
+
+    /**
+     * 获取备注描述
+     */
+    @GetMapping("/timeFrame")
+    public ApiResult<String> timeFrame(@RequestParam("platformType") String platformType) {
+        String timeFrame = cfgRuleCommonService.timeFrame(platformType);
+        return success(timeFrame);
+    }
 }

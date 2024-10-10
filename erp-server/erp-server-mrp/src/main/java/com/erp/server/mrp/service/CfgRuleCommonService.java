@@ -58,4 +58,9 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
      * @param findKey key全长
      */
     Set<String> findByKey(String baseKey, List<CfgRuleCommonDTO.StrategyResultDTO> list, String findKey);
+
+    /**
+     * 获取时间建议范围
+     */
+    String timeFrame(String platformType);
 }
