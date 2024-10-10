@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.server.wms.service.SoReturnNoticeDetailService;
@@ -44,5 +45,10 @@ public class SoReturnNoticeFeignController {
     @PostMapping("/listDetailBySourceDetailIds")
     public List<SoReturnNoticeDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
         return soReturnNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIds);
+    }
+
+    @PostMapping("/generateSoB2cReturnNotice")
+    public void generateSoB2cReturnNotice(@RequestBody List<SoB2cReturnDTO.GenerateSoReturnNoticeView> list){
+        soReturnNoticeService.generateSoB2cReturnNotice(list);
     }
 }

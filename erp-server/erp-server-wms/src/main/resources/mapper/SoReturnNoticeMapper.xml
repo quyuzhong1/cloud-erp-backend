@@ -5,7 +5,9 @@
         SELECT
             srn.id,
             srnd.id as detailId,
+            srn.so_id as soId,
             srn.source_id AS sourceId,
+            srn.type,
             srnd.source_detail_id AS sourceDetailId,
             srn.code,
             srn.source_code AS sourceCode,

@@ -6,6 +6,9 @@ import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -20,4 +23,6 @@ import org.apache.ibatis.annotations.Mapper;
 public interface SoB2cReturnMapper extends BaseMapper<SoB2cReturnEntity> {
 
     IPage<SoB2cReturnDTO.PagingViewDTO> paging(Page query, SoB2cReturnDTO.PagingParamDTO params);
+
+    List<SoB2cReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeView(@Param("ids") List<String> ids);
 }

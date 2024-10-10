@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -234,6 +235,8 @@ public class SoB2cReturnDTO implements Serializable {
 
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PagingViewDTO {
         /**
          * 退货单id
@@ -386,6 +389,9 @@ public class SoB2cReturnDTO implements Serializable {
         private LocalDateTime sysInstockTime;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
          * 页面高级查询
@@ -397,5 +403,92 @@ public class SoB2cReturnDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenerateSoReturnNoticeView {
+
+        private String id;
+
+        private String code;
+
+        private String soId;
+        private String status;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer saleQty;
+        /**
+         * 出库数量
+         */
+        private Integer outQty;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+
+        /**
+         * 退货数量
+         */
+        @NotNull(message = "退货数量不能为空")
+        private Integer returnQty;
+
+        /**
+         * 退货仓库
+         */
+        @NotNull(message = "退货仓库不能为空")
+        private String returnWarehouseId;
+
+        /**
+         * 退货仓库名称
+         */
+        private String returnWarehouseName;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 }

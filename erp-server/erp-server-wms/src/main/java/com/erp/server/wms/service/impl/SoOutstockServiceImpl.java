@@ -2423,7 +2423,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return result;
     }
 
-    private SoOutstockEntity getBySoId(String soB2cId) {
+    @Override
+    public SoOutstockEntity getBySoId(String soB2cId) {
         return this.lambdaQuery().eq(SoOutstockEntity::getSoId, soB2cId).
                 last("LIMIT 1").one();
     }
