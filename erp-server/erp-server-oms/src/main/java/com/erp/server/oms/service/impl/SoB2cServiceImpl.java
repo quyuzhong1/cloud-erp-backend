@@ -10,6 +10,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -89,11 +90,9 @@ import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.oms.aliexpress.api.IopResponse;
-import com.erp.oms.aliexpress.dto.response.AliExpressAscpFfoQueryResponse;
-import com.erp.oms.aliexpress.dto.response.AliExpressDeliveryDetail;
-import com.erp.oms.aliexpress.dto.response.DataListBean;
-import com.erp.oms.aliexpress.dto.response.ErpFulfillmentForwardDtoBean;
+import com.erp.oms.aliexpress.dto.response.*;
 import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -349,7 +348,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private LogisticsMappingFeign logisticsMappingFeign;
-    
+    @Resource
+    private AliExpressOrderService aliExpressOrderService;
+
     @Autowired
     @Qualifier("soB2cTabExecutorPool")
     private ExecutorService soB2cTabExecutorPool;
@@ -1451,8 +1452,43 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         try {
             LogisticsBillDTO.GenerateBillDTO generateBillDTO = makeGenerateBillDTO(entity, soB2cLogisticsEntity);
             paramJson = JSONObject.toJSONString(generateBillDTO);
-            //货取物流单号
-            LogisticsBillDTO.GenerateBillResultDTO resultDTO = logisticsBillFeign.generateBill(generateBillDTO);
+            LogisticsBillDTO.GenerateBillResultDTO resultDTO = null;
+            try {
+                //货取物流单号
+                resultDTO = logisticsBillFeign.generateBill(generateBillDTO);
+            }catch (Exception e){
+                String type = SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
+                message = e.getMessage();
+                //如果异常符合以下条件则取拉取最新的oaid信息
+                if (message.contains("decryptPrivacy parameter failed")) {
+                    AliExpressOrderDetail orderDetail = aliExpressOrderService.getOrderDetailByOrderIdAndShopId(entity.getPlatformCode(), entity.getShopId());
+                    if (null == orderDetail) {
+                        log.error("【速卖通标记发货】订单【{}】查询订单详情为空", entity.getPlatformCode());
+                        throw new ServiceException("查询订单详情为空");
+                    }
+                    String oaid = orderDetail.getOaid();
+                    JSON extendData = JSONObject.parseObject(entity.getExtendData());
+                    Map<String, String> map = JSON.toJavaObject(extendData, Map.class);
+                    map.put("oaid",oaid);
+                    this.lambdaUpdate().eq(SoB2cEntity::getId, id).
+                            set(SoB2cEntity::getExtendData, JSONObject.toJSONString(map)).update();
+                    generateBillDTO.setOaid(oaid);
+                    //货取物流单号
+                    resultDTO = logisticsBillFeign.generateBill(generateBillDTO);
+                }else{
+                    //检测是否是API 对接的仓库
+                    List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(warehouseId));
+                    Boolean isApiWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
+                    if (isApiWarehouse) {
+                        soB2cErrorService.removeErrorOrder(id, type);
+                    } else {
+                        //添加异常信息
+                        soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
+                    }
+                    log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
+                    return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+                }
+            }
             if (Objects.isNull(resultDTO)) {
                 throw new ServiceException("下物流单失败");
             }
