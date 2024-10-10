@@ -2294,6 +2294,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         });
         packingTaskDetailService.updateBatchById(detailEntityList);
         List<String> ids = detailEntityList.stream().map(PackingTaskDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(ids)){
+            return;
+        }
         List<PackingTaskEntity> packingTaskEntityList = this.listByIds(ids);
         List<PackingTaskDetailEntity> allDetailList = packingTaskDetailService.listByMainIds(ids);
         packingTaskEntityList.forEach(main->{
