@@ -256,7 +256,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             //新增分货数据
             batchViewVirtualAllocation(oldDTO,skuInventoryStatusList,virtualInventoryList,resultList);
 
-            List<VirtualWarehouseRelationEntity> newRelationList = relationList.stream().filter(obj -> !StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getVirtualWarehouseId())).collect(Collectors.toList());
+            List<VirtualWarehouseRelationEntity> newRelationList = relationList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),paramDTO.getWarehouseId()) && !StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getVirtualWarehouseId())).collect(Collectors.toList());
             if (CollectionUtil.isNotEmpty(newRelationList)) {
                 //虚拟仓调拨数据
                 batchViewVirtualTransfer(oldDTO,newRelationList,virtualInventoryList,resultList,virtualWarehouseList);
@@ -288,6 +288,8 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             viewVirtualAllocationDTO.setType(VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode());
             viewVirtualAllocationDTO.setTypeName(VirtualWarehouseAllocationTypeEnum.TRANSFER.getName());
             viewVirtualAllocationDTO.setOutWarehouseId(relationEntity.getVirtualWarehouseId());
+            viewVirtualAllocationDTO.setVirtualScarceTotalQty(oldDTO.getVirtualScarceQty());
+            viewVirtualAllocationDTO.setVirtualUsableTotalQty(oldDTO.getVirtualUsableQty());
             //名称
             String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), relationEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             viewVirtualAllocationDTO.setOutWarehouseName(virtualWarehouseName);
@@ -300,7 +302,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
                     .reduce(MathUtil.ZERO, Integer::sum);
             viewVirtualAllocationDTO.setUnDistributionQty(realVirtualTotalQty);
             if (MathUtil.compareTo(realVirtualTotalQty,MathUtil.ZERO) <= MathUtil.ZERO) {
-                return;
+                continue;
             }
             resultList.add(viewVirtualAllocationDTO);
         }

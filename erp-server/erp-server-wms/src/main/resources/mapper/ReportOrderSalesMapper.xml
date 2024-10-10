@@ -85,6 +85,7 @@
             ${params.sqlMap.default}
             and ros.is_deleted = false
             <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory">
+                and
                 <foreach collection="maxStatDurationList" item="maxStatDuration" separator="and" open="(" close=")">
                     <if test="maxStatDuration != null and maxStatDuration == 'today'">
                           ros.today_sales_qty != 0
