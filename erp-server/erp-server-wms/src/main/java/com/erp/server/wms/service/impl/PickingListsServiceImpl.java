@@ -360,8 +360,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<PickingListsDTO.PrintView> printViews = new ArrayList<>();
         List<String> sourceIds = pickingLists.stream().map(PickingListsEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<String> sourceDetailIds = detailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<RequisitionApplicationEntity> applicationEntities = requisitionApplicationService.listByIds(sourceIds);
-        List<RequisitionApplicationDetailEntity> applicationDetails = requisitionApplicationDetailService.listByMainIds(sourceIds);
+        List<RequisitionApplicationDetailEntity> applicationDetails = requisitionApplicationDetailService.listByIds(sourceDetailIds);
         List<String> applicationDetailSkuIds = applicationDetails.stream().map(RequisitionApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(applicationDetailSkuIds);
@@ -428,39 +429,36 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //封装组合品明细
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
                 List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailViewList = new ArrayList<>();
-                for (PickingListsDTO.PrintDetailView view : viewList) {
+                for (RequisitionApplicationDetailEntity requisitionApplicationDetail : applicationDetails) {
                     RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
-                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
-                    RequisitionApplicationDetailEntity applicationDetail = applicationDetails.stream().filter(v -> v.getId().equals(view.getSourceDetailId()))
                             .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
 
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
-                            .filter(req -> req.getParentSkuId().equals(applicationDetail.getSkuId())
-                                    && req.getBomVersion().equals(applicationDetail.getBomVersion())
+                            .filter(req -> req.getParentSkuId().equals(requisitionApplicationDetail.getSkuId())
+                                    && req.getBomVersion().equals(requisitionApplicationDetail.getBomVersion())
+                                    && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                             ).collect(Collectors.toList());
                     if(CollectionUtils.isEmpty(sonSkuList)){
                         continue;
                     }
-                    PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
-                    combinationPrintDetailView.setThirdSku("");
-                    if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
-                        combinationPrintDetailView.setThirdSku((applicationDetail.getPlatformFnSku()));
+                    for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
+                        PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                        combinationPrintDetailView.setThirdSku("");
+                        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                            combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
+                        }
+                        combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo());
+                        combinationPrintDetailView.setParentSkuQty(requisitionApplicationDetail.getPickingQty());
+                        combinationPrintDetailView.setChildSku(bomChildrenSkuDTO.getSkuNo());
+                        combinationPrintDetailView.setChildSkuQty(requisitionApplicationDetail.getPickingQty() * bomChildrenSkuDTO.getQuantity());
+                        combinationPrintDetailViewList.add(combinationPrintDetailView);
                     }
-                    BomChildrenSkuDTO sonSku = sonSkuList.stream().filter(v->v.getSkuId().equals(view.getSkuId())).findFirst().orElse(null);
-                    if(Objects.isNull(sonSku)){
-                        continue;
-                    }
-                    combinationPrintDetailView.setParentSku(applicationDetail.getSkuNo());
-                    combinationPrintDetailView.setParentSkuQty(((double)view.getPickingQty()/(double)sonSku.getQuantity()));
-                    combinationPrintDetailView.setChildSku(sonSku.getSkuNo());
-                    combinationPrintDetailView.setChildSkuQty(view.getPickingQty());
-                    combinationPrintDetailViewList.add(combinationPrintDetailView);
                 }
                 List<PickingListsDTO.CombinationPrintDetailView> combinationList = new ArrayList<>(combinationPrintDetailViewList.stream().collect(Collectors.groupingBy(v -> v.getThirdSku() + ":"+  v.getParentSku() + ":" + v.getChildSku(),
                         Collectors.collectingAndThen(Collectors.toList(), v -> {
                             PickingListsDTO.CombinationPrintDetailView view = v.get(0);
-                            Double totalParentQty = v.stream().mapToDouble(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
+                            Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
                             view.setParentSkuQty(totalParentQty);
                             int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
                             view.setChildSkuQty(totalChildQty);
@@ -469,9 +467,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         .thenComparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)).collect(Collectors.toList());
                 //清空上层相同父sku
                 String currentParentSku = "";
-                Double parentQty = (double) 0;
+                Integer parentQty = 0;
                 for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
-                    combinationPrintDetailView.setParentSkuQty(Math.floor(combinationPrintDetailView.getParentSkuQty()));
                     if(StringUtils.isBlank(currentParentSku)){
                         currentParentSku = combinationPrintDetailView.getParentSku();
                         parentQty = combinationPrintDetailView.getParentSkuQty();
