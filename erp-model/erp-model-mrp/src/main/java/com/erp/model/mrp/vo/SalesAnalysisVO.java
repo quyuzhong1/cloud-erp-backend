@@ -1,8 +1,6 @@
 package com.erp.model.mrp.vo;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -16,29 +14,18 @@ public class SalesAnalysisVO {
     /**
      * 预测销量
      */
-    private SalesVO estimatesSales;
+    private List<BigDecimal> estimatesSales;
     /**
      * 去噪销量
      */
-    private SalesVO denoisingSales;
+    private List<BigDecimal> denoisingSales;
     /**
      * 历史销量
      */
-    private SalesVO historySales;
+    private List<BigDecimal> historySales;
 
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SalesVO {
-        /**
-         * 日期
-         */
-        private List<LocalDate> date;
-        /**
-         * 数量
-         */
-        private List<BigDecimal> qty;
-    }
+    /**
+     * 日期
+     */
+    private List<LocalDate> date;
 }

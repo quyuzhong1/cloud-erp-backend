@@ -287,25 +287,44 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public SalesAnalysisVO salesAnalysis(SalesAnalysisDTO dto) {
+        LocalDate startDate = dto.getStartDate().minusDays(1);
+        LocalDate endDate = LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1);
         SalesAnalysisVO salesAnalysisVO = new SalesAnalysisVO();
         List<SalesInfoEntity> list = salesInfoService.list(Wrappers.<SalesInfoEntity>lambdaQuery()
                 .eq(SalesInfoEntity::getReplenishmentDetailId, dto.getDetailId())
                 .between(SalesInfoEntity::getDate, dto.getStartDate().minusDays(1), dto.getEndDate())
                 .orderByAsc(SalesInfoEntity::getDate)
         );
-        List<BigDecimal> originalSales = list.stream().map(SalesInfoEntity::getOriginalSalesQty).map(BigDecimal::new).collect(Collectors.toList());
-        List<BigDecimal> sales =  list.stream().map(SalesInfoEntity::getSalesQty).collect(Collectors.toList());
-        List<LocalDate> dates = list.stream().map(SalesInfoEntity::getDate).collect(Collectors.toList());
-        salesAnalysisVO.setDenoisingSales(new SalesAnalysisVO.SalesVO(dates, sales));
-        salesAnalysisVO.setHistorySales(new SalesAnalysisVO.SalesVO(dates, originalSales));
         List<SalesEstimateEntity> estimateEntityList = salesEstimateService.list(Wrappers.<SalesEstimateEntity>lambdaQuery()
                 .eq(SalesEstimateEntity::getReplenishmentDetailId, dto.getDetailId())
-                .between(SalesEstimateEntity::getDate, LocalDate.now(), LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1))
+                .between(SalesEstimateEntity::getDate, LocalDate.now(), endDate)
                 .orderByAsc(SalesEstimateEntity::getDate)
         );
-        List<BigDecimal> salesEstimates = estimateEntityList.stream().map(SalesEstimateEntity::getSalesQty).collect(Collectors.toList());
-        List<LocalDate> salesEstimateDates = estimateEntityList.stream().map(SalesEstimateEntity::getDate).collect(Collectors.toList());
-        salesAnalysisVO.setEstimatesSales(new SalesAnalysisVO.SalesVO(salesEstimateDates, salesEstimates));
+        List<LocalDate> dates = new ArrayList<>();
+        while (startDate.isBefore(endDate)) {
+            dates.add(startDate);
+            startDate = startDate.plusDays(1);
+        }
+        List<BigDecimal> originalSales = new ArrayList<>();
+        List<BigDecimal> sales = new ArrayList<>();
+        List<BigDecimal> salesEstimates = new ArrayList<>();
+        for (LocalDate date : dates) {
+            SalesInfoEntity salesInfo = list.stream()
+                    .filter(v -> v.getDate().equals(date))
+                    .findFirst()
+                    .orElse(new SalesInfoEntity());
+            originalSales.add(new BigDecimal(salesInfo.getOriginalSalesQty()));
+            sales.add(salesInfo.getSalesQty());
+            SalesEstimateEntity estimate = estimateEntityList.stream()
+                    .filter(v -> v.getDate().equals(date))
+                    .findFirst()
+                    .orElse(new SalesEstimateEntity());
+            salesEstimates.add(estimate.getSalesQty());
+        }
+        salesAnalysisVO.setDate(dates);
+        salesAnalysisVO.setDenoisingSales(originalSales);
+        salesAnalysisVO.setHistorySales(sales);
+        salesAnalysisVO.setEstimatesSales(salesEstimates);
         return salesAnalysisVO;
     }
 
