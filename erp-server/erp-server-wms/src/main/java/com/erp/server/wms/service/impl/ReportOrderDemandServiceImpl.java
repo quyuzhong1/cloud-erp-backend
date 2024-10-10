@@ -360,13 +360,13 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
             //新增分货
             ReportOrderDemandDTO.BatchAddVirtualAllocationDTO addVirtualAllocationDTO = value.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(addVirtualAllocationDTO)) {
+            if (ObjectUtil.isNotEmpty(addVirtualAllocationDTO)) {
                 batchAddVirtualAllocation(addVirtualAllocationDTO);
             }
 
             //调拨分货
             List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> addVirtualTransferList = value.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())).collect(Collectors.toList());
-            if (StrUtil.equals(addVirtualAllocationDTO.getType(),VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())) {
+            if (CollectionUtil.isNotEmpty(addVirtualTransferList)) {
                 batchAddVirtualTransfer(addVirtualTransferList);
             }
         }
