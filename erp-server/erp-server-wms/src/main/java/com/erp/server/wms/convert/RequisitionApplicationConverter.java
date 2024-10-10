@@ -55,6 +55,15 @@ public interface RequisitionApplicationConverter {
     List<RequisitionApplicationDetailEntity> detailConvert(List<RequisitionApplicationDetailDTO.AddDTO> detailList);
 
     @Mappings({
+            @Mapping(target = "platformSku", source = "platformSku"),
+            @Mapping(target = "platformSpu", source = "asin"),
+            @Mapping(target = "platformFnSku", source = "fnSku"),
+            @Mapping(target = "platformSkuName", source = "platformSkuName"),
+    })
+    RequisitionApplicationDetailEntity detailUpdateConvert(RequisitionApplicationDetailDTO.UpdateDTO detailList);
+    List<RequisitionApplicationDetailEntity> detailUpdateConvert(List<RequisitionApplicationDetailDTO.UpdateDTO> detailList);
+
+    @Mappings({
             @Mapping(target = "destWarehouseId", source = "toWarehouseId"),
             @Mapping(target = "destWarehouseName", source = "toWarehouseName"),
             @Mapping(target = "countryId", source = "country")

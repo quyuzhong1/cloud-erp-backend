@@ -87,7 +87,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             this.removeByIds(deleteIds);
         }
 
-        List<RequisitionApplicationDetailEntity> list = BeanMapper.copyList(updateDTO.getDetailList(), RequisitionApplicationDetailEntity.class);
+        List<RequisitionApplicationDetailEntity> list = RequisitionApplicationConverter.INSTANCE.detailUpdateConvert(updateDTO.getDetailList());
 
         // 数据处理
         handleData(list, mainId, Boolean.TRUE);
