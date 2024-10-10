@@ -61,7 +61,7 @@
         LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
             AND h.id = dcob.main_id
             AND dcob.is_deleted = FALSE
-        WHERE t.is_deleted = false and dcob.id is not null and dcob.field_value != '' 
+        WHERE t.is_deleted = false 
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
@@ -104,6 +104,43 @@
             </foreach>
         </if>
         t.create_time desc
+    </select>
+    
+    <select id="blackPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
+        SELECT  distinct
+        dcob.id,dcob.create_time,
+				dcob.create_user_name,
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        dcob.field_value AS sourceCode,
+        t.status AS status,
+        t.create_time,
+        t.update_time AS lastSyncTime,
+        t.response_data AS returnMsg,
+        t.is_need_sync AS isNeedSync,
+        CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS isBlack
+        FROM dmp_cfg_output_black dcob
+				LEFT JOIN dmp_cfg_output h ON dcob.main_id = h.id
+				LEFT JOIN dmp_output_task g ON h.id = g.cfg_output_id
+				LEFT JOIN dmp_output_task_record t on g.id = t.main_id and t.source_code = dcob.field_value
+				LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+        LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+		where ${params.sqlMap.default} and dcob.is_deleted = FALSE and dcob.compare_sign = 'eq' and dcob.data_type = 'string' 
+		and dcob.create_user_id != '' and k.id is not null and dcob.field_value != '' 
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        dcob.create_time desc
     </select>
 
     <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
