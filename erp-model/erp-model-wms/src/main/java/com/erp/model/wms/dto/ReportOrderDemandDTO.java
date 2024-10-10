@@ -218,7 +218,30 @@ public class ReportOrderDemandDTO implements Serializable {
         */
         private Integer virtualScarceQty;
 
-
+        /**
+         * 今日销量
+         */
+        private Integer todaySalesQty;
+        /**
+         * 昨日销量
+         */
+        private Integer yesterdaySalesQty;
+        /**
+         * 近3天销量
+         */
+        private Integer threeDaysSalesQty;
+        /**
+         * 近7天销量
+         */
+        private Integer sevenDaysSalesQty;
+        /**
+         * 近14天销量
+         */
+        private Integer fourteenDaysSalesQty;
+        /**
+         * 30天销量
+         */
+        private Integer thirtyDaysSalesQty;
     }
 
     /**
@@ -601,6 +624,31 @@ public class ReportOrderDemandDTO implements Serializable {
          * 分货类型
          */
         private String type;
+
+        /**
+         * 今日销量
+         */
+        private Integer todaySalesQty;
+        /**
+         * 昨日销量
+         */
+        private Integer yesterdaySalesQty;
+        /**
+         * 近3天销量
+         */
+        private Integer threeDaysSalesQty;
+        /**
+         * 近7天销量
+         */
+        private Integer sevenDaysSalesQty;
+        /**
+         * 近14天销量
+         */
+        private Integer fourteenDaysSalesQty;
+        /**
+         * 30天销量
+         */
+        private Integer thirtyDaysSalesQty;
     }
 
     @Data
