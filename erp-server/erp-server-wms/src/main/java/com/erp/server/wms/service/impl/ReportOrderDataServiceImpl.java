@@ -291,7 +291,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //b2c销售订单数据格式化
         boolean containsB2c = orderTypeList.contains(CfgSettingOrderTypeEnum.B2C.getCode());
         if (containsB2c) {
-            List<ReportOrderDataEntity> b2cList =  handleB2cSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO(),bomChildrenSkuList,isSplit);
+            List<ReportOrderDataEntity> b2cList =  handleB2cSales(reportOrderDataList, salesDashboardDTO.getB2cStatusDTO(),bomChildrenSkuList,isSplit);
             if (CollectionUtils.isNotEmpty(b2cList)) {
                 resultList.addAll(b2cList);
             }
