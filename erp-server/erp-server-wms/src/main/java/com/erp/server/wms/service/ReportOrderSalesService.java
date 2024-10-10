@@ -51,4 +51,24 @@ public interface ReportOrderSalesService extends SuperService<ReportOrderSalesEn
      * @return List<ListDTO>
      */
     PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+    /**
+     * 根据sku、仓库、虚拟仓
+     * @author will
+     * @date 2024/10/10 14:41
+     * @param skuId
+     * @param warehouseId
+     * @param virtualWarehouseId
+     * @return ReportOrderSalesEntity
+     */
+    ReportOrderSalesEntity getByUnique(String skuId, String warehouseId, String virtualWarehouseId);
+    /**
+     * 查询数据
+     * @author will
+     * @date 2024/10/10 14:52
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @return List<ReportOrderSalesEntity>
+     */
+    List<ReportOrderSalesEntity> listByUnique(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList);
 }

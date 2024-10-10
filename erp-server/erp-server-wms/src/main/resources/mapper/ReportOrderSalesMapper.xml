@@ -85,7 +85,26 @@
             ${params.sqlMap.default}
             and ros.is_deleted = false
             <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory">
-                and  ros.thirty_days_sales_qty != 0
+                <foreach collection="maxStatDurationList" item="maxStatDuration" separator="and" open="(" close=")">
+                    <if test="maxStatDuration != null and maxStatDuration == 'today'">
+                          ros.today_sales_qty != 0
+                    </if>
+                    <if test="maxStatDuration != null and maxStatDuration == 'yesterday'">
+                          ros.yesterday_sales_qty != 0
+                    </if>
+                    <if test="maxStatDuration != null and maxStatDuration == 'threeDays'">
+                          ros.three_days_sales_qty != 0
+                    </if>
+                    <if test="maxStatDuration != null and maxStatDuration == 'sevenDays'">
+                          ros.seven_days_sales_qty != 0
+                    </if>
+                    <if test="maxStatDuration != null and maxStatDuration == 'fourteenDays'">
+                          ros.fourteen_days_sales_qty != 0
+                    </if>
+                    <if test="maxStatDuration != null and maxStatDuration == 'thirtyDays'">
+                          ros.thirty_days_sales_qty != 0
+                    </if>
+                </foreach>
             </if>
             <if test="params.isWarn != null and params.isWarn">
                 and  ros.is_warn = true

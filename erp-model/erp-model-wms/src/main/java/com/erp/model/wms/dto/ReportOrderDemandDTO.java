@@ -348,6 +348,13 @@ public class ReportOrderDemandDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewVirtualAllocationParamDTO {
+
+        /**
+         * 类型不能为空
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
         /**
          * skuId
          */
@@ -371,6 +378,24 @@ public class ReportOrderDemandDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewVirtualAllocationDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 实体仓Id
+         */
+        private String warehouseId;
+        /**
+         * 实体仓名称
+         */
+        private String warehouseName;
 
         /**
          * 虚拟仓Id
@@ -532,6 +557,10 @@ public class ReportOrderDemandDTO implements Serializable {
          * 实体仓，新增分货是和调出仓一致
          */
         private String warehouseId;
+        /**
+         * 实体仓名称
+         */
+        private String warehouseName;
         /**
          * 虚拟仓id
          */

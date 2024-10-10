@@ -33,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,11 +85,29 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
     @Override
     public PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingDTO) {
+        List<String> maxStatDurationList = getMaxStatDurationList();
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<ReportOrderSalesDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        IPage<ReportOrderSalesDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams(),maxStatDurationList);
         //数据处理
         handlePage(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+
+    /**
+     * 获取最大的统计时长
+     * @author will
+     * @date 2024/10/10 15:34
+     * @return String
+     */
+    private List<String> getMaxStatDurationList () {
+        CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
+        if (ObjectUtil.isEmpty(viewDTO.getVirtualRuleDTO())) {
+            return null;
+        }
+        List<String> statDurationList = viewDTO.getSalesDashboardDTO().getStatDurationList();
+        List<String> maxStatDurationList = statDurationList.stream().max(Comparator.comparing(obj -> CfgSettingSalesStatisticsEnum.getNum(obj))).map(Collections::singletonList).orElse(null);
+        return maxStatDurationList;
     }
 
     @Override
@@ -100,6 +120,25 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
     public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingParamDTO) {
         PagingVO<ReportOrderSalesDTO.ListDTO> resultList = this.paging(pagingParamDTO);
         return resultList;
+    }
+
+    @Override
+    public ReportOrderSalesEntity getByUnique(String skuId, String warehouseId, String virtualWarehouseId) {
+        ReportOrderSalesEntity entity = lambdaQuery().eq(ReportOrderSalesEntity::getSkuId, skuId)
+                .eq(ReportOrderSalesEntity::getWarehouseId, warehouseId)
+                .eq(ReportOrderSalesEntity::getVirtualWarehouseId, virtualWarehouseId)
+                .last("limit 1")
+                .one();
+        return entity;
+    }
+
+    @Override
+    public List<ReportOrderSalesEntity> listByUnique(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList) {
+        List<ReportOrderSalesEntity> list = lambdaQuery().in(ReportOrderSalesEntity::getSkuId, skuIdList)
+                .in(ReportOrderSalesEntity::getWarehouseId, warehouseIdList)
+                .in(ReportOrderSalesEntity::getVirtualWarehouseId, virtualWarehouseIdList)
+                .list();
+        return list;
     }
 
     /**

@@ -338,28 +338,28 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             addDTO.setVirtualScarceQty(virtualScarceQty);
 
             //今天销量
-            Integer todaySalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now())).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer todaySalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now())).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setTodaySalesQty(todaySalesQty);
             //昨日销量
-            Integer yesterdaySalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(1L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer yesterdaySalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(1L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setYesterdaySalesQty(yesterdaySalesQty);
             //近3日销量
-            Integer threeDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(2L)) || obj.getDate().isAfter(LocalDate.now().minusDays(2L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer threeDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(2L)) || obj.getDate().isAfter(LocalDate.now().minusDays(2L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setThreeDaysSalesQty(threeDaysSalesQty);
             //近7日销量
-            Integer sevenDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(6L)) || obj.getDate().isAfter(LocalDate.now().minusDays(6L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer sevenDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(6L)) || obj.getDate().isAfter(LocalDate.now().minusDays(6L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setSevenDaysSalesQty(sevenDaysSalesQty);
             //近14日销量
-            Integer fourteenDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(14L)) || obj.getDate().isAfter(LocalDate.now().minusDays(14L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer fourteenDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(14L)) || obj.getDate().isAfter(LocalDate.now().minusDays(14L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setFourteenDaysSalesQty(fourteenDaysSalesQty);
             //近30日销量
-            Integer thirtyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(30L)) || obj.getDate().isAfter(LocalDate.now().minusDays(30L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer thirtyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(30L)) || obj.getDate().isAfter(LocalDate.now().minusDays(30L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setThirtyDaysSalesQty(thirtyDaysSalesQty);
             //近60日销量
-            Integer sixtyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(60L)) || obj.getDate().isAfter(LocalDate.now().minusDays(60L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer sixtyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(60L)) || obj.getDate().isAfter(LocalDate.now().minusDays(60L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setSixtyDaysSalesQty(sixtyDaysSalesQty);
             //近90日销量
-            Integer ninetyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(90L)) || obj.getDate().isAfter(LocalDate.now().minusDays(90L))).map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer ninetyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(90L)) || obj.getDate().isAfter(LocalDate.now().minusDays(90L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setNinetyDaysSalesQty(ninetyDaysSalesQty);
             addOrUpdateList.add(addDTO);
         }
