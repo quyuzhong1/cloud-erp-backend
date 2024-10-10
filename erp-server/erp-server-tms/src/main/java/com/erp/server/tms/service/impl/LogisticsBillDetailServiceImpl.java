@@ -288,6 +288,9 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
      * @param trackDesc
      */
     private void addLogisticsTrack (LogisticsBillDetailEntity detailEntity,LocalDateTime trackTime,String trackDesc) {
+        if (StrUtil.isBlank(detailEntity.getTrackNo())){
+            return;//不记录空跟踪号轨迹
+        }
         LogisticsTrackDTO.AddDTO addDTO = new LogisticsTrackDTO.AddDTO();
         addDTO.setTrackNo(detailEntity.getTrackNo());
         addDTO.setContent(trackDesc);
@@ -328,6 +331,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 .set(LogisticsBillDetailEntity::getTrackStatus, logisticsTrackEntity.getStatus())
                 .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
                 .set(LogisticsBillDetailEntity::getSignTime, signTime)
+                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
                 .set(LogisticsBillDetailEntity::getVersion, logisticsTrackEntity.getVersion() + 1)
                 .update();
     }
@@ -341,6 +345,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
                 .set(LogisticsBillDetailEntity::getTrackStatus, status)
                 .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
+                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
                 .set(Objects.nonNull(signTime), LogisticsBillDetailEntity::getSignTime, signTime)
                 .update();
     }
@@ -354,6 +359,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
                 .set(LogisticsBillDetailEntity::getTrackStatus, code)
                 .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
+                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
                 .set(Objects.nonNull(signTime), LogisticsBillDetailEntity::getSignTime, signTime)
                 .update();
     }

@@ -124,7 +124,7 @@
         <if test="query.trackEnable != null">
             and lbd.track_enable = #{query.trackEnable}
         </if>
-        order by lbd.version limit 50000
+        order by lbd.update_time limit 50000
     </select>
 
     <!-- 根据平台单和物流跟踪单号查询 -->
