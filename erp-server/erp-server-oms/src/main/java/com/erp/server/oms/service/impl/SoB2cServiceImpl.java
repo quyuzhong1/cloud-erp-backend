@@ -3194,13 +3194,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<SoB2cDetailDTO.ListDTO> soB2cDetailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ListDTO.class, detailList);
 
             Boolean isCombination = Boolean.FALSE;
-
             //手动标发标记
+            data.setTag(Boolean.FALSE);
             List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Arrays.asList(data.getId()));
             if(CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
                 SoB2cDeliveryEntity record = soB2cDeliveryEntities.get(0);
                 if(!record.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()) && record.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode())){
-                    data.setTag("发");
+                    data.setTag(Boolean.TRUE);
                 }
             }
 

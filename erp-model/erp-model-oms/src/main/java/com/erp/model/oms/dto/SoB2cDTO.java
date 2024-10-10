@@ -491,7 +491,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 标签
          */
-        private String tag;
+        private Boolean tag;
     }
 
     @Data
