@@ -245,7 +245,7 @@ public class PickingListsDTO {
         /**
          * 父级sku数量
          */
-        private Integer parentSkuQty;
+        private Double parentSkuQty;
 
         /**
          * 子级sku

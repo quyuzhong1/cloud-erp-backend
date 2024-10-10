@@ -452,7 +452,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         continue;
                     }
                     combinationPrintDetailView.setParentSku(applicationDetail.getSkuNo());
-                    combinationPrintDetailView.setParentSkuQty(view.getPickingQty()/sonSku.getQuantity());
+                    combinationPrintDetailView.setParentSkuQty(((double)view.getPickingQty()/(double)sonSku.getQuantity()));
                     combinationPrintDetailView.setChildSku(sonSku.getSkuNo());
                     combinationPrintDetailView.setChildSkuQty(view.getPickingQty());
                     combinationPrintDetailViewList.add(combinationPrintDetailView);
@@ -460,7 +460,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 List<PickingListsDTO.CombinationPrintDetailView> combinationList = new ArrayList<>(combinationPrintDetailViewList.stream().collect(Collectors.groupingBy(v -> v.getThirdSku() + ":"+  v.getParentSku() + ":" + v.getChildSku(),
                         Collectors.collectingAndThen(Collectors.toList(), v -> {
                             PickingListsDTO.CombinationPrintDetailView view = v.get(0);
-                            int totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
+                            Double totalParentQty = v.stream().mapToDouble(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
                             view.setParentSkuQty(totalParentQty);
                             int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
                             view.setChildSkuQty(totalChildQty);
@@ -469,8 +469,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         .thenComparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)).collect(Collectors.toList());
                 //清空上层相同父sku
                 String currentParentSku = "";
-                Integer parentQty = 0;
+                Double parentQty = (double) 0;
                 for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
+                    combinationPrintDetailView.setParentSkuQty(Math.floor(combinationPrintDetailView.getParentSkuQty()));
                     if(StringUtils.isBlank(currentParentSku)){
                         currentParentSku = combinationPrintDetailView.getParentSku();
                         parentQty = combinationPrintDetailView.getParentSkuQty();
