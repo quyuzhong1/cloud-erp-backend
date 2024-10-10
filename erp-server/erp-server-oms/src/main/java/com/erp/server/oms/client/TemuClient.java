@@ -1,15 +1,23 @@
 package com.erp.server.oms.client;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.UrlContant;
+import com.common.core.utils.HttpCommonUtil;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
+
+import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
@@ -21,12 +29,13 @@ public class TemuClient {
     private static final String CONTENT_TYPE_HEADER_NAME = "Content-Type";
 
     //https://seller.kuajingmaihuo.com/sop/view/867739977041685428#r2WKrz
-    private static final String TEMU_US_URL = "http://40.118.250.12/openapi/router";
+    private static final String TEMU_US_URL = "http://40.118.250.12:7000/openapi/router";
 //    private static final String TEMU_US_URL = "http://openapi-b-us.temudemo.com/openapi/router";
     private static final String ORDER_LIST = "bg.order.list.get";
 
     //https://seller.kuajingmaihuo.com/sop/view/750197804480663142#SjadVR
-    private static final String TEMU_GOOD_US_URL = "https://openapi.kuajingmaihuo.com/openapi/router";
+    private static final String TEMU_GOOD_US_URL = "http://40.118.250.12:7100/openapi/router";
+//    private static final String TEMU_GOOD_US_URL = "https://openapi.kuajingmaihuo.com/openapi/router";
 //    private static final String TEMU_GOOD_US_URL = "https://kj-openapi.temudemo.com/openapi/router";
     private static final String GOODS_LIST = "bg.goods.list.get";
 
@@ -42,6 +51,9 @@ public class TemuClient {
 
     private WebClient webClient;
 
+    @Resource
+    private HttpClient httpClient;
+
 
     public static void main(String[] args) {
         TemuEntity entity = new TemuEntity();
@@ -54,22 +66,6 @@ public class TemuClient {
     }
 
     public void getGoodList(TemuEntity entity ){
-        HttpClient httpClient = HttpClient.create()
-                .tcpConfiguration(client ->
-                        client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
-                                //本地启动时设置代理
-//                                .proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP)
-//                                        .address(new InetSocketAddress("127.0.0.1", 80)))
-                                .doOnConnected(conn -> conn
-                                        .addHandlerLast(new ReadTimeoutHandler(60))
-                                        .addHandlerLast(new WriteTimeoutHandler(60))));
-
-
-        this.webClient = WebClient.builder().baseUrl(TEMU_GOOD_US_URL)
-                .defaultHeader(CONTENT_TYPE_HEADER_NAME, MediaType.APPLICATION_JSON_VALUE)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .build();
-
         entity.setData_type("JSON");
         entity.setAccess_token(ACCESS_TOKEN);
         entity.setApp_key(APP_KEY);
@@ -85,29 +81,14 @@ public class TemuClient {
         entity.setSign(sign);
 
         jsonParameters = JSONObject.toJSONString(entity);
-        String result = webClient.post().header("content-type","application/json")
-                .bodyValue(entity)
-                .retrieve().bodyToMono(String.class).block();
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("Content-Type", "application/json");
+        JSONObject result = HttpCommonUtil.sendOkhttp(TEMU_GOOD_US_URL, jsonParameters, null, headerMap, RequestMethod.POST);
         System.out.println("===="+result);
         System.out.println("curl -X POST -H 'content-type: application/json' -d '"+jsonParameters+"' "+TEMU_GOOD_US_URL);
     }
 
     public void getOrderList(TemuEntity entity ){
-        HttpClient httpClient = HttpClient.create()
-                .tcpConfiguration(client -> client
-                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
-//                        .proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP)
-//                                .address(new java.net.InetSocketAddress("40.118.250.12", 80))
-//                        )
-                        .doOnConnected(conn -> conn
-                                .addHandlerLast(new ReadTimeoutHandler(60))
-                                .addHandlerLast(new WriteTimeoutHandler(60))));
-
-        this.webClient = WebClient.builder().baseUrl(TEMU_US_URL)
-                .defaultHeader(CONTENT_TYPE_HEADER_NAME, MediaType.APPLICATION_JSON_VALUE)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .build();
-
         entity.setData_type("JSON");
         entity.setAccess_token(ACCESS_TOKEN);
         entity.setApp_key(APP_KEY);
@@ -123,8 +104,12 @@ public class TemuClient {
         entity.setSign(sign);
 
         jsonParameters = JSONObject.toJSONString(entity);
+
         System.out.println(jsonParameters);
-        String result = webClient.post().header(CONTENT_TYPE_HEADER_NAME, MediaType.APPLICATION_JSON_VALUE).bodyValue(entity).retrieve().bodyToMono(String.class).block();
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("Content-Type", "application/json");
+        JSONObject result = HttpCommonUtil.sendOkhttp(TEMU_US_URL, jsonParameters, null, headerMap, RequestMethod.POST);
+//        String result = webClient.post().header(CONTENT_TYPE_HEADER_NAME, MediaType.APPLICATION_JSON_VALUE).bodyValue(entity).retrieve().bodyToMono(String.class).block();
         System.out.println("===="+result);
         System.out.println("curl -X POST -H 'content-type: application/json' -d '"+jsonParameters+"' "+TEMU_US_URL);
 
