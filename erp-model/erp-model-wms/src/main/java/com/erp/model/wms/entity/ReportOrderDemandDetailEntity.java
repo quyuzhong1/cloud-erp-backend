@@ -23,7 +23,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("report_order_demand_detail")
+@TableName(value ="report_order_demand_detail",autoResultMap = true)
 public class ReportOrderDemandDetailEntity extends BaseEntity<ReportOrderDemandDetailEntity> {
 
     /**

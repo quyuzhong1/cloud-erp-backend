@@ -14,7 +14,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -33,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,7 +63,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
 
     @Override
     public Boolean batchAddOrUpdate(List<ReportOrderDemandDetailDTO.AddDTO> addOrUpdateList) {
-        List<ReportOrderDemandDetailEntity> list =  BeanMapperUtils.copyList(ReportOrderDemandDetailEntity.class, addOrUpdateList);
+        List<ReportOrderDemandDetailEntity> list =  BeanUtil.copyToList(addOrUpdateList,ReportOrderDemandDetailEntity.class);
         //删除原数据
         deleteAll();
         handleData(list);
@@ -119,13 +119,21 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
         Integer quantity = MathUtil.ONE;
         //bom子级需求量
         if (entity.getIsSplit() && ObjectUtil.isNotEmpty(entity.getBomJson())) {
-            List<ReportOrderDemandDetailDTO.BomDTO> bomList = BeanUtil.copyToList(entity.getBomJson(), ReportOrderDemandDetailDTO.BomDTO.class);
-           for (ReportOrderDemandDetailDTO.BomDTO bomDTO : bomList) {
-               ReportOrderDemandDetailEntity reportOrderDemandDetailEntity = reportOrderDemandDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomDTO.getChildSkuId())).findFirst().orElse(null);
+            List<ReportOrderDemandDetailDTO.BomJsonDTO> bomJsonList = BeanUtil.copyToList(entity.getBomJson(), ReportOrderDemandDetailDTO.BomJsonDTO.class);
+
+            List<ReportOrderDemandDetailDTO.BomDTO> bomList = new ArrayList<>();
+            for (ReportOrderDemandDetailDTO.BomJsonDTO bomJsonDTO : bomJsonList) {
+
+               ReportOrderDemandDetailEntity reportOrderDemandDetailEntity = reportOrderDemandDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomJsonDTO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(reportOrderDemandDetailEntity)) {
-                    throw new ServiceException(StrUtil.format("销售订单【{}】、SKU【{}】未找到",entity.getSourceCode(),bomDTO.getChildSkuNo()));
+                    throw new ServiceException(StrUtil.format("销售订单【{}】、SKU【{}】未找到",entity.getSourceCode(),bomJsonDTO.getSkuNo()));
                 }
-               bomDTO.setQty(reportOrderDemandDetailEntity.getQty());
+                ReportOrderDemandDetailDTO.BomDTO bomDTO = new ReportOrderDemandDetailDTO.BomDTO();
+                bomDTO.setChildSkuId(bomJsonDTO.getSkuId());
+                bomDTO.setChildSkuNo(bomJsonDTO.getSkuNo());
+                bomDTO.setQuantity(bomJsonDTO.getQuantity());
+                bomDTO.setQty(reportOrderDemandDetailEntity.getQty());
+                bomList.add(bomDTO);
            }
            viewBomQtyDTO.setBomList(bomList);
            //本条数据子级SKU用量
@@ -137,6 +145,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
         parentQtyDTO.setOrderQty(entity.getOrderQty() / quantity);
         parentQtyDTO.setDeliveryNoticeQty(entity.getDeliveryNoticeQty() / quantity);
         parentQtyDTO.setFrozenQty(entity.getFrozenQty() / quantity);
+        viewBomQtyDTO.setParentQtyDTO(parentQtyDTO);
         return viewBomQtyDTO;
     }
 

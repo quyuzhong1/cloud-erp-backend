@@ -484,7 +484,6 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             //添加bom信息
             List<ReportOrderDemandDetailDTO.BomJsonDTO> bomJsonList = BeanUtil.copyToList(skuList, ReportOrderDemandDetailDTO.BomJsonDTO.class);
             JSONArray bomJson = JSONUtil.parseArray(bomJsonList);
-            addDTO.setBomJson(bomJson);
             //拆分
             for (BomChildrenSkuDTO bomChildrenSkuDTO : skuList) {
                 //添加bom数据
@@ -510,6 +509,8 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                 //订单需求数量，订单数量 - 发货通知单数量 - 冻结数量
                 bomAddDTO.setQty(bomAddDTO.getOrderQty() - bomAddDTO.getDeliveryNoticeQty() - bomAddDTO.getFrozenQty());
                 bomAddDTO.setVirtualUsableQty(virtualUsableQty);
+                bomAddDTO.setBomJson(bomJson);
+                bomAddDTO.setIsSplit(Boolean.TRUE);
                 addList.add(bomAddDTO);
             }
         } else {
