@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -77,4 +78,9 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      * @param dto
      */
     void processTrackData(PlatformTrackDTO dto);
+
+    /**
+     * 更新3个月前物流单状态为系统完结
+     */
+    void updateBeforeThreeMonthTrackNo(LogisticsBillDetailQueryDTO query);
 }

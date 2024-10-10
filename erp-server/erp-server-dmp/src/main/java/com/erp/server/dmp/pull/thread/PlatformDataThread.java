@@ -64,7 +64,7 @@ public class PlatformDataThread {
             businessService.pullProcessBusiness(jobTaskDTO.getPlatformCategory(), jobTaskDTO.getDictPlatform(),jobTaskDTO.getBillType(), jobTaskDTO, dto.getPlatformApiEnum());
             Boolean aBoolean = platformApiTaskService.updateTaskStateById(jobTaskDTO, 0);
             if (!aBoolean) {
-                throw new RuntimeException("修改任务下次执行时间失败！");
+//                throw new RuntimeException("修改任务下次执行时间失败！");
             }
         } catch (Exception e) {
             log.error(" {}拉取数据错误dto={}", jobTaskDTO.getDictPlatform(), JSONUtil.toJsonStr(dto), e);

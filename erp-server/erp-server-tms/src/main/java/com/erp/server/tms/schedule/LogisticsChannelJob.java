@@ -193,16 +193,16 @@ public class LogisticsChannelJob {
         //列表查询
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
         XxlJobHelper.log("获取列表数：{}", list.size());
-        if (list.size() > MathUtil.NUMBER_100){
+//        if (list.size() > MathUtil.NUMBER_100){
             //列表数据较多情况下，进行分割集合
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
             XxlJobHelper.log("拆分列表数：{}", partition.size());
             //物流商数据处理
             partition.forEach(e -> logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
-        }else {
-            //物流商数据处理
-            logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(),list, query.getTransportType());
-        }
+//        }else {
+//            //物流商数据处理
+//            logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(),list, query.getTransportType());
+//        }
         log.info("========同步物流轨迹数据完成==========");
     }
 

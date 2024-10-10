@@ -109,7 +109,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
 
     private ResponseData getTrackData(LogisticsBillDetailQueryDTO query, CfgAppClientEntity cfgAppClient) {
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
-        if (list.size() > MathUtil.NUMBER_100){
+//        if (list.size() > MathUtil.NUMBER_100){
 
             List<String> noList = new ArrayList<>();
 
@@ -130,7 +130,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             }
 
             //过滤后查询是否超过100条
-            if (list.size() > MathUtil.NUMBER_100){
+//            if (list.size() > MathUtil.NUMBER_100){
                 //列表数据较多情况下，进行分割集合
                 List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
 
@@ -145,16 +145,16 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                 if (Objects.nonNull(responseData)){
                     return responseData;
                 }
-            } else {
-                // 缓存到redis
-                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO);
-
-                //物流商数据处理
-                ResponseData responseData = this.processTrackData(list, cfgAppClient);
-                if (Objects.nonNull(responseData)){
-                    return responseData;
-                }
-            }
+//            } else {
+//                // 缓存到redis
+//                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO);
+//
+//                //物流商数据处理
+//                ResponseData responseData = this.processTrackData(list, cfgAppClient);
+//                if (Objects.nonNull(responseData)){
+//                    return responseData;
+//                }
+//            }
 
             //物流商数据处理
 /*            partition.forEach(e -> {
@@ -163,13 +163,13 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                     responseDataList.add(responseData);
                 }
             });*/
-        }else {
-            //物流商数据处理
-            ResponseData responseData = this.processTrackData(list, cfgAppClient);
-            if (Objects.nonNull(responseData)){
-                return responseData;
-            }
-        }
+//        }else {
+//            //物流商数据处理
+//            ResponseData responseData = this.processTrackData(list, cfgAppClient);
+//            if (Objects.nonNull(responseData)){
+//                return responseData;
+//            }
+//        }
         log.info("========同步物流轨迹数据完成==========");
         return null;
     }
@@ -181,13 +181,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
             //根据配置进行组装注册数据
             records.forEach(updateTrackDTO -> {
-                if (TrackQueryTypeEnum.TRACK_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTrackNo())){
-                    logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
-                            .trackNo(updateTrackDTO.getTrackNo())
-                            .phoneSuffix(updateTrackDTO.getTelNumber())
-                            .build());
-
-                }else {
+                if (TrackQueryTypeEnum.TRANSPORT_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTransportNo())){
                     String transportNo = updateTrackDTO.getTransportNo();
                     if (StrUtil.isNotBlank(transportNo)){
                         logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
@@ -195,6 +189,11 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                                 .phoneSuffix(updateTrackDTO.getTelNumber())
                                 .build());
                     }
+                }else {
+                    logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
+                            .trackNo(updateTrackDTO.getTrackNo())
+                            .phoneSuffix(updateTrackDTO.getTelNumber())
+                            .build());
                 }
             });
             if (CollectionUtils.isEmpty(logisticsRegisterVOS)){

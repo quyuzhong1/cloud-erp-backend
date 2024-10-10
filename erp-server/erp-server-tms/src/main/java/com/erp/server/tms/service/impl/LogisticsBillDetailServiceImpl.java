@@ -328,6 +328,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 .set(LogisticsBillDetailEntity::getTrackStatus, logisticsTrackEntity.getStatus())
                 .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
                 .set(LogisticsBillDetailEntity::getSignTime, signTime)
+                .set(LogisticsBillDetailEntity::getVersion, logisticsTrackEntity.getVersion() + 1)
                 .update();
     }
 
@@ -339,6 +340,19 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         this.lambdaUpdate().eq(LogisticsBillDetailEntity::getTrackNo, trackNo)
                 .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
                 .set(LogisticsBillDetailEntity::getTrackStatus, status)
+                .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
+                .set(Objects.nonNull(signTime), LogisticsBillDetailEntity::getSignTime, signTime)
+                .update();
+    }
+
+    @Override
+    public void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime signTime) {
+        if (CollectionUtils.isEmpty(trackNoList) || StrUtil.isBlank(code)){
+            return;
+        }
+        this.lambdaUpdate().in(LogisticsBillDetailEntity::getTrackNo, trackNoList)
+                .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
+                .set(LogisticsBillDetailEntity::getTrackStatus, code)
                 .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
                 .set(Objects.nonNull(signTime), LogisticsBillDetailEntity::getSignTime, signTime)
                 .update();

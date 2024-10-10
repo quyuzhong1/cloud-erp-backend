@@ -9,6 +9,8 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
@@ -17,6 +19,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
 import com.erp.server.tms.service.*;
+import com.google.common.collect.Lists;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import com.sdk.tms.track123.model.response.TrackDetail;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -61,6 +64,9 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     public BaseResultDTO.AddDTO add(LogisticsTrackDTO.AddDTO addDTO) {
         LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
         BeanMapperUtils.copy(addDTO, logisticsTrackEntity);
+        if (StrUtil.isBlank(logisticsTrackEntity.getTrackNo())){
+            return new BaseResultDTO.AddDTO();
+        }
 
         // 数据处理
         handleData(logisticsTrackEntity);
@@ -239,19 +245,34 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }else {
                 if (Objects.nonNull(trackEntity) && Objects.nonNull(trackEntity.getTrackTime()) && trackEntity.getTrackTime().isBefore(threeMonthsAgo)){
                     //系统完结
-                    logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),LocalDateTime.now());
+                    logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),null);
                 }
             }
         }else {
             if (Objects.nonNull(trackEntity) && Objects.nonNull(trackEntity.getTrackTime()) && trackEntity.getTrackTime().isBefore(threeMonthsAgo)){
                 //系统完结
-                logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),LocalDateTime.now());
+                logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),null);
             }
         }
         log.info(StrUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
 
     }
 
+    @Override
+    public void updateBeforeThreeMonthTrackNo(LogisticsBillDetailQueryDTO query) {
+        List<LogisticsTrackDTO.UpdateTrackDTO> dtoList = baseMapper.listBeforeThreeMonthTrack(query);
+        if (CollectionUtils.isEmpty(dtoList)){
+            return;
+        }
+        List<String> trackNoList = dtoList.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(trackNoList)){
+            return;
+        }
+        String code = LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode();
+        //集合分区
+        List<List<String>> partition = Lists.partition(trackNoList, MathUtil.NUMBER_100);
+        partition.forEach(e -> logisticsBillDetailService.batchUpdateTrackStatus(e,code,null));
+    }
 
 
     /**
