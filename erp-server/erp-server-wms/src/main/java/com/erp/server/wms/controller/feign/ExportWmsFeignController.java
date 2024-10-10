@@ -652,6 +652,7 @@ public class ExportWmsFeignController {
      * 订单需求明细导出
      */
     @PostMapping("/listReportOrderDemandDetail")
+    @WebAdvanceQuery
     public PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto){
         return reportOrderDemandDetailService.listReportOrderDemandDetail(dto);
     }
@@ -659,6 +660,7 @@ public class ExportWmsFeignController {
      * 缺货统计数据导出
      */
     @PostMapping("/listReportOrderDemand")
+    @WebAdvanceQuery
     public PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(@RequestBody PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto){
         return reportOrderDemandService.listReportOrderDemand(dto);
     }
@@ -666,6 +668,7 @@ public class ExportWmsFeignController {
      * 销售看板数据导出
      */
     @PostMapping("/listReportOrderSales")
+    @WebAdvanceQuery
     public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto){
         return reportOrderSalesService.listReportOrderSales(dto);
     }
