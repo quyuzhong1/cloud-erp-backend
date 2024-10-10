@@ -1868,6 +1868,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             } else {
                 detailView.setIsCombination(Boolean.FALSE);
             }
+            detailView.setAsin(detailEntity.getPlatformSpu());
             detailView.setPlatformSku(detailEntity.getPlatformSku());
             detailView.setThirdWarehouseSku(detailEntity.getPlatformSku());
             //根据类型设置第三方SKU信息
