@@ -260,7 +260,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
                     isWarn =  listDTO.getVirtualUsableQty() <= daysQty;
                     break;
             }
-            if (!isWarn) {
+            if (isWarn) {
                 listDTO.setIsWarn(isWarn);
             }
         }
