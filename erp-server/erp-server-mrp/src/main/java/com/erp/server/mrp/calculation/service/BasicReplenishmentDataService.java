@@ -424,11 +424,21 @@ public class BasicReplenishmentDataService {
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = warehouseStrategy.process(new CfgRuleWarehouseDTO.StrategyDTO(basicDTO.getPlatformType(), basicDTO.getPlatform(), basicDTO.getShopId()));
         cfgRuleStrategy.setWarehouseResult(warehouseResult);
         //获取店铺对应的本地仓，海外仓
-        List<String> localWarehouse = warehouseResult.getLocalWarehouseList()
-                .stream()
-                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
-                .collect(Collectors.toList());
-        resultDTO.setLocalWarehouseId(localWarehouse);
+        if (Boolean.TRUE.equals(warehouseResult.getIsEnableVirtual())) {
+            List<String> localWarehouse = warehouseResult.getLocalWarehouseList()
+                    .stream()
+                    .filter(v -> !ObjectUtils.isEmpty(v.getVirtualWarehouseId()))
+                    .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
+                    .collect(Collectors.toList());
+            resultDTO.setLocalWarehouseId(localWarehouse);
+        } else {
+            List<String> localWarehouse = warehouseResult.getLocalWarehouseList()
+                    .stream()
+                    .filter(v -> ObjectUtils.isEmpty(v.getVirtualWarehouseId()))
+                    .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
+                    .collect(Collectors.toList());
+            resultDTO.setLocalWarehouseId(localWarehouse);
+        }
         List<String> overseasWarehouse = warehouseResult.getOverseasWarehouseList()
                 .stream()
                 .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)

@@ -2,6 +2,7 @@ package com.erp.server.mrp.calculation.service;
 
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
+import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 
 import java.time.LocalDate;
@@ -82,7 +83,19 @@ public interface InventoryService {
 
     /**
      * 判断表是否存在
-     * @param calculationDate 计算日
+     * @param calcDate 计算日
      */
     void checkAllTableExists(String calcDate);
+
+    /**
+     * 根据建议配置获取库存
+     *
+     * @param replenishmentResultDTO  建议
+     * @param startDate               开始时间
+     * @param endDate                 结束时间
+     * @param deliveryVolumeInventory 库存建议配置
+     * @param warehouseResult         仓库配置
+     */
+    int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate startDate, LocalDate endDate, Set<String> deliveryVolumeInventory, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult);
+
 }

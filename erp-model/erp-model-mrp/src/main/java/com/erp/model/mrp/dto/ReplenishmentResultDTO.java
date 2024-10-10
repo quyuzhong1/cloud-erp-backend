@@ -951,6 +951,11 @@ public class ReplenishmentResultDTO {
          */
         private String sourceType;
 
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
         public static EstimatedDeliveryDetailEntity buildEstimatedDeliveryDetail(EstimatedDeliveryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedDeliveryDetailEntity entity = new EstimatedDeliveryDetailEntity();
             entity.setReplenishmentDetailId(replenishmentDetailId);
@@ -1140,6 +1145,10 @@ public class ReplenishmentResultDTO {
          * 预计可售日期
          */
         private LocalDate estimateSalesDate;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
 
         public static OverseasInTransitDetailEntity buildOverseasInTransitDetail(OverseasInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             OverseasInTransitDetailEntity entity = new OverseasInTransitDetailEntity();

@@ -4,6 +4,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
+import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -25,12 +26,12 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
     @Resource
     private RecentSuggestionHandler recentSuggestionHandler;
     @Resource
     private CfgRuleCommonService cfgRuleCommonService;
-
+    @Resource
+    private InventoryService inventoryService;
 
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
@@ -51,9 +52,6 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         String baseKey = CfgRuleCommonTypeEnum.getBaseSuggestRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
         Set<String> purchaseVolumeAging = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeAging());
         Set<String> purchaseVolumeInventory = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeInventory());
-        int inventory = purchaseVolumeInventory.stream()
-                .map(v -> ReplenishmentResultDTO.DetailDTO.getAttributeValue(replenishmentResultDTO.getReplenishmentDetail(), v))
-                .reduce(0, Math::addExact);
         int agingDays = purchaseVolumeAging.stream()
                 .map(v -> ReplenishmentResultDTO.DetailDTO.getAttributeValue(replenishmentResultDTO.getReplenishmentDetail(), v))
                 .reduce(0, Math::addExact);
@@ -62,13 +60,12 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                 .stream().filter(v -> v.getKey().equals(CfgSettingEnum.CALCULATION_DAYS.getCode()))
                 .map(CfgSettingDTO::getDataJson)
                 .map(Integer::parseInt)
-                .findFirst().orElse(Integer.MAX_VALUE);
+                .findFirst().orElse(180);
         List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults = stockUpResult.getStockingRatioResults();
         // 根据新品/常规品获取默认补货系数
         BigDecimal stockingRatio = CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode().equals(replenishmentResultDTO.getReplenishmentDetail().getSkuType()) ? stockUpResult.getStockingRatio() : stockUpResult.getNewStockingRatio();
         List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = replenishmentResultDTO.getSalesEstimates();
         LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
-        LocalDate calcDate = now.plusDays(Math.min(agingDays, days));
         //处理连续断货数据
         List<LocalDate> dates = rptOutOfStocks.stream().map(ReplenishmentResultDTO.RptOutOfStockDTO::getStartDate).distinct().collect(Collectors.toList());
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> deliverySuggests = dates.parallelStream()
@@ -102,27 +99,20 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                                 .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays());
                         suggestDTO.setEstimateInstockDate(estimateInstockDate);
                         //建议采购量
+                        LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
                         int suggestDeliveryQty = getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now);
-                        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-                            suggestDeliveryQty = suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getFbaInTransitQty();
-                        } else {
-                            suggestDeliveryQty = suggestDeliveryQty - replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty() - replenishmentResultDTO.getReplenishmentDetail().getOverseasInTransitQty();
-                        }
-                        suggestDTO.setSuggestPurchaseQty(Math.max(0, suggestDeliveryQty));
+                        int inventory = inventoryService.getInventory(replenishmentResultDTO, now, calcDate, purchaseVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
+                        suggestDTO.setSuggestPurchaseQty(Math.max(0, suggestDeliveryQty - inventory));
                     }
                     if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                             || CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
                         //建议采购日期（本地备货） = 断货日期 -（审批时长 + 采购交期 + 供应商发货时效 + 质检天数 + 采购频率 + 本地备货安全天数）
-                        LocalDate suggestDeliveryDate = localDate.minusDays(stockUpResult.getPurchaseApproveDays())
-                                .minusDays(stockUpResult.getQcDays())
-                                .minusDays(stockUpResult.getProductionDays())
-                                .minusDays(stockUpResult.getPurchaseCycleDays())
-                                .minusDays(stockUpResult.getSupplierDeliveryDays())
-                                .minusDays(stockUpResult.getSafeDays());
-                        suggestDeliveryDate = suggestDeliveryDate.isBefore(now) ? now : suggestDeliveryDate;
+                        LocalDate suggestDeliveryDate = getSuggestDeliveryDate(localDate, stockUpResult, now);
                         suggestDTO.setSuggestPurchaseDate(suggestDeliveryDate);
                         //建议采购量
-                        suggestDTO.setSuggestPurchaseQty(Math.max(0, getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now) - replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty()));
+                        LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
+                        int inventory = inventoryService.getInventory(replenishmentResultDTO, now, calcDate, purchaseVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
+                        suggestDTO.setSuggestPurchaseQty(Math.max(0, getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now) - inventory));
                         //预计入库日期 （本地备货）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数）
                         LocalDate estimateInstockDate = suggestDeliveryDate.plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
                                 .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays());
@@ -135,6 +125,24 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                     return suggestDTO;
                 }).collect(Collectors.toList());
         replenishmentResultDTO.setPurchaseSuggests(deliverySuggests);
+    }
+
+    /**
+     * 获取建议发货日期
+     *
+     * @param localDate     断货日
+     * @param stockUpResult 备货配置
+     * @param now           计算日
+     */
+    private LocalDate getSuggestDeliveryDate(LocalDate localDate, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, LocalDate now) {
+        LocalDate suggestDeliveryDate = localDate.minusDays(stockUpResult.getPurchaseApproveDays())
+                .minusDays(stockUpResult.getQcDays())
+                .minusDays(stockUpResult.getProductionDays())
+                .minusDays(stockUpResult.getPurchaseCycleDays())
+                .minusDays(stockUpResult.getSupplierDeliveryDays())
+                .minusDays(stockUpResult.getSafeDays());
+        suggestDeliveryDate = suggestDeliveryDate.isBefore(now) ? now : suggestDeliveryDate;
+        return suggestDeliveryDate;
     }
 
     /**
