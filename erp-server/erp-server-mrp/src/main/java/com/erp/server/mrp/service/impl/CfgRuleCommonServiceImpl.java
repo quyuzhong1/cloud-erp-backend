@@ -211,11 +211,11 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     @Override
     public String timeFrame(String platformType) {
         List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
-                .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
+                .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.SUGGEST.getCode())
                 .eq(CfgRuleCommonEntity::getIsDefault, false));
         if (CollectionUtils.isEmpty(list)) {
             list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
-                    .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
+                    .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.SUGGEST.getCode())
                     .eq(CfgRuleCommonEntity::getIsDefault, true));
         }
         CfgRuleCommonEntity entity = list.stream()
