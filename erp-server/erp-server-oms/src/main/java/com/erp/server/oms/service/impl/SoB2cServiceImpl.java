@@ -3203,7 +3203,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     data.setTag(Boolean.TRUE);
                 }
             }
-
             for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
                 SkuVO skuVO = skuVOMap.get(detailDTO.getSkuId());
                 detailDTO.setVariantProperty(null == skuVO ? "" : skuVO.getVariantProperty());
