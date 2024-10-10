@@ -129,7 +129,7 @@
         LEFT JOIN dmp_basic_system i ON h.system_id = i.id
 		where ${params.sqlMap.default} and dcob.is_deleted = FALSE and dcob.compare_sign = 'eq' and dcob.data_type = 'string' 
 		and dcob.create_user_id != '' and k.id is not null and dcob.field_value != '' 
-		and ((t.id is null and not exists (select 1 from dmp_output_task_record tt where tt.source_code = dcob.field_value)) or t.id is not null) 
+		and ((t.id is null and not exists (select 1 from dmp_output_task_record tt left join dmp_output_task gg on tt.main_id = gg.id where tt.source_code = dcob.field_value and gg.cfg_output_id = h.id)) or t.id is not null) 
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
