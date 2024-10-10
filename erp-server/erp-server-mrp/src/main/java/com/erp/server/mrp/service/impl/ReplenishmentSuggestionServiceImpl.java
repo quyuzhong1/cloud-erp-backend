@@ -313,7 +313,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .filter(v -> v.getDate().equals(date))
                     .findFirst()
                     .orElse(new SalesInfoEntity());
-            originalSales.add(new BigDecimal(salesInfo.getOriginalSalesQty()));
+            originalSales.add(Optional.ofNullable(salesInfo.getOriginalSalesQty()).map(BigDecimal::new).orElse(null));
             sales.add(salesInfo.getSalesQty());
             SalesEstimateEntity estimate = estimateEntityList.stream()
                     .filter(v -> v.getDate().equals(date))
