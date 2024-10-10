@@ -429,7 +429,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //封装组合品明细
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
                 List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailViewList = new ArrayList<>();
-                for (RequisitionApplicationDetailEntity requisitionApplicationDetail : applicationDetails) {
+                List<String> requisitionDetailIds = details.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
+                List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = applicationDetails.stream().filter(v->requisitionDetailIds.contains(v.getId())).collect(Collectors.toList());
+                for (RequisitionApplicationDetailEntity requisitionApplicationDetail : requisitionApplicationDetailEntityList) {
                     RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
                             .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
 
