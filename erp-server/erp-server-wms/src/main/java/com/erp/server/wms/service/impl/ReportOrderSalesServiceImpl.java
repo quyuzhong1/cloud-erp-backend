@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -244,6 +245,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
         List<String> daysTypeList = warnConditionDTO.getDaysTypeList();
 
         Boolean isWarn = Boolean.FALSE;
+        List<String> daysTypeNameList = new ArrayList<>();
         for (String days : daysTypeList) {
             Integer daysQty = handleDaysQty(days,listDTO);
             switch (compareEnum){
@@ -261,9 +263,11 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
                     break;
             }
             if (isWarn) {
+                daysTypeNameList.add(CfgSettingSalesStatisticsEnum.getName(days));
                 listDTO.setIsWarn(isWarn);
             }
         }
+        listDTO.setDaysTypeNameList(daysTypeNameList);
         listDTO.setIsWarnName(isWarn ? "是":"否");
     }
 

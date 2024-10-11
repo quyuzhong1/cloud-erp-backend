@@ -145,6 +145,10 @@ public class ReportOrderSalesDTO implements Serializable {
          */
         private String isWarnName;
         /**
+         * 预警日期名称
+         */
+        private List<String> daysTypeNameList;
+        /**
          * 缺货数量
          */
         private Integer virtualScarceQty;
