@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -102,7 +103,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
     }
 
     @Override
-    public void generateVirtualReport() {
+    public void generateVirtualReport(String time) {
         //查询配置
         CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
         //规则配置
@@ -110,11 +111,11 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         if (ObjectUtil.isEmpty(virtualRuleDTO) || CollectionUtils.isEmpty(virtualRuleDTO.getExecTimeList())) {
             return;
         }
-        LocalTime now = LocalTime.now();
-        boolean isGenerate = virtualRuleDTO.getExecTimeList().contains(now);
-       /* if (!isGenerate) {
+        LocalTime now = StrUtil.isBlank(time) ? LocalTime.now() : LocalTime.parse(time,DateTimeFormatter.ofPattern("HH:mm"));
+        boolean isGenerate = virtualRuleDTO.getExecTimeList().contains(LocalTime.parse(now.format(DateTimeFormatter.ofPattern("HH:mm")), DateTimeFormatter.ofPattern("HH:mm")));
+        if (!isGenerate) {
             return;
-        }*/
+        }
         //是否拆分
         boolean isSplit = ObjectUtil.isEmpty(viewDTO.getVirtualRuleDTO()) ? false : viewDTO.getVirtualRuleDTO().getIsSplit();
         //生成源数据

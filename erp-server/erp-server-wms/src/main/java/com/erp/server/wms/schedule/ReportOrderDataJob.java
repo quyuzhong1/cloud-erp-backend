@@ -33,7 +33,7 @@ public class ReportOrderDataJob {
         //可输入时间
         String time = XxlJobHelper.getJobParam();
         XxlJobHelper.log("====开始生成报表数据=====");
-        reportOrderDataService.generateVirtualReport();
+        reportOrderDataService.generateVirtualReport(time);
         XxlJobHelper.log("====开始生成报表数据=====");
         return ReturnT.SUCCESS;
     }

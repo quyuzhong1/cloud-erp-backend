@@ -33,7 +33,7 @@ public interface ReportOrderDataService extends SuperService<ReportOrderDataEnti
      * @author will
      * @date 2024/9/27 9:29
      */
-    void generateVirtualReport();
+    void generateVirtualReport(String time);
 
     /**
      * 生成报表数据
