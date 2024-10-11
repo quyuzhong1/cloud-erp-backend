@@ -97,7 +97,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // （soB2cBillStatus字典类型）  SoB2cBillStatusEnum
         //UNPAID/READY_TO_SHIP/PROCESSED/SHIPPED/COMPLETED/IN_CANCEL/CANCELLED/INVOICE_PENDING
 //        orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-        String orderStatus = orderDetail.getStatus();
+        String orderStatus = orderDetail.getOrderStatus();
         if (OrderStatusEnum.UNPAID.getCode().equals(orderStatus)) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -210,10 +210,10 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
      * 批量转换明细
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(OrderDetail orderDetail) {
-        if (Objects.isNull(orderDetail) || CollectionUtils.isEmpty(orderDetail.getItems())) {
+        if (Objects.isNull(orderDetail) || CollectionUtils.isEmpty(orderDetail.getItemList())) {
             return Collections.emptyList();
         }
-        return orderDetail.getItems().stream()
+        return orderDetail.getItemList().stream()
                 .map(e -> intPlatformOrderDetailDTO(e, orderDetail))
                 .collect(Collectors.toList());
     }
@@ -243,11 +243,11 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
     }
 
     public static List<PlatformOrderLogisticsDTO> parseLogisticsList(OrderDetail orderDetail) {
-        if (Objects.isNull(orderDetail) || CollectionUtils.isEmpty(orderDetail.getPackages())) {
+        if (Objects.isNull(orderDetail) || CollectionUtils.isEmpty(orderDetail.getPackageList())) {
             return Collections.emptyList();
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
-        List<Package> packages = orderDetail.getPackages();
+        List<Package> packages = orderDetail.getPackageList();
         packages.forEach(p -> {
             Long shipByDate = orderDetail.getShipByDate();
             LocalDateTime deliveryTime = null;

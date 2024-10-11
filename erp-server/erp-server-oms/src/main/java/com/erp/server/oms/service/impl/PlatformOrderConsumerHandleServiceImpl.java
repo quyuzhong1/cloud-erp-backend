@@ -122,7 +122,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String billStatus = mainEntity.getBillStatus();
         Boolean isShipped = shipped.equals(billStatus);
         //如果已发货且仓库为空且是平台仓订单
-        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform())) {
+        if (isShipped && isWarehouseEmpty && hasPlatformWarehouse && !PlatformDictEnum.ALI_EXPRESS.getCode().equals(mainEntity.getDictPlatform()) && !PlatformDictEnum.SHOPEE.getCode().equals(mainEntity.getDictPlatform())) {
             String warehouseId = resultDTO.getShopWarehouseId();
             if(StringUtils.isNotBlank(warehouseId)){
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
@@ -233,6 +233,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> platformSpuList = new LinkedList<>();
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.convertPlatformSpuList();
         }

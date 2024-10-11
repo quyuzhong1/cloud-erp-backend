@@ -100,7 +100,7 @@ public class PlatformShopeeGlobalListingDTO extends CleanBaseDTO {
             List<AttributeValue> attributeValueList = attribute.getAttributeValueList();
             if (CollectionUtils.isNotEmpty(attributeValueList)) {
                 attributeValueList.forEach(attributeValue -> {
-                    stringBuffer.append(attributeValue.getValueName());
+                    stringBuffer.append(attributeValue.getOriginalValueName());
                 });
                 stringBuffer.append(";");
             }
