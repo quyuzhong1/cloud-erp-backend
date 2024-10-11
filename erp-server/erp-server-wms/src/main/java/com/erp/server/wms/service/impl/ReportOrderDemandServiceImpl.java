@@ -414,6 +414,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             detailDto.setSkuId(addVirtualAllocationDTO.getSkuId());
             detailDto.setWarehouseId(addVirtualAllocationDTO.getWarehouseId());
             detailDto.setToVirtualWarehouseId(addVirtualAllocationDTO.getVirtualWarehouseId());
+            detailDto.setFromVirtualWarehouseId(addVirtualAllocationDTO.getOutWarehouseId());
             detailDto.setQty(addVirtualAllocationDTO.getQty());
             detailList.add(detailDto);
         }
