@@ -928,8 +928,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             item.setTotalPackageWeightStr(totalPackageWeightStr);
             BigDecimal weight = item.getWeight();
             String weightUnit = item.getWeightUnit();
-            String weightStr = weight + weightUnit;
-            item.setWeightStr(weightStr);
+            if (Objects.nonNull(weight) && StrUtil.isNotBlank(weightUnit)){
+                String weightStr = weight + weightUnit;
+                item.setWeightStr(weightStr);
+            }else {
+                item.setWeightStr("");
+            }
+
         }
     }
 
