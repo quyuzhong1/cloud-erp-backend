@@ -110,6 +110,7 @@
         SELECT
             srnd.id,
             srnd.main_id,
+            srn.type,
             srn.source_id,
             srn.warehouse_id,
             srn.inventory_org_id,

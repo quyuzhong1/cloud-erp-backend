@@ -153,7 +153,7 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     /**
      * 审核时间
      */
-    @TableField("approve_time")
+    @TableField(exist = false)
     private LocalDateTime approveTime;
 
     public static final String MAIN_ID = "main_id";

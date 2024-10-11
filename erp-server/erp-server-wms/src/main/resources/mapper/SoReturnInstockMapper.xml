@@ -9,6 +9,7 @@
         sri.source_id AS sourceId,
         srid.source_detail_id AS sourceDetailId,
         srid.so_return_detail_id AS soReturnDetailId,
+        sri.so_return_id as soReturnId,
         sri.code,
         sri.source_code AS sourceCode,
         sri.so_code AS soCode,

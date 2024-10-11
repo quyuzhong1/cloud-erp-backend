@@ -102,6 +102,8 @@ public class SoReturnReceiveDTO {
          * id
          */
         private String id;
+
+        private String type;
         /**
          * 明细表id
          */

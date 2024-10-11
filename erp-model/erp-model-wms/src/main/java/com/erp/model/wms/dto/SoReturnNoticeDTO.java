@@ -453,6 +453,8 @@ public class SoReturnNoticeDTO {
          * id
          */
         private String id;
+
+        private String type;
         /**
          * 主表id
          */

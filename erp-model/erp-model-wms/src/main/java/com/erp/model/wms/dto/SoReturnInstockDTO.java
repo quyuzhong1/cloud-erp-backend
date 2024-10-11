@@ -120,6 +120,10 @@ public class SoReturnInstockDTO {
          */
         private String soReturnDetailId;
         /**
+         * 退货明细id
+         */
+        private String soReturnId;
+        /**
          * 退货入库单号
          */
         private String code;
