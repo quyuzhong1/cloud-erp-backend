@@ -49,7 +49,8 @@
             <include refid="Base_Column_List"/>
             ,rs.platform_type,rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
         from purchase_suggest ps
-        left join replenishment_suggestion rs on ps.source_id = rs.id and rs.is_deleted = false
+        inner join replenishment_suggestion_detail rsd on ps.source_id = rs.id = rsd.is_deleted = false
+        inner join replenishment_suggestion rs on rsd.main_id = rs.id and rs.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and ps.is_deleted = false
