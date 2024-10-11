@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -400,6 +401,16 @@ public class CfgRuleSalesQtyDTO implements Serializable {
             dto.setEffectiveValue(entity.getEffectiveValue());
             return dto;
         }
+
+        public static StrategyDenoisingResultDTO buildStrategyDenoisingResultDTO(CfgRuleSalesDenoisingDTO.UpdateDTO updateDTO) {
+            StrategyDenoisingResultDTO dto = new StrategyDenoisingResultDTO();
+            dto.setName(updateDTO.getName());
+            dto.setStartDate(updateDTO.getDateList().get(0));
+            dto.setEndDate(updateDTO.getDateList().get(1));
+            dto.setDenoisingType(updateDTO.getDenoisingType());
+            dto.setEffectiveValue(updateDTO.getEffectiveValue());
+            return dto;
+        }
     }
 
     @Getter
@@ -468,6 +479,30 @@ public class CfgRuleSalesQtyDTO implements Serializable {
             dto.setFixedValue(entity.getFixedValue());
             dto.setPercentJson(entity.getPercentJson());
             dto.setPercentJsonDTO(JSONUtil.toBean(entity.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class));
+            return dto;
+        }
+
+        public static StrategyFormulaResultDTO buildFormulaResultDTO(CfgRuleSalesFormulaDTO.FixedUpdateDTO fixedUpdate) {
+            StrategyFormulaResultDTO dto = new StrategyFormulaResultDTO();
+            dto.setType(CfgRuleSalesFormulaTypeEnum.FIXED.getCode());
+            dto.setName(fixedUpdate.getName());
+            dto.setFixedValue(fixedUpdate.getFixedValue());
+            return dto;
+        }
+
+        public static StrategyFormulaResultDTO buildFormulaResultDTO(CfgRuleSalesFormulaDTO.DynamicUpdateDTO dynamicUpdate) {
+            StrategyFormulaResultDTO dto = new StrategyFormulaResultDTO();
+            dto.setType(CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode());
+            dto.setName(dynamicUpdate.getName());
+            dto.setPercentJsonDTO(dynamicUpdate.getPercentJsonDTO());
+            return dto;
+        }
+
+        public static StrategyFormulaResultDTO buildFormulaResultDTO(CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultUpdateDTO) {
+            StrategyFormulaResultDTO dto = new StrategyFormulaResultDTO();
+            dto.setDefaultType(defaultUpdateDTO.getDefaultType());
+            dto.setPercentJsonDTO(defaultUpdateDTO.getPercentJsonDTO());
+            dto.setFixedValue(defaultUpdateDTO.getFixedValue());
             return dto;
         }
     }

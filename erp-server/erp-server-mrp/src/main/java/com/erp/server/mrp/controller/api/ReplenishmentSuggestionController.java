@@ -655,4 +655,14 @@ public class ReplenishmentSuggestionController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 模拟销量分析
+     * @param dto 参数
+     */
+    @PostMapping("/mockSalesAnalysis")
+    public ApiResult<SalesAnalysisVO> mockSalesAnalysis(@RequestBody @Validated MockSalesAnalysisDTO dto) {
+        SalesAnalysisVO salesAnalysis = replenishmentSuggestionService.mockSalesAnalysis(dto);
+        return success(salesAnalysis);
+    }
 }

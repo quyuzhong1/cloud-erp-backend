@@ -51,25 +51,11 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         for (int i = 0; i < days; i++) {
             LocalDate calcDate = basicCalcDate.plusDays(i);
             //获取最大优先级的规则 优先取 sku 固定规则，其次sku动态规则，其次sku默认规则，取不到则取系统动态规则，其次系统默认规则
-            CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult = formulaResults.stream()
-                    .filter(v -> !ObjectUtils.isEmpty(v.getStartDate()) && !ObjectUtils.isEmpty(v.getEndDate()) &&
-                            !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
-                    .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
-                            .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
-                    .orElseGet(() -> formulaResults.stream()
-                            .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
-                            .findFirst().orElse(defaultFormulaResults.stream()
-                                    .filter(v -> !ObjectUtils.isEmpty(v.getStartDate()) && !ObjectUtils.isEmpty(v.getEndDate()) &&
-                                            !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
-                                    .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
-                                            .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
-                                    .orElseGet(() -> defaultFormulaResults.stream()
-                                            .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
-                                            .findFirst().orElse(null))));
+            CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult = getStrategyFormulaResultDTO(formulaResults, calcDate, defaultFormulaResults);
             if (ObjectUtils.isEmpty(formulaResult)) {
                 continue;
             }
-            BigDecimal saleQty = getSaleQty(replenishmentResultDTO, formulaResult, basicCalcDate);
+            BigDecimal saleQty = getSaleQty(replenishmentResultDTO.getSalesInfos(), replenishmentResultDTO.getAvgTimePeriodSales(), formulaResult, basicCalcDate);
             ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = new ReplenishmentResultDTO.SalesEstimateDTO(calcDate, saleQty,
                     calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
             salesEstimates.add(salesEstimateDTO);
@@ -77,6 +63,49 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         replenishmentResultDTO.setSalesEstimates(salesEstimates);
         //开始计算分时段销量和日均预估
         calculationTimePeriodSalesEstimates(replenishmentResultDTO, basicCalcDate);
+    }
+
+    /**
+     * 获取日销量规则
+     *
+     * @param formulaResults        sku日销量规则
+     * @param calcDate              计算日
+     * @param defaultFormulaResults 默认日销量规则
+     */
+    private static CfgRuleSalesQtyDTO.StrategyFormulaResultDTO getStrategyFormulaResultDTO(List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults, LocalDate calcDate, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults) {
+        return formulaResults.stream()
+                .filter(v -> !ObjectUtils.isEmpty(v.getStartDate()) && !ObjectUtils.isEmpty(v.getEndDate()) &&
+                        !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
+                .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
+                        .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
+                .orElse(formulaResults.stream()
+                        .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
+                        .findFirst().orElse(getSysDynamic(calcDate, defaultFormulaResults)));
+    }
+
+    /**
+     * 获取系统动态规则
+     * @param defaultFormulaResults 系统销量规则
+     * @param calcDate 当前计算日
+     */
+    private static CfgRuleSalesQtyDTO.StrategyFormulaResultDTO getSysDynamic(LocalDate calcDate, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults) {
+        return defaultFormulaResults.stream()
+                .filter(v -> !ObjectUtils.isEmpty(v.getStartDate()) && !ObjectUtils.isEmpty(v.getEndDate()) &&
+                        !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
+                .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
+                        .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
+                .orElse(getSysDefault(defaultFormulaResults));
+    }
+
+
+    /**
+     * 获取系统默认规则
+     * @param defaultFormulaResults 系统销量规则
+     */
+    private static CfgRuleSalesQtyDTO.StrategyFormulaResultDTO getSysDefault(List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults) {
+        return defaultFormulaResults.stream()
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
+                .findFirst().orElse(null);
     }
 
     /**
@@ -143,15 +172,15 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
      * @param formulaResult 销量计算参数
      * @param basicCalcDate 计算时间
      */
-    private BigDecimal getSaleQty(ReplenishmentResultDTO replenishmentResult, CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult, LocalDate basicCalcDate) {
+    public BigDecimal getSaleQty(List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, List<ReplenishmentResultDTO.TimePeriodSalesDTO> avgTimePeriodSales, CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult, LocalDate basicCalcDate) {
         BigDecimal saleQty;
         if (CfgRuleSalesFormulaTypeEnum.FIXED.getCode().equals(formulaResult.getType())) {
             saleQty = MathUtil.valueOf(formulaResult.getFixedValue());
         } else if (CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode().equals(formulaResult.getType())) {
-            saleQty = getDynamicSaleQty(formulaResult.getPercentJsonDTO(), replenishmentResult, basicCalcDate);
+            saleQty = getDynamicSaleQty(formulaResult.getPercentJsonDTO(), salesInfos, avgTimePeriodSales, basicCalcDate);
         } else {
             if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(formulaResult.getDefaultType())) {
-                saleQty = getDynamicSaleQty(formulaResult.getPercentJsonDTO(), replenishmentResult, basicCalcDate);
+                saleQty = getDynamicSaleQty(formulaResult.getPercentJsonDTO(), salesInfos, avgTimePeriodSales, basicCalcDate);
             } else {
                 saleQty = MathUtil.valueOf(formulaResult.getFixedValue());
             }
@@ -159,12 +188,19 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         return saleQty;
     }
 
-    private BigDecimal getDynamicSaleQty(CfgRuleSalesFormulaDTO.PercentJsonDTO dto, ReplenishmentResultDTO replenishmentResult, LocalDate basicCalcDate) {
+    /**
+     * 计算动态规则销量
+     *
+     * @param dto                动态规则
+     * @param salesInfos         销量
+     * @param avgTimePeriodSales 去噪销量日均
+     * @param basicCalcDate      计算日
+     */
+    private BigDecimal getDynamicSaleQty(CfgRuleSalesFormulaDTO.PercentJsonDTO dto, List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, List<ReplenishmentResultDTO.TimePeriodSalesDTO> avgTimePeriodSales, LocalDate basicCalcDate) {
 
         List<SalesForecastCalculatorDTO> salesDataList = new ArrayList<>();
         LocalDate localDate = basicCalcDate.minusDays(1);
-        List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos = replenishmentResult.getSalesInfos();
-        Map<TimePeriodEnum, BigDecimal> timePeriodMap = replenishmentResult.getAvgTimePeriodSales()
+        Map<TimePeriodEnum, BigDecimal> timePeriodMap = avgTimePeriodSales
                 .stream().collect(Collectors.toMap(ReplenishmentResultDTO.TimePeriodSalesDTO::getCode, ReplenishmentResultDTO.TimePeriodSalesDTO::getQty, (o1, o2) -> o1));
         // 3天日均
         salesDataList.add(new SalesForecastCalculatorDTO(timePeriodMap.get(TimePeriodEnum.THREE), MathUtil.valueOf(dto.getThreeDaysRatio()).divide(MathUtil.BigDecimal_100, 2, RoundingMode.HALF_UP), getIsExcluded(salesInfos, localDate, 3)));
