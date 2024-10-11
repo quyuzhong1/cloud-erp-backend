@@ -1708,7 +1708,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //更新库存锁定数量
         oldList.stream().forEach(obj -> obj.setFrozenQty(MathUtil.ZERO));
         this.updateBatchById(oldList);
-        return new BatchResultDTO(oldEntity.getId(),StrUtil.format("【{}】",soInfoEntity.getCode()),"释放库存成功",Boolean.TRUE);
+        return new BatchResultDTO(soInfoEntity.getId(),StrUtil.format("【{}】",soInfoEntity.getCode()),"释放库存成功",Boolean.TRUE);
     }
 
     @Override
@@ -1861,7 +1861,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //销售数量不能小于（冻结数量+发货通知单审核数量）
-            if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
+            if (StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
                 throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
             }
             //仅判断冻结数量
