@@ -954,13 +954,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         //创建了委外退料记录
         if (CollectionUtils.isNotEmpty(addDTOS)){
             for (SubcontractReturnDTO.AddDTO addDTO : addDTOS){
-                BaseResultDTO.AddDTO add = subcontractReturnService.add(addDTO);
+                BaseResultDTO.AddDTO add = subcontractReturnService.addAndSubmit(addDTO);
                 String id = add.getId();
                 if (StringUtils.isBlank(id)) {
                     throw new ServiceException(ApiError.ERROR_1019);
                 }
-                SubcontractReturnEntity subcontractReturnEntity = subcontractReturnService.getById(id);
-                subcontractReturnService.approveEnd(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(),"采购退货自动生成"), subcontractReturnEntity);
+                subcontractReturnService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(),"系统自动审核"));
             }
         }
         LoginUser userInfo = UserContext.getDefaultLoginUser();
