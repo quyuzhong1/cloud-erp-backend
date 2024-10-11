@@ -27,5 +27,5 @@ public interface WaveListMapper extends BaseMapper<WaveListEntity> {
 
     List<String> listDeliveryIdBySql(@Param("sql") String compareCodeSplicingValueSql);
 
-    List<WaveListDTO.WaveDeliveryStatusDTO> listDeliveryStatus();
+    List<WaveListDTO.WaveDeliveryStatusDTO> listDeliveryStatus(@Param("deliveryId") String deliveryId);
 }

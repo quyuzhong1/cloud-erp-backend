@@ -30,6 +30,7 @@ import com.erp.model.wms.enums.*;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.*;
+import io.seata.common.util.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -426,26 +427,30 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public void waveListStatusAutoChange() {
-        //查询波次列表状态为待拣货和拣货中的所有数据
-        List<WaveListDTO.WaveDeliveryStatusDTO> waveDeliveryStatusList = this.baseMapper.listDeliveryStatus();
-        if(CollectionUtil.isEmpty(waveDeliveryStatusList)){
-            log.warn("波次列表波次状态自动变更任务--未找到符合状态的数据");
-            return;
-        }
+    public void waveListStatusAutoChange(String deliveryId) {
+//        仓储管理-B2C订单发货-发货单：手动发货 SoB2cDeliveryController.delivery
+//        仓储管理-B2C订单发货-包装验货：勾选了流水线称重后自动发货，流水线分拣后自动出库（有接口调用） AsyncServiceImpl.syncSoB2cDeliveryAutoOut
+//        仓储管理-B2C订单发货-称重出库：勾选了称重后自动出库，称重后自动出库 WeighingOutboundController.scan
+//        仓储管理-B2C订单发货-组包称重：点击了组包后自动出库，完成组包后会自动出库 MergePackageDeliveryConsumer.onMessage
+//        仓储管理-B2C订单发货-组包称重：点击了组包后自动出库，完成组包后会自动出库 MergePackageDeliveryConsumer.onMessage
+//        仓储管理-B2C订单发货-发货拦截单：拦截结果确认，选择拦截失败并出库 SoB2cDeliveryInterceptController.interceptFailure
 
-        //根据波次主键id分组
-        Map<String, List<WaveListDTO.WaveDeliveryStatusDTO>> map = waveDeliveryStatusList.stream().collect(Collectors.groupingBy(WaveListDTO.WaveDeliveryStatusDTO::getId));
-        for (Map.Entry<String, List<WaveListDTO.WaveDeliveryStatusDTO>> wave : map.entrySet()) {
-            String waveId = wave.getKey();
-            //发货单状态全匹配已发货
-            boolean isShipped = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getStatus()));
-            //发货单状态全匹配取消发货
-            boolean iscCancelDelivery = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus()));
-            if(isShipped||iscCancelDelivery){
-                //更新波次状态为已完成
-                this.lambdaUpdate().set(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode()).eq(WaveListEntity::getId, waveId);
-                operateLogService.addModuleOperateLog("波次下发货单完结，自动变更状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更");
+        //查询波次列表状态为待拣货和拣货中的所有数据
+        List<WaveListDTO.WaveDeliveryStatusDTO> waveDeliveryStatusList = this.baseMapper.listDeliveryStatus(deliveryId);
+        if(CollectionUtil.isNotEmpty(waveDeliveryStatusList)){
+            //根据波次主键id分组
+            Map<String, List<WaveListDTO.WaveDeliveryStatusDTO>> map = waveDeliveryStatusList.stream().collect(Collectors.groupingBy(WaveListDTO.WaveDeliveryStatusDTO::getId));
+            for (Map.Entry<String, List<WaveListDTO.WaveDeliveryStatusDTO>> wave : map.entrySet()) {
+                String waveId = wave.getKey();
+                //发货单状态全匹配已发货
+                boolean isShipped = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getStatus()));
+                //发货单状态全匹配取消发货
+                boolean iscCancelDelivery = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus()));
+                if(isShipped||iscCancelDelivery){
+                    //更新波次状态为已完成
+                    this.lambdaUpdate().set(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode()).eq(WaveListEntity::getId, waveId).update();
+                    operateLogService.addModuleOperateLog("波次下发货单完结，自动变更状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更");
+                }
             }
         }
     }

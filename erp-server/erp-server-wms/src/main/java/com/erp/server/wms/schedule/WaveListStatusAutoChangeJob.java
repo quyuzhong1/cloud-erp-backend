@@ -31,7 +31,7 @@ public class WaveListStatusAutoChangeJob {
     public ReturnT<String> poReturnAutoConfirmJob() {
         XxlJobHelper.log("=====波次列表波次状态自动变更 开始任务=====");
         long start = System.currentTimeMillis();
-        waveListService.waveListStatusAutoChange();
+        waveListService.waveListStatusAutoChange("");
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("=====波次列表波次状态自动变更 结束任务=====");

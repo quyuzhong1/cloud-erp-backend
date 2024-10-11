@@ -107,6 +107,9 @@
         WHERE
             pw.is_deleted = FALSE
           AND pw.status IN ( 'awaitPick', 'pickIng' )
+        <if test="deliveryId != null and deliveryId != ''">
+            AND pw.ID in(SELECT main_id FROM wave_list_detail WHERE delivery_id = #{deliveryId})
+        </if>
         ORDER BY
             pw.ID
     </select>

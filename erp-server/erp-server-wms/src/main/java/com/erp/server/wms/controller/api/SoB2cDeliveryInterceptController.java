@@ -6,6 +6,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.server.wms.query.SoB2cDeliveryInterceptQueryHandler;
+import com.erp.server.wms.service.WaveListService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -41,6 +42,9 @@ public class SoB2cDeliveryInterceptController extends BaseController {
 
     @Resource
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
+
+    @Resource
+    private WaveListService waveListService;
 
     /**
     * 新增
@@ -214,6 +218,11 @@ public class SoB2cDeliveryInterceptController extends BaseController {
             BatchResultDTO result;
             try {
                 result = soB2cDeliveryInterceptService.interceptFailure(id,dto.getIsAutoOut(),dto.getResultRemark() );
+                if(result.getSuccess()&&dto.getIsAutoOut()){
+                    //波次列表波次状态自动变更
+                    SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
+                    waveListService.waveListStatusAutoChange(entity.getDeliveryId());
+                }
             }catch (Exception e){
                 log.error("发货拦截单 拦截失败处理异常",e);
                 SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);

@@ -139,5 +139,5 @@ public interface WaveListService extends SuperService<WaveListEntity> {
     /**
      * 波次列表波次状态自动变更
      */
-    void waveListStatusAutoChange();
+    void waveListStatusAutoChange(String deliveryId);
 }
