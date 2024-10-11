@@ -750,7 +750,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
             soB2cDeliveryService.updateById(soB2cDelivery);
             //波次列表波次状态自动变更
-            waveListService.waveListStatusAutoChange(entity.getId());
+            waveListService.waveListStatusAutoChange(soB2cDelivery.getId());
 
             //更新销售订单,在这里修改拦截状态，冻结状态，因为下面生成销售出库单依赖这个状态
             interceptUpdateOrderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
