@@ -33,8 +33,8 @@ public class ShopeeOrderService {
     public static void main(String[] args) {
         ShopeeOrderService shopeeOrderService = new ShopeeOrderService();
         long timest = System.currentTimeMillis() / 1000L;
-        Long time_from = timest - (3600 * 24 * 14);
-        Long time_to = timest;
+        Long time_from = timest - (3600 * 24 * 40);
+        Long time_to = timest - (3600 * 24 * 30);;
         //订单列表
         OrderRequest orderRequest = OrderRequest.builder()
                 .offset(0)

@@ -17,5 +17,5 @@ import java.util.List;
 public class ExtendedDescription implements Serializable {
 
     @Alias( "field_list")
-    private List<Field> fields;
+    private List<Field> fieldList;
 }

@@ -7,6 +7,7 @@ import com.common.core.utils.OkHttpUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeAuth;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.base.ShopeeTokenAuth;
+import com.sdk.oms.shopee.dto.logistics.response.ShipResponse;
 import com.sdk.oms.shopee.dto.merchant.response.MerchantResponse;
 import com.sdk.oms.shopee.dto.shop.response.ShopResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -105,6 +106,29 @@ public class ShopeeApiUtils {
             String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
             log.info("bodyStr：{}", bodyStr);
             resultMap = JSONUtil.toBean(bodyStr, ShopResponse.class);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+
+        return resultMap;
+    }
+    /**
+     * GET 请求
+     *
+     * @param baseUrl
+     * @param paramMap
+     * @return
+     */
+    public static ShipResponse sendShipGet(String baseUrl, HashMap<String, Object> paramMap) {
+        ShipResponse resultMap = null;
+        Map<String, String> headers = new HashMap<String, String>();
+        headers.put("Content-Type", "application/json");
+        headers.put("Connection", "keep-alive");
+        log.info("baseUrl：{}", baseUrl);
+        try {
+            String bodyStr = OkHttpUtils.doGet(baseUrl, paramMap, headers);
+            log.info("bodyStr：{}", bodyStr);
+            resultMap = JSONUtil.toBean(bodyStr, ShipResponse.class);
         } catch (Exception e) {
             log.error(e.getMessage());
         }
@@ -223,6 +247,29 @@ public class ShopeeApiUtils {
             log.error("请求异常：{}", e.getMessage());
         }
 
+        return resultMap;
+    }
+    /**
+     * 虾皮标记发货 post请求
+     *
+     * @param baseUrl 接口地址
+     * @param paramsJson
+     * @return java.lang.String
+     */
+    public static ShopeeResponse sendShipOrderPost(String baseUrl, Map<String, Object> urlParams, String paramsJson) {
+        ShopeeResponse resultMap = null;
+        Map<String, String> headers = new HashMap();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept", "application/json");
+        String url = buildUrl(baseUrl, urlParams);
+        log.info("url：{}", url);
+        try {
+            String bodyStr = OkHttpUtils.doPostJson(url, paramsJson, headers);
+            log.info("bodyStr：{}", bodyStr);
+            resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
+        } catch (Exception e) {
+            log.error("请求异常：{}", e.getMessage());
+        }
         return resultMap;
     }
 
