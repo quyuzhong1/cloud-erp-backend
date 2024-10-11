@@ -61,6 +61,7 @@ import com.erp.server.oms.mapper.SoDetailMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1596,6 +1597,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO) {
         SoDetailEntity soDetailEntity = this.getById(saveDTO.getDetailId());
         if (ObjectUtil.isEmpty(soDetailEntity)) {
@@ -1646,6 +1648,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity oldEntity) {
         SoDetailEntity old =  this.getById(detailId);
         if (ObjectUtil.isEmpty(old)) {
@@ -1665,20 +1668,21 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         SoDetailEntity soDetailEntity = new SoDetailEntity();
         BeanMapperUtils.copy(old,soDetailEntity);
-        //更新库存锁定数量
-        soDetailEntity.setFrozenQty(MathUtil.ZERO);
-        this.updateById(soDetailEntity);
 
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-
         stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,old));
         stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_UNLOCK.getCode());
         virtualInventoryFeign.approveByType(stockParamDTO);
+
+        //更新库存锁定数量
+        soDetailEntity.setFrozenQty(MathUtil.ZERO);
+        this.updateById(soDetailEntity);
         return new BatchResultDTO(soDetailEntity.getId(),StrUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"释放库存成功",Boolean.TRUE);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUnLockVirtualInventory(List<String> detailIdList,SoInfoEntity oldEntity) {
         List<SoDetailEntity> oldList =  this.listByIds(detailIdList);
         if (CollectionUtils.isEmpty(oldList)) {
@@ -1692,10 +1696,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
             return new BatchResultDTO(soInfoEntity.getId(),soInfoEntity.getCode(),"无虚拟仓，不支持释放锁定库存",Boolean.TRUE);
         }
-        //更新库存锁定数量
-        oldList.stream().forEach(obj -> obj.setFrozenQty(MathUtil.ZERO));
-        this.updateBatchById(oldList);
-
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
         List<VirtualInventoryStockDTO.OutInStockDTO> outInStockList = unLockVirtualInventory(soInfoEntity, oldList);
         if (CollectionUtils.isEmpty(outInStockList)) {
@@ -1704,6 +1704,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         stockParamDTO.setParamList(outInStockList);
         stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_UNLOCK.getCode());
         virtualInventoryFeign.approveByType(stockParamDTO);
+
+        //更新库存锁定数量
+        oldList.stream().forEach(obj -> obj.setFrozenQty(MathUtil.ZERO));
+        this.updateBatchById(oldList);
         return new BatchResultDTO(oldEntity.getId(),StrUtil.format("【{}】",soInfoEntity.getCode()),"释放库存成功",Boolean.TRUE);
     }
 
