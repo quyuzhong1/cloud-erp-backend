@@ -569,6 +569,10 @@ public class ReportOrderDemandDTO implements Serializable {
     @NoArgsConstructor
     public static class BatchViewVirtualAllocationDTO {
         /**
+         * 拼接id，skuid+实体仓id+虚拟仓id
+         */
+        private String id;
+        /**
          * skuId
          */
         private String skuId;
