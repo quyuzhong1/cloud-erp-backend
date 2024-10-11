@@ -1785,24 +1785,18 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     private List<VirtualInventoryStockDTO.OutInStockDTO> unLockVirtualInventory (SoInfoEntity soInfoEntity, List<SoDetailEntity> soDetailEntityList) {
         List<VirtualInventoryStockDTO.OutInStockDTO> resultList = new ArrayList<>();
-
-        Map<String, List<SoDetailEntity>> map = soDetailEntityList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId()));
-        for (Map.Entry<String, List<SoDetailEntity>> entry : map.entrySet()) {
-            List<SoDetailEntity> value = entry.getValue();
-            SoDetailEntity soDetailEntity = value.get(0);
+        for (SoDetailEntity soDetailEntity : soDetailEntityList) {
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setSkuId(soDetailEntity.getSkuId());
             outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
             outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
             outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
             outInStockDTO.setBillDate(LocalDate.now());
-            //数量
-            Integer qty = value.stream().map(SoDetailEntity::getFrozenQty).reduce(MathUtil.ZERO, Integer::sum);
             //数量未大于0无需扣建库存
-            if (MathUtil.compareTo(qty,MathUtil.ZERO) <= MathUtil.ZERO) {
+            if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
                 continue;
             }
-            outInStockDTO.setQty(qty);
+            outInStockDTO.setQty(soDetailEntity.getFrozenQty());
             outInStockDTO.setSourceId(soInfoEntity.getId());
             outInStockDTO.setSourceCode(soInfoEntity.getCode());
             outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_INFO);
