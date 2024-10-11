@@ -1,7 +1,6 @@
 package com.sdk.oms.shopee.dto.order.response;
 
 import cn.hutool.core.annotation.Alias;
-import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -208,6 +207,6 @@ public class OrderDetail implements Serializable {
     private List<Package> packageList;
 
     @Alias("invoice_data")
-    private JSONObject invoiceData;
+    private Object invoiceData;
 
 }

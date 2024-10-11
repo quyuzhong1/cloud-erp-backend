@@ -103,7 +103,12 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setInvalidStatus(false);
-        } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus) || OrderStatusEnum.PROCESSED.getCode().equals(orderStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(orderStatus)) {
+        } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus)){
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setInvalidStatus(false);
+        } else if (OrderStatusEnum.PROCESSED.getCode().equals(orderStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(orderStatus)) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
@@ -117,7 +122,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         }  else if (OrderStatusEnum.IN_CANCEL.getCode().equals(orderStatus)) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
-            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.REJECT.getCode());
             orderDTO.setInvalidStatus(false);
             orderDTO.setInvalidRemark("订单取消中");
             orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_MANUAL.getCode());
@@ -300,7 +305,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         detailDTO.setPlatformSkuNo(StringUtils.isNotEmpty(item.getItemSku()) ? item.getItemSku() : item.getModelSku());
 
         // 平台产品id
-        detailDTO.setPlatformSpuNo(item.getItemId().toString());
+        detailDTO.setPlatformSpuNo(Objects.nonNull(item.getItemId()) ? item.getItemId().toString() : "");
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
@@ -310,13 +315,13 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 数量
         detailDTO.setQty(item.getModelQuantityPurchased());
         // 单价
-        detailDTO.setPrice(BigDecimal.valueOf(item.getModelDiscountedPrice()));
+        detailDTO.setPrice(BigDecimal.valueOf(item.getModelOriginalPrice()));
         // 金额
         try {
-            BigDecimal amount = BigDecimal.valueOf(item.getModelDiscountedPrice()).multiply(BigDecimal.valueOf(item.getModelQuantityPurchased()));
+            BigDecimal amount = BigDecimal.valueOf(item.getModelOriginalPrice()).multiply(BigDecimal.valueOf(item.getModelQuantityPurchased()));
             detailDTO.setAmount(amount);
         } catch (Exception e) {
-            log.error("计算金额异常：打折后金额：{},数量{}", item.getModelDiscountedPrice(), item.getModelQuantityPurchased());
+            log.error("计算金额异常：打折后金额：{},数量{}", item.getModelOriginalPrice(), item.getModelQuantityPurchased());
         }
 
         // 币别（原币）
