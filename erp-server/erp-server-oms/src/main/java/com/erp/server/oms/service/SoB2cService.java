@@ -800,7 +800,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     List<BatchResultDTO> autoOrderForecast(List<String> soIdList);
 
-    List<BatchResultDTO> cancelOrderForecast(List<String> ids);
+    List<BatchResultDTO> cancelOrderForecast(List<String> ids, Boolean checkPackageStatus);
 
     List<BatchResultDTO> retryOrderForecast(List<String> ids);
     /**

@@ -68,9 +68,7 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
@@ -1134,7 +1132,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @date 2024/7/17 12:08
      * @param deliveryEntityList
      */
-    private  void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList) {
+    @Override
+    public void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList) {
         List<String> mainIdList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getId).collect(Collectors.toList());
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(mainIdList);
         if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
@@ -1537,33 +1536,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return resultDTOS;
     }
 
-    @Override
-    public List<BatchResultDTO> interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto) {
-        List<String> ids = dto.getIds();
-        if(CollectionUtils.isEmpty(ids)){
-            return new ArrayList<>();
-        }
-        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(ids);
-        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByDeliveryIds(ids);
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        for (String id : ids) {
-            BatchResultDTO result;
-            SoB2cDeliveryEntity soB2cDelivery = soB2cDeliveryEntities.stream().filter(v->v.getId().equals(id)).findFirst().orElse(new SoB2cDeliveryEntity());
-            SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = soB2cDeliveryInterceptEntityList.stream().filter(v->v.getDeliveryId().equals(soB2cDelivery.getId())).findFirst().orElse(null);
-            if(Objects.isNull(soB2cDeliveryInterceptEntity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"物流拦截单不存在, 确认失败"));
-                continue;
-            }
-            try {
-                result = soB2cDeliveryInterceptService.interceptResultConfirm(dto,soB2cDeliveryInterceptEntity.getId());
-            }catch (Exception e){
-                log.error("物流拦截单 拦截结果确认失败",e);
-                result = BatchResultDTO.fail(soB2cDeliveryInterceptEntity.getId(), soB2cDeliveryInterceptEntity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS;
-    }
 
     /**
      *
@@ -1734,7 +1706,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
         soB2cEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
         waveListService.cleanException(id);
-        waveListDetailService.moveOut(id);
+        waveListDetailService.moveOut(id, false);
         soB2cFeign.updateById(soB2cEntity);
         entity.setStatus(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus());
         updateById(entity);
@@ -1763,34 +1735,18 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         moveDto.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         moveDto.setDetailList(moveDetailList);
         warehouseLocationMoveService.addAndApprove(moveDto);
+        //取消保宏预报
+        BaseIdsDTO.IdsDTO idDto = new BaseIdsDTO.IdsDTO();
+        idDto.setIds(Arrays.asList(soB2cEntity.getId()));
+        if (TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus())) {
+            ApiResult<List<BatchResultDTO>> cancelOrderForecastResult = soB2cFeign.cancelOrderForecast(idDto);
+            if(!cancelOrderForecastResult.isSuccess()){
+                throw new ServiceException("订单取消保宏预报失败,无法处理拦截成功");
+            }
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消成功");
     }
 
-    /**
-     * 变更库存
-     * @param dto 参数
-     * @param warehouseLocation 仓位
-     * @param businessType 业务类型
-     */
-    private void changeInventory(SoB2cDeliveryDTO.CancelShipmentDTO dto, String warehouseLocation, String businessType) {
-        InOutStockDTO inOutStockDTO = new InOutStockDTO();
-        inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
-        inOutStockDTO.setSourceCode(dto.getCode());
-        inOutStockDTO.setSourceId(dto.getId());
-        inOutStockDTO.setSourceDetailId(dto.getDetailId());
-        inOutStockDTO.setBillDate(LocalDate.now());
-        inOutStockDTO.setSkuNo(dto.getSkuNo());
-        inOutStockDTO.setSkuId(dto.getSkuId());
-        inOutStockDTO.setQty(dto.getPickingQty());
-        inOutStockDTO.setWarehouseId(dto.getWarehouseId());
-        inOutStockDTO.setWarehouseLocation(warehouseLocation);
-        //添加冻结库存
-        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setParamList(Collections.singletonList(inOutStockDTO));
-        inventoryInOutStockDTO.setBusinessType(businessType);
-        //更新库存
-        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-    }
 
     @Override
     public SoB2cDeliveryDTO.CancelShipmentView cancelShipmentView(List<String> ids) {
@@ -2176,7 +2132,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
-                record.setIsIntercept(soB2cEntity.getIsIntercept());
+                record.setIsIntercept(soB2cEntity.getIsIntercept() && !record.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()));
                 record.setPackageStatus(soB2cEntity.getPackageStatus());
                 record.setTransferStatus(soB2cEntity.getTransferStatus());
                 record.setOrderRemark(soB2cEntity.getRemark());
