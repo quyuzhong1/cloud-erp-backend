@@ -135,6 +135,8 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
                 bomDTO.setQty(reportOrderDemandDetailEntity.getQty());
                 bomList.add(bomDTO);
            }
+           viewBomQtyDTO.setParentSkuId(bomJsonList.get(0).getParentSkuId());
+           viewBomQtyDTO.setParentSkuNo(bomJsonList.get(0).getParentSkuNo());
            viewBomQtyDTO.setBomList(bomList);
            //本条数据子级SKU用量
            quantity = bomList.stream().filter(obj -> StrUtil.equals(obj.getChildSkuId(), entity.getSkuId())).map(ReportOrderDemandDetailDTO.BomDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);

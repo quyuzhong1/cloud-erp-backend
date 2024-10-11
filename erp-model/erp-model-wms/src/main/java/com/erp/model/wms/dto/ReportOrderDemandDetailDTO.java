@@ -393,6 +393,16 @@ public class ReportOrderDemandDetailDTO implements Serializable {
          * bom信息
          */
         private List<BomDTO> bomList;
+        /**
+         * 父级SKU
+         */
+        private String parentSkuId;
+
+        /**
+         * 父级SKU编码
+         */
+        private String parentSkuNo;
+
     }
 
     @Data
