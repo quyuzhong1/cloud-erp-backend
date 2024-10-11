@@ -497,6 +497,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private static void getStockParam(RequisitionApplicationDTO.HandleListDTO handleListDTO, Integer
             approveQty, List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList) {
+        if(approveQty == 0){
+            return;
+        }
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
         outInStockDTO.setBillDate(LocalDate.now());
         outInStockDTO.setSourceId(handleListDTO.getSourceId());
@@ -1719,9 +1722,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
-    public PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page) {
+    public PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<RequisitionApplicationDTO.GetPickingViewDTO> page) {
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
-        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(page.getParams());
+        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(page.getParams().getId());
         if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
             throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
         }
@@ -1748,6 +1751,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         boolean checkUnpickedQty = details.stream().allMatch(detail -> (detail.getApproveQty() - detail.getPickingQty()) > 0);
         if (Boolean.FALSE.equals(checkUnpickedQty)) {
             throw new ServiceException(ApiError.UNPICKED_QUANTITY_SHORTAGE);
+        }
+        details = details.stream().filter(v->v.getApproveQty()>0).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(details)){
+            throw new ServiceException("批准数量为0无法生成拣货明细");
         }
         PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
         addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
@@ -1861,6 +1868,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             } else {
                 detailView.setIsCombination(Boolean.FALSE);
             }
+            detailView.setAsin(detailEntity.getPlatformSpu());
             detailView.setPlatformSku(detailEntity.getPlatformSku());
             detailView.setThirdWarehouseSku(detailEntity.getPlatformSku());
             //根据类型设置第三方SKU信息

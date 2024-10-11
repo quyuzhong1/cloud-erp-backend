@@ -924,7 +924,7 @@ public class RequisitionApplicationDTO implements Serializable {
          * 批准数量
          */
         @NotNull(message = "批准数量不能为空")
-        @Min(value = 1, message = "批准数量最小值为1")
+        @Min(value = 0, message = "批准数量最小值为0")
         @Max(value = 999999999, message = "批准数量最大值为999999999")
         private Integer approveQty;
         /**
@@ -1263,6 +1263,26 @@ public class RequisitionApplicationDTO implements Serializable {
         private String virtualWarehouseId;
     }
 
+
+    @Getter
+    @Setter
+    public static class GetPickingViewDTO {
+        /**
+         * 要货申请id
+         */
+        @NotBlank(message = "要货申请不能为空")
+        private String id;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
 
     @Getter
     @Setter
