@@ -203,6 +203,9 @@
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
+            <if test="params.isViewVirtual != null and params.isViewVirtual == true">
+                and  vi.sku_id is not null
+            </if>
         </where>
         ) diff
         <where>
@@ -218,9 +221,6 @@
             </if>
             <if test="params.isExceed != null and params.isExceed == false">
                 and  diff.usableQty >= diff.totalVirtualQty
-            </if>
-            <if test="params.isViewVirtual != null and params.isViewVirtual == true">
-                and  diff.skuId is not null
             </if>
             <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory == true">
                 and (diff.virtualQty > 0 or diff.virtualUsableQty > 0 or diff.virtualFrozenQty > 0 or diff.realQty > 0 or diff.usableQty > 0 or diff.frozenQty > 0 or diff.inTransitQty > 0 or diff.waitQcQty > 0 or diff.totalVirtualQty > 0)
