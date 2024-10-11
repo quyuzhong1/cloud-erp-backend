@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
@@ -68,36 +69,48 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 		}
 		Map<String, String> map = new HashMap<>();
 		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
-		for(String changId : changeIds) {
-			PlatformTrackDTO logisticsTrackEntity = this.convert(dmpLogisticsTrackEntityMap.get(changId), cfgOutputId);
-			if(logisticsTrackEntity != null) {
-				map.put(changId, JSON.toJSONString(logisticsTrackEntity));
-			}
+
+		for (Map.Entry<String, DmpLogisticsTrackEntity> stringDmpLogisticsTrackEntityEntry : dmpLogisticsTrackEntityMap.entrySet()) {
+			stringDmpLogisticsTrackEntityEntry.getValue().getTrackNo();
 		}
+
+		List<DmpLogisticsTrackEntity> trackEntityList = new ArrayList<>(dmpLogisticsTrackEntityMap.values());
+		Map<String, List<DmpLogisticsTrackEntity>> trackMap = trackEntityList.stream().collect(Collectors.groupingBy(DmpLogisticsTrackEntity::getTrackNo));
+		for (Map.Entry<String, List<DmpLogisticsTrackEntity>> stringListEntry : trackMap.entrySet()) {
+			PlatformTrackDTO platformTrackDTO = this.convert(stringListEntry.getValue(), cfgOutputId);
+			map.put(stringListEntry.getValue().get(0).getId(), JSON.toJSONString(platformTrackDTO));
+		}
+
 		return map;
 	}
 	
 	/**
      * 解析订单数据
      **/
-    public PlatformTrackDTO convert(DmpLogisticsTrackEntity dmpLogisticsTrackEntity , String cfgOutputId) {
-    	if(this.validateDataBlack(dmpLogisticsTrackEntity, cfgOutputId)) {
+    public PlatformTrackDTO convert(List<DmpLogisticsTrackEntity> trackEntityList , String cfgOutputId) {
+    	if (CollectionUtils.isEmpty(trackEntityList)) {
     		return null;
-    	}
+		}
+		if(this.validateDataBlack(trackEntityList.get(0), cfgOutputId)) {
+			return null;
+		}
+
 		PlatformTrackDTO platformTrackDTO = new PlatformTrackDTO();
 
-		platformTrackDTO.setTrackNo(dmpLogisticsTrackEntity.getTrackNo());
+		platformTrackDTO.setTrackNo(trackEntityList.get(0).getTrackNo());
 
 		List<PlatformTrackDetail> details = new ArrayList<>();
 
+		for (DmpLogisticsTrackEntity dmpLogisticsTrackEntity : trackEntityList) {
+			PlatformTrackDetail platformTrackDetail = new PlatformTrackDetail();
+			platformTrackDetail.setContent(dmpLogisticsTrackEntity.getContent());
+			platformTrackDetail.setTrackNo(dmpLogisticsTrackEntity.getTrackNo());
+			platformTrackDetail.setTrackTime(dmpLogisticsTrackEntity.getTrackTime());
+			platformTrackDetail.setStatus(dmpLogisticsTrackEntity.getStatus());
 
-		PlatformTrackDetail platformTrackDetail = new PlatformTrackDetail();
-		platformTrackDetail.setContent(dmpLogisticsTrackEntity.getContent());
-		platformTrackDetail.setTrackNo(dmpLogisticsTrackEntity.getTrackNo());
-		platformTrackDetail.setTrackTime(dmpLogisticsTrackEntity.getTrackTime());
-		platformTrackDetail.setStatus(dmpLogisticsTrackEntity.getStatus());
+			details.add(platformTrackDetail);
+		}
 
-		details.add(platformTrackDetail);
 		platformTrackDTO.setDetails(details);
 
 
