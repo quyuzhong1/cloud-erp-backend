@@ -53,28 +53,31 @@
         do2.plan_delivery_date ASC,do2.create_time DESC ,do2.id ASC
     </select>
     <select id="tabList" resultType="com.erp.model.srm.dto.DeliveryOrderDTO$StatusListDTO">
-        select tab.receiptStatus,tab.isPrint,sum(qtyDifferences) as qtyDifferences,sum(count)  as count from (
-        SELECT
-        do2.id,
-        do2.receipt_status AS receiptStatus,
-        do2.is_print AS isPrint,
-        case when ( SELECT COUNT ( 1 ) FROM delivery_order_detail doe WHERE doe.main_id = do2.ID AND doe.delivery_qty != doe.receive_qty and doe.is_deleted = false ) >0 then 1 else 0 end  AS qtyDifferences,
-        COUNT ( 1 )   AS COUNT
-        FROM
-        delivery_order do2
-        WHERE
-        do2.is_deleted = FALSE
-        <if test="supplierIdList != null and supplierIdList.size > 0">
-        AND do2.supplier_id IN
+        select t1.receipt_status receiptStatus,t1.is_print isPrint, COALESCE(qtyDifferences , 0) qtyDifferences,COALESCE(count , 0) count 
+        from 
+		(
+		select t.receipt_status,t.is_print,count(*) count from delivery_order t where t.is_deleted = FALSE 
+		<if test="supplierIdList != null and supplierIdList.size > 0">
+        AND t.supplier_id IN
         <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
         </if>
-        GROUP BY
-        do2.receipt_status,
-        do2.is_print,
-        do2.id
-        ) tab group by tab.receiptStatus,tab.isPrint
+		group by t.receipt_status,t.is_print
+		) t1
+		left join 
+		(
+		select t.receipt_status,t.is_print,count(*) qtyDifferences from delivery_order t where t.is_deleted = false 
+		<if test="supplierIdList != null and supplierIdList.size > 0">
+        AND t.supplier_id IN
+        <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        </if>
+		and exists (select * from delivery_order_detail g where t.id = g.main_id and g.is_deleted = false and g.delivery_qty != g.receive_qty) 
+		group by t.receipt_status,t.is_print
+		) t2 
+		on t1.receipt_status = t2.receipt_status and t1.is_print = t2.is_print
     </select>
     <select id="getExportList" resultType="com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO">
         select
