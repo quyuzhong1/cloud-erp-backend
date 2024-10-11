@@ -8,8 +8,6 @@ import com.erp.model.wms.entity.ReportOrderSalesEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
-
 
 /**
  * <p>
@@ -29,7 +27,7 @@ public interface ReportOrderSalesMapper extends BaseMapper<ReportOrderSalesEntit
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<ReportOrderSalesDTO.ListDTO> paging(Page query,@Param("params") ReportOrderSalesDTO.PagingParamDTO params,@Param("maxStatDurationList") List<String> maxStatDurationList);
+    IPage<ReportOrderSalesDTO.ListDTO> paging(Page query,@Param("params") ReportOrderSalesDTO.PagingParamDTO params,@Param("otherParamDTO") ReportOrderSalesDTO.PagingOtherParamDTO otherParamDTO);
     /**
      * 删除
      * @author will

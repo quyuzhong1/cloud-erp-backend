@@ -484,6 +484,22 @@ public class ReportOrderSalesDTO implements Serializable {
 
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class PagingOtherParamDTO {
+        /**
+         * 最大统计时长
+         */
+        private List<String> maxStatDurationList;
+        /**
+         * 预警比较符
+         */
+        private String compareType;
+        /**
+         * 预警时间
+         */
+        private List<String> daysTypeList;
 
+    }
 
 }

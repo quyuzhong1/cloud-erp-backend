@@ -85,30 +85,62 @@
             ${params.sqlMap.default}
             and ros.is_deleted = false
             <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory">
-                and
-                <foreach collection="maxStatDurationList" item="maxStatDuration" separator="and" open="(" close=")">
-                    <if test="maxStatDuration != null and maxStatDuration == 'today'">
-                          ros.today_sales_qty != 0
-                    </if>
-                    <if test="maxStatDuration != null and maxStatDuration == 'yesterday'">
-                          ros.yesterday_sales_qty != 0
-                    </if>
-                    <if test="maxStatDuration != null and maxStatDuration == 'threeDays'">
-                          ros.three_days_sales_qty != 0
-                    </if>
-                    <if test="maxStatDuration != null and maxStatDuration == 'sevenDays'">
-                          ros.seven_days_sales_qty != 0
-                    </if>
-                    <if test="maxStatDuration != null and maxStatDuration == 'fourteenDays'">
-                          ros.fourteen_days_sales_qty != 0
-                    </if>
-                    <if test="maxStatDuration != null and maxStatDuration == 'thirtyDays'">
-                          ros.thirty_days_sales_qty != 0
-                    </if>
-                </foreach>
+                <if test="otherParamDTO.maxStatDurationList != null and otherParamDTO.maxStatDurationList.size > 0">
+                    and
+                    <foreach collection="otherParamDTO.maxStatDurationList" item="maxStatDuration" separator="and" open="(" close=")">
+                        <if test="maxStatDuration != null and maxStatDuration == 'today'">
+                            ros.today_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'yesterday'">
+                            ros.yesterday_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'threeDays'">
+                            ros.three_days_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'sevenDays'">
+                            ros.seven_days_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'fourteenDays'">
+                            ros.fourteen_days_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'thirtyDays'">
+                            ros.thirty_days_sales_qty != 0
+                        </if>
+                    </foreach>
+                </if>
             </if>
             <if test="params.isWarn != null and params.isWarn">
-                and  ros.is_warn = true
+                <if test="otherParamDTO.compareType != null and otherParamDTO.compareType != ''">
+                    <if test="otherParamDTO.daysTypeList != null and otherParamDTO.daysTypeList.size > 0">
+                    and
+                        <foreach collection="otherParamDTO.daysTypeList" item="daysType" open="(" close=")" separator="or">
+                            <if test="daysType == 'today'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.today_sales_qty
+                            </if>
+                            <if test="daysType == 'yesterday'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.yesterday_sales_qty
+                            </if>
+                            <if test="daysType == 'threeDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.three_days_sales_qty
+                            </if>
+                            <if test="daysType == 'sevenDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.seven_days_sales_qty
+                            </if>
+                            <if test="daysType == 'fourteenDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.fourteen_days_sales_qty
+                            </if>
+                            <if test="daysType == 'thirtyDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.thirty_days_sales_qty
+                            </if>
+                            <if test="daysType == 'sixtyDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.sixty_days_sales_qty
+                            </if>
+                            <if test="daysType == 'ninetyDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.ninety_days_sales_qty
+                            </if>
+                        </foreach>
+                    </if>
+                </if>
             </if>
             <if test="params.isVirtualScarce != null and params.isVirtualScarce">
                 and  ros.is_virtual_scarce = true

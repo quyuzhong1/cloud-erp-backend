@@ -86,9 +86,10 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
     @Override
     public PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingDTO) {
-        List<String> maxStatDurationList = getMaxStatDurationList();
+        //最大统计时长
+        ReportOrderSalesDTO.PagingOtherParamDTO paramDTO = getMaxStatDurationList();
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        IPage<ReportOrderSalesDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams(),maxStatDurationList);
+        IPage<ReportOrderSalesDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams(),paramDTO);
         //数据处理
         handlePage(pageData.getRecords());
         return new PagingVO(pageData);
@@ -101,14 +102,22 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
      * @date 2024/10/10 15:34
      * @return String
      */
-    private List<String> getMaxStatDurationList () {
+    private ReportOrderSalesDTO.PagingOtherParamDTO getMaxStatDurationList () {
+        ReportOrderSalesDTO.PagingOtherParamDTO paramDTO = new ReportOrderSalesDTO.PagingOtherParamDTO();
         CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
-        if (ObjectUtil.isEmpty(viewDTO.getVirtualRuleDTO())) {
+        if (ObjectUtil.isEmpty(viewDTO.getSalesDashboardDTO())) {
             return null;
         }
         List<String> statDurationList = viewDTO.getSalesDashboardDTO().getStatDurationList();
         List<String> maxStatDurationList = statDurationList.stream().max(Comparator.comparing(obj -> CfgSettingSalesStatisticsEnum.getNum(obj))).map(Collections::singletonList).orElse(null);
-        return maxStatDurationList;
+        paramDTO.setMaxStatDurationList(maxStatDurationList);
+        //预警比较类型
+        String compareType = viewDTO.getSalesDashboardDTO().getWarnConditionDTO().getCompareType();
+        paramDTO.setCompareType(CfgSettingCompareEnum.getDesc(compareType));
+        //预警天数
+        List<String> daysTypeList = viewDTO.getSalesDashboardDTO().getWarnConditionDTO().getDaysTypeList();
+        paramDTO.setDaysTypeList(daysTypeList);
+        return paramDTO;
     }
 
     @Override
