@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.erp.server.wms.query.SoB2cDeliveryInterceptQueryHandler;
 import com.erp.server.wms.service.WaveListService;
+import com.erp.server.wms.service.WaveListService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
