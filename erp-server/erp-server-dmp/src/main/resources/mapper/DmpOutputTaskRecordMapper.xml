@@ -116,7 +116,7 @@
         dcob.field_value AS sourceCode,
         t.status AS status,
         t.update_time AS lastSyncTime,
-        ('黑名单原因：' || dcob.remark || '，推送失败原因：' || COALESCE(t.response_data , '无')) AS returnMsg,
+        ('黑名单原因：' || dcob.remark) AS returnMsg,
         t.is_need_sync AS isNeedSync,
         CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS isBlack
         FROM dmp_cfg_output_black dcob
