@@ -475,6 +475,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         if(CollectionUtils.isNotEmpty(dto.getUpdateList())){
             this.updateBatchById(dto.getUpdateList());
         }
+        if(CollectionUtils.isNotEmpty(dto.getUpdateMainList())){
+            soReturnInstockService.updateBatchById(dto.getUpdateMainList());
+        }
     }
 
 

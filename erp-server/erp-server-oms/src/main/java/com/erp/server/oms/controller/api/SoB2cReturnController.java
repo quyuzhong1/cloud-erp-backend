@@ -45,7 +45,7 @@ public class SoB2cReturnController extends BaseController {
     private SoB2cReturnService soB2cReturnService;
 
     /**
-     * 退款订单分页
+     * 分页
      *
      * @return
      */
@@ -55,7 +55,17 @@ public class SoB2cReturnController extends BaseController {
         PagingVO<SoB2cReturnDTO.PagingViewDTO> pagingVO = soB2cReturnService.paging(dto);
         return success(pagingVO);
     }
-
+    /**
+     * 退款订单导出
+     *
+     * @return
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery
+    public ApiResult export(@RequestBody @Validated PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
+        soB2cReturnService.exportExcel(dto);
+        return success();
+    }
     /**
      * 标记已退货
      *
@@ -112,5 +122,13 @@ public class SoB2cReturnController extends BaseController {
     @PostMapping("/bindReturnInstock")
     public ApiResult<Boolean> bindReturnInstock(@RequestBody @Valid List<SoB2cReturnDTO.BindReturnInstockViewDTO> list) {
         return success(soB2cReturnService.bindReturnInstock(list));
+    }
+    /**
+     * 删除
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
+        return success(soB2cReturnService.delete(idsDTO.getIds()));
     }
 }

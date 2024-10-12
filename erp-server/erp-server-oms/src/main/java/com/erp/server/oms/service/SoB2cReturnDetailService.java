@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * b2c退货订单明细 服务类
@@ -31,6 +33,6 @@ public interface SoB2cReturnDetailService extends SuperService<SoB2cReturnDetail
     * @return
     */
     Boolean update(SoB2cReturnDetailDTO.UpdateDTO dto);
-
-
+    List<SoB2cReturnDetailEntity> listByMainIds(List<String> mainIds);
+    boolean deleteByMainIds(List<String> mainIds);
 }

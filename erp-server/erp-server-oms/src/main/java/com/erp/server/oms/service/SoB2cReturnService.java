@@ -49,4 +49,8 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
     List<SoB2cReturnDTO.BindReturnInstockViewDTO> bindReturnInstockView(List<String> ids);
 
     Boolean bindReturnInstock(List<SoB2cReturnDTO.BindReturnInstockViewDTO> list);
+
+    Boolean delete(List<String> ids);
+
+    void exportExcel(PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto);
 }

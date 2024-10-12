@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
@@ -84,6 +85,23 @@ public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDe
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, soB2cReturnDetailEntity, null, soB2cReturnDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<SoB2cReturnDetailEntity> listByMainIds(List<String> mainIds) {
+        if(CollectionUtil.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+
+        return this.lambdaQuery().in(SoB2cReturnDetailEntity::getMainId,mainIds).list();
+    }
+
+    @Override
+    public boolean deleteByMainIds(List<String> mainIds) {
+        if(CollectionUtil.isEmpty(mainIds)) {
+            return true;
+        }
+        return this.lambdaUpdate().in(SoB2cReturnDetailEntity::getMainId,mainIds).remove();
     }
 
 

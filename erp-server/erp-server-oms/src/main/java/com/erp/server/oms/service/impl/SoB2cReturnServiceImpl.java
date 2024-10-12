@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
@@ -14,6 +15,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
 import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -22,6 +24,8 @@ import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.model.wms.entity.SoReturnNoticeEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.SoReturnInstockFeign;
@@ -51,6 +55,8 @@ import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_RETURN;
+
 /**
  * <p>
  * b2c退货订单 服务实现类
@@ -77,6 +83,9 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
     private SoOutstockFeign soOutstockFeign;
 
     @Resource
@@ -84,6 +93,8 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
     @Resource
     private SoReturnNoticeFeign soReturnNoticeFeign;
+    @Resource
+    private SoB2cReturnDetailService soB2cReturnDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -240,12 +251,18 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = FeignQuery.create(SoReturnInstockDetailEntity.class).in(SoReturnInstockDetailEntity::getMainId,instockIds).list();
 
         List<SoReturnInstockDetailEntity> updateList = new ArrayList<>();
+        List<SoReturnInstockEntity> updateMainList = new ArrayList<>();
         for (SoB2cReturnDTO.BindReturnInstockViewDTO bindReturnInstockViewDTO : list) {
             List<String> currentInstockCodes = bindReturnInstockViewDTO.getReturnInstockCodes();
             List<SoReturnInstockEntity> currentInstockList = soReturnInstockEntityList.stream().filter(v->currentInstockCodes.contains(v.getCode())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(currentInstockList)){
                 continue;
             }
+            currentInstockList.forEach(v->{
+                v.setSoReturnId(bindReturnInstockViewDTO.getId());
+                v.setSoReturnCode(bindReturnInstockViewDTO.getCode());
+            });
+            updateMainList.addAll(currentInstockList);
             List<String> instockMainIds = currentInstockList.stream().map(v->v.getId()).collect(Collectors.toList());
             List<SoReturnInstockDetailEntity> currentInstockDetailList = soReturnInstockDetailEntityList.stream().filter(v->instockMainIds.contains(v.getMainId()) && v.getSkuId().equals(bindReturnInstockViewDTO.getSkuId())).collect(Collectors.toList());
             currentInstockDetailList.forEach(v->v.setSoReturnDetailId(bindReturnInstockViewDTO.getDetailId()));
@@ -253,8 +270,36 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         }
         //清空原先绑定的单号
         List<String> detailIds = list.stream().map(v->v.getDetailId()).collect(Collectors.toList());
-        soReturnInstockFeign.clearSoReturnAndUpdate(new SoReturnInstockDetailDTO.ClearSoReturnAndUpdateDTO(detailIds,updateList));
+        soReturnInstockFeign.clearSoReturnAndUpdate(new SoReturnInstockDetailDTO.ClearSoReturnAndUpdateDTO(detailIds,updateMainList,updateList));
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean delete(List<String> ids) {
+        List<SoB2cReturnEntity> soB2cReturnEntityList = this.listByIds(ids);
+        List<String> autoAddList = soB2cReturnEntityList.stream().filter(v->v.getSourceType().equals(SoB2cReturnSourceTypeEnum.AUTO_ADD.code)).map(v->v.getCode()).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(autoAddList)){
+            throw new ServiceException("{}自动新增单据不可删除",autoAddList);
+        }
+        List<SoReturnNoticeEntity> soReturnNoticeEntities = FeignQuery.create(SoReturnNoticeEntity.class).in(SoReturnNoticeEntity::getSourceId,ids).list();
+        if(CollectionUtils.isNotEmpty(soReturnNoticeEntities)){
+            List<String> errorCodes = soReturnNoticeEntities.stream().map(v->v.getSourceCode()).collect(Collectors.toList());
+            throw new ServiceException("{}已下推退货通知单不可删除",errorCodes);
+        }
+        List<SoReturnInstockEntity> soReturnInstockEntityList = FeignQuery.create(SoReturnInstockEntity.class).in(SoReturnInstockEntity::getSoReturnId,ids).list();
+        if(CollectionUtils.isNotEmpty(soReturnInstockEntityList)){
+            List<String> errorCodes = soReturnInstockEntityList.stream().map(v->v.getSoReturnCode()).collect(Collectors.toList());
+            throw new ServiceException("{}已关联退货入库单不可删除",errorCodes);
+        }
+        this.removeByIds(ids);
+        soB2cReturnDetailService.deleteByMainIds(ids);
+        return true;
+    }
+
+    @Override
+    public void exportExcel(PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
+        downloadTaskFeign.saveDownloadTask("b2c退货订单导出", EXPORT_OMS_SO_B2C_RETURN.getCode(), dto);
     }
 
     private void fillBindReturnInstockView(List<SoB2cReturnDTO.BindReturnInstockViewDTO> soB2cReturnEntityList) {
@@ -322,8 +367,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         if(CollectionUtils.isEmpty(list)){
             return;
         }
-        String key = DictBasicTypeEnum.PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
         List<String> shopIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getShopId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity>shopInfoEntityList = CollectionUtils.isNotEmpty(shopIds)?shopInfoService.listByIds(shopIds):new ArrayList<>();
         List<String> skuIds = list.stream().map(SoB2cReturnDTO.PagingViewDTO::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -333,10 +376,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         List<SoOutstockDetailEntity> allSoOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
         List<SoReturnInstockDetailEntity> allSoReturnInstockDetailList = soReturnInstockFeign.getSoReturnInstockByReturnIds(ids);
         for (SoB2cReturnDTO.PagingViewDTO pagingViewDTO : list) {
-            String dictPlatform = pagingViewDTO.getPlatform();
-            String platformName = dictBasicList.stream().filter(d -> d.getValue().equals(dictPlatform)).
-                    map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
-            pagingViewDTO.setPlatformName(platformName);
+            pagingViewDTO.setPlatformName(PlatformDictEnum.getNameByCode(pagingViewDTO.getPlatform()));
             ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(pagingViewDTO.getShopId())).findFirst().orElse(new ShopInfoEntity());
             pagingViewDTO.setShopName(shopInfoEntity.getName());
             pagingViewDTO.setTypeName(SoB2cReturnTypeEnum.getName(pagingViewDTO.getType()));

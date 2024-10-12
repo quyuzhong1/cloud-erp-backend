@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,8 @@ public class SoReturnInstockDetailDTO {
     public static class ClearSoReturnAndUpdateDTO {
 
         private List<String> clearSoReturnDetailIds;
+
+        private List<SoReturnInstockEntity> updateMainList;
 
         private List<SoReturnInstockDetailEntity> updateList;
     }
