@@ -4,6 +4,7 @@ import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -93,6 +94,8 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         orderDTO.setInvalidRemark("");
         // 作废状态（false未作废，true已作废）
         orderDTO.setInvalidStatus(false);
+        // 平台取消
+        boolean isCancel = Boolean.FALSE;
         // 订单状态
         // （soB2cBillStatus字典类型）  SoB2cBillStatusEnum
         //UNPAID/READY_TO_SHIP/PROCESSED/SHIPPED/COMPLETED/IN_CANCEL/CANCELLED/INVOICE_PENDING
@@ -106,7 +109,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus)){
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-            orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
+            orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setInvalidStatus(false);
         } else if (OrderStatusEnum.PROCESSED.getCode().equals(orderStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(orderStatus)) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
@@ -126,6 +129,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
             orderDTO.setInvalidStatus(false);
             orderDTO.setInvalidRemark("订单取消中");
             orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_MANUAL.getCode());
+            isCancel = Boolean.TRUE;
         } else if (OrderStatusEnum.CANCELLED.getCode().equals(orderStatus)) {
             // 作废状态（false未作废，true已作废）
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
@@ -134,6 +138,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
             orderDTO.setInvalidStatus(true);
             orderDTO.setInvalidRemark("订单已取消");
             orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_MANUAL.getCode());
+            isCancel = Boolean.TRUE;
         } else if (OrderStatusEnum.INVOICE_PENDING.getCode().equals(orderStatus)) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
@@ -149,7 +154,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(orderStatus);
         // 订单状态
-        orderDTO.setIsCancel(orderDTO.getIsCancel());
+        orderDTO.setIsCancel(isCancel);
 
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
@@ -187,7 +192,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 拦截备注
         orderDTO.setInterceptRemark(orderDetail.getBuyerCancelReason());
         // 来源类型
-        orderDTO.setSourceType("soB2c");
+        orderDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
         // 来源id
         orderDTO.setSourceId(orderDetail.getOrdersn());
         // 来源编码
@@ -232,8 +237,8 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
        return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(orderDetail.getBuyerUserId()))
                 .customerId(String.valueOf(orderDetail.getBuyerUserId()))
-                .name(orderDetail.getBuyerUsername())
-                .receiverName(orderDetail.getBuyerUsername())
+                .name(recipientAddress.getName())
+                .receiverName(recipientAddress.getName())
                 .telNumber(recipientAddress.getPhone())
                 .receiverTelNumber(recipientAddress.getPhone())
                 .email("")

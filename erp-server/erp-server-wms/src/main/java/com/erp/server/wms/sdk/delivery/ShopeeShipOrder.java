@@ -31,6 +31,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.LogisticsMappingFeign;
 import com.erp.server.wms.service.DictBasicService;
+import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.logistics.request.Dropoff;
 import com.sdk.oms.shopee.dto.logistics.request.ShipOrderRequest;
 import com.sdk.oms.shopee.dto.logistics.request.ShipRequest;
@@ -194,7 +195,7 @@ public class ShopeeShipOrder extends AbstractShipOrder {
             }
 
             try {
-                shopeeLogisticsService.shippingOrder(shipRequest,shipOrderRequest);
+                ShopeeResponse shopeeResponse = shopeeLogisticsService.shippingOrder(shipRequest, shipOrderRequest);
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ServiceException e){
                 if (-353 == e.getCode()) {

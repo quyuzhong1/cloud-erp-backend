@@ -397,7 +397,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
         }
         // 虾皮
         if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
-            return true;
+            return false;
         }
         //沃尔玛
         if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(this.dictPlatform)) {
