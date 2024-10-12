@@ -25,14 +25,14 @@ import java.util.List;
 public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
 
 
-    IPage<BomPagingVO> paging(Page query, @Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList,@Param("stateList")List<Integer> stateList);
+    IPage<BomPagingVO> paging(Page query, @Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList);
 
     List<BomVO> getByIds(@Param("bomIdList") List<String> bomIdList);
 
     List<ChangeInfoDTO> getBomInfo(@Param("state")Integer state, @Param("searchKeyword") String searchKeyword);
 
-    List<BomPagingVO> getAllBom(@Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList,@Param("stateList")List<Integer> stateList);
-    Page<BomPagingVO> getAllBom(@Param("page") Page<BomPagingVO> page, @Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList,@Param("stateList")List<Integer> stateList);
+    List<BomPagingVO> getAllBom(@Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList);
+    Page<BomPagingVO> getAllBom(@Param("page") Page<BomPagingVO> page, @Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList);
 
     IPage<BomSkuPageDTO.ListDTO> skuPaging(Page query, @Param("params") BomSkuPageDTO.PagingParamDTO params);
 
