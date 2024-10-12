@@ -125,7 +125,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
 		String syncOperate = dmpPushMsgEntity.getSyncOperate();
 		if(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode().equals(syncOperate)) {
-			String responseData = JSON.parseObject("requestData").getString("remark");
+			String responseData = JSON.parseObject(requestData).getString("remark");
 			dmpOutputUtils.updateStatus(id, DmpOutputTaskRecordStatusEnum.ERROR.getCode(), responseData , responseData);
 			return;
 		}
