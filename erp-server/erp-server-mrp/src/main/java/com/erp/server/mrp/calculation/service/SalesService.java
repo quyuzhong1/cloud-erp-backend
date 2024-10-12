@@ -9,9 +9,9 @@ public interface SalesService {
     /**
      * 查询全部销售出库单销量
      */
-    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllSalesBySoOutStock(String calculation);
+    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySob2c(String calculation, String orderType);
     /**
      * 查询全部销售订单销量
      */
-    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllSalesBySob2c(String calculation);
+    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySoOutStock(String calculation, String orderType);
 }
