@@ -375,12 +375,6 @@ public class WarehouseLocationDTO implements Serializable {
         private String warehouseId;
 
         /**
-         * 库区类型
-         */
-        @NotBlank(message = "库区类型不能为空")
-        private String areaType;
-
-        /**
          * 库区ID
          */
         @NotBlank(message = "库区ID不能为空")

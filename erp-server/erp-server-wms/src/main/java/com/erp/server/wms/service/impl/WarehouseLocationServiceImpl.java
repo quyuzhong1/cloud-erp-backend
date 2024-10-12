@@ -770,7 +770,6 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         insertEntity.setType("location");
         insertEntity.setCode(dto.getCode());
         insertEntity.setName(dto.getName());
-        insertEntity.setAreaType(dto.getAreaType());
         insertEntity.setWarehouseId(dto.getWarehouseId());
         insertEntity.setParentId(dto.getWarehouseAreaId());
         insertEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
@@ -822,7 +821,6 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         newEntity.setWarehouseId(dto.getWarehouseId());
         newEntity.setParentId(dto.getWarehouseAreaId());
         newEntity.setRemark(dto.getRemark());
-        newEntity.setAreaType(dto.getAreaType());
         baseMapper.updateById(newEntity);
 
         WarehouseLocationEntity areaEntity = new WarehouseLocationEntity();

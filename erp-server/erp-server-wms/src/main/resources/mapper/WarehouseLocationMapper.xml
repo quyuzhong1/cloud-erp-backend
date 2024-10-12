@@ -152,7 +152,7 @@
         select wl.id,
                wl.code,
                wl.name,
-               wl.area_type as areaType,
+               wa.area_type as areaType,
                wl.status,
                wl.disabled,
                wl.remark,
@@ -164,7 +164,8 @@
                wt.id as warehouseId,
                wt.kingdee_warehouse_code as warehouseCode,
                wt.name as warehouseName
-        from warehouse_location wl LEFT join warehouse_location wa on wl.parent_id = wa.id AND  wa.is_deleted = FALSE
+        from warehouse_location wl
+            INNER join warehouse_location wa on wl.parent_id = wa.id AND  wa.is_deleted = FALSE
         inner join warehouse wt on wl.warehouse_id = wt.id
         where wl.is_deleted = false  and wt.is_deleted = false
           and wt.approve_status = 'approve'
@@ -300,7 +301,8 @@
     <select id="listAreaByWarehouseId" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
         select id,
                code,
-               name
+               name,
+               area_type
         from warehouse_location
         where warehouse_id = #{warehouseId}
           and type = 'area'
