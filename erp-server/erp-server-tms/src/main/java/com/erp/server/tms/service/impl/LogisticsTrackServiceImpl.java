@@ -213,6 +213,9 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     public void processTrackData(PlatformTrackDTO dto){
         log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
         List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
+        if (StrUtil.isBlank(dto.getTrackNo())){
+            return;
+        }
         //获取跟踪号最新一条记录
         LogisticsTrackEntity trackEntity = this.getMaxByTrackTime(dto.getTrackNo());
         //未查询到物流轨迹 且最近一条物流轨迹是三个月前
