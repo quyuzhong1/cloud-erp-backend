@@ -285,7 +285,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         }
 
         //校验是否存在黑名单
-        checkExistsBlack(ids);
+//        checkExistsBlack(ids);
 
         return this.lambdaUpdate()
                 .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
