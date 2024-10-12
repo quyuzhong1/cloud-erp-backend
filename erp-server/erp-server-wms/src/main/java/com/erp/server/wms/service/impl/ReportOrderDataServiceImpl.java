@@ -27,6 +27,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderDataMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,10 +91,8 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         List<ReportOrderDataEntity> list =  BeanMapperUtils.copyList(ReportOrderDataEntity.class, addOrUpdateList);
         // 数据处理
         List<ReportOrderDataEntity> resultList =  handleData(list);
-        //存在数据的id集合
-        List<String> updateIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(ReportOrderDataEntity::getId).distinct().collect(Collectors.toList());
         //删除多余的订单数据
-        this.removeByNotIds(updateIdList);
+        this.removeByNotIds(null);
         //新增或修改有变更数据
         boolean save = super.saveOrUpdateBatch(resultList);
         if(!save) {
@@ -563,11 +562,16 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             return resultList;
         }
         List<String> sourceDetailIdList = resultList.stream().filter(obj -> StrUtil.isNotEmpty(obj.getSourceDetailId())).map(ReportOrderDataEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        List<ReportOrderDataEntity> oldList =  this.listBySourceDetailIdList(sourceDetailIdList);
+        List<List<String>> sourceDetailIdListPartition = Lists.partition(sourceDetailIdList, 50000);
 
         //发货通知单
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIdList);
-
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = new ArrayList<>();
+        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
+            List<SoDeliveryNoticeDetailEntity> list = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(list)) {
+                soDeliveryNoticeDetailList.addAll(list);
+            }
+        }
         List<ReportOrderDataEntity> addOrUpdateList = new ArrayList<>();
         for (ReportOrderDataEntity entity : resultList) {
 
@@ -579,17 +583,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             //需求数量,订单数量 - 发货通知单数量 - 冻结数量
             entity.setQty(entity.getOrderQty() - deliveryNoticeQty - frozenQty);
 
-            ReportOrderDataEntity reportOrderDataEntity = oldList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), entity.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(reportOrderDataEntity)) {
-                addOrUpdateList.add(entity);
-                continue;
-            }
-            //主键id赋值
-            entity.setId(reportOrderDataEntity.getId());
-            boolean equals = entity.equals(reportOrderDataEntity);
-            if (!equals) {
-                addOrUpdateList.add(entity);
-            }
+            addOrUpdateList.add(entity);
         }
         return addOrUpdateList;
     }

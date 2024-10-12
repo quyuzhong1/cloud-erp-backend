@@ -377,6 +377,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
+        diff.skuId
     </select>
 
 
