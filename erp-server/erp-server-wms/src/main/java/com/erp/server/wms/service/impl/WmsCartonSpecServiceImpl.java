@@ -98,8 +98,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     }
 
     @Override
-    public List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId, Integer boxSpecNo) {
-        return baseMapper.listPackingQtyByMainId(mainId, boxSpecNo);
+    public List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId) {
+        return baseMapper.listPackingQtyByMainId(mainId);
     }
 
     @Override
