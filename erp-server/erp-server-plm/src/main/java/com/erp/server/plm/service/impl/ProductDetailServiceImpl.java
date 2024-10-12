@@ -1665,6 +1665,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //发送金蝶
         sendPushTask(Arrays.asList(detailEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
+        //增加一条虚假的同步任务记录
+        syncWangDianProductDetailService.addPlmPushMsg(entity);
         return this.remove(queryWrapper);
     }
 
