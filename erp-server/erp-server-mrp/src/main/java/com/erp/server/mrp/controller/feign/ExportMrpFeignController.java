@@ -6,6 +6,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
+import com.erp.server.mrp.service.DeliverySuggestService;
 import com.erp.server.mrp.service.PurchaseSuggestService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +26,9 @@ public class ExportMrpFeignController {
     @Resource
     private PurchaseSuggestService purchaseSuggestService;
 
+
+    @Resource
+    private DeliverySuggestService deliverySuggestService;
     /**
      * 历史销量导出数据查询
      * @author will
@@ -61,5 +65,18 @@ public class ExportMrpFeignController {
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
         return replenishmentSuggestionService.listReplenishmentRule(dto);
+    }
+
+    /**
+     * 发货建议导出数据查询
+     * @author will
+     * @date 2024/10/12 14:54
+     * @param dto
+     * @return PagingVO<DeliverySuggestionDTO>
+     */
+    @PostMapping("/listDeliverySuggestion")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
+    public PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
+        return deliverySuggestService.listDeliverySuggestion(dto);
     }
 }

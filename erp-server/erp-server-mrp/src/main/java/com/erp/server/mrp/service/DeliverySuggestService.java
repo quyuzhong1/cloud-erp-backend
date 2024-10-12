@@ -1,4 +1,6 @@
 package com.erp.server.mrp.service;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -48,4 +50,12 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @param detailId 明细id
      */
     List<DeliverySuggestEntity> listByReplenishmentId(String detailId);
+    /**
+     * 查询发货建议导出数据
+     * @author will
+     * @date 2024/10/12 14:56
+     * @param dto
+     * @return PagingVO<DeliverySuggestionDTO>
+     */
+    PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
 }

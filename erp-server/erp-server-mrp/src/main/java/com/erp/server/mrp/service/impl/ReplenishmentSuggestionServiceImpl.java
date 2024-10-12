@@ -755,6 +755,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    public Boolean exportDeliverySuggest(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+        downloadTaskFeign.saveDownloadTask("补货计划_发货建议", FileTaskEventEnum.EXPORT_MRP_DELIVERY_SUGGESTION.getCode(), pagingParamDTO);
+        return Boolean.TRUE;
+    }
+
+    @Override
     public PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(),user.getUid());
@@ -1276,6 +1282,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         salesAnalysisVO.setEstimatesSales(salesEstimates);
         return salesAnalysisVO;
     }
+
+
 
     private List<ReplenishmentResultDTO.TimePeriodSalesDTO> calculationTimePeriodSales(List<ReplenishmentResultDTO.SalesInfoDTO> list, String calcDate) {
         //分时段日均销量
