@@ -2,6 +2,7 @@ package com.erp.server.plm.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.server.plm.constant.SearchType;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +23,7 @@ public class BomInfoHandler extends AbstractQueryHandler {
     public String getTabSql (Object value) {
         // 待提交
         if (SearchType.WAIT_AUDIT.equals(value)) {
-            super.buildDefaultDTO("b.state", Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+            super.buildDefaultDTO("b.state", Collections.singletonList(BomStateEnum.WAIT_AUDIT.getState()));
         }
         return super.getSplicingSQL();
     }

@@ -59,13 +59,6 @@
             </foreach>
             )
         </if>
-        <if test="stateList !=null and stateList.size>0">
-            AND
-            b.state IN
-            <foreach collection="stateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
-        </if>
         <if test="params.permissionSql  !=null  and  params.permissionSql!='' ">
             ${params.permissionSql}
         </if>
