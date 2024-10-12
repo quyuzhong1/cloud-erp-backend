@@ -1277,8 +1277,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             salesEstimates.add(estimate.getSalesQty());
         }
         salesAnalysisVO.setDate(dates);
-        salesAnalysisVO.setDenoisingSales(originalSales);
-        salesAnalysisVO.setHistorySales(sales);
+        salesAnalysisVO.setDenoisingSales(sales);
+        salesAnalysisVO.setHistorySales(originalSales);
         salesAnalysisVO.setEstimatesSales(salesEstimates);
         return salesAnalysisVO;
     }
