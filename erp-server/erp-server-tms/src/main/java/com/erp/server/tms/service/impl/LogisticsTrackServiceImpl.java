@@ -245,13 +245,13 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }else {
                 if (Objects.nonNull(trackEntity) && Objects.nonNull(trackEntity.getTrackTime()) && trackEntity.getTrackTime().isBefore(threeMonthsAgo)){
                     //系统完结
-                    logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),null);
+                    logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),null,trackEntity.getTrackTime());
                 }
             }
         }else {
             if (Objects.nonNull(trackEntity) && Objects.nonNull(trackEntity.getTrackTime()) && trackEntity.getTrackTime().isBefore(threeMonthsAgo)){
                 //系统完结
-                logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),null);
+                logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),null,trackEntity.getTrackTime());
             }
         }
         log.info(StrUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
@@ -269,9 +269,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             return;
         }
         String code = LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode();
+        LocalDateTime trackTime = LocalDateTime.now();
         //集合分区
         List<List<String>> partition = Lists.partition(trackNoList, MathUtil.NUMBER_100);
-        partition.forEach(e -> logisticsBillDetailService.batchUpdateTrackStatus(e,code,null));
+        partition.forEach(e -> logisticsBillDetailService.batchUpdateTrackStatus(e,code,null, trackTime));
     }
 
 

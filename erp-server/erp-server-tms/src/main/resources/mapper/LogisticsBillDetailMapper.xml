@@ -46,7 +46,7 @@
         set
             track_status = #{trackStatus},
             is_api_update = #{aTrue},
-            track_time = NOW(),
+            track_time = #{trackTime},
             <if test="signTime != null">
                 sign_time = #{signTime},
             </if>

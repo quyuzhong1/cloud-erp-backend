@@ -44,5 +44,5 @@ public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetai
      * @param trackStatus
      * @param signTime
      */
-    void updateTransportNo(@Param("trackNoList") List<String> trackNoList, @Param("aTrue") Boolean aTrue, @Param("trackStatus") String trackStatus, @Param("signTime") LocalDateTime signTime);
+    void updateTransportNo(@Param("trackNoList") List<String> trackNoList, @Param("aTrue") Boolean aTrue, @Param("trackStatus") String trackStatus, @Param("signTime") LocalDateTime signTime, @Param("trackTime") LocalDateTime trackTime);
 }

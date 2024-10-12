@@ -134,7 +134,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @param status
      * @param signTime
      */
-    void updateTrackStatus(String trackNo, String status, LocalDateTime signTime);
+    void updateTrackStatus(String trackNo, String status, LocalDateTime signTime, LocalDateTime trackTime);
 
     /**
      * 批量更新跟踪号信息
@@ -142,5 +142,5 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @param code
      * @param now
      */
-    void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime now);
+    void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime now, LocalDateTime trackTime);
 }
