@@ -31,6 +31,7 @@ import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,6 +63,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
     private VirtualWarehouseService virtualWarehouseService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean batchAddOrUpdate(List<ReportOrderDemandDetailDTO.AddDTO> addOrUpdateList) {
         List<ReportOrderDemandDetailEntity> list =  BeanUtil.copyToList(addOrUpdateList,ReportOrderDemandDetailEntity.class);
         //删除原数据

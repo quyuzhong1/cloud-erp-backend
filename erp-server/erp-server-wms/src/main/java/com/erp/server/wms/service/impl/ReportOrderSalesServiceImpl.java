@@ -27,7 +27,6 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderSalesMapper;
 import com.erp.server.wms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -67,7 +66,6 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
     @Autowired
     private CfgSettingVirtualService cfgSettingVirtualService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchAddOrUpdate(List<ReportOrderSalesDTO.AddDTO> addOrUpdateList) {

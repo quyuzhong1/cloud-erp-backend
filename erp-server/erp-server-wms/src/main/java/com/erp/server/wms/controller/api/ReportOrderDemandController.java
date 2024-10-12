@@ -11,6 +11,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.ReportOrderDemandDTO;
+import com.erp.server.wms.service.ReportOrderDataService;
 import com.erp.server.wms.service.ReportOrderDemandService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -36,6 +37,9 @@ public class ReportOrderDemandController extends BaseController {
 
     @Resource
     private ReportOrderDemandService reportOrderDemandService;
+
+    @Resource
+    private ReportOrderDataService reportOrderDataService;
 
     /**
      * 列表查询
@@ -118,5 +122,19 @@ public class ReportOrderDemandController extends BaseController {
     public ApiResult batchAddAllocation(@RequestBody @Validated ValidList<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> list) {
         Boolean flag = reportOrderDemandService.batchAddAllocation(list);
         return flag == true ? success() : failure();
+    }
+
+
+    /**
+     * 更新虚拟仓报表数据
+     * @author will
+     * @date 2024/10/12 11:59
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.UPDATE, desc = "生成虚拟仓报表")
+    @PostMapping(value = "/generateVirtualReport")
+    public ApiResult generateVirtualReport() {
+        reportOrderDataService.generateVirtualReport("",Boolean.FALSE);
+        return success();
     }
 }

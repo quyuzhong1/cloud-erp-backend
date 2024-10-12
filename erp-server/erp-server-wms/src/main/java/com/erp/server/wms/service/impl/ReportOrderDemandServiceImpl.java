@@ -29,13 +29,15 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderDemandMapper;
 import com.erp.server.wms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDER_DEMAND;
@@ -75,7 +77,6 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     private ReportOrderSalesService reportOrderSalesService;
 
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchAddOrUpdate(List<ReportOrderDemandDTO.AddDTO> addOrUpdateList) {
@@ -182,7 +183,6 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean addAllocation(ReportOrderDemandDTO.AddVirtualAllocationDTO dto) {
         ReportOrderDemandDTO.AddAllocationDTO addAllocationDTO = dto.getAddAllocationDTO();
 
@@ -348,6 +348,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean batchAddAllocation(ValidList<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> list) {
         if (CollectionUtil.isEmpty(list) || CollectionUtil.isEmpty(list.getList())) {
             throw new ServiceException("选择数据不能为空");
