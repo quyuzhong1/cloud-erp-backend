@@ -1,5 +1,6 @@
 package com.sdk.oms.shopee.dto.logistics.request;
 
+import cn.hutool.core.annotation.Alias;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,8 +16,6 @@ import java.io.Serializable;
 @Data
 @Builder
 public class Integrated implements Serializable {
-    private Integer branchId;
-    private String senderRealName;
+    @Alias( "tracking_number")
     private String trackingNumber;
-    private String slug;
 }

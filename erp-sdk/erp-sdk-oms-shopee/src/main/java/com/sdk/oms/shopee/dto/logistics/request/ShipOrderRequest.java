@@ -1,5 +1,6 @@
 package com.sdk.oms.shopee.dto.logistics.request;
 
+import cn.hutool.core.annotation.Alias;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,9 +16,12 @@ import java.io.Serializable;
 @Data
 @Builder
 public class ShipOrderRequest implements Serializable {
+    @Alias( "order_sn")
     private String orderSn;
+    @Alias( "package_number")
     private String packageNumber;
     private PickUp pickup;
     private Dropoff dropoff;
+    @Alias( "non_integrated")
     private Integrated nonIntegrated;
 }

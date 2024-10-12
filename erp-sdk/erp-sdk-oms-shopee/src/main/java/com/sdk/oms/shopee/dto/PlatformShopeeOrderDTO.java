@@ -1,5 +1,7 @@
 package com.sdk.oms.shopee.dto;
 
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -197,8 +199,8 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         orderDTO.setSourceId(orderDetail.getOrdersn());
         // 来源编码
         orderDTO.setSourceCode(orderDetail.getOrdersn());
-        // 标签json
-        orderDTO.setLabelJson("{}");
+//        // 标签json
+//        orderDTO.setLabelJson("{}");
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
@@ -208,7 +210,17 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         //B2C销售订单买家信息表
         orderDTO.setReceiver(parseReceiver(orderDetail));
         //B2C销售订单物流信息表
-        orderDTO.setLogisticsList(parseLogisticsList(orderDetail));
+        List<PlatformOrderLogisticsDTO> platformOrderLogisticsDTOS = parseLogisticsList(orderDetail);
+        orderDTO.setLogisticsList(platformOrderLogisticsDTOS);
+        // 标签json
+        if (CollectionUtils.isNotEmpty(orderDetail.getPackageList())){
+            List<String> collect = orderDetail.getPackageList().stream().map(Package::getPackageNumber).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("package_number", String.join(",", collect));
+            orderDTO.setLabelJson(jsonObject.toJSONString());
+        }else {
+            orderDTO.setLabelJson("{}");
+        }
         //B2C销售订单财务信息表
         orderDTO.setFinances(parseFinances(orderDetail));
         orderDTO.setPlatform(PlatformDictEnum.SHOPEE.getCode());
