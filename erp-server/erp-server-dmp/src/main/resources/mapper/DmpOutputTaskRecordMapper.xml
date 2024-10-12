@@ -93,7 +93,6 @@
             AND dcob.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
-        and (dcob.id IS NULL or dcob.field_value = '') 
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
