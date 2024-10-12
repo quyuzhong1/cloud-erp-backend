@@ -4,6 +4,7 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
@@ -12,25 +13,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.oms.aliexpress.api.IopClient;
-import com.erp.oms.aliexpress.api.IopClientImpl;
-import com.erp.oms.aliexpress.api.IopRequest;
-import com.erp.oms.aliexpress.api.IopResponse;
-import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
-import com.erp.oms.aliexpress.enums.Protocol;
-import com.erp.oms.aliexpress.service.AliExpressOrderService;
-import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -38,6 +29,7 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
+import com.sdk.oms.shopee.dto.product.response.Item;
 import com.sdk.oms.shopee.service.ShopeeProductService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -71,6 +63,8 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 			return new ArrayList<>();
 		}
 		
+		List<Object> itemIds = findMongoData.stream().map(f -> f.get("item_id")).collect(Collectors.toList());
+		
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
 		List<CfgAppClientEntity> cfgAppClientEntityList = cfgAppClientService.lambdaQuery()
 			.eq(CfgAppClientEntity::getBusinessType, appClientEnum.getBusinessType())
@@ -82,7 +76,7 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 		}
 		
 		CfgAppClientEntity cfgAppClientEntity = cfgAppClientEntityList.get(0);
-		List<ShopAuthEntity> shopAuthEntityList = FeignQuery.create(ShopAuthEntity.class).eq(ShopAuthEntity::getShopeeId, nextLevelId).list();
+		List<ShopAuthEntity> shopAuthEntityList = FeignQuery.create(ShopAuthEntity.class).eq(ShopAuthEntity::getShopId, findMongoData.get(0).get("nextLevelId").toString()).list();
 		if(CollUtil.isEmpty(shopAuthEntityList)) {
 			throw new ServiceException("shopee授权未配置");
 		}
@@ -97,6 +91,7 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
                 .timeFrom(null)
                 .timeTo(null)
                 .build();
+		productRequest.setItemIdList(StringUtils.join(itemIds, ","));
 		
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
@@ -107,7 +102,7 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
     		data = this.execute(productRequest);
     		if(data == null) {
     			if(count == 10) {
-    				throw new ServiceException("调用shopee产品信息接口重试" + count + "失败");
+    				throw new ServiceException("调用shopee产品明细接口重试" + count + "失败");
     			}
     			try {
 					Thread.sleep(sleepTime);
@@ -119,7 +114,7 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
         
     	JSONObject result = data.getResponse();
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.toJSONString());
+		dmpInputTaskInitDTO.setMsg(result.getJSONArray("item_list").toJSONString());
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
     
 		return dmpInputTaskInitDTOList;
@@ -128,7 +123,7 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 	private ShopeeResponse execute(ProductRequest productRequest){
 		ShopeeResponse response = null;
 		try {
-			response = shopeeProductService.getProductList(productRequest);
+			response = shopeeProductService.getProductItemBaseInfo(productRequest);
 		} catch (Exception e) {
 			Throwable cause = e.getCause();
 			if(cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {

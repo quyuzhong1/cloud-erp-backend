@@ -10,6 +10,7 @@ import javax.net.ssl.SSLHandshakeException;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
@@ -55,7 +56,7 @@ public class DmpInputShopeeProductInitHandler extends DmpInputInitHandler{
 		}
 		
 		CfgAppClientEntity cfgAppClientEntity = cfgAppClientEntityList.get(0);
-		List<ShopAuthEntity> shopAuthEntityList = FeignQuery.create(ShopAuthEntity.class).eq(ShopAuthEntity::getShopeeId, nextLevelId).list();
+		List<ShopAuthEntity> shopAuthEntityList = FeignQuery.create(ShopAuthEntity.class).eq(ShopAuthEntity::getShopId, nextLevelId).list();
 		if(CollUtil.isEmpty(shopAuthEntityList)) {
 			throw new ServiceException("shopee授权未配置");
 		}
@@ -73,26 +74,34 @@ public class DmpInputShopeeProductInitHandler extends DmpInputInitHandler{
 		
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-    	ShopeeResponse data = null;
-    	long sleepTime = 1000;
-    	int count = 0;
-    	while(data == null) {
-    		data = this.execute(productRequest);
-    		if(data == null) {
-    			if(count == 10) {
-    				throw new ServiceException("调用shopee产品信息接口重试" + count + "失败");
-    			}
-    			try {
-					Thread.sleep(sleepTime);
-				} catch (InterruptedException e) {}
-    			sleepTime = sleepTime + 1000;
-    			count = count + 1;
-    		}
-    	}
-        
-    	JSONObject result = data.getResponse();
-        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.toJSONString());
+		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		JSONArray item = new JSONArray();
+		boolean hasNextPage = true;
+		while(hasNextPage) {
+			ShopeeResponse data = null;
+	    	long sleepTime = 1000;
+	    	int count = 0;
+	    	while(data == null) {
+	    		data = this.execute(productRequest);
+	    		if(data == null) {
+	    			if(count == 10) {
+	    				throw new ServiceException("调用shopee产品信息接口重试" + count + "失败");
+	    			}
+	    			try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {}
+	    			sleepTime = sleepTime + 1000;
+	    			count = count + 1;
+	    		}
+	    	}
+	    	JSONObject result = data.getResponse();
+	    	hasNextPage = result.getBoolean("has_next_page");
+	    	if(hasNextPage) {
+	    		productRequest.setOffset(result.getInteger("next_offset"));
+	    	}
+	    	item.addAll(result.getJSONArray("item"));
+		}
+		dmpInputTaskInitDTO.setMsg(item.toJSONString());
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
     
 		return dmpInputTaskInitDTOList;
