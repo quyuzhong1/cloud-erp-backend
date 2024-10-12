@@ -78,7 +78,7 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      **/
     List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(@Param("ids") List<String> ids);
 
-    IPage<RequisitionApplicationDTO.PickingViewDTO> pagingPicking(@Param("page") Page<RequisitionApplicationDTO.PickingViewDTO> page,@Param("id") String id,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
+    IPage<RequisitionApplicationDTO.PickingViewDTO> pagingPicking(@Param("page") Page<RequisitionApplicationDTO.PickingViewDTO> page,@Param("param") RequisitionApplicationDTO.GetPickingViewDTO param,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
 
     List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(@Param("ids") List<String> cartonIds);
 

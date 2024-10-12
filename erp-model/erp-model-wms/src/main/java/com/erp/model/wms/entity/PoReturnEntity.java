@@ -242,6 +242,13 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     @TableField(value = "confirm_date",updateStrategy = FieldStrategy.IGNORED)
     private LocalDate confirmDate;
 
+    /**
+     * 退货单数据来源（selfAdd手动新增，autoAdd自动新增）
+     */
+    @TableField("return_type")
+    private String returnType;
+
+
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";

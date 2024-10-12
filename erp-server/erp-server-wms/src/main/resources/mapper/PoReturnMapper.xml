@@ -42,11 +42,18 @@
         pro.unusual_handle_user_id,
         pro.unusual_handle_user_name,
         pro.confirm_date,
-        prod.is_combination as isCombination
+        pro.return_type,
+        prod.is_combination as isCombination,
+        po.type as purchaseType,
+        po.source_id as purchaseSourceId,
+        po.source_code as purchaseSourceCode,
+        po.source_type as purchaseSourceType,
+        po.subcontract_type as subcontractType
         FROM po_return_detail prod
-        INNER JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
+        INNER JOIN po_return pro ON prod.main_id = pro.id AND pro.is_deleted = FALSE
+        LEFT JOIN purchase_order po ON pro.purchase_order_id = po.id AND po.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
-        and pro.is_deleted = FALSE
+        and prod.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -104,61 +111,6 @@
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
         AND pro.purchase_order_id = #{purchaseOrderId}
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$PagingViewDTO">
-        SELECT
-        pro.id,
-        pro.code,
-        pro.purchase_order_code AS purchaseOrderCode,
-        pro.supplier_name AS supplierName,
-        pro.approve_status AS approveStatus,
-        pro.invalid_status AS invalidStatus,
-        prod.sku_id AS skuId,
-        prod.sku_no AS skuNo,
-        pro.bill_date AS billDate,
-        pro.return_warehouse_id AS returnWarehouseId,
-        pro.return_warehouse_name AS returnWarehouseName,
-        prod.return_qty AS returnQty,
-        prod.return_price AS returnPrice,
-        prod.deduct_amount_qty AS deductAmountQty,
-        prod.currency,
-        prod.currency_symbol AS currencySymbol,
-        pro.return_remark AS returnRemark,
-        pro.return_mode AS returnMode,
-        pro.purchase_user_id AS purchaseUserId,
-        pro.return_user_name AS returnUserName,
-        prod.remark,
-        pro.approve_user_name AS approveUserName,
-        pro.approve_time AS approveTime,
-        pro.create_user_name AS createUserName,
-        pro.create_time AS createTime,
-        prod.remark,
-        prod.warehouse_location AS warehouseLocation,
-        pro.source_type AS sourceType,
-        prod.purchase_order_detail_id AS purchaseOrderDetailId,
-        pro.confirm_status AS confirmStatus,
-        pro.unusual_type,
-        pro.unusual_remark,
-        pro.unusual_handle_user_id,
-        pro.unusual_handle_user_name,
-        pro.confirm_date,
-        prod.is_combination as isCombination
-        FROM po_return_detail prod
-        LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
-        WHERE
-        ${params.sqlMap.default}
-        and pro.is_deleted = FALSE
-        <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        pro.create_time desc,pro.id
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
@@ -382,5 +334,79 @@
             #{item}
         </foreach>
         </if>
+    </select>
+    <select id="listSubcontractOrder"
+            resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$SubcontractOrderDTO">
+        SELECT
+            po.id as purchaseId,
+            po.code as purchaseCode,
+            pr.id as returnId,
+            pr.code as returnCode,
+            po.source_id as subcontractId,
+            po.source_code as subcontractCode,
+            pr.supplier_id as supplierId,
+            pr.supplier_name as supplierName,
+            po.approve_status as approveStatus,
+            prd.sku_id,
+            prd.sku_no
+        FROM po_return pr
+        LEFT JOIN po_return_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE
+        LEFT JOIN purchase_order po ON po.id = pr.purchase_order_id AND po.is_deleted = FALSE
+        <where>
+            pr.is_deleted = FALSE and po.invalid_status = false
+            <if test="poIds != null and poIds.size > 0">
+                AND pr.purchase_order_id in
+                <foreach collection="poIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="batchGetTaxPrice"
+            resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$PurchaseTaxPriceBatchViewDTO">
+        SELECT supplier_id,sku_id,tax_price,tax_rate,currency,currency_symbol,approve_time,purchase_org_id
+        FROM
+        (
+        SELECT
+        pi.supplier_id,
+        pid.sku_id,
+        pid.tax_price,
+        pid.tax_rate,
+        pid.currency,
+        pid.currency_symbol,
+        pi.approve_time,
+        po.purchase_org_id,
+        ROW_NUMBER ( ) OVER ( PARTITION BY pi.supplier_id, pid.sku_id, po.purchase_org_id ORDER BY pi.approve_time DESC ) AS row_num
+        FROM
+        po_instock pi
+        LEFT JOIN po_instock_detail pid ON pi.ID = pid.main_id
+        AND pid.is_deleted =
+        FALSE INNER JOIN purchase_order po ON pi.purchase_order_id = po.ID
+        AND po."type" != 'CGDD06-SYS'
+        <where>
+            1=1
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
+                and pid.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and pi.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrgIdList != null and params.purchaseOrgIdList.size > 0">
+                and po.purchase_org_id in
+                <foreach collection="params.purchaseOrgIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ) M
+        WHERE
+        row_num = 1
     </select>
 </mapper>

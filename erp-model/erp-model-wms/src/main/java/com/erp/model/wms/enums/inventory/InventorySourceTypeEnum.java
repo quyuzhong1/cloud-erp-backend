@@ -31,6 +31,9 @@ public enum InventorySourceTypeEnum {
     OTHER_INSTOCK("otherInstock", "其他入库单"),
     OTHER_OUTSTOCK("otherOutstock", "其他出库单"),
     INSTOCK_FORCAST("instockForcast", "入库预报"),
+    INSTOCK_FORCAST_CHANGE("instockForcastChange", "入库预报变更"),
+    // 自定义规则，无法固化
+    PURCHASE_ORDER_CHANGE("purchaseOrderChange", "采购订单变更"),
     RECEIVE_MATERIAL("receiveMaterial", "领料"),
     RETURN_MATERIAL("returnMaterial", "退料"),
     STOCKTAKING_PROFIT_LOSS("stocktakingProfitLoss", "盘盈盘亏"),
@@ -40,7 +43,7 @@ public enum InventorySourceTypeEnum {
     VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单"),
     REQUISITION_APPLICATION("requisitionApplication", "要货申请"),
     SO_INFO("soInfo", "B2B销售订单"),
-
+    SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "b2c发货拦截单"),
     ;
 
     /**

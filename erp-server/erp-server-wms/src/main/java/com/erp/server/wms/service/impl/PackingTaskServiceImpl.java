@@ -1378,6 +1378,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         checkAdjustData(dto);
         //更新调整数量
         Integer boxNo = updateAdjustData(dto);
+        //更新装箱状态
+        this.updatePackingStatus(listGroupSkuById(dto.getTaskId()),dto.getTaskId());
         //发送飞书通知
         this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "调整装箱-" + AdjustTypeEnum.getName(dto.getAdjustType()));
         return packingTaskEntity.getSourceCode() + "-" + boxNo;
@@ -2292,6 +2294,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         });
         packingTaskDetailService.updateBatchById(detailEntityList);
         List<String> ids = detailEntityList.stream().map(PackingTaskDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(ids)){
+            return;
+        }
         List<PackingTaskEntity> packingTaskEntityList = this.listByIds(ids);
         List<PackingTaskDetailEntity> allDetailList = packingTaskDetailService.listByMainIds(ids);
         packingTaskEntityList.forEach(main->{

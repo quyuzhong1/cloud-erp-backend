@@ -37,6 +37,7 @@ import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -45,6 +46,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -266,6 +268,8 @@ public class PackageServiceImpl implements PackageService {
      */
     @Override
     @DataIdempotent(keyIdName = "dto.ids")
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> mergePackage(PackageDTO.MergePackageDTO dto) {
         List<PackageForecastDTO.AddDTO> addList = assembleDbBySoIds(dto);
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
@@ -283,32 +287,32 @@ public class PackageServiceImpl implements PackageService {
             }
         }
         for (PackageForecastDTO.AddDTO item : addList) {
-            try {
-                List<PackageForecastDetailDTO.AddDTO> detailList = item.getDetailList();
-                //有拦截单的订单返回错误
-                Map<String,String> hasDeliveryInterceptMap = detailList.stream().filter(PackageForecastDetailDTO.AddDTO::isHasDeliveryIntercept).collect(Collectors.toMap(PackageForecastDetailDTO.CommonDTO::getSoCode, v->StrUtil.format("{}/{}/{}",v.getSoCode(),v.getTransportNo(),v.getTrackNo()),(v1, v2)->v1));
-                if(MapUtil.isEmpty(hasDeliveryInterceptMap)){
+            List<PackageForecastDetailDTO.AddDTO> detailList = item.getDetailList();
+            //有拦截单的订单返回错误
+            Map<String, String> hasDeliveryInterceptMap = detailList.stream().filter(PackageForecastDetailDTO.AddDTO::isHasDeliveryIntercept).collect(Collectors.toMap(PackageForecastDetailDTO.CommonDTO::getSoCode, v -> StrUtil.format("{}/{}/{}", v.getSoCode(), v.getTransportNo(), v.getTrackNo()), (v1, v2) -> v1));
+            if (MapUtil.isEmpty(hasDeliveryInterceptMap)) {
+                try {
                     packageForecastService.add(item);
-                    //自动发货
-                    if (dto.getIsAutoOut()) {
-                        List<String> soIdList = item.getDetailList().stream().filter(v->!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
-                        // 异步推送到MQ
-                        soIdList.stream().peek(soId ->{
-                            SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
-                                    soId, soId);
-                            if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())){
-                                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
-                            }
-                        }).collect(Collectors.toList());
-                    }
-                }else{
-                    hasDeliveryInterceptMap.forEach((key,val)->{
-                        resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(),key, val+" 存在拦截单，无法组包，可操作移除后再进行组包"));
-                    });
+                } catch (Exception e) {
+                    log.error("添加组包预报异常 {}", e.getMessage());
+                    item.getDetailList().forEach(v -> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(), v.getSoCode(), StrUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
                 }
-            } catch (Exception e) {
-                log.error("添加组包预报异常 {}", e.getMessage());
-                item.getDetailList().forEach(v-> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(),v.getSoCode(), StrUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
+                //自动发货
+                if (dto.getIsAutoOut()) {
+                    List<String> soIdList = item.getDetailList().stream().filter(v -> !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
+                    // 异步推送到MQ
+                    soIdList.stream().peek(soId -> {
+                        SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
+                                soId, soId);
+                        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+                            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                        }
+                    }).collect(Collectors.toList());
+                }
+            } else {
+                hasDeliveryInterceptMap.forEach((key, val) -> {
+                    resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(), key, val + " 存在拦截单，无法组包，可操作移除后再进行组包"));
+                });
             }
         }
 

@@ -160,6 +160,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/subcontractIssue")
     PagingVO<SubcontractIssueDTO.ListDTO> exportSubcontractIssue(@RequestBody PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/subcontractReturn")
+    PagingVO<SubcontractReturnDTO.ListDTO> exportSubcontractReturn(@RequestBody PagingDTO<SubcontractReturnDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/supplierDeliveryOrder")
     PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(@RequestBody PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 

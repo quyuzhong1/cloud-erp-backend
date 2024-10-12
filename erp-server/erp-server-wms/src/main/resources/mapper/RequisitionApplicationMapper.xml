@@ -269,8 +269,9 @@
         rad.approve_qty - rad.picking_qty AS unpickedQuantity
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
-        where ra.is_deleted = false
-        and ra.id = #{id} and rad.approve_qty > rad.picking_qty
+        where ${param.sqlMap.default}
+        and ra.is_deleted = false
+        and ra.id = #{param.id} and rad.approve_qty > rad.picking_qty
         <if test="ignoreInventorySkus != null and ignoreInventorySkus.size > 0">
             and rad.sku_no not in
             <foreach collection="ignoreInventorySkus" item="sku" open="(" separator="," close=")">
@@ -326,7 +327,7 @@
         wcd.fn_sku,sum(wcd.pack_qty) as pack_qty
             FROM wms_carton wc
                      inner join wms_carton_detail wcd on wcd.main_id = wc.id
-            WHERE wc.is_deleted = FALSE and wc.id in
+            WHERE wc.is_deleted = FALSE and wcd.is_deleted = false and wc.id in
         <foreach collection="params.matchedCartonIds" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>

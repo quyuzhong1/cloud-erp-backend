@@ -97,6 +97,10 @@ public class CfgSettingDTO implements Serializable {
          * 中转设置
          */
         private CfgSettingValueDTO.TransitSettingDTO transitSettingDTO;
+        /**
+         * 委外入库
+         */
+        private CfgSettingValueDTO.SubcontractInStock subcontractInStock;
 
     }
 

@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -14,6 +15,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
@@ -22,6 +24,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
@@ -58,6 +61,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -731,20 +735,19 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         return pair.getValue();
     }
 
-
     @Override
-    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
         //skuId
-        List<String> skuIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSkuId).distinct().collect(Collectors.toList());
         //供应商Id
-        List<String> supplierIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSupplierId).distinct().collect(Collectors.toList());
+        List<String> supplierIdList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getSupplierId).distinct().collect(Collectors.toList());
         //采购数量
-        List<Integer> purchaseQtyList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseQty).distinct().collect(Collectors.toList());
+        List<Integer> purchaseQtyList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseQty).distinct().collect(Collectors.toList());
         //采购组织Id
-        List<String> purchaseOrgIdList = list.getList().stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
+        List<String> purchaseOrgIdList = list.stream().map(PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO::getPurchaseOrgId).distinct().collect(Collectors.toList());
 
 
         PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
@@ -760,7 +763,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
 
         List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> resultList = new ArrayList<>();
-        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO : list.getList()) {
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO : list) {
             PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO purchaseTaxPriceViewDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO();
             if (CollectionUtils.isNotEmpty(viewList)) {
                 PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> obj.getSkuId().equals(searchDTO.getSkuId())
@@ -810,6 +813,19 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         updateDTO.setIds(dto.getIds());
         updateDTO.setDisabled(Boolean.FALSE);
         return updateDisabled(updateDTO);
+    }
+
+    @Override
+    public List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(List<String> skuIdList, List<String> supplierIdList, List<Integer> purchaseQtyList, List<String> purchaseOrgIdList) {
+        PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO dto = new PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO();
+        dto.setSkuIdList(skuIdList);
+        dto.setSupplierIdList(supplierIdList);
+        dto.setPurchaseQtyList(purchaseQtyList);
+        dto.setPurchaseOrgIdList(purchaseOrgIdList);
+        if (CollectionUtils.isEmpty(dto.getPurchaseOrgIdList()) && CollectionUtils.isEmpty(dto.getSkuIdList()) && CollectionUtils.isEmpty(dto.getSupplierIdList())&& CollectionUtils.isEmpty(dto.getPurchaseQtyList())) {
+            return Collections.emptyList();
+        }
+        return baseMapper.batchGetTaxPrice(dto);
     }
 
 

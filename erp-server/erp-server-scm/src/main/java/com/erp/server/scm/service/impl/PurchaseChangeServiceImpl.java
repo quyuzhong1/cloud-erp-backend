@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -19,29 +20,26 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.scm.dto.ListStatusCountDTO;
-import com.erp.model.scm.dto.PurchaseChangeDTO;
-import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
-import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.ExecutionStatusEnum;
-import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastPoChangeDetailDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
+import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -62,6 +60,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -122,7 +121,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SupplierService supplierService;
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -298,7 +302,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             });
 
             // 更新库存信息
-            updateInventoryTransCore(purchaseChangeDetailEntityList, purchaseOrderDetailEntityList);
+            updateInventoryTransCore(purchaseChangeDetailEntityList, purchaseOrderDetailEntityList, entity);
 
             //推送金蝶
             DmpPushTaskEntity pushTaskEntity = syncKingdeePurchaseChangeService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -477,6 +481,45 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         return new PagingVO<>(page);
     }
 
+    /**
+     * 补货采购订单  进行采购变更时  采购退货单_退货单价，允许修改；补货采购订单_采购单价，允许修改
+     * @param purchaseOrderEntity
+     * @param dto
+     * @param purchasePriceDTO
+     * @param batchResultDTOList
+     * @return
+     */
+    private ApiResult<PurchaseChangeDTO.PurchasePriceDTO> batchGetReturnPurchasePrice(PurchaseOrderEntity purchaseOrderEntity, PurchaseChangeDTO.UpdateDTO dto, PurchaseChangeDTO.PurchasePriceDTO purchasePriceDTO, List<BatchResultDTO> batchResultDTOList) {
+        String sourceId = purchaseOrderEntity.getSourceId();
+        List<PoReturnEntity> poReturnEntityList = wmsTaskFeign.listPoReturnByIdList(Collections.singletonList(sourceId));
+        if (CollectionUtils.isEmpty(poReturnEntityList)){
+            batchResultDTOList.add(BatchResultDTO.fail(sourceId, purchaseOrderEntity.getSourceCode(),"采购退货单记录不存在"));
+            purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
+            purchasePriceDTO.setDto(dto);
+            return ApiResult.error("获取退货单价异常",purchasePriceDTO);
+        }
+        //根据主键唯一 只会存在一个退货单记录
+        PoReturnEntity poReturnEntity = poReturnEntityList.get(0);
+        List<PoReturnDetailEntity> poReturnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(Collections.singletonList(poReturnEntity.getId()));
+        if (CollectionUtils.isEmpty(poReturnDetailEntityList)){
+            batchResultDTOList.add(BatchResultDTO.fail(sourceId, purchaseOrderEntity.getSourceCode(),"采购退货单明细记录不存在"));
+            purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
+        }
+        //遍历赋值
+        for (PurchaseChangeDetailDTO.UpdateDTO updateDTO : dto.getDetails()){
+            PoReturnDetailEntity poReturnDetailEntity = poReturnDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(updateDTO.getSkuId()) && Objects.equals(e.getSkuId(), updateDTO.getSkuId())).findFirst().orElse(null);
+            if (Objects.nonNull(poReturnDetailEntity)){
+                BigDecimal returnPrice = Objects.nonNull(poReturnDetailEntity.getReturnPrice()) ? poReturnDetailEntity.getReturnPrice() : BigDecimal.ZERO;
+                updateDTO.setPrice(returnPrice);
+                Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
+                updateDTO.setAmount(MathUtil.multiply(returnPrice,qty));
+            }
+        }
+        purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
+        purchasePriceDTO.setDto(dto);
+        return CollectionUtils.isEmpty(batchResultDTOList) ? ApiResult.success(purchasePriceDTO) : ApiResult.error("获取退货单价异常", purchasePriceDTO);
+    }
+
 
     /**
      * 处理数据id
@@ -634,20 +677,24 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     /**
      * 采购变更单库存变更（需要计算差额，原采购订单已经增加了在途（没有待检的时候））
+     *
      * @param purchaseChangeDetailList 变更单明细
+     * @param entity
      */
-    public void updateInventoryTransCore(List<PurchaseChangeDetailEntity> purchaseChangeDetailList, List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList) {
+    public void updateInventoryTransCore(List<PurchaseChangeDetailEntity> purchaseChangeDetailList, List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList, PurchaseChangeEntity entity) {
         List<InstockForcastDTO.PoChangeDTO> dataList = Lists.newArrayList();
         Map<String,PurchaseOrderDetailEntity> detailOrderMap = originPurchaseOrderDetailEntityList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
+        InstockForcastDTO.PoChangeDTO dto = new InstockForcastDTO.PoChangeDTO();
+        List<InstockForcastPoChangeDetailDTO.AddDTO> members = Lists.newArrayList();
         for(PurchaseChangeDetailEntity purchaseChangeDetailEntity : purchaseChangeDetailList) {
-            InstockForcastDTO.PoChangeDTO dto = new InstockForcastDTO.PoChangeDTO();
-
             String detailOrderId = purchaseChangeDetailEntity.getPurchaseOrderDetailId();
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = detailOrderMap.get(detailOrderId);
             dto.setPurchaseOrderId(purchaseOrderDetailEntity.getPurchaseOrderId());
-            List<InstockForcastPoChangeDetailDTO.AddDTO> members = Lists.newArrayList();
+            dto.setPurchaseChangeOrderId(purchaseChangeDetailEntity.getPurchaseChangeId());
+            dto.setPurchaseChangeOrderCode(entity.getCode());
             InstockForcastPoChangeDetailDTO.AddDTO addDTO = new InstockForcastPoChangeDetailDTO.AddDTO();
             addDTO.setPurchaseOrderDetailId(detailOrderId);
+            addDTO.setPurchaseOrderChangeDetailId(purchaseChangeDetailEntity.getId());
             addDTO.setSkuId(purchaseChangeDetailEntity.getSkuId());
             addDTO.setSkuNo(purchaseChangeDetailEntity.getSkuNo());
             addDTO.setOriginQty(purchaseOrderDetailEntity.getPurchaseQty());
@@ -655,9 +702,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             addDTO.setQty(purchaseChangeDetailEntity.getQty());
             addDTO.setExecutionStatus(purchaseOrderDetailEntity.getExecutionStatus());
             members.add(addDTO);
-            dto.setMembers(members);
-            dataList.add(dto);
         }
+        dto.setMembers(members);
+        dataList.add(dto);
         inventoryFeign.poChangeBatch(dataList);
     }
 

@@ -72,4 +72,13 @@ public class CfgSettingController extends BaseController {
     public ApiResult<CfgSettingValueDTO.PoReturnSettingDTO> getPoReturnSetting() {
         return success(cfgSettingService.getPoReturnSetting());
     }
+
+    /**
+     * 获取委外入库自动入库配置
+     * @return
+     */
+    @GetMapping("/getSubcontractInStockSetting")
+    public ApiResult<String> getSubcontractInStockSetting() {
+        return success(cfgSettingService.getSubcontractInStockSetting());
+    }
 }

@@ -43,15 +43,6 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
 
     Integer pdaListCount(@Param("params") PoInstockDTO.SearchParamDTO searchParamDTO);
     /**
-     * @description: 导出数据查询
-     * @author Will
-     * @date: 2023/4/13 17:30
-     * @param dto
-     * @return List<PurchaseStockInDTO.ListDTO>
-     */
-    List<PoInstockDTO.ListDTO> listExportExcel(@Param("params") PoInstockDTO.ExportParamDTO dto);
-    Page<PoInstockDTO.ListDTO> listExportExcel(@Param("page") Page<PoInstockDTO.ListDTO> page, @Param("params") PoInstockDTO.ExportParamDTO dto);
-    /**
      * @description: 查询退货单
      * @author Will
      * @date: 2023/4/14 14:23

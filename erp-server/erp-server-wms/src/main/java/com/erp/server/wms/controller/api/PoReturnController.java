@@ -12,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -206,10 +207,11 @@ public class PoReturnController extends BaseController {
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<PoReturnEntity> entityList = poReturnService.listByIds(dto.getIds());
         List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listByMainIds(dto.getIds());
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             PoReturnEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
                 resultDTOS.add(BatchResultDTO.fail(id,id,"采购退货单记录不存在"));
@@ -410,5 +412,26 @@ public class PoReturnController extends BaseController {
         return success(unusualHandleUserOption);
     }
 
+    /**
+     * 采购退货-委外订单关联
+     * @Author zdy
+     * @Date 2024/9/23 18:59
+     * @param purchaseOrderId purchaseOrderId
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/listSubcontractOrder")
+    public ApiResult<List<PurchaseReturnOrderDTO.SubcontractOrderDTO>> listSubcontractOrder(@RequestBody @RequestParam("purchaseOrderId") String purchaseOrderId) {
+        List<PurchaseReturnOrderDTO.SubcontractOrderDTO> subcontractOrderDTOS = poReturnService.listSubcontractOrder(purchaseOrderId);
+        return success(subcontractOrderDTOS);
+    }
 
+    /**
+     * 批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    @PostMapping("/batchGetPurchasePrice")
+    public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
+        return success(poReturnService.batchGetPurchasePrice(list));
+    }
 }

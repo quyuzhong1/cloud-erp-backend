@@ -192,7 +192,7 @@
         where
         ${params.sqlMap.default}
         and sb2c.is_deleted = false
-        and EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id) 
+        and EXISTS (SELECT 1 from so_b2c_detail sbd where  sbd.is_deleted = false and sbd.main_id = sb2c.id) 
         <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
             and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
         </if>
@@ -217,7 +217,7 @@
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false
-            and EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id) 
+            and EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id)
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
                 and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
             </if>

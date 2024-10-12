@@ -23,4 +23,12 @@ public interface WarehouseLocationReplenishMapper extends BaseMapper<WarehouseLo
     Page<WarehouseLocationReplenishEntity> listByParam(@Param("page") Page<WarehouseLocationReplenishEntity> page, @Param("params") WarehouseLocationReplenishDTO.SearchParamDTO params);
 
     List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo();
+    /**
+     * 安全库存补货
+     * @date: 2024-09-26
+     * @author: jack
+     */
+    List<WarehouseLocationReplenishDTO.AddDTO> generateReplenishBill();
+
+
 }

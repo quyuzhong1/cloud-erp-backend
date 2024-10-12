@@ -188,10 +188,12 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
 
     /**
      * 移出波次
-     * @param deliveryId 发货单ID
+     *
+     * @param deliveryId  发货单ID
+     * @param isIntercept
      */
     @Override
-    public ApiResult<?> moveOut(String deliveryId) {
+    public ApiResult<?> moveOut(String deliveryId, Boolean isIntercept) {
         LoginUser user = UserContext.getNonLoginUser();
         List<WaveListDetailEntity> entityList = baseMapper.selectList(new QueryWrapper<WaveListDetailEntity>()
                 .eq("delivery_id", deliveryId));
@@ -211,7 +213,11 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
             waveListService.getBaseMapper().delete(new QueryWrapper<WaveListEntity>().in("id", mainIds));
         }
         WaveListDetailEntity entity = entityList.stream().findFirst().orElse(new WaveListDetailEntity());
-        operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
+        if(isIntercept){
+            operateLogService.addModuleOperateLog(String.format("移除发货单--订单发起拦截，自动取消发货单【%s】拣货波次", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
+        }else{
+            operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
+        }
         return ApiResult.success();
     }
 

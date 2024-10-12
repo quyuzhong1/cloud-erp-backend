@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -176,11 +177,30 @@ public class PurchaseChangeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+
+        /**
+         * 采购组织
+         */
+//        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+        /**
+         * 供应商id
+         */
+//        @NotBlank(message = "供应商id不能为空")
+        private String supplierId;
         /**
          * 采购订单id
          */
         @NotBlank(message = "采购订单id不能为空")
         private String purchaseOrderId;
+        /**
+         * 单据类型
+         */
+        private String type;
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
 
         /**
          * 变更日期
@@ -279,4 +299,16 @@ public class PurchaseChangeDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PurchasePriceDTO {
+        /**
+         * 批量表单数据
+         */
+        private PurchaseChangeDTO.UpdateDTO dto;
+        /**
+         * 批量校验结果
+         */
+        private List<BatchResultDTO> batchResultDTOList;
+    }
 }

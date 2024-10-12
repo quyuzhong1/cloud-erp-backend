@@ -23,7 +23,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
 
         if("sku".equals(field)){
-            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.sku_no "+ compareCodeSplicingValueSql +" ) ";
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.sku_no "+ compareCodeSplicingValueSql +" ) ";
         }
 
         if("platformSpuNo".equals(field)){
@@ -38,7 +38,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             return " sb2c.id in ( select so_b2c_id from so_b2c_ref_category  where is_deleted = false and category_id "+compareCodeSplicingValueSql+" ) ";
         }
         if("sb2cd.warehouse_id".equals(field)){
-        	return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
+        	return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
         }
         //标签类型
         if("lable".equals(field)){
