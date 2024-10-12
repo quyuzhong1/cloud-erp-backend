@@ -351,6 +351,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO finish(WarehouseLocationReplenishDTO.HandleDTO dto) {
         LoginUser loginUser = UserContext.getNonLoginUser();
         WarehouseLocationReplenishEntity updateEntity = new WarehouseLocationReplenishEntity();
