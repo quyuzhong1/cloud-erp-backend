@@ -7,6 +7,7 @@ import java.util.List;
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -117,6 +118,13 @@ public class DmpInputShopeeProductInitHandler extends DmpInputInitHandler{
 				return null;
 			}
 			throw new ServiceException("调用shopee产品信息接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+		}
+		
+		if(response != null) {
+			String error = response.getError();
+			if(StringUtils.isNotBlank(error)) {
+				throw new ServiceException("调用shopee产品信息接口报错，错误原因：" + response.getMessage());
+			}
 		}
 		
 		return response;

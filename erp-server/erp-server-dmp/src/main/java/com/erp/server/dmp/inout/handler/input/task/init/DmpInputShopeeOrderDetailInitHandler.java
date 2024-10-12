@@ -28,9 +28,8 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
-import com.sdk.oms.shopee.dto.product.request.ProductRequest;
-import com.sdk.oms.shopee.dto.product.response.Item;
-import com.sdk.oms.shopee.service.ShopeeProductService;
+import com.sdk.oms.shopee.dto.order.request.OrderRequest;
+import com.sdk.oms.shopee.service.ShopeeOrderService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
@@ -44,11 +43,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
+public class DmpInputShopeeOrderDetailInitHandler extends DmpInputInitHandler{
 	@Resource
 	private CfgAppClientService cfgAppClientService;
 	@Resource
-    private ShopeeProductService shopeeProductService;
+    private ShopeeOrderService shopeeOrderService;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -63,7 +62,7 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 			return new ArrayList<>();
 		}
 		
-		List<Object> itemIds = findMongoData.stream().map(f -> f.get("item_id")).collect(Collectors.toList());
+		List<Object> itemIds = findMongoData.stream().map(f -> f.get("order_sn")).collect(Collectors.toList());
 		
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
 		List<CfgAppClientEntity> cfgAppClientEntityList = cfgAppClientService.lambdaQuery()
@@ -81,9 +80,9 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 			throw new ServiceException("shopee授权未配置");
 		}
 		ShopAuthEntity shopAuthEntity = shopAuthEntityList.get(0);
-		ProductRequest productRequest = ProductRequest.builder()
+		OrderRequest orderRequest = OrderRequest.builder()
                 .host(cfgAppClientEntity.getUrl())
-                .offset(null)
+                .offset(0)
                 .token(shopAuthEntity.getAccessToken())
                 .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
                 .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
@@ -91,7 +90,7 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
                 .timeFrom(null)
                 .timeTo(null)
                 .build();
-		productRequest.setItemIdList(StringUtils.join(itemIds, ","));
+		orderRequest.setOrderSns(StringUtils.join(itemIds, ","));
 		
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
@@ -99,10 +98,10 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
     	long sleepTime = 1000;
     	int count = 0;
     	while(data == null) {
-    		data = this.execute(productRequest);
+    		data = this.execute(orderRequest);
     		if(data == null) {
     			if(count == 10) {
-    				throw new ServiceException("调用shopee产品明细接口重试" + count + "失败");
+    				throw new ServiceException("调用shopee订单明细接口重试" + count + "失败");
     			}
     			try {
 					Thread.sleep(sleepTime);
@@ -120,22 +119,22 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 		return dmpInputTaskInitDTOList;
 	}
 	
-	private ShopeeResponse execute(ProductRequest productRequest){
+	private ShopeeResponse execute(OrderRequest orderRequest){
 		ShopeeResponse response = null;
 		try {
-			response = shopeeProductService.getProductItemBaseInfo(productRequest);
+			response = shopeeOrderService.getOrderDetail(orderRequest);
 		} catch (Exception e) {
 			Throwable cause = e.getCause();
 			if(cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
 				return null;
 			}
-			throw new ServiceException("调用shopee产品明细接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+			throw new ServiceException("调用shopee订单明细接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
 		}
 		
 		if(response != null) {
 			String error = response.getError();
 			if(StringUtils.isNotBlank(error)) {
-				throw new ServiceException("调用shopee产品明细接口报错，错误原因：" + response.getMessage());
+				throw new ServiceException("调用shopee订单明细接口报错，错误原因：" + response.getMessage());
 			}
 		}
 		
