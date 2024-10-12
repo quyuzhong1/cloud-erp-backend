@@ -7,10 +7,16 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.server.oms.service.SoB2cAbnormalService;
 import com.erp.server.oms.service.SoB2cErrorService;
+import com.erp.server.oms.service.SoB2cService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -25,7 +31,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +49,8 @@ public class SoB2cRetryJob {
     private SoB2cAbnormalService soB2cAbnormalService;
     @Resource
     private RedisTemplate redisTemplate;
+    @Resource
+    private SoB2cService soB2cService;
 
 
     /**
@@ -59,16 +69,15 @@ public class SoB2cRetryJob {
         try {
             String jobParam = XxlJobHelper.getJobParam();
             int count = 1;
-            String message = "";
-            String type = "";
-            Integer maxVersion = 3;
+            String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+            Integer maxCount = 3;
             List<String> messageList = new ArrayList<>();
             if (StringUtils.isNotBlank(jobParam)) {
                 JSONObject jsonObject = new JSONObject(jobParam);
                 count = jsonObject.getInt("count", 1);
                 messageList = jsonObject.getJSONArray("messageList").stream().map(Object::toString).collect(Collectors.toList());
                 type = jsonObject.getStr("type", "");
-                maxVersion = jsonObject.getInt("maxVersion", 3);
+                maxCount = jsonObject.getInt("maxVersion", 3);
             }
 
             LocalDateTime now = LocalDateTime.now();
@@ -80,9 +89,10 @@ public class SoB2cRetryJob {
             }
 
             LambdaQueryWrapper<SoB2cErrorEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(SoB2cErrorEntity::getType, type) // 添加 type 条件
-                    .le(SoB2cErrorEntity::getUpdateTime, todayNoon) // 添加更新时间条件
-                    .lt(SoB2cErrorEntity::getVersion, maxVersion); // 添加 version 条件
+            queryWrapper.eq(SoB2cErrorEntity::getType, type)
+                    .ne(SoB2cErrorEntity::getMainId, "")
+                    .le(SoB2cErrorEntity::getUpdateTime, todayNoon)
+                    .lt(SoB2cErrorEntity::getRetryCount, maxCount);
 
             if (CollectionUtils.isNotEmpty(messageList)) {
                 for (String keyword : messageList) {
@@ -97,10 +107,25 @@ public class SoB2cRetryJob {
                 XxlJobHelper.log("SoB2cRetryJob 需要执行任务列表为空");
                 return ReturnT.SUCCESS;
             }
+            List<String> soIds = list.stream().map(SoB2cErrorEntity::getMainId).distinct().collect(Collectors.toList());
+            Map<String, SoB2cEntity> soMap = soB2cService.listByIds(soIds)
+                    .stream()
+                    .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
 
             for (SoB2cErrorEntity soB2cErrorEntity : list) {
                 try {
+                    soB2cErrorEntity.setRetryCount(soB2cErrorEntity.getRetryCount() + 1);
+                    soB2cErrorService.updateById(soB2cErrorEntity);
+
+                    if (checkSignDelivery(soB2cErrorEntity, type, soMap)) continue;
+
                     List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId());
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        XxlJobHelper.log("SoB2cRetryJob 当前任务睡眠失败");
+                        continue;
+                    }
                     XxlJobHelper.log("SoB2cRetryJob 当前任务执行成功：{}", JSONUtil.toJsonStr(resultDTOS));
                 } catch (Exception e) {
                     log.error("SoB2cRetryJob 当前任务执行成功异常：soId={}, error={}",
@@ -118,6 +143,32 @@ public class SoB2cRetryJob {
             redisTemplate.delete(redisKey);
         }
         return ReturnT.SUCCESS;
+    }
+
+    /**
+     * 检查当前销售订单是否可标记发货
+     */
+    private boolean checkSignDelivery(SoB2cErrorEntity soB2cErrorEntity, String type, Map<String, SoB2cEntity> soMap) {
+        if (SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode().equalsIgnoreCase(type)){
+            SoB2cEntity soB2cEntity = soMap.get(soB2cErrorEntity.getMainId());
+            if (null == soB2cEntity){
+                XxlJobHelper.log("SoB2cRetryJob 当前任务无销售订单id={}", soB2cErrorEntity.getMainId());
+                return true;
+            }
+            if (soB2cEntity.getIsCancel() || soB2cEntity.getInvalidStatus()){
+                XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单作废={}", soB2cErrorEntity.getMainId());
+                return true;
+            }
+            if (!SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus()) &&
+                    !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus())
+            ){
+                soB2cErrorEntity.setVersion(soB2cErrorEntity.getVersion() + 1);
+                soB2cErrorService.updateById(soB2cErrorEntity);
+                XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单非待发货/已发货={}", soB2cErrorEntity.getMainId());
+                return true;
+            }
+        }
+        return false;
     }
 
 }
