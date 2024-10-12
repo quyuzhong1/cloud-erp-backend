@@ -1264,10 +1264,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<BigDecimal> sales = new ArrayList<>();
         List<BigDecimal> salesEstimates = new ArrayList<>();
         for (LocalDate date : dates) {
-            SalesInfoEntity salesInfo = list.stream()
+            ReplenishmentResultDTO.SalesInfoDTO salesInfo = salesInfoList.stream()
                     .filter(v -> v.getDate().equals(date))
                     .findFirst()
-                    .orElse(new SalesInfoEntity());
+                    .orElse(new ReplenishmentResultDTO.SalesInfoDTO());
             originalSales.add(Optional.ofNullable(salesInfo.getOriginalSalesQty()).map(BigDecimal::new).orElse(null));
             sales.add(salesInfo.getSalesQty());
             ReplenishmentResultDTO.SalesEstimateDTO estimate = estimateEntityList.stream()
