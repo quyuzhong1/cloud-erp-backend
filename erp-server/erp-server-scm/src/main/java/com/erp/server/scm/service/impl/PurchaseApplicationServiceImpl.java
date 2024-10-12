@@ -610,7 +610,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     }
                 }
                 //更新试产量产明细表订单状态
-                if(map.keySet().size()>0){
+                if(map.size()>0){
                     pilotApplicationFeign.updateDetailByPilotApplicationDetailIds(map);
                 }
             }
