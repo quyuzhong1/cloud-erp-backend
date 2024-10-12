@@ -83,7 +83,7 @@ public class SoB2cRetryJob {
                 JSONObject jsonObject = new JSONObject(jobParam);
                 count = jsonObject.getInt("count", 3);
                 messageList = jsonObject.getJSONArray("messageList").stream().map(Object::toString).collect(Collectors.toList());
-                type = jsonObject.getStr("type", "");
+                type = jsonObject.getStr("type", SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode());
                 maxRetryCount = jsonObject.getInt("maxRetryCount", 2);
                 intervalHour = jsonObject.getInt("intervalHour", 0);
             }
