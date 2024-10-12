@@ -353,22 +353,16 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             throw new ServiceException("选择数据不能为空");
         }
         List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> addVirtualAllocationList = list.getList();
-        Map<String, List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO>> map = addVirtualAllocationList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId()).concat(obj.getVirtualWarehouseId())));
 
-        for (Map.Entry<String, List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO>> entry : map.entrySet()) {
-            List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> value = entry.getValue();
-
-            //新增分货
-            ReportOrderDemandDTO.BatchAddVirtualAllocationDTO addVirtualAllocationDTO = value.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(addVirtualAllocationDTO)) {
-                batchAddVirtualAllocation(addVirtualAllocationDTO);
-            }
-
-            //调拨分货
-            List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> addVirtualTransferList = value.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())).collect(Collectors.toList());
-            if (CollectionUtil.isNotEmpty(addVirtualTransferList)) {
-                batchAddVirtualTransfer(addVirtualTransferList);
-            }
+        //新增分货
+        List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> virtualAllocationList = addVirtualAllocationList.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())).collect(Collectors.toList());
+        if (ObjectUtil.isNotEmpty(virtualAllocationList)) {
+            batchAddVirtualAllocation(virtualAllocationList);
+        }
+        //调拨分货
+        List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> virtualTransferList = addVirtualAllocationList.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())).collect(Collectors.toList());
+        if (CollectionUtil.isNotEmpty(virtualTransferList)) {
+            batchAddVirtualTransfer(virtualTransferList);
         }
         return Boolean.TRUE;
     }
@@ -377,21 +371,25 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
      * 批量分货新增分货
      * @author will
      * @date 2024/9/26 10:32
-     * @param addVirtualAllocationDTO
+     * @param virtualAllocationList
      */
-    private void batchAddVirtualAllocation (ReportOrderDemandDTO.BatchAddVirtualAllocationDTO addVirtualAllocationDTO) {
+    private void batchAddVirtualAllocation (List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> virtualAllocationList) {
         //新增分货
         VirtualWarehouseAllocationDTO.AddDTO addDTO = new VirtualWarehouseAllocationDTO.AddDTO();
         addDTO.setType(VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode());
         addDTO.setDirection(VwAllocationDirectionEnum.FORWARD.getCode());
         addDTO.setStatus(VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode());
         addDTO.setDisabled(Boolean.FALSE);
-        VirtualWarehouseAllocationDTO.DetailDto detailDto = new VirtualWarehouseAllocationDTO.DetailDto();
-        detailDto.setSkuId(addVirtualAllocationDTO.getSkuId());
-        detailDto.setWarehouseId(addVirtualAllocationDTO.getWarehouseId());
-        detailDto.setToVirtualWarehouseId(addVirtualAllocationDTO.getVirtualWarehouseId());
-        detailDto.setQty(addVirtualAllocationDTO.getQty());
-        addDTO.setDetailList(Arrays.asList(detailDto));
+        List<VirtualWarehouseAllocationDTO.DetailDto> detailList = new ArrayList<>();
+        for (ReportOrderDemandDTO.BatchAddVirtualAllocationDTO allocationDTO : virtualAllocationList) {
+            VirtualWarehouseAllocationDTO.DetailDto detailDto = new VirtualWarehouseAllocationDTO.DetailDto();
+            detailDto.setSkuId(allocationDTO.getSkuId());
+            detailDto.setWarehouseId(allocationDTO.getWarehouseId());
+            detailDto.setToVirtualWarehouseId(allocationDTO.getVirtualWarehouseId());
+            detailDto.setQty(allocationDTO.getQty());
+            detailList.add(detailDto);
+        }
+        addDTO.setDetailList(detailList);
         virtualWarehouseAllocationService.add(addDTO);
     }
 

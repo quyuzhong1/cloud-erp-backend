@@ -66,13 +66,13 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
         List<ReportOrderDemandDetailEntity> list =  BeanUtil.copyToList(addOrUpdateList,ReportOrderDemandDetailEntity.class);
         //删除原数据
         deleteAll();
-        handleData(list);
+        List<ReportOrderDemandDetailEntity> resultList = handleData(list);
         //无数据则返回
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollectionUtil.isEmpty(resultList)) {
             return Boolean.TRUE;
         }
         //新增或修改有变更数据
-        boolean save = super.saveOrUpdateBatch(list);
+        boolean save = super.saveOrUpdateBatch(resultList);
         if(!save) {
             throw new ServiceException("订单报表信息保存失败");
         }
@@ -178,9 +178,10 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
      * @date 2024/9/27 10:51
      * @param list
      */
-    private void handleData(List<ReportOrderDemandDetailEntity> list) {
+    private List<ReportOrderDemandDetailEntity>  handleData(List<ReportOrderDemandDetailEntity> list) {
+        List<ReportOrderDemandDetailEntity> resultList = new ArrayList<>();
         if (CollectionUtil.isEmpty(list)) {
-            return;
+            return resultList;
         }
         //SKU
         List<String> skuIdList = list.stream().map(ReportOrderDemandDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -208,7 +209,14 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
             //虚拟仓
             String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             entity.setVirtualWarehouseName(virtualWarehouseName);
+
+            //需求数量为0则不新增
+            if (MathUtil.compareTo(entity.getQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+                continue;
+            }
+            resultList.add(entity);
         }
+        return resultList;
     }
 
     /**
