@@ -140,7 +140,8 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * 批量更新跟踪号信息
      * @param trackNoList
      * @param code
-     * @param now
+     * @param signTime
+     * @param trackTime
      */
-    void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime now, LocalDateTime trackTime);
+    void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime signTime, LocalDateTime trackTime);
 }
