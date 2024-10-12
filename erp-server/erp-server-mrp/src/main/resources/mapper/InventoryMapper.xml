@@ -104,7 +104,8 @@
         SELECT
         wdp.approve_status AS status,
         wdpd.qty AS qty,
-        wdp.create_time AS estimateSalesDate,
+        CASE WHEN wdp.approve_status = 'approve' THEN wdp.approve_time
+        ELSE wdp.create_time END AS estimateSalesDate,
         wdp.id AS sourceId,
         wdp.code AS sourceCode
         FROM
