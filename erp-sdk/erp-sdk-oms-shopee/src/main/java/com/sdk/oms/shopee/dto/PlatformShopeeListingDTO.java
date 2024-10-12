@@ -101,7 +101,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
         return productDTO;
     }
 
-    private static String processProductSpec(List<Attribute> attributes) {
+    public static String processProductSpec(List<Attribute> attributes) {
         if (CollectionUtils.isEmpty(attributes)) return "";
         StringBuffer stringBuffer = new StringBuffer();
         attributes.forEach(attribute -> {
