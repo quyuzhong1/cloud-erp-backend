@@ -152,6 +152,7 @@
         select wl.id,
                wl.code,
                wl.name,
+               wl.area_type as areaType,
                wl.status,
                wl.disabled,
                wl.remark,
@@ -163,9 +164,9 @@
                wt.id as warehouseId,
                wt.kingdee_warehouse_code as warehouseCode,
                wt.name as warehouseName
-        from warehouse_location wl inner join warehouse_location wa on wl.parent_id = wa.id
-                                   inner join warehouse wt on wl.warehouse_id = wt.id
-        where wl.is_deleted = false and wa.is_deleted = false and wt.is_deleted = false
+        from warehouse_location wl LEFT join warehouse_location wa on wl.parent_id = wa.id AND  wa.is_deleted = FALSE
+        inner join warehouse wt on wl.warehouse_id = wt.id
+        where wl.is_deleted = false  and wt.is_deleted = false
           and wt.approve_status = 'approve'
           and ${params.sqlMap.default}
         <if test="params.permissionSql != null and params.permissionSql != ''">
