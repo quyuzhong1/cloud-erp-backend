@@ -25,4 +25,6 @@ public interface SoB2cReturnMapper extends BaseMapper<SoB2cReturnEntity> {
     IPage<SoB2cReturnDTO.PagingViewDTO> paging(Page query, SoB2cReturnDTO.PagingParamDTO params);
 
     List<SoB2cReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeView(@Param("ids") List<String> ids);
+
+    List<SoB2cReturnDTO.BindReturnInstockViewDTO> bindReturnInstockView(@Param("ids")List<String> ids);
 }

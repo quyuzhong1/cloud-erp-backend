@@ -92,6 +92,8 @@ public class SoB2cReturnEntity extends BaseEntity<SoB2cReturnEntity> {
     @TableField("sys_return_time")
     private LocalDateTime sysReturnTime;
 
+    @TableField("source_type")
+    private String sourceType;
 
     public static final String CODE = "code";
 

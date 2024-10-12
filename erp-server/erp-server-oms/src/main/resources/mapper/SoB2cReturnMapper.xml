@@ -99,6 +99,23 @@
         and sbr.is_deleted =FALSE
         order by sbr.create_time
     </select>
+    <select id="bindReturnInstockView"
+            resultType="com.erp.model.oms.dto.SoB2cReturnDTO$BindReturnInstockViewDTO">
+        SELECT sbr.id ,
+               sbrd.id as detailId,
+               sbr.code,
+               sbrd.sku_id,
+               sbrd.sku_no,
+               sbrd.return_qty
+        FROM
+            so_b2c_return sbr
+        inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
+        where sbr.is_deleted = false
+        and sbr.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 
 
 </mapper>

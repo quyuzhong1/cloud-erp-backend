@@ -107,6 +107,7 @@ public enum ModuleTypeEnum {
     INVENTORY_SKU_COST("95", "SKU成本"),
     COST_ALLOCATION("96", "费用分摊"),
     PILOT_APPLICATION("97", "试产量产单"),
+    SO_B2C_RETURN("98", "b2c退货单"),
     ;
 
 

@@ -466,6 +466,18 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         return baseMapper.getSoReturnInstockByReturnIds(returnIds);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void clearSoReturnAndUpdate(SoReturnInstockDetailDTO.ClearSoReturnAndUpdateDTO dto) {
+        if(CollectionUtils.isNotEmpty(dto.getClearSoReturnDetailIds())){
+            this.lambdaUpdate().in(SoReturnInstockDetailEntity::getSoReturnDetailId,dto.getClearSoReturnDetailIds()).set(SoReturnInstockDetailEntity::getSoReturnDetailId,"").update();
+        }
+        if(CollectionUtils.isNotEmpty(dto.getUpdateList())){
+            this.updateBatchById(dto.getUpdateList());
+        }
+    }
+
+
     /**
      * @description: 更新委外标识
      * @author Will

@@ -9,14 +9,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -408,6 +403,40 @@ public class SoB2cReturnDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class MatchResultDTO {
+
+        /**
+         * 匹配的sku编号
+         */
+        private String matchSkuNo;
+
+        /**
+         * 入库数量
+         */
+        private Integer instockQty;
+
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MatchDTO {
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * 退货入库单Codes
+         */
+        @NotEmpty(message = "退货入库单不能为空")
+        private List<String> returnInstockCodes;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class GenerateSoReturnNoticeView {
 
         private String id;
@@ -490,5 +519,61 @@ public class SoB2cReturnDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class  BindReturnInstockViewDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+        /**
+         * detailId
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+        /**
+         * code
+         */
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 退货入库单号
+         */
+        @NotEmpty(message = "退货入库单号不能为空")
+        private List<String> returnInstockCodes;
+
+        /**
+         * 匹配的sku编号
+         */
+        private String matchSkuNo;
+
+        /**
+         * 入库数量
+         */
+        private Integer instockQty;
+
     }
 }

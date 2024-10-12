@@ -87,5 +87,30 @@ public class SoB2cReturnController extends BaseController {
         return success();
     }
 
+    /**
+     * 绑定退货入库订单View
+     * @return
+     */
+    @PostMapping("/bindReturnInstockView")
+    public ApiResult<List<SoB2cReturnDTO.BindReturnInstockViewDTO>> bindReturnInstockView(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
+        return success(soB2cReturnService.bindReturnInstockView(idsDTO.getIds()));
+    }
 
+    /**
+     * 匹配退货入库单
+     *
+     * @return
+     */
+    @PostMapping("/matchSoReturnInstock")
+    public ApiResult<SoB2cReturnDTO.MatchResultDTO> matchSoReturnInstock(@RequestBody @Valid SoB2cReturnDTO.MatchDTO matchDTO) {
+        return success(soB2cReturnService.matchSoReturnInstock(matchDTO));
+    }
+    /**
+     * 绑定退货入库订单保存
+     * @return
+     */
+    @PostMapping("/bindReturnInstock")
+    public ApiResult<Boolean> bindReturnInstock(@RequestBody @Valid List<SoB2cReturnDTO.BindReturnInstockViewDTO> list) {
+        return success(soB2cReturnService.bindReturnInstock(list));
+    }
 }

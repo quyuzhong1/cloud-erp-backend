@@ -43,4 +43,10 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
     List<SoB2cReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeView(List<String> ids);
 
     void generateSoB2cReturnNotice(List<SoB2cReturnDTO.GenerateSoReturnNoticeView> list);
+
+    SoB2cReturnDTO.MatchResultDTO matchSoReturnInstock(SoB2cReturnDTO.MatchDTO matchDTO);
+
+    List<SoB2cReturnDTO.BindReturnInstockViewDTO> bindReturnInstockView(List<String> ids);
+
+    Boolean bindReturnInstock(List<SoB2cReturnDTO.BindReturnInstockViewDTO> list);
 }

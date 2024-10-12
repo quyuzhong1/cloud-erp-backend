@@ -158,4 +158,18 @@
         </if>
         ORDER BY sri.create_time desc
     </select>
+    <select id="b2cPagingSelect" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$SearchDTO">
+        select
+        sri.id,
+        sri.code
+        from so_return_instock sri
+        where
+        sri.is_deleted = false
+        and sri.type = 'B2C'
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and (  sri.code ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by
+        sri.code
+    </select>
 </mapper>

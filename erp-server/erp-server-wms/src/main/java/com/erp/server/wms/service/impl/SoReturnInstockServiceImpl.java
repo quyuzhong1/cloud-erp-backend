@@ -28,6 +28,7 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
@@ -1579,6 +1580,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
         }
         return new PagingVO<>(pagingViews);
+    }
+
+    @Override
+    public PagingVO<SoReturnInstockDTO.SearchDTO> pagingSelect(PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO) {
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        SoReturnInstockDTO.SelectDTO params = searchDTO.getParams();
+        IPage<SoReturnInstockDTO.SearchDTO> pagResult = baseMapper.b2cPagingSelect(query, params);
+        return new PagingVO<>(pagResult);
     }
 
     @Override

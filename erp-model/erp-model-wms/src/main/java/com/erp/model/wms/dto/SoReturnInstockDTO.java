@@ -988,4 +988,19 @@ public class SoReturnInstockDTO {
         private String childWarehouseLocation;
 
     }
+    @Data
+    public static class SearchDTO {
+
+        private String id;
+
+        private String code;
+    }
+    @Data
+    public static class SelectDTO {
+
+        /**
+         * code
+         */
+        private String searchKeyword;
+    }
 }

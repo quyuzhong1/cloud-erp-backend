@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -42,4 +43,6 @@ public interface SoReturnInstockFeign {
     @PostMapping("feign/soReturnInstock/getSoReturnInstockByReturnIds")
     List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(@RequestBody List<String> returnIds);
 
+    @PostMapping("feign/soReturnInstock/clearSoReturnAndUpdate")
+    void clearSoReturnAndUpdate(@RequestBody SoReturnInstockDetailDTO.ClearSoReturnAndUpdateDTO dto);
 }
