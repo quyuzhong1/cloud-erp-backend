@@ -736,6 +736,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
         Map<String, WarehouseDTO.ListDTO> finalWarehouseMap = warehouseMap;
         return allList.stream()
                 .map(e -> parseDateLocaleShopIdWarehouseId(e, timeList, shopMap, centerMap, finalWarehouseMap))
+                .filter(e-> null != e)
                 .collect(Collectors.toList());
     }
 
@@ -750,27 +751,30 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
     ) {
         // 按仓储中心补充仓库
         // 多渠道订单以仓储中心对应国家作为站点
-        CfgAmzFulfillmentCenterEntity centerEntity = centerMap.get(e.getFulfillmentCenterId());
+        try {
+            CfgAmzFulfillmentCenterEntity centerEntity = centerMap.get(e.getFulfillmentCenterId());
 
-        // Map<国家代号, 店铺>
-        Map<String, ShopInfoEntity> curMap = shopMap.get(e.getPlatformShopCode());
+            // Map<国家代号, 店铺>
+            Map<String, ShopInfoEntity> curMap = shopMap.get(e.getPlatformShopCode());
 
-        // 设置仓库中心对应仓库
-        if (null != centerEntity && !curMap.isEmpty()){
-            if (org.apache.commons.lang.StringUtils.isNotBlank(centerEntity.getCountry())){
-                ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
-                // 补充仓库信息
-                fillWarehouseInfo(e, warehouseMap, shopInfo);
+            // 设置仓库中心对应仓库
+            if (null != centerEntity && !curMap.isEmpty()){
+                if (org.apache.commons.lang.StringUtils.isNotBlank(centerEntity.getCountry())){
+                    ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
+                    // 补充仓库信息
+                    fillWarehouseInfo(e, warehouseMap, shopInfo);
+                }
             }
+            if (e.hasMultiChannel()) {
+                // 多渠道订单
+                parseMultiChannel(e, timeList, curMap, centerEntity);
+            } else {
+                // B2C订单
+                parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
+            }
+        } catch (Exception ex) {
+            log.error("解析亚马逊订单错误：{}", ExceptionUtil.stacktraceToString(ex));
         }
-        if (e.hasMultiChannel()) {
-            // 多渠道订单
-            parseMultiChannel(e, timeList, curMap, centerEntity);
-        } else {
-            // B2C订单
-            parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
-        }
-
         return e;
     }
 
