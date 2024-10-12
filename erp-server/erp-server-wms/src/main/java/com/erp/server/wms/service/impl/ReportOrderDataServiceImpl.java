@@ -534,11 +534,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
      * @param notIdList
      */
     private void removeByNotIds (List<String> notIdList) {
-        if (CollectionUtils.isEmpty(notIdList)) {
-            this.lambdaUpdate().remove();
-            return;
-        }
-        this.lambdaUpdate().notIn(ReportOrderDataEntity::getId,notIdList).remove();
+        baseMapper.removeByNotIds(notIdList);
     }
 
 

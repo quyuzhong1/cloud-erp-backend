@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.entity.ReportOrderDataEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -24,4 +25,11 @@ public interface ReportOrderDataMapper extends BaseMapper<ReportOrderDataEntity>
      * @return List<ReportOrderDataEntity>
      */
     List<ReportOrderDataEntity> listReportOrderData();
+    /**
+     * notIdList
+     * @author will
+     * @date 2024/10/12 10:48
+     * @param notIdList
+     */
+    void removeByNotIds(@Param("notIdList") List<String> notIdList);
 }

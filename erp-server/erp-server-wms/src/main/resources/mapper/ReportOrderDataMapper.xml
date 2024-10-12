@@ -40,6 +40,16 @@
         warehouse_id, virtual_warehouse_id, sku_id, qty, approve_status, status, invalid_status, source_id, source_detail_id, source_code, source_type, date,delivery_notice_qty,frozen_qty,order_qty
     </sql>
 
+    <delete id="removeByNotIds">
+        delete from report_order_data where is_deleted = false
+        <if test="notIdList != null and notIdList.size > 0">
+            and id not in
+            <foreach collection="notIdList" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </delete>
+
     <!-- 订单报表 -->
     <select id="listReportOrderData" resultType="com.erp.model.wms.entity.ReportOrderDataEntity">
             select
