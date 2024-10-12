@@ -1229,8 +1229,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public SalesAnalysisVO mockSalesAnalysis(MockSalesAnalysisDTO dto) {
 
-        ReplenishmentSuggestionEntity suggestion = getById(dto.getMainId());
         ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getById(dto.getDetailId());
+        ReplenishmentSuggestionEntity suggestion = getById(detail.getMainId());
         CfgRuleSalesQtyEntity cfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultByPlatformAndSkuType(suggestion.getPlatformType(), detail.getSkuType());
         List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults = cfgRuleSalesDenoisingService.listDenoisingBySalesId(cfgRuleSalesQty.getId());
         List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults = cfgRuleSalesFormulaService.listFormulaBySalesId(cfgRuleSalesQty.getId());
