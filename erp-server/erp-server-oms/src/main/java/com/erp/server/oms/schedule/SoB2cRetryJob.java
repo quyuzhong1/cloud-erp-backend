@@ -3,6 +3,7 @@ package com.erp.server.oms.schedule;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -10,6 +11,8 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -23,6 +26,8 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -61,38 +66,38 @@ public class SoB2cRetryJob {
     @XxlJob("SoB2cRetryJob")
     public ReturnT<String> SoB2cRetryJob() {
         String redisKey = RedisKeyConstant.SOB2C_RETRY_JOB;
-        if (redisTemplate.opsForValue().setIfAbsent(RedisKeyConstant.SOB2C_RETRY_JOB, DateUtil.now(), 600, TimeUnit.SECONDS)) {
+        Boolean setSignResult = redisTemplate.opsForValue().setIfAbsent(RedisKeyConstant.SOB2C_RETRY_JOB, DateUtil.now(), 600, TimeUnit.SECONDS);
+        if (Boolean.FALSE.equals(setSignResult)) {
             XxlJobHelper.log("SoB2cRetryJob 执行中,当前跳过");
             return ReturnT.FAIL;
         }
         XxlJobHelper.log("SoB2cRetryJob 执行开始");
         try {
             String jobParam = XxlJobHelper.getJobParam();
-            int count = 1;
+            int count = 3;
+            int intervalHour = 0;
             String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-            Integer maxCount = 3;
+            Integer maxRetryCount = 3;
             List<String> messageList = new ArrayList<>();
             if (StringUtils.isNotBlank(jobParam)) {
                 JSONObject jsonObject = new JSONObject(jobParam);
-                count = jsonObject.getInt("count", 1);
+                count = jsonObject.getInt("count", 3);
                 messageList = jsonObject.getJSONArray("messageList").stream().map(Object::toString).collect(Collectors.toList());
                 type = jsonObject.getStr("type", "");
-                maxCount = jsonObject.getInt("maxVersion", 3);
+                maxRetryCount = jsonObject.getInt("maxRetryCount", 2);
+                intervalHour = jsonObject.getInt("intervalHour", 0);
             }
 
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime todayNoon;
-            if (now.getHour() < 12) {
-                todayNoon = LocalDate.now().atTime(12, 0); // 今天12点的时间
-            } else {
-                todayNoon = LocalDate.now().atStartOfDay().minusDays(1); // 取前一天的0点
+            LocalDateTime todayNoon = LocalDateTime.now();
+            if (intervalHour > 0){
+                todayNoon = LocalDateTime.now().minusHours(intervalHour);
             }
 
             LambdaQueryWrapper<SoB2cErrorEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(SoB2cErrorEntity::getType, type)
                     .ne(SoB2cErrorEntity::getMainId, "")
                     .le(SoB2cErrorEntity::getUpdateTime, todayNoon)
-                    .lt(SoB2cErrorEntity::getRetryCount, maxCount);
+                    .lt(SoB2cErrorEntity::getRetryCount, maxRetryCount);
 
             if (CollectionUtils.isNotEmpty(messageList)) {
                 for (String keyword : messageList) {
