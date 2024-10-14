@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -87,9 +88,12 @@ public class SoB2cRetryJob {
             if (StringUtils.isNotBlank(jobParam)) {
                 JSONObject jsonObject = new JSONObject(jobParam);
                 count = jsonObject.getInt("count", 3);
-                messageList = jsonObject.getJSONArray("messageList").stream().map(Object::toString).collect(Collectors.toList());
+                JSONArray jsonArray = jsonObject.getJSONArray("messageList");
+                if (CollectionUtils.isNotEmpty(jsonArray)){
+                    messageList = jsonArray.stream().map(Object::toString).collect(Collectors.toList());
+                }
                 type = jsonObject.getStr("type", SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode());
-                maxRetryCount = jsonObject.getInt("maxRetryCount", 2);
+                maxRetryCount = jsonObject.getInt("maxRetryCount", 3);
                 intervalHour = jsonObject.getInt("intervalHour", 0);
             }
 
@@ -102,7 +106,7 @@ public class SoB2cRetryJob {
             queryWrapper.eq(SoB2cErrorEntity::getType, type)
                     .ne(SoB2cErrorEntity::getMainId, "")
                     .le(SoB2cErrorEntity::getUpdateTime, todayNoon)
-                    .lt(SoB2cErrorEntity::getRetryCount, maxRetryCount);
+                    .le(SoB2cErrorEntity::getRetryCount, maxRetryCount);
 
             if (CollectionUtils.isNotEmpty(messageList)) {
                 for (String keyword : messageList) {
