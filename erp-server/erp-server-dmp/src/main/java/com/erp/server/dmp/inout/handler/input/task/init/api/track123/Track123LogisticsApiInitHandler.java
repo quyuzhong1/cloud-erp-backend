@@ -181,13 +181,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
             //根据配置进行组装注册数据
             records.forEach(updateTrackDTO -> {
-                if (TrackQueryTypeEnum.TRACK_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTrackNo())){
-                    logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
-                            .trackNo(updateTrackDTO.getTrackNo())
-                            .phoneSuffix(updateTrackDTO.getTelNumber())
-                            .build());
-
-                }else {
+                if (TrackQueryTypeEnum.TRANSPORT_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTransportNo())){
                     String transportNo = updateTrackDTO.getTransportNo();
                     if (StrUtil.isNotBlank(transportNo)){
                         logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
@@ -195,6 +189,11 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                                 .phoneSuffix(updateTrackDTO.getTelNumber())
                                 .build());
                     }
+                }else {
+                    logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
+                            .trackNo(updateTrackDTO.getTrackNo())
+                            .phoneSuffix(updateTrackDTO.getTelNumber())
+                            .build());
                 }
             });
             if (CollectionUtils.isEmpty(logisticsRegisterVOS)){

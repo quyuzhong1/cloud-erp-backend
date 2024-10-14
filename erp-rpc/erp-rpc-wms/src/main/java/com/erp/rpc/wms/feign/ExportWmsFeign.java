@@ -43,6 +43,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/listDiffExportData")
     PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(@RequestBody PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
 
+    /**
+     * 暂时不用
+     */
     @PostMapping("/feign/export/warehouseStatisticsData")
     PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> exportWarehouseStatisticsData(@RequestBody PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
 

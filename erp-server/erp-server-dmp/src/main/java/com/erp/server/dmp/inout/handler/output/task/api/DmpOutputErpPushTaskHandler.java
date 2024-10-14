@@ -198,6 +198,22 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 								}
 							}
 						}
+						if(StringUtils.isNotBlank(code) && code.startsWith("CGRK")) {
+							JSONArray jsonArray = parseObject.getJSONArray("list");
+							if(CollUtil.isNotEmpty(jsonArray)) {
+								if(jsonArray.stream().allMatch(j -> {
+									JSONObject JSONObject = (JSONObject)j;
+									JSONArray FInStockEntry_Link = JSONObject.getJSONArray("FInStockEntry_Link");
+									return FInStockEntry_Link.stream().allMatch(f -> {
+										JSONObject link = (JSONObject)f;
+										String poKingdeeDetailId = link.getString("poKingdeeDetailId");
+										return StringUtils.isNotBlank(poKingdeeDetailId);
+									});
+								})) {
+									break;
+								}
+							}
+						}
 					} catch (Exception e) {
 						log.error("处理上游单据失败" , e);
 					}

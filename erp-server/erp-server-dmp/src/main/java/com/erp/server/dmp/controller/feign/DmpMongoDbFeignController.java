@@ -3,6 +3,8 @@ package com.erp.server.dmp.controller.feign;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
@@ -14,10 +16,17 @@ import com.erp.model.oms.dto.OmsMongoDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.server.dmp.convert.DmpTrackConverter;
 import com.erp.server.dmp.enums.CleanDataTableEnum;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.AmzBusinessHandleService;
+import com.erp.server.dmp.service.DmpTrackService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
+import com.sdk.tms.track123.dto.PlatformTrackDTO;
+import com.sdk.tms.track123.dto.PlatformTrackDetail;
+import com.sdk.tms.track123.model.response.LocalLogisticsInfo;
+import com.sdk.tms.track123.model.response.TrackDetail;
+import com.sdk.tms.track123.model.response.TrackingDetail;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +36,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,6 +58,8 @@ public class DmpMongoDbFeignController{
     private MongoTemplate mongoTemplate;
     @Resource
     private AmzBusinessHandleService amzBusinessHandleService;
+    @Resource
+    private DmpTrackService dmpTrackService;
 
     /**
      * 拉取货件
@@ -115,5 +128,15 @@ public class DmpMongoDbFeignController{
     @PostMapping("/checkOtherOutStock")
     Boolean checkOtherOutStock(@RequestBody DmpPullOtherOutStockDTO resultDTO){
         return amzBusinessHandleService.checkAndSendOtherOutStock(resultDTO);
+    }
+
+    /**
+     * 获取mongo DB中track123数据
+     * @param trackNoList
+     * @return
+     */
+    @PostMapping("/listMongoTractDataByTrackNoList")
+    String listMongoTractDataByTrackNoList(@RequestBody List<String> trackNoList){
+        return dmpTrackService.listMongoTractDataByTrackNoList(trackNoList);
     }
 }

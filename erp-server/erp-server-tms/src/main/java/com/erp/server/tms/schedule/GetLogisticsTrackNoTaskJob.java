@@ -1,6 +1,8 @@
 package com.erp.server.tms.schedule;
 
 import cn.hutool.core.util.IdUtil;
+import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
@@ -10,6 +12,7 @@ import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -18,7 +21,9 @@ import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsService;
+import com.erp.server.tms.service.LogisticsTrackService;
 import com.google.common.collect.Lists;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -53,6 +58,8 @@ public class GetLogisticsTrackNoTaskJob {
     private LogisticsAuthService logisticsAuthService;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
 
     @XxlJob("getLogisticsTrackNo")
     public void getLogisticsTrackNo() {
@@ -161,5 +168,23 @@ public class GetLogisticsTrackNoTaskJob {
             }
         }
         return queryBaseList;
+    }
+
+    /**
+     * 修改物流单单据状态
+     */
+    @XxlJob("updateTrackStatus")
+    public void updateTrackStatus() {
+        XxlJobHelper.log("====开始修改物流单单据状态====");
+        String jobParam = XxlJobHelper.getJobParam();
+        //获取物流编号
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .registerStatus(1)
+                .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .build();
+        logisticsTrackService.updateBeforeThreeMonthTrackNo(query);
+        XxlJobHelper.log("====结束修改物流单单据状态====");
     }
 }

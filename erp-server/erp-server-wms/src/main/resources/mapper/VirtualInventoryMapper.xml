@@ -122,14 +122,12 @@
     <!-- 库存差异分页查询 -->
     <select id="diffPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDTO">
         select
+            id,
             skuId,
             skuNo,
             productName,
             warehouseId,
             warehouseName,
-            virtualWarehouseId,
-            virtualWarehouseCode,
-            virtualWarehouseName,
             virtualQty,
             virtualUsableQty,
             virtualFrozenQty,
@@ -157,6 +155,7 @@
         ),
         Inventory AS (
             SELECT
+            min(id) as id,
             sku_id,
             warehouse_id,
             SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS usableQty,
@@ -171,14 +170,12 @@
             sku_id, warehouse_id
         )
         SELECT
+            i.id,
             i.sku_id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
             i.warehouse_id AS warehouseId,
             wh.name AS warehouseName,
-            vi.virtual_warehouse_id AS virtualWarehouseId,
-            vw.code as virtualWarehouseCode,
-            vw.name as virtualWarehouseName,
             COALESCE(vi.virtualQty, 0) as virtualQty,
             COALESCE(vi.virtualUsableQty, 0) as virtualUsableQty,
             COALESCE(vi.virtualFrozenQty, 0) as virtualFrozenQty,
@@ -190,14 +187,13 @@
             sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id) AS totalVirtualQty
         FROM
         Inventory i
-        LEFT JOIN
-        VirtualInventory vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
+        LEFT JOIN (
+            select sku_id,warehouse_id,sum(virtualQty) as virtualQty,sum(virtualUsableQty) as virtualUsableQty,sum(virtualFrozenQty) as virtualFrozenQty from VirtualInventory group by sku_id,warehouse_id
+        ) vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
         LEFT JOIN
         product_detail pd ON i.sku_id = pd.id AND pd.is_deleted = false
         LEFT JOIN
         warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
-        LEFT JOIN
-        virtual_warehouse vw ON vi.virtual_warehouse_id = vw.id AND vw.is_deleted = false
         <where>
             1 = 1
             <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -232,7 +228,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        diff.skuId
+        diff.id
     </select>
 
     <!-- 库存差异列表数量 -->
@@ -284,6 +280,7 @@
     <!-- 虚拟库存数据 -->
     <select id="listDiffExportData" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDiffExportDataDTO">
         select
+            id,
             skuId,
             skuNo,
             productName,
@@ -319,6 +316,7 @@
         ),
         Inventory AS (
             SELECT
+                min(id) as id,
                 sku_id,
                 warehouse_id,
                 SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS usableQty,
@@ -333,31 +331,32 @@
             sku_id, warehouse_id
         )
         SELECT
-            vi.sku_id AS skuId,
+            i.id,
+            i.sku_id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
-            vi.warehouse_id AS warehouseId,
+            i.warehouse_id AS warehouseId,
             wh.name AS warehouseName,
             vi.virtual_warehouse_id AS virtualWarehouseId,
             vw.code as virtualWarehouseCode,
             vw.name as virtualWarehouseName,
-            vi.virtualQty,
-            vi.virtualUsableQty,
-            vi.virtualFrozenQty,
+            COALESCE(vi.virtualQty, 0) as virtualQty,
+            COALESCE(vi.virtualUsableQty, 0) as virtualUsableQty,
+            COALESCE(vi.virtualFrozenQty, 0) as virtualFrozenQty,
             COALESCE(i.usableQty, 0) + COALESCE(i.frozenQty, 0) as realQty,
             COALESCE(i.usableQty, 0) AS usableQty,
             COALESCE(i.frozenQty, 0) AS frozenQty,
             COALESCE(i.inTransitQty, 0) AS inTransitQty,
             COALESCE(i.waitQcQty, 0) AS waitQcQty,
-            sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id) AS totalVirtualQty
+            COALESCE(sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id),0) AS totalVirtualQty
         FROM
         Inventory i
         LEFT JOIN
         VirtualInventory vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
         LEFT JOIN
-        product_detail pd ON vi.sku_id = pd.id AND pd.is_deleted = false
+        product_detail pd ON i.sku_id = pd.id AND pd.is_deleted = false
         LEFT JOIN
-        warehouse wh ON vi.warehouse_id = wh.id AND wh.is_deleted = false
+        warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
         LEFT JOIN
         virtual_warehouse vw ON vi.virtual_warehouse_id = vw.id AND vw.is_deleted = false
          <where>
@@ -365,11 +364,28 @@
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
+             <if test="params.isViewVirtual != null and params.isViewVirtual == true">
+                 and  vi.sku_id is not null
+             </if>
          </where>
         ) diff
         <where>
             ${params.sqlMap.default}
-            and diff.totalVirtualQty > diff.usableQty + diff.frozenQty
+            <if test="params.isDiff != null and params.isDiff == true">
+                and  diff.totalVirtualQty > diff.usableQty + diff.frozenQty
+            </if>
+            <if test="params.isDiff != null and params.isDiff == false">
+                and  diff.usableQty + diff.frozenQty >= diff.totalVirtualQty
+            </if>
+            <if test="params.isExceed != null and params.isExceed == true">
+                and  diff.totalVirtualQty > diff.usableQty
+            </if>
+            <if test="params.isExceed != null and params.isExceed == false">
+                and  diff.usableQty >= diff.totalVirtualQty
+            </if>
+            <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory == true">
+                and (diff.virtualQty > 0 or diff.virtualUsableQty > 0 or diff.virtualFrozenQty > 0 or diff.realQty > 0 or diff.usableQty > 0 or diff.frozenQty > 0 or diff.inTransitQty > 0 or diff.waitQcQty > 0 or diff.totalVirtualQty > 0)
+            </if>
         </where>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -377,7 +393,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        diff.skuId
+        diff.id
     </select>
 
 
