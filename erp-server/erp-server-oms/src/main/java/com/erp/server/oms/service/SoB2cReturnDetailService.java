@@ -17,13 +17,15 @@ import java.util.List;
 public interface SoB2cReturnDetailService extends SuperService<SoB2cReturnDetailEntity> {
 
     /**
-    * 新增
-    * @author lrp
-    * @date: 2024-10-09
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(SoB2cReturnDetailDTO.AddDTO dto);
+     * 新增
+     *
+     * @param dto
+     * @param mainId
+     * @return
+     * @author lrp
+     * @date: 2024-10-09
+     */
+    BaseResultDTO.AddDTO add(List<SoB2cReturnDetailDTO.AddDTO> dto, String mainId);
 
     /**
     * 修改

@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
@@ -10,8 +11,8 @@ import com.erp.server.oms.service.SoB2cReturnDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.jgoodies.common.bean.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,29 +36,16 @@ public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDe
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(SoB2cReturnDetailDTO.AddDTO addDTO) {
-        SoB2cReturnDetailEntity soB2cReturnDetailEntity = new SoB2cReturnDetailEntity();
-        BeanMapperUtils.copy(addDTO, soB2cReturnDetailEntity);
-
-        // 数据处理
-        handleData(soB2cReturnDetailEntity);
-
-        log.info("开始新增b2c退货订单明细");
-        boolean save = super.save(soB2cReturnDetailEntity);
+    public BaseResultDTO.AddDTO add(List<SoB2cReturnDetailDTO.AddDTO> addDTO, String mainId) {
+        List<SoB2cReturnDetailEntity> addList = BeanUtil.copyToList(addDTO, SoB2cReturnDetailEntity.class);
+        addList.forEach(v->v.setMainId(mainId));
+        boolean save = super.saveBatch(addList);
         if(!save) {
             throw new ServiceException("b2c退货订单明细保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c退货订单明细" , soB2cReturnDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, soB2cReturnDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(soB2cReturnDetailEntity.getId(), soB2cReturnDetailEntity.getId());
+        return new BaseResultDTO.AddDTO();
     }
 
     /**

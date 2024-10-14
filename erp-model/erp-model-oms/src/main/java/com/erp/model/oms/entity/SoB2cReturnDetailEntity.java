@@ -60,6 +60,11 @@ public class SoB2cReturnDetailEntity extends BaseEntity<SoB2cReturnDetailEntity>
     @TableField("remark")
     private String remark;
 
+    @TableField(exist = false)
+    private String soId;
+
+    @TableField(exist = false)
+    private String code;
 
     public static final String MAIN_ID = "main_id";
 

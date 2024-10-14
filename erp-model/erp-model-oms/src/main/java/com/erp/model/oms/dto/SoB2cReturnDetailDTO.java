@@ -106,41 +106,36 @@ public class SoB2cReturnDetailDTO implements Serializable {
         /**
         * 主表id
         */
-        @NotBlank(message = "主表id不能为空")
-        @Size(max = 19,message = "主表id最大长度不能超过19位")
         private String mainId;
 
         /**
         * skuId
         */
-        @NotBlank(message = "skuId不能为空")
-        @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
 
         /**
         * 平台sku
         */
-        @NotBlank(message = "平台sku不能为空")
-        @Size(max = 100,message = "平台sku最大长度不能超过100位")
         private String platformSkuNo;
 
         /**
         * 销售数量
         */
-        @NotNull(message = "销售数量不能为空")
         private Integer saleQty;
 
         /**
         * 退货数量
         */
-        @NotNull(message = "退货数量不能为空")
         private Integer returnQty;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
 

@@ -198,6 +198,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private SoB2cLogisticsService soB2cLogisticsService;
 
+    @Resource
+    private SoB2cReturnService soB2cReturnService;
     @Lazy
     @Autowired
     private SoB2cReceiverService soB2cReceiverService;
@@ -6947,6 +6949,39 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         fillProductSalesList(page.getRecords(), diffDays);
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<SoB2cDTO.GenerateSoB2cReturnViewDTO> generateSoB2cReturnView(List<String> ids) {
+        List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list = baseMapper.generateSoB2cReturnView(ids);
+        if(CollectionUtils.isEmpty(list)){
+            return new ArrayList<>();
+        }
+        if(list.stream().anyMatch(v->!v.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()))){
+            throw new ServiceException("只有已发货可以下推");
+        }
+        List<String> skuIds = list.stream().map(SoB2cDTO.GenerateSoB2cReturnViewDTO::getSkuId).filter(jodd.util.StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> soIds = list.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = soB2cReturnService.listDetailBySoIds(soIds);
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
+        for (SoB2cDTO.GenerateSoB2cReturnViewDTO generateSoB2cReturnViewDTO : list) {
+            SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(generateSoB2cReturnViewDTO.getSkuId())).findFirst().orElse(new SkuVO());
+            generateSoB2cReturnViewDTO.setProductName(skuVO.getSkuName());
+            List<SoOutstockDetailEntity> currentSoOutstockDetailEntityList = soOutstockDetailEntityList.stream().filter(v->v.getSoId().equals(generateSoB2cReturnViewDTO.getId()) && v.getSkuId().equals(generateSoB2cReturnViewDTO.getSkuId())).collect(Collectors.toList());
+            generateSoB2cReturnViewDTO.setOutQty(currentSoOutstockDetailEntityList.stream().map(v->v.getActualQty()).reduce(MathUtil.ZERO, Integer::sum));
+            List<SoB2cReturnDetailEntity> currentSoB2cReturnDetailEntityList = soB2cReturnDetailEntityList.stream().filter(v->v.getSoId().equals(generateSoB2cReturnViewDTO.getId()) && v.getSkuId().equals(generateSoB2cReturnViewDTO.getSkuId())).collect(Collectors.toList());
+            generateSoB2cReturnViewDTO.setAlreadyReturnQty(currentSoB2cReturnDetailEntityList.stream().map(v->v.getReturnQty()).reduce(MathUtil.ZERO, Integer::sum));
+
+        }
+        
+        return list;
+    }
+
+    @Override
+    public Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list) {
+
+        return soB2cReturnService.generateSoB2cReturnBySo(list);
     }
 
     @Override

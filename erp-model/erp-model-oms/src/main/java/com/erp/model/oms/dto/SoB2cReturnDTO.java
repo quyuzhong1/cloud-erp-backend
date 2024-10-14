@@ -121,6 +121,7 @@ public class SoB2cReturnDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
+        private List<SoB2cReturnDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -145,15 +146,11 @@ public class SoB2cReturnDTO implements Serializable {
         /**
         * 平台订单号
         */
-        @NotBlank(message = "平台订单号不能为空")
-        @Size(max = 50,message = "平台订单号最大长度不能超过50位")
         private String platformOrderNo;
 
         /**
         * 平台退货单号
         */
-        @NotBlank(message = "平台退货单号不能为空")
-        @Size(max = 50,message = "平台退货单号最大长度不能超过50位")
         private String platformReturnNo;
 
         /**
@@ -222,9 +219,11 @@ public class SoB2cReturnDTO implements Serializable {
         /**
         * 系统退货时间
         */
-        @NotNull(message = "系统退货时间不能为空")
         private LocalDateTime sysReturnTime;
-
+        /**
+         * 来源类型
+         */
+        private String sourceType;
 
     }
 

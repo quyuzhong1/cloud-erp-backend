@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +32,102 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class SoB2cDTO implements Serializable {
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class GenerateSoB2cReturnViewDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String code;
+        /**
+         * 明细ID
+         */
+        @NotBlank(message = "明细ID不能为空")
+        private String detailId;
+        private String billStatus;
+
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer saleQty;
+
+        /**
+         * 出库数量
+         */
+        private Integer outQty;
+
+        /**
+         * 已退数量
+         */
+        private Integer alreadyReturnQty;
+
+        /**
+         * 退货数量
+         */
+        @NotNull(message = "退货数量不能为空")
+        private Integer returnQty;
+
+        /**
+         * 退货类型 {{oms_url}}common/enumDropDown?type=SoB2cReturnType
+         */
+        @NotBlank(message = "退货类型不能为空")
+        private String returnType;
+
+        /**
+         * 退货原因 {{oms_url}}common/enumDropDown?type=SoB2cReturnReason
+         */
+        @NotBlank(message = "退货原因不能为空")
+        private String returnReason;
+
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderNo;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币别（原币）
+         */
+        private String currency;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+    }
 
     @Data
     @NoArgsConstructor

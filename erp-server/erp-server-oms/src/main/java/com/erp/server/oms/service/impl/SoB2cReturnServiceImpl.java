@@ -7,12 +7,16 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
@@ -42,7 +46,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 
@@ -96,7 +99,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     @Resource
     private SoB2cReturnDetailService soB2cReturnDetailService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoB2cReturnDTO.AddDTO addDTO) {
@@ -108,8 +110,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
         log.info("开始新增b2c退货订单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.THD);
         soB2cReturnEntity.setCode(code);
         boolean save = super.save(soB2cReturnEntity);
         if(!save) {
@@ -118,9 +119,8 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c退货订单" , soB2cReturnEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, soB2cReturnEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_RETURN.getCode(), soB2cReturnEntity.getId(), "新增操作");
+        soB2cReturnDetailService.add(addDTO.getDetailList(), soB2cReturnEntity.getId());
 
         return new BaseResultDTO.AddDTO(soB2cReturnEntity.getId(), code);
     }
@@ -300,6 +300,66 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     @Override
     public void exportExcel(PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
         downloadTaskFeign.saveDownloadTask("b2c退货订单导出", EXPORT_OMS_SO_B2C_RETURN.getCode(), dto);
+    }
+
+    @Override
+    public List<SoB2cReturnEntity> listBySoIds(List<String> soIds) {
+        if(CollectionUtils.isEmpty(soIds)){
+            return new ArrayList<>();
+        }
+
+        return this.lambdaQuery().in(SoB2cReturnEntity::getSoId,soIds).list();
+    }
+
+    @Override
+    public List<SoB2cReturnDetailEntity> listDetailBySoIds(List<String> soIds) {
+        if(CollectionUtils.isEmpty(soIds)){
+            return new ArrayList<>();
+        }
+        return this.baseMapper.listDetailBySoIds(soIds);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generateSoB2cReturnBySo(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list) {
+        if(CollectionUtils.isEmpty(list)){
+            return true;
+        }
+        Map<String,List<SoB2cDTO.GenerateSoB2cReturnViewDTO>> map = list.stream().collect(Collectors.groupingBy(v->v.getId()));
+        List<SoB2cReturnDTO.AddDTO> addList = new ArrayList<>();
+        map.forEach((soId,val)->{
+            SoB2cDTO.GenerateSoB2cReturnViewDTO generateSoB2cReturnViewDTO = val.get(0);
+            SoB2cReturnDTO.AddDTO addDTO = new SoB2cReturnDTO.AddDTO();
+            addDTO.setPlatformOrderNo(generateSoB2cReturnViewDTO.getPlatformOrderNo());
+            addDTO.setSoId(soId);
+            addDTO.setSoCode(generateSoB2cReturnViewDTO.getCode());
+            addDTO.setDictPlatform(generateSoB2cReturnViewDTO.getDictPlatform());
+            addDTO.setShopId(generateSoB2cReturnViewDTO.getShopId());
+            addDTO.setAmount(generateSoB2cReturnViewDTO.getAmount());
+            addDTO.setCurrency(generateSoB2cReturnViewDTO.getCurrency());
+            addDTO.setType(generateSoB2cReturnViewDTO.getReturnType());
+            addDTO.setReason(generateSoB2cReturnViewDTO.getReturnReason());
+            addDTO.setStatus(SoB2cReturnStatusEnum.TO_BE_RETURNED.code);
+            addDTO.setSourceType(SoB2cReturnSourceTypeEnum.SELF_ADD.code);
+            List<SoB2cReturnDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (SoB2cDTO.GenerateSoB2cReturnViewDTO soB2cReturnViewDTO : val) {
+                if(soB2cReturnViewDTO.getReturnQty()+soB2cReturnViewDTO.getAlreadyReturnQty() > soB2cReturnViewDTO.getOutQty()){
+                    throw new ServiceException("{}-sku:{}数量数量+已退不能大于出库数量",addDTO.getSoCode(),soB2cReturnViewDTO.getSkuNo());
+                }
+                SoB2cReturnDetailDTO.AddDTO detail = new SoB2cReturnDetailDTO.AddDTO();
+                detail.setSkuId(soB2cReturnViewDTO.getSkuId());
+                detail.setSkuNo(soB2cReturnViewDTO.getSkuNo());
+                detail.setSaleQty(soB2cReturnViewDTO.getSaleQty());
+                detail.setReturnQty(soB2cReturnViewDTO.getReturnQty());
+                detail.setPlatformSkuNo(soB2cReturnViewDTO.getPlatformSkuNo());
+                detail.setRemark(soB2cReturnViewDTO.getRemark());
+                detailList.add(detail);
+            }
+            addDTO.setDetailList(detailList);
+            addList.add(addDTO);
+        });
+        addList.forEach(this::add);
+        return true;
     }
 
     private void fillBindReturnInstockView(List<SoB2cReturnDTO.BindReturnInstockViewDTO> soB2cReturnEntityList) {

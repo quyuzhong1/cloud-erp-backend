@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -53,4 +55,10 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
     Boolean delete(List<String> ids);
 
     void exportExcel(PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto);
+
+    List<SoB2cReturnEntity> listBySoIds(List<String> soIds);
+
+    List<SoB2cReturnDetailEntity> listDetailBySoIds(List<String> soIds);
+
+    Boolean generateSoB2cReturnBySo(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
 }

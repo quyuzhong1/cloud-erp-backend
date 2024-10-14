@@ -1004,5 +1004,28 @@
             </if>
         </where>
     </select>
+    <select id="generateSoB2cReturnView"
+            resultType="com.erp.model.oms.dto.SoB2cDTO$GenerateSoB2cReturnViewDTO">
+        SELECT sb.id,
+               sbd.id as detailId,
+               sb.code ,
+               sb.bill_status as billStatus,
+               sbd.sku_id as skuId,
+               sbd.sku_no as skuNo,
+               sbd.qty as saleQty,
+               sb.platform_code as platformOrderNo,
+               sb.dict_platform as dictPlatform,
+               sb.shop_id as shopId,
+               sb.amount,
+               sb.currency,
+               sbd.platform_sku_no as platformSkuNo
+        FROM so_b2c sb
+        inner join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
+        where sb.is_deleted = false
+        and sb.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 
 </mapper>
