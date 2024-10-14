@@ -8,12 +8,12 @@ import java.util.List;
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
 
+import cn.hutool.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -102,9 +102,9 @@ public class DmpInputShopeeOrderInitHandler extends DmpInputInitHandler{
 	    		}
 	    	}
 	    	JSONObject result = data.getResponse();
-	    	hasNextPage = result.getBoolean("more");
+	    	hasNextPage = result.getBool("more");
 	    	if(hasNextPage) {
-	    		orderRequest.setCursor(result.getString("next_cursor"));
+	    		orderRequest.setCursor(result.getStr("next_cursor"));
 	    	}
 	    	item.addAll(result.getJSONArray("order_list"));
 		}
