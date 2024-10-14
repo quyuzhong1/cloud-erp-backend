@@ -126,8 +126,17 @@ public class SoB2cRetryJob {
                     .stream()
                     .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
 
-            for (SoB2cErrorEntity soB2cErrorEntity : list) {
+            // 根据订单ID分组去重
+            Map<String, SoB2cErrorEntity> gourpErrorMap = list.stream()
+                    .collect(Collectors.toMap(
+                            SoB2cErrorEntity::getMainId,
+                            entity -> entity,
+                            (existing, replacement) -> existing));
+
+            for (Map.Entry<String, SoB2cErrorEntity> entry : gourpErrorMap.entrySet()) {
+                SoB2cErrorEntity soB2cErrorEntity = entry.getValue();
                 try {
+                    XxlJobHelper.log("SoB2cRetryJob 当前任务执行处理：异常记录Id={}, 订单Id={}", soB2cErrorEntity.getId(), soB2cErrorEntity.getMainId());
                     soB2cErrorEntity.setRetryCount(soB2cErrorEntity.getRetryCount() + 1);
                     soB2cErrorService.updateById(soB2cErrorEntity);
 
@@ -146,7 +155,7 @@ public class SoB2cRetryJob {
                             soB2cErrorEntity.getMainId(),
                             ExceptionUtil.stacktraceToString(e)
                     );
-                    XxlJobHelper.log("SoB2cRetryJob 当前任务执行成功异常：handleType={}, error={}",
+                    XxlJobHelper.log("SoB2cRetryJob 当前任务执行成功异常：soB2cErrorId={}, error={}",
                             soB2cErrorEntity.getMainId(),
                             ExceptionUtil.stacktraceToString(e)
                     );
