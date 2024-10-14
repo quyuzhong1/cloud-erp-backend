@@ -150,7 +150,11 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
      */
     @TableField("warehouse_location_large")
     private String warehouseLocationLarge;
-
+    /**
+     * ean码
+     */
+    @TableField(exist = false)
+    private String ean;
 
     /**
      * 目的国申报价

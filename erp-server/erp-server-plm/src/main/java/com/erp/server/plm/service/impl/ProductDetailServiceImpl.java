@@ -423,6 +423,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (StrUtils.isNotEmpty(r.getSecondSupplier())) {
                     supplierIds.add(r.getSecondSupplier());
                 }
+                noSpecDetailById.setEan(r.getEan());
             });
             if (CollUtil.isNotEmpty(supplierIds)) {
                 Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
@@ -734,6 +735,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
 
         purchaseShowDTOList.forEach(req -> {
+            ProductDetailEntity entity = list.stream().filter(v -> v.getId().equals(req.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            entity.setEan(req.getEan());
             FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(req.getPurchaseUserId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
                 req.setCreateUserName(findUserDTO.getUserName());
