@@ -43,6 +43,7 @@ public class RefundOrderDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingViewDTO {
 
+        private String id;
         /**
          * 单据单号
          */

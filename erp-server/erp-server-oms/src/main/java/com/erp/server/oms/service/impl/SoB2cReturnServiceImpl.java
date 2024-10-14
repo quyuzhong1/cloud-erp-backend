@@ -177,7 +177,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         list.forEach(v->{
             operateLogService.addModuleOperateLog("变更退货订单的退货状态从【待退货】到【已退货】", ModuleTypeEnum.SO_B2C_RETURN.getCode(), v.getId(), "状态变更");
         });
-        this.lambdaUpdate().in(BaseEntity::getId,ids).set(SoB2cReturnEntity::getStatus,SoB2cReturnStatusEnum.TO_BE_RETURNED.code).set(SoB2cReturnEntity::getSysReturnTime, LocalDateTime.now()).update();
+        this.lambdaUpdate().in(BaseEntity::getId,ids).set(SoB2cReturnEntity::getStatus,SoB2cReturnStatusEnum.RETURNED.code).set(SoB2cReturnEntity::getSysReturnTime, LocalDateTime.now()).update();
     }
 
     @Override
