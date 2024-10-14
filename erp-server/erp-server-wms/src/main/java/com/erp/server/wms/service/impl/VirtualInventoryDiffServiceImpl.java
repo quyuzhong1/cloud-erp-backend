@@ -314,11 +314,23 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             //标识
             String flag = StrUtil.format("{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId());
             if (flagList.contains(flag)) {
+                listDTO.setSkuNo("");
+                listDTO.setProductName("");
+                listDTO.setWarehouseName("");
+                listDTO.setRealQty(null);
+                listDTO.setUsableQty(null);
+                listDTO.setFrozenQty(null);
+                listDTO.setInTransitQty(null);
+                listDTO.setWaitQcQty(null);
                 continue;
             }
             flagList.add(flag);
-            //仓库实际数量
-            listDTO.setRealQty(MathUtil.add(listDTO.getUsableQty(),listDTO.getFrozenQty()));
+            //是否差异
+            //是否有差异
+            boolean isDiff = listDTO.getVirtualQty() > listDTO.getRealQty();
+            listDTO.setIsDiff(isDiff);
+            listDTO.setIsDiffName(isDiff ? "是" : "否");
+            //仓库分配数量
             listDTO.setDistributionQty(listDTO.getTotalVirtualQty());
             //未分配数量
             listDTO.setUnDistributionQty(listDTO.getRealQty() - listDTO.getDistributionQty());

@@ -122,6 +122,7 @@
     <!-- 库存差异分页查询 -->
     <select id="diffPaging" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDTO">
         select
+            id,
             skuId,
             skuNo,
             productName,
@@ -154,6 +155,7 @@
         ),
         Inventory AS (
             SELECT
+            min(id) as id,
             sku_id,
             warehouse_id,
             SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS usableQty,
@@ -168,6 +170,7 @@
             sku_id, warehouse_id
         )
         SELECT
+            i.id,
             i.sku_id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
@@ -280,6 +283,7 @@
     <!-- 虚拟库存数据 -->
     <select id="listDiffExportData" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDiffExportDataDTO">
         select
+            id,
             skuId,
             skuNo,
             productName,
@@ -315,6 +319,7 @@
         ),
         Inventory AS (
             SELECT
+                min(id) as id,
                 sku_id,
                 warehouse_id,
                 SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS usableQty,
@@ -329,6 +334,7 @@
             sku_id, warehouse_id
         )
         SELECT
+            i.id,
             vi.sku_id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
@@ -361,11 +367,26 @@
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
+             <if test="params.isViewVirtual != null and params.isViewVirtual == true">
+                 and  vi.sku_id is not null
+             </if>
+             <if test="params.isViewVirtual != null and params.isViewVirtual == false">
+                 and  vi.sku_id is  null
+             </if>
          </where>
         ) diff
         <where>
             ${params.sqlMap.default}
             and diff.totalVirtualQty > diff.usableQty + diff.frozenQty
+            <if test="params.isExceed != null and params.isExceed == true">
+                and  diff.totalVirtualQty > diff.usableQty
+            </if>
+            <if test="params.isExceed != null and params.isExceed == false">
+                and  diff.usableQty >= diff.totalVirtualQty
+            </if>
+            <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory == true">
+                and (diff.virtualQty > 0 or diff.virtualUsableQty > 0 or diff.virtualFrozenQty > 0 or diff.realQty > 0 or diff.usableQty > 0 or diff.frozenQty > 0 or diff.inTransitQty > 0 or diff.waitQcQty > 0 or diff.totalVirtualQty > 0)
+            </if>
         </where>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">

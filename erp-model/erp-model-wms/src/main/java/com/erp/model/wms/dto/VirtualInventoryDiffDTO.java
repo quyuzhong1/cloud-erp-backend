@@ -66,6 +66,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * skuId【可排序】
          */
         private String skuId;
@@ -284,6 +288,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 库存差异
          */
         private Boolean isDiff;
+        /**
+         * 库存差异名称
+         */
+        private String isDiffName;
         /**
          * 虚拟仓库
          */
