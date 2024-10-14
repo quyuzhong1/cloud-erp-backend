@@ -227,7 +227,7 @@
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
-        ORDER BY pt.source_code,wc.box_no
+        ORDER BY pt.source_code
     </select>
     <select id="selectHistoryCartonList"
             resultType="com.erp.model.wms.dto.PackingTaskDetailDTO$HistoryCartonDTO">
