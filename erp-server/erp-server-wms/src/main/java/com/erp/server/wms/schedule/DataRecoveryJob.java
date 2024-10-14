@@ -83,7 +83,7 @@ public class DataRecoveryJob {
                 }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
                     TransferInfoEntity entity = transferInfoService.getById(item);
                     if (Objects.nonNull(entity)){
-                        transferInfoService.disApprove(entity, isPushKingdee, Boolean.TRUE);
+                        transferInfoService.disApprove(entity, isPushKingdee, isManual);
                     }
                 }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
                     soOutstockService.disApprove(soOutstock, isPushKingdee);
