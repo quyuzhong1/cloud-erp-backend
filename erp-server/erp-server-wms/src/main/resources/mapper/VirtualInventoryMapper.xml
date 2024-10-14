@@ -228,7 +228,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        diff.skuId
+        diff.id
     </select>
 
     <!-- 库存差异列表数量 -->
@@ -393,7 +393,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        diff.skuId
+        diff.id
     </select>
 
 
