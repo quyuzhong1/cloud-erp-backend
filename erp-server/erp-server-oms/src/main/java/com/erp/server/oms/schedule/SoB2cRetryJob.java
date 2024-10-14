@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
@@ -28,6 +29,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -53,9 +55,12 @@ public class SoB2cRetryJob {
     @Resource
     private SoB2cAbnormalService soB2cAbnormalService;
     @Resource
-    private RedisTemplate redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
     @Resource
     private SoB2cService soB2cService;
+
+    @Value("${spring.cloud.nacos.discovery.namespace}")
+    private String namespace;
 
 
     /**
@@ -64,9 +69,9 @@ public class SoB2cRetryJob {
      * @Author Jim
      **/
     @XxlJob("SoB2cRetryJob")
-    public ReturnT<String> SoB2cRetryJob() {
-        String redisKey = RedisKeyConstant.SOB2C_RETRY_JOB;
-        Boolean setSignResult = redisTemplate.opsForValue().setIfAbsent(RedisKeyConstant.SOB2C_RETRY_JOB, DateUtil.now(), 600, TimeUnit.SECONDS);
+    public ReturnT<String> soB2cRetryJob() {
+        String redisKey = StrUtil.format(RedisKeyConstant.SOB2C_RETRY_JOB, namespace);
+        Boolean setSignResult = redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 600, TimeUnit.SECONDS);
         if (Boolean.FALSE.equals(setSignResult)) {
             XxlJobHelper.log("SoB2cRetryJob 执行中,当前跳过");
             return ReturnT.FAIL;
@@ -145,7 +150,9 @@ public class SoB2cRetryJob {
             }
             XxlJobHelper.log("SoB2cRetryJob 执行任务列表结束");
         } finally {
-            redisTemplate.delete(redisKey);
+            if (redisTemplate.hasKey(redisKey)){
+                redisTemplate.opsForValue().getOperations().delete(redisKey);
+            }
         }
         return ReturnT.SUCCESS;
     }

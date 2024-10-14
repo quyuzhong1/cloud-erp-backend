@@ -81,5 +81,5 @@ public class RedisKeyConstant {
     /**
      * 重试任务key
      */
-    public static final String SOB2C_RETRY_JOB = "SOB2C_RETRY_JOB";
+    public static final String SOB2C_RETRY_JOB = "SOB2C_RETRY_JOB:{}";
 }
