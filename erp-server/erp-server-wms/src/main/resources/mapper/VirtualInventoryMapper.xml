@@ -127,9 +127,6 @@
             productName,
             warehouseId,
             warehouseName,
-            virtualWarehouseId,
-            virtualWarehouseCode,
-            virtualWarehouseName,
             virtualQty,
             virtualUsableQty,
             virtualFrozenQty,
@@ -176,9 +173,6 @@
             pd.name AS productName,
             i.warehouse_id AS warehouseId,
             wh.name AS warehouseName,
-            vi.virtual_warehouse_id AS virtualWarehouseId,
-            vw.code as virtualWarehouseCode,
-            vw.name as virtualWarehouseName,
             COALESCE(vi.virtualQty, 0) as virtualQty,
             COALESCE(vi.virtualUsableQty, 0) as virtualUsableQty,
             COALESCE(vi.virtualFrozenQty, 0) as virtualFrozenQty,
@@ -190,14 +184,13 @@
             sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id) AS totalVirtualQty
         FROM
         Inventory i
-        LEFT JOIN
-        VirtualInventory vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
+        LEFT JOIN (
+            select sku_id,warehouse_id,sum(virtualQty) as virtualQty,sum(virtualUsableQty) as virtualUsableQty,sum(virtualFrozenQty) as virtualFrozenQty from VirtualInventory group by sku_id,warehouse_id
+        ) vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
         LEFT JOIN
         product_detail pd ON i.sku_id = pd.id AND pd.is_deleted = false
         LEFT JOIN
         warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
-        LEFT JOIN
-        virtual_warehouse vw ON vi.virtual_warehouse_id = vw.id AND vw.is_deleted = false
         <where>
             1 = 1
             <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -205,6 +198,9 @@
             </if>
             <if test="params.isViewVirtual != null and params.isViewVirtual == true">
                 and  vi.sku_id is not null
+            </if>
+            <if test="params.isViewVirtual != null and params.isViewVirtual == false">
+                and  vi.sku_id is  null
             </if>
         </where>
         ) diff
