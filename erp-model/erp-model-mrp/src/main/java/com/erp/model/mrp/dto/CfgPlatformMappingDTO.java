@@ -4,10 +4,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -118,11 +120,7 @@ public class CfgPlatformMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+
 
     }
 
@@ -131,11 +129,10 @@ public class CfgPlatformMappingDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 平台
-        */
-        @NotBlank(message = "平台不能为空")
-        @Size(max = 64,message = "平台最大长度不能超过64位")
-        private String platform;
+         * 平台集合
+         */
+        @NotEmpty(message = "平台集合不能为空")
+        private List<String> platformList;
 
         /**
         * 归属平台
@@ -151,11 +148,16 @@ public class CfgPlatformMappingDTO implements Serializable {
         private Boolean disabled;
 
         /**
-        * 生效时间
+        * 定时生效时间
         */
+        @NotNull(message = "定时生效时间不能为空")
         private LocalDate effectiveDate;
 
-
+        /**
+         * 备货模式
+         */
+        @NotBlank(message = "备货模式不能为空")
+        private String stockingMode;
     }
 
 

@@ -1,12 +1,11 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
+import com.common.business.validator.ValidList;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
@@ -17,16 +16,17 @@ import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.mrp.mapper.CfgPlatformMappingMapper;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
 import com.erp.server.mrp.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -45,55 +45,29 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
     @Autowired
     private CustomerFeign customerFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(CfgPlatformMappingDTO.AddDTO addDTO) {
-        CfgPlatformMappingEntity cfgPlatformMappingEntity = new CfgPlatformMappingEntity();
-        BeanMapperUtils.copy(addDTO, cfgPlatformMappingEntity);
-
-        // 数据处理
-        handleData(cfgPlatformMappingEntity);
-
-        log.info("开始新增平台映射单");
-        boolean save = super.save(cfgPlatformMappingEntity);
-        if(!save) {
-            throw new ServiceException("平台映射单保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "平台映射单" , cfgPlatformMappingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgPlatformMappingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(cfgPlatformMappingEntity.getId(), cfgPlatformMappingEntity.getId());
-    }
-
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(CfgPlatformMappingDTO.UpdateDTO updateDTO) {
-        CfgPlatformMappingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "平台映射单"));
-        CfgPlatformMappingEntity cfgPlatformMappingEntity =  BeanMapperUtils.map(CfgPlatformMappingEntity.class, updateDTO);
-
+    public Boolean update(ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList) {
+        if (CollectionUtils.isEmpty(updateList)) {
+            throw new ServiceException("平台配置不能为空");
+        }
+        List<CfgPlatformMappingEntity> oldList = list();
         // 数据处理
-        handleData(cfgPlatformMappingEntity);
-        log.info("编辑 开始修改平台映射单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgPlatformMappingEntity);
+        List<CfgPlatformMappingEntity> list = handleData(updateList.getList(),oldList);
+
+        //删除多余数据
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
+
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("平台映射单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录平台映射单日志数据，id：【{}】", cfgPlatformMappingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgPlatformMappingEntity.getId(), "平台映射单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgPlatformMappingEntity, null, cfgPlatformMappingEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -123,10 +97,38 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
 
 
     /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<CfgPlatformMappingEntity> newList, List<CfgPlatformMappingEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(CfgPlatformMappingEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(CfgPlatformMappingEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
     * 新增修改处理数据
     */
-    private void handleData(CfgPlatformMappingEntity cfgPlatformMappingEntity) {
-    // TODO 验证数据 & 数据赋值
+    private List<CfgPlatformMappingEntity> handleData(List<CfgPlatformMappingDTO.UpdateDTO> updateList,List<CfgPlatformMappingEntity> oldList) {
+        List<CfgPlatformMappingEntity> list = new ArrayList<>();
+        if (CollectionUtils.isEmpty(updateList)) {
+            return list;
+        }
+
+        for (CfgPlatformMappingDTO.UpdateDTO updateDTO : updateList) {
+            for (String platform : updateDTO.getPlatformList()) {
+                CfgPlatformMappingEntity entity = new CfgPlatformMappingEntity();
+                BeanMapperUtils.copy(updateDTO,entity);
+                //平台映射
+                CfgPlatformMappingEntity old = oldList.stream().filter(obj -> StrUtil.equals(obj.getType(), updateDTO.getType()) && StrUtil.equals(obj.getPlatform(), platform)).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(old)) {
+                    entity.setId(old.getId());
+                }
+                entity.setPlatform(platform);
+                list.add(entity);
+            }
+        }
+        return list;
     }
 
     /**

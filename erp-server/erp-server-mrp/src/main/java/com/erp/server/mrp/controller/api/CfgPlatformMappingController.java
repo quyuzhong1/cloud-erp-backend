@@ -2,8 +2,8 @@ package com.erp.server.mrp.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -36,36 +36,16 @@ public class CfgPlatformMappingController extends BaseController {
     @Resource
     private CfgPlatformMappingService cfgPlatformMappingService;
 
-
-    /**
-    * 新增
-    * @author will
-    * @date:  2024-08-29
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "平台映射表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgPlatformMappingDTO.AddDTO dto) {
-        return success(cfgPlatformMappingService.add(dto));
-    }
-
     /**
     * 修改
     * @author will
     * @date:  2024-08-29
-    * @param dto
+    * @param updateList
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "平台映射表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "mrp:cfgPlatformMapping:update",
-        serviceClass = CfgPlatformMappingService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgPlatformMappingDTO.UpdateDTO dto) {
-        cfgPlatformMappingService.update(dto);
+    public ApiResult<?> update(@RequestBody @Validated ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList) {
+        cfgPlatformMappingService.update(updateList);
         return success();
     }
 

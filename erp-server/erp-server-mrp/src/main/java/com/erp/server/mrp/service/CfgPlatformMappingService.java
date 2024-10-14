@@ -1,6 +1,6 @@
 package com.erp.server.mrp.service;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
 
@@ -17,22 +17,13 @@ import java.util.List;
 public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappingEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-29
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgPlatformMappingDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-08-29
     * @param dto
     * @return
     */
-    Boolean update(CfgPlatformMappingDTO.UpdateDTO dto);
+    Boolean update(ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList);
 
     /**
      * 远程下拉
