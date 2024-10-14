@@ -72,15 +72,6 @@ public class ShopeeShipOrder extends AbstractShipOrder {
         //渠道
         String channelId = logisticsEntity.getLogisticsChannelId();
 
-        //获取销售渠道信息
-        LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
-                channelId,
-                PlatformDictEnum.SHOPEE.getCode()
-        );
-        if (null == tmsSignShipDTO) {
-            throw new ServiceException("找不到渠道信息");
-        }
-
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单详情是否存在
@@ -130,7 +121,7 @@ public class ShopeeShipOrder extends AbstractShipOrder {
             ShipInfo infoNeeded = response.getInfoNeeded();
 
             ShipOrderRequest shipOrderRequest = null;
-            if (Objects.nonNull(dropoff)){
+            if (Objects.nonNull(dropoff) &&  CollectionUtils.isNotEmpty(dropoff.getBranchInfoList())){
                 if ((Objects.isNull(dropoff) || CollectionUtils.isEmpty(dropoff.getBranchInfoList())) && Objects.isNull(infoNeeded)){
                     log.error("【虾皮标记发货】订单【{}】订单明细列表为空", mainEntity.getPlatformCode());
                     throw new ServiceException("订单明细列表为空");
@@ -138,6 +129,15 @@ public class ShopeeShipOrder extends AbstractShipOrder {
                 //获取到的
                 List<BranchInfo> branchInfoList = dropoff.getBranchInfoList();
                 List<SlugInfo> slugInfoList = dropoff.getSlugInfoList();
+
+                //获取销售渠道信息
+                LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
+                        channelId,
+                        PlatformDictEnum.SHOPEE.getCode()
+                );
+                if (null == tmsSignShipDTO) {
+                    throw new ServiceException("找不到渠道信息");
+                }
                 //获取渠道标发单号
                 String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();
                 String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(), standardOrderType)
@@ -166,7 +166,7 @@ public class ShopeeShipOrder extends AbstractShipOrder {
                 shipOrderRequest = ShipOrderRequest.builder()
                         .orderSn(mainEntity.getPlatformCode())
                         .dropoff(Dropoff.builder().build())
-                        .packageNumber(packageNumber)
+//                        .packageNumber(packageNumber)
                         .build();
             }
 
@@ -187,7 +187,11 @@ public class ShopeeShipOrder extends AbstractShipOrder {
 //            }
             try {
                 ShopeeResponse shopeeResponse = shopeeLogisticsService.shippingOrder(shipRequest, shipOrderRequest);
-                signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                if (StrUtil.isBlank(shopeeResponse.getError())){
+                    signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                }else {
+                    throw new ServiceException("虾皮API标记发货失败:" + shopeeResponse.getError());
+                }
             } catch (ServiceException e){
                 log.error("【虾皮标记发货】销售订单【{}】,平台订单【{}】虾皮标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 throw new ServiceException("虾皮API标记发货失败:" + e.getMessage());

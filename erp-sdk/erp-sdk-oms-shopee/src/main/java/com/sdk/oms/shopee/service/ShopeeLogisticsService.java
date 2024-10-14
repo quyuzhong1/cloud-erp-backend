@@ -45,7 +45,7 @@ public class ShopeeLogisticsService {
         ShipOrderRequest shipOrderRequest = ShipOrderRequest.builder()
                 .orderSn(orderSn)
                 .dropoff(Dropoff.builder().build())
-                .packageNumber(packageNumber)
+//                .packageNumber(packageNumber)
                 .build();
         ShopeeResponse shopeeResponse = service.shippingOrder(shipRequest, shipOrderRequest);
         System.out.println(shopeeResponse);

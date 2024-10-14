@@ -279,10 +279,10 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
                 deliveryTime = LocalDateTime.ofInstant(instant, zone);
             }
             PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
-                    .code(p.getPackageNumber())
+//                    .code(p.getPackageNumber())
                     .name(LogisticsPlatformEnum.SHOPEE.getName())
                     .deliveryTime(deliveryTime)
-                    .logisticsChannelName(p.getShippingCarrier())
+//                    .logisticsChannelName(p.getShippingCarrier())
                     .estimatedShippingCost(BigDecimal.valueOf(orderDetail.getEstimatedShippingFee()))
                     .actualShippingCost(BigDecimal.valueOf(orderDetail.getActualShippingFee()))
                     .accessoriesCostCurrency(orderDetail.getCurrency())
