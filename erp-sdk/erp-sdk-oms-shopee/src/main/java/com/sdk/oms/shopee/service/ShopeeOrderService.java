@@ -1,7 +1,8 @@
 package com.sdk.oms.shopee.service;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -30,8 +31,8 @@ public class ShopeeOrderService {
     public static void main(String[] args) {
         ShopeeOrderService shopeeOrderService = new ShopeeOrderService();
         long timest = System.currentTimeMillis() / 1000L;
-        Long time_from = timest - (3600 * 24 * 40);
-        Long time_to = timest - (3600 * 24 * 30);;
+        Long time_from = timest - (3600 * 24 * 15);
+        Long time_to = timest;
         //订单列表
         OrderRequest orderRequest = OrderRequest.builder()
                 .offset(0)
@@ -56,16 +57,16 @@ public class ShopeeOrderService {
             return;
         }
         JSONObject response = shopeeResponse.getResponse();
-        String error = response.getString("error");
+        String error = response.getStr("error");
         if (StringUtils.isNotEmpty(error)) {
             return;
         }
-        JSONArray jsonArray = JSONArray.parseArray(response.get("order_list").toString());
+        JSONArray jsonArray = response.getJSONArray("order_list");
         if (Objects.isNull(jsonArray)){
             return;
         }
         //目录列表
-        List<ShopeeOrder> orderList = JSONObject.parseArray(jsonArray.toJSONString(), ShopeeOrder.class);
+        List<ShopeeOrder> orderList = JSONUtil.toList(jsonArray, ShopeeOrder.class);
         //获取item明细
         List<String> orderSns = orderList.stream().map(ShopeeOrder::getOrderSn).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(orderSns)) {
@@ -75,16 +76,16 @@ public class ShopeeOrderService {
             if (Objects.nonNull(responseBaseInfo)){
                 //循环填充
                 JSONArray listBase = responseBaseInfo.getJSONArray("order_list");
-                List<OrderDetail> list = JSONObject.parseArray(listBase.toJSONString(), OrderDetail.class);
+                List<OrderDetail> list = JSONUtil.toList(listBase, OrderDetail.class);
 
                 if (CollectionUtils.isNotEmpty(list)) {
                     orderDetails.addAll(list);
                 }
             }
         }
-        boolean more = response.getBoolean("more");
+        boolean more = response.getBool("more");
         if (more) {
-            String next_cursor = response.getString("next_cursor");
+            String next_cursor = response.getStr("next_cursor");
             orderRequest.setCursor(next_cursor);
             //还有订单数据
             this.getAllOrder(orderRequest, orderDetails);

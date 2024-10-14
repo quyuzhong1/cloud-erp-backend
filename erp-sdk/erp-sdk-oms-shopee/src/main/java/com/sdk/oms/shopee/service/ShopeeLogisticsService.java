@@ -38,7 +38,8 @@ public class ShopeeLogisticsService {
                 .shopId(shop_id)
                 .build();
         String orderSn = "2409068X5S22U7";
-        String packageNumber ="OFG179307286219949";
+        String packageNumber ="";
+//        String packageNumber ="OFG179307286219949";
         ShipResponse shopInfo = service.getShipping(shipRequest, orderSn,packageNumber);
         System.out.println(shopInfo);
     }

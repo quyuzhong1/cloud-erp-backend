@@ -1,7 +1,8 @@
 package com.sdk.oms.shopee.service;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -73,16 +74,16 @@ public class ShopeeProductService {
         }
         JSONObject response = productList.getResponse();
 
-        String error = response.getString("error");
+        String error = response.getStr("error");
         if (StringUtils.isNotEmpty(error)) {
             return;
         }
-        JSONArray jsonArray = JSONArray.parseArray(response.get("item").toString());
+        JSONArray jsonArray = response.getJSONArray("item");
         if (Objects.isNull(jsonArray)){
             return;
         }
         //目录列表
-        List<Item> items = JSONObject.parseArray(jsonArray.toJSONString(), Item.class);
+        List<Item> items = JSONUtil.toList(jsonArray, Item.class);
         //获取item明细
         List<Long> itemIds = items.stream().map(Item::getItemId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(itemIds)) {
@@ -92,16 +93,16 @@ public class ShopeeProductService {
             if (Objects.nonNull(responseBaseInfo)) {
                 //循环填充
                 JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
-                List<ItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), ItemInfo.class);
+                List<ItemInfo> list = JSONUtil.toList(listBase, ItemInfo.class);
                 if (CollectionUtils.isNotEmpty(list)) {
                     itemInfos.addAll(list);
                 }
             }
         }
         //是否还有数据
-        boolean hasNextPage = response.getBoolean("has_next_page");
+        boolean hasNextPage = response.getBool("has_next_page");
         if (hasNextPage) {
-            Integer next_offset = response.getInteger("next_offset");
+            Integer next_offset = response.getInt("next_offset");
             productRequest.setOffset(next_offset);
             getAllProduct(productRequest, itemInfos);
         }
