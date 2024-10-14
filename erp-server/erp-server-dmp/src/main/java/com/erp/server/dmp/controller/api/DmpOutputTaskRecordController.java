@@ -132,8 +132,8 @@ public class DmpOutputTaskRecordController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "修改为无需同步")
     @PostMapping(value = "/batchNoNeedSync")
-    public ApiResult batchNoNeedSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = dmpOutputTaskRecordService.batchNoNeedSync(dto.getIds());
+    public ApiResult batchNoNeedSync(@RequestBody BaseIdsDTO.RemarkDTO dto) {
+        Boolean flag = dmpOutputTaskRecordService.batchNoNeedSync(dto.getIds() , dto.getRemark());
         return flag == true ? success() : failure();
     }
 

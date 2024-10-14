@@ -335,6 +335,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	}
 	
 	protected Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> convertData(List<Map<String, Object>> dmpInputMongoEntityList) {
+		this.beforeConvertData(dmpInputMongoEntityList);
 		Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps = new HashMap<>();
 		Map<String, List<String>> originaConvertMap = new HashMap<>();
 		for(Map<String, Object> dmpInputMongoBaseEntity : dmpInputMongoEntityList) {
@@ -360,6 +361,10 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		}
 		this.afterConvertData(dmpInputDataDmpRelationMaps);
 		return dmpInputDataDmpRelationMaps;
+	}
+	
+	protected void beforeConvertData(List<Map<String, Object>> dmpInputMongoEntityList) {
+		
 	}
 	
 	protected void afterConvertData(Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps) {

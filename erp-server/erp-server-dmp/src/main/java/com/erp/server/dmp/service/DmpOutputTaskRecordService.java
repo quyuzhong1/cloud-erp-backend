@@ -74,7 +74,7 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @param ids
      * @return java.lang.Boolean
      **/
-    Boolean batchNoNeedSync(List<String> ids);
+    Boolean batchNoNeedSync(List<String> ids , String remark);
 
     /**
      * 加入黑名单

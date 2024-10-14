@@ -22,15 +22,15 @@ public class DmpOutputTaskRecordQueryHandler extends AbstractQueryHandler {
             }
 
             if (DmpPushMonitorTabEnum.NO_NEED_SYNC.getCode().equals(searchType)) {
-                return "t.status = '" + DmpOutputTaskRecordStatusEnum.FINISH.getCode() + "' AND t.is_need_sync = " + Boolean.FALSE + "";
+                return "(dcob.id IS NULL or dcob.field_value = '') and t.status = '" + DmpOutputTaskRecordStatusEnum.FINISH.getCode() + "' AND t.is_need_sync = " + Boolean.FALSE + "";
             } else if (DmpPushMonitorTabEnum.PUSH_ING.getCode().equals(searchType)) {
-                return "(t.status = '" + DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode() + "'" +
+                return "(dcob.id IS NULL or dcob.field_value = '') and (t.status = '" + DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode() + "'" +
                         " OR t.status = '" + DmpOutputTaskRecordStatusEnum.MQERROR.getCode() + "'" +
                         " OR t.status = '" + DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode() + "')";
             } else if (DmpPushMonitorTabEnum.BLACK.getCode().equals(searchType)) {
                 return " dcob.ID IS NOT NULL and dcob.field_value != '' ";
             } else {
-                super.buildDefaultDTO("t.status", searchType);
+                return " (dcob.id IS NULL or dcob.field_value = '') and t.status = '" + searchType + "' ";
             }
         }
 

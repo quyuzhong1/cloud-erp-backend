@@ -192,6 +192,11 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * 是否需要同步
          */
         private Boolean isNeedSync;
+        
+        /**
+         * 备注
+         */
+        private String remark;
 
     }
 

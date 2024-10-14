@@ -93,7 +93,6 @@
             AND dcob.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
-        and (dcob.id IS NULL or dcob.field_value = '') 
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -104,7 +103,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.create_time desc
+        t.id desc
     </select>
     
     <select id="blackPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
@@ -117,7 +116,7 @@
         dcob.field_value AS sourceCode,
         t.status AS status,
         t.update_time AS lastSyncTime,
-        t.response_data AS returnMsg,
+        ('黑名单原因：' || dcob.remark) AS returnMsg,
         t.is_need_sync AS isNeedSync,
         CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS isBlack
         FROM dmp_cfg_output_black dcob
@@ -141,7 +140,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        dcob.create_time desc
+        dcob.id desc
     </select>
 
     <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
