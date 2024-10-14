@@ -62,7 +62,7 @@ public class DmpInputShopeeOrderDetailInitHandler extends DmpInputInitHandler{
 			return new ArrayList<>();
 		}
 		
-		List<Object> itemIds = findMongoData.stream().map(f -> f.get("order_sn")).collect(Collectors.toList());
+		List<Object> itemIds = findMongoData.stream().map(f -> f.get("order_sn").toString()).collect(Collectors.toList());
 		
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
 		List<CfgAppClientEntity> cfgAppClientEntityList = cfgAppClientService.lambdaQuery()
@@ -113,7 +113,7 @@ public class DmpInputShopeeOrderDetailInitHandler extends DmpInputInitHandler{
         
     	JSONObject result = data.getResponse();
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.getJSONArray("item_list").toJSONString());
+		dmpInputTaskInitDTO.setMsg(result.getJSONArray("order_list").toJSONString());
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
     
 		return dmpInputTaskInitDTOList;

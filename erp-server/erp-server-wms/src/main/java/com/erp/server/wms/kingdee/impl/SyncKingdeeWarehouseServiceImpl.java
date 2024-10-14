@@ -32,6 +32,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseLocationService;
+import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
 
 import io.seata.spring.annotation.GlobalTransactional;
@@ -65,6 +66,9 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 
     @Resource
     private WmsPushMsgService wmsPushMsgService;
+    
+    @Resource
+    private WarehouseService warehouseService;
     
     /**
      * 发送消息同步金蝶
@@ -126,7 +130,8 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
     }
 
 	@Override
-	public Map<String, Object> newSyncDataToKingdee(WarehouseEntity entity, String operate) {
+	public Map<String, Object> newSyncDataToKingdee(WarehouseEntity paramEntity, String operate) {
+		WarehouseEntity entity = warehouseService.getById(paramEntity.getId());
 		Map<String, Object> resultMap = new HashMap<>();
 
         //金蝶id
@@ -167,9 +172,9 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 
 
         //审核未通过、非反审核不推送
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            return null;
-        }
+//        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+//            return null;
+//        }
 
         //仓库类型
         DictBasicEntity type = dictBasicService.getById(entity.getTypeId());

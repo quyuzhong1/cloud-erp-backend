@@ -18,6 +18,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -76,6 +77,7 @@ public class DmpInputShopeeOrderInitHandler extends DmpInputInitHandler{
                 .timeTo(timeTo)
                 .cursor("")
                 .build();
+		orderRequest.setCreateTime(DmpInputTaskTaskTypeEnum.HISTORY.getCode().equals(dmpInputTaskEntity.getTaskType()));
 		
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
@@ -105,9 +107,6 @@ public class DmpInputShopeeOrderInitHandler extends DmpInputInitHandler{
 	    		orderRequest.setCursor(result.getString("next_cursor"));
 	    	}
 	    	item.addAll(result.getJSONArray("order_list"));
-		}
-		if(item.size() > 0) {
-			System.out.println(1);
 		}
 		dmpInputTaskInitDTO.setMsg(item.toJSONString());
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
