@@ -220,12 +220,17 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
     @Override
     public PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
-        Page<VirtualInventoryDiffDTO.ListDiffExportDataDTO> page = baseMapper.listDiffExportData(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
-        //统计数据
+        //库存差异
         Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isDiff)) {
             dto.getParams().setIsDiff(Boolean.valueOf(isDiff.toString()));
         }
+        //超出分配
+        Object isExceed = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isExceed") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        if (ObjectUtil.isNotNull(isExceed)) {
+            dto.getParams().setIsExceed(Boolean.valueOf(isExceed.toString()));
+        }
+        Page<VirtualInventoryDiffDTO.ListDiffExportDataDTO> page = baseMapper.listDiffExportData(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         //数据赋值处理
         fillExportData(page.getRecords());
         return new PagingVO<>(page);
@@ -327,7 +332,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             flagList.add(flag);
             //是否差异
             //是否有差异
-            boolean isDiff = listDTO.getVirtualQty() > listDTO.getRealQty();
+            boolean isDiff = listDTO.getTotalVirtualQty() > listDTO.getRealQty();
             listDTO.setIsDiff(isDiff);
             listDTO.setIsDiffName(isDiff ? "是" : "否");
             //仓库分配数量

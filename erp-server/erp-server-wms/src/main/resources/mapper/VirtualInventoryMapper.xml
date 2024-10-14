@@ -202,9 +202,6 @@
             <if test="params.isViewVirtual != null and params.isViewVirtual == true">
                 and  vi.sku_id is not null
             </if>
-            <if test="params.isViewVirtual != null and params.isViewVirtual == false">
-                and  vi.sku_id is  null
-            </if>
         </where>
         ) diff
         <where>
@@ -335,31 +332,31 @@
         )
         SELECT
             i.id,
-            vi.sku_id AS skuId,
+            i.sku_id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
-            vi.warehouse_id AS warehouseId,
+            i.warehouse_id AS warehouseId,
             wh.name AS warehouseName,
             vi.virtual_warehouse_id AS virtualWarehouseId,
             vw.code as virtualWarehouseCode,
             vw.name as virtualWarehouseName,
-            vi.virtualQty,
-            vi.virtualUsableQty,
-            vi.virtualFrozenQty,
+            COALESCE(vi.virtualQty, 0) as virtualQty,
+            COALESCE(vi.virtualUsableQty, 0) as virtualUsableQty,
+            COALESCE(vi.virtualFrozenQty, 0) as virtualFrozenQty,
             COALESCE(i.usableQty, 0) + COALESCE(i.frozenQty, 0) as realQty,
             COALESCE(i.usableQty, 0) AS usableQty,
             COALESCE(i.frozenQty, 0) AS frozenQty,
             COALESCE(i.inTransitQty, 0) AS inTransitQty,
             COALESCE(i.waitQcQty, 0) AS waitQcQty,
-            sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id) AS totalVirtualQty
+            COALESCE(sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id),0) AS totalVirtualQty
         FROM
         Inventory i
         LEFT JOIN
         VirtualInventory vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
         LEFT JOIN
-        product_detail pd ON vi.sku_id = pd.id AND pd.is_deleted = false
+        product_detail pd ON i.sku_id = pd.id AND pd.is_deleted = false
         LEFT JOIN
-        warehouse wh ON vi.warehouse_id = wh.id AND wh.is_deleted = false
+        warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
         LEFT JOIN
         virtual_warehouse vw ON vi.virtual_warehouse_id = vw.id AND vw.is_deleted = false
          <where>
@@ -370,14 +367,16 @@
              <if test="params.isViewVirtual != null and params.isViewVirtual == true">
                  and  vi.sku_id is not null
              </if>
-             <if test="params.isViewVirtual != null and params.isViewVirtual == false">
-                 and  vi.sku_id is  null
-             </if>
          </where>
         ) diff
         <where>
             ${params.sqlMap.default}
-            and diff.totalVirtualQty > diff.usableQty + diff.frozenQty
+            <if test="params.isDiff != null and params.isDiff == true">
+                and  diff.totalVirtualQty > diff.usableQty + diff.frozenQty
+            </if>
+            <if test="params.isDiff != null and params.isDiff == false">
+                and  diff.usableQty + diff.frozenQty >= diff.totalVirtualQty
+            </if>
             <if test="params.isExceed != null and params.isExceed == true">
                 and  diff.totalVirtualQty > diff.usableQty
             </if>
