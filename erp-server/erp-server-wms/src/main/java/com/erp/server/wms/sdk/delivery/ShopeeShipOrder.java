@@ -128,20 +128,48 @@ public class ShopeeShipOrder extends AbstractShipOrder {
             ShipDetailResponse response = shipResponse.getResponse();
             ShipDropInfo dropoff = response.getDropoff();
             ShipInfo infoNeeded = response.getInfoNeeded();
-            if ((Objects.isNull(dropoff) || CollectionUtils.isEmpty(dropoff.getBranchInfoList())) && Objects.isNull(infoNeeded)){
-                log.error("【虾皮标记发货】订单【{}】订单明细列表为空", mainEntity.getPlatformCode());
-                throw new ServiceException("订单明细列表为空");
+
+            ShipOrderRequest shipOrderRequest = null;
+            if (Objects.nonNull(dropoff)){
+                if ((Objects.isNull(dropoff) || CollectionUtils.isEmpty(dropoff.getBranchInfoList())) && Objects.isNull(infoNeeded)){
+                    log.error("【虾皮标记发货】订单【{}】订单明细列表为空", mainEntity.getPlatformCode());
+                    throw new ServiceException("订单明细列表为空");
+                }
+                //获取到的
+                List<BranchInfo> branchInfoList = dropoff.getBranchInfoList();
+                List<SlugInfo> slugInfoList = dropoff.getSlugInfoList();
+                //获取渠道标发单号
+                String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();
+                String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(), standardOrderType)
+                        ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
+                if (StrUtil.isBlank(logisticsNo)) {
+                    throw new ServiceException("【虾皮标记发货】操作失败，渠道标发单号为空");
+                }
+
+                // 都是全部发货
+                Dropoff dropoff1 = Dropoff.builder()
+                        .branchId(branchInfoList.get(0).getBranchId())
+                        .senderRealName(tmsSignShipDTO.getLogisticsChannelName())
+                        .slug(slugInfoList.get(0).getSlug())
+                        .trackingNumber(logisticsNo)
+                        .build();
+                Integrated nonIntegrated = Integrated.builder().trackingNumber(logisticsNo).build();
+
+                shipOrderRequest = ShipOrderRequest.builder()
+                        .orderSn(mainEntity.getPlatformCode())
+                        .packageNumber(packageNumber)
+                        .dropoff(dropoff1)
+                        .nonIntegrated(nonIntegrated)
+                        .build();
+
+            }else {
+                shipOrderRequest = ShipOrderRequest.builder()
+                        .orderSn(mainEntity.getPlatformCode())
+                        .dropoff(Dropoff.builder().build())
+                        .packageNumber(packageNumber)
+                        .build();
             }
-            //获取到的
-            List<BranchInfo> branchInfoList = dropoff.getBranchInfoList();
-            List<SlugInfo> slugInfoList = dropoff.getSlugInfoList();
-            //获取渠道标发单号
-            String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();
-            String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(), standardOrderType)
-                    ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
-            if (StrUtil.isBlank(logisticsNo)) {
-                throw new ServiceException("【虾皮标记发货】操作失败，渠道标发单号为空");
-            }
+
             // 得到当前标记的子订单下标
 //            List<String> sourceDetailIds = detailEntityList.stream().map(SoB2cDetailEntity::getSourceDetailId).collect(Collectors.toList());
 //            List<Integer> subOrderIndexList = branchInfoList.stream()
@@ -157,21 +185,6 @@ public class ShopeeShipOrder extends AbstractShipOrder {
 //                );
 //                throw new ServiceException("【虾皮标记发货】订单【{}】数据异常未匹配到有效子订单下标");
 //            }
-
-            // 都是全部发货
-            Dropoff dropoff1 = Dropoff.builder()
-                    .branchId(branchInfoList.get(0).getBranchId())
-                    .senderRealName(tmsSignShipDTO.getLogisticsChannelName())
-                    .slug(slugInfoList.get(0).getSlug())
-                    .trackingNumber(logisticsNo)
-                    .build();
-            Integrated nonIntegrated = Integrated.builder().trackingNumber(logisticsNo).build();
-            ShipOrderRequest shipOrderRequest = ShipOrderRequest.builder()
-                    .orderSn(mainEntity.getPlatformCode())
-                    .packageNumber(packageNumber)
-                    .dropoff(dropoff1)
-                    .nonIntegrated(nonIntegrated)
-                    .build();
             try {
                 ShopeeResponse shopeeResponse = shopeeLogisticsService.shippingOrder(shipRequest, shipOrderRequest);
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));

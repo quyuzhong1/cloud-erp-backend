@@ -3,6 +3,7 @@ package com.sdk.oms.shopee.service;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
+import com.sdk.oms.shopee.dto.logistics.request.Dropoff;
 import com.sdk.oms.shopee.dto.logistics.request.ShipOrderRequest;
 import com.sdk.oms.shopee.dto.logistics.request.ShipRequest;
 import com.sdk.oms.shopee.dto.logistics.response.ShipResponse;
@@ -38,10 +39,16 @@ public class ShopeeLogisticsService {
                 .shopId(shop_id)
                 .build();
         String orderSn = "2409068X5S22U7";
-        String packageNumber ="";
-//        String packageNumber ="OFG179307286219949";
-        ShipResponse shopInfo = service.getShipping(shipRequest, orderSn,packageNumber);
-        System.out.println(shopInfo);
+//        String packageNumber ="";
+        String packageNumber ="OFG179307286219949";
+//        ShipResponse shopInfo = service.getShipping(shipRequest, orderSn,packageNumber);
+        ShipOrderRequest shipOrderRequest = ShipOrderRequest.builder()
+                .orderSn(orderSn)
+                .dropoff(Dropoff.builder().build())
+                .packageNumber(packageNumber)
+                .build();
+        ShopeeResponse shopeeResponse = service.shippingOrder(shipRequest, shipOrderRequest);
+        System.out.println(shopeeResponse);
     }
     /**
      * 获取标发参数
