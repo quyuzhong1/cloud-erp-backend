@@ -31,7 +31,11 @@
         main_id, type, param_json, message, return_json
     </sql>
     <delete id="deleteB2cError">
-        DELETE FROM so_b2c_error WHERE main_id=#{params.mainId} and  type = #{params.type} and detail_id = ''
+        DELETE FROM so_b2c_error WHERE main_id=#{params.mainId}
+            <if test="params.type != null and params.type != ''">
+                and type = #{params.type}
+            </if>
+            and detail_id = ''
     </delete>
     <delete id="deleteByCodeAndType">
         DELETE FROM so_b2c_error

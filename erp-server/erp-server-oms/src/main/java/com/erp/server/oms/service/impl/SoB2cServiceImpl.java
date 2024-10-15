@@ -1795,8 +1795,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
         String submitDelivery = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         //删除异常订单信息
-        soB2cErrorService.removeErrorOrder(id, submitDelivery);
-        soB2cService.removeSignError(entity.getId(),SoB2cErrorTypeEnum.THIRD_WAREHOUSE_OUT_EXCEPTION.getCode());
+        soB2cErrorService.removeAllTypeErrorOrder(id);
 
         //操作日志
         String msg = "B2C销售订单【{}】提交发货";
@@ -3197,11 +3196,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             data.setTag(Boolean.FALSE);
             List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Arrays.asList(data.getId()));
             if(CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
-                SoB2cDeliveryEntity record = soB2cDeliveryEntities.get(0);
-                if(!record.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()) && record.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode())){
-                    data.setTag(Boolean.TRUE);
+                for (SoB2cDeliveryEntity record : soB2cDeliveryEntities) {
+                    if(record.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode())){
+                        data.setTag(Boolean.FALSE);
+                        break;
+                    }
+                    if(record.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode())){
+                        data.setTag(Boolean.TRUE);
+                    }
                 }
             }
+
             for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
                 SkuVO skuVO = skuVOMap.get(detailDTO.getSkuId());
                 detailDTO.setVariantProperty(null == skuVO ? "" : skuVO.getVariantProperty());
