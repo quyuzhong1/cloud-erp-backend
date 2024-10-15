@@ -31,8 +31,19 @@ import java.util.Objects;
 @Component
 public class ShopeeLogisticsService {
     public static void main(String[] args) {
+        String shop_access_token = "6e41797262594e465057794861595653";
+        long partner_id = 1070627;
+        String tmp_partner_key = "5975757847654870727869546f436e696f4b454d466a74586f46696555466348";
+        long shop_id = 94349;
         ShopeeLogisticsService service = new ShopeeLogisticsService();
-
+        BaseRequest baseRequest = BaseRequest.builder()
+                .accessToken(shop_access_token)
+                .partnerId(partner_id)
+                .partnerKey(tmp_partner_key)
+                .shopId(shop_id)
+                .build();
+        BaseResponse channelList = service.getChannelList(baseRequest);
+        System.out.println(channelList);
     }
 
 
@@ -47,7 +58,7 @@ public class ShopeeLogisticsService {
         baseRequest.setPath(PathConstants.GET_CHANNEL_LIST_URL);
         baseRequest.setTimestamp(timestamp);
         HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
-        return ShopeeApiUtils.sendGet(PathConstants.HOST + baseRequest.getPath(), paramMap);
+        return ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
     }
 
     /**
@@ -70,7 +81,7 @@ public class ShopeeLogisticsService {
                 .build();
         HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
         paramMap.put("order_sn", trackRequest.getOrderSn());
-        return ShopeeApiUtils.sendGet(PathConstants.HOST + baseRequest.getPath(), paramMap);
+        return ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
     }
 
     /**
@@ -96,7 +107,7 @@ public class ShopeeLogisticsService {
         paramMap.put("to_date", trackRequest.getToDate());
         paramMap.put("page_size", trackRequest.getPageSize());
         paramMap.put("cursor", trackRequest.getCursor());
-        BaseResponse baseResponse = ShopeeApiUtils.sendGet(PathConstants.HOST + baseRequest.getPath(), paramMap);
+        BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
             return null;
         }

@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -80,7 +81,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("logisticsPlatform", getPlatForm().getCode());
         map.put("partnerKey", cfgAppClient.getClientSecret());
         map.put("partnerId", cfgAppClient.getClientId());
-        map.put("url", cfgAppClient.getUrl());
+        map.put("host", cfgAppClient.getUrl());
         if (StringUtils.isNotBlank(shopId)) {
             ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(shopId);
             if (Objects.nonNull(shopAuth)) {
@@ -110,6 +111,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .shopId(Long.valueOf(authMap.get("shopId")))
                     .accessToken(authMap.get("token"))
                     .orderSn(logisticsQueryVO.getDeliveryNo())
+                    .host(authMap.get("host"))
                     .build();
             try {
                 ValidatorUtil.validateEntity(trackRequest);
@@ -157,6 +159,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
                 .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
                 .build();
         ValidatorUtil.validateEntity(baseRequest);
         try {
@@ -176,7 +179,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 log.error("获取渠道列表异常：{}", error);
                 return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" +error);
             }
-            JSONArray jsonArray = (JSONArray) response.get("logistics_channel_list");
+            JSONArray jsonArray = response.getJSONArray("logistics_channel_list");
             //渠道列表
             List<LogisticsChannel> logisticsChannels = JSONObject.parseArray(jsonArray.toJSONString(), LogisticsChannel.class);
             //接口数据映射
@@ -206,6 +209,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
                 .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
                 .build();
         ValidatorUtil.validateEntity(baseRequest);
         try {

@@ -9,7 +9,8 @@ package com.sdk.tms.shopee.constant;
  */
 public interface PathConstants {
 
-    String HOST = "https://openplatform.shopee.cn";
+//    String HOST = "https://openplatform.shopee.cn";
+    String HOST = "https://partner.test-stable.shopeemobile.com";
     //获取渠道列表
     String GET_CHANNEL_LIST_URL = "/api/v2/logistics/get_channel_list";
     //获取跟踪号码列表

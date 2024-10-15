@@ -13,6 +13,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
@@ -20,6 +26,8 @@ import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
 import com.erp.server.tms.service.*;
@@ -62,7 +70,10 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     @Lazy
     @Resource
     private AsyncService  asyncService;
-
+    @Resource
+    private ShopeeFeign shopeeFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
 
 
@@ -190,6 +201,40 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(LogisticsAuthEntity::getMainId, supplierIds).list();
+    }
+
+    @Override
+    public Map<String, String> addShopeeShopAuth(Map<String, String> authMap) {
+        //获取oms已授权店铺
+        ApiResult<List<ShopAuthEntity>> result = null;
+        try {
+            result = shopeeFeign.getShopeeShopList(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode());
+        } catch (Exception e) {
+            log.error("erp-oms服务接口getShopeeShopList异常：{}", e.getMessage());
+        }
+        if (result != null && (!result.isSuccess() || CollectionUtil.isEmpty(result.getData()))) {
+            throw new ServiceException("请先完成Shopee店铺授权后再执行物流授权");
+        }
+        //根据主店铺获取子店铺token
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = null;
+        try {
+            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        }catch (Exception e){
+            log.error("erp-dmp服务获取虾皮配置信息异常：{}",e.getMessage());
+        }
+        if (Objects.isNull(cfgAppClient)) {
+            throw new ServiceException("请先完成Shopee中台授权后再执行物流授权");
+        }
+        ShopAuthEntity shopAuthEntity = result.getData().get(0);
+        authMap.put("shopId",shopAuthEntity.getShopeeId());
+        authMap.put("token",shopAuthEntity.getAccessToken());
+        authMap.put("host",cfgAppClient.getUrl());
+        return authMap;
     }
 
     public LogisticsAuthEntity getDbByMainId(String mainId){
