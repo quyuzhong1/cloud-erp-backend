@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -15,10 +16,8 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -70,7 +69,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -1442,6 +1440,32 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             fillDb(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<ShopDTO.AreaDTO> pagingSelectArea(PagingDTO<ShopDTO.AreaParamDTO> dto) {
+        ShopDTO.AreaParamDTO params = dto.getParams();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ShopDTO.AreaDTO> pagResult = baseMapper.pagingSelectArea(query, params);
+        return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public List<ShopDTO.ListDTO> listSelect(ShopDTO.SelectDTO dto) {
+        PagingDTO<ShopDTO.SelectDTO> pagingParamDTO = new PagingDTO<>();
+        pagingParamDTO.setParams(dto);
+        pagingParamDTO.setPageSize(-1);
+        PagingVO<ShopDTO.ListDTO> resultList = this.pagingSelect(pagingParamDTO);
+        List<ShopDTO.ListDTO> list = (List<ShopDTO.ListDTO>) resultList.getList();
+        return list;
+    }
+
+    @Override
+    public List<String> listShopInfoByPlatform(String platform) {
+        List<ShopInfoEntity> list = list(Wrappers.<ShopInfoEntity>lambdaQuery()
+                .eq(ShopInfoEntity::getDictPlatform, platform)
+                .eq(ShopInfoEntity::getDisabled, false));
+        return list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
     }
 
     @Override

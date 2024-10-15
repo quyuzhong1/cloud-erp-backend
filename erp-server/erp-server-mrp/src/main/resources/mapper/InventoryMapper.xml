@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.erp.server.mrp.mapper.InventoryMapper">
+
+    <select id="getFbaUsable" resultType="java.lang.Integer">
+        select COALESCE(sum(${code}), 0)
+        from ${tableName}
+        where is_deleted = false
+          and sku_no = #{result.replenishment.skuNo}
+          and warehouse_id = #{result.replenishment.fbaWarehouseId}
+    </select>
+    <select id="getFbaShipment"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
+        select t1.ID                                AS sourceId,
+               t1.code                              AS sourceCode,
+               'fbaShipment'                             AS sourceType,
+               t1.delivery_status                   AS status,
+               t2.declare_qty                       AS declareQty,
+               t2.delivery_qty                      AS deliveryQty,
+               t2.receive_qty                       AS receiveQty,
+               t2.delivery_qty - t2.receive_qty     AS inTransitQty,
+               #{result.replenishmentDetail.calcVersion} AS calcVersion
+        from ${tableName} t1
+                 INNER JOIN
+             ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
+        where t1.is_deleted = false
+          and t2.sku_id = #{result.replenishment.skuId}
+          and t1.shop_id = #{result.replenishment.shopId}
+          and (t2.delivery_qty - t2.receive_qty) > 0
+          and t1.delivery_status = 'shipped'
+    </select>
+    <select id="getFbaDelivery"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
+        select t1.id                                                            as sourceId,
+               t1.code                                                          as sourceCode,
+               'firstMileDelivery'                                              as sourceType,
+               t1.approve_status                                                as status,
+               t1.approve_time                                                  as deliveryDate,
+               t2.delivery_qty                                                  as deliveryQty,
+               COALESCE(
+                       (SELECT SUM
+                               (t4.receive_qty)
+                        FROM ${shipmentName} t3
+                                 INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                            AND t4.main_id = t3.id
+                            AND t3.code = t2.fba_shipment_code
+                            AND t4.sku_id = #{result.replenishment.skuId}), 0)  AS receiveQty,
+               (t2.delivery_qty - COALESCE(
+                       (SELECT SUM
+                               (t4.receive_qty)
+                        FROM ${shipmentName} t3
+                                 INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                            AND t4.main_id = t3.id
+                            AND t3.code = t2.fba_shipment_code
+                            AND t4.sku_id = #{result.replenishment.skuId}), 0)) as inTransitQty,
+               #{result.replenishmentDetail.calcVersion}                        as calcVersion
+        from ${tableName} t1
+                 INNER JOIN
+             ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
+        where t1.is_deleted = false
+          and t2.sku_id = #{result.replenishment.skuId}
+          and t1.shop_id = #{result.replenishment.shopId}
+          and t1.approve_status = 'approve'
+          and (t2.delivery_qty - COALESCE(
+                (SELECT SUM
+                        (t4.receive_qty)
+                 FROM ${shipmentName} t3
+                          INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                     AND t4.main_id = t3.id
+                     AND t3.code = t2.fba_shipment_code
+                     AND t4.sku_id = #{result.replenishment.skuId}), 0)) > 0
+    </select>
+    <select id="getLogisticsBillBySourceIds" resultType="com.erp.model.tms.entity.LogisticsBillEntity">
+        select * from ${tableName} where is_deleted = false
+        and source_id in
+        <foreach collection="sourceIds" item="sourceId" open="(" close=")" separator=",">
+            #{sourceId}
+        </foreach>
+    </select>
+    <select id="listLogisticsChannelByIds" resultType="com.erp.model.tms.entity.LogisticsChannelEntity">
+        select * from ${tableName} where is_deleted = false
+        and id in
+        <foreach collection="channelIds" item="channelId" open="(" close=")" separator=",">
+            #{channelId}
+        </foreach>
+    </select>
+    <select id="listFirstMileDelivery" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$FbaShipmentDTO">
+        select t1.id,t1.approve_time,t2.fba_shipment_code from ${tableName} t1
+        INNER JOIN
+        ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
+        where t1.is_deleted = false and t2.fba_shipment_code in
+        <foreach collection="codes" item="code" open="(" close=")" separator=",">
+            #{code}
+        </foreach>
+    </select>
+    <select id="isTableExist" resultType="java.lang.Boolean">
+        SELECT EXISTS (SELECT 1
+                       FROM pg_tables
+                       WHERE tablename = #{tableName}
+                         AND schemaname = 'public')
+    </select>
+    <select id="getPlanDelivery"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedDeliveryDetailDTO">
+        SELECT
+        wdp.approve_status AS status,
+        wdpd.qty AS qty,
+        CASE WHEN wdp.approve_status = 'approve' THEN wdp.approve_time
+        ELSE wdp.create_time END AS estimateSalesDate,
+        wdp.id AS sourceId,
+        wdp.code AS sourceCode
+        FROM
+        ${tableName} AS wdp
+        INNER JOIN ${tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
+        AND wdpd.main_id = wdp.id
+        WHERE
+        wdp.is_deleted = FALSE
+        AND wdp."type" = #{type} AND wdp.shop_id = #{result.replenishment.shopId} AND wdpd.sku_id =
+        #{result.replenishment.skuId}
+        <if test="codes != null and !codes.isEmpty()">
+            <!-- 当 codes 只有 'approve' 时，单独处理 -->
+            <if test="codes.size() == 1 and 'approve' in codes">
+                AND wdp.approve_status = 'approve'
+                AND wdp.delivery_status = 'unShipped'
+            </if>
+            <!-- 当 codes 包含 'approve' 以及其他状态时 -->
+            <if test="codes.size() > 1 and 'approve' in codes">
+                AND (
+                (wdp.approve_status = 'approve' AND wdp.delivery_status = 'unShipped')
+                OR wdp.approve_status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    <if test="code != 'approve'">
+                        #{code}
+                    </if>
+                </foreach>
+                )
+            </if>
+            <!-- 当 codes 不包含 'approve' 时，直接使用 IN 查询 -->
+            <if test="'approve' not in codes">
+                AND wdp.approve_status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </if>
+    </select>
+    <select id="getOverseasUsable" resultType="java.lang.Integer">
+        select COALESCE(sum(${code}), 0)
+        from ${tableName}
+        where is_deleted = false
+          and sku_id = #{result.replenishment.skuId}
+          and warehouse_id = #{result.replenishment.fbaWarehouseId}
+    </select>
+
+    <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+        SELECT
+        warehouse_id AS warehouseId,
+        SUM ( qty ) AS qty
+        FROM
+        ${tableName}
+        WHERE is_deleted = false
+        AND dict_inventory_status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        AND sku_id = #{skuId}
+        GROUP BY
+        warehouse_id
+    </select>
+
+    <select id="getVirtualUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+        SELECT
+        virtual_warehouse_id AS warehouseId,
+        SUM ( qty ) AS qty
+        FROM
+        ${tableName}
+        WHERE is_deleted = false
+        AND dict_inventory_status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        AND sku_id = #{skuId}
+        GROUP BY
+        virtual_warehouse_id
+    </select>
+
+    <select id="listPurchasePlan" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedPurchaseDetailDTO">
+        SELECT
+        pa.approve_status AS status,
+        pa.code AS sourceCode,
+        pa.id AS sourceId,
+        pad.dest_warehouse_id AS warehouseId,
+        pad.apply_qty AS qty,
+        pad.create_po_type AS createPoType,
+        COALESCE(pa.approve_time,pa.create_time) AS estimatedPutAwayDate,
+        pad.id AS detailId,
+        'purchaseApplication' AS sourceType
+        FROM
+        ${tableName} AS pa
+        INNER JOIN ${tableDetailName} AS pad ON pad.is_deleted = FALSE
+        AND pad.purchase_application_id = pa."id"
+        WHERE
+        pad.sku_id = #{skuId}
+          and pad.dest_warehouse_id in
+        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        <if test="codes != null and !codes.isEmpty()">
+            <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
+            <if test="codes.size() == 1 and 'approve' in codes">
+                AND pa.approve_status = 'approve'
+                AND pad.create_po_type IN ('0', '1')
+            </if>
+            <!-- 当 codes 包含 'approve' 以及其他状态时 -->
+            <if test="codes.size() > 1 and 'approve' in codes">
+                AND (
+                (pa.approve_status = 'approve' AND pad.create_po_type IN ('0', '1'))
+                OR pa.approve_status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    <if test="code != 'approve'">
+                        #{code}
+                    </if>
+                </foreach>
+                )
+            </if>
+            <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
+            <if test="'approve' not in codes">
+                AND pa.approve_status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </if>
+    </select>
+    <select id="listPurchase" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedPurchaseDetailDTO">
+        SELECT
+        po.code AS sourceCode,
+        po.id AS sourceId,
+        po.create_time AS estimatedPutAwayDate,
+        po.approve_status AS status,
+        pod.purchase_qty AS qty,
+        po.delivery_warehouse_id AS warehouseId,
+        'purchaseOrder' AS sourceType
+        FROM
+        ${tableName} AS po
+        INNER JOIN ${tableDetailName} AS pod ON pod.is_deleted = FALSE
+        AND pod.purchase_order_id = po."id"
+        WHERE
+        pod.sku_id = #{skuId}
+        AND po.approve_status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        and po.delivery_warehouse_id in
+        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+    <select id="listPurchaseApplicationRefPo"
+            resultType="com.erp.model.scm.dto.PurchaseApplicationRefPoDTO$ListDTO">
+        select
+        parp.purchase_application_detail_id,
+        parp.purchase_application_id,
+        parp.purchase_order_detail_id,
+        parp.purchase_order_id,
+        COALESCE(pod.purchase_qty,0) as purchaseQty
+        from ${otherTableName} parp
+        left join ${tableName} po on parp.purchase_order_id = po.id and po.is_deleted = false and po.invalid_status =
+        false
+        left join ${tableDetailName} pod on parp.purchase_order_detail_id = pod.id and po.id = pod.purchase_order_id and
+        pod.is_deleted = false
+        where
+        parp.is_deleted = false
+        and parp.purchase_application_detail_id in
+        <foreach collection="detailIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+
+
+    <select id="listSubcontractOrderDetail" resultType="com.erp.model.scm.entity.SubcontractOrderDetailEntity">
+        select
+        sod.id,
+        sod.qty,
+        sod.parent_id,
+        sod.source_detail_id
+        from ${tableName} so
+        inner join ${tableDetailName} sod on so.id = sod.main_id and sod.is_deleted = false
+        left join ${otherTableName} pod on pod.source_detail_id = sod.id and pod.is_deleted = false
+        <where>
+            so.is_deleted = false and so.invalid_status = false and pod.id is null
+            and sod.source_detail_id in
+            <foreach collection="detailIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+    <select id="getAllFbaHistoryInventory" resultType="com.erp.model.wms.entity.FbaInventoryEntity">
+        select *
+        from ${tableName}
+        where is_deleted = false
+    </select>
+    <select id="getLocalInTransitDetail"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$LocalInTransitDetailDTO">
+        SELECT warehouseId,
+        source_type,
+        source_code,
+        qty,
+        sourceId,
+        estimatedPutAwayDate
+        FROM (SELECT MAX
+        (warehouse_id) AS warehouseId,
+        MAX(source_type) AS source_type,
+        MAX(source_code) AS source_code,
+        SUM(qty) AS qty,
+        MAX(bill_date) AS estimatedPutAwayDate,
+        MAX(source_id) AS sourceId
+        FROM (select tf.warehouse_id,
+        tf.warehouse_name,
+        tf.bill_date,
+        tf.sku_id,
+        tf.sku_no,
+        tf.qty,
+        tf.source_id,
+        case
+        when tf.source_type in
+        ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder')
+        then 'purchaseInTransit'
+        when tf.source_type in ('transferOut', 'transferIn') then 'transferInTransit'
+        else '' end
+        as source_type,
+        case
+        <if test="isPurchase != null and isPurchase">
+            when tf.source_type = 'instockForcast' then inv.purchase_order_code
+            when tf.source_type = 'warehouseReceive' then wr.purchase_order_code
+            when tf.source_type = 'purchaseStockIn' then po.purchase_order_code
+            when tf.source_type = 'purchaseReturnOrder' then pr.purchase_order_code
+        </if>
+        <if test="isTransfer != null and isTransfer">
+            when tf.source_type = 'transferOut' then tfo.code
+            when tf.source_type = 'transferIn' then tfi.source_code
+        </if>
+        else '' end
+        as source_code
+        from ${transactionFlow} tf
+        <if test="isPurchase != null and isPurchase">
+            left join ${instockForcast} inv
+            on inv.id = tf.source_id and tf.source_type = 'instockForcast'
+            left join ${poReceive} wr on wr.id = tf.source_id and tf.source_type = 'warehouseReceive'
+            left join ${poInstock} po on po.id = tf.source_id and tf.source_type = 'purchaseStockIn'
+            left join ${poReturn} pr on pr.id = tf.source_id and tf.source_type = 'purchaseReturnOrder'
+        </if>
+        <if test="isTransfer != null and isTransfer">
+            left join ${transferOut} tfo on tfo.id = tf.source_id and tf.source_type = 'transferOut'
+            left join ${transferIn} tfi on tfi.id = tf.source_id and tf.source_type = 'transferIn'
+        </if>
+        where tf.is_deleted = 'f'
+        and tf.dict_inventory_status = 'inTransit'
+        and tf.source_type in
+        ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder',
+        'transferOut', 'transferIn')
+        and tf.sku_id = #{skuId}
+        and tf.warehouse_id in
+        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        ) m
+        group by source_type, source_code
+        order by estimatedPutAwayDate desc) t
+        where t.qty > 0
+    </select>
+    <select id="getAllOverseasHistoryInventory" resultType="com.erp.model.wms.entity.OverseasInventoryEntity">
+        select *
+        from ${tableName}
+        where is_deleted = false
+    </select>
+    <select id="getAllLocalHistoryInventory" resultType="com.erp.model.wms.entity.InventoryEntity">
+        select *
+        from ${tableName}
+        where is_deleted = false
+    </select>
+    <select id="getAllVirtualHistoryInventory" resultType="com.erp.model.wms.entity.VirtualInventoryEntity">
+        select *
+        from ${tableName}
+        where is_deleted = false
+    </select>
+
+</mapper>

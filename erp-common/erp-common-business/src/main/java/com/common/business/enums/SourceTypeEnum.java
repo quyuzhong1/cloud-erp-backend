@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -141,6 +140,9 @@ public enum SourceTypeEnum {
     LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
     TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单","tms_first_mile_reconciliation"),
 
+    //MRP
+    REPLENISHMENT_SUGGESTION("replenishmentSuggestion", "补货建议","replenishment_suggestion"),
+
 
     //Mabang
     MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
@@ -202,6 +204,11 @@ public enum SourceTypeEnum {
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
     PILOT_APPLICATION("pilotApplication", "试产量产单", "pilot_application"),
     FIRST_MILE_ESTIMATED("first_mile_estimated", "头程暂估账单", "first_mile_estimated_bill"),
+
+
+
+    //mrp
+    REPLENISHMENT_PLAN("replenishment_plan", "补货计划计划","replenishment_plan"),
     ;
 
     /**

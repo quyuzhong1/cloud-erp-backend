@@ -482,6 +482,35 @@ public class ShopInfoController extends BaseController {
         return null != shopInfoEntity ? success() : failure();
     }
 
+    /**
+     * 区域远程分页下拉查询
+     * @author will
+     * @date 2024/8/28 16:50
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/pagingSelectArea")
+    public ApiResult<PagingVO<ShopDTO.AreaDTO>> pagingSelectArea(@RequestBody PagingDTO<ShopDTO.AreaParamDTO> dto) {
+        PagingVO<ShopDTO.AreaDTO> pagingVO = shopInfoService.pagingSelectArea(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 店铺下拉查询
+     * @author will
+     * @date 2024/8/28 16:50
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/listSelect")
+    public ApiResult<List<ShopDTO.ListDTO>> listSelect(@RequestBody ShopDTO.SelectDTO dto) {
+        List<ShopDTO.ListDTO> list = shopInfoService.listSelect(dto);
+        return success(list);
+    }
+
+
+
+
     private Boolean checkDmpThirdMapping(String shopId) {
         ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();
         viewParamDTO.setType(ThirdSysTypeEnum.SHOP.getCode());

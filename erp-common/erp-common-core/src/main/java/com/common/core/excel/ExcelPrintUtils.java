@@ -543,7 +543,7 @@ public class ExcelPrintUtils {
 					.registerConverter(new SqlDateNumberConverter())
 					.registerConverter(new SqlDateStringConverter())
 					.registerConverter(new SqlTimestampStringConverter())
-					.head(head).registerWriteHandler(horizontalCellStyleStrategy).sheet(sheetName).doWrite(data);
+					.head(head).registerWriteHandler(horizontalCellStyleStrategy).registerWriteHandler(new ExcelCellWidthStyleStrategy()).sheet(sheetName).doWrite(data);
 			return out.toByteArray();
 		} catch (Exception e) {
 			throw new ServiceException(e.getMessage());

@@ -153,4 +153,7 @@ public interface BusinessNoConstant {
     String CHCB = "CHCB";
     //试产量产
     String SCLC = "SCLC";
+    String JSRQ = "JSRQ";
+    String FHJY = "FHJY";
+    String CGJY = "CGJY";
 }
