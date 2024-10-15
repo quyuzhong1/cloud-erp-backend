@@ -1,13 +1,7 @@
 package com.sdk.oms.shopee.handler;
 
-import com.common.business.annotation.BusinessType;
-import com.common.business.annotation.PlatformCategoryType;
-import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.PlatformProductDTO;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.handler.AbstractProductHandler;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
@@ -18,7 +12,6 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeGlobalListingDTO;
-import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.global.request.GlobalProductRequest;
 import com.sdk.oms.shopee.dto.global.response.GlobalItemInfo;
 import com.sdk.oms.shopee.service.ShopeeGlobalProductService;
@@ -36,16 +29,16 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * 亚马逊产品处理器
+ * 虾皮产品处理器
  *
  * @Author Cloud
  * @Date 2023/8/31 15:48
  **/
 @Slf4j
 @Component
-@PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
-@PlatformType(PlatformDictEnum.SHOPEE)
-@BusinessType(BusinessTypeEnum.GLOBAL_PRODUCT)
+//@PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
+//@PlatformType(PlatformDictEnum.SHOPEE)
+//@BusinessType(BusinessTypeEnum.GLOBAL_PRODUCT)
 public class ShopeeGlobalListingHandler extends AbstractProductHandler<PlatformShopeeGlobalListingDTO, PlatformProductDTO> {
     @Resource
     private ShopeeFeign shopeeFiegn;

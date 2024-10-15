@@ -33,17 +33,17 @@ import java.util.Objects;
 @AllArgsConstructor
 public class PlatformShopeeListingDTO extends CleanBaseDTO {
     //
-    private ItemInfo itemInfo;
+    private ShopeeProductInfo shopeeProductInfo;
     private String shopId;
 
     /**
      * 初始化
      */
-    public PlatformShopeeListingDTO(ItemInfo itemInfo, JobTaskDTO dto) {
-        this.itemInfo = itemInfo;
+    public PlatformShopeeListingDTO(ShopeeProductInfo shopeeProductInfo, JobTaskDTO dto) {
+        this.shopeeProductInfo = shopeeProductInfo;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
-        this.setUniqueId(itemInfo.getItemId() + "_" + dto.getShopId());
+        this.setUniqueId(shopeeProductInfo.getItemInfo().getItemId() + "_"+ shopeeProductInfo.getModelInfo().getModelId() + "_" + dto.getShopId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
         this.shopId = dto.getShopId();
@@ -54,7 +54,9 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
      */
     public static PlatformProductDTO convertDTO(PlatformShopeeListingDTO dto) {
         // 原商品信息
-        ItemInfo itemInfo = dto.getItemInfo();
+        ShopeeProductInfo shopeeProductInfo = dto.getShopeeProductInfo();
+        ModelInfo modelInfo = shopeeProductInfo.getModelInfo();
+        ItemInfo itemInfo = shopeeProductInfo.getItemInfo();
         if (Objects.isNull(itemInfo)) {
             return null;
         }
@@ -78,13 +80,17 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 // 平台spu no
                 .setPlatformProductNo(String.valueOf(itemInfo.getItemId()))
                 // 平台sku no
-                .setPlatformSkuNo(itemInfo.getItemSku())
+                .setPlatformSkuNo(modelInfo.getModelSku())
+                //平台产品id
+                .setPlatformSkuId(String.valueOf(modelInfo.getModelId()))
+                //平台sku状态
+                .setPlatformStatus(modelInfo.getModelStatus())
                 //sku名称
-                .setPlatformSkuName(itemInfo.getItemName())
+                .setPlatformSkuName(modelInfo.getModelSku())
                 // 平台产品名称
                 .setPlatformProductName(itemInfo.getItemName())
                 //产品包装信息
-                .setProductPacking(processDimension(itemInfo.getDimension(), itemInfo.getWeight()))
+                .setProductPacking(processDimension(modelInfo.getDimension(), modelInfo.getWeight()))
                 //产品规格信息
                 .setProductSpec(processProductSpec(itemInfo.getAttributeList()))
                 // 产品图片 url
@@ -132,7 +138,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
     @Override
     public String toString() {
         return "PlatformShopeeListingDTO{" +
-                "itemInfo=" + itemInfo +
+                "shopeeProductInfo=" + shopeeProductInfo +
                 '}';
     }
 }

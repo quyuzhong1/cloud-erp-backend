@@ -319,10 +319,10 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         detailDTO.setSkuNo("");
 
         // 平台sku编号
-        detailDTO.setPlatformSkuNo(StringUtils.isNotEmpty(item.getItemSku()) ? item.getItemSku() : item.getModelSku());
+        detailDTO.setPlatformSkuNo(item.getModelSku());
 
         // 平台产品id
-        detailDTO.setPlatformSpuNo(Objects.nonNull(item.getItemId()) ? item.getItemId().toString() : "");
+        detailDTO.setPlatformSpuNo(item.getItemId().toString());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
@@ -350,7 +350,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(item.getItemId()+"_"+item.getModelId());
+        detailDTO.setSourceDetailId(String.valueOf(item.getItemId()));
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
