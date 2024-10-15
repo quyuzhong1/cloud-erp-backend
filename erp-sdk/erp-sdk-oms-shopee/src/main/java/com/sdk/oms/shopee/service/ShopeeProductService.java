@@ -93,6 +93,7 @@ public class ShopeeProductService {
             return;
         }
         productRequest.setItemIdList(StringUtils.join(itemIds, ","));
+        //获取产品基础信息
         ShopeeResponse productItemBaseInfo = this.getProductItemBaseInfo(productRequest);
         JSONObject responseBaseInfo = productItemBaseInfo.getResponse();
         if (Objects.isNull(responseBaseInfo)) {
@@ -104,8 +105,6 @@ public class ShopeeProductService {
         if (CollectionUtils.isEmpty(itemInfos)) {
             return;
         }
-//        JSONArray tierVariation = responseBaseInfo.getJSONArray("tier_variation");
-//        List<TierVariation> tierVariationList = JSONUtil.toList(tierVariation, TierVariation.class);
         //获取产品model列表
         for (Long itemId : itemIds){
             if (Objects.isNull(itemId)){
