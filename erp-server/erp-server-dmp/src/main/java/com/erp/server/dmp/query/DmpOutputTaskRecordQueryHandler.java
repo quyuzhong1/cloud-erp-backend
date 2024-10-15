@@ -17,7 +17,7 @@ public class DmpOutputTaskRecordQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("tab".equals(field)) {
             String searchType = value.toString();
-            if ("all".equals(searchType) || "-1".equals(searchType)) {
+            if ("all".equals(searchType) || "-1".equals(searchType) || DmpPushMonitorTabEnum.BLACK.getCode().equals(searchType)) {
                 return getQueryAllSql();
             }
 
@@ -27,9 +27,7 @@ public class DmpOutputTaskRecordQueryHandler extends AbstractQueryHandler {
                 return "(dcob.id IS NULL or dcob.field_value = '') and (t.status = '" + DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode() + "'" +
                         " OR t.status = '" + DmpOutputTaskRecordStatusEnum.MQERROR.getCode() + "'" +
                         " OR t.status = '" + DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode() + "')";
-            } else if (DmpPushMonitorTabEnum.BLACK.getCode().equals(searchType)) {
-                return " dcob.ID IS NOT NULL and dcob.field_value != '' ";
-            } else {
+            }else {
                 return " (dcob.id IS NULL or dcob.field_value = '') and t.status = '" + searchType + "' ";
             }
         }

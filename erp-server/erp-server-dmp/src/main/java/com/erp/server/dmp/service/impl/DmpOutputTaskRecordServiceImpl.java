@@ -242,7 +242,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("tab") && "black".equals(a.getValue()))) {
         		String sql = params.getSqlMap().get("default");
         		if(StringUtils.isNotBlank(sql)) {
-        			params.getSqlMap().put("default", sql.replace("t.source_code", "dcob.field_value"));
+        			params.getSqlMap().put("default", sql.replace("t.source_code", "t.field_value"));
         		}
         		pageData = baseMapper.blackPaging(query, params);
         	}else {
