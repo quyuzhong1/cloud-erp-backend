@@ -209,7 +209,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         if(CollectionUtils.isEmpty(allSoReturnInstockDetailEntityList)){
             throw new ServiceException("退货入库明细为空");
         }
-        allSoReturnInstockDetailEntityList = allSoReturnInstockDetailEntityList.stream().filter(v->!v.getSoReturnDetailId().equals(matchDTO.getDetailId())).collect(Collectors.toList());
         String skuNo = null;
         Integer instockQty = 0;
         for (String returnCode : returnCodes) {
@@ -221,12 +220,12 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             if(CollectionUtils.isEmpty(soReturnInstockDetailEntityList)){
                 throw new ServiceException("{}退货入库单与退货订单不匹配",soReturnInstockEntity.getCode());
             }
-            soReturnInstockDetailEntityList = soReturnInstockDetailEntityList.stream().filter(v-> StringUtils.isBlank(v.getSoReturnDetailId())).collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(soReturnInstockDetailEntityList)){
-                throw new ServiceException("退货入库单【{}】已经绑定退货订单，无法重复绑定",soReturnInstockEntity.getCode());
-            }
             instockQty = instockQty+soReturnInstockDetailEntityList.stream().map(v->v.getRealQty()).reduce(MathUtil.ZERO, Integer::sum);
             skuNo = soReturnInstockDetailEntityList.get(0).getSkuNo();
+            soReturnInstockDetailEntityList = soReturnInstockDetailEntityList.stream().filter(v-> StringUtils.isNotBlank(v.getSoReturnDetailId()) && !v.getSoReturnDetailId().equals(matchDTO.getDetailId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(soReturnInstockDetailEntityList)){
+                throw new ServiceException("退货入库单【{}】已经绑定退货订单，无法重复绑定",soReturnInstockEntity.getCode());
+            }
         }
         return new SoB2cReturnDTO.MatchResultDTO(skuNo,instockQty);
     }
