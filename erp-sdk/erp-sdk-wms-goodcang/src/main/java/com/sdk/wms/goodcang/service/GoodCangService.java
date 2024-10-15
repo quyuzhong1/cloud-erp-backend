@@ -224,4 +224,17 @@ public class GoodCangService {
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_CANCEL_OUTBOUND_BILL,paramsMap);
         return JSONObject.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
     }
+
+    /**
+     * 获取退货入库
+     */
+    public GoodCangResponse<List<GoodCangReturnInstockResp>> getReturnInstock(GoodCangGetReturnInstockReq goodCangGetReturnInstockReq){
+        String json = JSON.toJSONString(goodCangGetReturnInstockReq);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_RETURN_INSTOCK,json);
+        GoodCangResponse<List<GoodCangReturnInstockResp>> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangReturnInstockResp>>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            return GoodCangResponse.error("谷仓接口返回为空:"+response);
+        }
+        return respDto;
+    }
 }

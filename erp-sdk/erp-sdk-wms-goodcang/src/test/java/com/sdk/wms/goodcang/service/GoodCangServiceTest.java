@@ -1,6 +1,7 @@
 package com.sdk.wms.goodcang.service;
 
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
@@ -209,6 +210,19 @@ public class GoodCangServiceTest {
         GoodCangResponse<String> response = goodCangService.cancelOutboundBill("G1149-231116-005",null);
         System.out.println(response);
         System.out.println(response.getData());
+    }
+
+    @Test
+    public void getReturnInstockTest() {
+        GoodCangGetReturnInstockReq goodCangGetReturnInstockReq = GoodCangGetReturnInstockReq
+                .builder()
+                .currentPage(1)
+                .pageSize(5)
+                .asroStatus(5)
+                .build();
+        GoodCangResponse<List<GoodCangReturnInstockResp>> response = goodCangService.getReturnInstock(goodCangGetReturnInstockReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
 
 }
