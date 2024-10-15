@@ -1774,7 +1774,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(CollectionUtils.isEmpty(collect)){
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
         }
-        int i = 1/0;
         //库存验证
         checkInventory(entity, list, deliveryWarehouseIdList,warehouseManageType);
         /**
