@@ -85,12 +85,6 @@ public class SoB2cDTO implements Serializable {
         private Integer returnQty;
 
         /**
-         * 退货类型 {{oms_url}}common/enumDropDown?type=SoB2cReturnType
-         */
-        @NotBlank(message = "退货类型不能为空")
-        private String returnType;
-
-        /**
          * 退货原因 {{oms_url}}common/enumDropDown?type=SoB2cReturnReason
          */
         @NotBlank(message = "退货原因不能为空")

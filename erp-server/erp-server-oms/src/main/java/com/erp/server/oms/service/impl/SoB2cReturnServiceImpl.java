@@ -337,7 +337,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             addDTO.setShopId(generateSoB2cReturnViewDTO.getShopId());
             addDTO.setAmount(generateSoB2cReturnViewDTO.getAmount());
             addDTO.setCurrency(generateSoB2cReturnViewDTO.getCurrency());
-            addDTO.setType(generateSoB2cReturnViewDTO.getReturnType());
+            addDTO.setType(SoB2cReturnTypeEnum.CUSTOMER_RETURNS.code);
             addDTO.setReason(generateSoB2cReturnViewDTO.getReturnReason());
             addDTO.setStatus(SoB2cReturnStatusEnum.TO_BE_RETURNED.code);
             addDTO.setSourceType(SoB2cReturnSourceTypeEnum.SELF_ADD.code);

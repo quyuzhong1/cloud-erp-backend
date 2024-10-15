@@ -6,25 +6,34 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Getter
 public enum SoB2cReturnReasonEnum implements EnumMessage {
-    COLOR("COLOR","COLOR"),
-    DEFECTIVE("DEFECTIVE","DEFECTIVE"),
-    NOT_AS_DESCRIBED("NOT_AS_DESCRIBED","NOT_AS_DESCRIBED"),
-    OTHER("OTHER","OTHER"),
-    SIZE_TOO_LARGE("SIZE_TOO_LARGE","SIZE_TOO_LARGE"),
-    SIZE_TOO_SMALL("SIZE_TOO_SMALL","SIZE_TOO_SMALL"),
-    STYLE("STYLE","STYLE"),
-    UNKNOWN("UNKNOWN","UNKNOWN"),
-    UNWANTED("UNWANTED","UNWANTED"),
-    WRONG_ITEM("WRONG_ITEM","WRONG_ITEM"),
+    COLOR("COLOR","COLOR","platform"),
+    DEFECTIVE("DEFECTIVE","DEFECTIVE","platform"),
+    NOT_AS_DESCRIBED("NOT_AS_DESCRIBED","NOT_AS_DESCRIBED","platform"),
+    OTHER("OTHER","OTHER","platform"),
+    SIZE_TOO_LARGE("SIZE_TOO_LARGE","SIZE_TOO_LARGE","platform"),
+    SIZE_TOO_SMALL("SIZE_TOO_SMALL","SIZE_TOO_SMALL","platform"),
+    STYLE("STYLE","STYLE","platform"),
+    UNKNOWN("UNKNOWN","UNKNOWN","platform"),
+    UNWANTED("UNWANTED","UNWANTED","platform"),
+    WRONG_ITEM("WRONG_ITEM","WRONG_ITEM","platform"),
+    DESCRIPTION_NOT_MATCH("DESCRIPTION_NOT_MATCH","描述不符","erp"),
+    QUALITY_ISSUES("QUALITY_ISSUES","质量问题","erp"),
+    ORDER_ERROR("ORDER_ERROR","下单错误","erp"),
+    OTHER_ERP("OTHER_ERP","其他","erp"),
     ;
 
-    SoB2cReturnReasonEnum(String code, String name) {
+    SoB2cReturnReasonEnum(String code, String name,String type) {
         this.code = code;
         this.name = name;
+        this.type = type;
     }
     /**
      * 类型
@@ -36,6 +45,10 @@ public enum SoB2cReturnReasonEnum implements EnumMessage {
      * 名称
      */
     private final String name;
+
+    @Getter
+    private final String type;
+
 
     @Override
     public String getCode() {
@@ -67,5 +80,12 @@ public enum SoB2cReturnReasonEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+    public static List<SoB2cReturnReasonEnum> listByType(String type) {
+        if (StringUtils.isBlank(type)) {
+            return new ArrayList<>();
+        }
+        return Arrays.stream(SoB2cReturnReasonEnum.values()).filter(v->v.getType().equals(type)).collect(Collectors.toList());
     }
 }

@@ -2,24 +2,27 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.EnumCacheUtils;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
+import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
+import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.server.oms.service.SoB2cReturnService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * b2c退货订单
@@ -123,5 +126,15 @@ public class SoB2cReturnController extends BaseController {
     @PostMapping("/delete")
     public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
         return success(soB2cReturnService.delete(idsDTO.getIds()));
+    }
+
+    @GetMapping("getSoB2cReturnReason")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> getSoB2cReturnReason(@RequestParam(value = "type")String type) {
+        List<SoB2cReturnReasonEnum> soB2cReturnReasonEnumList = SoB2cReturnReasonEnum.listByType(type);
+        List<BaseDropDownDTO.CommonDTO> list = new ArrayList<>();
+        soB2cReturnReasonEnumList.forEach(v->{
+            list.add(new BaseDropDownDTO.CommonDTO(v.getCode(),v.getName()));
+        });
+        return success(list);
     }
 }
