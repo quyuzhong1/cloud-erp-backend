@@ -1770,10 +1770,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(CollectionUtils.isEmpty(mappingList)){
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
         }
-        List<LogisticsMappingEntity> collect = mappingList.stream().filter(v -> null != v.getSalesPlatform() && v.getSalesPlatform().equalsIgnoreCase(logisticsEntity.getLogisticsChannelName())).collect(Collectors.toList());
+        List<LogisticsMappingEntity> collect = mappingList.stream().filter(v -> null != v.getSalesPlatform() && v.getSalesPlatform().equalsIgnoreCase(entity.getDictPlatform())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(collect)){
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
         }
+        int i = 1/0;
         //库存验证
         checkInventory(entity, list, deliveryWarehouseIdList,warehouseManageType);
         /**
