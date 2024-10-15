@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -86,5 +87,11 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      */
     List<SoDetailDTO.TypeCountDTO> listDeliveryCount(@Param("permissionSql") String permissionSql);
 
-
+    /**
+     * 查询所有虚拟仓B2B销售订单数据
+     * @author will
+     * @date 2024/9/26 17:03
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
 }

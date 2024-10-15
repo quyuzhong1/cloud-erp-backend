@@ -22,12 +22,12 @@ public interface WmsCartonSpecMapper extends BaseMapper<WmsCartonSpecEntity> {
 
     /**
      * 查询已装箱数量
-     * @Author Luo_WG
+     * @Author zdy
      * @Date 2023/11/28 19:04
      * @param mainId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(@Param("mainId") String mainId, @Param("boxSpecNo") Integer boxSpecNo);
+    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(@Param("mainId") String mainId);
     List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainIds(@Param("mainIds") List<String> mainIds);
 
 

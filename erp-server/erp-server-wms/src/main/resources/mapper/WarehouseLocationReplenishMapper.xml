@@ -91,4 +91,62 @@
         where is_deleted = false
         group by status
     </select>
+    <select id="generateReplenishBill" resultType="com.erp.model.wms.dto.WarehouseLocationReplenishDTO$AddDTO">
+        select * from (
+        SELECT
+        wlsi.warehouse_id,
+        wlsi.sku_id,
+        wlsi.warehouse_location,
+        wlsi.safety_qty,
+        wlsi.max_qty,
+        wlsi.sku_no,
+        it.usable_qty,
+        wa.areaCode AS warehouseArea,
+        CASE
+        WHEN wlsi.max_qty >0 THEN
+        wlsi.max_qty - it.usable_qty
+        ELSE
+        wlsi.safety_qty - it.usable_qty
+        END as qty
+        FROM
+        warehouse_location_safety_inventory AS wlsi
+        LEFT JOIN (
+        SELECT
+        it.warehouse_id,
+        it.sku_id,
+        it.warehouse_location,
+        SUM ( CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END ) AS usable_qty
+        FROM
+        inventory it
+        WHERE
+        it.is_deleted = FALSE
+        GROUP BY
+        it.warehouse_id,
+        it.sku_id,
+        it.warehouse_location
+        ) it ON wlsi.warehouse_id = it.warehouse_id
+        AND wlsi.warehouse_location = it.warehouse_location
+        AND wlsi.sku_id = it.sku_id
+        LEFT JOIN (
+        SELECT DISTINCT
+        wa.warehouse_id,
+        wa.code AS areaCode,
+        wl.code AS location_code
+        FROM
+        warehouse_location wa
+        LEFT JOIN warehouse_location wl ON wl.parent_id = wa.ID
+        AND wl.is_deleted = FALSE
+        WHERE
+        wa.TYPE = 'area'
+        AND wa.is_deleted = FALSE
+        ) wa ON wlsi.warehouse_id = wa.warehouse_id
+        AND wlsi.warehouse_location = wa.location_code
+        WHERE
+        wlsi.is_deleted = FALSE
+        AND wlsi.safety_qty > 0
+        AND  wlsi.safety_qty > it.usable_qty ) as re
+        where re.qty > 0
+        ORDER BY
+        sku_id
+    </select>
 </mapper>

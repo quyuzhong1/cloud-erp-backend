@@ -17,20 +17,18 @@ public class DmpOutputTaskRecordQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("tab".equals(field)) {
             String searchType = value.toString();
-            if ("all".equals(searchType) || "-1".equals(searchType)) {
+            if ("all".equals(searchType) || "-1".equals(searchType) || DmpPushMonitorTabEnum.BLACK.getCode().equals(searchType)) {
                 return getQueryAllSql();
             }
 
             if (DmpPushMonitorTabEnum.NO_NEED_SYNC.getCode().equals(searchType)) {
-                return "t.status = '" + DmpOutputTaskRecordStatusEnum.FINISH.getCode() + "' AND t.is_need_sync = " + Boolean.FALSE + "";
+                return "(dcob.id IS NULL or dcob.field_value = '') and t.status = '" + DmpOutputTaskRecordStatusEnum.FINISH.getCode() + "' AND t.is_need_sync = " + Boolean.FALSE + "";
             } else if (DmpPushMonitorTabEnum.PUSH_ING.getCode().equals(searchType)) {
-                return "(t.status = '" + DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode() + "'" +
+                return "(dcob.id IS NULL or dcob.field_value = '') and (t.status = '" + DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode() + "'" +
                         " OR t.status = '" + DmpOutputTaskRecordStatusEnum.MQERROR.getCode() + "'" +
                         " OR t.status = '" + DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode() + "')";
-            } else if (DmpPushMonitorTabEnum.BLACK.getCode().equals(searchType)) {
-                return "EXISTS ( SELECT 1 FROM dmp_cfg_output_black b WHERE b.field_value = t.source_code ) AND dcob.ID IS NOT NULL";
-            } else {
-                super.buildDefaultDTO("t.status", searchType);
+            }else {
+                return " (dcob.id IS NULL or dcob.field_value = '') and t.status = '" + searchType + "' ";
             }
         }
 

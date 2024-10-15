@@ -61,6 +61,7 @@ public class DictBasicController extends BaseController {
      *             stocktakingMethod 盘点方式 stocktakingType 盘点类型 separateRule 分单规则 stocktakingStatus 盘点状态 warehouseType 仓库类型 qcProblemType 质检单 问题属性
      *             handleModeType 质检单 处理措施 qcReportResult 质检单 质检报告结果 inventoryDirection 库存方向
      *              machineHandleType 加工处理类型    collectMode 揽收方式 issueType 发料类型 soB2cExportType b2c销售订单导出类型
+     *             CfgSettingOrderStatistics 配置订单统计,CfgSettingSalesStatistics 配置销售量统计
      * @param remark 备注
      * @return
      */

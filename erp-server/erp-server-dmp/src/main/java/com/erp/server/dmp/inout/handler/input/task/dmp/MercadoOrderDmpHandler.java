@@ -191,11 +191,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                                 dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                             }
                         }
-                    }
 
-                    //订单状态
-                    Object orderStatusObj = dmpDataMap.get("status");
-                    if (orderStatusObj != null) {
+                        //订单状态
                         String orderStatus = String.valueOf(statusObj);
                         dmpDataMap.put("platformOriginalStatus", orderStatus);
                         if ("invalid".equalsIgnoreCase(orderStatus)) {

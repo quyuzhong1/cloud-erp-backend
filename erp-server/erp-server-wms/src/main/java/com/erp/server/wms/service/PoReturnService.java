@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
@@ -106,6 +107,13 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return java.lang.Boolean
      **/
     BatchResultDTO disApprove(PoReturnEntity entity,List<PoReturnDetailEntity> detailEntityList);
+
+    /**
+     * 根据采购订单获取采购退货记录
+     * @param poIds
+     * @return
+     */
+    List<PoReturnEntity> listByPurchaseOrderIds(List<String> poIds);
 
     /**
      * 取消流程
@@ -379,4 +387,18 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     PurchaseReturnStatisticsDTO.StatusDTO confirmStatusCountBySupplier(PurchaseReturnStatisticsDTO.RequestDTO returnRequestDTO);
 
     PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto);
+
+    /**
+     * 获取委外订单列表
+     * @param purchaseOrderId
+     * @return
+     */
+    List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(String purchaseOrderId);
+
+    /**
+     * 批量获取列表采购单价
+     * @param list
+     * @return
+     */
+    List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
 }

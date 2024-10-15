@@ -93,7 +93,6 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
 
     private void getTrackData(LogisticsBillDetailQueryDTO query, List<OceanResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
-        if (list.size() > MathUtil.NUMBER_100){
             //列表数据较多情况下，进行分割集合
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
             //物流商数据处理
@@ -103,13 +102,6 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
                     responseDataList.add(responseData);
                 }
             });
-        }else {
-            //物流商数据处理
-            OceanResponseData responseData = this.processTrackData(list, cfgAppClient);
-            if (Objects.nonNull(responseData)){
-                responseDataList.add(responseData);
-            }
-        }
         log.info("========同步物流轨迹数据完成==========");
     }
 

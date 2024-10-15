@@ -27,6 +27,7 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
     DELIVERY_FAIL("deliveryFail","投递失败","trackIng","运输途中"),
     SIGN("sign","成功签收","received","已签收"),
     MANUAL_COMPLETE("manualComplete","手动完结","received","已签收"),
+    SYSTEM_COMPLETE("systemComplete","系统完结","received","已签收"),
     MAYBE_EXCEPTION("maybeException","可能异常","trackException","运输异常"),
     TRANSPORT_LONG("transportLong","运输过久","trackException","运输异常"),
     /**

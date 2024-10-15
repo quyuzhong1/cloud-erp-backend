@@ -4,7 +4,7 @@
 
     <sql id="Base_Column_List">
         <!--@mbg.generated-->
-        id, create_user_id, create_user_name, create_time, update_user_id, update_user_name,
+        id, type,create_user_id, create_user_name, create_time, update_user_id, update_user_name,
         update_time, version, is_deleted, approve_status, code, purchase_date, purchase_user_id,
         purchase_user_name, purchase_org_id, purchase_org_name, purchase_dept_id, purchase_dept_name,
         is_first_mass_product, invalid_status, invalid_time, approve_time, approve_user_name,

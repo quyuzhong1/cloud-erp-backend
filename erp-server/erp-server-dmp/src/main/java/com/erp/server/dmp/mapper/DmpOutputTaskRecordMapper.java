@@ -49,6 +49,8 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
      * @return com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingDTO>
      **/
     IPage<DmpOutputTaskRecordDTO.PagingDTO> paging(Page query, @Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
+    
+    IPage<DmpOutputTaskRecordDTO.PagingDTO> blackPaging(Page query, @Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
 
     /**
      * 导出数据查询

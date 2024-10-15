@@ -35,5 +35,28 @@
         main_id, sku_id, sku_no, bom_version, requisition_qty, approve_qty, picking_qty
     </sql>
 
+    <!-- 查询要货申请数据 -->
+    <select id="listAllVirtualRequisitionApplicationDetail"
+            resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO">
+        select
+            COALESCE(ra.requisition_warehouse_id, rad.from_warehouse_id) as warehouseId,
+            rad.from_virtual_warehouse_id as virtualWarehouseId,
+            rad.sku_id as skuId,
+            rad.requisition_qty as orderQty,
+            ra.status,
+            ra.invalid_status as invalidStatus,
+            ra.id as sourceId,
+            ra.code as sourceCode,
+            'requisitionApplication' as sourceType,
+            rad.id as sourceDetailId,
+            ra.create_time as date
+        from requisition_application ra
+        inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
+        <where>
+            ra.is_deleted = false and rad.from_virtual_warehouse_id != ''
+        </where>
+        order by ra.id desc
+    </select>
+
 
 </mapper>

@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
@@ -606,9 +607,13 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 含税单价
          */
+        @NotNull(message = "含税单价不能为空")
         @Digits(integer = 16,fraction = 4,message = "含税单价最大16字符，小数位不能大于4个字符")
         private BigDecimal taxPrice;
-
+        /**
+         * 价税合计
+         */
+        private BigDecimal taxAmount;
         /**
          * 是否赠品
          */
@@ -1045,6 +1050,10 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal price;
+        /**
+         * 采购金额
+         */
+        private BigDecimal amount;
 
         /**
          * 是否赠品
@@ -1061,6 +1070,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 是否自动生成采购订单
          */
         private Boolean isGeneratePo;
+        /**
+         * 是否自动生成入库单
+         * 勾选即为当成品采购订单入库时，以相应BOM数量对子件数量自动入库。
+         */
+        private Boolean isGenerateInStock;
 
         /**
          * 付款条件
@@ -1073,5 +1087,34 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         @NotEmpty(message = "子件SKU不能为空")
         private List<GenerateSubcontractOrderDTO> childList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchasePriceDTO {
+        /**
+         * 批量表单数据
+         */
+        private PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto;
+        /**
+         * 批量校验结果
+         */
+        private List<BatchResultDTO> batchResultDTOList;
+    }
+
+    /**
+     * 委外采购单价
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SubcontractPurchasePriceDTO {
+        /**
+         * 批量表单数据
+         */
+        private List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list;
+        /**
+         * 批量校验结果
+         */
+        private List<BatchResultDTO> batchResultDTOList;
     }
 }

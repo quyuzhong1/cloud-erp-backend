@@ -234,6 +234,10 @@ public class SoReturnInstockDTO {
          * 是否委外（true是、false否）
          */
         private Boolean isSubContract;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**
@@ -311,6 +315,11 @@ public class SoReturnInstockDTO {
          * 仓管员
          */
         private String warehouseKeeperId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -381,6 +390,11 @@ public class SoReturnInstockDTO {
          * 仓管员
          */
         private String warehouseKeeperId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -535,6 +549,11 @@ public class SoReturnInstockDTO {
          * 创建时间
          */
         private String createTime;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */

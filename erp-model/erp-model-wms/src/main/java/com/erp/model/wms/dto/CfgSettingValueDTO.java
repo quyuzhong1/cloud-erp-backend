@@ -225,4 +225,18 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private List<String> userIdList;
     }
+    /**
+     * 委外入库
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubcontractInStock {
+        /**
+         * 自动入库配置
+         * manual 不自动 auto 自动  semiAuto 部分自动
+         */
+        private String autoInStockSetting;
+    }
 }

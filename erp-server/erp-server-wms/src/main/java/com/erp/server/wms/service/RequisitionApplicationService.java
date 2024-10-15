@@ -171,7 +171,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * 生成拣货单弹窗
      * @param page 要货申请id
      */
-    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page);
+    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<RequisitionApplicationDTO.GetPickingViewDTO> page);
     /**
      * 生成拣货单
      * @param picking 拣货参数

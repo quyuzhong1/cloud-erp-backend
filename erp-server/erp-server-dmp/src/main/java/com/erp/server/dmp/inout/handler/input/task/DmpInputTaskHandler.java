@@ -86,8 +86,6 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	@Autowired
 	protected DmpCfgApiService dmpCfgApiService;
 	@Autowired
-	protected DmpCfgInputChildServiceImpl dmpCfgInputChildServiceImpl;
-	@Autowired
 	protected DmpInputCreateFactory dmpInputCreateFactory;
 	@Autowired
 	protected DmpInputTaskFileService dmpInputTaskFileService;
@@ -469,7 +467,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @return
 	 */
 	protected List<DmpCfgInputChildEntity> getCfgInputChildList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse){
-		return dmpCfgInputChildServiceImpl.lambdaQuery()
+		return dmpCfgInputChildService.lambdaQuery()
 				.eq(DmpCfgInputChildEntity::getParentId, dmpResponse.getDmpCfgInputEntity().getId())
 				.eq(DmpCfgInputChildEntity::getInputStatus, dmpRequest.getDealTaskStatus())
 				.list();

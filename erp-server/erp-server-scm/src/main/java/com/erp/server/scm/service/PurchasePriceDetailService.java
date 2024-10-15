@@ -228,7 +228,7 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @param list
      * @return List<PurchaseTaxPriceBatchViewDTO>
      */
-    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(ValidList<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list);
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(List<PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO> list);
     /**
      * @description: 更新明细备注
      * @author Will
@@ -254,4 +254,14 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * @return Boolean
      */
     Boolean enable(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 根据组织/供应商/sku/数量获取采购单价
+     * @param skuIdList
+     * @param supplierIdList
+     * @param purchaseQtyList
+     * @param purchaseOrgIdList
+     * @return
+     */
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(List<String> skuIdList, List<String> supplierIdList, List<Integer> purchaseQtyList, List<String> purchaseOrgIdList);
 }

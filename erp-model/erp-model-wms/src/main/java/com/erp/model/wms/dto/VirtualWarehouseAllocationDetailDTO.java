@@ -2,11 +2,11 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -242,4 +242,35 @@ public class VirtualWarehouseAllocationDetailDTO implements Serializable {
     }
 
 
+    /**
+     * 分货信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AllocationDataDTO {
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * sku信息
+         */
+        private String skuId;
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+        /**
+         * 调出虚拟仓id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调入虚拟仓id
+         */
+        private String toVirtualWarehouseId;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
 }

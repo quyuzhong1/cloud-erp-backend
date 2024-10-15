@@ -200,7 +200,8 @@ public class BusinessServiceImpl {
         }
         // 异步推送到MQ
         String finalTableName = tableName;
-        pushToMqList.stream().peek(msg ->{
+//        pushToMqList.stream().peek(msg ->{
+        pushToMqList.forEach(msg ->{
             BusinessTypeEnum businessType = BusinessTypeEnum.getByCode(business);
             if (ObjectUtil.isEmpty(businessType)){
                 throw new ServiceException(StrUtil.format("业务类型business = {} 不存在", business));
@@ -221,7 +222,8 @@ public class BusinessServiceImpl {
                 mapUtil.put("isClean", 1);
                 mongoService.updateMongoData(updateDto, mapUtil, finalTableName, tClass);
             }
-        }).collect(Collectors.toList());
+        });
+//        }).collect(Collectors.toList());
 
         return pushToMqList;
     }

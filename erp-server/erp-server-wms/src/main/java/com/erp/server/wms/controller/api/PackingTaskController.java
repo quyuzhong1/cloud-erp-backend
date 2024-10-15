@@ -243,7 +243,13 @@ public class PackingTaskController extends BaseController {
     }
 
     /**
-     * 修复历史装箱数据
+     * 更新装箱任务状态
+     * @param taskId
+     * @return
      */
-
+    @GetMapping("/updatePackingStatusByTaskId")
+    public ApiResult updatePackingStatusByTaskId(@RequestParam("taskId") String taskId){
+        packingTaskService.updatePackingStatusByTaskId(taskId);
+        return success();
+    }
 }
