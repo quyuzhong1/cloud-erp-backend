@@ -89,7 +89,7 @@ public class SoB2cRetryJob {
                 JSONObject jsonObject = new JSONObject(jobParam);
                 count = jsonObject.getInt("count", 3);
                 JSONArray jsonArray = jsonObject.getJSONArray("messageList");
-                if (CollectionUtils.isNotEmpty(jsonArray)){
+                if (CollectionUtils.isNotEmpty(jsonArray)) {
                     messageList = jsonArray.stream().map(Object::toString).collect(Collectors.toList());
                 }
                 type = jsonObject.getStr("type", SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode());
@@ -98,7 +98,7 @@ public class SoB2cRetryJob {
             }
 
             LocalDateTime todayNoon = LocalDateTime.now();
-            if (intervalHour > 0){
+            if (intervalHour > 0) {
                 todayNoon = LocalDateTime.now().minusHours(intervalHour);
             }
 
@@ -136,20 +136,29 @@ public class SoB2cRetryJob {
             for (Map.Entry<String, SoB2cErrorEntity> entry : gourpErrorMap.entrySet()) {
                 SoB2cErrorEntity soB2cErrorEntity = entry.getValue();
                 try {
-                    XxlJobHelper.log("SoB2cRetryJob 当前任务执行处理：异常记录Id={}, 订单Id={}", soB2cErrorEntity.getId(), soB2cErrorEntity.getMainId());
-                    soB2cErrorEntity.setRetryCount(soB2cErrorEntity.getRetryCount() + 1);
-                    soB2cErrorService.updateById(soB2cErrorEntity);
 
-                    if (checkSignDelivery(soB2cErrorEntity, type, soMap)) continue;
+                    if (checkSignDelivery(soB2cErrorEntity, type, soMap)) {
+                        XxlJobHelper.log("SoB2cRetryJob 当前任务执行处理：异常记录Id={}, 订单Id={}", soB2cErrorEntity.getId(), soB2cErrorEntity.getMainId());
+                        soB2cErrorEntity.setRetryCount(soB2cErrorEntity.getRetryCount() + 1);
+                        soB2cErrorService.updateById(soB2cErrorEntity);
+                        continue;
+                    }
+                    ;
 
                     List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId());
                     try {
-                        Thread.sleep(3000);
+                        Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         XxlJobHelper.log("SoB2cRetryJob 当前任务睡眠失败");
                         continue;
                     }
-                    XxlJobHelper.log("SoB2cRetryJob 当前任务执行成功：{}", JSONUtil.toJsonStr(resultDTOS));
+                    // 成功重新记录重试数量任务
+                    boolean update = soB2cErrorService.lambdaUpdate()
+                            .set(SoB2cErrorEntity::getRetryCount, soB2cErrorEntity.getRetryCount() + 1)
+                            .eq(SoB2cErrorEntity::getMainId, soB2cErrorEntity.getMainId())
+                            .eq(SoB2cErrorEntity::getType, soB2cErrorEntity.getType())
+                            .update();
+                    XxlJobHelper.log("SoB2cRetryJob 当前任务执行成功：{}, 重新记录数量结果={}", JSONUtil.toJsonStr(resultDTOS), update);
                 } catch (Exception e) {
                     log.error("SoB2cRetryJob 当前任务执行成功异常：soId={}, error={}",
                             soB2cErrorEntity.getMainId(),
@@ -163,7 +172,7 @@ public class SoB2cRetryJob {
             }
             XxlJobHelper.log("SoB2cRetryJob 执行任务列表结束");
         } finally {
-            if (redisTemplate.hasKey(redisKey)){
+            if (redisTemplate.hasKey(redisKey)) {
                 redisTemplate.opsForValue().getOperations().delete(redisKey);
             }
         }
@@ -174,19 +183,19 @@ public class SoB2cRetryJob {
      * 检查当前销售订单是否可标记发货
      */
     private boolean checkSignDelivery(SoB2cErrorEntity soB2cErrorEntity, String type, Map<String, SoB2cEntity> soMap) {
-        if (SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode().equalsIgnoreCase(type)){
+        if (SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode().equalsIgnoreCase(type)) {
             SoB2cEntity soB2cEntity = soMap.get(soB2cErrorEntity.getMainId());
-            if (null == soB2cEntity){
+            if (null == soB2cEntity) {
                 XxlJobHelper.log("SoB2cRetryJob 当前任务无销售订单id={}", soB2cErrorEntity.getMainId());
                 return true;
             }
-            if (soB2cEntity.getIsCancel() || soB2cEntity.getInvalidStatus()){
+            if (soB2cEntity.getIsCancel() || soB2cEntity.getInvalidStatus()) {
                 XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单作废={}", soB2cErrorEntity.getMainId());
                 return true;
             }
             if (!SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus()) &&
                     !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus())
-            ){
+            ) {
                 soB2cErrorEntity.setVersion(soB2cErrorEntity.getVersion() + 1);
                 soB2cErrorService.updateById(soB2cErrorEntity);
                 XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单非待发货/已发货={}", soB2cErrorEntity.getMainId());
