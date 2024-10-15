@@ -16,14 +16,14 @@ import java.util.Objects;
 
 /**
  * @author zdy
- * @ClassName ShopeeShipperService
+ * @ClassName ShopeeLogisticsService
  * @description: 物流供应商接口对接
  * @date 2023年10月30日
  * @version: 1.0
  */
 @Slf4j
 @Component
-public class ShopeeShipperService {
+public class ShopeeLogisticsService {
     public static void main(String[] args) {
         TrackRequest trackRequest = TrackRequest.builder().build();
     }

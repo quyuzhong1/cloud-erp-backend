@@ -25,13 +25,12 @@ import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
 import com.sdk.tms.shopee.model.logistics.response.TrackResponse;
-import com.sdk.tms.shopee.service.ShopeeShipperService;
+import com.sdk.tms.shopee.service.ShopeeLogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -52,7 +51,7 @@ import java.util.*;
 public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
-    private ShopeeShipperService shopeeShipperService;
+    private ShopeeLogisticsService shopeeLogisticsService;
     @Resource
     private ShopeeFeign shopeeFeign;
     @Resource
@@ -114,7 +113,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .build();
             try {
                 ValidatorUtil.validateEntity(trackRequest);
-                BaseResponse baseResponse = shopeeShipperService.getTrackNumber(trackRequest);
+                BaseResponse baseResponse = shopeeLogisticsService.getTrackNumber(trackRequest);
                 responseVO.setDeliveryNo(logisticsQueryVO.getDeliveryNo());
                 if (Objects.nonNull(baseResponse) && Objects.nonNull(baseResponse.getResponse()) && StrUtil.isNotBlank(baseResponse.getResponse().getString("error"))) {
                     TrackResponse trackResponse = JSONObject.parseObject(baseResponse.getResponse().toJSONString(), TrackResponse.class);
@@ -161,7 +160,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         ValidatorUtil.validateEntity(baseRequest);
         try {
-            BaseResponse baseResponse = shopeeShipperService.getChannelList(baseRequest);
+            BaseResponse baseResponse = shopeeLogisticsService.getChannelList(baseRequest);
             if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
                 logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
@@ -210,7 +209,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         ValidatorUtil.validateEntity(baseRequest);
         try {
-            BaseResponse baseResponse = shopeeShipperService.getChannelList(baseRequest);
+            BaseResponse baseResponse = shopeeLogisticsService.getChannelList(baseRequest);
             if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
                 return failure("授权失败");
             }

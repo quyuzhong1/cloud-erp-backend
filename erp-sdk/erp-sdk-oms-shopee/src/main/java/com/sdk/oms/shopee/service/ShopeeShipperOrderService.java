@@ -7,9 +7,6 @@ import com.sdk.oms.shopee.dto.logistics.request.Dropoff;
 import com.sdk.oms.shopee.dto.logistics.request.ShipOrderRequest;
 import com.sdk.oms.shopee.dto.logistics.request.ShipRequest;
 import com.sdk.oms.shopee.dto.logistics.response.ShipResponse;
-import com.sdk.oms.shopee.dto.order.request.OrderRequest;
-import com.sdk.oms.shopee.dto.shop.request.ShopRequest;
-import com.sdk.oms.shopee.dto.shop.response.ShopResponse;
 import com.sdk.oms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,17 +17,17 @@ import static com.sdk.oms.shopee.constants.ShopeeConstants.*;
 
 /**
  * @author zdy
- * @ClassName ShopeeLogisticsService
+ * @ClassName ShopeeShipperOrderService
  * @description: 物流服务
  * @date 2024年10月09日
  * @version: 1.0
  */
 @Component
 @Slf4j
-public class ShopeeLogisticsService {
+public class ShopeeShipperOrderService {
 
     public static void main(String[] args) {
-        ShopeeLogisticsService service = new ShopeeLogisticsService();
+        ShopeeShipperOrderService service = new ShopeeShipperOrderService();
         ShipRequest shipRequest = ShipRequest.builder()
                 .host(host)
                 .token(shop_access_token)

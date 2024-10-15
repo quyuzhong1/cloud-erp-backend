@@ -32,7 +32,7 @@ import com.sdk.oms.shopee.dto.logistics.request.Integrated;
 import com.sdk.oms.shopee.dto.logistics.request.ShipOrderRequest;
 import com.sdk.oms.shopee.dto.logistics.request.ShipRequest;
 import com.sdk.oms.shopee.dto.logistics.response.*;
-import com.sdk.oms.shopee.service.ShopeeLogisticsService;
+import com.sdk.oms.shopee.service.ShopeeShipperOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 @PlatformShipOrderAnno(method = PlatformDictEnum.SHOPEE)
 public class ShopeeShipOrder extends AbstractShipOrder {
     @Resource
-    private ShopeeLogisticsService shopeeLogisticsService;
+    private ShopeeShipperOrderService shopeeShipperOrderService;
     @Resource
     private DictBasicService dictBasicService;
     @Resource
@@ -111,7 +111,7 @@ public class ShopeeShipOrder extends AbstractShipOrder {
             }
             // 查询订单详情(获取子声明
             // 下标)
-            ShipResponse shipResponse = shopeeLogisticsService.getShipping(shipRequest,mainEntity.getPlatformCode(), packageNumber);
+            ShipResponse shipResponse = shopeeShipperOrderService.getShipping(shipRequest,mainEntity.getPlatformCode(), packageNumber);
             if (Objects.isNull(shipResponse) || Objects.isNull(shipResponse.getResponse())){
                 log.error("【虾皮标记发货】订单【{}】查询订单详情为空", mainEntity.getPlatformCode());
                 throw new ServiceException("查询订单详情为空");
@@ -186,7 +186,7 @@ public class ShopeeShipOrder extends AbstractShipOrder {
 //                throw new ServiceException("【虾皮标记发货】订单【{}】数据异常未匹配到有效子订单下标");
 //            }
             try {
-                ShopeeResponse shopeeResponse = shopeeLogisticsService.shippingOrder(shipRequest, shipOrderRequest);
+                ShopeeResponse shopeeResponse = shopeeShipperOrderService.shippingOrder(shipRequest, shipOrderRequest);
                 if (StrUtil.isBlank(shopeeResponse.getError())){
                     signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
                 }else {
