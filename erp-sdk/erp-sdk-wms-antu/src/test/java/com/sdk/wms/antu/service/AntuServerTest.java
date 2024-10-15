@@ -180,4 +180,13 @@ public class AntuServerTest {
         AntuResponse<String> response = antuService.cancelInboundBill("RVA001-240826-0003");
         System.out.println(response);
     }
+    @Test
+    public void getReturnInstockTest() {
+        AntuGetReturnReq antuGetReturnReq = AntuGetReturnReq.builder()
+                .page(1)
+                .pageSize(4)
+                .build();
+        AntuResponse<List<AntuReturnResp>> response = antuService.getReturnInstock(antuGetReturnReq);
+        System.out.println(JSONUtil.toJsonStr(response));
+    }
 }

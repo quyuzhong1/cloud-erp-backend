@@ -47,6 +47,12 @@ public class GoodCangReturnInstockResp extends CleanBaseDTO implements Serializa
     @JSONField(name = "asro_add_time")
     private LocalDateTime asroAddTime;
 
+    //仓库
+    @JSONField(name = "warehouse_code")
+    private String warehouseCode;
+    //退件备注
+    @JSONField(name = "asro_reason")
+    private String reason;
     //明细
     @JSONField(name = "product_detail")
     private List<GoodCangReturnInstockResp.Product> productDetailList;

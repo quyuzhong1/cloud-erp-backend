@@ -1,9 +1,6 @@
 package com.sdk.wms.goodcang.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.Max;
@@ -29,6 +26,7 @@ public class GoodCangGetReturnInstockReq {
     private LocalDateTime endUpdateTime;
 
     //订单状态
+    @Builder.Default
     private Integer asroStatus = 5;
 
 }

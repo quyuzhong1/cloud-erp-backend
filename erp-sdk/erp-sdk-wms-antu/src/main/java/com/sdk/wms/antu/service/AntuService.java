@@ -171,4 +171,12 @@ public class AntuService {
         return JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
     }
 
+    /**
+     * 获取退货单
+     */
+    public AntuResponse<List<AntuReturnResp>> getReturnInstock(@Valid AntuGetReturnReq antuGetReturnReq){
+        String response = AntuUtils.callService(AntuConstants.GET_SPECIAL_ORDERS_LIST,antuGetReturnReq);
+        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuReturnResp>>>() {}.getType());
+    }
+
 }
