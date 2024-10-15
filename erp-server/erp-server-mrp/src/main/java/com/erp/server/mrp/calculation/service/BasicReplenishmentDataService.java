@@ -173,11 +173,11 @@ public class BasicReplenishmentDataService {
         List<CfgRuleSalesFormulaEntity> defaultFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(defaultSalesQtyIds);
         List<CfgRuleSalesDenoisingEntity> defaultDenoisingList = cfgRuleSalesDenoisingService.listBySalesQtyIdList(defaultSalesQtyIds);
         //查询所有需要计算得数据
-        List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(suggestionIds);
-        List<List<ReplenishmentResultDTO>> partition = Lists.partition(suggestions, 1000);
-        for (List<ReplenishmentResultDTO> list : partition) {
+        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
+        for (List<String> list : partition) {
             CompletableFuture.runAsync(() -> {
-                for (ReplenishmentResultDTO dto : list) {
+                List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(list);
+                for (ReplenishmentResultDTO dto : suggestions) {
                     try {
                         ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
                         ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
