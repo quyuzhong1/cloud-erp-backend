@@ -55,6 +55,7 @@ public class ProductChangeHandler extends AbstractQueryHandler {
             if (CollectionUtils.isEmpty(changeIdList)) {
                 return getQueryEmptySql();
             }
+            super.buildSplicingSQLDTO("id", QueryConditionEnum.IN_LIST, changeIdList, QueryDataTypeEnum.STRING);
         }
         return super.getSplicingSQL();
     }
