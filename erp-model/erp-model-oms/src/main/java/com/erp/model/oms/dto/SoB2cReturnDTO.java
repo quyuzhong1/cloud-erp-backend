@@ -420,6 +420,12 @@ public class SoB2cReturnDTO implements Serializable {
     @AllArgsConstructor
     public static class MatchDTO {
 
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
         /**
          * skuId
          */

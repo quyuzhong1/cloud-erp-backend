@@ -209,6 +209,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         if(CollectionUtils.isEmpty(allSoReturnInstockDetailEntityList)){
             throw new ServiceException("退货入库明细为空");
         }
+        allSoReturnInstockDetailEntityList = allSoReturnInstockDetailEntityList.stream().filter(v->!v.getSoReturnDetailId().equals(matchDTO.getDetailId())).collect(Collectors.toList());
         String skuNo = null;
         Integer instockQty = 0;
         for (String returnCode : returnCodes) {
