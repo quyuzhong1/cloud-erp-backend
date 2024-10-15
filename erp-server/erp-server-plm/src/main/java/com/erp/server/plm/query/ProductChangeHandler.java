@@ -30,7 +30,7 @@ public class ProductChangeHandler extends AbstractQueryHandler {
         if("tab".equals(field)){
             return getTabSql(value);
         }
-        if ("b.state".equals(field)) {
+        if ("state".equals(field)) {
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             if (QueryConditionEnum.EQ.equals(queryConditionEnum)) {
                 super.buildSplicingSQLDTO(field, QueryConditionEnum.EQ, value, QueryDataTypeEnum.NUMBER);
