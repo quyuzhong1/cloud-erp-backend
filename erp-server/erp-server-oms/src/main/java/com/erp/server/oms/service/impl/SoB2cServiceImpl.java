@@ -4150,9 +4150,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public BatchResultDTO falseDelivery(String id) {
         SoB2cEntity entity = this.getById(id);
-        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())
-                && !ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())
-        ) {
+        if (!(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())
+                && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()))) {
             throw new ServiceException(ApiError.APPROVE_IS_FALSE_DELIVERY);
         }
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));

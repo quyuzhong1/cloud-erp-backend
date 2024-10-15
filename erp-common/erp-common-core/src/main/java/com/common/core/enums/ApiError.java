@@ -1013,7 +1013,7 @@ public enum ApiError implements Serializable {
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货，取消发货的数据不允许操作手动标发"),
-    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许手动标发"),
+    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且待发货的订单允许手动标发"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】未生成波次，不允许操作"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
