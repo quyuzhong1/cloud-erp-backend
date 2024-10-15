@@ -69,6 +69,22 @@ public class CfgPlatformMappingDTO implements Serializable {
     }
 
     /**
+     * 详情（代id）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MainViewDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 详情数据
+         */
+        private List<ViewDTO> viewList;
+    }
+
+    /**
     * 详情
     */
     @Data

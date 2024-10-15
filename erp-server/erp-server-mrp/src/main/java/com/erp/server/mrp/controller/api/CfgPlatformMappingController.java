@@ -51,7 +51,7 @@ public class CfgPlatformMappingController extends BaseController {
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<List<CfgPlatformMappingDTO.ViewDTO>> view() {
+    public ApiResult<CfgPlatformMappingDTO.MainViewDTO> view() {
         return success(cfgPlatformMappingService.view());
     }
 

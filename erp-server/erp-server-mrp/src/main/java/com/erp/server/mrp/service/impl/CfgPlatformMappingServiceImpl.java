@@ -10,9 +10,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingModeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.mrp.mapper.CfgPlatformMappingMapper;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -80,6 +83,12 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         return Boolean.TRUE;
     }
 
+    /**
+     * 添加日志
+     * @author will
+     * @date 2024/10/15 14:38
+     * @param list 
+     */
     private void addOperateLog (List<CfgPlatformMappingEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -99,10 +108,15 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
             String platformNames = platformViewList.stream().filter(obj -> platformList.contains(obj.getValue()))
                     .map(DictBasicDTO.ViewDTO::getName)
                     .collect(Collectors.joining(","));
-            String content = StrUtil.format("补货建议平台{}，平台{}，备货模式{}，是否启用{}，定时生效{};<br>",value.get(0).getType(),platformNames,
+            String content = StrUtil.format("补货建议平台【{}】，平台【{}】，备货模式【{}】，是否启用【{}】，定时生效【{}】;<br>", CfgRulePlatformTypeEnum.getName(value.get(0).getType()),platformNames,
                     CfgRuleStockingModeEnum.getName(entity.getStockingMode()),entity.getDisabled() ? "是":"否", entity.getEffectiveDate());
             msg.append(content);
         }
+        if (StrUtil.isBlank(msg)) {
+            return;
+        }
+        String minId = list.stream().min(Comparator.comparing(obj -> obj.getId())).map(CfgPlatformMappingEntity::getId).orElse("");
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), minId, "平台");
     }
 
     @Override
@@ -131,13 +145,18 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
 
 
     @Override
-    public List<CfgPlatformMappingDTO.ViewDTO> view() {
-        List<CfgPlatformMappingDTO.ViewDTO> resultList = new ArrayList<>();
+    public CfgPlatformMappingDTO.MainViewDTO view() {
+        CfgPlatformMappingDTO.MainViewDTO mainViewDTO = new CfgPlatformMappingDTO.MainViewDTO();
+
+        List<CfgPlatformMappingDTO.ViewDTO> viewList = new ArrayList<>();
 
         List<CfgPlatformMappingEntity> platformMappingList = this.list();
         if (CollectionUtils.isEmpty(platformMappingList)) {
-            return resultList;
+            return mainViewDTO;
         }
+        //最小id
+        String minId = platformMappingList.stream().min(Comparator.comparing(obj -> obj.getId())).map(CfgPlatformMappingEntity::getId).orElse("");
+        mainViewDTO.setId(minId);
         Map<String, List<CfgPlatformMappingEntity>> map = platformMappingList.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getPlatform));
         for (Map.Entry<String, List<CfgPlatformMappingEntity>> entry : map.entrySet()) {
             List<CfgPlatformMappingEntity> value = entry.getValue();
@@ -145,9 +164,10 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
             BeanMapperUtils.copy(value.get(0),viewDTO);
             List<String> platformList = value.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
             viewDTO.setPlatformList(platformList);
-            resultList.add(viewDTO);
+            viewList.add(viewDTO);
         }
-        return resultList;
+        mainViewDTO.setViewList(viewList);
+        return mainViewDTO;
     }
 
 

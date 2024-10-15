@@ -47,7 +47,7 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
      * 查询详情
      * @author will
      * @date 2024/10/15 10:01
-     * @return ViewDTO
+     * @return MainViewDTO
      */
-    List<CfgPlatformMappingDTO.ViewDTO> view();
+    CfgPlatformMappingDTO.MainViewDTO view();
 }
