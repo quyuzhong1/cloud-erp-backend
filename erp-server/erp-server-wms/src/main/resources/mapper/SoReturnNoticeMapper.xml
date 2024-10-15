@@ -25,7 +25,8 @@
             srn.create_user_name AS createUserName,
             srnd.return_type_dict AS returnTypeDict,
             srnd.return_reason_dict AS returnReasonDict,
-            srn.create_time AS createTime
+            srn.create_time AS createTime,
+            srn.return_logistic_code as returnLogisticCode
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE
@@ -84,7 +85,8 @@
         srn.create_user_name AS createUserName,
         srnd.return_type_dict AS returnTypeDict,
         srnd.return_reason_dict AS returnReasonDict,
-        srn.create_time AS createTime
+        srn.create_time AS createTime,
+        srn.return_logistic_code as returnLogisticCode
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE
@@ -121,7 +123,8 @@
             srnd.return_type_dict,
             srnd.return_reason_dict,
             srnd.remark,
-            srn.approve_status
+            srn.approve_status,
+            srn.return_logistic_code
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE

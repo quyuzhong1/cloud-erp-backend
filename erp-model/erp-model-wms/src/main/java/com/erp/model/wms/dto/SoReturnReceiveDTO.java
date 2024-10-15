@@ -215,6 +215,11 @@ public class SoReturnReceiveDTO {
          * 仓库Id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**
@@ -299,6 +304,10 @@ public class SoReturnReceiveDTO {
         private String type;
 
         /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.Add> detailList;
@@ -367,6 +376,10 @@ public class SoReturnReceiveDTO {
          */
         private String type;
 
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -499,6 +512,11 @@ public class SoReturnReceiveDTO {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -648,6 +666,11 @@ public class SoReturnReceiveDTO {
          * 入库日期
          */
         private LocalDate instockDate;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**

@@ -355,7 +355,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setInventoryOrgId(updateDTO.getOrgId());
         String warehouseOrgName = orgList.stream().filter(o -> updateDTO.getOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setInventoryOrgName(warehouseOrgName);
-
+        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         entity.setSoReturnId(dto.getSoReturnId());
         entity.setSoReturnCode(dto.getSoReturnCode());
         entity.setSourceCode(dto.getSourceCode());
@@ -402,6 +402,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         String warehouseOrgName = orgList.stream().filter(o -> updateDTO.getOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setInventoryOrgName(warehouseOrgName);
         entity.setBillDate(dto.getBillDate());
+        if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
+        }
+        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //操作日志
         SoReturnInstockEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
@@ -791,16 +795,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(id);
             SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
-            //等于空表示无退货单的下推
-/*            if (StringUtils.isBlank(soReturnReceiveEntity.getSourceId())) {
-                dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
-                dto.setSourceCode(soReturnReceiveEntity.getCode());
-                dto.setSourceId(id);
-            } else {
-                dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
-                dto.setSourceCode(soReturnReceiveEntity.getSourceCode());
-                dto.setSourceId(soReturnReceiveEntity.getSourceId());
-            }*/
             dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
             dto.setSourceCode(soReturnReceiveEntity.getCode());
             dto.setSourceId(id);
@@ -813,6 +807,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             dto.setWarehouseId(soReturnReceiveEntity.getWarehouseId());
             dto.setWarehouseKeeperId(soReturnReceiveEntity.getWarehouseKeeperId());
             dto.setType(soReturnReceiveEntity.getType());
+            dto.setReturnLogisticCode(viewList.get(0).getReturnLogisticCode());
 
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView view : viewList) {
