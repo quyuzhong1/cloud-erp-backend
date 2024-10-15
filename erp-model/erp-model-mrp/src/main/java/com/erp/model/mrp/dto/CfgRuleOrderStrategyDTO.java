@@ -2,12 +2,11 @@ package com.erp.model.mrp.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -44,7 +43,7 @@ public class CfgRuleOrderStrategyDTO implements Serializable {
         /**
         * 采购建议策略
         */
-        private String purchaseStrategy;
+        private Boolean isSplit;
 
 
     }
@@ -81,11 +80,10 @@ public class CfgRuleOrderStrategyDTO implements Serializable {
         private String platformType;
 
         /**
-        * 采购建议策略
+        * 采购建议策略,是否拆分,true是，false否
         */
-        @NotBlank(message = "采购建议策略不能为空")
-        @Size(max = 32,message = "采购建议策略最大长度不能超过32位")
-        private String purchaseStrategy;
+        @NotNull(message = "采购建议策略,是否拆分不能为空")
+        private Boolean isSplit;
 
 
     }

@@ -1,13 +1,13 @@
 package com.erp.model.mrp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -30,15 +30,15 @@ public class CfgRuleOrderStrategyEntity extends BaseEntity<CfgRuleOrderStrategyE
     @TableField("platform_type")
     private String platformType;
     /**
-    * 采购建议策略
+    * 采购建议策略,是否拆分
     */
-    @TableField("purchase_strategy")
-    private String purchaseStrategy;
+    @TableField("is_split")
+    private Boolean isSplit;
 
 
     public static final String PLATFORM_TYPE = "platform_type";
 
-    public static final String PURCHASE_STRATEGY = "purchase_strategy";
+    public static final String IS_SPLIT = "is_split";
 
     @Override
     public Serializable pkVal() {

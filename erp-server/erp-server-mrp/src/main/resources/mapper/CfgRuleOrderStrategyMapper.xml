@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="platform_type" property="platformType" />
-       <result column="purchase_strategy" property="purchaseStrategy" />
+       <result column="is_split" property="isSplit" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -27,7 +27,7 @@
         update_time,
         version,
         is_deleted,
-        platform_type, purchase_strategy
+        platform_type, is_split
     </sql>
 
 

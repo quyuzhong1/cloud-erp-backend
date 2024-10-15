@@ -10,6 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
+import com.erp.model.mrp.enums.CfgRuleStockingModeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -64,12 +65,44 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             this.removeByIds(deleteIds);
         }
+        //无数据则直接返回
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
 
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("平台映射单保存失败");
         }
+
+        //日志
+        addOperateLog(list);
         return Boolean.TRUE;
+    }
+
+    private void addOperateLog (List<CfgPlatformMappingEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        Map<String, List<CfgPlatformMappingEntity>> map = list.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getType));
+
+        //平台信息
+        List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+
+        //日志
+        StringBuffer msg = new StringBuffer();
+        for (Map.Entry<String, List<CfgPlatformMappingEntity>> entry : map.entrySet()) {
+            List<CfgPlatformMappingEntity> value = entry.getValue();
+            CfgPlatformMappingEntity entity = value.get(0);
+            //平台集合
+            List<String> platformList = value.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
+            String platformNames = platformViewList.stream().filter(obj -> platformList.contains(obj.getValue()))
+                    .map(DictBasicDTO.ViewDTO::getName)
+                    .collect(Collectors.joining(","));
+            String content = StrUtil.format("补货建议平台{}，平台{}，备货模式{}，是否启用{}，定时生效{};<br>",value.get(0).getType(),platformNames,
+                    CfgRuleStockingModeEnum.getName(entity.getStockingMode()),entity.getDisabled() ? "是":"否", entity.getEffectiveDate());
+            msg.append(content);
+        }
     }
 
     @Override
