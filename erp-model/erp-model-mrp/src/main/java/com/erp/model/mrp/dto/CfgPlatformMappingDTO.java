@@ -76,14 +76,9 @@ public class CfgPlatformMappingDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
         * 平台
         */
-        private String platform;
+        private List<String> platformList;
 
         /**
         * 归属平台
@@ -100,7 +95,10 @@ public class CfgPlatformMappingDTO implements Serializable {
         */
         private LocalDate effectiveDate;
 
-
+        /**
+         * 备货模式
+         */
+        private String stockingMode;
     }
 
     /**

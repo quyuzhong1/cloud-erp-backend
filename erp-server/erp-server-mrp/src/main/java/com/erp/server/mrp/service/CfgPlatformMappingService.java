@@ -20,7 +20,7 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
     * 修改
     * @author will
     * @date: 2024-08-29
-    * @param dto
+    * @param updateList
     * @return
     */
     Boolean update(ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList);
@@ -36,11 +36,18 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
 
     List<CfgPlatformMappingEntity> listByEffective();
     /**
-     * 根据平台类型查询
+     * 根据平台类型查询有效数据
      * @author will
      * @date 2024/9/3 17:56
      * @param platformType 
      * @return List<CfgPlatformMappingEntity>
      */
     List<CfgPlatformMappingEntity> listByPlatformType(String platformType);
+    /**
+     * 查询详情
+     * @author will
+     * @date 2024/10/15 10:01
+     * @return ViewDTO
+     */
+    List<CfgPlatformMappingDTO.ViewDTO> view();
 }

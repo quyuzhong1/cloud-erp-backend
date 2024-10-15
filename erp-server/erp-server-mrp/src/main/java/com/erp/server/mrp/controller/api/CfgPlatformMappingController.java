@@ -1,22 +1,16 @@
 package com.erp.server.mrp.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -47,6 +41,18 @@ public class CfgPlatformMappingController extends BaseController {
     public ApiResult<?> update(@RequestBody @Validated ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList) {
         cfgPlatformMappingService.update(updateList);
         return success();
+    }
+
+    /**
+     * 查询详情
+     * @author will
+     * @date 2024/10/15 10:00
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<List<CfgPlatformMappingDTO.ViewDTO>> view() {
+        return success(cfgPlatformMappingService.view());
     }
 
     /**

@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -93,6 +94,27 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
                 .eq(CfgPlatformMappingEntity::getType, platformType)
                 .list();
         return list;
+    }
+
+
+    @Override
+    public List<CfgPlatformMappingDTO.ViewDTO> view() {
+        List<CfgPlatformMappingDTO.ViewDTO> resultList = new ArrayList<>();
+
+        List<CfgPlatformMappingEntity> platformMappingList = this.list();
+        if (CollectionUtils.isEmpty(platformMappingList)) {
+            return resultList;
+        }
+        Map<String, List<CfgPlatformMappingEntity>> map = platformMappingList.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getPlatform));
+        for (Map.Entry<String, List<CfgPlatformMappingEntity>> entry : map.entrySet()) {
+            List<CfgPlatformMappingEntity> value = entry.getValue();
+            CfgPlatformMappingDTO.ViewDTO viewDTO = new CfgPlatformMappingDTO.ViewDTO();
+            BeanMapperUtils.copy(value.get(0),viewDTO);
+            List<String> platformList = value.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
+            viewDTO.setPlatformList(platformList);
+            resultList.add(viewDTO);
+        }
+        return resultList;
     }
 
 
