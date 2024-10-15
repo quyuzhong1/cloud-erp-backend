@@ -13,6 +13,11 @@ import java.util.Date;
  */
 @Data
 @TableName("sys_post_user")
+
+
+
+
+
 public class SysPostUserEntity {
 
     @TableId(value = "id",type = IdType.ASSIGN_ID )

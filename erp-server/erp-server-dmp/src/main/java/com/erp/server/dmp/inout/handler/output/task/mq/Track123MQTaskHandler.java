@@ -78,9 +78,10 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 		Map<String, List<DmpLogisticsTrackEntity>> trackMap = trackEntityList.stream().collect(Collectors.groupingBy(DmpLogisticsTrackEntity::getTrackNo));
 		for (Map.Entry<String, List<DmpLogisticsTrackEntity>> stringListEntry : trackMap.entrySet()) {
 			PlatformTrackDTO platformTrackDTO = this.convert(stringListEntry.getValue(), cfgOutputId);
-			map.put(stringListEntry.getValue().get(0).getId(), JSON.toJSONString(platformTrackDTO));
+			if (platformTrackDTO != null) {
+				map.put(stringListEntry.getValue().get(0).getId(), JSON.toJSONString(platformTrackDTO));
+			}
 		}
-
 		return map;
 	}
 	

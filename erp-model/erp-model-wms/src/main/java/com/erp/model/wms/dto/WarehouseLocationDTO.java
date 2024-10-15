@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -411,6 +412,12 @@ public class WarehouseLocationDTO implements Serializable {
          * 仓位ID
          */
         private String id;
+
+        /**
+         * 库区类型
+         */
+        @Dict(queryTypeField = "warehouseAreaType")
+        private String areaType;
 
         /**
          * 仓位编码

@@ -487,6 +487,11 @@ public class SoB2cDTO implements Serializable {
          * 是否地址修改 true 是  false 否
          */
         private Boolean isChangeReceiverAddress;
+
+        /**
+         * 标签
+         */
+        private Boolean tag;
     }
 
     @Data

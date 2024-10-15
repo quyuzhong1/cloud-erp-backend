@@ -209,6 +209,23 @@ public class CfgSettingValueDTO implements Serializable {
     }
 
     /**
+     * 飞书要货申请完成通知DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FsRequisitionNoticeDTO{
+
+        /**
+         * 可以选择单据的操作人（创建人、处理人）
+         */
+        private List<String> roleIdList;
+
+        /**
+         * 抄送人员id集合,post请求,/api/plm/common/findUserList
+         */
+        private List<String> userIdList;
+    }
+    /**
      * 委外入库
      */
     @Data

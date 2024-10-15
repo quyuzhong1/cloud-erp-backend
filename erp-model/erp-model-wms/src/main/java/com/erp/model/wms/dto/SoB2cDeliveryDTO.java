@@ -540,6 +540,16 @@ public class SoB2cDeliveryDTO implements Serializable {
         @Dict(enumClass = AbnormalCauseEnum.class)
         private String abnormalCause;
 
+        /**
+         * 发货标记
+         */
+        private String shipmentMark;
+
+        /**
+         * 标签
+         */
+        private String tag;
+
     }
 
     /**

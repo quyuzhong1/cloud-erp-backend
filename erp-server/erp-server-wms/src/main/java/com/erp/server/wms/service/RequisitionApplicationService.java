@@ -224,4 +224,12 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id);
 
     void assembleDownload(List<String> ids, HttpServletResponse response);
+
+    /**
+     * 要货申请完成飞书通知
+     * @author jack
+     * @date 2024/10/9
+     * @param requisitionApplication
+     */
+    void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
 }

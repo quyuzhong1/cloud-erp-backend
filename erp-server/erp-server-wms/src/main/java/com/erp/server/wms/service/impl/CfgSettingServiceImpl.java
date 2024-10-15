@@ -220,6 +220,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case SUBCONTRACT_IN_STOCK:
                 jsonObject = JSONUtil.parseObj(addDTO.getSubcontractInStock());
                 break;
+            case FS_REQUISITION_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionNoticeDTO());
+                break;
             default:
                 break;
         }
@@ -256,7 +259,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private void handleViewEnum (CfgSettingEntity cfgSetting,CfgSettingDTO.ViewDTO viewDTO) {
         //获取枚举
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());
-        if (ObjectUtil.isEmpty(cfgSettingEnum)) {
+        if(null == cfgSettingEnum){
             return;
         }
         switch (cfgSettingEnum) {
@@ -291,6 +294,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case CFG_PRINT:
                 CfgSettingValueDTO.CfgPrint cfgPrint = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.CfgPrint.class);
                 viewDTO.setCfgPrint(cfgPrint);
+                break;
+            case FS_REQUISITION_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionNoticeDTO(fsRequisitionNoticeDTO);
                 break;
             case SUBCONTRACT_IN_STOCK:
                 CfgSettingValueDTO.SubcontractInStock subcontractInStock = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);

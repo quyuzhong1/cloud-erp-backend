@@ -499,6 +499,10 @@ public class SoReturnDTO {
          * 库存组织id
          */
         private String inventoryOrgName;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**
