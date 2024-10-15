@@ -1,17 +1,23 @@
 package com.sdk.tms.shopee.service;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.sdk.tms.shopee.constant.PathConstants;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
+import com.sdk.tms.shopee.model.logistics.request.ShippingDocumentRequest;
+import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
+import com.sdk.tms.shopee.model.logistics.response.ShippingDocumentParameterResponse;
 import com.sdk.tms.shopee.model.logistics.response.TrackNumber;
 import com.sdk.tms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -25,7 +31,8 @@ import java.util.Objects;
 @Component
 public class ShopeeLogisticsService {
     public static void main(String[] args) {
-        TrackRequest trackRequest = TrackRequest.builder().build();
+        ShopeeLogisticsService service = new ShopeeLogisticsService();
+
     }
 
 
@@ -103,6 +110,60 @@ public class ShopeeLogisticsService {
         return JSONObject.parseObject(response.toJSONString(), TrackNumber.class);
     }
 
+    /**
+     * 获取面单打印参数
+     * @param baseRequest
+     * @param orderRequestList
+     * @return
+     */
+    public List<ShippingDocumentParameterResponse> getShippingDocumentParameter(BaseRequest baseRequest, List<ShippingOrderRequest> orderRequestList) {
+        String path = "/api/v2/logistics/get_shipping_document_parameter";
+        baseRequest.setPath(path);
+        long timestamp = System.currentTimeMillis() / 1000L;
+        baseRequest.setTimestamp(timestamp);
+        HashMap<String, Object> urlParams = getOrderCommonParam(baseRequest);
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("order_list", JSONUtil.toJsonStr(orderRequestList));
+        BaseResponse baseResponse = ShopeeApiUtils.sendPost(baseRequest.getHost() + path, urlParams, params);
+        if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
+            return null;
+        }
+        JSONObject response = baseResponse.getResponse();
+        String error = response.getString("error");
+        if (StrUtil.isNotEmpty(error)) {
+            log.error("获取面单打印参数异常：{}", error);
+            return null;
+        }
+        //打印列表
+        return JSONObject.parseArray(response.getString("result_list"), ShippingDocumentParameterResponse.class);
+    }
+    /**
+     * 创建面单打印
+     * @param baseRequest
+     * @param orderRequestList
+     * @return
+     */
+    public List<ShippingDocumentParameterResponse> createShippingDocument(BaseRequest baseRequest, List<ShippingOrderRequest> orderRequestList) {
+        String path = "/api/v2/logistics/create_shipping_document";
+        baseRequest.setPath(path);
+        long timestamp = System.currentTimeMillis() / 1000L;
+        baseRequest.setTimestamp(timestamp);
+        HashMap<String, Object> urlParams = getOrderCommonParam(baseRequest);
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("order_list", JSONUtil.toJsonStr(orderRequestList));
+        BaseResponse baseResponse = ShopeeApiUtils.sendPost(baseRequest.getHost() + path, urlParams, params);
+        if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
+            return null;
+        }
+        JSONObject response = baseResponse.getResponse();
+        String error = response.getString("error");
+        if (StrUtil.isNotEmpty(error)) {
+            log.error("获取面单打印参数异常：{}", error);
+            return null;
+        }
+        //打印列表
+        return JSONObject.parseArray(response.getString("result_list"), ShippingDocumentParameterResponse.class);
+    }
     private HashMap<String, Object> getOrderCommonParam(BaseRequest baseRequest) {
         HashMap<String, Object> paramMap = new HashMap<>();
         paramMap.put("timestamp", baseRequest.getTimestamp());

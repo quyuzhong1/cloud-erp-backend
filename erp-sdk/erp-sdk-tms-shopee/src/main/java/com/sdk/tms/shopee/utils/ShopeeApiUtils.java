@@ -1,5 +1,6 @@
 package com.sdk.tms.shopee.utils;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.shopee.model.base.BaseResponse;
@@ -154,6 +155,30 @@ public class ShopeeApiUtils {
         }
         return resultMap;
     }
+    /**
+     * 虾皮标记发货 post请求
+     *
+     * @param baseUrl 接口地址
+     * @param paramsJson
+     * @return java.lang.String
+     */
+    public static BaseResponse sendPost(String baseUrl, Map<String, Object> urlParams, String paramsJson) {
+        BaseResponse resultMap = null;
+        Map<String, String> headers = new HashMap();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept", "application/json");
+        String url = buildUrl(baseUrl, urlParams);
+        log.info("url：{}", url);
+        try {
+            String bodyStr = OkHttpUtils.doPostJson(url, paramsJson, headers);
+            log.info("bodyStr：{}", bodyStr);
+            resultMap = JSONUtil.toBean(bodyStr, BaseResponse.class);
+        } catch (Exception e) {
+            log.error("请求异常：{}", e.getMessage());
+        }
+        return resultMap;
+    }
+
 
     /**
      * 发送请求到沃尔玛获取令牌token
