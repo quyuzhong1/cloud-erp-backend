@@ -3136,7 +3136,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> disableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SKU_DETAIL_LIST, skuFiledConfigList);
         productDetail.setDisableFieldList(disableFields);
 
-        result.setProductManySkuDetail(productDetail);
 
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetail = productDetailMapper.getManySpecDetailById(productId);
@@ -3169,7 +3168,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 purchaseShowDTO.setCreateUserName(findUserDTO.getUserName());
             }
             result.setProductPurchaseShowDTO(purchaseShowDTO);
+            productDetail.setEan(purchaseShowDTO.getEan());
         }
+        result.setProductManySkuDetail(productDetail);
         //产品采购备注信息查询列表
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
         result.setRemarkEntityList(remarkEntityList);
