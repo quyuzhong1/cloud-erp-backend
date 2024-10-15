@@ -3,7 +3,10 @@ package com.erp.server.plm.query;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.common.business.threadlocal.AdvanceQueryContext;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
@@ -26,6 +29,18 @@ public class ProductChangeHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("tab".equals(field)){
             return getTabSql(value);
+        }
+        if ("b.state".equals(field)) {
+            QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+            if (QueryConditionEnum.EQ.equals(queryConditionEnum)) {
+                super.buildSplicingSQLDTO(field, QueryConditionEnum.EQ, value, QueryDataTypeEnum.NUMBER);
+            } else if (QueryConditionEnum.NE.equals(queryConditionEnum)) {
+                super.buildSplicingSQLDTO(field, QueryConditionEnum.NE, value, QueryDataTypeEnum.NUMBER);
+            } else if (QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
+                super.buildSplicingSQLDTO(field, QueryConditionEnum.IN_LIST, value, QueryDataTypeEnum.NUMBER);
+            } else if (QueryConditionEnum.NOT_IN_LIST.equals(queryConditionEnum)) {
+                super.buildSplicingSQLDTO(field, QueryConditionEnum.NOT_IN_LIST, value, QueryDataTypeEnum.NUMBER);
+            }
         }
         return null;
     }
