@@ -1,4 +1,4 @@
-package com.sdk.oms.shopee.dto.logistics.response;
+package com.sdk.tms.shopee.model.logistics.response;
 
 import cn.hutool.core.annotation.Alias;
 import lombok.Data;
@@ -14,9 +14,7 @@ import java.util.List;
  * @version: 1.0
  */
 @Data
-public class SlugInfo implements Serializable {
-    @Alias( "slug")
-    private String slug;
-    @Alias( "slug_name")
-    private String slugName;
+public class ShipPickInfo implements Serializable {
+    @Alias( "address_list")
+    private List<AddressInfo> addressInfoList;
 }

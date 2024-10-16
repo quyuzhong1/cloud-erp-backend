@@ -1,4 +1,4 @@
-package com.sdk.oms.shopee.dto.logistics.request;
+package com.sdk.tms.shopee.model.logistics.request;
 
 import cn.hutool.core.annotation.Alias;
 import lombok.Builder;

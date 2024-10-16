@@ -18,6 +18,7 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
@@ -28,8 +29,12 @@ import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
+import com.sdk.tms.shopee.model.logistics.request.Dropoff;
+import com.sdk.tms.shopee.model.logistics.request.ShipOrderRequest;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
 import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
+import com.sdk.tms.shopee.model.logistics.response.ShipDetailResponse;
+import com.sdk.tms.shopee.model.logistics.response.ShipDropInfo;
 import com.sdk.tms.shopee.model.logistics.response.TrackResponse;
 import com.sdk.tms.shopee.service.ShopeeLogisticsService;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +98,61 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     /**
+     * 创建订单
+     *
+     * @param logisticsOrderVO
+     * @return
+     * 订单配货后，如果渠道是虾皮的线上物流，获取跟踪号时需要调虾皮接口ship_order，并默认选择drop_off，并调接口get_tracking_number获取跟踪号
+     */
+    public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
+        Map<String, String> authMap = logisticsOrderVO.getAuthMap();
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("accessToken"))
+                .host(authMap.get("host"))
+                .build();
+        String orderSn = logisticsOrderVO.getPlatformCode();
+        String packageNumber = logisticsOrderVO.getPackageNumber();
+        //标记发货
+        ShipDetailResponse shippingParameter = shopeeLogisticsService.getShippingParameter(baseRequest, orderSn, packageNumber);
+        ShipDropInfo dropoff = shippingParameter.getDropoff();
+        ShipOrderRequest shipOrderRequest = null;
+        if (CollectionUtil.isEmpty(dropoff.getBranchInfoList())){
+            shipOrderRequest = ShipOrderRequest.builder()
+                    .orderSn(orderSn)
+                    .dropoff(Dropoff.builder().build())
+                    .build();
+        }else {
+            String logisticsChannelName = "";
+            String logisticsNo = "";
+            Dropoff dropoff1 = Dropoff.builder()
+                    .branchId(dropoff.getBranchInfoList().get(0).getBranchId())
+                    .senderRealName(logisticsChannelName)
+                    .slug(dropoff.getSlugInfoList().get(0).getSlug())
+                    .trackingNumber(logisticsNo)
+                    .build();
+            shipOrderRequest = ShipOrderRequest.builder()
+                    .orderSn(orderSn)
+                    .dropoff(dropoff1)
+                    .packageNumber(packageNumber)
+                    .build();
+        }
+        BaseResponse baseResponse = shopeeLogisticsService.shippingOrder(baseRequest, shipOrderRequest);
+        if (Objects.isNull(baseResponse) || StrUtil.isNotBlank(baseResponse.getError())){
+            //标记发货异常
+        }
+        //获取跟踪号
+        TrackResponse trackNumber = shopeeLogisticsService.getTrackNumber(baseRequest, orderSn);
+        if (Objects.isNull(trackNumber)){
+            //获取跟踪号异常
+
+        }
+        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
      * 查询订单(批量)
      *
      * @param logisticsQueryVOList
@@ -105,40 +165,38 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         for (LogisticsQueryBaseVO logisticsQueryVO : logisticsQueryVOList) {
             LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
             Map<String, String> authMap = logisticsQueryVO.getAuthMap();
-            TrackRequest trackRequest = TrackRequest.builder()
+            BaseRequest baseRequest = BaseRequest.builder()
                     .partnerKey(authMap.get("partnerKey"))
                     .partnerId(Long.valueOf(authMap.get("partnerId")))
                     .shopId(Long.valueOf(authMap.get("shopId")))
-                    .accessToken(authMap.get("token"))
-                    .orderSn(logisticsQueryVO.getDeliveryNo())
+                    .accessToken(authMap.get("accessToken"))
                     .host(authMap.get("host"))
                     .build();
             try {
-                ValidatorUtil.validateEntity(trackRequest);
-                BaseResponse baseResponse = shopeeLogisticsService.getTrackNumber(trackRequest);
+                ValidatorUtil.validateEntity(baseRequest);
+                TrackResponse trackResponse = shopeeLogisticsService.getTrackNumber(baseRequest,logisticsQueryVO.getDeliveryNo());
                 responseVO.setDeliveryNo(logisticsQueryVO.getDeliveryNo());
-                if (Objects.nonNull(baseResponse) && Objects.nonNull(baseResponse.getResponse()) && StrUtil.isNotBlank(baseResponse.getResponse().getString("error"))) {
-                    TrackResponse trackResponse = JSONObject.parseObject(baseResponse.getResponse().toJSONString(), TrackResponse.class);
+                if (Objects.nonNull(trackResponse) && StrUtil.isNotBlank(trackResponse.getTrackingNumber())) {
                     responseVO.setTransportNo(trackResponse.getTrackingNumber());
                     responseVO.setTrackNo(trackResponse.getTrackingNumber());
                     responseVO.success();
-                    logisticsOperateService.pullOperateLog(authMap.get("id"),
+                    logisticsOperateService.pullOperateLog(logisticsQueryVO.getOrderId(),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
-                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(trackRequest), JSONUtil.toJsonStr(baseResponse));
+                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest), JSONUtil.toJsonStr(trackResponse));
                 } else {
                     isSuccess = false;
-                    responseVO.failure(LogisticsPlatformEnum.SHOPEE.getName(), logisticsQueryVO.getDeliveryNo(), baseResponse.getError());
-                    logisticsOperateService.pullOperateLog(authMap.get("id"),
+                    responseVO.failure(LogisticsPlatformEnum.SHOPEE.getName(), logisticsQueryVO.getDeliveryNo(), "响应接口数据为空");
+                    logisticsOperateService.pullOperateLog(logisticsQueryVO.getOrderId(),
                             logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
-                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(trackRequest), JSONUtil.toJsonStr(baseResponse));
+                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), JSONUtil.toJsonStr(trackResponse));
                 }
                 responseVOS.add(responseVO);
             }catch (Exception e){
                 isSuccess = false;
                 responseVO.failure(LogisticsPlatformEnum.SHOPEE.getName(), logisticsQueryVO.getDeliveryNo(), e.getMessage());
-                logisticsOperateService.pullOperateLog(authMap.get("id"),
+                logisticsOperateService.pullOperateLog(logisticsQueryVO.getOrderId(),
                         logisticsQueryVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
-                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(trackRequest), JSONUtil.toJsonStr(e));
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), JSONUtil.toJsonStr(e));
                 responseVOS.add(responseVO);
             }
         }
