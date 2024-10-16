@@ -91,6 +91,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private String paymentConditionName;
 
         /**
+         * 仓库库位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 子件集合
          */
         private List<ChildDTO> childList;

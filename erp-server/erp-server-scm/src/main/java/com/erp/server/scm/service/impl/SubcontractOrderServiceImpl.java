@@ -36,9 +36,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
-import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
@@ -65,7 +63,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -609,6 +606,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(viewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             viewDTO.setPaymentConditionName(paymentConditionName);
 
+            //仓位名称
+            String locationName = warehouseLocationList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),viewDTO.getWarehouseId()) && StrUtil.equals(obj.getCode(), viewDTO.getWarehouseLocation())).map(WarehouseLocationEntity::getName).findFirst().orElse("");
+            viewDTO.setWarehouseLocationName(locationName);
+
             //子集SKU
             List<SubcontractOrderDetailEntity> childList = detailList.stream().filter(obj -> obj.getParentId().equals(viewDTO.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
@@ -683,6 +684,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_95163);
         }
 
+        //仓位信息
+        List<String> warehouseLocationCodeList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getWarehouseLocation())).map(SubcontractOrderDTO.ViewGeneratePoDTO::getWarehouseLocation).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationCodeList).list();
+
         //价目查询
         List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
         list.forEach(e -> {
@@ -728,6 +733,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (ObjectUtils.isEmpty(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
+
+            //仓位名称
+            String locationName = warehouseLocationList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),dto.getWarehouseId()) && StrUtil.equals(obj.getCode(), dto.getWarehouseLocation()))
+                    .map(WarehouseLocationEntity::getName).findFirst().orElse("");
+            dto.setWarehouseLocationName(locationName);
+
             dto.setIsConstitute(Boolean.FALSE);
             if (ObjectUtils.isEmpty(dto.getParentId())) {
                 dto.setIsConstitute(Boolean.TRUE);
@@ -738,7 +749,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //待申请数量
             Integer purchaseQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(purchaseOrderList)) {
-                 purchaseQty = purchaseOrderList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+                 purchaseQty = purchaseOrderList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId()))
+                         .map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             dto.setApplyQty(dto.getQty() - purchaseQty);
             dto.setQty(dto.getApplyQty());
