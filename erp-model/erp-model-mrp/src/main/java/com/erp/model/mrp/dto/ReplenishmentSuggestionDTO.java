@@ -200,6 +200,116 @@ public class ReplenishmentSuggestionDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class DeliverySuggestionDTO {
+
+        /**
+         * 类型
+         */
+        private String platformType;
+        /**
+         * 类型名称
+         */
+        private String platformTypeName;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺
+         */
+        private String shopName;
+
+        /**
+         * 单号
+         */
+        private String code;
+
+        /**
+         * 创建类型
+         */
+        private String createType;
+
+        /**
+         * SKUID
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 品名
+         */
+        private String productName;
+
+        /**
+         * 建议发货量
+         */
+        private Integer suggestDeliveryQty;
+
+        /**
+         * 物流方式（系统）
+         */
+        private String logisticsMethod;
+        /**
+         * 物流方式名称（系统）
+         */
+        private String logisticsMethodName;
+
+        /**
+         * 建议发货日期（系统）
+         */
+        private LocalDate suggestDeliveryDate;
+
+        /**
+         * 预计可售日期（系统）
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 物流成本
+         */
+        private BigDecimal logisticsCost;
+
+        /**
+         * 创建方式
+         */
+        private String createTypeName;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private String createTime;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private String updateTime;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class PurchaseSuggestionDTO {
 
         /**

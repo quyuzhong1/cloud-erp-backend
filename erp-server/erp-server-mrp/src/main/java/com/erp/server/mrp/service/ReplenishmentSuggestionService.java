@@ -289,4 +289,18 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param id 建议主表id
      */
     BatchResultDTO renewData(String id);
+
+    /**
+     * 模拟销量分析
+     * @param dto 参数
+     */
+    SalesAnalysisVO mockSalesAnalysis(MockSalesAnalysisDTO dto);
+    /**
+     * 导出发货建议
+     * @author will
+     * @date 2024/10/12 14:46
+     * @param pagingParamDTO
+     * @return Boolean
+     */
+    Boolean exportDeliverySuggest(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO);
 }

@@ -26,4 +26,9 @@ public interface ExportMrpFeign {
      */
     @PostMapping("/feign/export/listReplenishmentRule")
     PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
+    /**
+     * 导出发货建议（补货建议）
+     */
+    @PostMapping("/feign/export/listDeliverySuggestion")
+    PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
 }

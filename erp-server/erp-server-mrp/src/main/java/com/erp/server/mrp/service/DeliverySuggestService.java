@@ -1,5 +1,7 @@
 package com.erp.server.mrp.service;
 import com.common.business.vo.PagingVO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -40,7 +42,7 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * 分页查询
      * @author will
      * @date 2024/10/16 10:36
-     * @param pagingDTO 
+     * @param pagingDTO
      * @return PagingVO<ListDTO>
      */
     PagingVO<DeliverySuggestDTO.ListDTO> paging(PagingDTO<DeliverySuggestDTO.PagingParamDTO> pagingDTO);
@@ -60,17 +62,25 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      */
     List<DeliverySuggestEntity> listByReplenishmentId(String detailId);
     /**
+     * 查询发货建议导出数据
+     * @author will
+     * @date 2024/10/12 14:56
+     * @param dto
+     * @return PagingVO<DeliverySuggestionDTO>
+     */
+    PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
+    /**
      * 下载模板
      * @author will
      * @date 2024/10/16 10:55
-     * @param response 
+     * @param response
      */
     void downloadTemplate(HttpServletResponse response);
     /**
      * 锁定
      * @author will
      * @date 2024/10/16 11:24
-     * @param id 
+     * @param id
      * @return BatchResultDTO
      */
     BatchResultDTO locking(String id);
@@ -86,7 +96,7 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * 作废
      * @author will
      * @date 2024/10/16 11:34
-     * @param id 
+     * @param id
      * @return BatchResultDTO
      */
     BatchResultDTO invalid(String id,String remark);

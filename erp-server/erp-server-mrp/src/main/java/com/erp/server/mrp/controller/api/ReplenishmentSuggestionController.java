@@ -616,6 +616,23 @@ public class ReplenishmentSuggestionController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 导出补货计划_发货建议
+     * @author will
+     * @date 2024/10/12 14:46
+     * @param pagingParamDTO
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货计划_建议发货")
+    @PostMapping(value = "/exportDeliverySuggest")
+    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
+    public ApiResult exportDeliverySuggest(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+        Boolean flag = replenishmentSuggestionService.exportDeliverySuggest(pagingParamDTO);
+        return flag == true ? success() : failure();
+    }
+
+
     @GetMapping("/initReplenishmentSku/id")
     public void initReplenishmentSku(@RequestParam(required = false) LocalDate calculationDate, @RequestParam String id) {
         basicReplenishmentDataService.initReplenishmentSku(calculationDate, id);
@@ -654,5 +671,15 @@ public class ReplenishmentSuggestionController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 模拟销量分析
+     * @param dto 参数
+     */
+    @PostMapping("/mockSalesAnalysis")
+    public ApiResult<SalesAnalysisVO> mockSalesAnalysis(@RequestBody @Validated MockSalesAnalysisDTO dto) {
+        SalesAnalysisVO salesAnalysis = replenishmentSuggestionService.mockSalesAnalysis(dto);
+        return success(salesAnalysis);
     }
 }

@@ -173,11 +173,11 @@ public class BasicReplenishmentDataService {
         List<CfgRuleSalesFormulaEntity> defaultFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(defaultSalesQtyIds);
         List<CfgRuleSalesDenoisingEntity> defaultDenoisingList = cfgRuleSalesDenoisingService.listBySalesQtyIdList(defaultSalesQtyIds);
         //查询所有需要计算得数据
-        List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(suggestionIds);
-        List<List<ReplenishmentResultDTO>> partition = Lists.partition(suggestions, 1000);
-        for (List<ReplenishmentResultDTO> list : partition) {
+        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
+        for (List<String> list : partition) {
             CompletableFuture.runAsync(() -> {
-                for (ReplenishmentResultDTO dto : list) {
+                List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(list);
+                for (ReplenishmentResultDTO dto : suggestions) {
                     try {
                         ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
                         ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
@@ -243,11 +243,12 @@ public class BasicReplenishmentDataService {
             List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList;
             // 以销售订单订单创建时间计算销量
             if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(cfgRuleSalesQty.getSalesQtyType())) {
-                salesInfoAllList = salesService.listAllSalesBySob2c(calcDate);
+                salesInfoAllList = salesService.listAllAmzSalesBySob2c(calcDate, cfgRuleSalesQty.getOrderType());
             } else {
                 // 以销售出库单出库时间计算销量
-                salesInfoAllList = salesService.listAllSalesBySoOutStock(calcDate);
+                salesInfoAllList = salesService.listAllAmzSalesBySoOutStock(calcDate, cfgRuleSalesQty.getOrderType());
             }
+            //todo 获取海外仓本地B2B销量
             salesByPlatformType.put(cfgRuleSalesQty.getPlatformType() + ":" + cfgRuleSalesQty.getType(), salesInfoAllList);
         }
         List<String> skuIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getSkuId).distinct().collect(Collectors.toList());

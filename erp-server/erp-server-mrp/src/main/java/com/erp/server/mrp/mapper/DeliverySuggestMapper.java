@@ -1,7 +1,9 @@
 package com.erp.server.mrp.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
+import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -34,8 +36,17 @@ public interface DeliverySuggestMapper extends BaseMapper<DeliverySuggestEntity>
      * @author will
      * @date 2024/10/16 10:37
      * @param query
-     * @param params 
+     * @param params
      * @return IPage<ListDTO>
      */
     IPage<DeliverySuggestDTO.ListDTO> paging(Page query,@Param("params") DeliverySuggestDTO.PagingParamDTO params);
+    /**
+     * 查询发货建议导出数据
+     * @author will
+     * @date 2024/10/12 15:06
+     * @param page
+     * @param params
+     * @return Page<DeliverySuggestionDTO>
+     */
+    Page<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> pagingExportDeliverySuggestion(Page page, @Param("params") ReplenishmentSuggestionDTO.PagingParamDTO params);
 }

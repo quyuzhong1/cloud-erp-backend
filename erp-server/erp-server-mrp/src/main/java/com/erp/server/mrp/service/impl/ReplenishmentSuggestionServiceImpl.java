@@ -39,6 +39,7 @@ import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.mrp.calculation.handler.SalesEstimateHandler;
 import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionMapper;
 import com.erp.server.mrp.service.*;
@@ -52,11 +53,14 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum.COMPLETELY;
 
 /**
  * <p>
@@ -142,6 +146,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private PurchaseSuggestService purchaseSuggestService;
     @Resource
     private CfgRuleWarehouseService cfgRuleWarehouseService;
+
+    @Resource
+    private SalesEstimateHandler salesEstimateHandler;
 
     @Resource
     @Lazy
@@ -748,6 +755,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    public Boolean exportDeliverySuggest(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+        downloadTaskFeign.saveDownloadTask("补货计划_发货建议", FileTaskEventEnum.EXPORT_MRP_DELIVERY_SUGGESTION.getCode(), pagingParamDTO);
+        return Boolean.TRUE;
+    }
+
+    @Override
     public PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(),user.getUid());
@@ -1217,6 +1230,202 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public BatchResultDTO renewData(String id) {
         return replenishmentDataService.renewData(id);
+    }
+
+    @Override
+    public SalesAnalysisVO mockSalesAnalysis(MockSalesAnalysisDTO dto) {
+
+        ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getById(dto.getDetailId());
+        ReplenishmentSuggestionEntity suggestion = getById(detail.getMainId());
+        CfgRuleSalesQtyEntity cfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultByPlatformAndSkuType(suggestion.getPlatformType(), detail.getSkuType());
+        List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults = cfgRuleSalesDenoisingService.listDenoisingBySalesId(cfgRuleSalesQty.getId());
+        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults = cfgRuleSalesFormulaService.listFormulaBySalesId(cfgRuleSalesQty.getId());
+        List<LocalDate> dates = new ArrayList<>();
+        LocalDate startDate = dto.getStartDate().minusDays(1);
+        LocalDate endDate = LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1);
+        while (startDate.isBefore(endDate)) {
+            dates.add(startDate);
+            startDate = startDate.plusDays(1);
+        }
+        List<SalesInfoEntity> list = salesInfoService.list(Wrappers.<SalesInfoEntity>lambdaQuery()
+                .eq(SalesInfoEntity::getReplenishmentDetailId, dto.getDetailId())
+                .orderByAsc(SalesInfoEntity::getDate)
+        );
+        List<ReplenishmentResultDTO.SalesInfoDTO> salesInfoList = list.stream()
+                .map(ReplenishmentResultDTO.SalesInfoDTO::buildSalesInfoDTO)
+                .collect(Collectors.toList());
+        //模拟计算去噪销量
+        calculationSales(cfgRuleSalesQty.getIsIgnoreOutOfStock(), salesInfoList, dto.getSalesQtyUpdateDTO().getSalesDenoisingList(), defaultDenoisingResults);
+        List<ReplenishmentResultDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(salesInfoList, detail.getCalcDate());
+        List<ReplenishmentResultDTO.SalesEstimateDTO> estimateEntityList = calculationSaleEstimate(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1,
+                detail.getCalcDate(), salesInfoList, avgTimePeriodSales, dto.getSalesQtyUpdateDTO(), defaultFormulaResults);
+        SalesAnalysisVO salesAnalysisVO = new SalesAnalysisVO();
+        List<BigDecimal> originalSales = new ArrayList<>();
+        List<BigDecimal> sales = new ArrayList<>();
+        List<BigDecimal> salesEstimates = new ArrayList<>();
+        for (LocalDate date : dates) {
+            ReplenishmentResultDTO.SalesInfoDTO salesInfo = salesInfoList.stream()
+                    .filter(v -> v.getDate().equals(date))
+                    .findFirst()
+                    .orElse(new ReplenishmentResultDTO.SalesInfoDTO());
+            originalSales.add(Optional.ofNullable(salesInfo.getOriginalSalesQty()).map(BigDecimal::new).orElse(null));
+            sales.add(salesInfo.getSalesQty());
+            ReplenishmentResultDTO.SalesEstimateDTO estimate = estimateEntityList.stream()
+                    .filter(v -> v.getDate().equals(date))
+                    .findFirst()
+                    .orElse(new ReplenishmentResultDTO.SalesEstimateDTO());
+            salesEstimates.add(estimate.getSalesQty());
+        }
+        salesAnalysisVO.setDate(dates);
+        salesAnalysisVO.setDenoisingSales(sales);
+        salesAnalysisVO.setHistorySales(originalSales);
+        salesAnalysisVO.setEstimatesSales(salesEstimates);
+        return salesAnalysisVO;
+    }
+
+
+
+    private List<ReplenishmentResultDTO.TimePeriodSalesDTO> calculationTimePeriodSales(List<ReplenishmentResultDTO.SalesInfoDTO> list, String calcDate) {
+        //分时段日均销量
+        List<ReplenishmentResultDTO.TimePeriodSalesDTO> avgTimePeriodSales = new ArrayList<>();
+        LocalDate now = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE);
+        LocalDate endDate = now.minusDays(1);
+        for (TimePeriodEnum value : TimePeriodEnum.values()) {
+            BigDecimal qty = list.stream()
+                    .filter(v -> !endDate.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
+                    .map(ReplenishmentResultDTO.SalesInfoDTO::getSalesQty)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(0, RoundingMode.CEILING);
+            long count = list.stream()
+                    .filter(v -> !endDate.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
+                    .filter(v -> Boolean.FALSE.equals(v.getIsIgnoreOutOfStock()))
+                    .filter(v -> !COMPLETELY.getCode().equals(v.getDenoisingType()))
+                    .count();
+            BigDecimal avgQty = new BigDecimal(0);
+            if (count != 0) {
+                avgQty = qty.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+            }
+            avgTimePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, avgQty));
+        }
+        return avgTimePeriodSales;
+    }
+
+    private List<ReplenishmentResultDTO.SalesEstimateDTO> calculationSaleEstimate(int days, String date,
+                                                                                  List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, List<ReplenishmentResultDTO.TimePeriodSalesDTO> avgTimePeriodSales,
+                                                                                  CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetail, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults) {
+        List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = new ArrayList<>();
+        LocalDate basicCalcDate = LocalDate.parse(date, DateTimeFormatter.BASIC_ISO_DATE);
+        for (int i = 0; i < days; i++) {
+            LocalDate calcDate = basicCalcDate.plusDays(i);
+            //获取最大优先级的规则 优先取 sku 固定规则，其次sku动态规则，其次sku默认规则，取不到则取系统动态规则，其次系统默认规则
+            CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult = updateDetail.getFixedSalesQtyList().stream()
+                    .filter(v -> !v.getDateList().get(0).isAfter(calcDate) && !v.getDateList().get(1).isBefore(calcDate))
+                    .map(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::buildFormulaResultDTO)
+                    .reduce((first, second) -> second)
+                    .orElse(getSkuDynamic(updateDetail, defaultFormulaResults, calcDate));
+            if (ObjectUtils.isEmpty(formulaResult)) {
+                continue;
+            }
+            BigDecimal saleQty = salesEstimateHandler.getSaleQty(salesInfos, avgTimePeriodSales, formulaResult, basicCalcDate);
+            ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = new ReplenishmentResultDTO.SalesEstimateDTO(calcDate, saleQty,
+                    calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            salesEstimates.add(salesEstimateDTO);
+        }
+        return salesEstimates;
+    }
+
+    /**
+     * 获取sku 动态规则
+     * @param updateDetail 入参
+     * @param defaultFormulaResults 系统销量规则
+     * @param calcDate 当前计算日
+     */
+    private static CfgRuleSalesQtyDTO.StrategyFormulaResultDTO getSkuDynamic(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetail, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults, LocalDate calcDate) {
+        return updateDetail.getDynamicSalesQtyList().stream()
+                .filter(v -> !v.getDateList().get(0).isAfter(calcDate) && !v.getDateList().get(1).isBefore(calcDate))
+                .map(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::buildFormulaResultDTO)
+                .reduce((first, second) -> second)
+                .orElse(getSkuDefault(updateDetail, defaultFormulaResults, calcDate));
+    }
+
+    /**
+     * 获取sku默认规则
+     * @param updateDetail 入参
+     * @param defaultFormulaResults 系统销量规则
+     * @param calcDate 当前计算日
+     */
+    private static CfgRuleSalesQtyDTO.StrategyFormulaResultDTO getSkuDefault(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetail, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults, LocalDate calcDate) {
+        return Optional.ofNullable(updateDetail.getDefaultSalesQtyDTO()).map(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::buildFormulaResultDTO)
+                .orElse(getSysDynamic(defaultFormulaResults, calcDate));
+    }
+
+    /**
+     * 获取系统动态规则
+     * @param defaultFormulaResults 系统销量规则
+     * @param calcDate 当前计算日
+     */
+    private static CfgRuleSalesQtyDTO.StrategyFormulaResultDTO getSysDynamic(List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults, LocalDate calcDate) {
+        return defaultFormulaResults.stream()
+                .filter(v -> !ObjectUtils.isEmpty(v.getStartDate()) && !ObjectUtils.isEmpty(v.getEndDate()) &&
+                        !v.getStartDate().isAfter(calcDate) && !v.getEndDate().isBefore(calcDate))
+                .min(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getPriority)
+                        .thenComparing(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO::getIndex).reversed()))
+                .orElse(getSysDefault(defaultFormulaResults));
+    }
+
+    /**
+     * 获取系统默认规则
+     * @param defaultFormulaResults 系统销量规则
+     */
+    private static CfgRuleSalesQtyDTO.StrategyFormulaResultDTO getSysDefault(List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults) {
+        return defaultFormulaResults.stream()
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
+                .findFirst().orElse(null);
+    }
+
+
+    private void calculationSales(Boolean isIgnoreOutOfStock, List<ReplenishmentResultDTO.SalesInfoDTO> list, List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults) {
+        for (ReplenishmentResultDTO.SalesInfoDTO salesInfo : list) {
+            //获取符合的最大优先级销量去噪规则 (序号越小优先级越大)
+            CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO denoisingResult = salesDenoisingList.stream()
+                    .filter(v -> !v.getDateList().get(0).isAfter(salesInfo.getDate()) && !v.getDateList().get(1).isBefore(salesInfo.getDate()))
+                    .map(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO::buildStrategyDenoisingResultDTO)
+                    .reduce((first, second) -> second)
+                    .orElse(defaultDenoisingResults.stream()
+                            .filter(v -> !v.getStartDate().isAfter(salesInfo.getDate()) && !v.getEndDate().isBefore(salesInfo.getDate()))
+                            .max(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO::getIndex))
+                            .orElse(null));
+            // 断货排除 ＞ 销量去噪
+            if (Boolean.TRUE.equals(isIgnoreOutOfStock) && salesInfo.getOriginalInventoryQty() == 0 && salesInfo.getOriginalSalesQty() == 0) {
+                //存在真实断货
+                salesInfo.setSalesQty(new BigDecimal(0));
+                salesInfo.setIsIgnoreOutOfStock(true);
+            } else {
+                salesInfo.setIsIgnoreOutOfStock(false);
+                //走销量规则
+                if (ObjectUtils.isEmpty(denoisingResult)) {
+                    salesInfo.setSalesQty(new BigDecimal(salesInfo.getOriginalSalesQty()));
+                } else {
+                    CfgRuleSalesDenoisingDenoisingTypeEnum code = CfgRuleSalesDenoisingDenoisingTypeEnum.getEnumByCode(denoisingResult.getDenoisingType());
+                    BigDecimal salesQty = new BigDecimal(0);
+                    switch (Objects.requireNonNull(code)) {
+                        case PERCENTAGE:
+                            salesQty = new BigDecimal(salesInfo.getOriginalSalesQty())
+                                    .multiply(BigDecimal.valueOf(denoisingResult.getEffectiveValue()))
+                                    .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
+                            break;
+                        case FIXED_VALUE:
+                            salesQty = BigDecimal.valueOf(denoisingResult.getEffectiveValue());
+                            break;
+                        default:
+                            break;
+                    }
+                    salesInfo.setSalesQty(salesQty);
+                    salesInfo.setDenoisingType(denoisingResult.getDenoisingType());
+                }
+
+            }
+        }
     }
 
     private EstimationDetailResultDTO handlerLocalEstimateDetail(ReplenishmentSuggestionDetailEntity detail, Map<LocalDate, BigDecimal> salesEstimateMap, InventoryEstimationDetailDTO dto, long days) {
