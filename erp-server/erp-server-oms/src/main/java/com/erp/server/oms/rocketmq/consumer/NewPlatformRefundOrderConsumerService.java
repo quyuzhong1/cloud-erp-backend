@@ -1,6 +1,7 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
+import com.common.business.dto.PlatformRefundOrderDTO;
 import com.common.business.dto.PlatformReturnOrderDTO;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -25,12 +26,12 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 
 	@Override
 	public String getBizName() {
-		return "平台退货订单";
+		return "平台退款订单";
 	}
 	
     @Override
 	public void handle(String data) {
-		PlatformReturnOrderDTO dto = JSONUtil.toBean(data, PlatformReturnOrderDTO.class);
+		PlatformRefundOrderDTO dto = JSONUtil.toBean(data, PlatformRefundOrderDTO.class);
 	}
 
 }
