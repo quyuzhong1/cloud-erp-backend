@@ -30,6 +30,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
@@ -169,6 +170,10 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         //更新成待确认状态
         old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
         this.updateById(old);
+
+        // 操作日志
+        String msg = StrUtil.format("锁定了采购建议");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), old.getId(), "锁定");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -183,6 +188,10 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         //更新成完成状态
         old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
         this.updateById(old);
+
+        // 操作日志
+        String msg = StrUtil.format("确认了采购建议");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), old.getId(), "确认");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -202,12 +211,16 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         old.setInvalidStatus(Boolean.TRUE);
         old.setInvalidRemark(remark);
         this.updateById(old);
+
+        // 操作日志
+        String msg = StrUtil.format("作废了采购建议");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), old.getId(), "作废");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
 
     @Override
     public Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("发货建议", FileTaskEventEnum.EXPORT_MRP_REPLENISHMENT_RULE.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveDownloadTask("采购建议", FileTaskEventEnum.EXPORT_MRP_REPLENISHMENT_RULE.getCode(), pagingParamDTO);
         return Boolean.TRUE;
     }
 

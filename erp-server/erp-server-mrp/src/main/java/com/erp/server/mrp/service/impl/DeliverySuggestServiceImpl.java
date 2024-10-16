@@ -21,6 +21,7 @@ import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
@@ -138,6 +139,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //更新成待确认状态
         old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
         this.updateById(old);
+
+        // 操作日志
+        String msg = StrUtil.format("锁定了发货建议");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), old.getId(), "锁定");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -152,6 +157,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //更新成完成状态
         old.setStatus(SuggestStatusEnum.FINISH.getCode());
         this.updateById(old);
+
+        // 操作日志
+        String msg = StrUtil.format("确认了发货建议");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), old.getId(), "确认");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
 
@@ -171,6 +180,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         old.setInvalidStatus(Boolean.TRUE);
         old.setInvalidRemark(remark);
         this.updateById(old);
+
+        // 操作日志
+        String msg = StrUtil.format("作废了发货建议");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), old.getId(), "作废");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
 

@@ -107,6 +107,8 @@ public enum ModuleTypeEnum {
     CFG_RULE_COMMON("97", "规则设置"),
     REPLENISHMENT_SUGGESTION("98", "补货建议"),
     LABEL_INFO("99", "智能补货标签管理"),
+    DELIVERY_SUGGEST("100", "发货建议"),
+    PURCHASE_SUGGEST("101", "采购建议"),
     ;
 
 
