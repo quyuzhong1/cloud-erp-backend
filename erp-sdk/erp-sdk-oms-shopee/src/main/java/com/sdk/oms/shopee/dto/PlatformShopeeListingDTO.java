@@ -86,7 +86,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 //平台sku状态
                 .setPlatformStatus(modelInfo.getModelStatus())
                 //sku名称
-                .setPlatformSkuName(modelInfo.getModelSku())
+                .setPlatformSkuName(modelInfo.getModelName())
                 // 平台产品名称
                 .setPlatformProductName(itemInfo.getItemName())
                 //产品包装信息

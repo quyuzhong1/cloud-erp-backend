@@ -504,7 +504,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ApiResult<LogisticsOrderResponseVO> orderResult = service.createOrder(logisticsOrderVO);
         //表示成功
         if (orderResult.isSuccess()) {
-            return handleBill(orderResult.getData(), dto);
+            return LogisticsBillDTO.GenerateBillResultDTO.builder()
+                    .trackNo(orderResult.getData().getTrackNo())
+                    .transportNo(orderResult.getData().getTransportNo())
+                    .build();
         } else {
             LogisticsOrderResponseVO responseVO = orderResult.getData();
             StringBuilder sb = new StringBuilder(orderResult.getMsg());
@@ -559,32 +562,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         resultMap.put("detailList", Arrays.asList(detailMap));
         return  resultMap;
-    }
-
-//    @Transactional(rollbackFor = Exception.class)
-    public LogisticsBillDTO.GenerateBillResultDTO handleBill(LogisticsOrderResponseVO responseVO, LogisticsBillDTO.GenerateBillDTO dto) {
-        LogisticsBillDTO.GenerateBillResultDTO resultDTO = new LogisticsBillDTO.GenerateBillResultDTO();
-        List<String> trackNoList = new ArrayList<>(2);
-
-        String transportNo = responseVO.getTransportNo();
-        //跟踪单号
-        String trackNo = responseVO.getTrackNo();
-//        if (StringUtils.isNotBlank(trackNo) && !"null".equals(trackNo)) {
-//            trackNoList.add(trackNo);
-//        }
-//        Boolean more = responseVO.getMore();
-//        if (Objects.nonNull(more) && more) {
-//            List<LogisticsOrderResponseVO> responseList = responseVO.getLogisticsOrderResponseVOS();
-//            for (LogisticsOrderResponseVO item : responseList) {
-//                LogisticsBillDetailDTO.AddDTO detailDTO = new LogisticsBillDetailDTO.AddDTO();
-//                detailDTO.setTrackNo(item.getTrackNo());
-//                trackNoList.add(item.getTrackNo());
-//            }
-//        }
-        resultDTO.setTransportNo(transportNo);
-        resultDTO.setTrackNo(trackNo);
-        return resultDTO;
-
     }
 
     @Override

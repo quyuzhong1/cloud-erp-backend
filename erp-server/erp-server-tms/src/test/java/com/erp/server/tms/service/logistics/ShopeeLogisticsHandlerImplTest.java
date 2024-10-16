@@ -226,8 +226,8 @@ public class ShopeeLogisticsHandlerImplTest {
                 .build();
 //        String orderSn = "2410119RC3WKGU";
 //        String packageNumber = "OFG182340319214041";
-        String orderSn = "241014HEJQ5KGY";
-        String packageNumber = "OFG182599777214119";
+        String orderSn = "241015KMF3U41R";
+        String packageNumber = "OFG182674818215655";
         ShipDetailResponse shippingParameter = shopeeLogisticsService.getShippingParameter(baseRequest, orderSn, packageNumber);
         ShipDropInfo dropoff = shippingParameter.getDropoff();
         ShipOrderRequest shipOrderRequest = null;

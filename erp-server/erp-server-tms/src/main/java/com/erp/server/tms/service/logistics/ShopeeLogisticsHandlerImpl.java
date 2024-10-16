@@ -9,6 +9,7 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -105,6 +106,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * 订单配货后，如果渠道是虾皮的线上物流，获取跟踪号时需要调虾皮接口ship_order，并默认选择drop_off，并调接口get_tracking_number获取跟踪号
      */
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
+        //基础信息整理
         Map<String, String> authMap = logisticsOrderVO.getAuthMap();
         BaseRequest baseRequest = BaseRequest.builder()
                 .partnerKey(authMap.get("partnerKey"))
@@ -115,41 +117,98 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         String orderSn = logisticsOrderVO.getPlatformCode();
         String packageNumber = logisticsOrderVO.getPackageNumber();
+        ValidatorUtil.validateEntity(baseRequest);
+        //获取标记发货参数
+        ShipOrderRequest shipOrderRequest = getShippingParameter(baseRequest,orderSn,packageNumber);
         //标记发货
-        ShipDetailResponse shippingParameter = shopeeLogisticsService.getShippingParameter(baseRequest, orderSn, packageNumber);
-        ShipDropInfo dropoff = shippingParameter.getDropoff();
-        ShipOrderRequest shipOrderRequest = null;
-        if (CollectionUtil.isEmpty(dropoff.getBranchInfoList())){
-            shipOrderRequest = ShipOrderRequest.builder()
-                    .orderSn(orderSn)
-                    .dropoff(Dropoff.builder().build())
-                    .build();
-        }else {
-            String logisticsChannelName = "";
-            String logisticsNo = "";
-            Dropoff dropoff1 = Dropoff.builder()
-                    .branchId(dropoff.getBranchInfoList().get(0).getBranchId())
-                    .senderRealName(logisticsChannelName)
-                    .slug(dropoff.getSlugInfoList().get(0).getSlug())
-                    .trackingNumber(logisticsNo)
-                    .build();
-            shipOrderRequest = ShipOrderRequest.builder()
-                    .orderSn(orderSn)
-                    .dropoff(dropoff1)
-                    .packageNumber(packageNumber)
-                    .build();
-        }
-        BaseResponse baseResponse = shopeeLogisticsService.shippingOrder(baseRequest, shipOrderRequest);
-        if (Objects.isNull(baseResponse) || StrUtil.isNotBlank(baseResponse.getError())){
-            //标记发货异常
-        }
+        shippingOrder(baseRequest,shipOrderRequest);
         //获取跟踪号
-        TrackResponse trackNumber = shopeeLogisticsService.getTrackNumber(baseRequest, orderSn);
-        if (Objects.isNull(trackNumber)){
-            //获取跟踪号异常
+        String trackNumber = getTrackNumber(baseRequest,orderSn);
+        LogisticsOrderResponseVO vo = LogisticsOrderResponseVO.builder()
+                .deliveryNo(logisticsOrderVO.getDeliveryNo())
+                .trackNo(trackNumber)
+                .transportNo(trackNumber)
+                .build();
+        return ApiResult.success(vo);
+    }
 
+    /**
+     * 获取跟踪号
+     * @param baseRequest
+     * @param orderSn
+     * @return
+     */
+    private String getTrackNumber(BaseRequest baseRequest, String orderSn) {
+        try {
+            TrackResponse trackNumber = shopeeLogisticsService.getTrackNumber(baseRequest, orderSn);
+            logisticsOperateService.pullOperateLog("",
+                    orderSn, BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest), JSONUtil.toJsonStr(trackNumber));
+            return trackNumber.getTrackingNumber();
+        }catch (Exception e){
+            //获取跟踪号异常
+            logisticsOperateService.pullOperateLog("",
+                    orderSn, BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
+            throw new ServiceException(StrUtil.format("虾皮【{}】标记发货异常请求异常:{}",orderSn,e.getMessage()));
         }
-        return ApiResult.error(-1, "功能未开放");
+    }
+
+    /**
+     * 标记发货
+     * @param baseRequest
+     * @param shipOrderRequest
+     */
+    private void shippingOrder(BaseRequest baseRequest, ShipOrderRequest shipOrderRequest) {
+        try {
+            BaseResponse baseResponse = shopeeLogisticsService.shippingOrder(baseRequest, shipOrderRequest);
+            logisticsOperateService.pullOperateLog("",
+                    shipOrderRequest.getOrderSn(), BusinessTypeEnum.SHIPPING_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest), JSONUtil.toJsonStr(baseResponse));
+        }catch (Exception e){
+            logisticsOperateService.pullOperateLog("",
+                    shipOrderRequest.getOrderSn(), BusinessTypeEnum.SHIPPING_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
+            throw new ServiceException(StrUtil.format("虾皮【{}】标记发货异常请求异常:{}",shipOrderRequest.getOrderSn(),e.getMessage()));
+        }
+    }
+
+    private ShipOrderRequest getShippingParameter(BaseRequest baseRequest, String orderSn, String packageNumber) {
+        try {
+            ShipDetailResponse shippingParameter = shopeeLogisticsService.getShippingParameter(baseRequest, orderSn, packageNumber);
+
+            ShipDropInfo dropout = shippingParameter.getDropoff();
+            ShipOrderRequest shipOrderRequest = null;
+            if (CollectionUtil.isEmpty(dropout.getBranchInfoList())){
+                shipOrderRequest = ShipOrderRequest.builder()
+                        .orderSn(orderSn)
+                        .dropoff(Dropoff.builder().build())
+                        .build();
+            }else {
+                String logisticsChannelName = "";
+                String logisticsNo = "";
+                Dropoff dropoff1 = Dropoff.builder()
+                        .branchId(dropout.getBranchInfoList().get(0).getBranchId())
+                        .senderRealName(logisticsChannelName)
+                        .slug(dropout.getSlugInfoList().get(0).getSlug())
+                        .trackingNumber(logisticsNo)
+                        .build();
+                shipOrderRequest = ShipOrderRequest.builder()
+                        .orderSn(orderSn)
+                        .dropoff(dropoff1)
+                        .packageNumber(packageNumber)
+                        .build();
+            }
+            logisticsOperateService.pullOperateLog("",
+                    orderSn, BusinessTypeEnum.SHIPPING_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest), JSONUtil.toJsonStr(shippingParameter));
+            return shipOrderRequest;
+        }catch (Exception e){
+            logisticsOperateService.pullOperateLog("",
+                    orderSn, BusinessTypeEnum.SHIPPING_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
+            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,baseRequest));
+        }
     }
 
     /**
