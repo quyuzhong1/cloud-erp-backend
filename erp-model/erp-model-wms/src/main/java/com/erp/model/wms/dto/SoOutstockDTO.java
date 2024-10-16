@@ -1455,6 +1455,7 @@ public class SoOutstockDTO implements Serializable {
          * 销售订单code
          */
         private String soCode;
+        private String dictPlatform;
 
         /**
          * 订单类型

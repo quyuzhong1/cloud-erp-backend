@@ -1255,15 +1255,16 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<String> subCodeList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(subcontractReturnEntityList)) {
             subCodeList = subcontractReturnEntityList.stream().map(SubcontractReturnEntity::getCode).distinct().collect(Collectors.toList());
-//            throw new ServiceException(ApiError.ERROR_92244,String.join(",",subCodeList));
         }
         //判断是否已生成子件的采购退货单
-        PurchaseOrderEntity purchaseOrder = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
         List<String> codeList = new ArrayList<>();
-        if (Objects.nonNull(purchaseOrder) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(purchaseOrder.getSubcontractType())){
-            List<PoReturnEntity> childPoReturnList = this.listBySourceIds(Collections.singletonList(entity.getId()));
-            if (CollectionUtils.isNotEmpty(childPoReturnList)){
-                codeList = childPoReturnList.stream().map(PoReturnEntity::getCode).distinct().collect(Collectors.toList());
+        if(StrUtil.isNotBlank(entity.getPurchaseOrderId())){
+            PurchaseOrderEntity purchaseOrder = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
+            if (Objects.nonNull(purchaseOrder) && SubcontractTypeEnum.ENUM_PARENT.getCode().equals(purchaseOrder.getSubcontractType())){
+                List<PoReturnEntity> childPoReturnList = this.listBySourceIds(Collections.singletonList(entity.getId()));
+                if (CollectionUtils.isNotEmpty(childPoReturnList)){
+                    codeList = childPoReturnList.stream().map(PoReturnEntity::getCode).distinct().collect(Collectors.toList());
+                }
             }
         }
         if (CollectionUtils.isNotEmpty(subCodeList) && CollectionUtils.isNotEmpty(codeList)){

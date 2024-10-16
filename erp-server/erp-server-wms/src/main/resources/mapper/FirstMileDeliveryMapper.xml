@@ -512,6 +512,6 @@
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
-        ORDER BY fmd.code
+        ORDER BY fmd.code,wc.box_no
     </select>
 </mapper>

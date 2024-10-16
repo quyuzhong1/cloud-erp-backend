@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -217,7 +218,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(dto.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
         entity.setReturnDate(dto.getReturnDate());
-
+        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //如果有退货订单号
         if (StringUtils.isNotBlank(dto.getSourceId())) {
             //获取退货单信息
@@ -227,21 +228,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             }
             //获取销售单信息
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
-/*            entity.setType(soReturnEntity.getType());
-            entity.setSalesOrgId(soReturnEntity.getSalesOrgId());
-            entity.setSalesOrgName(soReturnEntity.getSalesOrgName());
-            entity.setSalesDeptId(soReturnEntity.getSalesDeptId());
-            if (StringUtils.isNotBlank(soReturnEntity.getSalesDeptId())) {
-                SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soReturnEntity.getSalesDeptId());
-                if (dept != null) {
-                    entity.setSalesDeptName(dept.getName());
-                }
-            }
-            entity.setSellerId(soReturnEntity.getSellerId());
-            entity.setSellerName(soReturnEntity.getSellerName());
-            entity.setCustomerId(soReturnEntity.getCustomerId());
-            entity.setCustomerName(customerInfoEntity.getName());
-            entity.setReturnDate(soReturnEntity.getBillDate());*/
             entity.setSourceCode(soReturnEntity.getCode());
             entity.setSoCode(soInfoEntity.getCode());
             entity.setSoId(soInfoEntity.getId());
@@ -301,7 +287,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(dto.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
         entity.setReturnDate(dto.getReturnDate());
-
+        if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
+        }
+        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //如果有退货订单号
         if (StringUtils.isNotBlank(dto.getSourceId())) {
             //获取退货单信息
@@ -724,6 +713,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             dto.setSalesOrgId(noticeEntity.getSalesOrgId());
             dto.setSalesDeptId(noticeEntity.getSalesDeptId());
             dto.setSellerId(noticeEntity.getSellerId());
+            dto.setReturnLogisticCode(viewList.get(0).getReturnLogisticCode());
             List<SoReturnReceiveDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
                 dto.setSourceId(view.getSourceId());

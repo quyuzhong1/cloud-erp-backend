@@ -171,12 +171,18 @@ public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 退货物流单号
+     */
+    @TableField("return_logistic_code")
+    private String returnLogisticCode;
+
     @TableField(exist = false)
     private List<OtherInstockDetailEntity> detailEntityList;
 
     @TableField(exist = false)
     private OtherInStockImportExcelDTO importExcelDTO;
-    
+
 
 
     public static final String CODE = "code";

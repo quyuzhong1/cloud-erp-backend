@@ -322,6 +322,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         //添加日志
         OtherInstockEntity old = this.getById(dto.getId());
+        if(!entity.getReturnLogisticCode().equals(old.getReturnLogisticCode())){
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",old.getReturnLogisticCode(),entity.getReturnLogisticCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), old.getId(), "编辑");
+        }
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "", "");
         //更新主表数据
         this.updateById(entity);
