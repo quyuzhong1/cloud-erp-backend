@@ -11,12 +11,9 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -27,11 +24,11 @@ import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
@@ -212,7 +209,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Override
     public Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
-        downloadTaskFeign.saveDownloadTask("发货建议", FileTaskEventEnum.EXPORT_MRP_REPLENISHMENT_RULE.getCode(), pagingParamDTO);
+        downloadTaskFeign.saveDownloadTask("发货建议", FileTaskEventEnum.EXPORT_MRP_DELIVERY_SUGGESTION_ENTITY.getCode(), pagingParamDTO);
         return Boolean.TRUE;
     }
 
