@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.FileTemplateConstant;
@@ -1925,6 +1926,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      * @param taskId
      */
     @Override
+    @DataIdempotent(keyIdName = "taskId", waitTime = 20, businessType = "updatePackingStatus")
     public void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList, String taskId) {
         if (StringUtils.isBlank(taskId) || CollectionUtils.isEmpty(groupSkuList)){
             return;
