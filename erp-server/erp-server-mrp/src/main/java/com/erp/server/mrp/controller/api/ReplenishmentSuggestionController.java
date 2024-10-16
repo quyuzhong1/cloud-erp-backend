@@ -632,19 +632,12 @@ public class ReplenishmentSuggestionController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
-    @GetMapping("/initReplenishmentSku/id")
-    public void initReplenishmentSku(@RequestParam(required = false) LocalDate calculationDate, @RequestParam String id) {
-        basicReplenishmentDataService.initReplenishmentSku(calculationDate, id);
-    }
-
-
     /**
      * 归档，全量更新数据
      */
     @GetMapping("/dataArchiving")
-    public void dataArchiving() {
-        dataArchivingService.dataArchiving();
+    public void dataArchiving(@RequestParam(required = false) LocalDate calculationDate) {
+        dataArchivingService.dataArchiving(calculationDate);
     }
 
     /**

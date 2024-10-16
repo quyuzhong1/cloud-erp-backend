@@ -88,6 +88,15 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return BatchResultDTO
      */
     BatchResultDTO notRestockingReplenishment(String id,String replenishmentRemark);
+
+
+    /**
+     * 批量暂不补货
+     *
+     * @param ids                   建议id
+     * @param replenishmentRemark   备注
+     */
+    void batchNotRestockingReplenishment(List<String> ids,String replenishmentRemark);
     /**
      * 恢复补货
      * @author will
@@ -177,7 +186,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     /**
      * 获取所有需要计算的数据
      */
-    List<ReplenishmentSuggestionEntity> listCalculationData(String id);
+    List<ReplenishmentSuggestionEntity> listCalculationData();
     /**
      * 根据id查询标签
      * @author will

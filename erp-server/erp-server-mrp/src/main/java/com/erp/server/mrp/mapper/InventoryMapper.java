@@ -5,7 +5,6 @@ import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.InventoryEntity;
@@ -17,6 +16,9 @@ import org.apache.ibatis.annotations.Param;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * 库存接口
+ */
 @Mapper
 public interface InventoryMapper {
 
@@ -40,10 +42,6 @@ public interface InventoryMapper {
      */
     List<LogisticsBillEntity> getLogisticsBillBySourceIds(@Param("sourceIds") List<String> firstMileDeliveryIds, @Param("tableName") String tableName);
 
-    /**
-     * 查询物流渠道
-     */
-    List<LogisticsChannelEntity> listLogisticsChannelByIds(@Param("channelIds") List<String> channelIds, @Param("tableName") String tableName);
 
     /**
      * 查询头程物流单

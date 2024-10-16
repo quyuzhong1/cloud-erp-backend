@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,7 +21,6 @@ import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
 import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.service.*;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -87,6 +87,8 @@ public class BasicReplenishmentDataService {
     private SalesInfoService salesInfoService;
     @Resource
     private InventoryService inventoryService;
+    @Resource
+    private ReplenishmentTaskService replenishmentTaskService;
 
     @Resource
     @Lazy
@@ -95,63 +97,49 @@ public class BasicReplenishmentDataService {
     /**
      * 增量变动建议补货基础数据
      */
-    public void initReplenishmentSku(LocalDate calculationDate, String id) {
-        calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
+    public void initReplenishmentSku(LocalDate calculationDate) {
         String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         inventoryService.checkAllTableExists(calcDate);
         inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
-        if (!ObjectUtils.isEmpty(id)) {
-            cleanHistorySalesAndInventory(calculationDate, calcDate, id);
-            return;
-        }
         //获取所有已审核且存在上市时间得非费用服务类sku
         List<SkuVO> vos = plmTaskFeign.listApproveAndListingSku();
         //获取已生成补货基础数据得信息
         List<ReplenishmentSuggestionEntity> replenishmentSuggestion = replenishmentSuggestionService.listAllSkuAndShop();
-        List<String> suggestionList = replenishmentSuggestion.stream().map(v -> v.getSkuId() + "|" + v.getSkuNo() + "|" + v.getShopId()).collect(Collectors.toList());
+        Map<String, ReplenishmentSuggestionEntity> oldReplenishmentMap = replenishmentSuggestion.stream()
+                .collect(Collectors.toMap(v -> v.getSkuId() + ":" + v.getShopId(), v -> v, (o1, o2) -> o1));
         //获取所有店铺
         ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
         if (!allShopResult.isSuccess()) {
-            throw new ServiceException(ApiError.ERROR_1023);
+            throw new ServiceException(allShopResult.getMsg());
         }
-        List<ReplenishmentSuggestionEntity> suggestionLists = new ArrayList<>();
         List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
-        for (CfgPlatformMappingEntity mapping : mappings) {
-            for (ShopInfoEntity shopInfo : allShopResult.getData()) {
-                //跳过店铺不是当前循环平台的数据
-                if (!mapping.getPlatform().equals(shopInfo.getDictPlatform())) {
-                    continue;
-                }
-                ReplenishmentSuggestionEntity entity = new ReplenishmentSuggestionEntity();
-                entity.setShopId(shopInfo.getId());
-                entity.setArea(shopInfo.getDictAreaCode());
-                entity.setFbaWarehouseId(shopInfo.getWarehouseId());
-                entity.setCountry(shopInfo.getDictCountryCode());
-                entity.setPlatformType(PlatformMappingTypeEnum.getEnum(mapping.getType()).getPlatformType().getCode());
-                entity.setPlatform(shopInfo.getDictPlatform());
-                suggestionLists.add(entity);
-            }
-        }
-        //过滤掉已生成建议基础数据且sku_no未发生变化得sku
-        List<ReplenishmentSuggestionEntity> replenishmentList = suggestionLists.parallelStream().map(v -> vos.parallelStream().map(e -> {
-            if (suggestionList.contains(e.getSkuId() + "|" + e.getSkuNo() + "|" + v.getShopId())) {
-                return null;
-            }
-            ReplenishmentSuggestionEntity entity = replenishmentSuggestion.stream().filter(suggestion -> suggestion.getSkuId().equals(e.getSkuId()) && suggestion.getShopId().equals(v.getShopId()))
-                    .findFirst().orElse(new ReplenishmentSuggestionEntity());
-            entity.setShopId(v.getShopId());
-            entity.setArea(v.getArea());
-            entity.setFbaWarehouseId(v.getFbaWarehouseId());
-            entity.setCountry(v.getCountry());
-            entity.setPlatformType(v.getPlatformType());
-            entity.setPlatform(v.getPlatform());
-            entity.setSkuId(e.getSkuId());
-            entity.setSkuNo(e.getSkuNo());
-            entity.setReplenishmentType(ObjectUtils.isEmpty(entity.getReplenishmentType()) ? ReplenishmentTypeEnum.NORMAL.getCode() : entity.getReplenishmentType());
-            return entity;
-        }).filter(Objects::nonNull).collect(Collectors.toList())).flatMap(Collection::stream).collect(Collectors.toList());
-        replenishmentSuggestionService.saveOrUpdateBatch(replenishmentList);
-        cleanHistorySalesAndInventory(calculationDate, calcDate, null);
+        Map<String, String> mappingMap = mappings.stream().collect(Collectors.toMap(CfgPlatformMappingEntity::getPlatform, CfgPlatformMappingEntity::getType, (o1, o2) -> o1));
+        // 等待所有任务执行完毕
+        CompletableFuture.allOf(allShopResult.getData().stream()
+                .map(shopInfo -> CompletableFuture.runAsync(() -> {
+                    List<ReplenishmentSuggestionEntity> suggestionLists = new ArrayList<>();
+                    String platFormMapping = mappingMap.get(shopInfo.getDictPlatform());
+                    if (ObjectUtils.isEmpty(platFormMapping)) {
+                        return;
+                    }
+                    for (SkuVO vo : vos) {
+                        ReplenishmentSuggestionEntity entity = Optional.ofNullable(oldReplenishmentMap.get(vo.getSkuId() + ":" + shopInfo.getId())).orElse(new ReplenishmentSuggestionEntity());
+                        // 过滤掉已生成建议且 sku_no 未发生变化的 SKU，或未启用的平台
+                        if (!ObjectUtils.isEmpty(entity.getId()) && entity.getSkuNo().equals(vo.getSkuNo())) {
+                            continue;
+                        }
+                        entity.setShopId(shopInfo.getId());
+                        entity.setArea(shopInfo.getDictAreaCode());
+                        entity.setFbaWarehouseId(shopInfo.getWarehouseId());
+                        entity.setCountry(shopInfo.getDictCountryCode());
+                        entity.setPlatformType(PlatformMappingTypeEnum.getEnum(platFormMapping).getPlatformType().getCode());
+                        entity.setPlatform(shopInfo.getDictPlatform());
+                        entity.setSkuId(vo.getSkuId());
+                        entity.setSkuNo(vo.getSkuNo());
+                        suggestionLists.add(entity);
+                    }
+                    replenishmentSuggestionService.saveOrUpdateBatch(suggestionLists);
+                }, threadPoolTaskExecutor)).toArray(CompletableFuture[]::new)).join();
     }
 
 
@@ -172,72 +160,86 @@ public class BasicReplenishmentDataService {
         List<String> defaultSalesQtyIds = defaultCfgRuleSalesQty.stream().map(CfgRuleSalesQtyEntity::getId).collect(Collectors.toList());
         List<CfgRuleSalesFormulaEntity> defaultFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(defaultSalesQtyIds);
         List<CfgRuleSalesDenoisingEntity> defaultDenoisingList = cfgRuleSalesDenoisingService.listBySalesQtyIdList(defaultSalesQtyIds);
+        List<String> replenishmentIds = replenishmentTaskService.listByWaitAndReplenishment(suggestionIds);
         //查询所有需要计算得数据
-        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
-        for (List<String> list : partition) {
-            CompletableFuture.runAsync(() -> {
-                List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(list);
-                for (ReplenishmentResultDTO dto : suggestions) {
-                    try {
-                        ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
-                        ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
-                        //初始化配置
-                        CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
-                        //获取销量配置
-                        CfgRuleSalesQtyEntity defaultSalesQty = defaultCfgRuleSalesQty.stream()
-                                .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
-                                .filter(v -> v.getType().equals(detail.getSkuType()))
-                                .findFirst()
-                                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
-                        List<CfgRuleSalesFormulaEntity> defaultFormula = defaultFormulaList.stream()
-                                .filter(v -> v.getSalesQtyId().equals(defaultSalesQty.getId()))
-                                .collect(Collectors.toList());
-                        List<CfgRuleSalesDenoisingEntity> defaultDenoising = defaultDenoisingList.stream()
-                                .filter(v -> v.getSalesQtyId().equals(defaultSalesQty.getId()))
-                                .collect(Collectors.toList());
-                        CfgRuleSettingStrategy<CfgRuleSalesQtyDTO.StrategyDTO, CfgRuleSalesQtyDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
-                        CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultSalesQty, defaultFormula, defaultDenoising));
-                        cfgRuleStrategy.setSalesQtyResult(salesResult);
-                        cfgRuleStrategy.setSettings(settings);
+        List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(replenishmentIds);
+        for (ReplenishmentResultDTO dto : suggestions) {
+            try {
+                replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.IN_SYNC.getCode());
+                ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
+                ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
+                //初始化配置
+                CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
+                //获取销量配置
+                CfgRuleSalesQtyEntity defaultSalesQty = defaultCfgRuleSalesQty.stream()
+                        .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
+                        .filter(v -> v.getType().equals(detail.getSkuType()))
+                        .findFirst()
+                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
+                List<CfgRuleSalesFormulaEntity> defaultFormula = defaultFormulaList.stream()
+                        .filter(v -> v.getSalesQtyId().equals(defaultSalesQty.getId()))
+                        .collect(Collectors.toList());
+                List<CfgRuleSalesDenoisingEntity> defaultDenoising = defaultDenoisingList.stream()
+                        .filter(v -> v.getSalesQtyId().equals(defaultSalesQty.getId()))
+                        .collect(Collectors.toList());
+                CfgRuleSettingStrategy<CfgRuleSalesQtyDTO.StrategyDTO, CfgRuleSalesQtyDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
+                CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultSalesQty, defaultFormula, defaultDenoising));
+                cfgRuleStrategy.setSalesQtyResult(salesResult);
+                cfgRuleStrategy.setSettings(settings);
 
-                        //获取仓库配置
-                        getCfgRuleCommon(entity, cfgRuleStrategy, dto);
-                        // todo 海外仓备货存在问题
-                        //获取备货配置
-                        CfgRuleStockUpEntity defaultStockUp = defaultStockUpList.stream()
-                                .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
-                                .findFirst()
-                                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_STOCK_UP_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
-                        List<CfgRuleStockingRatioEntity> defaultStockingRatio = defaultStockingRatioList.stream()
-                                .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))
-                                .collect(Collectors.toList());
-                        List<CfgRuleLogisticsEntity> defaultLogistics = defaultLogisticsList.stream()
-                                .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))
-                                .collect(Collectors.toList());
-                        List<String> defaultLogisticsByPlatformIds = defaultLogistics.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
-                        List<CfgRuleLogisticsDetailEntity> logisticsDetails = defaultLogisticsDetailList.stream()
-                                .filter(v -> defaultLogisticsByPlatformIds.contains(v.getMainId()))
-                                .collect(Collectors.toList());
-                        CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
-                        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
-                        cfgRuleStrategy.setStockUpResult(stockUpResult);
-                        stockingTimeHandler.handle(cfgRuleStrategy, dto);
-                        replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, dto);
-                    } catch (Exception e) {
-                        log.error("计算失败 sku{},店铺{}, 原因{}", dto.getReplenishment().getSkuNo(), dto.getReplenishment().getShopId(), e.getMessage(), e);
-                        replenishmentSuggestionService.updateRemark(dto.getReplenishment().getId(), e.getMessage());
-                    }
-                }
-            }, threadPoolTaskExecutor);
+                //获取仓库配置
+                getCfgRuleCommon(entity, cfgRuleStrategy, dto);
+                // todo 海外仓备货存在问题
+                //获取备货配置
+                CfgRuleStockUpEntity defaultStockUp = defaultStockUpList.stream()
+                        .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
+                        .findFirst()
+                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_STOCK_UP_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
+                List<CfgRuleStockingRatioEntity> defaultStockingRatio = defaultStockingRatioList.stream()
+                        .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))
+                        .collect(Collectors.toList());
+                List<CfgRuleLogisticsEntity> defaultLogistics = defaultLogisticsList.stream()
+                        .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))
+                        .collect(Collectors.toList());
+                List<String> defaultLogisticsByPlatformIds = defaultLogistics.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
+                List<CfgRuleLogisticsDetailEntity> logisticsDetails = defaultLogisticsDetailList.stream()
+                        .filter(v -> defaultLogisticsByPlatformIds.contains(v.getMainId()))
+                        .collect(Collectors.toList());
+                CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
+                CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
+                cfgRuleStrategy.setStockUpResult(stockUpResult);
+                stockingTimeHandler.handle(cfgRuleStrategy, dto);
+                replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, dto);
+                replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.SUCCESS_SYNC.getCode());
+            } catch (Exception e) {
+                log.error("计算失败 sku{},店铺{}, 原因{}", dto.getReplenishment().getSkuNo(), dto.getReplenishment().getShopId(), e.getMessage(), e);
+                replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
+            }
         }
     }
 
 
-    private void cleanHistorySalesAndInventory(LocalDate calculationDate, String calcDate, String id) {
+    /**
+     * 清洗历史库存及销量
+     * @param calculationDate 计算日
+     */
+    public void cleanHistorySalesAndInventory(LocalDate calculationDate) {
+        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         //查询所有需要计算得数据
-        List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(id);
+        List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData();
         List<CfgRuleSalesQtyEntity> defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty();
+        //获取配置
         List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
+        CfgSettingDTO newDaysSetting = settings.stream()
+                .filter(v -> v.getKey().equals(CfgSettingEnum.NEW_DAYS.getCode()))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_NEWS_NOT_EXIST));
+        CfgSettingDTO replenishmentDaysSetting = settings.stream()
+                .filter(v -> v.getKey().equals(CfgSettingEnum.REPLENISHMENT_DAYS.getCode()))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_NEWS_NOT_EXIST));
+        //获取历史库存
+        List<FbaHistoryInventoryEntity> fbaHistoryInventoryList = fbaHistoryInventoryService.list();
         Map<String, List<ReplenishmentResultDTO.SalesInfoAllDTO>> salesByPlatformType = new HashMap<>();
         for (CfgRuleSalesQtyEntity cfgRuleSalesQty : defaultCfgRuleSalesQty) {
             List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList;
@@ -251,24 +253,22 @@ public class BasicReplenishmentDataService {
             //todo 获取海外仓本地B2B销量
             salesByPlatformType.put(cfgRuleSalesQty.getPlatformType() + ":" + cfgRuleSalesQty.getType(), salesInfoAllList);
         }
-        List<String> skuIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> vos = plmTaskFeign.listSkuCostByIds(skuIds);
-        List<ProductSaleEntity> productSaleList = plmTaskFeign.listProductSaleBySkuId(skuIds);
-        CfgSettingDTO newDaysSetting = settings.stream()
-                .filter(v -> v.getKey().equals(CfgSettingEnum.NEW_DAYS.getCode()))
-                .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_NEWS_NOT_EXIST));
-        CfgSettingDTO replenishmentDaysSetting = settings.stream()
-                .filter(v -> v.getKey().equals(CfgSettingEnum.REPLENISHMENT_DAYS.getCode()))
-                .findFirst()
-                .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_NEWS_NOT_EXIST));
-        List<String> suggestionIds = suggestions.parallelStream()
-                .map(entity -> {
+        Map<String, List<ReplenishmentSuggestionEntity>> replenishmentBySku = suggestions.stream()
+                .collect(Collectors.groupingBy(ReplenishmentSuggestionEntity::getSkuId));
+        for (List<ReplenishmentSuggestionEntity> suggestion : replenishmentBySku.values()) {
+            CompletableFuture.runAsync(() -> {
+                List<String> skuIds = suggestion.stream().map(ReplenishmentSuggestionEntity::getSkuId).distinct().collect(Collectors.toList());
+                List<SkuVO> vos = plmTaskFeign.listSkuCostByIds(skuIds);
+                List<ProductSaleEntity> productSaleList = plmTaskFeign.listProductSaleBySkuId(skuIds);
+                List<String> notRestockingId = new ArrayList<>();
+                List<ReplenishmentSuggestionDetailEntity> details = new ArrayList<>();
+                List<String> suggestionIds = suggestion.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
+                for (ReplenishmentSuggestionEntity entity : suggestion) {
                     ReplenishmentSuggestionDetailEntity detail = new ReplenishmentSuggestionDetailEntity();
                     //计算是否新品
                     ProductSaleEntity sale = productSaleList.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(sale) || ObjectUtils.isEmpty(sale.getListingTime())) {
-                        return null;
+                        continue;
                     }
                     SkuVO skuVO = vos.stream().filter(v -> v.getSkuId().equals(entity.getSkuId())).findFirst().orElse(new SkuVO());
                     detail.setSalesPrice(skuVO.getRetailPrice());
@@ -292,15 +292,14 @@ public class BasicReplenishmentDataService {
                             .filter(v -> v.getSkuId().equals(entity.getSkuId()))
                             .map(ReplenishmentResultDTO.SalesInfoAllDTO::getOriginalSalesQty)
                             .reduce(0, Math::addExact);
-                    replenishmentSuggestionDetailService.save(detail);
+                    details.add(detail);
                     if (Boolean.TRUE.equals(isOver180Days) && saleQty == 0) {
-                        replenishmentSuggestionService.notRestockingReplenishment(entity.getId(), "上市超180天，360天内无销量的商品，系统自动标记暂不补货");
-                        return null;
+                        notRestockingId.add(entity.getId());
                     } else {
                         List<SalesInfoEntity> salesInfoList = new ArrayList<>();
                         //清洗历史销量及库存
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(entity.getPlatformType())) {
-                            salesInfoList = getFbaHistorySales(salesByPlatformType.get(CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + detail.getSkuType()), entity, detail);
+                            salesInfoList = getFbaHistorySales(salesByPlatformType.get(CfgRulePlatformTypeEnum.AMAZON.getCode() + ":" + detail.getSkuType()), entity, detail, fbaHistoryInventoryList);
                         } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(entity.getPlatformType())) {
                             //todo 后期做
                         } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(entity.getPlatformType()) ||
@@ -308,11 +307,14 @@ public class BasicReplenishmentDataService {
                             //todo 后期做
                         }
                         salesInfoService.saveBatch(salesInfoList);
-                        return entity.getId();
                     }
-                }).filter(Objects::nonNull).collect(Collectors.toList());
-        //计算数据
-        calculationDetail(suggestionIds);
+                    replenishmentSuggestionDetailService.saveOrUpdateBatch(details);
+                    replenishmentSuggestionService.batchNotRestockingReplenishment(notRestockingId, "上市超180天，360天内无销量的商品，系统自动标记暂不补货");
+                    replenishmentTaskService.saveTask(suggestionIds);
+                    calculationDetail(suggestionIds);
+                }
+            }, threadPoolTaskExecutor);
+        }
     }
 
     /**
@@ -322,14 +324,18 @@ public class BasicReplenishmentDataService {
      * @param entity           主表
      * @param detail           明细
      */
-    private List<SalesInfoEntity> getFbaHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllDTOS, ReplenishmentSuggestionEntity entity, ReplenishmentSuggestionDetailEntity detail) {
+    private List<SalesInfoEntity> getFbaHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllDTOS,
+                                                     ReplenishmentSuggestionEntity entity,
+                                                     ReplenishmentSuggestionDetailEntity detail,
+                                                     List<FbaHistoryInventoryEntity> fbaHistoryInventoryList) {
         Map<LocalDate, Integer> salesMap = salesInfoAllDTOS.stream()
                 .filter(v -> v.getSkuId().equals(entity.getSkuId()))
                 .filter(v -> v.getShopId().equals(entity.getShopId()))
                 .collect(Collectors.toMap(ReplenishmentResultDTO.SalesInfoAllDTO::getDate, ReplenishmentResultDTO.SalesInfoAllDTO::getOriginalSalesQty, Integer::sum));
-
-        //获取历史库存
-        List<FbaHistoryInventoryEntity> list = fbaHistoryInventoryService.listBySkuNo(entity.getSkuNo(), entity.getFbaWarehouseId());
+        List<FbaHistoryInventoryEntity> list = fbaHistoryInventoryList.stream()
+                .filter(v -> v.getSkuNo().equals(entity.getSkuNo()))
+                .filter(v -> v.getWarehouseId().equals(entity.getFbaWarehouseId()))
+                .collect(Collectors.toList());
         String calcDate = detail.getCalcDate();
         LocalDate endDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE);
         LocalDate startDate = LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(361);
@@ -355,6 +361,10 @@ public class BasicReplenishmentDataService {
         return salesInfo;
     }
 
+    /**
+     * 更新数据
+     * @param id 主表id
+     */
     public BatchResultDTO renewData(String id) {
         ReplenishmentSuggestionEntity suggestion = replenishmentSuggestionService.getById(id);
         ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getByMainId(id);
