@@ -55,6 +55,9 @@ public class UserDatePermissionServiceImpl implements UserDatePermissionService 
      * @return java.lang.String
      */
     public String getUserDatePermissionSql(String tableField, String menuCode) {
+        if ("plm:bom:paging".equals(menuCode)) {
+            System.out.println("1");
+        }
         if (StringUtil.isBlank(tableField) || StringUtil.isBlank(menuCode)) {
             return "";
         }
