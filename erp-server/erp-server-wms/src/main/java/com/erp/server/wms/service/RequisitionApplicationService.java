@@ -171,7 +171,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * 生成拣货单弹窗
      * @param page 要货申请id
      */
-    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page);
+    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<RequisitionApplicationDTO.GetPickingViewDTO> page);
     /**
      * 生成拣货单
      * @param picking 拣货参数
@@ -224,4 +224,12 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id);
 
     void assembleDownload(List<String> ids, HttpServletResponse response);
+
+    /**
+     * 要货申请完成飞书通知
+     * @author jack
+     * @date 2024/10/9
+     * @param requisitionApplication
+     */
+    void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
 }

@@ -6,7 +6,9 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -71,4 +73,12 @@ public interface SoInfoFeign {
      */
     @PostMapping("feign/soInfo/updateFrozenQty")
     void updateFrozenQty(@RequestBody List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList);
+    /**
+     * 查询所有虚拟仓B2B销售订单数据
+     * @author will
+     * @date 2024/9/26 14:47
+     * @return List<ViewDTO>
+     */
+    @GetMapping("feign/soInfo/listAllVirtualSoDetail")
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
 }

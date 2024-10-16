@@ -260,7 +260,7 @@ public class DmpInoutController extends BaseController {
 										parseObject.put("dmpOutputTaskRecordId", q.getId());
 										q.setRequestData(JSON.toJSONString(parseObject));
 										q.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-										q.setIsNeedSync(Boolean.FALSE);
+										q.setIsNeedSync(Boolean.TRUE);
 									}
 									dmpOutputTaskRecordService.updateBatchById(queryDataList);
 									dmpOutputTaskRecordService.batchSync(queryDataList);
@@ -359,6 +359,8 @@ public class DmpInoutController extends BaseController {
 				    				if(CollUtil.isNotEmpty(dataList)) {
 				    					Integer num = wdtInsufficientInventoryDTO.getNum();
 				    					List<WarehouseLocationDTO.LocationListDTO> locationList = JSON.parseArray(JSON.toJSONString(dataList), LocationListDTO.class);
+				    					String positionName = wdtInsufficientInventoryDTO.getPosition();
+				    					locationList.removeIf(l -> l.getName().equals(positionName));
 				    					LocationListDTO dto = locationList.stream().filter(l -> l.getCode().startsWith("3") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
 				    					if(dto == null) {
 				    						dto = locationList.stream().filter(l -> l.getCode().startsWith("2") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);

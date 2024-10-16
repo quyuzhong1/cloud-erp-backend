@@ -231,6 +231,11 @@ public class RequisitionApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "完成保存:ids={ids}")
     public ApiResult finishSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.FinishListDTO> dto) {
         Boolean flag = requisitionApplicationService.finishSave(dto.getList());
+        //发送飞书通知
+        if(flag){
+            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(dto.get(0).getSourceId());
+            requisitionApplicationService.sendRequisitionMsg(requisitionApplication);
+        }
         return flag ? success() : failure();
     }
 
@@ -345,7 +350,8 @@ public class RequisitionApplicationController extends BaseController {
      * @param page 要货单id
      */
     @PostMapping("/generatePickingView")
-    public ApiResult<PagingVO<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestBody @Validated PagingDTO<String> page) {
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<RequisitionApplicationDTO.PickingViewDTO>> generatePickingView(@RequestBody @Validated PagingDTO<RequisitionApplicationDTO.GetPickingViewDTO> page) {
         PagingVO<RequisitionApplicationDTO.PickingViewDTO> result = requisitionApplicationService.generatePickingView(page);
         return success(result);
     }

@@ -3101,11 +3101,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(soDetailList)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
-        for (SoDetailEntity soDetailEntity :soDetailList) {
-            BatchResultDTO resultDTO = soDetailService.batchUnLockVirtualInventory(soDetailEntity.getId(),null);
-            if (!resultDTO.getSuccess()) {
-                throw new ServiceException(StrUtil.format("销售订单【{}】SKU【{}】库存释放失败",soInfoEntity.getCode(),soDetailEntity.getSkuNo()));
-            }
+        List<String> detailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        BatchResultDTO resultDTO = soDetailService.batchUnLockVirtualInventory(detailIdList, null);
+        if (!resultDTO.getSuccess()) {
+            throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
     }

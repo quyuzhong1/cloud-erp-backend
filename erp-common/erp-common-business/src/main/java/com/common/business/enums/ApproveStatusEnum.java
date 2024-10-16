@@ -17,19 +17,21 @@ import java.util.stream.Collectors;
  * @date 2023/3/15 17:28
  */
 public enum ApproveStatusEnum implements EnumMessage  {
-    WAIT_SUBMIT("waitSubmit", "待提交"),
-    APPROVE_ING("approveIng", "审核中"),
-    REJECT("reject", "审核不通过"),
-    APPROVE("approve", "已审核");
+    WAIT_SUBMIT("waitSubmit", "待提交", "待提交"),
+    APPROVE_ING("approveIng", "审核中","待审核"),
+    REJECT("reject", "审核不通过","不通过"),
+    APPROVE("approve", "已审核","已审核");
 
     @EnumValue
     @JsonValue
     private String status;
     private String name;
+    private String tableName;
 
-    ApproveStatusEnum(String status, String name) {
+    ApproveStatusEnum(String status, String name,String tableName) {
         this.status = status;
         this.name = name;
+        this.tableName = tableName;
     }
 
 
@@ -45,11 +47,25 @@ public enum ApproveStatusEnum implements EnumMessage  {
         return name;
     }
 
+    public String getTableName() {
+        return tableName;
+    }
+
     public static String getName(String state) {
         if (StringUtils.isNotBlank(state)) {
             for (ApproveStatusEnum item : ApproveStatusEnum.values()) {
                 if (state.equals(item.getStatus())) {
                     return item.getName();
+                }
+            }
+        }
+        return "";
+    }
+    public static String getTableName(String state) {
+        if (StringUtils.isNotBlank(state)) {
+            for (ApproveStatusEnum item : ApproveStatusEnum.values()) {
+                if (state.equals(item.getStatus())) {
+                    return item.getTableName();
                 }
             }
         }

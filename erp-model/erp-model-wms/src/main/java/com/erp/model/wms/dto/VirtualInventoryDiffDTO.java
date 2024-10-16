@@ -46,6 +46,16 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 超出分配,true是，false否
          */
         private Boolean isExceed;
+
+        /**
+         * 仅看虚拟仓相关
+         */
+        private Boolean isViewVirtual;
+
+        /**
+         * 去除0库存
+         */
+        private Boolean isDeleteZeroInventory;
     }
 
 
@@ -55,6 +65,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
         /**
          * skuId【可排序】
          */
@@ -83,6 +97,14 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 实体仓冻结库存
          */
         private Integer frozenQty;
+        /**
+         * 实体仓在途库存
+         */
+        private Integer inTransitQty;
+        /**
+         * 实体仓待检库存
+         */
+        private Integer waitQcQty;
 
         /**
          * 实体仓实际库存
@@ -100,6 +122,14 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 虚拟仓库存
          */
         private Integer virtualQty;
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
         /**
          * 库存差异，true是，false否
          */
@@ -227,6 +257,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private String warehouseName;
         /**
+         * 实体仓实际库存
+         */
+        private Integer realQty;
+        /**
          * 实体仓可用库存
          */
         private Integer usableQty;
@@ -234,11 +268,14 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 实体仓冻结库存
          */
         private Integer frozenQty;
-
         /**
-         * 实体仓实际库存
+         * 实体仓在途库存
          */
-        private Integer realQty;
+        private Integer inTransitQty;
+        /**
+         * 实体仓待检库存
+         */
+        private Integer waitQcQty;
         /**
          * 实体仓已分配数
          */
@@ -247,6 +284,14 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 实体仓未分配数
          */
         private Integer unDistributionQty;
+        /**
+         * 库存差异
+         */
+        private Boolean isDiff;
+        /**
+         * 库存差异名称
+         */
+        private String isDiffName;
         /**
          * 虚拟仓库
          */

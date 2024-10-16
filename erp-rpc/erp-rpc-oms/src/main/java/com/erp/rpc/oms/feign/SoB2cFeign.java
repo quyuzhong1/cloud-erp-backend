@@ -4,13 +4,16 @@ import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -615,4 +618,24 @@ public interface SoB2cFeign {
      */
     @PostMapping("/feign/soB2c/updateLogisticsBySoId")
     void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo);
+
+    /**
+     * 取消订单预报
+     */
+    @PostMapping("/feign/soB2c/cancelOrderForecast")
+    ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 取消物流单
+     */
+    @PostMapping("/feign/soB2c/cancelLogistic")
+    ApiResult<List<BatchResultDTO>> cancelLogistic(@RequestBody BaseIdsDTO.IdsDTO idDTO);
+    /**
+     * 查询所有虚拟仓B2C销售订单数据
+     * @author will
+     * @date 2024/9/26 14:47
+     * @return List<ViewDTO>
+     */
+    @GetMapping("feign/soB2c/listAllVirtualSoB2cDetail")
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
 }

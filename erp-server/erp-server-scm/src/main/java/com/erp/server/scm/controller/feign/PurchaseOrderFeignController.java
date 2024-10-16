@@ -6,6 +6,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
@@ -520,5 +521,15 @@ public class PurchaseOrderFeignController {
     public PurchaseOrderDTO.ListDTO srmWaitDeliveryTotal(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto) {
         return purchaseOrderService.srmWaitDeliveryTotal(dto);
     }
-
+    /**
+     * 下推采购入库单弹窗显示 根据采购订单明细获取待入库信息
+     * @author zdy
+     * @date: 2023/4/13 11:20
+     * @param purchaseDetailIdList
+     * @return ApiResult<List<ViewGenerateReceiveDTO>>
+     */
+    @PostMapping("/viewGenerateStockIn")
+    public List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(@RequestBody @Validated List<String>  purchaseDetailIdList) {
+        return purchaseOrderService.viewGenerateStockIn(purchaseDetailIdList);
+    }
 }

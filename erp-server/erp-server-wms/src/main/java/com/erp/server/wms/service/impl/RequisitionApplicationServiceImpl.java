@@ -1,9 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -24,16 +27,25 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelExportFillCellMergeStrategy;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
+import com.erp.model.msg.constant.NoticeMsgConstant;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysPostEntity;
+import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
@@ -46,13 +58,18 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
+import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -66,6 +83,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -167,6 +185,15 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
+    @Resource
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
+
+    @Resource
+    private SysPostFeign sysPostFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -400,6 +427,52 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return flag;
     }
 
+    public void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication){
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.FS_REQUISITION_NOTICE.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            log.info("未设置飞书要货申请通知配置，无需发送通知");
+        }else{
+            List<String> noticeUserIdList = new ArrayList<>();
+            CfgSettingValueDTO.FsRequisitionNoticeDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+            if (CollectionUtils.isNotEmpty(dto.getRoleIdList())) {
+                List<String> collect = sysPostFeign.listById(dto.getRoleIdList()).stream().map(SysPostEntity::getPostName).collect(Collectors.toList());
+                for (String s : collect) {
+                    if(s.equals("创建人")){
+                        noticeUserIdList.add(requisitionApplication.getCreateUserId());
+                    }
+                    if(s.equals("处理人")){
+                        noticeUserIdList.add(loginUser.getUid());
+                    }
+                }
+            }
+            //抄送人员
+            if (CollectionUtils.isNotEmpty(dto.getUserIdList())) {
+                noticeUserIdList.addAll(dto.getUserIdList());
+            }
+            noticeUserIdList = noticeUserIdList.stream().distinct().collect(Collectors.toList());
+
+            NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+            noticeMsgInfoDTO.setReceiverUserIds(noticeUserIdList);
+            String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
+
+            //消息头
+            String title = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+            noticeMsgInfoDTO.setTitle(title);
+            //消息体
+            String msgContent = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT,"数大臣","要货申请",requisitionApplication.getCode(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            noticeMsgInfoDTO.setContent(msgContent);
+            noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                    noticeMsgInfoDTO, IdUtil.simpleUUID());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
+            }else{
+                log.info("消息发送结果成功：{}", JSONObject.toJSONString(result));
+            }
+        }
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void saveWdtOrder(List<String> fromVmIds, RequisitionApplicationEntity requisitionApplication,
                              Map<String, List<RequisitionApplicationDetailEntity>> haveFromVwMap) {
@@ -497,6 +570,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      */
     private static void getStockParam(RequisitionApplicationDTO.HandleListDTO handleListDTO, Integer
             approveQty, List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList) {
+        if(approveQty == 0){
+            return;
+        }
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
         outInStockDTO.setBillDate(LocalDate.now());
         outInStockDTO.setSourceId(handleListDTO.getSourceId());
@@ -826,7 +902,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
             //清空明细中的虚拟仓
-            requisitionApplicationDetailService.cleanVirtualWarehouseIdByMianId(id);
+//            requisitionApplicationDetailService.cleanVirtualWarehouseIdByMianId(id);
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())) {
             if (entity.getHandleTime().isBefore(LocalDateTime.of(2024,07,27,0,0))) {
                 throw new ServiceException("系统升级，不支持撤销，请联系实施人员");
@@ -1460,6 +1536,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     }
 
+
     /**
      * 处理申请单
      */
@@ -1719,9 +1796,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
-    public PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page) {
+    public PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<RequisitionApplicationDTO.GetPickingViewDTO> page) {
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
-        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(page.getParams());
+        FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(page.getParams().getId());
         if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
             throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
         }
@@ -1748,6 +1825,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         boolean checkUnpickedQty = details.stream().allMatch(detail -> (detail.getApproveQty() - detail.getPickingQty()) > 0);
         if (Boolean.FALSE.equals(checkUnpickedQty)) {
             throw new ServiceException(ApiError.UNPICKED_QUANTITY_SHORTAGE);
+        }
+        details = details.stream().filter(v->v.getApproveQty()>0).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(details)){
+            throw new ServiceException("批准数量为0无法生成拣货明细");
         }
         PickingListsDTO.AddDTO addDTO = new PickingListsDTO.AddDTO();
         addDTO.setBillType(RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType()) ?
@@ -1861,6 +1942,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             } else {
                 detailView.setIsCombination(Boolean.FALSE);
             }
+            detailView.setAsin(detailEntity.getPlatformSpu());
             detailView.setPlatformSku(detailEntity.getPlatformSku());
             detailView.setThirdWarehouseSku(detailEntity.getPlatformSku());
             //根据类型设置第三方SKU信息

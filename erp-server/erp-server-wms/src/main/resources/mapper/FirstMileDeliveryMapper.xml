@@ -181,6 +181,14 @@
     </select>
 
     <select id="listPackingDetail" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
+        with wcd as (
+        SELECT main_id,
+        string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',') as boxDesc,
+        string_agg(wcd.sku_no, ',') as sku,
+        string_agg(wcd.sku_id, ',') as skuIds ,
+        string_agg(concat(wcd.sku_no,':',wcd.sku_id), ',')   as skuMapping
+        from wms_carton_detail wcd where is_deleted = false group by main_id
+        )
         SELECT
         pt.source_id as id,
         pt.id taskId,
@@ -190,17 +198,18 @@
         concat(box_length, '*', wcs.box_width, '*', wcs.box_height) AS boxSize,
         box_length*box_width*box_height as multiplySize,
         wcs.package_weight,
-        (select string_agg(concat(wcd.sku_no,'*',wcd.pack_qty), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as boxDesc,
+        wcd.boxDesc,
         wcs.box_length as length,
         wcs.box_width as width,
         wcs.box_height as height,
         wcs.size_unit as sizeUnit,
-        (select string_agg(wcd.sku_no, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku,
-        (select string_agg(wcd.sku_id, ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as skuIds,
-        (select string_agg(concat(wcd.sku_no,':',wcd.sku_id), ',')  from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as skuMapping
+        wcd.sku,
+        wcd.skuIds,
+        wcd.skuMapping
         FROM packing_task pt
         INNER JOIN wms_carton wc ON pt.id = wc.packing_task_id AND wc.is_deleted = FALSE
         INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id AND wcs.is_deleted = FALSE
+        LEFT JOIN wcd ON WCD.main_id = wc.id
         WHERE pt.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND pt.source_id IN
@@ -275,7 +284,7 @@
             </foreach>
         </if>
         <if test="params.searchKey != null and params.searchKey != ''">
-            fmd.code ILIKE concat('%', #{params.searchKey}::text ,'%')
+            AND fmd.code ILIKE concat('%', #{params.searchKey}::text ,'%')
         </if>
         <if test="params.ids == null or params.ids.size == 0">
             limit 20
@@ -503,6 +512,6 @@
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
-        ORDER BY fmd.code
+        ORDER BY fmd.code,wc.box_no
     </select>
 </mapper>

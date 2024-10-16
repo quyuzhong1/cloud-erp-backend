@@ -2,19 +2,26 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
 import com.erp.server.tms.service.*;
+import com.google.common.collect.Lists;
+import com.sdk.tms.track123.dto.PlatformTrackDTO;
+import com.sdk.tms.track123.model.response.TrackDetail;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -22,12 +29,14 @@ import com.common.core.exception.ServiceException;
 import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -55,6 +64,9 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     public BaseResultDTO.AddDTO add(LogisticsTrackDTO.AddDTO addDTO) {
         LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
         BeanMapperUtils.copy(addDTO, logisticsTrackEntity);
+        if (StrUtil.isBlank(logisticsTrackEntity.getTrackNo())){
+            return new BaseResultDTO.AddDTO();
+        }
 
         // 数据处理
         handleData(logisticsTrackEntity);
@@ -186,6 +198,84 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         if (CollectionUtils.isNotEmpty(detailList)){
             logisticsBillDetailService.updateBatchById(detailList);
         }
+    }
+
+    @Override
+    public LogisticsTrackEntity getMaxByTrackTime(String trackNo) {
+        if (StrUtil.isBlank(trackNo)){
+            return null;
+        }
+        return baseMapper.getMaxByTrackTime(trackNo);
+    }
+
+    @Override
+    @Async("tmsExecutor")
+    public void processTrackData(PlatformTrackDTO dto){
+        log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
+        List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
+        if (StrUtil.isBlank(dto.getTrackNo())){
+            return;
+        }
+        //获取跟踪号最新一条记录
+        LogisticsTrackEntity trackEntity = this.getMaxByTrackTime(dto.getTrackNo());
+        //未查询到物流轨迹 且最近一条物流轨迹是三个月前
+        // 获取当前时间
+        LocalDateTime now = LocalDateTime.now();
+        // 计算三个月前的时间
+        LocalDateTime threeMonthsAgo = now.minusMonths(3);
+        //先物理删除  再新增
+        if (CollectionUtils.isNotEmpty(logisticsTrackEntities)) {
+            Boolean needUpdate = Boolean.FALSE;
+            LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
+            //查询不到就保存全部
+            if (Objects.isNull(trackEntity)){
+                needUpdate = Boolean.TRUE;
+                this.saveBatch(logisticsTrackEntities);
+            }else {
+                List<LogisticsTrackEntity> lastList = logisticsTrackEntities.stream().filter(e -> Objects.nonNull(e)
+                        && Objects.nonNull(e.getTrackTime())
+                        && StrUtil.isNotBlank(e.getStatus())
+                        && !LogisticTrackStatusEnum.NOT_FIND.getCode().equals(e.getStatus())
+                        && e.getTrackTime().isAfter(trackEntity.getTrackTime())
+                ).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(lastList)){
+                    needUpdate = Boolean.TRUE;
+                    this.saveBatch(lastList);
+                }
+            }
+            if (needUpdate){
+                logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(max);
+            }else {
+                if (Objects.nonNull(trackEntity) && Objects.nonNull(trackEntity.getTrackTime()) && trackEntity.getTrackTime().isBefore(threeMonthsAgo)){
+                    //系统完结
+                    logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),null,trackEntity.getTrackTime());
+                }
+            }
+        }else {
+            if (Objects.nonNull(trackEntity) && Objects.nonNull(trackEntity.getTrackTime()) && trackEntity.getTrackTime().isBefore(threeMonthsAgo)){
+                //系统完结
+                logisticsBillDetailService.updateTrackStatus(dto.getTrackNo(),LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode(),null,trackEntity.getTrackTime());
+            }
+        }
+        log.info(StrUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
+
+    }
+
+    @Override
+    public void updateBeforeThreeMonthTrackNo(LogisticsBillDetailQueryDTO query) {
+        List<LogisticsTrackDTO.UpdateTrackDTO> dtoList = baseMapper.listBeforeThreeMonthTrack(query);
+        if (CollectionUtils.isEmpty(dtoList)){
+            return;
+        }
+        List<String> trackNoList = dtoList.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(trackNoList)){
+            return;
+        }
+        String code = LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode();
+//        LocalDateTime trackTime = LocalDateTime.now();
+        //集合分区
+        List<List<String>> partition = Lists.partition(trackNoList, MathUtil.NUMBER_100);
+        partition.forEach(e -> logisticsBillDetailService.batchUpdateTrackStatus(e,code,null, null));
     }
 
 

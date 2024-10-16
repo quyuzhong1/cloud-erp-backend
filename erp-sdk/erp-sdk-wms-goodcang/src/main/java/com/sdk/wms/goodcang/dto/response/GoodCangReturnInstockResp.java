@@ -23,10 +23,6 @@ public class GoodCangReturnInstockResp extends CleanBaseDTO implements Serializa
     @JSONField(name = "order_code")
     private String orderCode;
 
-    //退货参考号
-    @JSONField(name = "reference_no")
-    private String returnReferenceNo;
-
     //订单参考号
     @JSONField(name = "order_reference_no")
     private String orderReferenceNo;

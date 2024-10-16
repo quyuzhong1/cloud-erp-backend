@@ -59,4 +59,10 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
     List<BatchResultDTO> verifyReplenishQty(List<WarehouseLocationReplenishDTO.HandleDTO> dtoList);
 
     PagingVO<WarehouseLocationReplenishDTO.ViewDTO> exportWarehouseLocationReplenish(PagingDTO<WarehouseLocationReplenishDTO.ExportParamDTO> dto);
+    /**
+     * 安全库存补货
+     * @date: 2024-09-26
+     * @author: jack
+     */
+    List<BatchResultDTO> generateReplenishBill();
 }

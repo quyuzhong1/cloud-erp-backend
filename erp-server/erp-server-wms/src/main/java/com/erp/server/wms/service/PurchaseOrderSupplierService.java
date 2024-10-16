@@ -22,4 +22,11 @@ public interface PurchaseOrderSupplierService {
      * @Date 2023/4/19 16:05
      **/
     Boolean saveOrUpdatePurchaseOrderSupplier(List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntityList);
+
+    /**
+     * 根据采购订单获取关系记录
+     * @param poIds
+     * @return
+     */
+    List<PurchaseOrderSupplierEntity> listByPurchaseOrderIds(List<String> poIds);
 }

@@ -90,6 +90,7 @@ public enum BusinessNoTypeEnum {
     CODE_SCLC(69, "SCLC","试产量产单",BusinessNoConstant.SCLC),
     THD(70, "THD","B2C退货单",BusinessNoConstant.THD),
 
+    CODE_TLD(67, "tld","委外发退料单",BusinessNoConstant.TLD),
     ;
 
 

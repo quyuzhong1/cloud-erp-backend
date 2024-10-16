@@ -1013,7 +1013,7 @@ public enum ApiError implements Serializable {
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货，取消发货的数据不允许操作手动标发"),
-    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许手动标发"),
+    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且待发货的订单允许手动标发"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】未生成波次，不允许操作"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
@@ -1029,6 +1029,7 @@ public enum ApiError implements Serializable {
     UPLOAD_SUCCESS_NOT_UPLOAD(92126,"上传成功状态不能重复上传"),
     RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
     ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
+    ERROR_SUBCONTRACT_RETURN_SUPPLIER_DIFF(92125,"委外退料单明细数据对应供应商【{}】必须一致"),
     ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
     ERROR_UPLOAD_SUCCES_CAN_INSTOCK_FORCAST(92132,"仅支持【订单预报(批次)】上传成功时且入库预报为【待上传/上传失败】，可操作【入库预报】"),
     ERROR_TRANSFER_DECLARE_NOT_EXIST(92133,"中转报关单记录不存在"),
@@ -1062,6 +1063,8 @@ public enum ApiError implements Serializable {
     ERROR_92258(92258,"请选择拣货单"),
     ERROR_92259(92259,"当前周期【{}】单号【{}】已存在对账单记录"),
     ERROR_92260(92260,"同一个单【{}】同一个月份【{}】仅可生成一次对账单"),
+    ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
+    ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
@@ -1150,7 +1153,13 @@ public enum ApiError implements Serializable {
     ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
     ERROR_92241(92241, "已进行费用分摊，不能进行反审核"),
 
-
+    ERROR_SUBCONTRACT_RETURN_NOT_EXIST(92241,"委外退料单不存在"),
+    ERROR_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST(92242,"委外退料单明细不存在"),
+    ERROR_SUBCONTRACT_RETURN_QTY_EXCEED(92243,"委外退料单SKU【{}】退料数量【{}】可退数量【{}】"),
+    ERROR_92244(92244,"存在有效下推单据【委外退料单{}】,不支持反审"),
+    ERROR_92245(92245,"存在有效下推单据【采购订单{}】,不支持反审"),
+    ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
+    ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1366,6 +1375,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】不能设置多个渠道"),
     ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
+    ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
     /**
      * TMS 错误
      * 从94000 开始

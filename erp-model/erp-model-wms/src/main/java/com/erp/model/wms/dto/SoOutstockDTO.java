@@ -1455,6 +1455,7 @@ public class SoOutstockDTO implements Serializable {
          * 销售订单code
          */
         private String soCode;
+        private String dictPlatform;
 
         /**
          * 订单类型
@@ -1480,6 +1481,10 @@ public class SoOutstockDTO implements Serializable {
          * 物流渠道
          */
         private String logisticsChannelId;
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
 
 
         private LocalDate billDate;

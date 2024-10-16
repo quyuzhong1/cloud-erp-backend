@@ -445,5 +445,13 @@ public interface ScmTaskFeign {
      */
     @GetMapping("/feign/kingdeePaymentCondition/listPaymentCondition")
     List<BaseDropDownDTO.DisabledDTO>  listPaymentCondition();
-
+    /**
+     * 批量获取列表采购单价
+     * @author zdy
+     * @date: 2023/10/27 10:06
+     * @param list
+     * @return List<PurchasePriceDTO.PriceDTO>
+     */
+    @PostMapping("feign/purchasePrice/batchGetPurchasePrice")
+    List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list);
 }

@@ -42,7 +42,7 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      * @param mainId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId, Integer boxSpecNo);
+    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId);
 
     /**
      * 批量汇总装箱信息

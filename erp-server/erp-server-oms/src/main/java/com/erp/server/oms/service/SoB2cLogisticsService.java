@@ -148,7 +148,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
 
    Boolean updateWeight(String soId, String logisticsId, BigDecimal weightByG, String operation);
 
-    BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList);
+    BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList, Boolean checkBillStatus);
     /**
      * 根据物流跟踪号或运单好查询订单物流信息
      * @author will

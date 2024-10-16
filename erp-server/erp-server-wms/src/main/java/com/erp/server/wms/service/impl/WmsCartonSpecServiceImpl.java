@@ -98,8 +98,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     }
 
     @Override
-    public List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId, Integer boxSpecNo) {
-        return baseMapper.listPackingQtyByMainId(mainId, boxSpecNo);
+    public List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId) {
+        return baseMapper.listPackingQtyByMainId(mainId);
     }
 
     @Override
@@ -147,7 +147,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId()) && dto.getFnSku().equals(req.getFnSku())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 dto.setDeliveryQty(deliveryQty);
                 //待装箱数量=发货数量-所有已装箱数量
-                dto.setWaitPackQty(deliveryQty - dto.getPackQty());
+                int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(dto.getSkuId()) && dto.getFnSku().equals(req.getFnSku())).mapToInt(WmsCartonSpecDTO.PackDateDTO::getPackQty).sum();
+                dto.setWaitPackQty(deliveryQty - packQtySum);
 
                 //匹配产品信息，设置中文名
                 SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());

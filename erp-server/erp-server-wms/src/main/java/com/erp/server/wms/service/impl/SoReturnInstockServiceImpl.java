@@ -443,6 +443,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         String warehouseOrgName = orgList.stream().filter(o -> updateDTO.getOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setInventoryOrgName(warehouseOrgName);
         entity.setBillDate(dto.getBillDate());
+        if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "编辑");
+        }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //操作日志
         SoReturnInstockEntity byId = this.getById(dto.getId());
@@ -1588,6 +1591,29 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         SoReturnInstockDTO.SelectDTO params = searchDTO.getParams();
         IPage<SoReturnInstockDTO.SearchDTO> pagResult = baseMapper.b2cPagingSelect(query, params);
         return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public SoReturnInstockEntity getByThirdCode(String thirdCode) {
+        if(StringUtils.isBlank(thirdCode)){
+            return null;
+        }
+        return lambdaQuery().eq(SoReturnInstockEntity::getThirdCode,thirdCode).last("limit 1").one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
+        this.save(soReturnInstockEntity);
+
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("三方仓新增销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), soReturnInstockEntity.getId(), "新增操作");
+
+        detailEntityList.forEach(v->v.setMainId(soReturnInstockEntity.getId()));
+        soReturnInstockDetailService.saveBatch(detailEntityList);
+        //审核
+        this.approve(soReturnInstockEntity,ApproveTypeEnum.PASS.getStatus(),"三方仓新增自动审核通过",false);
     }
 
     @Override

@@ -128,7 +128,7 @@
         WHERE
             t.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
-        and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30','32','33','34','35')
+        and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30','32','33','34','35','49','50')
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
             and t.sku_no in
             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -794,14 +794,17 @@
     </select>
     <select id="listByOrgId" resultType="java.lang.String">
         SELECT inventory_id from transaction_flow where is_deleted = false
-        <if test=" null != orgId and '' != orgId  ">
+        <if test=" null != orgId and '' != orgId and !fromTable ">
             and org_id =#{orgId}
         </if>
-        <if test=" null != inventoryId and '' != inventoryId  ">
+        <if test=" null != inventoryId and '' != inventoryId and !fromTable ">
             and inventory_id =#{inventoryId}
         </if>
         <if test=" null != startDate">
             and bill_date >= #{startDate}
+        </if>
+        <if test=" null != fromTable and fromTable">
+            and inventory_id in (select inventory_id from inventory_temp)
         </if>
         GROUP BY inventory_id
     </select>

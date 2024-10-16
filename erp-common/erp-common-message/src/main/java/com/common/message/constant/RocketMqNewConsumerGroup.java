@@ -142,6 +142,20 @@ public class RocketMqNewConsumerGroup {
     /**
      * 新中台平台入库
      */
-    public static final String DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_so_out_stock_to_wms_group";
+    public static final String DMP_AMZ_SO_OUT_STOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_amz_so_out_stock_to_wms_group";
+
+    /**
+     * 新中台平台退货入库
+     */
+    public static final String DMP_PLATFORM_RETURN_INSTOCK_TO_WMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_return_instock_to_wms_group";
+
+    /**
+     * 新中台平台退货入库
+     */
+    public static final String DMP_PLATFORM_RETURN_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_return_order_to_oms_group";
+    /**
+     * 新中台平台退货入库
+     */
+    public static final String DMP_PLATFORM_REFUND_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_refund_order_to_oms_group";
 
 }

@@ -38,15 +38,13 @@
         SELECT
             t.status AS tabFlag,
             COUNT(t.id) AS count
-        FROM
-            dmp_output_task_record t
-        WHERE t.is_deleted = false
-        AND NOT EXISTS (
-            SELECT 1
-            FROM dmp_cfg_output_black b
-            WHERE b.is_deleted = FALSE
-            AND b.field_value = t.source_code AND t.main_id = b.main_id
-        )
+        FROM dmp_output_task_record t
+        LEFT JOIN dmp_output_task g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
+            AND h.id = dcob.main_id
+            AND dcob.is_deleted = FALSE
+        WHERE t.is_deleted = false and (dcob.id is null or dcob.field_value = '')  
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
@@ -57,16 +55,13 @@
     <select id="listBlackCount" resultType="java.lang.Integer">
         SELECT
             COUNT(t.id) AS count
-        FROM
-        dmp_output_task_record t
-        WHERE t.is_deleted = false
-        AND EXISTS (
-            SELECT 1
-            FROM dmp_cfg_output_black b
-            WHERE b.is_deleted = FALSE
-            AND b.field_value = t.source_code
-            AND t.main_id = b.main_id
-        )
+        FROM dmp_output_task_record t
+        LEFT JOIN dmp_output_task g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
+            AND h.id = dcob.main_id
+            AND dcob.is_deleted = FALSE
+        WHERE t.is_deleted = false 
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
@@ -85,7 +80,7 @@
         t.update_time AS lastSyncTime,
         t.response_data AS returnMsg,
         t.is_need_sync AS isNeedSync,
-        CASE WHEN dcob.id IS NULL OR dcob.id = '' THEN FALSE ELSE TRUE END AS isBlack
+        CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS isBlack
         FROM dmp_output_task_record t
         LEFT JOIN dmp_output_task g ON t.main_id = g.id
         LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
@@ -94,7 +89,7 @@
         LEFT JOIN dmp_basic_system l ON k.system_id = l.id
         LEFT JOIN dmp_basic_system i ON h.system_id = i.id
         LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
-            AND g.id = dcob.main_id
+            AND h.id = dcob.main_id
             AND dcob.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
@@ -108,7 +103,43 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.create_time desc
+        t.id desc
+    </select>
+    
+    <select id="blackPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
+        select 
+	t.id,t.create_time,
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        t.field_value AS sourceCode,
+        t.status AS status,
+        t.update_time AS lastSyncTime,
+        ('黑名单原因：' || t.remark) AS returnMsg,
+        t.is_need_sync AS isNeedSync,
+        TRUE isBlack
+from 
+(select id,main_id,create_time,field_value,remark,cfg_output_id,source_code,t4.update_time,status,is_need_sync from dmp_cfg_output_black t1 
+left join 
+(select t2.is_need_sync,t3.cfg_output_id,t2.source_code,t2.update_time,t2.status from dmp_output_task_record t2 left join dmp_output_task t3 on t2.main_id = t3.id where t2.is_deleted = 'f' and t3.is_deleted = 'f') t4 
+on t1.main_id = t4.cfg_output_id and t1.field_value = t4.source_code
+where t1.field_value != '' and t1.compare_sign = 'eq' and t1.create_user_id != '' and t1.is_deleted = 'f') t
+LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
+				LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+				LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id 
+		where ${params.sqlMap.default} <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        t.id desc
     </select>
 
     <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
