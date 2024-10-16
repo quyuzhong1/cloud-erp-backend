@@ -132,7 +132,7 @@ public class PurchaseSuggestController extends BaseController {
      * @return ApiResult<?>
      */
     @PostMapping("/confirm")
-    @LogAction(value = LogActionEnum.CONFIRM, desc = "锁定")
+    @LogAction(value = LogActionEnum.CONFIRM, desc = "确认")
     public ApiResult<?> confirm(BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -162,7 +162,7 @@ public class PurchaseSuggestController extends BaseController {
      * @return ApiResult<?>
      */
     @PostMapping("/invalid")
-    @LogAction(value = LogActionEnum.CANCEL_CONFIRM, desc = "作废")
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废")
     public ApiResult<?> invalid(BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
