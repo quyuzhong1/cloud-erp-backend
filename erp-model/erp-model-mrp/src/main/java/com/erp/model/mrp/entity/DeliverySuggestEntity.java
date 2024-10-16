@@ -92,6 +92,60 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 平台类型
+     */
+    @TableField("platform_type")
+    private String platformType;
+
+    /**
+     * 平台
+     */
+    @TableField("platform")
+    private String platform;
+
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
+     * skuid
+     */
+    @TableField("sku_id")
+    private String skuId;
+
+    /**
+     * 计划发货量（计划修正值）
+     */
+    @TableField("plan_delivery_qty")
+    private String planDeliveryQty;
+
+    /**
+     * 实际发货量（运营确认值）
+     */
+    @TableField("actual_delivery_qty")
+    private String actualDeliveryQty;
+
+    /**
+     * 发货备货量
+     */
+    @TableField("delivery_stock_up_qty")
+    private String deliveryStockUpQty;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
 
     public static final String CODE = "code";
 

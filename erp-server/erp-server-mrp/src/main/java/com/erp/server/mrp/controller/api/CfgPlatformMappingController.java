@@ -16,7 +16,7 @@ import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 平台映射表
+ * 平台（规则设置）
  *
  * @author will
  * @since 2024-08-29

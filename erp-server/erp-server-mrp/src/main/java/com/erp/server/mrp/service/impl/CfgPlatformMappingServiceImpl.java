@@ -8,6 +8,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
@@ -189,8 +190,12 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         if (CollectionUtils.isEmpty(updateList)) {
             return list;
         }
-
         for (CfgPlatformMappingDTO.UpdateDTO updateDTO : updateList) {
+            //补货建议平台
+            long count = updateList.stream().filter(obj -> StrUtil.equals(obj.getType(), updateDTO.getType())).count();
+            if (count > MathUtil.ONE) {
+                throw new ServiceException(StrUtil.format("补货建议平台【{}】重复",CfgRulePlatformTypeEnum.getName(updateDTO.getType())));
+            }
             for (String platform : updateDTO.getPlatformList()) {
                 CfgPlatformMappingEntity entity = new CfgPlatformMappingEntity();
                 BeanMapperUtils.copy(updateDTO,entity);
