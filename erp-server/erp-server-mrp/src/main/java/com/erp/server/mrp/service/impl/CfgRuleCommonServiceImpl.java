@@ -247,22 +247,20 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         // 遍历树的每个节点
         for (CfgRuleCommonDTO.StrategyResultDTO node : list) {
             // 检查当前节点的 code 是否与 keyParts 的第一部分匹配
-            if (node.getCode().equals(keyParts[0])) {
-                // 如果是最后一层，检查子节点
-                if (keyParts.length == 1) {
-                    // 遍历子节点并保存 value 为 true 的节点到 Redis
-                    if (node.getChildrenList() != null) {
-                        for (CfgRuleCommonDTO.StrategyResultDTO child : node.getChildrenList()) {
-                            if ("true".equalsIgnoreCase(child.getValue())) {
-                                String redisKey = redisKeyPrefix + ":" + child.getCode();
-                                redisTemplate.opsForValue().set(redisKey, child.getValue());
-                                matchedCodes.add(child.getCode());
-                            }
-                        }
-                    }
-                } else {
-                    // 递归调用，进入下一层
-                    matchedCodes.addAll(findAndCacheNodeByKey(node.getChildrenList(), String.join(":", Arrays.copyOfRange(keyParts, 1, keyParts.length)), redisKeyPrefix));
+            if (!node.getCode().equals(keyParts[0]) || node.getChildrenList() == null) {
+                continue;
+            }
+            // 如果是最后一层，检查子节点
+            if (keyParts.length != 1) {
+                // 递归调用，进入下一层
+                matchedCodes.addAll(findAndCacheNodeByKey(node.getChildrenList(), String.join(":", Arrays.copyOfRange(keyParts, 1, keyParts.length)), redisKeyPrefix));
+            }
+            // 遍历子节点并保存 value 为 true 的节点到 Redis
+            for (CfgRuleCommonDTO.StrategyResultDTO child : node.getChildrenList()) {
+                if ("true".equalsIgnoreCase(child.getValue())) {
+                    String redisKey = redisKeyPrefix + ":" + child.getCode();
+                    redisTemplate.opsForValue().set(redisKey, child.getValue());
+                    matchedCodes.add(child.getCode());
                 }
             }
         }
