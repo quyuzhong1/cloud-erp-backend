@@ -1591,6 +1591,29 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    public SoReturnInstockEntity getByThirdCode(String thirdCode) {
+        if(StringUtils.isBlank(thirdCode)){
+            return null;
+        }
+        return lambdaQuery().eq(SoReturnInstockEntity::getThirdCode,thirdCode).last("limit 1").one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList) {
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
+        this.save(soReturnInstockEntity);
+
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("三方仓新增销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), soReturnInstockEntity.getId(), "新增操作");
+
+        detailEntityList.forEach(v->v.setMainId(soReturnInstockEntity.getId()));
+        soReturnInstockDetailService.saveBatch(detailEntityList);
+        //审核
+        this.approve(soReturnInstockEntity,ApproveTypeEnum.PASS.getStatus(),"三方仓新增自动审核通过",false);
+    }
+
+    @Override
     public SoReturnInstockDTO.View pdaView(String id) {
         SoReturnInstockDTO.View view = this.view(id);
         if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(view.getSourceType())) {

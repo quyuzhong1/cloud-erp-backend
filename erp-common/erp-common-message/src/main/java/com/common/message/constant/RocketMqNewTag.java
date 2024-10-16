@@ -143,4 +143,8 @@ public class RocketMqNewTag {
      */
     public static final String DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_so_out_stock_to_wms_tag";
 
+    /**
+     * 新中台平台退货入库
+     */
+    public static final String DMP_PLATFORM_RETURN_INSTOCK_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_return_instock_to_wms_tag";
 }
