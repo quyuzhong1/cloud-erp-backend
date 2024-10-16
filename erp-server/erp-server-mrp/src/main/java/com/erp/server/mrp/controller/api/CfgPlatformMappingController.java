@@ -56,6 +56,18 @@ public class CfgPlatformMappingController extends BaseController {
     }
 
     /**
+     * 根据平台类型查询
+     * @author will
+     * @date 2024/10/16 17:06
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/getByPlatformType")
+    public ApiResult<CfgPlatformMappingDTO.ViewDTO> getByPlatformType(@RequestParam("platformType") String platformType) {
+        return success(cfgPlatformMappingService.getByPlatformType(platformType));
+    }
+
+
+    /**
      * 下拉查询
      * @author Will
      * @date: 2024/08/29 17:06

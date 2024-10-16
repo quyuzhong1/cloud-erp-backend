@@ -44,10 +44,26 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
      */
     List<CfgPlatformMappingEntity> listByPlatformType(String platformType);
     /**
+     * 根据平台类型查询所有数据
+     * @author will
+     * @date 2024/10/16 17:13
+     * @param platformType
+     * @return List<CfgPlatformMappingEntity>
+     */
+    List<CfgPlatformMappingEntity> listAllByPlatformType(String platformType);
+    /**
      * 查询详情
      * @author will
      * @date 2024/10/15 10:01
      * @return MainViewDTO
      */
     CfgPlatformMappingDTO.MainViewDTO view();
+    /**
+     * 根据平台类型查询
+     * @author will
+     * @date 2024/10/16 17:11
+     * @param platformType
+     * @return ViewDTO
+     */
+    CfgPlatformMappingDTO.ViewDTO getByPlatformType(String platformType);
 }

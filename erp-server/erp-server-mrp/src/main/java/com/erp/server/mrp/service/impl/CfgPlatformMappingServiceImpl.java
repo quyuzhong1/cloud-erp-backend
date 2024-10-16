@@ -144,6 +144,14 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         return list;
     }
 
+    @Override
+    public List<CfgPlatformMappingEntity> listAllByPlatformType(String platformType) {
+        List<CfgPlatformMappingEntity> list = lambdaQuery()
+                .eq(CfgPlatformMappingEntity::getType, platformType)
+                .list();
+        return list;
+    }
+
 
     @Override
     public CfgPlatformMappingDTO.MainViewDTO view() {
@@ -169,6 +177,20 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         }
         mainViewDTO.setViewList(viewList);
         return mainViewDTO;
+    }
+
+    @Override
+    public CfgPlatformMappingDTO.ViewDTO getByPlatformType(String platformType) {
+        CfgPlatformMappingDTO.ViewDTO viewDTO = new CfgPlatformMappingDTO.ViewDTO();
+
+        List<CfgPlatformMappingEntity> cfgPlatformMappingList = this.listAllByPlatformType(platformType);
+        if (CollectionUtils.isEmpty(cfgPlatformMappingList)) {
+            return viewDTO;
+        }
+        BeanMapperUtils.copy(cfgPlatformMappingList.get(0),viewDTO);
+        List<String> platformList = cfgPlatformMappingList.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
+        viewDTO.setPlatformList(platformList);
+        return viewDTO;
     }
 
 
