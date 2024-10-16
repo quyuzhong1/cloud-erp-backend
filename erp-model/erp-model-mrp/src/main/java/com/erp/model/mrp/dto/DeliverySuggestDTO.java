@@ -1,5 +1,7 @@
 package com.erp.model.mrp.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +12,8 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -23,6 +27,25 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class DeliverySuggestDTO implements Serializable {
 
+
+    /**
+     * 高级查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+    }
 
     /**
      * 列表参数

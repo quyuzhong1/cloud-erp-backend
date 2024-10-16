@@ -2,11 +2,15 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -14,16 +18,20 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
+import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
 import com.erp.server.mrp.service.OperateLogService;
 import com.erp.server.mrp.service.PurchaseSuggestService;
@@ -34,6 +42,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +64,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     private OperateLogService operateLogService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
+    @Autowired
+    private DownloadTaskFeign f;
 
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     public List<PurchaseSuggestDTO.ListDTO> list(PurchaseSuggestDTO.ListParamDTO params) {
@@ -109,13 +123,6 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if(!save) {
             throw new ServiceException("建议采购保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录建议采购日志数据，单号：【{}】", purchaseSuggestEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), purchaseSuggestEntity.getCode(), "建议采购");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, purchaseSuggestEntity, null, purchaseSuggestEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -132,6 +139,76 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Override
     public List<PurchaseSuggestEntity> listByReplenishmentId(String detailId) {
         return list(Wrappers.<PurchaseSuggestEntity>lambdaQuery().eq(PurchaseSuggestEntity::getSourceId, detailId));
+    }
+
+    @Override
+    public PagingVO<PurchaseSuggestDTO.ListDTO> paging(PagingDTO<PurchaseSuggestDTO.PagingParamDTO> pagingDTO) {
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        IPage<PurchaseSuggestDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
+        //数据处理
+        handleList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/purchaseSuggestTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ExcelUtil.downloadTemplate(path,excelName,response);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO locking(String id) {
+        PurchaseSuggestEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode())) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
+        }
+        //更新成待确认状态
+        old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
+        this.updateById(old);
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO confirm(String id) {
+        PurchaseSuggestEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
+        }
+        //更新成完成状态
+        old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
+        this.updateById(old);
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO invalid(String id, String remark) {
+        PurchaseSuggestEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        //草稿和待确认支持作废
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+        }
+        if (old.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        //更新成作废状态
+        old.setInvalidStatus(Boolean.TRUE);
+        old.setInvalidRemark(remark);
+        this.updateById(old);
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
+    }
+
+    @Override
+    public Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
+        downloadTaskFeign.saveDownloadTask("发货建议", FileTaskEventEnum.EXPORT_MRP_REPLENISHMENT_RULE.getCode(), pagingParamDTO);
+        return Boolean.TRUE;
     }
 
     /**

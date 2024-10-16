@@ -1488,6 +1488,9 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_NOT_EXIST(97013,"物流配置不存在"),
     ERROR_TABLE_NOT_EXIST(97014,"表{}不存在"),
     ERROR_TIME_FRAME_NOT_EXIST(97015,"*建议时间范围规则配置不存在"),
+    ERROR_SUGGEST_CONFIRM(97016,"非待确认数据不支持确认操作"),
+    ERROR_SUGGEST_LOCKING(97017,"非草稿数据不支持锁定操作"),
+    ERROR_SUGGEST_INVALID(97018,"非草稿和待确认数据不支持作废操作"),
 
 
 

@@ -74,5 +74,26 @@
         </where>
     </select>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.mrp.dto.PurchaseSuggestDTO$ListDTO">
+        select
+            <include refid="Base_Column_List"/>
+        from purchase_suggest ps
+        <where>
+            ${params.sqlMap.default}
+            and ps.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ps.id desc
+    </select>
+
 
 </mapper>

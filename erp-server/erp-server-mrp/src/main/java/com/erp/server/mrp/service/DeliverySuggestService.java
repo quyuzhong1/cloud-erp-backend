@@ -1,9 +1,11 @@
 package com.erp.server.mrp.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -35,6 +37,15 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
     Boolean update(DeliverySuggestDTO.UpdateDTO dto);
 
     /**
+     * 分页查询
+     * @author will
+     * @date 2024/10/16 10:36
+     * @param pagingDTO 
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<DeliverySuggestDTO.ListDTO> paging(PagingDTO<DeliverySuggestDTO.PagingParamDTO> pagingDTO);
+
+    /**
      * 列表查询
      * @author will
      * @date 2024/9/9 14:12
@@ -48,4 +59,43 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @param detailId 明细id
      */
     List<DeliverySuggestEntity> listByReplenishmentId(String detailId);
+    /**
+     * 下载模板
+     * @author will
+     * @date 2024/10/16 10:55
+     * @param response 
+     */
+    void downloadTemplate(HttpServletResponse response);
+    /**
+     * 锁定
+     * @author will
+     * @date 2024/10/16 11:24
+     * @param id 
+     * @return BatchResultDTO
+     */
+    BatchResultDTO locking(String id);
+    /**
+     * 确认
+     * @author will
+     * @date 2024/10/16 11:00
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO confirm(String id);
+    /**
+     * 作废
+     * @author will
+     * @date 2024/10/16 11:34
+     * @param id 
+     * @return BatchResultDTO
+     */
+    BatchResultDTO invalid(String id,String remark);
+    /**
+     * 导出发货建议
+     * @author will
+     * @date 2024/10/16 12:12
+     * @param pagingParamDTO
+     * @return Boolean
+     */
+    Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO);
 }

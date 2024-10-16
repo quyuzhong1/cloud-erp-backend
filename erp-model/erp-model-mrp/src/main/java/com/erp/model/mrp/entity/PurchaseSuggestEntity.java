@@ -1,15 +1,15 @@
 package com.erp.model.mrp.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -81,6 +81,11 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     */
     @TableField("invalid_remark")
     private String invalidRemark;
+    /**
+     * 状态
+     */
+    @TableField("status")
+    private String status;
     /**
     * 来源id
     */
