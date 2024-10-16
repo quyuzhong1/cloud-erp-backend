@@ -321,7 +321,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<String> skuIdList = list.stream().map(WmsCartonSpecDTO.GroupSkuDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
         //查询已装箱数
-        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(id, null);
+        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(id);
         for (WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO : list) {
             //待装箱数量=发货数量-已装箱数量
             int packQty = packingQtyDTOS.stream()
@@ -529,7 +529,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             return;
         }
         //已装箱数据汇总
-        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(packingTask.getId(), null);
+        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainId(packingTask.getId());
         //发货数量汇总
         List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTask.getId()));
         //拣货数量
@@ -1205,6 +1205,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 SkuVO skuVO = skuVOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(wmsCartonDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                 cartonDetailDTO.setSkuId(wmsCartonDetailEntity.getSkuId());
                 cartonDetailDTO.setSkuNo(wmsCartonDetailEntity.getSkuNo());
+                cartonDetailDTO.setFnSku(wmsCartonDetailEntity.getFnSku());
                 //发货数量
                 Integer deliveryQty1 = taskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(wmsCartonDetailEntity.getSkuId()))
                         .map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1378,6 +1379,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         checkAdjustData(dto);
         //更新调整数量
         Integer boxNo = updateAdjustData(dto);
+        //更新装箱状态
+        this.updatePackingStatus(listGroupSkuById(dto.getTaskId()),dto.getTaskId());
         //发送飞书通知
         this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "调整装箱-" + AdjustTypeEnum.getName(dto.getAdjustType()));
         return packingTaskEntity.getSourceCode() + "-" + boxNo;
@@ -1942,10 +1945,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonEntity> unWeightList = cartonEntityList.stream().filter(e -> PackingWeightStatusEnum.UNWEIGHED.getCode().equals(e.getWeightingStatus()) || PackingWeightStatusEnum.FAIL.getCode().equals(e.getWeightingStatus())).collect(Collectors.toList());
         List<WmsCartonEntity> weighedList = cartonEntityList.stream().filter(e -> PackingWeightStatusEnum.SUCCESS.getCode().equals(e.getWeightingStatus())).collect(Collectors.toList());
         String weightingStatus;
-        if (deliveryQty.equals(packQty) && CollectionUtils.isEmpty(unWeightList)){
+        if (deliveryQty != 0 && packQty != 0 && deliveryQty.equals(packQty) && CollectionUtils.isEmpty(unWeightList)){
             //全部称重
             weightingStatus = PackingWeightStatusEnum.WEIGHTED.getCode();
-        }else if (CollectionUtils.isNotEmpty(weighedList)){
+        }else if (deliveryQty != 0 && packQty != 0 && CollectionUtils.isNotEmpty(weighedList)){
             weightingStatus = PackingWeightStatusEnum.WEIGHTING.getCode();
         }else {
             weightingStatus = PackingWeightStatusEnum.UNWEIGHED.getCode();
@@ -1971,10 +1974,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         Integer deliveryQty = detailEntityList.stream().map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
         Integer packQty = wmsCartonDetailEntityList.stream().map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
         String weightingStatus;
-        if (deliveryQty.equals(packQty) && CollectionUtils.isEmpty(unWeightList)){
+        if (deliveryQty != 0 && packQty != 0 && deliveryQty.equals(packQty) && CollectionUtils.isEmpty(unWeightList)){
             //全部称重
             weightingStatus = PackingWeightStatusEnum.WEIGHTED.getCode();
-        }else if (CollectionUtils.isNotEmpty(weighedList)){
+        }else if (deliveryQty != 0 && packQty != 0 && CollectionUtils.isNotEmpty(weighedList)){
             weightingStatus = PackingWeightStatusEnum.WEIGHTING.getCode();
         }else {
             weightingStatus = PackingWeightStatusEnum.UNWEIGHED.getCode();
@@ -2292,6 +2295,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         });
         packingTaskDetailService.updateBatchById(detailEntityList);
         List<String> ids = detailEntityList.stream().map(PackingTaskDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(ids)){
+            return;
+        }
         List<PackingTaskEntity> packingTaskEntityList = this.listByIds(ids);
         List<PackingTaskDetailEntity> allDetailList = packingTaskDetailService.listByMainIds(ids);
         packingTaskEntityList.forEach(main->{
@@ -2332,6 +2338,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public void updatePackingStatusByTaskId(String taskId) {
+        this.updatePackingStatus(listGroupSkuById(taskId),taskId);
     }
 
     /**

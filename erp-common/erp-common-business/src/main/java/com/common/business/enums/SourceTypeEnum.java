@@ -12,6 +12,7 @@ import java.util.Objects;
 @NoArgsConstructor
 public enum SourceTypeEnum {
     SELF_ADD("selfAdd", "手动新增",""),
+    AUTO_ADD("autoAdd", "自动新增",""),
 
 
 
@@ -50,6 +51,7 @@ public enum SourceTypeEnum {
     WDT_OTHER_OUTSTOCK("wdtOtherOutstock", "其他出库","other_outstock"),
     WAREHOUSE("warehouse", "仓库","warehouse"),
     SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
+    SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
     PACKING_TASK("packingTask", "装箱任务",""),
 
@@ -70,6 +72,7 @@ public enum SourceTypeEnum {
     REQUISITION_APPLICATION_FINISH("requisitionApplicationFinish", "要货申请(完成)","requisition_application"),
 
     SUBCONTRACT_ISSUE("subcontractIssue", "委外发料单","subcontract_issue"),
+    SUBCONTRACT_RETURN("subcontractReturn", "委外退料单","subcontract_return"),
     WAREHOUSE_AREA_INFO("warehouseAreaInfo", "库区","warehouse_area_info"),
     VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单","virtual_warehouse_allocation"),
     PICKING_LISTS_ADD("pickingListsAdd", "拣货单新增","picking_lists_add"),

@@ -159,10 +159,12 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
 
     /**
      * 通过组织id查询存在流水的库存id
-     * @param startDate 开始时间
-     * @param orgId 组织id
+     *
+     * @param startDate   开始时间
+     * @param orgId       组织id
      * @param inventoryId 库存id
-     * @return  List<String>
+     * @param fromTable 临时表中获取
+     * @return List<String>
      */
-    List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId);
+    List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId, Boolean fromTable);
 }

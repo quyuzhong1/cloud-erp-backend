@@ -40,6 +40,10 @@ public class InstockForcastPoChangeDetailDTO implements Serializable {
          */
         @NotEmpty(message = "采购订单明细id不能为空")
         private String purchaseOrderDetailId;
+        /**
+         * 采购变更单明细id
+         */
+        private String purchaseOrderChangeDetailId;
 
         /**
          * 执行状态

@@ -65,6 +65,7 @@ public class RedisKeyConstant {
 
     public static final String SO_B2C_ORDER_KEY = "SO_B2C_ORDER_KEY";
     public static final String SO_B2C_DELIVERY_KEY = "SO_B2C_DELIVERY_KEY";
+    public static final String SO_B2C_DELIVERY_INTERCEPT_KEY = "SO_B2C_DELIVERY_INTERCEPT_KEY";
 
 
     /**
@@ -76,4 +77,9 @@ public class RedisKeyConstant {
      * 更新产品上架时间
      */
     public static final String PRODUCT_LISTING_TIME = "product:listing:time:";
+
+    /**
+     * 重试任务key
+     */
+    public static final String SOB2C_RETRY_JOB = "SOB2C_RETRY_JOB:{}";
 }

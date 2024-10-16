@@ -17,6 +17,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
@@ -157,6 +159,64 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
 						.list();
 				if(CollUtil.isEmpty(list)) {
+					try {
+						JSONObject parseObject = JSON.parseObject(requestData);
+						String poSyncKingdeeId = parseObject.getString("poSyncKingdeeId");
+						if(StringUtils.isNotBlank(poSyncKingdeeId)) {
+							break;
+						}
+						String soKingdeeDetailIds = parseObject.getString("soKingdeeDetailIds");
+						if(StringUtils.isNotBlank(soKingdeeDetailIds)) {
+							break;
+						}
+						String code = parseObject.getString("code");
+						if(StringUtils.isNotBlank(code) && code.startsWith("CGTJ")) {
+							JSONArray jsonArray = parseObject.getJSONArray("list");
+							if(CollUtil.isNotEmpty(jsonArray)) {
+								if(jsonArray.stream().allMatch(j -> {
+									JSONObject JSONObject = (JSONObject)j;
+									String kingdeeDetailId = JSONObject.getString("kingdeeDetailId");
+									return StringUtils.isNotBlank(kingdeeDetailId);
+								})) {
+									break;
+								}
+							}
+						}
+						if(StringUtils.isNotBlank(code) && code.startsWith("CGTH")) {
+							JSONArray jsonArray = parseObject.getJSONArray("list");
+							if(CollUtil.isNotEmpty(jsonArray)) {
+								if(jsonArray.stream().allMatch(j -> {
+									JSONObject JSONObject = (JSONObject)j;
+									JSONArray FPURMRBENTRY_Link = JSONObject.getJSONArray("FPURMRBENTRY_Link");
+									return FPURMRBENTRY_Link.stream().allMatch(f -> {
+										JSONObject link = (JSONObject)f;
+										String poKingdeeDetailId = link.getString("poKingdeeDetailId");
+										return StringUtils.isNotBlank(poKingdeeDetailId);
+									});
+								})) {
+									break;
+								}
+							}
+						}
+						if(StringUtils.isNotBlank(code) && code.startsWith("CGRK")) {
+							JSONArray jsonArray = parseObject.getJSONArray("list");
+							if(CollUtil.isNotEmpty(jsonArray)) {
+								if(jsonArray.stream().allMatch(j -> {
+									JSONObject JSONObject = (JSONObject)j;
+									JSONArray FInStockEntry_Link = JSONObject.getJSONArray("FInStockEntry_Link");
+									return FInStockEntry_Link.stream().allMatch(f -> {
+										JSONObject link = (JSONObject)f;
+										String poKingdeeDetailId = link.getString("poKingdeeDetailId");
+										return StringUtils.isNotBlank(poKingdeeDetailId);
+									});
+								})) {
+									break;
+								}
+							}
+						}
+					} catch (Exception e) {
+						log.error("处理上游单据失败" , e);
+					}
 					dmpOutputTaskRecordService.lambdaUpdate()
 						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
 						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
@@ -246,4 +306,5 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	protected List<String> getSourceCodeKeys() {
 		return Arrays.asList("sourceCode");
 	}
+	
 }

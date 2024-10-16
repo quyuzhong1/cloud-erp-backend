@@ -39,4 +39,6 @@ public interface SoB2cDeliveryInterceptMapper extends BaseMapper<SoB2cDeliveryIn
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO.ListDTO>
      **/
     IPage<SoB2cDeliveryInterceptDTO.ListDTO> paging(Page query, @Param("params") SoB2cDeliveryInterceptDTO.PagingParamDTO params);
+
+    List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> getInterceptInventoryDTOList(@Param("ids") List<String> ids);
 }

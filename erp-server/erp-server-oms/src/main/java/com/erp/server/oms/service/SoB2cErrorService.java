@@ -67,6 +67,15 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      */
     Boolean removeErrorOrder(String mainId, String type);
 
+    /**  删除异常订单
+     * @description
+     * @param mainId
+     * @author jack
+     * @return
+     * @create 2024/10/15
+     */
+    Boolean removeAllTypeErrorOrder(String mainId);
+
     /**
      * 获取异常订单详情
      * @description

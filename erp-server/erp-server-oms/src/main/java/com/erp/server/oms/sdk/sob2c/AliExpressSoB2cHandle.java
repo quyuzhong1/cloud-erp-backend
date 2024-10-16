@@ -111,7 +111,7 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService {
             }
             return true;
         } catch (Exception e) {
-            log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage());
+            log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage() , e);
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
             addError.setParamJson("");

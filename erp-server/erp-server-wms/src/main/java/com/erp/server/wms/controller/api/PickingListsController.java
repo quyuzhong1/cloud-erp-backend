@@ -108,4 +108,5 @@ public class PickingListsController extends BaseController {
     public void initDelivery(@RequestBody List<String> codes) {
         pickingListsService.initDelivery(codes);
     }
+
 }

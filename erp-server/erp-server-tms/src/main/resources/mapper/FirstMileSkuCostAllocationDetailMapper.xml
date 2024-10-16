@@ -43,7 +43,8 @@
     <select id="listByMainIds" resultType="com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity">
         select
             cad.*,
-            ca.sku_id
+            ca.sku_id,
+            ca.platform_sku_no
         from first_mile_sku_cost_allocation_detail cad
         left join first_mile_sku_cost_allocation ca on ca.id = cad.cost_main_id and ca.is_deleted = false
         where cad.is_deleted=false

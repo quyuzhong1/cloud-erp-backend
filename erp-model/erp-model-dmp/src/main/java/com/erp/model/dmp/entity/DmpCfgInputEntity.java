@@ -82,17 +82,4 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
 
     public static final String EXTEND_JSON = "extend_json";
 
-
-    /**
-     * 解析扩展参数 autoCheckNow
-     */
-    public Boolean parseExtendAutoCheckNow() {
-        Boolean autoCheckNow = false;
-        String extendJson = this.getExtendJson();
-        if (StringUtils.isNotBlank(extendJson)) {
-            JSONObject jsonObject = JSON.parseObject(extendJson);
-            autoCheckNow = jsonObject.getBoolean("autoCheckNow");
-        }
-        return autoCheckNow;
-    }
 }

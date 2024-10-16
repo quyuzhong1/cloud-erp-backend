@@ -67,6 +67,7 @@
         sod.is_urgent,
         sod.bom_version,
         sod.is_generate_po,
+        sod.is_generate_in_stock,
         sod.parent_id,
         sod.source_detail_id
     </sql>

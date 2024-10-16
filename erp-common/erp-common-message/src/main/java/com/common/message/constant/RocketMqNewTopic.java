@@ -142,7 +142,7 @@ public class RocketMqNewTopic {
     /**
      * 新中台平台销售出库单
      */
-    public static final String DMP_PLATFORM_SO_OUT_STOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_so_out_stock_to_wms_topic";
+    public static final String DMP_AMZ_SO_OUT_STOCK_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_amz_so_out_stock_to_wms_topic";
 
     /**
      * 新中台退货入库

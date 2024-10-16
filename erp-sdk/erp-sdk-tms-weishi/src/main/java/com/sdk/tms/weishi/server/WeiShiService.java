@@ -1,5 +1,7 @@
 package com.sdk.tms.weishi.server;
 
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
@@ -34,7 +36,7 @@ public class WeiShiService {
      */
     public WeiShiCreateOrder createOrder(@Valid WeiShiCreateOrderRequest request,Map<String, String> authMap){
         log.info("==========WeiShiService.createOrder==========start");
-        log.warn("authMap:{}, orderRequest:{}",authMap, request);
+        log.warn("authMap:{}, orderRequest:{}",authMap, JSONObject.toJSONString(request));
         String response = WeiShiUtils.sendPost(authMap.get("url"),WeiShiConstants.METHOD_CREATE_ORDER,JSONObject.toJSONString(request),authMap.get("clientId"),authMap.get("clientSecret"));
         log.warn("下单完成：{}",JSONObject.toJSONString(response));
         return JSONObject.parseObject(response,WeiShiCreateOrder.class);

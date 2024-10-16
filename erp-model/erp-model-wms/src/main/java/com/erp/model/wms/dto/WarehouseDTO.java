@@ -706,6 +706,16 @@ public class WarehouseDTO implements Serializable {
          * approve :已审核
          */
         private String approveStatus;
+
+        /**
+         * 地理位置
+         */
+        private List<String> geographyLocationList;
+
+        /**
+         * 仓库类型
+         */
+        private String type;
     }
 
     /**

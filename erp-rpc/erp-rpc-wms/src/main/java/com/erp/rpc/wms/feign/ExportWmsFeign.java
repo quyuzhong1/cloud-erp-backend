@@ -43,6 +43,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/listDiffExportData")
     PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(@RequestBody PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
 
+    /**
+     * 暂时不用
+     */
     @PostMapping("/feign/export/warehouseStatisticsData")
     PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> exportWarehouseStatisticsData(@RequestBody PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
 
@@ -160,6 +163,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/subcontractIssue")
     PagingVO<SubcontractIssueDTO.ListDTO> exportSubcontractIssue(@RequestBody PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/subcontractReturn")
+    PagingVO<SubcontractReturnDTO.ListDTO> exportSubcontractReturn(@RequestBody PagingDTO<SubcontractReturnDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/supplierDeliveryOrder")
     PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(@RequestBody PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 
@@ -198,4 +204,19 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/fbaShipmentPacking")
     PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
 
+    /**
+     * 订单需求明细导出
+     */
+    @PostMapping("/feign/export/listReportOrderDemandDetail")
+    PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto);
+    /**
+     * 缺货统计导出
+     */
+    @PostMapping("/feign/export/listReportOrderDemand")
+    PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(@RequestBody PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto);
+    /**
+     * 销售看板导出
+     */
+    @PostMapping("/feign/export/listReportOrderSales")
+    PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
 }

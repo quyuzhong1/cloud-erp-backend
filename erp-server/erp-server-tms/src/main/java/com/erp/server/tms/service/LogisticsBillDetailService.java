@@ -9,6 +9,7 @@ import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsTrackEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -120,4 +121,27 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @return List<LogisticsBillDetailEntity>
      */
     List<LogisticsBillDetailEntity> listByPlatformCodeAndTrackNo(List<String> platformCodeList, List<String> trackNoList);
+
+    /**
+     * 根据跟踪号进行更新操作
+     * @param max
+     */
+    void updateLogisticsBillDetailByTrackNo(LogisticsTrackEntity max);
+
+    /**
+     * 更新跟踪号信息
+     * @param trackNo
+     * @param status
+     * @param signTime
+     */
+    void updateTrackStatus(String trackNo, String status, LocalDateTime signTime, LocalDateTime trackTime);
+
+    /**
+     * 批量更新跟踪号信息
+     * @param trackNoList
+     * @param code
+     * @param signTime
+     * @param trackTime
+     */
+    void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime signTime, LocalDateTime trackTime);
 }

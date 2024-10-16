@@ -106,6 +106,8 @@ public class ExportWmsFeignController {
     @Resource
     private SubcontractIssueService subcontractIssueService;
     @Resource
+    private SubcontractReturnService subcontractReturnService;
+    @Resource
     private TransferApplicationService transferApplicationService;
     @Resource
     private SupplierDeliveryOrderService supplierDeliveryOrderService;
@@ -130,6 +132,16 @@ public class ExportWmsFeignController {
 
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
+
+
+    @Resource
+    private ReportOrderDemandDetailService reportOrderDemandDetailService;
+
+    @Resource
+    private ReportOrderDemandService reportOrderDemandService;
+
+    @Resource
+    private ReportOrderSalesService reportOrderSalesService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -526,6 +538,16 @@ public class ExportWmsFeignController {
     public PagingVO<SubcontractIssueDTO.ListDTO> exportSubcontractIssue(@RequestBody PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto) {
         return subcontractIssueService.exportSubcontractIssue(dto);
     }
+    @PostMapping("/subcontractReturn")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:subcontractReturn:export",
+            tableAlias = "sr"
+    )
+    @WebAdvanceQuery(handler = SubcontractReturnQueryHandler.class)
+    public PagingVO<SubcontractReturnDTO.ListDTO> exportSubcontractReturn(@RequestBody PagingDTO<SubcontractReturnDTO.PagingParamDTO> dto){
+        return subcontractReturnService.paging(dto);
+    }
 
     @PostMapping("/supplierDeliveryOrder")
     @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
@@ -624,5 +646,30 @@ public class ExportWmsFeignController {
     @PostMapping("/inventoryAge")
     public PagingVO<DynamicExcelDTO> exportWmsInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto){
         return inventoryService.exportWmsInventoryAge(dto);
+    }
+
+    /**
+     * 订单需求明细导出
+     */
+    @PostMapping("/listReportOrderDemandDetail")
+    @WebAdvanceQuery
+    public PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto){
+        return reportOrderDemandDetailService.listReportOrderDemandDetail(dto);
+    }
+    /**
+     * 缺货统计数据导出
+     */
+    @PostMapping("/listReportOrderDemand")
+    @WebAdvanceQuery
+    public PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(@RequestBody PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto){
+        return reportOrderDemandService.listReportOrderDemand(dto);
+    }
+    /**
+     * 销售看板数据导出
+     */
+    @PostMapping("/listReportOrderSales")
+    @WebAdvanceQuery
+    public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto){
+        return reportOrderSalesService.listReportOrderSales(dto);
     }
 }

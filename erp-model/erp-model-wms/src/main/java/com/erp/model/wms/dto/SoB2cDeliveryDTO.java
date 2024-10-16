@@ -342,6 +342,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String id;
         /**
+         * 发货拦截单id
+         */
+        private String interceptId;
+        /**
          * 明细id
          */
         private String detailId;
@@ -535,6 +539,16 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         @Dict(enumClass = AbnormalCauseEnum.class)
         private String abnormalCause;
+
+        /**
+         * 发货标记
+         */
+        private String shipmentMark;
+
+        /**
+         * 标签
+         */
+        private String tag;
 
     }
 

@@ -15,6 +15,7 @@ import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.server.sys.service.SysPostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,5 +67,11 @@ public class SysPostController extends BaseController {
     public ApiResult paging(@RequestBody PagingDTO<BasePagingSearchDTO> dto) {
         PagingVO vo = sysPostService.paging(dto);
         return success(vo);
+    }
+
+    @GetMapping("/listByRequisitionSetting")
+    public ApiResult listByRequisitionSetting() {
+        List<SysPostEntity> list = sysPostService.listByRequisitionSetting();
+        return success(list);
     }
 }

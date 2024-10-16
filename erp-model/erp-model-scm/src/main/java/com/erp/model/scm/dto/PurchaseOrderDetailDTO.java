@@ -283,6 +283,26 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 采购单号
          */
         private String  code;
+        /**
+         * 订单类型
+         */
+        private String  type;
+        /**
+         * 来源单号id
+         */
+        private String  sourceId;
+        /**
+         * 来源单号
+         */
+        private String  sourceCode;
+        /**
+         * 来源类型
+         */
+        private String  sourceType;
+        /**
+         * 委外类型
+         */
+        private String  subcontractType;
 
         /**
          * skuId
@@ -383,6 +403,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 含税单价
          */
         private BigDecimal taxPrice;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
 
         /**
          * 币别
