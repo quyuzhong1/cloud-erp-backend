@@ -7070,6 +7070,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public SoB2cEntity getByPlatformCode(String platformCode) {
+        if(StringUtils.isBlank(platformCode)){
+            return null;
+        }
+        return lambdaQuery().eq(SoB2cEntity::getPlatformCode,platformCode).last("limit 1").one();
+    }
+
+    @Override
     public SoB2cDTO.SoB2cDataDTO listSoB2cData(SoB2cDTO.SoB2cDataParamDTO paramDTO) {
         //校验必填
         if(CollectionUtils.isEmpty(paramDTO.getB2cSoIdList()) && CollectionUtils.isEmpty(paramDTO.getB2cSoCodeList())) {

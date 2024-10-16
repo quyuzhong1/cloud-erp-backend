@@ -91,6 +91,7 @@ public enum BusinessNoTypeEnum {
     THD(70, "THD","B2C退货单",BusinessNoConstant.THD),
 
     CODE_TLD(67, "tld","委外发退料单",BusinessNoConstant.TLD),
+    CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TLD),
     ;
 
 

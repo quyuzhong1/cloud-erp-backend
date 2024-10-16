@@ -3,8 +3,11 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.RefundOrderDTO;
+import com.erp.model.oms.entity.RefundOrderDetailEntity;
 import com.erp.model.oms.entity.RefundOrderEntity;
 import com.common.business.service.SuperService;
+
+import java.util.List;
 
 /**
  * <p>
@@ -29,4 +32,6 @@ public interface RefundOrderService extends SuperService<RefundOrderEntity> {
     void exportExcel(RefundOrderDTO.PagingParamDTO dto);
 
     PagingVO<RefundOrderDTO.PagingViewDTO> exportRefund(PagingDTO<RefundOrderDTO.PagingParamDTO> dto);
+
+    void add(RefundOrderEntity refundOrderEntity, List<RefundOrderDetailEntity> refundOrderDetailEntityList);
 }

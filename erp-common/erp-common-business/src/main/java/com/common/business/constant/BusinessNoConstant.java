@@ -154,4 +154,5 @@ public interface BusinessNoConstant {
     //试产量产
     String SCLC = "SCLC";
     String THD = "THD";
+    String TKD = "TKD";
 }

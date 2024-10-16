@@ -2,15 +2,20 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.RefundOrderDTO;
+import com.erp.model.oms.entity.RefundOrderDetailEntity;
 import com.erp.model.oms.entity.RefundOrderEntity;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -18,10 +23,13 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.mapper.RefundOrderMapper;
 import com.erp.server.oms.service.DictBasicService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.RefundOrderDetailService;
 import com.erp.server.oms.service.RefundOrderService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -41,7 +49,11 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REQUISITION
 @Service
 public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, RefundOrderEntity> implements RefundOrderService {
 
+    @Resource
+    private OperateLogService operateLogService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
     @Resource
     private DictBasicService dictBasicService;
 
@@ -53,6 +65,9 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private RefundOrderDetailService refundOrderDetailService;
 
     /**
      * 售后订单分页
@@ -95,6 +110,19 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
         //填充数据
         fillDb(list);
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void add(RefundOrderEntity refundOrderEntity, List<RefundOrderDetailEntity> refundOrderDetailEntityList) {
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TKD);
+        this.save(refundOrderEntity);
+
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("新增退款单【%s】", code), ModuleTypeEnum.REFUND_ORDER.getCode(), refundOrderEntity.getId(), "新增操作");
+
+        refundOrderDetailEntityList.forEach(v->v.setMainId(refundOrderEntity.getId()));
+        refundOrderDetailService.saveBatch(refundOrderDetailEntityList);
     }
 
     /**

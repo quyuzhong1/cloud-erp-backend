@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.math.BigDecimal;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -54,7 +56,17 @@ public class RefundOrderDetailEntity extends BaseEntity<RefundOrderDetailEntity>
     */
     @TableField("refund_qty")
     private Integer refundQty;
+    /**
+     * 退款金额
+     */
+    @TableField("refund_amount")
+    private BigDecimal refundAmount;
 
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
 
     public static final String MAIN_ID = "main_id";
 
