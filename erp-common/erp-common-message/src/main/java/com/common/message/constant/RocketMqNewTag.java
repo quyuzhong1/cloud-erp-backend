@@ -147,4 +147,15 @@ public class RocketMqNewTag {
      * 新中台平台退货入库
      */
     public static final String DMP_PLATFORM_RETURN_INSTOCK_TO_WMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_return_instock_to_wms_tag";
+
+    /**
+     * 新中台平台退货订单
+     */
+    public static final String DMP_PLATFORM_RETURN_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_return_order_to_oms_tag";
+
+    /**
+     * 新中台平台退货订单
+     */
+    public static final String DMP_PLATFORM_REFUND_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_refund_order_to_oms_tag";
+
 }
