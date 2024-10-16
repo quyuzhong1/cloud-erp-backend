@@ -105,8 +105,8 @@ public class ErpServerOmsShopifyApplicationTests {
 
         //1、通过检索订单列表，按指定条件获取订单ID，订单付款状态：部分付款，已付款，部分退款，已退款，已作废；订单创建时间：当天\
 //        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-11-27T00:00:00+08:00");
-        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-05-01T00:00:00-04:00");
-        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-08-16T00:00:00-04:00");
+        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2024-05-01T00:00:00+08:00");
+        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-10-15T19:10:00+08:00");
 
 
         List<ShopifyOrder> shopifyOrders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
@@ -356,8 +356,22 @@ public class ErpServerOmsShopifyApplicationTests {
     @Test
     public void shopifyGraphQLReturnTest() {
 
-        ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient("jim-shop-test.myshopify.com", "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");
-        String orderReturn = shopifyGraphQLClient.getOrderReturn("5548561662144");
+        ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient("luna-shop-test.myshopify.com", "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");
+        // 退款
+        String orderReturn = shopifyGraphQLClient.getOrderReturn("5530425884864");
+        // 退货
+//        String orderReturn = shopifyGraphQLClient.getOrderReturn("5533574234304");
+        System.out.println("订单退货信息结果");
+        System.out.println(orderReturn);
+    }
+
+    @Test
+    public void shopifyReturnTest() {
+        ShopifyRestClient shopifyRestClient = shopifyRestClientService.getShopifyRestClient("luna-shop-test.myshopify.com", "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");
+        // 退款
+//        String orderReturn = shopifyRestClient.getOrderRefunds("5530425884864");
+        // 退货
+        String orderReturn = shopifyRestClient.getOrderRefunds("5533574234304");
         System.out.println("订单退货信息结果");
         System.out.println(orderReturn);
     }
