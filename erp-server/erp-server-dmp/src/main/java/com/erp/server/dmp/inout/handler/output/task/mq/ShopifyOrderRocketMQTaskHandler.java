@@ -538,7 +538,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             dto.setPlatform(dmpEntity.getSourceSystem());
             dto.setDmpSyncTaskId(cfgOutputId);
             // 明细
-            List<PlatformRefundOrderDTO.Detail> detailList = parseReturnDetailList(dmpDetailList);
+            List<PlatformReturnOrderDTO.Detail> detailList = parseReturnDetailList(dmpDetailList);
             dto.setDetailList(detailList);
 
             resultList.add(dto);
@@ -549,13 +549,12 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
     /**
      * 批量转换退货单明细DTO
      */
-    private List<PlatformRefundOrderDTO.Detail> parseReturnDetailList(List<DmpSoReturnDetailEntity> dmpDetailList) {
-        List<PlatformRefundOrderDTO.Detail> resultList = new LinkedList<>();
+    private List<PlatformReturnOrderDTO.Detail> parseReturnDetailList(List<DmpSoReturnDetailEntity> dmpDetailList) {
+        List<PlatformReturnOrderDTO.Detail> resultList = new LinkedList<>();
         for (DmpSoReturnDetailEntity dmpDetailEntity : dmpDetailList) {
-            PlatformRefundOrderDTO.Detail detail = new PlatformRefundOrderDTO.Detail();
+            PlatformReturnOrderDTO.Detail detail = new PlatformReturnOrderDTO.Detail();
             detail.setPlatformSkuNo(dmpDetailEntity.getSkuNo());
-            detail.setRefundAmount(dmpDetailEntity.getAmount());
-            detail.setRefundQty(dmpDetailEntity.getQty());
+            detail.setReturnQty(dmpDetailEntity.getQty());
             resultList.add(detail);
         }
         return resultList;
@@ -599,7 +598,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         for (DmpSoRefundDetailEntity dmpDetailEntity : dmpDetailList) {
             PlatformRefundOrderDTO.Detail detail = new PlatformRefundOrderDTO.Detail();
             detail.setPlatformSkuNo(dmpDetailEntity.getSkuNo());
-            detail.setRefundAmount(dmpDetailEntity.getAmount());
             detail.setRefundQty(dmpDetailEntity.getQty());
             resultList.add(detail);
         }
