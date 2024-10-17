@@ -33,6 +33,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 	
     @Override
 	public void handle(String data) {
+		log.debug("平台退货单消费:{}", data);
 		PlatformReturnOrderDTO dto = JSONUtil.toBean(data, PlatformReturnOrderDTO.class);
 	}
 

@@ -55,6 +55,7 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 	
     @Override
 	public void handle(String data) {
+		log.debug("平台退货入库单消费:{}", data);
 		PlatformRefundOrderDTO dto = JSONUtil.toBean(data, PlatformRefundOrderDTO.class);
 		if(Objects.isNull(dto)){
 			return;

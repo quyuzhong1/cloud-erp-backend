@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,8 +53,13 @@ public class ShopifyReturnOrderDmpHandler extends DmpInputDoNextDmpHandler{
         }
         List<Map<String, Object>> resultList = new LinkedList<>();
         // 公共参数
-        Object shopId = dmpInputMongoEntity.getOrDefault("shopId", "");
-        Object shopName = dmpInputMongoEntity.getOrDefault("shopName", "");
+        Object shopId = dmpInputMongoEntity.getOrDefault("nextLevelId", "");
+        // 订单币种
+        String currency = "";
+        Object currencyObj = dmpInputMongoEntity.get("currency");
+        if (null != currencyObj) {
+            currency = (String) currencyObj;
+        }
 
         for (ShopifyRefund shopifyRefund : shopifyRefunds) {
             List<ShopifyRefundLineItem> refundLineItems = shopifyRefund.getRefundLineItems();
@@ -65,17 +72,23 @@ public class ShopifyReturnOrderDmpHandler extends DmpInputDoNextDmpHandler{
 
             // 记录公共参数
             dmpMap.put("shopId", shopId);
-            dmpMap.put("shop_name", shopName);
 
             // 主单信息
-            dmpMap.put("third_code", shopifyRefund.getId());
-            dmpMap.put("platform_code", shopifyRefund.getOrderId());
-            dmpMap.put("platform_create_time", shopifyRefund.getCreatedAt());
-            dmpMap.put("platform_update_time", shopifyRefund.getProcessedAt());
+            dmpMap.put("thirdCode", shopifyRefund.getId());
+            dmpMap.put("platformCode", shopifyRefund.getOrderId());
 
-            dmpMap.put("return_time", shopifyRefund.getProcessedAt());
-            dmpMap.put("buyer_user_id", shopifyRefund.getUserId());
+            LocalDateTime createdAt = shopifyRefund.getCreatedAt();
+            LocalDateTime createTime = LocalDateTime.parse(createdAt.toString());
+            dmpMap.put("platformCreateTime", createTime);
+
+            LocalDateTime processedAt = shopifyRefund.getProcessedAt();
+            LocalDateTime parseReturnTime = LocalDateTime.parse(processedAt.toString());
+            dmpMap.put("platformUpdateTime", parseReturnTime);
+
+            dmpMap.put("returnTime", parseReturnTime);
+            dmpMap.put("buyerUserId", shopifyRefund.getUserId());
             dmpMap.put("remark", shopifyRefund.getNote());
+            dmpMap.put("currencyCode", currency);
 
             // 记录所有金额
             List<ShopifyTransaction> transactions = shopifyRefund.getTransactions();
@@ -84,13 +97,10 @@ public class ShopifyReturnOrderDmpHandler extends DmpInputDoNextDmpHandler{
                         .map(ShopifyTransaction::getAmount)
                         .reduce(BigDecimal::add)
                         .orElse(BigDecimal.ZERO);
-                Currency currency = transactions.get(0).getCurrency();
                 // 存在退款金额
-                dmpMap.put("currency_code", currency.getCurrencyCode());
-                dmpMap.put("all_amount", allAmount);
+                dmpMap.put("allAmount", allAmount);
             } else {
-                dmpMap.put("currency_code", "");
-                dmpMap.put("all_amount", "0");
+                dmpMap.put("allAmount", "0");
             }
             resultList.add(dmpMap);
         }

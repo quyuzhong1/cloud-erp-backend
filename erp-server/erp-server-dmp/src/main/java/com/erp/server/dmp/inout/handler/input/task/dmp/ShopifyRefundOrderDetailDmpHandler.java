@@ -9,6 +9,7 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.sdk.oms.shopify.api.rest.model.ShopifyLineItem;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
 import com.sdk.oms.shopify.api.rest.model.ShopifyTransaction;
@@ -42,20 +43,25 @@ public class ShopifyRefundOrderDetailDmpHandler extends DmpInputDoNextDmpHandler
         List<Map<String, Object>> resultList = new LinkedList<>();
 
         for (ShopifyRefund shopifyRefund : shopifyRefunds) {
-            List<ShopifyTransaction> transactions = shopifyRefund.getTransactions();
-            if (CollectionUtils.isEmpty(transactions)){
+            List<ShopifyRefundLineItem> refundLineItems = shopifyRefund.getRefundLineItems();
+            if (CollectionUtils.isEmpty(refundLineItems)){
                 // 当前无退货信息
                 continue;
             }
-            for (ShopifyTransaction transaction : transactions) {
-                JSONObject jsonObject = (JSONObject) JSON.toJSON(transaction);
-                jsonObject.put("third_code", shopifyRefund.getId());
-                jsonObject.put("platform_code", shopifyRefund.getOrderId());
-                jsonObject.put("platform_create_time", shopifyRefund.getCreatedAt());
-                jsonObject.put("platform_update_time", shopifyRefund.getProcessedAt());
+            for (ShopifyRefundLineItem refundLineItem : refundLineItems) {
+                ShopifyLineItem lineItem = refundLineItem.getLineItem();
+                JSONObject jsonObject = (JSONObject) JSON.toJSON(lineItem);
+                jsonObject.put("thirdOrderCode", shopifyRefund.getId());
+                jsonObject.put("platformOrderCode", shopifyRefund.getId());
+                jsonObject.put("soEntryId", shopifyRefund.getOrderId());
+                jsonObject.put("platformCode", shopifyRefund.getOrderId());
+                jsonObject.put("platformCreateTime", shopifyRefund.getCreatedAt());
+                jsonObject.put("platformUpdateTime", shopifyRefund.getProcessedAt());
+                jsonObject.put("qty", refundLineItem.getQuantity());
 
-                jsonObject.put("buyer_user_id", shopifyRefund.getUserId());
-                jsonObject.put("remark", shopifyRefund.getNote());
+                jsonObject.put("buyerUserId", shopifyRefund.getUserId());
+                jsonObject.put("reason", shopifyRefund.getNote());
+
                 resultList.add(jsonObject);
             }
         }

@@ -106,7 +106,7 @@ public class ErpServerOmsShopifyApplicationTests {
         //1、通过检索订单列表，按指定条件获取订单ID，订单付款状态：部分付款，已付款，部分退款，已退款，已作废；订单创建时间：当天\
 //        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-11-27T00:00:00+08:00");
         OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2024-10-15T00:00:00+08:00");
-        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-10-16T19:05:00+08:00");
+        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-10-17T14:05:00+08:00");
 
 
         List<ShopifyOrder> shopifyOrders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)

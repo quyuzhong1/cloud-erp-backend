@@ -92,11 +92,6 @@ public class DmpSoRefundDetailEntity extends BaseEntity<DmpSoRefundDetailEntity>
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
-    /**
-     * 币别
-     */
-    @SerializedName("currency")
-    private String currency;
 
 
     public static final String MAIN_ID = "main_id";
