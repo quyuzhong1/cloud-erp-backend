@@ -2,6 +2,7 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -613,4 +614,22 @@ public interface PlmTaskFeign {
 
     @PostMapping("feign/product/dimensionalWeightMeasure")
     String dimensionalWeightMeasure(@RequestBody DimensionalWeightDTO dto);
+
+    /**
+     * 试产量产  审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/pilotApprovalPass")
+    void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
+
+    /**
+     * 试产量产  审核 不通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/pilotApprovalNoPass")
+    void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
 }

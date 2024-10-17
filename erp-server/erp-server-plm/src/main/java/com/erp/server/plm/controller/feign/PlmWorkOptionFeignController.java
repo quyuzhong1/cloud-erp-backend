@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller.feign;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.erp.model.plm.dto.AuditParamDTO;
+import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -32,6 +34,9 @@ public class PlmWorkOptionFeignController {
 
     @Resource
     private ProductChangeService productChangeService;
+
+    @Resource
+    private PilotApplicationService pilotApplicationService;
 
     /**
      * 根据入参查询单据数量
@@ -135,5 +140,29 @@ public class PlmWorkOptionFeignController {
     @PostMapping("/productChangeApprovalNoPass")
     public void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto) {
         productChangeService.approvalNoPass(dto);
+    }
+
+    /**
+     * 试产量产  审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/pilotApprovalPass")
+    public void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO dto) {
+        PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
+        pilotApplicationService.approve(dto,approveDTO);
+    }
+
+    /**
+     * 试产量产  审核 不通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/pilotApprovalNoPass")
+    public void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO dto) {
+        PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
+        pilotApplicationService.approve(dto,approveDTO);
     }
 }
