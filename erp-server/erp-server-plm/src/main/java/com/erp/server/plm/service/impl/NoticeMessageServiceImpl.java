@@ -2722,9 +2722,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
             sendMessage.setUnionIds(unionIds);
             //标题
-            String title = String.format("试产量产单【%s】已提交审核，请尽快审核",entity.getCode());
+            String title = String.format("试产量产单【%s】已在数大臣提交审核，请尽快审核",entity.getCode());
             if(isCompeletd){
-                title = String.format("试产量产单【%s】已完成审核，请知悉",entity.getCode());
+                title = String.format("试产量产单【%s】已在数大臣完成审核，请知悉",entity.getCode());
             }
             //消息内容
             String chargeName = Arrays.asList(entity.getChargeName().split(",")).stream().distinct().collect(Collectors.joining(";"));
