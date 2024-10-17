@@ -61,4 +61,8 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
     List<SoB2cReturnDetailEntity> listDetailBySoIds(List<String> soIds);
 
     Boolean generateSoB2cReturnBySo(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
+
+    SoB2cReturnEntity getByPlatformReturnCode(String platformReturnNo);
+
+    void addByPlatform(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList);
 }

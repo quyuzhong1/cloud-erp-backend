@@ -34,4 +34,6 @@ public interface RefundOrderService extends SuperService<RefundOrderEntity> {
     PagingVO<RefundOrderDTO.PagingViewDTO> exportRefund(PagingDTO<RefundOrderDTO.PagingParamDTO> dto);
 
     void add(RefundOrderEntity refundOrderEntity, List<RefundOrderDetailEntity> refundOrderDetailEntityList);
+
+    RefundOrderEntity getByPlatformRefundCode(String platformRefundNo);
 }

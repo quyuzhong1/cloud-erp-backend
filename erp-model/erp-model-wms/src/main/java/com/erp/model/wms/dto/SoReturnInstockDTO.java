@@ -177,6 +177,11 @@ public class SoReturnInstockDTO {
          * 销售员Id
          */
         private String sellerId;
+
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
         /**
          * 销售员
          */

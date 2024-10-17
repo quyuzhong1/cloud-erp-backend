@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.RefundOrderDTO;
 import com.erp.model.oms.entity.RefundOrderDetailEntity;
 import com.erp.model.oms.entity.RefundOrderEntity;
+import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -28,6 +29,7 @@ import com.erp.server.oms.service.RefundOrderDetailService;
 import com.erp.server.oms.service.RefundOrderService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -120,9 +122,19 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
 
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增退款单【%s】", code), ModuleTypeEnum.REFUND_ORDER.getCode(), refundOrderEntity.getId(), "新增操作");
-
+        if(CollectionUtils.isEmpty(refundOrderDetailEntityList)){
+            return;
+        }
         refundOrderDetailEntityList.forEach(v->v.setMainId(refundOrderEntity.getId()));
         refundOrderDetailService.saveBatch(refundOrderDetailEntityList);
+    }
+
+    @Override
+    public RefundOrderEntity getByPlatformRefundCode(String platformRefundNo) {
+        if(StringUtils.isBlank(platformRefundNo)){
+            return null;
+        }
+        return lambdaQuery().eq(RefundOrderEntity::getPlatformRefundNo,platformRefundNo).last("limit 1").one();
     }
 
     /**

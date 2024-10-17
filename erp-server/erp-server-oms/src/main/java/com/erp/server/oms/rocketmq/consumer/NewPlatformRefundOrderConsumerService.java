@@ -13,6 +13,7 @@ import com.erp.server.oms.service.RefundOrderService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cService;
+import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -60,11 +61,18 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 		if(Objects.isNull(dto)){
 			return;
 		}
+		RefundOrderEntity exist = refundOrderService.getByPlatformRefundCode(dto.getPlatformRefundNo());
+		if(Objects.nonNull(exist)){
+			return;
+		}
 		SoB2cEntity soB2cEntity = null;
 		List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
 		if(StringUtils.isNotBlank(dto.getPlatformOrderNo())){
-			soB2cEntity = soB2cService.getByPlatformCode(dto.getPlatformOrderNo());
-			soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+			List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCode(dto.getPlatformOrderNo());
+			if(CollectionUtils.isNotEmpty(soB2cEntityList)){
+				soB2cEntity = soB2cEntityList.get(0);
+				soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+			}
 		}
 		RefundOrderEntity refundOrderEntity = this.buildRefund(dto,soB2cEntity);
 		List<RefundOrderDetailEntity> refundOrderDetailEntityList = this.buildRefundDetail(dto,soB2cDetailEntityList);
@@ -77,8 +85,6 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 			RefundOrderDetailEntity refundOrderDetailEntity = new RefundOrderDetailEntity();
 			refundOrderDetailEntity.setPlatformSkuNo(detail.getPlatformSkuNo());
 			refundOrderDetailEntity.setRefundQty(detail.getRefundQty());
-			refundOrderDetailEntity.setRefundAmount(detail.getRefundAmount());
-			refundOrderDetailEntity.setCurrency(detail.getCurrency());
 			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(item -> item.getPlatformSkuNo().equals(detail.getPlatformSkuNo())).findFirst().orElse(null);
 			if(Objects.nonNull(soB2cDetailEntity)){
 				refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
