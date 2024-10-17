@@ -4,6 +4,8 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.DeliverySuggestDTO;
+import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.DeliverySuggestService;
@@ -42,7 +44,7 @@ public class ExportMrpFeignController {
         return replenishmentSuggestionService.listHistorySalesQty(dto);
     }
     /**
-     * 采购建议导出数据查询
+     * (补货建议)采购建议导出数据查询
      * @author will
      * @date 2024/9/6 14:53
      * @param dto
@@ -68,7 +70,7 @@ public class ExportMrpFeignController {
     }
 
     /**
-     * 发货建议导出数据查询
+     * (补货建议)发货建议导出数据查询
      * @author will
      * @date 2024/10/12 14:54
      * @param dto
@@ -78,5 +80,31 @@ public class ExportMrpFeignController {
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
         return deliverySuggestService.listDeliverySuggestion(dto);
+    }
+
+    /**
+     * 采购建议导出数据查询
+     * @author will
+     * @date 2024/10/17 10:41
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/pagingPurchaseSuggestion")
+    @WebAdvanceQuery
+    public PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto) {
+        return purchaseSuggestService.paging(dto);
+    }
+
+    /**
+     * 发货建议导出数据查询
+     * @author will
+     * @date 2024/10/17 10:44
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/pagingDeliverySuggestion")
+    @WebAdvanceQuery
+    public PagingVO<DeliverySuggestDTO.ListDTO> pagingDeliverySuggestion(@RequestBody PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
+        return deliverySuggestService.paging(dto);
     }
 }
