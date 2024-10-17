@@ -5,7 +5,6 @@ import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -42,12 +41,19 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
         //计算FBA的库存
         totalQty = getFBATotalQty(replenishmentResultDTO, inventoryResult, baseKey, totalQty);
         //计算海外仓的库存
-        totalQty = getTotalQty(replenishmentResultDTO,cfgRuleStrategyDTO.getWarehouseResult().getIsEnableOverseas(), inventoryResult, baseKey, totalQty);
+        totalQty = getOverseasTotalQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getIsEnableOverseas(), inventoryResult, baseKey, totalQty);
         //计算本地的库存
         totalQty = getLocalTotalQty(replenishmentResultDTO, inventoryResult, baseKey, totalQty);
         replenishmentResultDTO.getReplenishmentDetail().setTotalInventoryQty(totalQty);
     }
 
+    /**
+     * 计算本地总库存
+     * @param replenishmentResultDTO 建议
+     * @param inventoryResult        库存配置
+     * @param baseKey                baseKey
+     * @param totalQty               总库存
+     */
     private int getLocalTotalQty(ReplenishmentResultDTO replenishmentResultDTO, List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, int totalQty) {
         Set<String> localResult = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getTotalLocalInventory());
         if (!ObjectUtils.isEmpty(localResult)) {
@@ -64,7 +70,15 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
         return totalQty;
     }
 
-    private int getTotalQty(ReplenishmentResultDTO replenishmentResultDTO,Boolean isEnableOverseas, List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, int totalQty) {
+    /**
+     * 计算海外仓总库存
+     * @param replenishmentResultDTO 建议
+     * @param isEnableOverseas       是否开启海外仓
+     * @param inventoryResult        库存配置
+     * @param baseKey                baseKey
+     * @param totalQty               总库存
+     */
+    private int getOverseasTotalQty(ReplenishmentResultDTO replenishmentResultDTO, Boolean isEnableOverseas, List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, int totalQty) {
         Set<String> overseasResult = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getTotalOverseasInventory());
         if (!ObjectUtils.isEmpty(overseasResult) && Boolean.TRUE.equals(isEnableOverseas)) {
             if (overseasResult.contains(TOTAL_OVERSEAS_USABLE.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty())) {
@@ -80,6 +94,13 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
         return totalQty;
     }
 
+    /**
+     * 计算本地仓总库存
+     * @param replenishmentResultDTO 建议
+     * @param inventoryResult        库存配置
+     * @param baseKey                baseKey
+     * @param totalQty               总库存
+     */
     private int getFBATotalQty(ReplenishmentResultDTO replenishmentResultDTO, List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, int totalQty) {
         Set<String> fbaResult = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getTotalFbaInventory());
         if (!ObjectUtils.isEmpty(fbaResult)) {

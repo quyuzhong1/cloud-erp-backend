@@ -312,20 +312,19 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate startDate, LocalDate endDate, Set<String> deliveryVolumeInventory, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult) {
-        return deliveryVolumeInventory.parallelStream()
-                .map(code -> getInventoryByCode(code, replenishmentResultDTO, startDate, endDate, warehouseResult))
+    public int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult) {
+        return deliveryVolumeInventory.stream()
+                .map(code -> getInventoryByCode(code, replenishmentResultDTO, endDate, warehouseResult))
                 .reduce(0, Math::addExact);
     }
 
     /**
      * @param code                   库存类型
      * @param replenishmentResultDTO 建议
-     * @param startDate              开始时间
      * @param endDate                结束时间
      * @param warehouseResult        仓库配置
      */
-    private int getInventoryByCode(String code, ReplenishmentResultDTO replenishmentResultDTO, LocalDate startDate, LocalDate endDate, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult) {
+    private int getInventoryByCode(String code, ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult) {
         if (CfgRuleSuggestedAmountNodeEnum.FBA_USABLE_QTY.getCode().equals(code)) {
             return replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty();
         }
@@ -338,14 +337,14 @@ public class InventoryServiceImpl implements InventoryService {
         if (CfgRuleSuggestedAmountNodeEnum.FBA_IN_TRANSIT_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getFbaInTransitDetails()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(startDate) && !v.getEstimateSalesDate().isBefore(endDate))
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
                     .map(ReplenishmentResultDTO.FbaInTransitDetailDTO::getInTransitQty)
                     .reduce(0, Math::addExact);
         }
         if (CfgRuleSuggestedAmountNodeEnum.FBA_PLAN_DELIVERY_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getFbaDeliveryDetails()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(startDate) && !v.getEstimateSalesDate().isBefore(endDate))
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
                     .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
                     .reduce(0, Math::addExact);
         }
@@ -354,7 +353,7 @@ public class InventoryServiceImpl implements InventoryService {
         if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_IN_TRANSIT_QTY.getCode().equals(code)) {
             invetoryList = Optional.ofNullable(replenishmentResultDTO.getOverseasInTransitDetails()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(startDate) && !v.getEstimateSalesDate().isBefore(endDate))
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
                     .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getInTransitQty()))
                     .collect(Collectors.toList());
             warehouseList = warehouseResult.getOverseasWarehouseList();
@@ -362,7 +361,7 @@ public class InventoryServiceImpl implements InventoryService {
         if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_PLAN_DELIVERY_QTY.getCode().equals(code)) {
             invetoryList = Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(startDate) && !v.getEstimateSalesDate().isBefore(endDate))
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
                     .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
                     .collect(Collectors.toList());
             warehouseList = warehouseResult.getOverseasWarehouseList();
@@ -370,18 +369,18 @@ public class InventoryServiceImpl implements InventoryService {
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_IN_TRANSIT_QTY.getCode().equals(code)) {
             invetoryList = Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(startDate) && !v.getEstimateSalesDate().isBefore(endDate))
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
                     .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
                     .collect(Collectors.toList());
-            warehouseList = warehouseResult.getOverseasWarehouseList();
+            warehouseList = warehouseResult.getLocalWarehouseList();
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_PLAN_PURCHASE_QTY.getCode().equals(code)) {
             invetoryList = Optional.ofNullable(replenishmentResultDTO.getLocalPurchaseDetails()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(startDate) && !v.getEstimateSalesDate().isBefore(endDate))
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
                     .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
                     .collect(Collectors.toList());
-            warehouseList = warehouseResult.getOverseasWarehouseList();
+            warehouseList = warehouseResult.getLocalWarehouseList();
         }
         int inventory = 0;
         for (LocalInventoryDTO inventoryDTO : invetoryList) {
@@ -394,7 +393,7 @@ public class InventoryServiceImpl implements InventoryService {
                 inventory = getInventoryQty(replenishmentResultDTO, inventory, inventoryDTO, result);
             }
         }
-        return 0;
+        return inventory;
     }
 
     /**
@@ -499,7 +498,7 @@ public class InventoryServiceImpl implements InventoryService {
             List<String> shopIds;
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(result.getChannelType())) {
                 //查询平台对应店铺
-                shopIds = shopInfoService.getShopInfoByPlatform(String.valueOf(result.getChannelIdJson().get(0)));
+                shopIds = replenishmentResultDTO.getShopIdByPlatform().get(String.valueOf(result.getChannelIdJson().get(0)));
             } else {
                 shopIds = result.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
             }
@@ -538,7 +537,7 @@ public class InventoryServiceImpl implements InventoryService {
             List<String> shopIds;
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(result.getChannelType())) {
                 //查询平台对应店铺
-                shopIds = shopInfoService.getShopInfoByPlatform(String.valueOf(result.getChannelIdJson().get(0)));
+                shopIds = replenishmentResultDTO.getShopIdByPlatform().get(String.valueOf(result.getChannelIdJson().get(0)));
             } else {
                 shopIds = result.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
             }

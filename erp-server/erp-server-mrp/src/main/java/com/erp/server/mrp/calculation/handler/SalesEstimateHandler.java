@@ -224,6 +224,12 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
         return SalesForecastCalculatorDTO.calculateForecastedSales(salesDataList);
     }
 
+    /**
+     * 判断是否排除权重
+     * @param salesInfos    销量
+     * @param basicCalcDate 计算日
+     * @param days          天数
+     */
     private boolean getIsExcluded(List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos, LocalDate basicCalcDate, int days) {
         return salesInfos.stream()
                 .filter(v -> !basicCalcDate.minusDays(days).isAfter(v.getDate()) && basicCalcDate.isAfter(v.getDate()))

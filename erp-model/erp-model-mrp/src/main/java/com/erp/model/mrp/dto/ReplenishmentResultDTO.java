@@ -19,6 +19,7 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Getter
@@ -137,6 +138,11 @@ public class ReplenishmentResultDTO {
      * 海外仓id
      */
     private List<String> overseasWarehouseId;
+
+    /**
+     * 店铺映射
+     */
+    private Map<String, List<String>> shopIdByPlatform;
 
     @Getter
     @Setter

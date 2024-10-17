@@ -101,7 +101,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                         //建议采购量
                         LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
                         int suggestDeliveryQty = getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now);
-                        int inventory = inventoryService.getInventory(replenishmentResultDTO, now, calcDate, purchaseVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
+                        int inventory = inventoryService.getInventory(replenishmentResultDTO, calcDate, purchaseVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
                         suggestDTO.setSuggestPurchaseQty(Math.max(0, suggestDeliveryQty - inventory));
                     }
                     if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
@@ -111,7 +111,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setSuggestPurchaseDate(suggestDeliveryDate);
                         //建议采购量
                         LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
-                        int inventory = inventoryService.getInventory(replenishmentResultDTO, now, calcDate, purchaseVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
+                        int inventory = inventoryService.getInventory(replenishmentResultDTO, calcDate, purchaseVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
                         suggestDTO.setSuggestPurchaseQty(Math.max(0, getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now) - inventory));
                         //预计入库日期 （本地备货）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数）
                         LocalDate estimateInstockDate = suggestDeliveryDate.plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
