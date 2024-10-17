@@ -22,6 +22,7 @@ import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
 import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.service.*;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -167,6 +168,13 @@ public class BasicReplenishmentDataService {
         List<CfgRuleSalesFormulaEntity> defaultFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(defaultSalesQtyIds);
         List<CfgRuleSalesDenoisingEntity> defaultDenoisingList = cfgRuleSalesDenoisingService.listBySalesQtyIdList(defaultSalesQtyIds);
         List<String> replenishmentIds = replenishmentTaskService.listByWaitAndReplenishment(suggestionIds);
+        //获取所有店铺
+        ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
+        if (!allShopResult.isSuccess()) {
+            throw new ServiceException(allShopResult.getMsg());
+        }
+        Map<String, List<String>> shopIdByPlatform = allShopResult.getData().stream()
+                .collect(Collectors.groupingBy(ShopInfoEntity::getDictPlatform, Collectors.mapping(ShopInfoEntity::getId, Collectors.toList())));
         //查询所有需要计算得数据
         List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(replenishmentIds);
         for (ReplenishmentResultDTO dto : suggestions) {
@@ -174,6 +182,7 @@ public class BasicReplenishmentDataService {
                 replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.IN_SYNC.getCode());
                 ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
                 ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
+                dto.setShopIdByPlatform(shopIdByPlatform);
                 //初始化配置
                 CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
                 //获取销量配置
@@ -234,10 +243,17 @@ public class BasicReplenishmentDataService {
         //查询所有需要计算得数据
         List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData();
         List<String> skuIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> vos = plmTaskFeign.listSkuCostByIds(skuIds);
-        Map<String, SkuVO> skuVOMap = vos.stream().collect(Collectors.toMap(SkuVO::getSkuId, v -> v, (o1, o2) -> o1));
-        List<ProductSaleEntity> productSaleList = plmTaskFeign.listProductSaleBySkuId(skuIds);
-        Map<String, ProductSaleEntity> productSaleEntityMap = productSaleList.stream().collect(Collectors.toMap(ProductSaleEntity::getSkuId, v -> v, (o1, o2) -> o1));
+        List<List<String>> skuPartList = Lists.partition(skuIds, 500);
+        List<SkuVO> skuVOList = new ArrayList<>();
+        List<ProductSaleEntity> productSales = new ArrayList<>();
+        for (List<String> skuIdList : skuPartList) {
+            List<SkuVO> vos = plmTaskFeign.listSkuCostByIds(skuIdList);
+            skuVOList.addAll(vos);
+            List<ProductSaleEntity> productSaleList = plmTaskFeign.listProductSaleBySkuId(skuIdList);
+            productSales.addAll(productSaleList);
+        }
+        Map<String, SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, v -> v, (o1, o2) -> o1));
+        Map<String, ProductSaleEntity> productSaleEntityMap = productSales.stream().collect(Collectors.toMap(ProductSaleEntity::getSkuId, v -> v, (o1, o2) -> o1));
         List<CfgRuleSalesQtyEntity> defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty();
         //获取配置
         List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
@@ -419,6 +435,14 @@ public class BasicReplenishmentDataService {
         replenishmentSuggestionDetailService.save(entity);
         //归档该条数据明细
         dataArchivingService.dataArchiving(detail.getId());
+        //获取所有店铺
+        ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
+        if (!allShopResult.isSuccess()) {
+            throw new ServiceException(allShopResult.getMsg());
+        }
+        Map<String, List<String>> shopIdByPlatform = allShopResult.getData().stream()
+                .collect(Collectors.groupingBy(ShopInfoEntity::getDictPlatform, Collectors.mapping(ShopInfoEntity::getId, Collectors.toList())));
+        resultDTO.setShopIdByPlatform(shopIdByPlatform);
         //初始化配置
         CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
         //获取销量配置
