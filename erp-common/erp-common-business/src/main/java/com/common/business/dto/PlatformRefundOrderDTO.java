@@ -66,16 +66,6 @@ public class PlatformRefundOrderDTO extends UniqueDto {
 
         //退款数量
         private Integer refundQty;
-
-        /**
-         * 退款金额
-         */
-        private BigDecimal refundAmount;
-
-        /**
-         * 币别
-         */
-        private String currency;
     }
 
 }

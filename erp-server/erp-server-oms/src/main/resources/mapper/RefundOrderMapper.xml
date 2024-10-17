@@ -50,7 +50,7 @@
             rod.sale_qty as saleQty,
             rod.refund_qty as refundQty
         FROM refund_order ro
-        inner join refund_order_detail rod on ro.id = rod.main_id
+        LEFT join refund_order_detail rod on ro.id = rod.main_id and rod.is_deleted = false
         WHERE  ${params.sqlMap.default}
           and ro.is_deleted =FALSE
         <!--权限-->

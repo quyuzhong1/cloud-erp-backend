@@ -84,8 +84,6 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 			RefundOrderDetailEntity refundOrderDetailEntity = new RefundOrderDetailEntity();
 			refundOrderDetailEntity.setPlatformSkuNo(detail.getPlatformSkuNo());
 			refundOrderDetailEntity.setRefundQty(detail.getRefundQty());
-			refundOrderDetailEntity.setRefundAmount(detail.getRefundAmount());
-			refundOrderDetailEntity.setCurrency(detail.getCurrency());
 			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(item -> item.getPlatformSkuNo().equals(detail.getPlatformSkuNo())).findFirst().orElse(null);
 			if(Objects.nonNull(soB2cDetailEntity)){
 				refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
