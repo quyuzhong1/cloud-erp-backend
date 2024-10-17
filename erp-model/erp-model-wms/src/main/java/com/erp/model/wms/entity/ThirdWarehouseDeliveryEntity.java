@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -55,6 +57,14 @@ public class ThirdWarehouseDeliveryEntity extends BaseEntity<ThirdWarehouseDeliv
     @TableField("third_warehouse_platform")
     private String thirdWarehousePlatform;
 
+    /**
+     * 配送方式
+     */
+    @TableField("shipping_method")
+    private String shippingMethod;
+
+    @TableField(exist = false)
+    private List<ThirdWarehouseDeliveryDetailEntity> detailEntityList;
 
     public static final String CODE = "code";
 

@@ -255,6 +255,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
+    @Resource
+    private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
 
     @Autowired
     private ThirdWarehouseFeign thirdWarehouseFeign;
@@ -2039,6 +2041,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         Integer quantity = bomSku.getQuantity();
                         deliverySku.setQty(quantity);
                         deliverySku.setSourceSkuId(skuId);
+                        deliverySku.setSourceSkuNo(skuNo);
                         deliverySku.setPlatformSkuNo(platformSkuNo);
                         deliverySku.setWarehouseId(detailEntity.getWarehouseId());
                         deliverySku.setDetailId(detailEntity.getId());
@@ -2050,6 +2053,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     deliverySku.setSkuId(skuId);
                     deliverySku.setQty(1);
                     deliverySku.setSourceSkuId(skuId);
+                    deliverySku.setSourceSkuNo(skuNo);
                     deliverySku.setSkuNo(skuNo);
                     deliverySku.setPlatformSkuNo(platformSkuNo);
                     deliverySku.setWarehouseId(detailEntity.getWarehouseId());
@@ -2063,6 +2067,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 deliverySku.setQty(1);
                 deliverySku.setSkuNo(skuNo);
                 deliverySku.setSourceSkuId(detailEntity.getSkuId());
+                deliverySku.setSourceSkuNo(detailEntity.getSkuNo());
                 deliverySku.setWarehouseId(detailEntity.getWarehouseId());
                 deliverySku.setDetailId(detailEntity.getId());
                 resultList.add(deliverySku);
@@ -2151,6 +2156,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
             outboundReqItem.setQuantity(baseQty);
             outboundReqItem.setProductSku(platformSku);
+            outboundReqItem.setSkuId(deliverySkuDTO.getSkuId());
+            outboundReqItem.setSkuNo(deliverySkuDTO.getSkuNo());
+            outboundReqItem.setSourceSkuId(deliverySkuDTO.getSourceSkuId());
+            outboundReqItem.setSourceSkuNo(deliverySkuDTO.getSourceSkuNo());
             itemList.add(outboundReqItem);
         }
         String platformWarehouseCode = overseasProviderWarehouse.getPlatformWarehouseCode();
@@ -2184,7 +2193,42 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cService.removeSignError(entity.getId(),SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             String msg = StrUtil.format("创建海外仓出库单成功，单号【{}】",shippingOrderNo);
             operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "创建海外仓出库单");
+            this.addThirdWarehouseDelivery(createOutboundReq,shippingOrderNo,warehouseId,entity);
         }
+    }
+
+    /**
+     * 新增三方仓发货单
+     * @param createOutboundReq
+     * @param shippingOrderNo
+     * @param warehouseId
+     * @param entity
+     */
+    @Async
+    public void addThirdWarehouseDelivery(ThirdWarehouseCreateOutboundReq createOutboundReq, String shippingOrderNo, String warehouseId, SoB2cEntity entity) {
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
+        thirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
+        thirdWarehouseDeliveryEntity.setSoId(entity.getId());
+        thirdWarehouseDeliveryEntity.setCode(shippingOrderNo);
+        thirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
+        thirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
+        thirdWarehouseDeliveryEntity.setThirdWarehousePlatform(createOutboundReq.getThirdWarehouseProvideCode());
+        thirdWarehouseDeliveryEntity.setShippingMethod(createOutboundReq.getShippingMethod());
+        List<ThirdWarehouseDeliveryDetailEntity> detailEntityList = new ArrayList<>();
+        for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getItems()) {
+            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+            thirdWarehouseDeliveryDetailEntity.setSkuId(item.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(item.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(item.getQuantity());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
+            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(item.getProductSku());
+            thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(item.getSourceSkuNo());
+            detailEntityList.add(thirdWarehouseDeliveryDetailEntity);
+        }
+        thirdWarehouseDeliveryEntity.setDetailEntityList(detailEntityList);
+        thirdWarehouseDeliveryFeign.add(thirdWarehouseDeliveryEntity);
     }
 
     private Map<String, Object> getRuleOrderHandleMap(SoB2cEntity entity, String logisticsChannelId,SoB2cReceiverEntity receiverEntity) {

@@ -18,19 +18,10 @@ public interface ThirdWarehouseDeliveryService extends SuperService<ThirdWarehou
     * 新增
     * @author lrp
     * @date: 2024-10-17
-    * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(ThirdWarehouseDeliveryDTO.AddDTO dto);
+    String add(ThirdWarehouseDeliveryEntity entity);
 
-    /**
-    * 修改
-    * @author lrp
-    * @date: 2024-10-17
-    * @param dto
-    * @return
-    */
-    Boolean update(ThirdWarehouseDeliveryDTO.UpdateDTO dto);
 
 
 }
