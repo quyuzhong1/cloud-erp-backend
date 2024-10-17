@@ -4,6 +4,8 @@ import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.DeliverySuggestDTO;
+import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,4 +33,14 @@ public interface ExportMrpFeign {
      */
     @PostMapping("/feign/export/listDeliverySuggestion")
     PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
+    /**
+     * 导出发货建议
+     */
+    @PostMapping("/feign/export/pagingDeliverySuggestion")
+    PagingVO<DeliverySuggestDTO.ListDTO> pagingDeliverySuggestion(PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto);
+    /**
+     * 导出采购建议
+     */
+    @PostMapping("/feign/export/pagingPurchaseSuggestion")
+    PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto);
 }
