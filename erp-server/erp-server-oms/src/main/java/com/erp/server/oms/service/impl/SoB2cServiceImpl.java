@@ -3150,6 +3150,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> transferLogisticsChannelIdList = list.stream().map(SoB2cDTO.ListDTO::getTransferLogisticsChannelId).distinct().collect(Collectors.toList());
         List<TransferLogisticsChannelDTO.ListSelectDTO> transferInfoList = transferLogisticsFeign.listByTransferChannelIds(transferLogisticsChannelIdList);
 
+        //手动标发标记数据处理
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(ids);
+        Map<String, String> shippedMap = new HashMap<>();
+        Map<String, String> manualMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
+            shippedMap = soB2cDeliveryEntities.stream()
+                    .filter(v -> StringUtils.isNotBlank(v.getStatus()) && v.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()))
+                    .collect(Collectors.toMap(SoB2cDeliveryEntity::getSourceId, SoB2cDeliveryEntity::getStatus));
+            manualMap = soB2cDeliveryEntities.stream()
+                    .filter(v -> StringUtils.isNotBlank(v.getShipmentMark()) && v.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode()))
+                    .collect(Collectors.toMap(SoB2cDeliveryEntity::getSourceId, SoB2cDeliveryEntity::getShipmentMark));
+        }
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
 
@@ -3227,22 +3239,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             data.setIsOverseasProviderWarehouse(isOverseasProviderWarehouse);
             List<SoB2cDetailDTO.ListDTO> soB2cDetailList = BeanMapperUtils.copyList(SoB2cDetailDTO.ListDTO.class, detailList);
 
-            Boolean isCombination = Boolean.FALSE;
             //手动标发标记
             data.setTag(Boolean.FALSE);
-            List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Arrays.asList(data.getId()));
-            if(CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
-                for (SoB2cDeliveryEntity record : soB2cDeliveryEntities) {
-                    if(record.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode())){
-                        data.setTag(Boolean.FALSE);
-                        break;
-                    }
-                    if(record.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode())){
-                        data.setTag(Boolean.TRUE);
-                    }
-                }
+            if(shippedMap.containsKey(data.getId())){
+
+            }else if(manualMap.containsKey(data.getId())){
+                data.setTag(Boolean.TRUE);
             }
 
+            Boolean isCombination = Boolean.FALSE;
             for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
                 SkuVO skuVO = skuVOMap.get(detailDTO.getSkuId());
                 detailDTO.setVariantProperty(null == skuVO ? "" : skuVO.getVariantProperty());
