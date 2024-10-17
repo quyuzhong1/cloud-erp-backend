@@ -578,7 +578,14 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private String bomVersion;
 
-
+        /**
+         * 仓库库位编码
+         */
+        private String warehouseLocation;
+        /**
+         * 仓库库位名称
+         */
+        private String warehouseLocationName;
     }
 
     @Data
