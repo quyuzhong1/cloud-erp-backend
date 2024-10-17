@@ -53,6 +53,11 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     @TableField("suggest_delivery_date")
     private LocalDate suggestDeliveryDate;
     /**
+     * 系统建议发货日期
+     */
+    @TableField("sys_suggest_delivery_date")
+    private LocalDate sysSuggestDeliveryDate;
+    /**
     * 物流方式,LogisticsMethodEnum枚举
     */
     @TableField("logistics_method")
