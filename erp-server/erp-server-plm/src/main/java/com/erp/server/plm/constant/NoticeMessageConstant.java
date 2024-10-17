@@ -195,6 +195,13 @@ public interface NoticeMessageConstant {
     String AUDIT_PILOT_MSG_CONTENT = "**通知类型：**%s\n**产品经理：**%s\n**SKU：**%s";
 
 
+    /**
+     * 试产量产催办
+     */
+    String AUDIT_PILOT_PRESS_TITLE = "【加急催办】[%s]提醒【%s】有尚未完成审核，请及时审核";
+    String AUDIT_PILOT_PRESS_CONTENT = "**通知类型：**%s\n**产品经理：**%s\n**SKU：**%s";
+
+
 
 
 
