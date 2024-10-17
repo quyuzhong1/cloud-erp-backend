@@ -685,7 +685,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
 
         //仓位信息
-        List<String> warehouseLocationCodeList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getWarehouseLocation())).map(SubcontractOrderDTO.ViewGeneratePoDTO::getWarehouseLocation).collect(Collectors.toList());
+        List<String> warehouseLocationCodeList = list.stream().map(SubcontractOrderDTO.ViewGeneratePoDTO::getWarehouseLocation).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationCodeList).list();
 
         //价目查询
