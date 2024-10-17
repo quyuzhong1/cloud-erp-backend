@@ -580,7 +580,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<KingdeePaymentConditionEntity> paymentConditionList =  kingdeePaymentConditionService.list();
 
         //仓位信息
-        List<String> warehouseLocationCodeList = detailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getWarehouseLocation())).map(SubcontractOrderDetailEntity::getWarehouseLocation).collect(Collectors.toList());
+        List<String> warehouseLocationCodeList = detailList.stream().map(SubcontractOrderDetailEntity::getWarehouseLocation).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationCodeList).list();
 
         List<SubcontractOrderDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ViewDTO.class, parentList);
