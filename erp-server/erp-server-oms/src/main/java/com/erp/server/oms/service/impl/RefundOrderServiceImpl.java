@@ -122,7 +122,9 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
 
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增退款单【%s】", code), ModuleTypeEnum.REFUND_ORDER.getCode(), refundOrderEntity.getId(), "新增操作");
-
+        if(CollectionUtils.isEmpty(refundOrderDetailEntityList)){
+            return;
+        }
         refundOrderDetailEntityList.forEach(v->v.setMainId(refundOrderEntity.getId()));
         refundOrderDetailService.saveBatch(refundOrderDetailEntityList);
     }
