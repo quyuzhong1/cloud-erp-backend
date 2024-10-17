@@ -40,7 +40,7 @@ public class CfgDataArchivingServiceImpl extends SuperServiceImpl<CfgDataArchivi
         try {
             Class<?> clazz = Class.forName(config.getArchiveFullPath());
             TableName tableName = clazz.getAnnotation(TableName.class);
-            baseMapper.moveData(config.getTableName(), tableName.value());
+//            baseMapper.moveData(config.getTableName(), tableName.value());
             baseMapper.deleteSource(config.getTableName());
         } catch (ClassNotFoundException e) {
             throw new ServiceException(e.getMessage(), e);

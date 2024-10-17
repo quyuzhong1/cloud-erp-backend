@@ -2,11 +2,12 @@ package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.entity.ReplenishmentTaskEntity;
 import com.erp.server.mrp.mapper.ReplenishmentTaskMapper;
 import com.erp.server.mrp.service.ReplenishmentTaskService;
-import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,9 @@ public class ReplenishmentTaskServiceImpl extends SuperServiceImpl<Replenishment
 
     @Override
     public void saveTask(List<String> suggestionIds) {
+        if (CollectionUtils.isEmpty(suggestionIds)) {
+            return;
+        }
         List<ReplenishmentTaskEntity> taskList = list(Wrappers.<ReplenishmentTaskEntity>lambdaQuery().in(ReplenishmentTaskEntity::getReplenishmentId, suggestionIds));
         Map<String, ReplenishmentTaskEntity> taskEntityMap = taskList.stream().collect(Collectors.toMap(ReplenishmentTaskEntity::getReplenishmentId, v -> v, (o1, o2) -> o1));
         List<ReplenishmentTaskEntity> list = suggestionIds.stream()

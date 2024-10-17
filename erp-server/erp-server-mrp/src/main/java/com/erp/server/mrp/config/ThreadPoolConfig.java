@@ -13,7 +13,7 @@ public class ThreadPoolConfig {
         // 设置核心线程数
         executor.setCorePoolSize(8);
         // 设置最大线程数
-        executor.setMaxPoolSize(20);
+        executor.setMaxPoolSize(100);
         // 设置队列大小
         executor.setQueueCapacity(Integer.MAX_VALUE);
         // 设置线程活跃时间(秒)
