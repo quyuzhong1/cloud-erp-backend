@@ -33,12 +33,12 @@ public class LogisticsBillQueryHandler extends AbstractQueryHandler {
             String statusType = DictBasicEnum.LOGISTIC_TRACK_STATUS.getType();
             List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(statusGroupType);
             List<DictBasicDTO.ViewDTO> trackStatusList = dictBasicService.getByKey(statusType);
-            DictBasicDTO.ViewDTO viewDTO = dictList.stream().filter(e -> Objects.nonNull(value) && StringUtils.isNotBlank(e.getRemark()) && Objects.equals(value.toString(), e.getRemark()))
-                    .findFirst().orElse(null);
+            DictBasicDTO.ViewDTO viewDTO = dictList.stream().filter(e -> Objects.nonNull(value) && StringUtils.isNotBlank(e.getCode())
+                            && Objects.equals(value.toString(), e.getCode())).findFirst().orElse(null);
             if (Objects.nonNull(viewDTO)){
-                String remark = viewDTO.getRemark();
-                List<String> statusList = trackStatusList.stream().filter(s -> StringUtils.isNotBlank(remark) && s.getRemark().equals(remark)).
-                        map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
+                String code = viewDTO.getCode();
+                List<String> statusList = trackStatusList.stream().filter(s -> StringUtils.isNotBlank(code) && StringUtils.isNotBlank(s.getRemark())
+                                && s.getRemark().equals(code)).map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
                 if (CollectionUtil.isNotEmpty(statusList)){
                     this.buildDefaultDTO("lbd.track_status", statusList);
                 }
