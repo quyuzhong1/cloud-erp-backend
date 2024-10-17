@@ -701,7 +701,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
                 .select(ReplenishmentSuggestionEntity::getSkuId,
                         ReplenishmentSuggestionEntity::getSkuNo,
-                        ReplenishmentSuggestionEntity::getShopId));
+                        ReplenishmentSuggestionEntity::getShopId,
+                        ReplenishmentSuggestionEntity::getId));
     }
 
     @Override
