@@ -2672,7 +2672,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         log.info("删除销售订单数据，id = {}", id);
         //删除合并后的数据
-        deleteById(Arrays.asList(id));
+        deleteById(Arrays.asList(id), null);
         //反作废合并前的数据
         List<String> sourceIdList = soB2cRefList.stream().map(SoB2cRefEntity::getSourceId).distinct().collect(Collectors.toList());
         for (String sourceId : sourceIdList) {
@@ -2686,13 +2686,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * @param ids
+     * 删除订单关联信息
+     * @param ids 需要删除的销售订单数据
+     * @param code 关联销售订单编码
      * @description: 根据主表id删除
      * @author Will
      * @date: 2023/8/23 14:09
      */
     @Override
-    public void deleteById(List<String> ids) {
+    public void deleteById(List<String> ids, String code) {
+        //存在物流单需要先取消物流单
+        batchCancelLogistic(ids,code);
         //删除物流信息
         soB2cLogisticsService.deleteByMainIds(ids);
         //删除买家信息
@@ -2707,6 +2711,41 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.removeByIds(ids);
         //删除操作日志
         operateLogService.removeByBusinessIds(ids);
+    }
+
+    /**
+     * 根据销售订单id 批量取消订单
+     * @param ids 需要删除的销售订单数据
+     * @param code 关联销售订单编码
+     */
+    private void batchCancelLogistic(List<String> ids, String code) {
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        List<String> soIds = soB2cLogisticsEntityList.stream().filter(e -> StrUtil.isNotBlank(e.getCode())
+                || StrUtil.isNotBlank(e.getTrackNo()) || StrUtil.isBlank(e.getLogisticsChannelId()))
+                .map(SoB2cLogisticsEntity::getMainId).distinct().collect(Collectors.toList());
+        //没有已下单的物流单 不需要取消
+        if(CollectionUtils.isEmpty(soIds)){
+            return;
+        }
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
+        for (String id : soIds) {
+            SoB2cEntity entity = soB2cEntityList.stream().filter(e -> e.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)){
+                throw new ServiceException(StrUtil.format("销售订单【{}】未找到",id));
+            }
+            try {
+                BatchResultDTO resultDTO = soB2cLogisticsService.cancelLogistic(id, soB2cEntityList, soB2cLogisticsEntityList, true);
+                if (!resultDTO.getSuccess()){
+                    throw new ServiceException(resultDTO.getMsg());
+                }
+            } catch (Exception e) {
+                log.error("B2C销售订单取消物流单失败", e);
+                if(StrUtil.isNotBlank(code)){
+                    throw new ServiceException(StrUtil.format("【{}】的关联子订单【{}}】取消物流单失败，请联系物流同事处理",code, entity.getCode()));
+                }
+                throw new ServiceException(StrUtil.format("销售订单【{}}】取消物流单失败，请联系物流同事处理", entity.getCode()));
+            }
+        }
     }
 
 
