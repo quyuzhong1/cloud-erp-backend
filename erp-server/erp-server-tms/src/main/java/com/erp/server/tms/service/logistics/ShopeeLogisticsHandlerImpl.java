@@ -112,17 +112,9 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         //基础信息整理
-        Map<String, String> authMap = logisticsOrderVO.getAuthMap();
-        BaseRequest baseRequest = BaseRequest.builder()
-                .partnerKey(authMap.get("partnerKey"))
-                .partnerId(Long.valueOf(authMap.get("partnerId")))
-                .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("token"))
-                .host(authMap.get("host"))
-                .build();
+        BaseRequest baseRequest = getBaseRequest(logisticsOrderVO.getAuthMap());
         String orderSn = logisticsOrderVO.getPlatformCode();
         String packageNumber = logisticsOrderVO.getPackageNumber();
-        ValidatorUtil.validateEntity(baseRequest);
         //获取标记发货参数
         ShipOrderRequest shipOrderRequest = getShippingParameter(baseRequest,orderSn,packageNumber);
         //标记发货
@@ -134,6 +126,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .trackNo(trackNumber)
                 .transportNo(trackNumber)
                 .build();
+        //获取跟踪号面单信息
         return ApiResult.success(vo);
     }
 
@@ -229,13 +222,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         for (LogisticsQueryBaseVO logisticsQueryVO : logisticsQueryVOList) {
             LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
             Map<String, String> authMap = logisticsQueryVO.getAuthMap();
-            BaseRequest baseRequest = BaseRequest.builder()
-                    .partnerKey(authMap.get("partnerKey"))
-                    .partnerId(Long.valueOf(authMap.get("partnerId")))
-                    .shopId(Long.valueOf(authMap.get("shopId")))
-                    .accessToken(authMap.get("token"))
-                    .host(authMap.get("host"))
-                    .build();
+            BaseRequest baseRequest = getBaseRequest(authMap);
             try {
                 ValidatorUtil.validateEntity(baseRequest);
                 TrackResponse trackResponse = shopeeLogisticsService.getTrackNumber(baseRequest,logisticsQueryVO.getDeliveryNo());
@@ -276,14 +263,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         Map<String, String> authMap = chanelQueryVO.getAuthMap();
-        BaseRequest baseRequest = BaseRequest.builder()
-                .partnerKey(authMap.get("partnerKey"))
-                .partnerId(Long.valueOf(authMap.get("partnerId")))
-                .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("token"))
-                .host(authMap.get("host"))
-                .build();
-        ValidatorUtil.validateEntity(baseRequest);
+        BaseRequest baseRequest = getBaseRequest(authMap);
         try {
             BaseResponse baseResponse = shopeeLogisticsService.getChannelList(baseRequest);
             if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
@@ -342,33 +322,100 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .build();
             orderRequestList.add(shippingOrderRequest);
         }
-        BaseRequest baseRequest = BaseRequest.builder()
-                .partnerKey(authMap.get("partnerKey"))
-                .partnerId(Long.valueOf(authMap.get("partnerId")))
-                .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("token"))
-                .host(authMap.get("host"))
-                .build();
-        ValidatorUtil.validateEntity(baseRequest);
+        BaseRequest baseRequest = getBaseRequest(authMap);
+        //获取面单打印类型
+        List<ShippingDocumentParameterResponse> shippingDocumentParameter = getShippingDocumentParameter(baseRequest, orderRequestList);
         //创建打印面单
+        createShippingDocument(baseRequest, orderRequestList);
+        //获取创建面单结果
+        getShippingDocumentResult(baseRequest, orderRequestList);
+        //下载面单
+        return downloadShippingDocument(baseRequest, orderRequestList, shippingDocumentParameter);
+
+    }
+
+    private ApiResult<List<LogisticsPrintLabelResponse>> downloadShippingDocument(BaseRequest baseRequest, List<ShippingOrderRequest> orderRequestList, List<ShippingDocumentParameterResponse> shippingDocumentParameter) {
+        String orderSnList = orderRequestList.stream().map(ShippingOrderRequest::getOrderSn).collect(Collectors.joining(","));
+        //下载面单文件 THERMAL_AIR_WAYBILL NORMAL_AIR_WAYBILL
+        String shippingDocumentType = "THERMAL_AIR_WAYBILL";//默认类型
+        if (CollectionUtil.isNotEmpty(shippingDocumentParameter)){
+            ShippingDocumentParameterResponse shippingDocumentParameterResponse = shippingDocumentParameter.stream().filter(e -> StrUtil.isNotBlank(e.getSuggestShippingDocumentType())).findFirst().orElse(null);
+            if (Objects.nonNull(shippingDocumentParameterResponse)){
+                shippingDocumentType = shippingDocumentParameterResponse.getSuggestShippingDocumentType();
+            }
+        }
         try {
-            List<ShippingDocumentParameterResponse> shippingDocument = shopeeLogisticsService.createShippingDocument(baseRequest, orderRequestList);
+            String base64Str = shopeeLogisticsService.downloadShippingDocument(baseRequest, orderRequestList, shippingDocumentType);
+            List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
+            String prefix = "data:application/pdf;base64,";
+            LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
+                    .deliveryNoList(orderRequestList.stream().map(ShippingOrderRequest::getOrderSn).collect(Collectors.toList()))
+                    .base64(prefix + base64Str).build();
+            logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.DOWNLOAD_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), JSONUtil.toJsonStr(base64Str));
+            responses.add(response);
+            return success(responses);
+        }catch (Exception e){
+            log.error(StrUtil.format("虾皮下载面单异常：{}", e.getMessage()));
+            logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.DOWNLOAD_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), e.getMessage());
+            //获取面单结果异常直接抛出
+            return failure(e.getMessage());
+        }
+    }
+
+    private void getShippingDocumentResult(BaseRequest baseRequest, List<ShippingOrderRequest> orderRequestList) {
+        String orderSnList = orderRequestList.stream().map(ShippingOrderRequest::getOrderSn).collect(Collectors.joining(","));
+        try {
+            List<ShippingDocumentParameterResponse> shippingDocumentResult = shopeeLogisticsService.getShippingDocumentResult(baseRequest, orderRequestList);
+            logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.SHIPPING_DOCUMENT_RESULT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), JSONUtil.toJsonStr(shippingDocumentResult));
+
         } catch (Exception e) {
             log.error(StrUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
+            logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.SHIPPING_DOCUMENT_RESULT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), e.getMessage());
+            //获取面单结果异常直接抛出
+            throw new ServiceException(e.getMessage());
+        }
+
+    }
+
+    /**
+     * 创建面单打印
+     * @param baseRequest
+     * @param orderRequestList
+     * @return
+     */
+    private void createShippingDocument(BaseRequest baseRequest, List<ShippingOrderRequest> orderRequestList) {
+        String orderSnList = orderRequestList.stream().map(ShippingOrderRequest::getOrderSn).collect(Collectors.joining(","));
+        try {
+            List<ShippingDocumentParameterResponse> shippingDocument = shopeeLogisticsService.createShippingDocument(baseRequest, orderRequestList);
+            logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.CREATE_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), JSONUtil.toJsonStr(shippingDocument));
+
+        } catch (Exception e) {
+            log.error(StrUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
+            logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.CREATE_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), e.getMessage());
             //创建面单打印异常不直接返回
         }
-        //获取创建面单结果
-        List<ShippingDocumentParameterResponse> shippingDocumentResult = shopeeLogisticsService.getShippingDocumentResult(baseRequest, orderRequestList);
-        //下载面单文件 THERMAL_AIR_WAYBILL NORMAL_AIR_WAYBILL
-        String base64Str = shopeeLogisticsService.downloadShippingDocument(baseRequest, orderRequestList, "THERMAL_AIR_WAYBILL");
-        List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
-        String prefix = "data:application/pdf;base64,";
-        LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
-                .deliveryNoList(logisticsGetLabelVOList.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
-                .base64(prefix + base64Str).build();
-        responses.add(response);
-        return success(responses);
+    }
 
+    private List<ShippingDocumentParameterResponse> getShippingDocumentParameter(BaseRequest baseRequest, List<ShippingOrderRequest> orderRequestList) {
+        List<ShippingDocumentParameterResponse> shippingDocumentParameter = null;
+        String orderSnList = orderRequestList.stream().map(ShippingOrderRequest::getOrderSn).collect(Collectors.joining(","));
+        try {
+            shippingDocumentParameter = shopeeLogisticsService.getShippingDocumentParameter(baseRequest, orderRequestList);
+            logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.SHIPPING_DOCUMENT_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), JSONUtil.toJsonStr(shippingDocumentParameter));
+        }catch (Exception e){
+            log.error(StrUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
+            logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.SHIPPING_DOCUMENT_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), e.getMessage());
+            //查询面单打印类型不抛出异常
+        }
+        return shippingDocumentParameter;
     }
 
     /**
@@ -378,14 +425,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult authorization(Map<String, String> authMap){
-        BaseRequest baseRequest = BaseRequest.builder()
-                .partnerKey(authMap.get("partnerKey"))
-                .partnerId(Long.valueOf(authMap.get("partnerId")))
-                .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("token"))
-                .host(authMap.get("host"))
-                .build();
-        ValidatorUtil.validateEntity(baseRequest);
+        BaseRequest baseRequest = getBaseRequest(authMap);
         try {
             BaseResponse baseResponse = shopeeLogisticsService.getChannelList(baseRequest);
             if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
@@ -402,6 +442,24 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             return failure(getPlatForm().getName() + ":" + e.getMessage());
         }
     }
+
+    /**
+     * 获取基础授权
+     * @param authMap
+     * @return
+     */
+    private BaseRequest getBaseRequest(Map<String, String> authMap) {
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+        ValidatorUtil.validateEntity(baseRequest);
+        return baseRequest;
+    }
+
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.SHOPEE;

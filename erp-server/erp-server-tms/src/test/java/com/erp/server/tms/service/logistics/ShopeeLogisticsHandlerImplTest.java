@@ -55,7 +55,7 @@ public class ShopeeLogisticsHandlerImplTest {
         authMap.put("partnerId", "1070627");
 //        authMap.put("shopId", "1843907937611972609");
         authMap.put("shopId", "94349");
-        authMap.put("token", "69644e5349425163665956674a65484a");
+        authMap.put("token", "74686351676b4b4c657a4b78586d6241");
         authMap.put("host", "https://partner.test-stable.shopeemobile.com");
     }
 
@@ -264,7 +264,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
-        String orderSn = "241014HEJQ5KGY";
+        String orderSn = "241016P6BFN5KQ";
         String packageNumber = "OFG182599777214119";
 //        String orderSn = "2410119RC3WKGU";
 //        String packageNumber = "OFG182340319214041";
@@ -273,7 +273,7 @@ public class ShopeeLogisticsHandlerImplTest {
         List<ShippingOrderRequest > orderRequestList = new ArrayList<>();
         ShippingOrderRequest shippingOrderRequest = ShippingOrderRequest.builder()
                 .orderSn(orderSn)
-                .packageNumber(packageNumber)
+//                .packageNumber(packageNumber)
                 .build();
         orderRequestList.add(shippingOrderRequest);
         List<ShippingDocumentParameterResponse> shippingDocumentParameter = shopeeLogisticsService.getShippingDocumentParameter(baseRequest, orderRequestList);
@@ -287,7 +287,7 @@ public class ShopeeLogisticsHandlerImplTest {
 //        String packageNumber = "OFG182340319214041";
 //        String orderSn = "2409068X5S22U7";//527508280
 //        String packageNumber = "OFG179307286219949";
-        String orderSn = "241014HEJQ5KGY";//180939511
+        String orderSn = "241016P6BFN5KQ";//180939511
         String packageNumber = "OFG182599777214119";
         BaseRequest baseRequest = BaseRequest.builder()
                 .partnerKey(authMap.get("partnerKey"))
@@ -364,7 +364,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
-        String orderSn = "241014HEJQ5KGY";//180939511
+        String orderSn = "241016P6BFN5KQ";//180939511
         String trackingNumber = "180939511";
         String packageNumber = "OFG182599777214119";
         List<ShippingOrderRequest > orderRequestList = new ArrayList<>();

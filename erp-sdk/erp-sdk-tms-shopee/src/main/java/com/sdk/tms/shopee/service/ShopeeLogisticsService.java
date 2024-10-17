@@ -227,8 +227,7 @@ public class ShopeeLogisticsService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("shipping_document_type",shippingDocumentType);
         jsonObject.put("order_list",orderRequestList);
-        String base64Str = ShopeeApiUtils.sendPostBase64(baseRequest.getHost() + baseRequest.getPath(), urlParams, jsonObject.toJSONString());
-        return base64Str;
+        return ShopeeApiUtils.sendPostBase64(baseRequest.getHost() + baseRequest.getPath(), urlParams, jsonObject.toJSONString());
     }
 
     /**
