@@ -2721,7 +2721,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private void batchCancelLogistic(List<String> ids, String code) {
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
         List<String> soIds = soB2cLogisticsEntityList.stream().filter(e -> StrUtil.isNotBlank(e.getCode())
-                || StrUtil.isNotBlank(e.getTrackNo()) || StrUtil.isBlank(e.getLogisticsChannelId()))
+                || StrUtil.isNotBlank(e.getTrackNo()) || StrUtil.isNotBlank(e.getLogisticsChannelId()))
                 .map(SoB2cLogisticsEntity::getMainId).distinct().collect(Collectors.toList());
         //没有已下单的物流单 不需要取消
         if(CollectionUtils.isEmpty(soIds)){
