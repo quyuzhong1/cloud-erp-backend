@@ -46,6 +46,7 @@ import com.erp.server.mrp.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -431,6 +432,23 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void batchNotRestockingReplenishment(List<String> ids, String replenishmentRemark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        update(Wrappers.<ReplenishmentSuggestionEntity>lambdaUpdate()
+                .in(ReplenishmentSuggestionEntity::getId, ids)
+                .set(ReplenishmentSuggestionEntity::getReplenishmentRemark, replenishmentRemark)
+                .set(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NOT_RESTOCKING.getCode())
+                .set(ReplenishmentSuggestionEntity::getIsManual, Boolean.TRUE)
+        );
+        // 操作日志
+        List<Pair<String, String>> addPairList = ids.stream().map(obj -> new Pair<>(obj, replenishmentRemark)).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("操作了暂不补货，原因：【{}】 ", ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), addPairList, "暂不补货");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO restoreReplenishment(String id, String replenishmentRemark) {
         ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
         if (!ReplenishmentTypeEnum.NOT_RESTOCKING.getCode().equals(entity.getReplenishmentType())) {
@@ -695,10 +713,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<ReplenishmentSuggestionEntity> listCalculationData(String id) {
-        if (ObjectUtil.isNotEmpty(id)) {
-            return listByIds(Collections.singletonList(id));
-        }
+    public List<ReplenishmentSuggestionEntity> listCalculationData() {
         return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
                 .not(wrapper -> wrapper
                         .eq(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NOT_RESTOCKING.getCode())
