@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * @Date 2023/8/31 15:48
  **/
 @Slf4j
-@Component
+//@Component
 //@PlatformCategoryType(PlatformCategoryEnum.THIRD_SYSTEM)
 //@PlatformType(PlatformDictEnum.SHOPEE)
 //@BusinessType(BusinessTypeEnum.GLOBAL_PRODUCT)

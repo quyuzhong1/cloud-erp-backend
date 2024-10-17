@@ -1,5 +1,6 @@
 package com.sdk.oms.shopee.service;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -54,19 +55,17 @@ public class ShopeeOrderService {
     public void getAllOrder(OrderRequest orderRequest, List<OrderDetail> orderDetails) {
         ShopeeResponse shopeeResponse = this.getOrderList(orderRequest);
         if (Objects.isNull(shopeeResponse) || Objects.isNull(shopeeResponse.getResponse())){
+            log.error(StrUtil.format("虾皮订单拉取接口返回异常：{}", shopeeResponse));
             return;
         }
         JSONObject response = shopeeResponse.getResponse();
         String error = response.getStr("error");
         if (StringUtils.isNotEmpty(error)) {
-            return;
-        }
-        JSONArray jsonArray = response.getJSONArray("order_list");
-        if (Objects.isNull(jsonArray)){
+            log.error(StrUtil.format("虾皮订单拉取接口异常：{}", error));
             return;
         }
         //目录列表
-        List<ShopeeOrder> orderList = JSONUtil.toList(jsonArray, ShopeeOrder.class);
+        List<ShopeeOrder> orderList = JSONUtil.toList(response.getJSONArray("order_list"), ShopeeOrder.class);
         //获取item明细
         List<String> orderSns = orderList.stream().map(ShopeeOrder::getOrderSn).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(orderSns)) {
@@ -116,17 +115,11 @@ public class ShopeeOrderService {
         }else {
         	paramMap.put("time_range_field", "update_time");
         }
-        //15天内
-//        Long time_from = timestamp - (3600 * 24 * 14);
-//        Long time_to = timestamp;
-
         if (Objects.nonNull(orderRequest.getTimeFrom())) {
             paramMap.put("time_from", orderRequest.getTimeFrom());
-//            paramMap.put("time_from", time_from);
         }
         if (Objects.nonNull(orderRequest.getTimeTo())) {
             paramMap.put("time_to", orderRequest.getTimeTo());
-//            paramMap.put("time_to", time_to);
         }
         paramMap.put("timestamp", timestamp);
         //1-100

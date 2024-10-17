@@ -1623,12 +1623,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         result.setIossTaxNo(shopInfoEntity.getIossTaxNo());
         result.setVoecTaxNo(shopInfoEntity.getVoecTaxNo());
         result.setSalesPlatform(entity.getDictPlatform());
+        //包裹号 虾皮
+        if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform()) && Objects.nonNull(entity.getLabelJson())){
+            JSONObject jsonObject = JSONObject.parseObject(entity.getLabelJson());
+            result.setPackageNumber(jsonObject.getString("package_number"));
+        }
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
         if (Objects.isNull(shopAuth) && isAliExpress) {
             throw new ServiceException(ApiError.SHOP_NOT_AUTH_ERROR);
         }
         if (Objects.nonNull(shopAuth)){
-            result.setToken(shopAuth.getToken());
+            result.setToken(shopAuth.getAccessToken());
         }
         //买家 收货人信息
         SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(id);

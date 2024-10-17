@@ -219,7 +219,7 @@ public class ShopeeLogisticsService {
      * @param shippingDocumentType  The type of shipping document. Available values: NORMAL_AIR_WAYBILL,THERMAL_AIR_WAYBILL,NORMAL_JOB_AIR_WAYBILL,THERMAL_JOB_AIR_WAYBILL
      * @return
      */
-    public byte[] downloadShippingDocument(BaseRequest baseRequest, List<ShippingOrderRequest> orderRequestList, String shippingDocumentType) {
+    public String downloadShippingDocument(BaseRequest baseRequest, List<ShippingOrderRequest> orderRequestList, String shippingDocumentType) {
         baseRequest.setPath(PathConstants.POST_DOWNLOAD_SHIPPING_DOCUMENT);
         long timestamp = System.currentTimeMillis() / 1000L;
         baseRequest.setTimestamp(timestamp);
@@ -227,20 +227,8 @@ public class ShopeeLogisticsService {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("shipping_document_type",shippingDocumentType);
         jsonObject.put("order_list",orderRequestList);
-        BaseResponse baseResponse = ShopeeApiUtils.sendPost(baseRequest.getHost() + baseRequest.getPath(), urlParams, jsonObject.toJSONString());
-        if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            log.error("获取面单打印参数异常：{}", baseResponse);
-            throw new ServiceException(StrUtil.format("虾皮下载发货面单文件请求异常:{}",orderRequestList));
-        }
-        JSONObject response = baseResponse.getResponse();
-        String error = response.getString("error");
-        if (StrUtil.isNotEmpty(error)) {
-            log.error("获取面单打印参数异常：{}", error);
-            throw new ServiceException(StrUtil.format("虾皮下载发货面单文件请求异常:{}",error));
-        }
-        //打印列表
-        byte[] waybills = response.getBytes("waybill");
-        return waybills;
+        String base64Str = ShopeeApiUtils.sendPostBase64(baseRequest.getHost() + baseRequest.getPath(), urlParams, jsonObject.toJSONString());
+        return base64Str;
     }
 
     /**

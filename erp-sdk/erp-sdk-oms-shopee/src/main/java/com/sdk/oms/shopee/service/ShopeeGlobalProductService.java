@@ -28,11 +28,11 @@ import static com.sdk.oms.shopee.constants.ShopeeConstants.pageSize;
 /**
  * @author zdy
  * @ClassName ShopeeGlobalProductService
- * @description: TODO
+ * @description: 全局产品-暂时没有使用
  * @date 2023年11月29日
  * @version: 1.0
  */
-@Component
+//@Component
 @Slf4j
 public class ShopeeGlobalProductService {
     public static void main(String[] args) {

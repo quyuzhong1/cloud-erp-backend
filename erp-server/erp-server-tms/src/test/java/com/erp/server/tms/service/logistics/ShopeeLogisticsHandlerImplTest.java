@@ -55,7 +55,7 @@ public class ShopeeLogisticsHandlerImplTest {
         authMap.put("partnerId", "1070627");
 //        authMap.put("shopId", "1843907937611972609");
         authMap.put("shopId", "94349");
-        authMap.put("accessToken", "69644e5349425163665956674a65484a");
+        authMap.put("token", "69644e5349425163665956674a65484a");
         authMap.put("host", "https://partner.test-stable.shopeemobile.com");
     }
 
@@ -207,7 +207,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
         String orderSn = "241014HEJQ5KGY";
@@ -221,7 +221,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
 //        String orderSn = "2410119RC3WKGU";
@@ -261,7 +261,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
         String orderSn = "241014HEJQ5KGY";
@@ -293,7 +293,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
         TrackResponse trackNumber = shopeeLogisticsService.getTrackNumber(baseRequest, orderSn);
@@ -307,7 +307,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
         String orderSn = "241014HEJQ5KGY";//180939511
@@ -335,7 +335,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
         String orderSn = "241014HEJQ5KGY";//180939511
@@ -361,7 +361,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
         String orderSn = "241014HEJQ5KGY";//180939511
@@ -376,7 +376,7 @@ public class ShopeeLogisticsHandlerImplTest {
                 .build();
         orderRequestList.add(shippingOrderRequest);
         String shippingDocumentType = "NORMAL_AIR_WAYBILL";
-        byte[] bytes = shopeeLogisticsService.downloadShippingDocument(baseRequest, orderRequestList, shippingDocumentType);
+        String bytes = shopeeLogisticsService.downloadShippingDocument(baseRequest, orderRequestList, shippingDocumentType);
 
         System.out.println(bytes);
     }

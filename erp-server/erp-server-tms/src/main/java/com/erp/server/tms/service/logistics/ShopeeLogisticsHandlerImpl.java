@@ -10,6 +10,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FileUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -19,31 +20,35 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.sdk.tms.disifang.model.base.ResponseMsg;
+import com.sdk.tms.disifang.model.label.request.LabelRequest;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.Dropoff;
 import com.sdk.tms.shopee.model.logistics.request.ShipOrderRequest;
+import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
-import com.sdk.tms.shopee.model.logistics.response.LogisticsChannel;
-import com.sdk.tms.shopee.model.logistics.response.ShipDetailResponse;
-import com.sdk.tms.shopee.model.logistics.response.ShipDropInfo;
-import com.sdk.tms.shopee.model.logistics.response.TrackResponse;
+import com.sdk.tms.shopee.model.logistics.response.*;
 import com.sdk.tms.shopee.service.ShopeeLogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author zdy
@@ -112,7 +117,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .partnerKey(authMap.get("partnerKey"))
                 .partnerId(Long.valueOf(authMap.get("partnerId")))
                 .shopId(Long.valueOf(authMap.get("shopId")))
-                .accessToken(authMap.get("accessToken"))
+                .accessToken(authMap.get("token"))
                 .host(authMap.get("host"))
                 .build();
         String orderSn = logisticsOrderVO.getPlatformCode();
@@ -207,7 +212,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("",
                     orderSn, BusinessTypeEnum.SHIPPING_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
-            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,baseRequest));
+            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,e.getMessage()));
         }
     }
 
@@ -228,7 +233,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .partnerKey(authMap.get("partnerKey"))
                     .partnerId(Long.valueOf(authMap.get("partnerId")))
                     .shopId(Long.valueOf(authMap.get("shopId")))
-                    .accessToken(authMap.get("accessToken"))
+                    .accessToken(authMap.get("token"))
                     .host(authMap.get("host"))
                     .build();
             try {
@@ -314,6 +319,58 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
+
+    /**
+     * 获取标签
+     * request_no 请求单号（支持4PX单号、客户单号和面单号
+     *
+     * @param logisticsGetLabelVOList
+     * @return
+     */
+    @Override
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsGetLabelVOList) throws IOException {
+        LogisticsGetLabelVO logisticsGetLabelVO = logisticsGetLabelVOList.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
+        assert logisticsGetLabelVO != null;
+        Map<String, String> authMap = logisticsGetLabelVO.getAuthMap();
+
+        List<ShippingOrderRequest> orderRequestList = new ArrayList<>();
+
+        for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
+            ShippingOrderRequest shippingOrderRequest = ShippingOrderRequest.builder()
+                    .orderSn(vo.getPlatformCode())
+                    .trackingNumber(vo.getTrackNo())
+                    .build();
+            orderRequestList.add(shippingOrderRequest);
+        }
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+        ValidatorUtil.validateEntity(baseRequest);
+        //创建打印面单
+        try {
+            List<ShippingDocumentParameterResponse> shippingDocument = shopeeLogisticsService.createShippingDocument(baseRequest, orderRequestList);
+        } catch (Exception e) {
+            log.error(StrUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
+            //创建面单打印异常不直接返回
+        }
+        //获取创建面单结果
+        List<ShippingDocumentParameterResponse> shippingDocumentResult = shopeeLogisticsService.getShippingDocumentResult(baseRequest, orderRequestList);
+        //下载面单文件 THERMAL_AIR_WAYBILL NORMAL_AIR_WAYBILL
+        String base64Str = shopeeLogisticsService.downloadShippingDocument(baseRequest, orderRequestList, "THERMAL_AIR_WAYBILL");
+        List<LogisticsPrintLabelResponse> responses = new ArrayList<>();
+        String prefix = "data:application/pdf;base64,";
+        LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
+                .deliveryNoList(logisticsGetLabelVOList.stream().map(LogisticsGetLabelVO::getDeliveryNo).collect(Collectors.toList()))
+                .base64(prefix + base64Str).build();
+        responses.add(response);
+        return success(responses);
+
+    }
+
     /**
      * 授权判断
      * @param authMap

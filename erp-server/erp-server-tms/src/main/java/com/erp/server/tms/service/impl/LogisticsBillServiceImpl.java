@@ -431,7 +431,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
-        authMap.put("token", dto.getToken());
+        if (StrUtil.isNotBlank(dto.getToken())){
+            authMap.put("token", dto.getToken());
+        }
         //来源
         String sourceType = dto.getSourceType();
         //订单类型
@@ -487,6 +489,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
                 platformCode(dto.getPlatformCode()).
+                packageNumber(dto.getPackageNumber()).
                 country(country).
                 voecTaxNo(dto.getVoecTaxNo()).
                 iossCode(getIossCodeByCountry(country,logisticsChannel.getIsIossPrepay(),dto.getIossTaxNo())).

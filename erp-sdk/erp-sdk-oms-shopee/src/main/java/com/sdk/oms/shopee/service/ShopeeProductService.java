@@ -73,22 +73,19 @@ public class ShopeeProductService {
         log.info("获取产品订单：{}", productRequest);
         ShopeeResponse productList = this.getProductList(productRequest);
         if (Objects.isNull(productList) || Objects.isNull(productList.getResponse())) {
+            log.error("获取产品订单接口返回异常：{}", productList);
             return;
         }
         JSONObject response = productList.getResponse();
-
         String error = response.getStr("error");
         if (StringUtils.isNotEmpty(error)) {
-            return;
-        }
-        JSONArray jsonArray = response.getJSONArray("item");
-        if (Objects.isNull(jsonArray)){
+            log.error("获取产品订单接口异常：{}", error);
             return;
         }
         //目录列表
-        List<Item> items = JSONUtil.toList(jsonArray, Item.class);
+        List<Item> items = JSONUtil.toList(response.getJSONArray("item"), Item.class);
         //获取item明细
-        List<Long> itemIds = items.stream().map(Item::getItemId).collect(Collectors.toList());
+        List<Long> itemIds = items.stream().map(Item::getItemId).filter(Objects::nonNull).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(itemIds)) {
             return;
         }
@@ -97,20 +94,18 @@ public class ShopeeProductService {
         ShopeeResponse productItemBaseInfo = this.getProductItemBaseInfo(productRequest);
         JSONObject responseBaseInfo = productItemBaseInfo.getResponse();
         if (Objects.isNull(responseBaseInfo)) {
+            log.error("获取产品基础信息接口返回异常：{}", productItemBaseInfo);
             return;
         }
         //循环填充
-        JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
-        List<ItemInfo> itemInfos = JSONUtil.toList(listBase, ItemInfo.class);
+        List<ItemInfo> itemInfos = JSONUtil.toList(responseBaseInfo.getJSONArray("item_list"), ItemInfo.class);
         if (CollectionUtils.isEmpty(itemInfos)) {
             return;
         }
         //获取产品model列表
         for (Long itemId : itemIds){
-            if (Objects.isNull(itemId)){
-                return;
-            }
             productRequest.setItemId(itemId);
+            //获取订单明细sku列表--erp以这个维度为准
             List<ModelInfo> modelList = getModelList(productRequest);
             //匹配对应的
             if (CollectionUtils.isEmpty(modelList)){
@@ -121,7 +116,6 @@ public class ShopeeProductService {
             if (Objects.isNull(itemInfo)){
                 continue;
             }
-
             for (ModelInfo modelInfo : modelList){
                 ShopeeProductInfo shopeeProductInfo = new ShopeeProductInfo();
                 shopeeProductInfo.setModelInfo(modelInfo);
@@ -136,10 +130,6 @@ public class ShopeeProductService {
             productRequest.setOffset(next_offset);
             getAllProduct(productRequest, shopeeProductInfos);
         }
-//        System.out.println(responseBaseInfo);
-//        ShopeeResponse productItemExtraInfo = this.getProductItemExtraInfo(host, token, shopId, partner_id, tmp_partner_key, StringUtils.join(itemIds, ","));
-//        JSONObject responseExtraInfo = productItemExtraInfo.getResponse();
-//        System.out.println(responseExtraInfo);
     }
 
     public ShopeeResponse getProductList(ProductRequest productRequest) {
@@ -154,12 +144,6 @@ public class ShopeeProductService {
         paramMap.put("access_token", productRequest.getToken());
         paramMap.put("offset", productRequest.getOffset());
         paramMap.put("page_size", pageSize);
-//        if (Objects.nonNull(productRequest.getTimeFrom())) {
-//            paramMap.put("update_time_from", productRequest.getTimeFrom());
-//        }
-//        if (Objects.nonNull(productRequest.getTimeTo())) {
-//            paramMap.put("update_time_to", productRequest.getTimeTo());
-//        }
         List<String> status = new ArrayList<>();
         status.add("NORMAL");
         status.add("DELETED");
