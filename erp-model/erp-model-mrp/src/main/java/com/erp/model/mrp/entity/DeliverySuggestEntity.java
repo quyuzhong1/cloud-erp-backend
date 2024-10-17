@@ -42,6 +42,12 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     @TableField("suggest_delivery_qty")
     private Integer suggestDeliveryQty;
     /**
+     * 系统建议发货量
+     */
+    @TableField("sys_suggest_delivery_qty")
+    private Integer sysSuggestDeliveryQty;
+
+    /**
     * 建议发货日期
     */
     @TableField("suggest_delivery_date")
@@ -52,20 +58,40 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     @TableField("logistics_method")
     private String logisticsMethod;
     /**
+     * 系统建议发货量
+     */
+    @TableField("sys_logistics_method")
+    private String sysLogisticsMethod;
+    /**
     * 物流时效（天）
     */
     @TableField("logistics_days")
     private Integer logisticsDays;
+    /**
+     * 系统物流时效（天）
+     */
+    @TableField("sys_logistics_days")
+    private Integer sysLogisticsDays;
     /**
     * 预计可售日期
     */
     @TableField("estimate_sales_date")
     private LocalDate estimateSalesDate;
     /**
+     * 系统预计可售日期
+     */
+    @TableField("sys_estimate_sales_date")
+    private LocalDate sysEstimateSalesDate;
+    /**
     * 物流成本
     */
     @TableField("logistics_cost")
     private BigDecimal logisticsCost;
+    /**
+     * 系统物流成本
+     */
+    @TableField("sys_logistics_cost")
+    private BigDecimal sysLogisticsCost;
     /**
     * 作废状态
     */

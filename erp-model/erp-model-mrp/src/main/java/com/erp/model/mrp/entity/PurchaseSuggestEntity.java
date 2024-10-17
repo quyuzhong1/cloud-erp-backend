@@ -42,35 +42,70 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("suggest_purchase_qty")
     private Integer suggestPurchaseQty;
     /**
+     * 系统建议采购量
+     */
+    @TableField("sys_suggest_purchase_qty")
+    private Integer sysSuggestPurchaseQty;
+    /**
     * 建议采购日期
     */
     @TableField("suggest_purchase_date")
     private LocalDate suggestPurchaseDate;
+    /**
+     * 系统建议采购日期
+     */
+    @TableField("sys_suggest_purchase_date")
+    private LocalDate sysSuggestPurchaseDate;
     /**
     * 物流方式
     */
     @TableField("logistics_method")
     private String logisticsMethod;
     /**
+     * 系统物流方式
+     */
+    @TableField("sys_logistics_method")
+    private String sysLogisticsMethod;
+    /**
     * 物流时效（天）
     */
     @TableField("logistics_days")
     private Integer logisticsDays;
+    /**
+     * 系统物流时效（天）
+     */
+    @TableField("sys_logistics_days")
+    private Integer sysLogisticsDays;
     /**
     * 预计入库日期
     */
     @TableField("estimate_instock_date")
     private LocalDate estimateInstockDate;
     /**
+     * 系统预计入库日期
+     */
+    @TableField("sys_estimate_instock_date")
+    private LocalDate sysEstimateInstockDate;
+    /**
     * 预计可售日期
     */
     @TableField("estimate_sales_date")
     private LocalDate estimateSalesDate;
     /**
+     * 系统预计可售日期
+     */
+    @TableField("sys_estimate_sales_date")
+    private LocalDate sysEstimateSalesDate;
+    /**
     * 采购成本
     */
     @TableField("purchase_cost")
     private BigDecimal purchaseCost;
+    /**
+     * 系统采购成本
+     */
+    @TableField("sys_purchase_cost")
+    private BigDecimal sysPurchaseCost;
     /**
     * 作废状态
     */
