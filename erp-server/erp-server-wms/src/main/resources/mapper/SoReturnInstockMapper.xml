@@ -35,9 +35,11 @@
         sri.inventory_org_name AS inventoryOrgName,
         srid.is_sub_contract AS isSubContract,
         sri.third_code as thirdCode,
-        sri.return_logistic_code as returnLogisticCode
+        sri.return_logistic_code as returnLogisticCode,
+        sb2c.platform_code as platformOrderCode
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id
+        LEFT JOIN so_b2c sb2c  on sb2c.id = sri.so_id and sb2c.is_deleted = false
         WHERE
         ${params.sqlMap.default}
           and srid.is_deleted = FALSE
