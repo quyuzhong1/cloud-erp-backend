@@ -362,6 +362,27 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         return true;
     }
 
+    @Override
+    public SoB2cReturnEntity getByPlatformReturnCode(String platformReturnNo) {
+        if(StringUtils.isBlank(platformReturnNo)){
+            return null;
+        }
+        return lambdaQuery().eq(SoB2cReturnEntity::getPlatformReturnNo,platformReturnNo).last("limit 1").one();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addByPlatform(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList) {
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.THD);
+        this.save(soB2cReturnEntity);
+
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("平台自动新增退货单【%s】", code), ModuleTypeEnum.SO_B2C_RETURN.getCode(), soB2cReturnEntity.getId(), "新增操作");
+
+        soB2cReturnDetailEntityList.forEach(v->v.setMainId(soB2cReturnEntity.getId()));
+        soB2cReturnDetailService.saveBatch(soB2cReturnDetailEntityList);
+    }
+
     private void fillBindReturnInstockView(List<SoB2cReturnDTO.BindReturnInstockViewDTO> soB2cReturnEntityList) {
         List<String> skuIds = soB2cReturnEntityList.stream().map(SoB2cReturnDTO.BindReturnInstockViewDTO::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);

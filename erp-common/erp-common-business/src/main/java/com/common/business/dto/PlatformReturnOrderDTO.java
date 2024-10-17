@@ -39,7 +39,7 @@ public class PlatformReturnOrderDTO extends UniqueDto {
     /**
      * 明细
      */
-    private List<PlatformRefundOrderDTO.Detail> detailList;
+    private List<PlatformReturnOrderDTO.Detail> detailList;
 
     @Data
     @ToString
