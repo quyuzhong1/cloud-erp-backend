@@ -46,6 +46,7 @@ public class DmpCfgOutputBlackServiceImpl extends SuperServiceImpl<DmpCfgOutputB
         // 数据处理
         handleData(dmpCfgOutputBlackEntity);
 
+        dmpCfgOutputBlackEntity.setIsWebAdd(true);
         log.info("开始新增输出黑名单");
         boolean save = super.save(dmpCfgOutputBlackEntity);
         if(!save) {

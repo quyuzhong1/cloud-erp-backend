@@ -213,8 +213,12 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	}
 	
 	protected boolean validateDataBlack(Object object , String cfgOutputId) {
+		return this.validateDataBlack(object, cfgOutputId, Boolean.FALSE);
+	}
+	
+	protected boolean validateDataBlack(Object object , String cfgOutputId , Boolean isWebAdd) {
 		if(object != null) {
-			List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityList = dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> d.getMainId().equals(cfgOutputId));
+			List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackEntityList = dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> d.getMainId().equals(cfgOutputId) && isWebAdd.equals(d.getIsWebAdd()));
 			if(CollUtil.isNotEmpty(dmpCfgOutputBlackEntityList)) {
 				JSONObject parseObject = JSON.parseObject(JSON.toJSONString(object));
 				for(DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity : dmpCfgOutputBlackEntityList) {

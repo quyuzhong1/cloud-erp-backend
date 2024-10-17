@@ -123,7 +123,7 @@ from
 left join 
 (select t2.is_need_sync,t3.cfg_output_id,t2.source_code,t2.update_time,t2.status from dmp_output_task_record t2 left join dmp_output_task t3 on t2.main_id = t3.id where t2.is_deleted = 'f' and t3.is_deleted = 'f') t4 
 on t1.main_id = t4.cfg_output_id and t1.field_value = t4.source_code
-where t1.field_value != '' and t1.compare_sign = 'eq' and t1.create_user_id != '' and t1.is_deleted = 'f') t
+where t1.field_value != '' and t1.compare_sign = 'eq' and t1.is_web_add = 't' and t1.is_deleted = 'f') t
 LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
 				LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
         LEFT JOIN dmp_cfg_input k ON j.main_id = k.id

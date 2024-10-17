@@ -43,6 +43,7 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 		
 		List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
 		
+		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
 		List<String> sourceCodeKeys = this.getSourceCodeKeys();
 		for(Map.Entry<String, String> pushJsonData : pushJsonDataMap.entrySet()) {
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
@@ -53,6 +54,9 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 			dmpOutputTaskRecordEntity.setDataId(key);
 			String value = pushJsonData.getValue();
 			JSONObject parseObject = JSON.parseObject(value);
+			if(this.validateDataBlack(parseObject, cfgOutputId, Boolean.TRUE)) {
+				continue;
+			}
 			parseObject.put("dmpOutputTaskRecordId", id);
 			parseObject.put("dmpOutputTaskRecordDataId", key);
 			if(CollUtil.isNotEmpty(sourceCodeKeys)) {

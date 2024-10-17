@@ -62,6 +62,12 @@ public class DmpCfgOutputBlackEntity extends BaseEntity<DmpCfgOutputBlackEntity>
      */
     @TableField(value = "remark")
     private String remark;
+    
+    /**
+     * 是否界面增加
+     */
+    @TableField(value = "is_web_add")
+    private Boolean isWebAdd;
 
     public static final String MAIN_ID = "main_id";
 
