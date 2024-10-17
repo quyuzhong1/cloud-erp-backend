@@ -45,6 +45,8 @@ public enum RuleOrderHandleEnum {
         SYMBOL_5("*","*"),
         SYMBOL_6("&","&"),
         SYMBOL_7("/","/"),
+        SYMBOL_8("(","("),
+        SYMBOL_9(")",")"),
         ;
         private final String code;
         private final String name;
@@ -62,6 +64,8 @@ public enum RuleOrderHandleEnum {
         SYMBOL_5("*","*"),
         SYMBOL_6("&","&"),
         SYMBOL_7("/","/"),
+        SYMBOL_8("(","("),
+        SYMBOL_9(")",")"),
         ;
         private final String code;
         private final String name;
@@ -78,6 +82,8 @@ public enum RuleOrderHandleEnum {
         SYMBOL_5("*","*"),
         SYMBOL_6("&","&"),
         SYMBOL_7("/","/"),
+        SYMBOL_8("(","("),
+        SYMBOL_9(")",")"),
         ;
         private final String code;
         private final String name;
@@ -105,6 +111,8 @@ public enum RuleOrderHandleEnum {
         SYMBOL_5("*","*"),
         SYMBOL_6("&","&"),
         SYMBOL_7("/","/"),
+        SYMBOL_8("(","("),
+        SYMBOL_9(")",")"),
         ;
         private final String code;
         private final String name;

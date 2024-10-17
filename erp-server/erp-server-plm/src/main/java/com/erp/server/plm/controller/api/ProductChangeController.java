@@ -1,5 +1,7 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
@@ -10,6 +12,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -17,6 +20,7 @@ import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.constant.BomConstant;
+import com.erp.server.plm.query.ProductChangeHandler;
 import com.erp.server.plm.service.ProductChangeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -84,9 +88,23 @@ public class ProductChangeController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = ProductChangeHandler.class)
     public ApiResult<PagingVO<List<ProductChangePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
         PagingVO<List<ProductChangePagingVO>> pagingVO = productChangeService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 获取 tab列表
+     * @author Will
+     * @date: 2023/10/13 11:49
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<ProductChangePagingVO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<ProductChangePagingVO.TabListDTO> tabList = productChangeService.tabList(dto);
+        return success(tabList);
     }
 
 

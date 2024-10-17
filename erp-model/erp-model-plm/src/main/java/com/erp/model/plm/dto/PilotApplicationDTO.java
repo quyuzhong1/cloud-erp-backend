@@ -718,5 +718,9 @@ public class PilotApplicationDTO implements Serializable {
          * 项目经理
          */
         private String projectChargeName;
+        /**
+         * 操作人
+         */
+        private String userName;
     }
 }

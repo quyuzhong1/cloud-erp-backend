@@ -254,7 +254,7 @@ public class ProductDetailExcelExportDTO {
      * ean码
      */
     @ExcelProperty("ean码")
-    @MenuCode("plm:product:detail:listProductPurchase")
+    @MenuCode("plm:product:detail:listProinfo")
     private String ean;
 
     /**
