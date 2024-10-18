@@ -422,7 +422,7 @@ public class DeliverySuggestDTO implements Serializable {
         /**
          * ASIN
          */
-        private String aSin;
+        private String asin;
         /**
          * 平台产品名称
          */

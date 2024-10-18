@@ -26,17 +26,7 @@ public interface CfgRuleOrderStrategyService extends SuperService<CfgRuleOrderSt
      * 查询详情
      * @author will
      * @date 2024/10/12 11:24
-     * @param platformType
      * @return ViewDTO
      */
-    CfgRuleOrderStrategyDTO.ViewDTO view(String platformType);
-
-    /**
-     * 根据平台类型查询
-     * @author will
-     * @date 2024/10/12 11:31
-     * @param platformType
-     * @return CfgRuleOrderStrategyEntity
-     */
-    CfgRuleOrderStrategyEntity getByPlatformType (String platformType);
+    CfgRuleOrderStrategyDTO.ViewDTO view();
 }

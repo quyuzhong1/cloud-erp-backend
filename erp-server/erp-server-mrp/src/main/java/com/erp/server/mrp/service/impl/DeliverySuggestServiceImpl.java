@@ -19,6 +19,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
@@ -26,7 +27,9 @@ import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -71,7 +74,6 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Autowired
     private DeliveryPlanFeign deliveryPlanFeign;
-
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -230,33 +232,57 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         List<String> shopIdList = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
-        Map<String, List<DeliverySuggestEntity>> map = deliverySuggestList.stream().collect(Collectors.groupingBy(obj -> obj.getShopId()));
-        for (Map.Entry<String, List<DeliverySuggestEntity>> entry : map.entrySet()) {
-            List<DeliverySuggestEntity> value = entry.getValue();
-            DeliverySuggestEntity entity = value.get(0);
-            viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
-            viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
-            viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
-            viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
-            //店铺信息
-            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-                viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
-                viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
-                viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
-                viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
-                viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
-            }
-            List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> detailList = new ArrayList<>();
+        //sku映射
+        List<String> skusIdList = deliverySuggestList.stream().map(obj -> obj.getSkuId()).distinct().collect(Collectors.toList());
+        List<SkuMappingEntity> list = FeignQuery.create(SkuMappingEntity.class).in(SkuMappingEntity::getProductSkuId, skusIdList).list();
+        
+        //listing
+        List<String> listingIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getListingId())).map(SkuMappingEntity::getListingId).distinct().collect(Collectors.toList());
+        List<ListingInfoEntity> listingList = FeignQuery.getByIds(ListingInfoEntity.class, listingIdList);
 
-            for (DeliverySuggestEntity suggestEntity : value) {
-                DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
-                BeanMapperUtils.copy(suggestEntity,detailDTO);
+        long count = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().count();
+        //校验
+        if (count > MathUtil.ONE) {
+            throw new ServiceException("下推发货计划店铺必须一致");
+        }
+        DeliverySuggestEntity entity = deliverySuggestList.get(0);
+        viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
+        viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
+        viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
+        viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
+        //店铺信息
+        ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
+            viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
+            viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
+            viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
+            viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+        }
+        List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> detailList = new ArrayList<>();
+
+        for (DeliverySuggestEntity suggestEntity : deliverySuggestList) {
+            DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
+            BeanMapperUtils.copy(suggestEntity,detailDTO);
+            //sku映射表
+            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getShopId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(skuMappingEntity)) {
+                //listing信息
+                List<ListingInfoEntity> detailListingList = listingList.stream().filter(obj -> StrUtil.equals(skuMappingEntity.getListingId(), obj.getId())).collect(Collectors.toList());
+                for (ListingInfoEntity listingInfoEntity : detailListingList) {
+                    DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO newDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
+                    BeanMapperUtils.copy(detailDTO,newDTO);
+                    newDTO.setMSKu(listingInfoEntity.getPlatformSkuNo());
+                    newDTO.setFnSku(listingInfoEntity.getPlatformFnSku());
+                    newDTO.setAsin(listingInfoEntity.getPlatformSpuNo());
+                    newDTO.setPlatformSkuName(listingInfoEntity.getPlatformSkuName());
+                    detailList.add(newDTO);
+                }
+            } else {
                 detailList.add(detailDTO);
             }
-            viewPushDeliveryPlanDTO.setDetailList(detailList);
         }
-
+        viewPushDeliveryPlanDTO.setDetailList(detailList);
         return viewPushDeliveryPlanDTO;
     }
 
@@ -268,7 +294,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         addDTO.setPlanDeliveryDate(deliveryPlanDTO.getDeliveryDate());
         addDTO.setToWarehouseId(deliveryPlanDTO.getWarehouseId());
         List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
-
+        for (DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO: deliveryPlanDTO.getDetailList()) {
+            WmsDeliveryPlanDetailDTO.AddDTO addDetailDTO = new WmsDeliveryPlanDetailDTO.AddDTO();
+        }
+        addDTO.setDetailList(detailList);
         deliveryPlanFeign.addDeliveryPlan(addDTO);
         return Boolean.TRUE;
     }

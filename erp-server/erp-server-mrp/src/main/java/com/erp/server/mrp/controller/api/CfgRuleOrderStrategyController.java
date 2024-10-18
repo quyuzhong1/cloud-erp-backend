@@ -45,12 +45,11 @@ public class CfgRuleOrderStrategyController extends BaseController {
      * 查询详情
      * @author will
      * @date 2024/10/12 11:23
-     * @param platformType 
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<CfgRuleOrderStrategyDTO.ViewDTO> view(@RequestParam("platformType") String platformType) {
-        return success(cfgRuleOrderStrategyService.view(platformType));
+    public ApiResult<CfgRuleOrderStrategyDTO.ViewDTO> view() {
+        return success(cfgRuleOrderStrategyService.view());
     }
 }

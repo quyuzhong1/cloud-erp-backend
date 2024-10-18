@@ -73,13 +73,6 @@ public class CfgRuleOrderStrategyDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-        */
-        @NotBlank(message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)不能为空")
-        @Size(max = 32,message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
-        private String platformType;
-
-        /**
         * 采购建议策略,是否拆分,true是，false否
         */
         @NotNull(message = "采购建议策略,是否拆分不能为空")

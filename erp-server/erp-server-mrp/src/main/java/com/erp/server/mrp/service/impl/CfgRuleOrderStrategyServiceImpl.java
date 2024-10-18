@@ -1,7 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -12,9 +11,13 @@ import com.erp.server.mrp.mapper.CfgRuleOrderStrategyMapper;
 import com.erp.server.mrp.service.CfgRuleOrderStrategyService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
 /**
  * <p>
  * 策略（规则设置） 服务实现类
@@ -37,9 +40,9 @@ public class CfgRuleOrderStrategyServiceImpl extends SuperServiceImpl<CfgRuleOrd
     public Boolean update(CfgRuleOrderStrategyDTO.UpdateDTO updateDTO) {
         CfgRuleOrderStrategyEntity orderStrategyEntity =  BeanMapperUtils.map(CfgRuleOrderStrategyEntity.class, updateDTO);
         //旧数据
-        CfgRuleOrderStrategyEntity old = this.getByPlatformType(updateDTO.getPlatformType());
-        if (ObjectUtil.isNotEmpty(old)) {
-            orderStrategyEntity.setId(old.getId());
+        List<CfgRuleOrderStrategyEntity> list = this.list();
+        if (CollectionUtils.isNotEmpty(list)) {
+            orderStrategyEntity.setId(list.get(0).getId());
         }
         // 数据处理
         handleData(orderStrategyEntity);
@@ -49,26 +52,19 @@ public class CfgRuleOrderStrategyServiceImpl extends SuperServiceImpl<CfgRuleOrd
         }
         // 记录主单操作日志
         log.info("编辑 开始记录策略（规则设置）日志数据，id：【{}】", orderStrategyEntity.getId());
-        operateLogService.addModuleOperateLogByObj(old, orderStrategyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), orderStrategyEntity.getId(), "");
+        operateLogService.addModuleOperateLogByObj(list.get(0), orderStrategyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), orderStrategyEntity.getId(), "");
         return Boolean.TRUE;
     }
 
     @Override
-    public CfgRuleOrderStrategyDTO.ViewDTO view(String platformType) {
+    public CfgRuleOrderStrategyDTO.ViewDTO view() {
         CfgRuleOrderStrategyDTO.ViewDTO viewDTO = new CfgRuleOrderStrategyDTO.ViewDTO();
-        CfgRuleOrderStrategyEntity oldEntity = this.getByPlatformType(platformType);
-        if (ObjectUtil.isEmpty(oldEntity)) {
+        List<CfgRuleOrderStrategyEntity> list = this.list();
+        if (CollectionUtils.isEmpty(list)) {
             return viewDTO;
         }
-        BeanMapperUtils.copy(oldEntity,viewDTO);
+        BeanMapperUtils.copy(list.get(0),viewDTO);
         return viewDTO;
-    }
-
-    @Override
-    public CfgRuleOrderStrategyEntity getByPlatformType (String platformType) {
-        return lambdaQuery().eq(CfgRuleOrderStrategyEntity::getPlatformType,platformType)
-                .last("limit 1")
-                .one();
     }
 
     /**
