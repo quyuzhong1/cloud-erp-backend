@@ -296,6 +296,13 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
         for (DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO: deliveryPlanDTO.getDetailList()) {
             WmsDeliveryPlanDetailDTO.AddDTO addDetailDTO = new WmsDeliveryPlanDetailDTO.AddDTO();
+            addDetailDTO.setMSKU(detailDTO.getMSKu());
+            addDetailDTO.setFnSku(detailDTO.getFnSku());
+            addDetailDTO.setAsin(detailDTO.getAsin());
+            addDetailDTO.setPlatformSkuName(detailDTO.getPlatformSkuName());
+            addDetailDTO.setPlatformSku(detailDTO.getMSKu());
+            addDetailDTO.setSkuId(detailDTO.getSkuId());
+            addDetailDTO.setQty(detailDTO.getPlanDeliveryQty());
         }
         addDTO.setDetailList(detailList);
         deliveryPlanFeign.addDeliveryPlan(addDTO);
