@@ -3997,6 +3997,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("buyLogisticsChannelId", logisticsEntity.getName());
         map.put("destCountry", receiverEntity.getCountry());
         map.put("destCity", receiverEntity.getCityName());
+        map.put("toProvince", receiverEntity.getProvinceName());
         map.put("orderTaxCost", totalTaxCost);
         map.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
         map.put("orderProfitRate", financialInfo.getProfitRateFlag());
@@ -4046,6 +4047,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("sellerLogistics", logisticsEntity.getName());
             detailMap.put("destCountry", receiverEntity.getCountry());
             detailMap.put("destCity", receiverEntity.getCityName());
+            detailMap.put("toProvince", receiverEntity.getProvinceName());
             detailMap.put("orderTaxCost", totalTaxCost);
             detailMap.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
             detailMap.put("orderProfitRate", financialInfo.getProfitRate());
