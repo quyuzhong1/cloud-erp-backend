@@ -461,6 +461,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if(TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus()) && checkBillStatus){
             throw new ServiceException(StrUtil.format("订单信息已预报，请取消订单预报后支持重新获取跟踪号"));
         }
+        if (PlatformDictEnum.SHOPEE.getCode().equals(soB2cEntity.getDictPlatform())){
+            throw new ServiceException(ApiError.ERROR_SHOP_SHOPEE_CANCEL_LOGISTICS);
+        }
         //取消物流单
         LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
                 channelId(soB2cLogisticsEntity.getLogisticsChannelId())
