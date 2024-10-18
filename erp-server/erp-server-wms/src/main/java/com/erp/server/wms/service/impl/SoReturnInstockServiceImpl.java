@@ -663,6 +663,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_99003.msg);
         }
+        if(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equals(entity.getSourceType())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"三方仓退货入库单不允许反审核");
+        }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .eq(SoReturnInstockEntity::getId, entity.getId())
