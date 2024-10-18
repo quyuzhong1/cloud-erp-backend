@@ -271,6 +271,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
 
+        SoReturnReceiveEntity existEntity = this.getById(dto.getId());
         SoReturnReceiveEntity entity = new SoReturnReceiveEntity();
         entity.setId(dto.getId());
         entity.setType(dto.getType());
@@ -287,7 +288,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(dto.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
         entity.setReturnDate(dto.getReturnDate());
-        if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
+        if(existEntity != null && !existEntity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
             operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
         }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
