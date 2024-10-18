@@ -238,12 +238,4 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return List<RequisitionApplicationDTO.PrintFnskuPreviewDTO>
      **/
     List<RequisitionApplicationDTO.PrintFnskuDetailDTO> printFnskuPreview(BaseIdsDTO.IdsDTO dto);
-    /**
-     * 打印fnsku预览
-     * @param
-     * @Author jack
-     * @Date 2024/10/16
-     * @return void
-     **/
-    void printFnskuConfirm(BaseIdsDTO.IdsDTO dto, HttpServletResponse response);
 }

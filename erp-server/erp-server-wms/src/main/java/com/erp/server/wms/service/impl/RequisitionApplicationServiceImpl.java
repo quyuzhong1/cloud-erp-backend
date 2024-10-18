@@ -2422,36 +2422,4 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         return result;
     }
-
-    @Override
-    public void printFnskuConfirm(BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
-        List<RequisitionApplicationDTO.PrintFnskuDetailDTO> result = this.printFnskuPreview(dto);
-        if(CollectionUtils.isEmpty(result)){
-            return;
-        }
-        List<String> base64List = new ArrayList<>();
-        if(CollectionUtils.isEmpty(base64List)){
-            throw new ServiceException("未找到面单数据");
-        }
-        try {
-            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
-
-            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
-            response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
-            BASE64Decoder decoder = new BASE64Decoder();
-            try (OutputStream out = response.getOutputStream()) {
-                // 将 Base64 编码的字符串解码为字节数组
-                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
-                // 将字节数组写入到响应输出流中
-                out.write(pdfBytes);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServiceException(ApiError.ERROR_PDF_MERGE);
-        }
-    }
 }

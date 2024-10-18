@@ -1459,42 +1459,6 @@ public class RequisitionApplicationDTO implements Serializable {
     }
 
     /**
-     * 打印fnsku
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class PrintFnskuPreviewDTO {
-
-        /**
-         * 错误原因
-         */
-        private String errorMsg;
-
-        /**
-         * 详情
-         */
-        private List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList;
-    }
-
-    /**
-     * 打印fnsku确认
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class PrintLogisticsBillConfirmDTO {
-        /**
-         * 错误原因
-         */
-        private String errorMsg;
-        /**
-         * 详情
-         */
-        private List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList;
-    }
-
-    /**
      * 打印fnsku的详情
      */
     @Data
