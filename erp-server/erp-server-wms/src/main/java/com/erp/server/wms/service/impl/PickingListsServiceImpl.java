@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -415,19 +416,17 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 }
                 return view;
             }).collect(Collectors.toList());
-            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getThirdSku() + ":"+  v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
                     Collectors.collectingAndThen(Collectors.toList(), v -> {
                         PickingListsDTO.PrintDetailView view = v.get(0);
                         int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintDetailView::getPickingQty).sum();
                         view.setPickingQty(totalQuantity);
                         return view;
-                    }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getWarehouseId)
-                    .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)
-                    .thenComparing(PickingListsDTO.PrintDetailView::getSkuNo)).collect(Collectors.toList());
-
+                    }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getSkuNo)
+                    .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)).collect(Collectors.toList());
             printView.setPrintDetailViews(viewList);
             //封装组合品明细
-            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
+//            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
                 List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailViewList = new ArrayList<>();
                 List<String> requisitionDetailIds = details.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
                 List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = applicationDetails.stream().filter(v->requisitionDetailIds.contains(v.getId())).collect(Collectors.toList());
@@ -442,6 +441,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                                     && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                             ).collect(Collectors.toList());
                     if(CollectionUtils.isEmpty(sonSkuList)){
+                        PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                        combinationPrintDetailView.setThirdSku("");
+                        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                            combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
+                        }
+                        combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo());
+                        combinationPrintDetailView.setParentSkuQty(requisitionApplicationDetail.getPickingQty());
+                        combinationPrintDetailViewList.add(combinationPrintDetailView);
                         continue;
                     }
                     for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
@@ -462,11 +469,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             PickingListsDTO.CombinationPrintDetailView view = v.get(0);
                             Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
                             view.setParentSkuQty(totalParentQty);
-                            int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
-                            view.setChildSkuQty(totalChildQty);
+                            if (StrUtil.isNotBlank(view.getChildSku())){
+                                int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
+                                view.setChildSkuQty(totalChildQty);
+                            }
                             return view;
-                        }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)
-                        .thenComparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)).collect(Collectors.toList());
+                        }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)
+                        .thenComparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)).collect(Collectors.toList());
                 //清空上层相同父sku
                 String currentParentSku = "";
                 Integer parentQty = 0;
@@ -479,13 +488,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     if(combinationPrintDetailView.getParentSku().equals(currentParentSku) && parentQty.equals(combinationPrintDetailView.getParentSkuQty())){
                         combinationPrintDetailView.setParentSku("");
                         combinationPrintDetailView.setParentSkuQty(null);
+                        combinationPrintDetailView.setThirdSku("");
                     }else{
                         currentParentSku = combinationPrintDetailView.getParentSku();
                         parentQty = combinationPrintDetailView.getParentSkuQty();
                     }
                 }
                 printView.setCombinationPrintDetailView(combinationList);
-            }
+//            }
             printViews.add(printView);
         }
 
