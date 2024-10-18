@@ -184,7 +184,7 @@ public class AntuServerTest {
     public void getReturnInstockTest() {
         AntuGetReturnReq antuGetReturnReq = AntuGetReturnReq.builder()
                 .page(1)
-                .pageSize(4)
+                .pageSize(100)
                 .build();
         AntuResponse<List<AntuReturnResp>> response = antuService.getReturnInstock(antuGetReturnReq);
         System.out.println(JSONUtil.toJsonStr(response));

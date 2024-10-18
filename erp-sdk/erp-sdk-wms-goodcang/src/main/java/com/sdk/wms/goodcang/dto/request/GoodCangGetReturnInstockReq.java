@@ -14,16 +14,16 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @SuperBuilder
 public class GoodCangGetReturnInstockReq {
-    @Max(value = 200,message = "每页最大长度不能大于200")
+    @Max(value = 100,message = "每页最大长度不能大于100")
     protected Integer pageSize;
 
     protected Integer currentPage;
 
     //订单修改开始时间
-    private LocalDateTime startUpdateTime;
+    private String startUpdateTime;
 
     //订单修改结束时间
-    private LocalDateTime endUpdateTime;
+    private String endUpdateTime;
 
     //订单状态
     @Builder.Default

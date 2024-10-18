@@ -15,8 +15,8 @@ public class AntuGetReturnReq extends AntuBaseRequest {
 
     //	状态 0:已作废 1:待确认 2:在途 3:到货 4:到货异常 5:已完成
     @JSONField(name = "spo_status")
-    @Builder.Default
-    private Integer spoStatus = 5;
+//    @Builder.Default
+    private Integer spoStatus;
 
     //更新开始时间， 格式YYYY-MM-DD HH:II:SS
     @JSONField(name = "spo_update_time_from")

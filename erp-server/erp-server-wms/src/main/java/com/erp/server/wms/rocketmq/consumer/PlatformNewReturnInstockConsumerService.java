@@ -1,7 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformReturnInstockDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -16,14 +15,12 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.sdk.oms.amz.spapi.model.shipping.Account;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.SoReturnInstockService;
@@ -49,7 +46,7 @@ import java.util.stream.Collectors;
 selectorExpression = RocketMqNewTag.DMP_PLATFORM_RETURN_INSTOCK_TO_WMS_TAG,
 consumerGroup = RocketMqNewConsumerGroup.DMP_PLATFORM_RETURN_INSTOCK_TO_WMS_GROUP,
 consumeMode = ConsumeMode.ORDERLY)
-public class PlatformReturnInstockConsumerService extends AbstractNewPlatformConsumerHandler {
+public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatformConsumerHandler {
 
 	@Resource
 	private SoReturnInstockService soReturnInstockService;
