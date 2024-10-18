@@ -1299,8 +1299,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     @Override
     public PilotApplicationDTO.ApprovePilotNoticeDTO getPilotApplicationNoticeData(String id) {
-        PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = null;
         // 在事务提交后执行的方法
+        PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = null;
         PilotApplicationEntity entity = this.getById(id);
         //获取试产量产明细中的skuId集合
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id).eq(PilotApplicationDetailEntity::getIsDeleted, Boolean.FALSE).list();

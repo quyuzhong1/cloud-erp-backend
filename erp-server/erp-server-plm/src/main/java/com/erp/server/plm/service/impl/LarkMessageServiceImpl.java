@@ -90,7 +90,6 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             throw new ServiceException(ApiError.ERROR_95178);
         }
         List<LarkPressMessageDTO.SendUserInfo> pressUserList = new ArrayList<>(10);
-
         switch (businessType) {
             case PILOT_APPLICATION:
                 PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
