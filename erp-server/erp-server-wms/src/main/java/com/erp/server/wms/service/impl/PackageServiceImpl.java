@@ -173,6 +173,9 @@ public class PackageServiceImpl implements PackageService {
             if(UnitEnum.WeightUnitEnum.KG.getCode().equals(scanDTO.getWeightUnit())){
                 weightByG = scanDTO.getWeight().multiply(BigDecimal.valueOf(1000));
             }
+            if(weightByG.compareTo(new BigDecimal("1000000")) > 0){
+                throw new ServiceException("超过1000KG，重量异常请核对");
+            }
             // 更新订单重量
             if(StringUtils.isNotBlank(scanResult.getLogisticsId())){
                 soB2cFeign.updateWeight(scanResult.getSoId(),scanResult.getLogisticsId(),weightByG);
