@@ -237,8 +237,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.convertPlatformSpuList();
         }
-
-        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = skuMappingService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), null);
+        List<String> platformSkuIdList = new ArrayList<>();
+        if (PlatformDictEnum.SHOPEE.getCode().equals(dto.getPlatform())){
+            platformSkuIdList = dto.convertPlatformSkuIdList();
+        }
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingInfoWithSkuMappingDTOMap = skuMappingService.mapListingByPlatformSkuNo(platformSkuList, platformSpuList, dto.getDictPlatform(), dto.getShopId(), dto.getPlatformOrderCreateTime(), null,platformSkuIdList);
 
         // 查询当前店铺信息
         ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());

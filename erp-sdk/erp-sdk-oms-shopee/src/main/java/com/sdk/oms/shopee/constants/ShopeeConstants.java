@@ -17,7 +17,7 @@ public interface ShopeeConstants {
     //     long shop_id = 497438607;
 //     long shop_id = 96070;
 //     long shop_id = 94349;
-     long shop_id = 94349;
+     long shop_id = 125408;
      long main_account_id = 863141;
      long merchant_id = 1315427;
      String code = "596d704f61436b46785a4c494b686363";
@@ -27,7 +27,7 @@ public interface ShopeeConstants {
      String access_token = "5a577a4f466d686f4a53736c61796e47";
      String refresh_token = "4e776c4e494949424e464d664379436c";
      String shop_refresh_token = "58666c4b58496358486265526e6f434a";
-     String shop_access_token = "5a6c544c6651687062474c7954537773";
+     String shop_access_token = "7942505853424d615341704743497957";
      String merchant_access_token = "6b6c50425770684a56474c6257697963";
      String merchant_refresh_token = "58424b515850524b7562476965644f44";
 
