@@ -1796,6 +1796,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
+    public void exportBox(PackingTaskDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("箱号对照表清单导出", EXPORT_WMS_FIRST_MILE_PACKING_BOX.getCode(), dto);
+    }
+
+    @Override
     public void exportPackingDetail(PackingTaskDTO.ExportDTO dto) {
         downloadTaskFeign.saveDownloadTask("发货单装箱清单导出", EXPORT_WMS_FIRST_MILE_PACKING_TASK_DETAIL.getCode(), dto);
     }

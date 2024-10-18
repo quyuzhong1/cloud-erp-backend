@@ -343,4 +343,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
     WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
+
+    void exportBox(PackingTaskDTO.ExportDTO dto);
 }
