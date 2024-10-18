@@ -1,9 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
@@ -232,4 +229,13 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param requisitionApplication
      */
     void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
+
+    /**
+     * 打印fnsku预览
+     * @param dto
+     * @Author jack
+     * @Date 2024/10/16
+     * @return List<RequisitionApplicationDTO.PrintFnskuPreviewDTO>
+     **/
+    List<RequisitionApplicationDTO.PrintFnskuDetailDTO> printFnskuPreview(BaseIdsDTO.IdsDTO dto);
 }

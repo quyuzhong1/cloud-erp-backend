@@ -318,6 +318,10 @@ public class WmsCartonDetailDTO implements Serializable {
          * fnsku
          */
         private String fnSku;
+        /**
+         * 装箱总数量
+         */
+        private Integer totalQty = 0;
     }
 
     /**

@@ -12,13 +12,11 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -35,9 +33,12 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -57,6 +58,7 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
@@ -78,9 +80,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.ObjectUtils;
+import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -185,6 +190,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
+    @Resource
+    private LogisticsProductFeign logisticsProductFeign;
 
     @Resource
     private CfgSettingService cfgSettingService;
@@ -2340,5 +2347,60 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             return new ArrayList<>();
         }
         return lambdaQuery().in(RequisitionApplicationEntity::getCode,codes).list();
+    }
+
+
+    @Override
+    public List<RequisitionApplicationDTO.PrintFnskuDetailDTO> printFnskuPreview(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        //查询要货申请列表
+        List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList = this.baseMapper.listPrintPreviewByIds(ids);
+        if(CollectionUtils.isEmpty(detailList)){
+            return Collections.emptyList();
+        }
+
+        //平台产品id集合
+        List<String> platformSpuNoList = detailList.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getPlatformSpu()))
+                .map(RequisitionApplicationDTO.PrintFnskuDetailDTO::getPlatformSpu)
+                .collect(Collectors.toList());
+        ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
+        listingInfoParamDTO.setPlatformSpuNoList(platformSpuNoList);
+        //oms 查询sku对照表
+        List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOS = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
+
+        //skuId集合
+        List<String> skuIds = detailList.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getSkuId()))
+                .map(RequisitionApplicationDTO.PrintFnskuDetailDTO::getSkuId)
+                .collect(Collectors.toList());
+        //plm 查询产品物流信息表
+        List<LogisticsProductDTO.ProductDTO> productDTOS = logisticsProductFeign.listLogisticsProduct(skuIds);
+        Map<String, String> collect = productDTOS.stream().filter(v -> StringUtils.isNotBlank(v.getDeclareEnglishName())).collect(Collectors.toMap(LogisticsProductDTO.ProductDTO::getSkuId, LogisticsProductDTO.ProductDTO::getDeclareEnglishName));
+
+        //汇总
+        List<RequisitionApplicationDTO.PrintFnskuDetailDTO> result = new ArrayList<>();
+        Map<String , RequisitionApplicationDTO.PrintFnskuDetailDTO> map = new HashMap();
+        for (RequisitionApplicationDTO.PrintFnskuDetailDTO detail : detailList) {
+            String skuId = detail.getSkuId();
+            Integer pickingQty = detail.getPickingQty();
+            if(map.containsKey(skuId)){
+                RequisitionApplicationDTO.PrintFnskuDetailDTO rp = map.get(skuId);
+                rp.setPickingQty(pickingQty + rp.getPickingQty());
+                map.put(skuId,rp);
+            }else{
+                String enName = collect.get(skuId);
+                if(StringUtils.isNotBlank(enName)){
+                    //长度超过则进行截取隐藏操作
+                    enName = enName;
+                }
+                detail.setDeclareEnglishName(enName);
+                map.put(skuId,detail);
+            }
+        }
+        if(map.size() > 0){
+            result = map.values().stream().collect(Collectors.toList());
+        }
+        return result;
     }
 }

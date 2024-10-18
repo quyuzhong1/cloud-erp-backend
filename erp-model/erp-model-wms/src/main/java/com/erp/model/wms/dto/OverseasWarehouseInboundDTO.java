@@ -683,10 +683,10 @@ public class OverseasWarehouseInboundDTO implements Serializable {
         private Integer receivedQty;
 
         /**
-         * 签收时间
+         * 签收日期
          */
-        @NotNull(message = "签收时间不能为空")
-        private LocalDateTime receiveTime;
+        @NotNull(message = "签收日期不能为空")
+        private LocalDate receiveDate;
     }
 
     /**
