@@ -1457,4 +1457,103 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Boolean isFlag;
     }
+
+    /**
+     * 打印fnsku
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintFnskuPreviewDTO {
+
+        /**
+         * 错误原因
+         */
+        private String errorMsg;
+
+        /**
+         * 详情
+         */
+        private List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList;
+    }
+
+    /**
+     * 打印fnsku确认
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintLogisticsBillConfirmDTO {
+        /**
+         * 错误原因
+         */
+        private String errorMsg;
+        /**
+         * 详情
+         */
+        private List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList;
+    }
+
+    /**
+     * 打印fnsku的详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintFnskuDetailDTO {
+
+        /**
+         * 要货申请id
+         */
+        private String id;
+        /**
+         *
+         */
+        private String skuId;
+        /**
+         *
+         */
+        private String skuNo;
+        /**
+         * fnsku
+         */
+        private String platformFnSku;
+        /**
+         * 平台skun/msku
+         */
+        private String platformSku;
+
+        /**
+         * 平台产品id/ASIN
+         */
+        private String platformSpu;
+        /**
+         * sku对照表id
+         */
+        private String skuMappingId;
+        /**
+         * 对应平台sku表id
+         */
+        private String listingId;
+        /**
+         * 产品物流信息表id
+         */
+        private String productLogisticsId;
+        /**
+         * 产品属性
+         */
+        private String productProperty;
+        /**
+         * 报关中文名
+         */
+        private String declareChineseName;
+        /**
+         * 报关英文名
+         */
+        private String declareEnglishName;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty = 0;
+    }
 }
