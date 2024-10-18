@@ -1,18 +1,16 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
+import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.sdk.oms.shopify.api.rest.model.ShopifyLineItem;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
-import com.sdk.oms.shopify.api.rest.model.ShopifyTransaction;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
@@ -67,4 +65,29 @@ public class ShopifyRefundOrderDetailDmpHandler extends DmpInputDoNextDmpHandler
         }
         return resultList;
     }
+
+    @Override
+    protected void afterConvertData(Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps) {
+        log.debug("ShopifyRefundOrderDetailDmpHandler afterConvertData：");
+        String parentTableName = SqlHelper.table(DmpSoRefundInfoEntity.class).getTableName();
+        ServiceImpl parentServiceImpl = this.getServiceImpl(parentTableName);
+        QueryWrapper<?> wrapper = new QueryWrapper<>();
+        wrapper.eq(INPUT_TASK_ID, inputTaskId);
+        List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
+        // Map<>
+        Map<String, String> dmpRefundIdMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(listMaps)) {
+            for(Map<String, Object> listMap : listMaps) {
+                dmpRefundIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.ID).toString());
+            }
+        }
+        for (List<TreeMap<String, Object>> dmpInputMongoList : dmpInputDataDmpRelationMaps.values()) {
+            for (TreeMap<String, Object> detailMap : dmpInputMongoList) {
+                String returnOrderId = detailMap.get("thirdOrderCode").toString();
+                String dmpId = dmpRefundIdMap.get(returnOrderId);
+                detailMap.put("mainId", dmpId);
+            }
+        }
+    }
+
 }

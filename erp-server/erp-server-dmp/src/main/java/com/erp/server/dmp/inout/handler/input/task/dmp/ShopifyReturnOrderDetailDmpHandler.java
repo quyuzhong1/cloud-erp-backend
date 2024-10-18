@@ -1,16 +1,14 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.sdk.oms.shopify.api.rest.model.ShopifyLineItem;
-import com.sdk.oms.shopify.api.rest.model.ShopifyOrder;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
 import lombok.extern.slf4j.Slf4j;
@@ -31,11 +29,6 @@ public class ShopifyReturnOrderDetailDmpHandler extends DmpInputDoNextDmpHandler
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
-//        String id = dmpInputTaskEntity.getId();
-//        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, id).list();
-//        if (CollectionUtil.isEmpty(list)) {
-//            return Collections.emptyList();
-//        }
         Object refundsObj = dmpInputMongoEntity.get("refunds");
         if (null == refundsObj) {
             return Collections.emptyList();
@@ -73,5 +66,30 @@ public class ShopifyReturnOrderDetailDmpHandler extends DmpInputDoNextDmpHandler
             }
         }
         return resultList;
+    }
+
+    @Override
+    protected void afterConvertData(Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps) {
+        log.debug("ShopifyReturnOrderDetailDmpHandler afterConvertData：");
+        String parentTableName = SqlHelper.table(DmpSoReturnInfoEntity.class).getTableName();
+        ServiceImpl parentServiceImpl = this.getServiceImpl(parentTableName);
+        QueryWrapper<?> wrapper = new QueryWrapper<>();
+        wrapper.eq(INPUT_TASK_ID, inputTaskId);
+        List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
+
+        Map<String, String> dmpReturnIdMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(listMaps)) {
+            for(Map<String, Object> listMap : listMaps) {
+                dmpReturnIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.ID).toString());
+            }
+        }
+        for (List<TreeMap<String, Object>> dmpInputMongoList : dmpInputDataDmpRelationMaps.values()) {
+            for (TreeMap<String, Object> detailMap : dmpInputMongoList) {
+                String returnOrderId = detailMap.get("thirdOrderCode").toString();
+                String dmpId = dmpReturnIdMap.get(returnOrderId);
+                detailMap.put("mainId", dmpId);
+            }
+        }
+        log.debug("ShopifyReturnOrderDetailDmpHandler afterConvertData：");
     }
 }

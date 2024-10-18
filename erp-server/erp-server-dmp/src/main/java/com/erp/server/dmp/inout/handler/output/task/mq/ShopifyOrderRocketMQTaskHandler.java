@@ -17,6 +17,7 @@ import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -36,21 +37,30 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         Map<String, List<DmpSoDetailEntity>> dmpSoDetailEntityMap = new HashMap<>();
         Map<String, List<DmpSoReceiverEntity>> dmpSoReceiverEntityMap = new HashMap<>();
 
-        // 退货信息
-        Map<String, String> dmpSoReturnIdMap = new HashMap<>();
-        // Map<平台订单ID, 退货单列表>
+        // Map<平台订单ID, DMP订单ID>
+        Map<String, String> platformOrderIdDmpSoIdMap = new HashMap<>();
+
+        // 退货信息 Map<DMP退货单ID, DMP订单ID>
+        Map<String, String> dmpReturnIdAndDmpSoIdMap = new HashMap<>();
+        // Map<DMP订单ID, 退货单列表>
         Map<String, List<DmpSoReturnInfoEntity>> dmpSoReturnInfoEntityMap = new HashMap<>();
-        // Map<平台订单ID, 退款单列表>
+        // Map<DMP退货订单ID, 退货单列表>
         Map<String, List<DmpSoReturnDetailEntity>> dmpSoReturnDetailEntityMap = new HashMap<>();
 
-        // 退款信息
-        Map<String, String> dmpSoRefundIdMap = new HashMap<>();
-        // Map<平台订单ID, 退款单列表>
+        // 退款信息  Map<DMP退款单ID, DMP订单ID>
+        Map<String, String> dmpRefundIdAndDmpSoIdMap = new HashMap<>();
+        // Map<DMP订单ID, 退款单列表>
         Map<String, List<DmpSoRefundInfoEntity>> dmpSoRefundInfoEntityMap = new HashMap<>();
-        // Map<退款单中台mainId, 退款单列表>
+        //  Map<退款单中台ID, 退款单列表>>
         Map<String, List<DmpSoRefundDetailEntity>> dmpSoRefundDetailEntityMap = new HashMap<>();
 
-        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+        // convert按order排序固定解析顺序
+        List<Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>>> sortedEntryMap = convertInputDmpBaseEntityListMaps.entrySet()
+                .stream()
+                .sorted(Comparator.comparingInt(entry -> entry.getKey().getOrder())) // 按 order 字段排序
+                .collect(Collectors.toList());
+
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : sortedEntryMap) {
             List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
                 String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
@@ -58,6 +68,8 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                     for (BaseEntity v : value) {
                         DmpSoInfoEntity dmpSoInfoEntity = (DmpSoInfoEntity) v;
                         dmpSoInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
+                        // 记录 Map<平台订单ID, DMP订单ID>
+                        platformOrderIdDmpSoIdMap.put(dmpSoInfoEntity.getPlatformCode(), dmpSoInfoEntity.getId());
                     }
                 } else if ("dmp_so_detail".equals(storageName)) {
                     for (BaseEntity v : value) {
@@ -84,14 +96,15 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 } else if ("dmp_so_return_info".equals(storageName)) {
                     for (BaseEntity v : value) {
                         DmpSoReturnInfoEntity dmpEntity = (DmpSoReturnInfoEntity) v;
-                        String returnOrderId = dmpEntity.getThirdCode();
-                        List<DmpSoReturnInfoEntity> list = dmpSoReturnInfoEntityMap.get(returnOrderId);
+                        String platformOrderId = dmpEntity.getPlatformCode();
+                        List<DmpSoReturnInfoEntity> list = dmpSoReturnInfoEntityMap.get(platformOrderId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
                         }
                         list.add(dmpEntity);
-                        dmpSoReturnInfoEntityMap.put(returnOrderId, list);
-                        dmpSoReturnIdMap.put(dmpEntity.getId(), returnOrderId);
+                        String dmpOrderId = platformOrderIdDmpSoIdMap.get(platformOrderId);
+                        dmpSoReturnInfoEntityMap.put(dmpOrderId, list);
+                        dmpReturnIdAndDmpSoIdMap.put(dmpEntity.getId(), dmpOrderId);
                     }
                 } else if ("dmp_so_return_detail".equals(storageName)) {
                     for (BaseEntity v : value) {
@@ -107,14 +120,15 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 } else if ("dmp_so_refund_info".equals(storageName)) {
                     for (BaseEntity v : value) {
                         DmpSoRefundInfoEntity dmpEntity = (DmpSoRefundInfoEntity) v;
-                        String refundOrderId = dmpEntity.getThirdCode();
-                        List<DmpSoRefundInfoEntity> list = dmpSoRefundInfoEntityMap.get(refundOrderId);
+                        String platformOrderId = dmpEntity.getPlatformCode();
+                        List<DmpSoRefundInfoEntity> list = dmpSoRefundInfoEntityMap.get(platformOrderId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
                         }
                         list.add(dmpEntity);
-                        dmpSoRefundInfoEntityMap.put(refundOrderId, list);
-                        dmpSoRefundIdMap.put(dmpEntity.getId(), refundOrderId);
+                        String dmpOrderId = platformOrderIdDmpSoIdMap.get(platformOrderId);
+                        dmpSoRefundInfoEntityMap.put(dmpOrderId, list);
+                        dmpRefundIdAndDmpSoIdMap.put(dmpEntity.getId(), dmpOrderId);
                     }
                 } else if ("dmp_so_refund_detail".equals(storageName)) {
                     for (BaseEntity v : value) {
@@ -132,11 +146,12 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         }
 
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+        // DMP订单ID
         Set<String> changeIds = new HashSet<>();
-        // 退货单变更
-        Set<String> returnChangeIds = new HashSet<>();
-        // 退款单变更
-        Set<String> refundChangeIds = new HashSet<>();
+        // 退货单变更<DMP订单ID, DMP退货单IDS>
+        Map<String, Set<String>> returnChangeIds = new HashMap<>();
+        // 退款单变更<DMP订单ID, DMP退款单IDS>
+        Map<String, Set<String>>refundChangeIds = new HashMap<>();
 
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
@@ -157,20 +172,46 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                         changeIds.add(dmpSoReceiverEntity.getMainId());
                     }
                 } else if ("dmp_so_return_detail".equals(storageName)) {
-                    // 仅判断明细，主表不用判断
+                    // 仅判断明细，主表不用判断(退货单的主表是由明细合并)
                     for (BaseEntity v : value) {
                         DmpSoReturnDetailEntity dmpEntity = (DmpSoReturnDetailEntity) v;
                         String mainId = dmpEntity.getMainId();
-                        changeIds.add(dmpSoReturnIdMap.get(mainId));
-                        returnChangeIds.add(mainId);
+                        String dmpSoId = dmpReturnIdAndDmpSoIdMap.get(mainId);
+                        changeIds.add(dmpSoId);
+                        Set<String> dmpReturnIds = returnChangeIds.get(dmpSoId);
+                        if (CollUtil.isEmpty(dmpReturnIds)){
+                            dmpReturnIds = new LinkedHashSet<>();
+                        }
+                        dmpReturnIds.add(dmpEntity.getMainId());
+                        returnChangeIds.put(dmpSoId, dmpReturnIds);
+                    }
+                } else if ("dmp_so_refund_info".equals(storageName)) {
+                    // 仅判断明细，主表不用判断
+                    for (BaseEntity v : value) {
+                        DmpSoRefundInfoEntity dmpEntity = (DmpSoRefundInfoEntity) v;
+                        String dmpSoId = dmpRefundIdAndDmpSoIdMap.get(dmpEntity.getId());
+                        changeIds.add(dmpSoId);
+                        Set<String> dmpRefundIds = refundChangeIds.get(dmpSoId);
+                        if (CollUtil.isEmpty(dmpRefundIds)){
+                            dmpRefundIds = new LinkedHashSet<>();
+                        }
+                        dmpRefundIds.add(dmpEntity.getId());
+                        refundChangeIds.put(dmpSoId, dmpRefundIds);
                     }
                 } else if ("dmp_so_refund_detail".equals(storageName)) {
                     // 仅判断明细，主表不用判断
                     for (BaseEntity v : value) {
                         DmpSoRefundDetailEntity dmpEntity = (DmpSoRefundDetailEntity) v;
                         String mainId = dmpEntity.getMainId();
-                        changeIds.add(dmpSoRefundIdMap.get(mainId));
-                        refundChangeIds.add(mainId);
+
+                        String dmpSoId = dmpRefundIdAndDmpSoIdMap.get(mainId);
+                        changeIds.add(dmpSoId);
+                        Set<String> dmpRefundIds = refundChangeIds.get(dmpSoId);
+                        if (CollUtil.isEmpty(dmpRefundIds)){
+                            dmpRefundIds = new LinkedHashSet<>();
+                        }
+                        dmpRefundIds.add(dmpEntity.getMainId());
+                        refundChangeIds.put(dmpSoId, dmpRefundIds);
                     }
                 }
             }
@@ -181,12 +222,13 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         for (String changId : changeIds) {
             // 退货单变更
             Map<DmpSoReturnInfoEntity, List<DmpSoReturnDetailEntity>> changeReturnMap = new HashMap<>();
-            List<DmpSoReturnInfoEntity> dmpSoReturnInfoEntity = dmpSoReturnInfoEntityMap.get(changId);
-            if (CollUtil.isNotEmpty(dmpSoReturnInfoEntity)) {
-                List<DmpSoReturnInfoEntity> returnInfoList = dmpSoReturnInfoEntityMap.get(changId);
+            Set<String> curChangeReturnIds = returnChangeIds.get(changId);
+            if (CollUtil.isNotEmpty(curChangeReturnIds)) {
                 // 变更的退货单
-                List<DmpSoReturnInfoEntity> curReturnInfoList = returnInfoList.stream()
-                        .filter(e -> returnChangeIds.contains(e.getId()))
+                List<DmpSoReturnInfoEntity> curReturnInfoList = dmpSoReturnInfoEntityMap.values()
+                        .stream()
+                        .flatMap(List::stream)
+                        .filter(e -> curChangeReturnIds.contains(e.getId()))
                         .collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(curReturnInfoList)) {
                     for (DmpSoReturnInfoEntity soReturnInfoEntity : curReturnInfoList) {
@@ -200,12 +242,13 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             }
             // 退款单变更
             Map<DmpSoRefundInfoEntity, List<DmpSoRefundDetailEntity>> changeRefundMap = new HashMap<>();
-            List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList = dmpSoRefundDetailEntityMap.get(changId);
-            if (CollUtil.isNotEmpty(dmpSoRefundDetailEntityList)) {
-                List<DmpSoRefundInfoEntity> returnInfoList = dmpSoRefundInfoEntityMap.get(changId);
+            Set<String> curChangeRefundIds = refundChangeIds.get(changId);
+            if (CollUtil.isNotEmpty(curChangeRefundIds)) {
                 // 变更的退货单
-                List<DmpSoRefundInfoEntity> curReturnInfoList = returnInfoList.stream()
-                        .filter(e -> refundChangeIds.contains(e.getId()))
+                List<DmpSoRefundInfoEntity> curReturnInfoList = dmpSoRefundInfoEntityMap.values()
+                        .stream()
+                        .flatMap(List::stream)
+                        .filter(e -> curChangeRefundIds.contains(e.getId()))
                         .collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(curReturnInfoList)) {
                     for (DmpSoRefundInfoEntity soRefundInfoEntity : curReturnInfoList) {
