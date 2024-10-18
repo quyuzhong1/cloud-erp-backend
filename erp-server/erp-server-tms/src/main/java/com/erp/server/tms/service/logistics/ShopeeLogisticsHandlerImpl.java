@@ -158,6 +158,10 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param shipOrderRequest
      */
     private void shippingOrder(BaseRequest baseRequest, ShipOrderRequest shipOrderRequest) {
+        //请求参数异常直接调出该步骤
+        if (Objects.isNull(shipOrderRequest)){
+            return;
+        }
         try {
             BaseResponse baseResponse = shopeeLogisticsService.shippingOrder(baseRequest, shipOrderRequest);
             logisticsOperateService.pullOperateLog("",
@@ -167,16 +171,17 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("",
                     shipOrderRequest.getOrderSn(), BusinessTypeEnum.SHIPPING_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
-            throw new ServiceException(StrUtil.format("虾皮【{}】标记发货异常请求异常:{}",shipOrderRequest.getOrderSn(),e.getMessage()));
+            log.error(StrUtil.format("虾皮【{}】标记发货异常请求异常:{}",shipOrderRequest.getOrderSn(),e.getMessage()));
+            //标发异常不进行抛出异常
         }
     }
 
     private ShipOrderRequest getShippingParameter(BaseRequest baseRequest, String orderSn, String packageNumber) {
+        ShipOrderRequest shipOrderRequest = null;
         try {
             ShipDetailResponse shippingParameter = shopeeLogisticsService.getShippingParameter(baseRequest, orderSn, packageNumber);
 
             ShipDropInfo dropout = shippingParameter.getDropoff();
-            ShipOrderRequest shipOrderRequest = null;
             if (CollectionUtil.isEmpty(dropout.getBranchInfoList())){
                 shipOrderRequest = ShipOrderRequest.builder()
                         .orderSn(orderSn)
@@ -200,13 +205,13 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("",
                     orderSn, BusinessTypeEnum.SHIPPING_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest), JSONUtil.toJsonStr(shippingParameter));
-            return shipOrderRequest;
         }catch (Exception e){
             logisticsOperateService.pullOperateLog("",
                     orderSn, BusinessTypeEnum.SHIPPING_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
-            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,e.getMessage()));
+            log.error(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,e.getMessage()));
         }
+        return shipOrderRequest;
     }
 
     /**
