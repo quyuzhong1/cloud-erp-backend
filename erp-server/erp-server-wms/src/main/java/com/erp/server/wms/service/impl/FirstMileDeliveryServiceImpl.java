@@ -2319,6 +2319,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     private List<WmsCartonDetailDTO.ListPackingDetailDTO> buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
+        //根据id汇总统计装箱总数量
+        Map<String, Integer> boxQtyMap = listPackingDetailDTOS.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailDTO::getPackQty)));
         List<String> taskIds = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskId).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> taskEntityList = packingTaskService.listByIds(taskIds);
         Map<String, PackingTaskEntity> taskMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
@@ -2338,9 +2340,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
         List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(taskIds, null);
         Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
+        Map<String,Integer> distinctMap = new HashMap<>();
         listPackingDetailDTOS.forEach(pagingViewDTO -> {
             PackingTaskEntity packingTaskEntity = taskMap.get(pagingViewDTO.getTaskId());
             PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(pagingViewDTO.getTaskId());
+            Integer totalQty = boxQtyMap.get(pagingViewDTO.getId());
+            pagingViewDTO.setTotalQty(totalQty);
             pagingViewDTO.setTaskCode(packingTaskEntity.getCode());
             pagingViewDTO.setSourceCode(packingTaskEntity.getSourceCode());
             pagingViewDTO.setSourceType(packingTaskEntity.getSourceType());
@@ -2353,18 +2358,30 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setWeightingTotalStatus(weightingStatus);
                 pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.getName(weightingStatus));
                 pagingViewDTO.setErrorMsg(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(statusDTO.getErrorMsg())? "" : statusDTO.getErrorMsg());
-                pagingViewDTO.setPackageWeightStr(pagingViewDTO.getPackageWeight().toPlainString() + UnitEnum.WeightUnitEnum.KG.getName());
+                pagingViewDTO.setPackageWeightStr(pagingViewDTO.getPackageWeight().toPlainString());
             }else {
                 pagingViewDTO.setPackingTotalStatus(PackingTaskStatusEnum.UNPACKED.getCode());
                 pagingViewDTO.setPackingTotalStatusName(PackingTaskStatusEnum.UNPACKED.getName());
                 pagingViewDTO.setWeightingTotalStatus(PackingWeightStatusEnum.UNWEIGHED.getCode());
                 pagingViewDTO.setWeightingTotalStatusName(PackingWeightStatusEnum.UNWEIGHED.getName());
                 pagingViewDTO.setPackageWeight(BigDecimal.ZERO);
-                pagingViewDTO.setPackageWeightStr("0" + UnitEnum.WeightUnitEnum.KG.getName());
+                pagingViewDTO.setPackageWeightStr("0");
             }
             if(StringUtils.isNotBlank(pagingViewDTO.getFbaBoxNo())){
                 String fbaBoxNo = StrUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(pagingViewDTO.getBusinessCode()), "U", StrUtils.leftPadding(pagingViewDTO.getFbaBoxNo(),6,"0"));
                 pagingViewDTO.setFbaBoxNo(fbaBoxNo);
+            }
+            if(distinctMap.containsKey(pagingViewDTO.getId())){
+                pagingViewDTO.setDeliveryCode("");
+                pagingViewDTO.setBusinessCode("");
+                pagingViewDTO.setTaskCode("");
+                pagingViewDTO.setSourceCode("");
+                pagingViewDTO.setSourceTypeName("");
+                pagingViewDTO.setFbaBoxNo("");
+                pagingViewDTO.setBoxNo("");
+                pagingViewDTO.setPackingTotalStatusName("");
+            }else {
+                distinctMap.put(pagingViewDTO.getId(),1);
             }
         });
         return listPackingDetailDTOS;
