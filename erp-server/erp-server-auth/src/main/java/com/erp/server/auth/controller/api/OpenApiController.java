@@ -54,7 +54,7 @@ public class OpenApiController {
 
     @PostMapping("/upload")
     public @ResponseBody ApiResult<?> unitPlatformServiceUpload(@Valid OpenApiReqDTO input, HttpServletRequest request, MultipartFile file){
-        log.warn("平台上传接口统一请求报文：{}" , JSON.toJSONString(input));
+        log.warn("平台上传接口统一请求报文：{},文件名:{}" , JSON.toJSONString(input),file.getName());
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
         String referer = request.getHeader("Referer");
