@@ -289,7 +289,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setCustomerName(customerInfoEntity.getName());
         entity.setReturnDate(dto.getReturnDate());
         if(existEntity != null && !existEntity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",existEntity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
         }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //如果有退货订单号

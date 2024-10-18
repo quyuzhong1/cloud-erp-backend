@@ -303,7 +303,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         entity.setId(dto.getId());
         if(existEntity != null && !existEntity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",existEntity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
         }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         entity.setSourceId(dto.getSourceId());
