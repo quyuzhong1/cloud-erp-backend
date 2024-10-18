@@ -306,4 +306,6 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
      * 试产量产审核/试产量产审核完毕 发送通知
      */
     Boolean approvePilotApplicationNotice(String userName, PilotApplicationDTO.ApprovePilotNoticeDTO entity,Boolean isCompeletd);
+
+    List<String> getSetPilotNotice(NoticeMessageEntity notice, PilotApplicationDTO.ApprovePilotNoticeDTO entity, Boolean isCompeletd);
 }

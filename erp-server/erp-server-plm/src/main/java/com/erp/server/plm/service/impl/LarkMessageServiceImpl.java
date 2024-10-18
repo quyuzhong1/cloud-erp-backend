@@ -4,6 +4,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.core.enums.ApiError;
@@ -11,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.dto.LarkPressMessageDTO;
+import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -19,6 +21,8 @@ import com.erp.model.plm.enums.NoticeEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
+import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.dto.LarkResultDTO;
@@ -31,6 +35,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -64,6 +70,9 @@ public class LarkMessageServiceImpl implements LarkMessageService {
     @Resource
     private RedisService redisService;
 
+    @Resource
+    private PilotApplicationService pilotApplicationService;
+
 
     @Override
     public Boolean press(LarkPressMessageDTO dto) {
@@ -83,6 +92,39 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         List<LarkPressMessageDTO.SendUserInfo> pressUserList = new ArrayList<>(10);
 
         switch (businessType) {
+            case PILOT_APPLICATION:
+                PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
+                if(null != entity) {
+                    if (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
+                        throw new ServiceException(ApiError.ERROR_95273);
+                    }
+                    noticeFlag = NoticeEnum.AUDIT_PILOT_APPLICATION;
+                    long timeInMillis = Calendar.getInstance().getTimeInMillis();
+                    dto.setBusinessName(businessType.getName()+"【"+entity.getCode()+"】###"+timeInMillis);
+                    //标题
+                    titleContent = String.format(NoticeMessageConstant.AUDIT_PILOT_PRESS_TITLE,entity.getUserName(),entity.getCode());
+                    //消息内容
+                    String chargeName = Arrays.asList(entity.getChargeName().split(",")).stream().distinct().collect(Collectors.joining(";"));
+                    String skuNo = Arrays.asList(entity.getSkuNo().split(",")).stream().distinct().collect(Collectors.joining(";"));
+                    textContent = String.format(NoticeMessageConstant.AUDIT_PILOT_PRESS_CONTENT , "试产量产催办" , chargeName, skuNo);
+
+                    //被通知人
+                    //根据节点标示获取到通知消息实体
+                    NoticeMessageEntity notice = noticeMessageService.getByNodeFlag(noticeFlag);
+                    if (Objects.isNull(notice)) {
+                        throw new ServiceException(ApiError.ERROR_MSG_IS_NOT_NULL);
+                    }
+                    List<String> handleUserIdList = noticeMessageService.getSetPilotNotice(notice, entity, Boolean.FALSE);
+                    if(CollectionUtils.isNotEmpty(handleUserIdList)) {
+                        for (String userId : handleUserIdList) {
+                            LarkPressMessageDTO.SendUserInfo sendUserInfo = new LarkPressMessageDTO.SendUserInfo();
+                            sendUserInfo.setUserId(userId);
+                            sendUserInfo.setUserName("");
+                            pressUserList.add(sendUserInfo);
+                        }
+                    }
+                }
+                break;
             case PRODUCT_TASK:
                 List<Integer> statusList = new ArrayList<>(3);
                 statusList.add(TaskStateEnum.APPROVAL_PASS.getCode());
@@ -136,21 +178,14 @@ public class LarkMessageServiceImpl implements LarkMessageService {
 
                     }
                 }
-
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_BUSINESS_NOT_EXIT);
 
         }
-
-
-
         // 发送飞书加急消息
         sendMessage(pressUserList, titleContent, textContent, noticeFlag, ThirdConstants.FS_MESSAGE_INTERACTIVE, Boolean.TRUE);
-
         redisService.setCacheObject(redisKey, dto.getBusinessName(), 30L, TimeUnit.MINUTES);
-
-
         return Boolean.TRUE;
     }
 
@@ -220,6 +255,14 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 //是否存在
                 String redisValue = redisService.getCacheObject(redisKey);
                 if (StringUtils.isNotBlank(redisValue)) {
+                    if(dto.getBusinessType().equals(LarkPressBusinessTypeEnum.PILOT_APPLICATION.getCode())){//试产量产类型
+                        String[] split = redisValue.split("###");
+                        long lastTime = Long.parseLong(split[1]);
+                        Calendar cal = Calendar.getInstance();
+                        long nowTime = cal.getTimeInMillis();
+                        long min = 30 - (nowTime - lastTime) / (60 * 1000);
+                        redisValue = split[0] + " " + min +"分钟前";
+                    }
                     alreadyPress.add(redisValue);
                 } else {
                     LarkPressMessageDTO pressMessage = new LarkPressMessageDTO();
@@ -231,8 +274,12 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         }
         if (CollectionUtils.isNotEmpty(alreadyPress)) {
             String name = alreadyPress.stream().collect(Collectors.joining(","));
-            String message = ApiError.ERROR_95191.msg;
-            throw new ServiceException(ApiError.ERROR_95191.code, String.format(message, name));
+            ApiError error = ApiError.ERROR_95191;
+            if(dto.getBusinessType().equals(LarkPressBusinessTypeEnum.PILOT_APPLICATION.getCode())){//试产量产类型
+                error = ApiError.ERROR_95274;
+            }
+            String message = error.msg;
+            throw new ServiceException(error.code, String.format(message, name));
         }
         return Boolean.TRUE;
 

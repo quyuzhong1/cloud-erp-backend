@@ -14,6 +14,7 @@ public enum LarkPressBusinessTypeEnum implements EnumMessage {
      * 产品任务催办
      */
     PRODUCT_TASK("product_task","产品任务"),
+    PILOT_APPLICATION("pilot_application","试产量产"),
     ;
 
     public String code;
