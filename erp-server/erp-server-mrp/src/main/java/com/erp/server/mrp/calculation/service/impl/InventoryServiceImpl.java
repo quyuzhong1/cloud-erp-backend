@@ -20,7 +20,6 @@ import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
-import com.erp.server.mrp.calculation.service.ShopInfoService;
 import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.*;
 import org.springframework.stereotype.Service;
@@ -40,8 +39,6 @@ import static com.erp.model.mrp.enums.SnapshotTableEnum.*;
 public class InventoryServiceImpl implements InventoryService {
     @Resource
     private InventoryMapper inventoryMapper;
-    @Resource
-    private ShopInfoService shopInfoService;
 
     @Resource
     private ReplenishmentSuggestionService replenishmentSuggestionService;
