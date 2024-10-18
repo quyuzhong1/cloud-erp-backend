@@ -183,6 +183,7 @@ public class PlatformReturnInstockConsumerService extends AbstractNewPlatformCon
 			soReturnInstockDetailEntity.setWarehouseId(warehouseEntity.getId());
 			soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
 			soReturnInstockDetailEntity.setRemark(dto.getReason());
+			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
 			detailEntityList.add(soReturnInstockDetailEntity);
 		}
 		return detailEntityList;

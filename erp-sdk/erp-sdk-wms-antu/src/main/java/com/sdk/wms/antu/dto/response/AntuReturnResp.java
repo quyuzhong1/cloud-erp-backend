@@ -29,6 +29,11 @@ public class AntuReturnResp extends CleanBaseDTO implements Serializable {
     @JSONField(name = "refrence_no_platform")
     private String orderCode;
 
+    //退件类型 1:买家退件 2:物流退件 3:认领
+    @JSONField(name = "spo_type")
+    private String spoType;
+
+
     //订单参考号
     @JSONField(name = "order_reference_no")
     private String orderReferenceNo;
