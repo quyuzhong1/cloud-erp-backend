@@ -5240,11 +5240,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 oldEntity.setApproveStatus(approveStatusEnum);
             }
-            //已发货
-            String shippedCode = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
-            //旧的订单状态
-            String oldBillStatus = oldEntity.getBillStatus();
-            String newBillStatus = dto.getBillStatus();
             //平台订单状态
             String platformOrderStatus = dto.getPlatformOrderStatus();
             // 亚马逊作废保留以前状态
@@ -5262,6 +5257,24 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setPayTime(oldEntity.getPayTime());
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
+            // SHOPEE作废保留以前状态
+            if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                if ("PROCESSED".equalsIgnoreCase(dto.getPlatformOrderStatus())
+                        || ("RETRY_SHIP".equalsIgnoreCase(dto.getPlatformOrderStatus()))
+                        || ("SHIPPED".equalsIgnoreCase(dto.getPlatformOrderStatus()))
+                ) {
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                }
+                if ("IN_CANCEL".equalsIgnoreCase(dto.getPlatformOrderStatus())
+                        || ("CANCELLED".equalsIgnoreCase(dto.getPlatformOrderStatus()))) {
+                    oldEntity.setApproveStatus(oldApproveStatus);
+                    dto.setPayStatus(oldEntity.getPayStatus());
+                    dto.setPayTime(oldEntity.getPayTime());
+                    dto.setBillStatus(oldEntity.getBillStatus());
+                    dto.setApproveStatusStr("");//取消和取消中不更新审核状态
+                }
+            }
+
             //速卖通
             if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                 if ("IN_CANCEL".equals(platformOrderStatus)

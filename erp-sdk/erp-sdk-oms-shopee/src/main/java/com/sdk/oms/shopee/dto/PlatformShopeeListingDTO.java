@@ -90,7 +90,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 // 平台产品名称
                 .setPlatformProductName(itemInfo.getItemName())
                 //产品包装信息
-                .setProductPacking(processDimension(modelInfo.getDimension(), modelInfo.getWeight()))
+                .setProductPacking(processDimension(itemInfo.getDimension(), itemInfo.getWeight()))
                 //产品规格信息
                 .setProductSpec(processProductSpec(itemInfo.getAttributeList()))
                 // 产品图片 url

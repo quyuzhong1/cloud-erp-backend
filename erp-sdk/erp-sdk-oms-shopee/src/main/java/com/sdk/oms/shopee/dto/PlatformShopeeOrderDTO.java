@@ -179,9 +179,9 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         // 付款方式
         orderDTO.setDictPayMethod(orderDetail.getPaymentMethod());
         // 买家备注
-        orderDTO.setBuyerRemark(orderDetail.getNote());
+        orderDTO.setBuyerRemark(orderDetail.getMessageToSeller());
         // 订单备注
-        orderDTO.setRemark(orderDetail.getMessageToSeller());
+        orderDTO.setRemark(orderDetail.getNote());
         // 销售组织id
         Long buyerUserId = orderDetail.getBuyerUserId();
         if (Objects.nonNull(buyerUserId)) {
