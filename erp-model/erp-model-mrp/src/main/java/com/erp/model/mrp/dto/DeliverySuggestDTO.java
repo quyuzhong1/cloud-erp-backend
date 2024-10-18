@@ -216,7 +216,7 @@ public class DeliverySuggestDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO  {
 
         /**
         * 主键id
@@ -224,6 +224,40 @@ public class DeliverySuggestDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 计划发货量（计划修正值）
+         */
+        private String planDeliveryQty;
+
+        /**
+         * 实际发货量（运营确认值）
+         */
+        private String actualDeliveryQty;
+
+        /**
+         * 发货备货量
+         */
+        private String deliveryStockUpQty;
+
+        /**
+         * 物流方式,LogisticsMethodEnum枚举
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+
+        /**
+         * 建议发货日期
+         */
+        private LocalDate suggestDeliveryDate;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     @Data
@@ -290,5 +324,108 @@ public class DeliverySuggestDTO implements Serializable {
 
     }
 
+    /**
+     * 下推发货计划
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewPushDeliveryPlanDTO {
+        /**
+         * 单据类型
+         */
+        private String type;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 国家
+         */
+        private String country;
+        /**
+         * 国家名称
+         */
+        private String countryName;
+        /**
+         * 期望发货时间
+         */
+        private LocalDate deliveryDate;
+        /**
+         * 期望物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 期望物流方式名称
+         */
+        private String logisticsMethodName;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 下推发货计划明细
+         */
+        private List<ViewPushDeliveryPlanDetailDTO> detailList;
+    }
+    /**
+     * 下推发货计划明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewPushDeliveryPlanDetailDTO {
+        /**
+         * 编号
+         */
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 品名
+         */
+        private String productName;
 
+        /**
+         * 发货备货量
+         */
+        private Integer deliveryStockUpQty;
+
+        /**
+         * 计划发货量（计划修正值）
+         */
+        private Integer planDeliveryQty;
+        /**
+         * MSKU
+         */
+        private String mSKu;
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+        /**
+         * ASIN
+         */
+        private String aSin;
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
+    }
 }

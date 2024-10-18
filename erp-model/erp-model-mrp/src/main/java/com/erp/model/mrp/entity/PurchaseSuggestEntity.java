@@ -166,13 +166,13 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
      * 计划采购量（计划修正值）
      */
     @TableField("plan_purchase_qty")
-    private String planPurchaseQty;
+    private Integer planPurchaseQty;
 
     /**
      * 采购备货量
      */
     @TableField("purchase_stock_up_qty")
-    private String purchaseStockUpQty;
+    private Integer purchaseStockUpQty;
 
     /**
      * 备注

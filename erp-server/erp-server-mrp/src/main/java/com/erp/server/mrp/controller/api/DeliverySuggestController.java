@@ -199,4 +199,30 @@ public class DeliverySuggestController extends BaseController {
         Boolean flag = deliverySuggestService.export(pagingParamDTO);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 下推发货计划
+     * @author will
+     * @date 2024/10/17 18:22
+     * @param idsDTO
+     * @return ApiResult<PushDeliveryPlanDTO>
+     */
+    @PostMapping(value = "/viewPushDeliveryPlan")
+    public ApiResult<DeliverySuggestDTO.ViewPushDeliveryPlanDTO> viewPushDeliveryPlan(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
+        DeliverySuggestDTO.ViewPushDeliveryPlanDTO dto = deliverySuggestService.viewPushDeliveryPlan(idsDTO.getIds());
+        return success(dto);
+    }
+
+    /**
+     * 下推发货计划保存
+     * @author will
+     * @date 2024/10/18 10:09
+     * @param deliveryPlanDTO
+     * @return ApiResult<ViewPushDeliveryPlanDTO>
+     */
+    @PostMapping(value = "/pushDeliveryPlan")
+    public ApiResult<DeliverySuggestDTO.ViewPushDeliveryPlanDTO> pushDeliveryPlan(@RequestBody DeliverySuggestDTO.ViewPushDeliveryPlanDTO deliveryPlanDTO) {
+        Boolean flag = deliverySuggestService.pushDeliveryPlan(deliveryPlanDTO);
+        return flag == true ? success() : failure();
+    }
 }

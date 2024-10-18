@@ -224,7 +224,7 @@ public class PurchaseSuggestDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO  {
 
         /**
         * 主键id
@@ -232,6 +232,30 @@ public class PurchaseSuggestDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 计划采购量（计划修正值）
+         */
+        private Integer planPurchaseQty;
+
+        /**
+         * 采购备货量
+         */
+        private Integer purchaseStockUpQty;
+
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
     }
 
     @Data

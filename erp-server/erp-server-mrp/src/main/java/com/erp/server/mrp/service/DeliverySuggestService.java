@@ -1,11 +1,12 @@
 package com.erp.server.mrp.service;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.mrp.dto.DeliverySuggestDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -108,4 +109,20 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return Boolean
      */
     Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO);
+    /**
+     * 下推发货计划
+     * @author will
+     * @date 2024/10/17 18:22
+     * @param ids
+     * @return ViewPushDeliveryPlanDTO
+     */
+    DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlan(List<String> ids);
+    /**
+     * 下推发货计划保存
+     * @author will
+     * @date 2024/10/18 10:10
+     * @param deliveryPlanDTO
+     * @return Boolean
+     */
+    Boolean pushDeliveryPlan(DeliverySuggestDTO.ViewPushDeliveryPlanDTO deliveryPlanDTO);
 }

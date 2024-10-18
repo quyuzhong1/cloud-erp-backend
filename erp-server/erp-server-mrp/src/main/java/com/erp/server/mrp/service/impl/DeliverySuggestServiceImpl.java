@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -29,8 +30,12 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
+import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
+import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.wms.feign.DeliveryPlanFeign;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
 import com.erp.server.mrp.service.DeliverySuggestService;
 import com.erp.server.mrp.service.OperateLogService;
@@ -42,10 +47,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +68,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Autowired
+    private DeliveryPlanFeign deliveryPlanFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -213,12 +219,66 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         return Boolean.TRUE;
     }
 
+    @Override
+    public DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlan(List<String> ids) {
+        List<DeliverySuggestEntity> deliverySuggestList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(deliverySuggestList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDTO();
+        //店铺id集合
+        List<String> shopIdList = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+
+        Map<String, List<DeliverySuggestEntity>> map = deliverySuggestList.stream().collect(Collectors.groupingBy(obj -> obj.getShopId()));
+        for (Map.Entry<String, List<DeliverySuggestEntity>> entry : map.entrySet()) {
+            List<DeliverySuggestEntity> value = entry.getValue();
+            DeliverySuggestEntity entity = value.get(0);
+            viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
+            viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
+            viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
+            viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
+            //店铺信息
+            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
+                viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
+                viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
+                viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
+                viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+            }
+            List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> detailList = new ArrayList<>();
+
+            for (DeliverySuggestEntity suggestEntity : value) {
+                DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
+                BeanMapperUtils.copy(suggestEntity,detailDTO);
+                detailList.add(detailDTO);
+            }
+            viewPushDeliveryPlanDTO.setDetailList(detailList);
+        }
+
+        return viewPushDeliveryPlanDTO;
+    }
+
+    @Override
+    public Boolean pushDeliveryPlan(DeliverySuggestDTO.ViewPushDeliveryPlanDTO deliveryPlanDTO) {
+        WmsDeliveryPlanDTO.AddDTO addDTO = new WmsDeliveryPlanDTO.AddDTO();
+        addDTO.setShopId(deliveryPlanDTO.getShopId());
+        addDTO.setType(deliveryPlanDTO.getType());
+        addDTO.setPlanDeliveryDate(deliveryPlanDTO.getDeliveryDate());
+        addDTO.setToWarehouseId(deliveryPlanDTO.getWarehouseId());
+        List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
+
+        deliveryPlanFeign.addDeliveryPlan(addDTO);
+        return Boolean.TRUE;
+    }
+
 
     /**
     * 新增修改处理数据
     */
     private void handleData(DeliverySuggestEntity deliverySuggestEntity) {
-    // TODO 验证数据 & 数据赋值
+    // TODO 验证数据 &
     }
 
 

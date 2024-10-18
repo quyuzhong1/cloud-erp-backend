@@ -157,19 +157,19 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
      * 计划发货量（计划修正值）
      */
     @TableField("plan_delivery_qty")
-    private String planDeliveryQty;
+    private Integer planDeliveryQty;
 
     /**
      * 实际发货量（运营确认值）
      */
     @TableField("actual_delivery_qty")
-    private String actualDeliveryQty;
+    private Integer actualDeliveryQty;
 
     /**
      * 发货备货量
      */
     @TableField("delivery_stock_up_qty")
-    private String deliveryStockUpQty;
+    private Integer deliveryStockUpQty;
 
     /**
      * 备注
