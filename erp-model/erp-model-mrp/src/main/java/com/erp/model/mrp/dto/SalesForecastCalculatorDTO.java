@@ -40,7 +40,7 @@ public class SalesForecastCalculatorDTO {
                     .map(SalesForecastCalculatorDTO::getWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
             //总权重
             BigDecimal totalWeight = salesDataList.stream().map(SalesForecastCalculatorDTO::getWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
-            if (totalWeight.compareTo(BigDecimal.ZERO) == 0) {
+            if (totalWeight.compareTo(BigDecimal.ZERO) == 0 || excludedTotalWeight.compareTo(BigDecimal.ZERO) == 0) {
                 return BigDecimal.ZERO;
             }
             //重算权重
