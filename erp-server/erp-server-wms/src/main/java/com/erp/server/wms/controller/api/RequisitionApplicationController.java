@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -14,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -544,5 +546,30 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult assembleDownload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
         requisitionApplicationService.assembleDownload(dto.getIds(), response);
         return success();
+    }
+
+    /**
+     * 打印fnsku预览
+     * @param dto
+     * @Author jack
+     * @Date 2024/10/16
+     * @return void
+     **/
+    @PostMapping("/printFnskuPreview")
+    public ApiResult<List<RequisitionApplicationDTO.PrintFnskuDetailDTO>> printFnskuPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(requisitionApplicationService.printFnskuPreview(dto));
+    }
+
+    /**
+     * 打印fnsku预览
+     * @param
+     * @Author jack
+     * @Date 2024/10/16
+     * @return void
+     **/
+    @PostMapping("/printFnskuConfirm")
+    @Idempotent
+    public void printFnskuConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        requisitionApplicationService.printFnskuConfirm(dto, response);
     }
 }
