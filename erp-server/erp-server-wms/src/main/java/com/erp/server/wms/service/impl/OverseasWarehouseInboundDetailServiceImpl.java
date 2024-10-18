@@ -263,7 +263,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
             entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
             entity.setDiffQty(entity.getDiffQty() + dto.getReceivedQty());
-            entity.setReceiveTime(LocalDateTime.now(ZoneId.systemDefault()));
+            entity.setReceiveTime(dto.getReceiveTime());
             // 计算在途数量
             int newTransportQty = entity.getPackQty() - entity.getReceiveQty();
             entity.setTransportQty(newTransportQty);
