@@ -457,11 +457,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 transferDeclareEntity.setInstockForecastDate(LocalDate.now());
                 //上传成功
                 baseMapper.updateById(transferDeclareEntity);
-                //删除订单异常记录
-                SoB2cErrorDTO.BatchDeleteDTO deleteDTO = new SoB2cErrorDTO.BatchDeleteDTO();
-                deleteDTO.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-                deleteDTO.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-                soB2cFeign.deleteErrorByMainIds(deleteDTO);
 
                 //入库预报成功添加报关对账明细
                 addDeclareReconciliation(transferDeclareDetailEntities);
@@ -473,13 +468,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 transferDeclareEntity.setInstockForecastRemark(result.getMsg());
                 transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
                 baseMapper.updateById(transferDeclareEntity);
-                //记录订单预报异常
-                SoB2cErrorDTO.BatchAdd batchAdd = new SoB2cErrorDTO.BatchAdd();
-                batchAdd.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-                batchAdd.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-                batchAdd.setMessage(msg);
-                batchAdd.setParamJson(JSONObject.toJSONString(qtyDTO));
-                soB2cFeign.batchAddSoB2cError(batchAdd);
 
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), msg));
             }
@@ -493,13 +481,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
             baseMapper.updateById(transferDeclareEntity);
 
-            //记录订单预报异常
-            SoB2cErrorDTO.BatchAdd batchAdd = new SoB2cErrorDTO.BatchAdd();
-            batchAdd.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-            batchAdd.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-            batchAdd.setMessage(e.getMessage());
-            batchAdd.setParamJson(JSONObject.toJSONString(qtyDTO));
-            soB2cFeign.batchAddSoB2cError(batchAdd);
+
             resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), e.getMessage()));
         }
 
