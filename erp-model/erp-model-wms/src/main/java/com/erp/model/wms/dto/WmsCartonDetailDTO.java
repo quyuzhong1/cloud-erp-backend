@@ -349,4 +349,33 @@ public class WmsCartonDetailDTO implements Serializable {
          */
         private String weightUnit;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class BoxDetailDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNO
+         */
+        private String skuNo;
+        /**
+         * fnSku
+         */
+        private String fnSku;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
+    }
 }
