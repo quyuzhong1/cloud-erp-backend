@@ -85,9 +85,9 @@ public class GoodCangServiceTest {
     @Test
     public void getOutboundTest() {
         GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-//                .modifyDateFrom(LocalDateTime.of(2020,12,20, 0, 0, 0))
-//                .modifyDateTo(LocalDateTime.of(2023,12,20, 0, 0, 0))
-                .orderCode("G1149-240515-0008")
+                .modifyDateFrom(LocalDateTime.of(2018,11,20, 0, 0, 0))
+                .modifyDateTo(LocalDateTime.of(2018,12,20, 0, 0, 0))
+//                .orderCode("G1149-240515-0008")
                 .page(1)
                 .pageSize(20)
                 .build();
@@ -218,7 +218,7 @@ public class GoodCangServiceTest {
                 .builder()
                 .currentPage(1)
                 .pageSize(5)
-                .asroStatus(5)
+//                .asroStatus(5)
                 .build();
         GoodCangResponse<List<GoodCangReturnInstockResp>> response = goodCangService.getReturnInstock(goodCangGetReturnInstockReq);
         System.out.println(response);

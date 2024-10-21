@@ -32,62 +32,74 @@ import java.util.*;
 
 /**
  * dmp输入init任务基础处理器下的旺店通api获取数据方式
- * @author Administrator
  *
+ * @author Administrator
  */
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputGoodCangReturnInstockInitHandler extends DmpInputInitHandler{
+public class DmpInputGoodCangReturnInstockInitHandler extends DmpInputInitHandler {
 
-	@Resource
+    @Resource
     private DmpHandlerCache dmpHandlerCache;
-	
-	@Override
-	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		String typeId = dmpCfgInputEntity.getTypeId();
-		DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
-		String apiType = dmpCfgApiEntity.getApiType();
 
-		GoodCangGetReturnInstockReq goodCangGetReturnInstockReq = new GoodCangGetReturnInstockReq();
-		goodCangGetReturnInstockReq.setStartUpdateTime(dmpInputTaskEntity.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-		goodCangGetReturnInstockReq.setEndUpdateTime(dmpInputTaskEntity.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-		goodCangGetReturnInstockReq.setPageSize(100);
-		int page = 1;
-		int currTotal = 0;
-		List<Object> allResult = new ArrayList<>();
-		List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
-		if(CollUtil.isEmpty(overseasProviderEntityList)) {
-			throw new ServiceException("谷仓授权信息不存在");
-		}
-		ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
-		while(true) {
-			goodCangGetReturnInstockReq.setCurrentPage(page);
-			log.debug("请求谷仓退货入库单请求:{}", JSON.toJSONString(goodCangGetReturnInstockReq));
-			String response = GoodCangUtils.sendPost(apiType, JSON.toJSONString(goodCangGetReturnInstockReq));
-			log.debug("请求谷仓退货入库单响应:{}", response);
-			GoodCangResponse<List<GoodCangReturnInstockResp>> result = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<Object>>>() {}.getType());
-			List<?> data = result.getData();
-			int size = data.size();
-			if(size == 0) {
-				break;
-			}
-			allResult.addAll(data);
-			currTotal = currTotal + size;
-			Integer count = result.getCount();
-			if(count == null) {
-				count  = 0;
-			}
-			if(currTotal >= count) {
-				break;
-			}
-			page = page + 1;
-		}
-		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
-		return Collections.singletonList(dmpInputTaskInitDTO);
-	}
+    @Override
+    public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+        String typeId = dmpCfgInputEntity.getTypeId();
+        DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
+        String apiType = dmpCfgApiEntity.getApiType();
 
-	
-	
+        GoodCangGetReturnInstockReq goodCangGetReturnInstockReq = new GoodCangGetReturnInstockReq();
+        goodCangGetReturnInstockReq.setStartUpdateTime(dmpInputTaskEntity.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        goodCangGetReturnInstockReq.setEndUpdateTime(dmpInputTaskEntity.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        goodCangGetReturnInstockReq.setPageSize(100);
+        int page = 1;
+        int currTotal = 0;
+        List<Object> allResult = new ArrayList<>();
+        List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
+        if (CollUtil.isEmpty(overseasProviderEntityList)) {
+            throw new ServiceException("谷仓授权信息不存在");
+        }
+        ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
+        while (true) {
+            goodCangGetReturnInstockReq.setCurrentPage(page);
+            log.debug("请求谷仓退货入库单请求:{}", JSON.toJSONString(goodCangGetReturnInstockReq));
+            String response = GoodCangUtils.sendPost(apiType, JSON.toJSONString(goodCangGetReturnInstockReq));
+            log.debug("请求谷仓退货入库单响应:{}", response);
+            // 空数据处理
+            // {"ask":"Failure","message":"没有数据(ERROR ID 99-UVU8HX)","Error":{"errCode":"400","errMessage":"没有数据(ERROR ID 99-UVU8HX)"}}
+            JSONObject jsonObject = JSONObject.parseObject(response);
+            JSONObject errorObj = jsonObject.getJSONObject("Error");
+            if (null != errorObj) {
+                String errCode = errorObj.getString("errCode");
+                String errMessage = errorObj.getString("errMessage");
+                if ("400".equalsIgnoreCase(errCode) && errMessage.contains("没有数据")) {
+                    break;
+                }
+                ServiceException.runError("谷仓接口返回异常:" + response);
+            }
+
+            GoodCangResponse<List<GoodCangReturnInstockResp>> result = JSONObject.parseObject(response, new TypeReference<GoodCangResponse<List<Object>>>() {
+            }.getType());
+            List<?> data = result.getData();
+            int size = data.size();
+            if (size == 0) {
+                break;
+            }
+            allResult.addAll(data);
+            currTotal = currTotal + size;
+            Integer count = result.getCount();
+            if (count == null) {
+                count = 0;
+            }
+            if (currTotal >= count) {
+                break;
+            }
+            page = page + 1;
+        }
+        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+        dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
+        return Collections.singletonList(dmpInputTaskInitDTO);
+    }
+
 }

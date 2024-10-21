@@ -26,7 +26,7 @@ public class GoodCangGetReturnInstockReq {
     private String endUpdateTime;
 
     //订单状态
-    @Builder.Default
-    private Integer asroStatus = 5;
+//    @Builder.Default
+//    private Integer asroStatus = 5;
 
 }

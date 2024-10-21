@@ -9,6 +9,7 @@ import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.utils.GoodCangUtils;
 import io.seata.common.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 
 
+@Slf4j
 @Component
 @Validated
 public class GoodCangService {
@@ -107,6 +109,7 @@ public class GoodCangService {
     public GoodCangResponse<List<GoodCangOutboundResp>> getOutboundBatch(GoodCangGetOutBoundReq goodCangGetOutBoundReq){
         String json = JSON.toJSONString(goodCangGetOutBoundReq);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_ORDER_LIST,json);
+        log.debug("请求谷仓出库单结果:{}", response);
         GoodCangResponse<List<GoodCangOutboundResp>> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangOutboundResp>>>() {}.getType());
         if(Objects.isNull(respDto)){
             return GoodCangResponse.error("谷仓接口返回为空:"+response);
