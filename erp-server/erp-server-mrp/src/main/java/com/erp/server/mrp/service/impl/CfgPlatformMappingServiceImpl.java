@@ -166,7 +166,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         //最小id
         String minId = platformMappingList.stream().min(Comparator.comparing(obj -> obj.getId())).map(CfgPlatformMappingEntity::getId).orElse("");
         mainViewDTO.setId(minId);
-        Map<String, List<CfgPlatformMappingEntity>> map = platformMappingList.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getPlatform));
+        Map<String, List<CfgPlatformMappingEntity>> map = platformMappingList.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getType));
         for (Map.Entry<String, List<CfgPlatformMappingEntity>> entry : map.entrySet()) {
             List<CfgPlatformMappingEntity> value = entry.getValue();
             CfgPlatformMappingDTO.ViewDTO viewDTO = new CfgPlatformMappingDTO.ViewDTO();
