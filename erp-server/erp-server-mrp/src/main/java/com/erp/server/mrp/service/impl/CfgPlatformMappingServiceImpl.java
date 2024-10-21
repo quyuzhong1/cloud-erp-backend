@@ -173,6 +173,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
             BeanMapperUtils.copy(value.get(0),viewDTO);
             List<String> platformList = value.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
             viewDTO.setPlatformList(platformList);
+            viewDTO.setTypeName(CfgRulePlatformTypeEnum.getName(viewDTO.getType()));
             viewList.add(viewDTO);
         }
         mainViewDTO.setViewList(viewList);
@@ -190,6 +191,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         BeanMapperUtils.copy(cfgPlatformMappingList.get(0),viewDTO);
         List<String> platformList = cfgPlatformMappingList.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
         viewDTO.setPlatformList(platformList);
+        viewDTO.setTypeName(CfgRulePlatformTypeEnum.getName(viewDTO.getType()));
         return viewDTO;
     }
 

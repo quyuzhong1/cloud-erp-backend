@@ -102,6 +102,11 @@ public class CfgPlatformMappingDTO implements Serializable {
         private String type;
 
         /**
+         * 归属平台名称
+         */
+        private String typeName;
+
+        /**
         * 是否禁用
         */
         private Boolean disabled;

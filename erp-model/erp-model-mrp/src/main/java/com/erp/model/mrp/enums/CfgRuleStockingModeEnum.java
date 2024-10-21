@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 @AllArgsConstructor
 public enum CfgRuleStockingModeEnum implements EnumMessage {
     LOCAL_TO_FBA("localToFba", "FBA备货（本地发FBA）"),
-    LOCAL_TO_OVERSEAS("localToOverseas", "海外备货（本地海外仓）"),
+    LOCAL_TO_OVERSEAS("localToOverseas", "海外备货（本地发海外仓）"),
     LOCAL("local", "本地备货"),
     ;
 
