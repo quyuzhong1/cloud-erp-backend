@@ -7165,12 +7165,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         skuMappingCheck(entity, detailList);
 
         List<String> platformSkuList = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).filter(StrUtil::isNotBlank).collect(Collectors.toList());
-        //虾皮使用
-        List<String> platformSkuIdList = detailList.stream().map(SoB2cDetailEntity::getSourceDetailId).filter(StrUtil::isNotBlank).collect(Collectors.toList());
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         List<String> platformSpuList = new LinkedList<>();
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())){
             platformSpuList = detailList.stream()
                     .map(SoB2cDetailEntity::getPlatformSpuNo)
@@ -7183,12 +7182,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuList);
-        if (PlatformDictEnum.SHOPEE.getCode().equals(entity.getDictPlatform())){
-            paramDTO.setPlatformSkuIdList(platformSkuIdList);
-        }
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())){
             paramDTO.setPlatformSpuNoList(platformSpuList);
         }
