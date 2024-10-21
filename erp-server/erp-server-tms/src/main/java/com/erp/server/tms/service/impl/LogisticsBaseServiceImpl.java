@@ -679,15 +679,15 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             dto.setTrackNo(e.getTrackNo());
             LocalLogisticsInfo localLogisticsInfo = e.getLocalLogisticsInfo();
             List<PlatformTrackDetail> details = new ArrayList<>();
-            if (Objects.isNull(localLogisticsInfo) || CollectionUtils.isEmpty(localLogisticsInfo.getTrackingDetails())){
-                PlatformTrackDetail detail = new PlatformTrackDetail();
-                detail.setTrackNo(e.getTrackNo());
-                detail.setStatus(convertTrackStatus(e.getTransitStatus()));//转换类型
-                LocalDateTime eventTime = LocalDateTime.parse(e.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                detail.setTrackTime(eventTime);
-                detail.setContent("暂无信息");
-                details.add(detail);
-            }else {
+            if (Objects.nonNull(localLogisticsInfo) || CollectionUtils.isNotEmpty(localLogisticsInfo.getTrackingDetails())){
+//                PlatformTrackDetail detail = new PlatformTrackDetail();
+//                detail.setTrackNo(e.getTrackNo());
+//                detail.setStatus(convertTrackStatus(e.getTransitStatus()));//转换类型
+//                LocalDateTime eventTime = LocalDateTime.parse(e.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                detail.setTrackTime(eventTime);
+//                detail.setContent("暂无信息");
+//                details.add(detail);
+//            }else {
                 for (TrackingDetail trackingDetail : localLogisticsInfo.getTrackingDetails()) {
                     PlatformTrackDetail detail = new PlatformTrackDetail();
                     detail.setTrackNo(e.getTrackNo());
