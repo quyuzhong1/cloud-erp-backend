@@ -54,7 +54,7 @@ public class OpenApiController {
 
     @PostMapping("/upload")
     public @ResponseBody ApiResult<?> unitPlatformServiceUpload(@Valid OpenApiReqDTO input, HttpServletRequest request, MultipartFile file){
-        log.warn("平台上传接口统一请求报文：{},文件名:{}" , JSON.toJSONString(input),file.getName());
+        log.warn("平台上传接口统一请求报文：{},文件名:{}" , JSON.toJSONString(input),file.getOriginalFilename());
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
         String referer = request.getHeader("Referer");
@@ -95,7 +95,7 @@ public class OpenApiController {
         log.warn("平台上传接口统一响应报文：{}" , JSON.toJSONString(success));
         //仓库设备发送文件信息，为了响应时间，需要在此处保存文件信息
         if("hczn".equals(referer)){
-            openApiService.addByWarehouseEquipment(fileUrl, file.getName());
+            openApiService.addByWarehouseEquipment(fileUrl, file.getOriginalFilename());
         }
 		return success;
     }
