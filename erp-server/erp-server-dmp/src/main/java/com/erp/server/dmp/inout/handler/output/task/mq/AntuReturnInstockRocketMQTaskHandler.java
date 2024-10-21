@@ -98,10 +98,10 @@ public class AntuReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTaskH
 		PlatformReturnInstockDTO dto = BeanUtil.copyProperties(dmpMainEntity, PlatformReturnInstockDTO.class);
 		String sourcePlatform = dmpMainEntity.getSourcePlatform();
 		dto.setPlatform(sourcePlatform);
+		dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
 		// 明细
 		List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
 		dto.setProductDetailList(detailList);
-		;
 
 		return dto;
 	}

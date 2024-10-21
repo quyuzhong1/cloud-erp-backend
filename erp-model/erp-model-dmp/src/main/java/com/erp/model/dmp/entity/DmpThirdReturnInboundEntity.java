@@ -119,6 +119,11 @@ public class DmpThirdReturnInboundEntity extends BaseEntity<DmpThirdReturnInboun
      */
     @TableField("received_time")
     private LocalDateTime receivedTime;
+    /**
+     * 平台授权id
+     */
+    @TableField("auth_id")
+    private String authId;
 
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";

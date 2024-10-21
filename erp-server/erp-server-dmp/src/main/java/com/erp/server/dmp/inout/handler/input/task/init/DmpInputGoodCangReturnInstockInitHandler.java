@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器下的旺店通api获取数据方式
@@ -55,12 +56,14 @@ public class DmpInputGoodCangReturnInstockInitHandler extends DmpInputInitHandle
         goodCangGetReturnInstockReq.setPageSize(100);
         int page = 1;
         int currTotal = 0;
-        List<Object> allResult = new ArrayList<>();
+        List<JSONObject> allResult = new ArrayList<>();
         List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
         if (CollUtil.isEmpty(overseasProviderEntityList)) {
             throw new ServiceException("谷仓授权信息不存在");
         }
-        ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
+        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
+        String authId = overseasProviderEntity.getId();
+        ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
         while (true) {
             goodCangGetReturnInstockReq.setCurrentPage(page);
             log.debug("请求谷仓退货入库单请求:{}", JSON.toJSONString(goodCangGetReturnInstockReq));
@@ -86,7 +89,12 @@ public class DmpInputGoodCangReturnInstockInitHandler extends DmpInputInitHandle
             if (size == 0) {
                 break;
             }
-            allResult.addAll(data);
+            List<JSONObject> jsonObjList = data.stream().map(e -> {
+                        JSONObject jsonItemObj = (JSONObject) JSON.toJSON(e);
+                        jsonItemObj.put("authId", authId);
+                        return jsonItemObj;}
+            ).collect(Collectors.toList());
+            allResult.addAll(jsonObjList);
             currTotal = currTotal + size;
             Integer count = result.getCount();
             if (count == null) {

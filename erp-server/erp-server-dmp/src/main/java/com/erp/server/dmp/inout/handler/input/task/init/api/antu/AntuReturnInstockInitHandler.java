@@ -66,7 +66,7 @@ public class AntuReturnInstockInitHandler extends DmpInputInitHandler {
                 .build();
         int page = 1;
         int currTotal = 0;
-        List<Object> allResult = new ArrayList<>();
+        List<JSONObject> allResult = new ArrayList<>();
         List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.ANTU.getCode()));
         if(CollUtil.isEmpty(overseasProviderEntityList)) {
             return Collections.emptyList();
@@ -75,18 +75,21 @@ public class AntuReturnInstockInitHandler extends DmpInputInitHandler {
             return Collections.emptyList();
         }
 
-        ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
+        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
+        String authId = overseasProviderEntity.getId();
+        ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
         while(true) {
             returnReq.setPage(page);
             log.debug("安兔退货信息请求:{}", returnReq);
             String response = AntuUtils.callService(apiType,returnReq);
             log.debug("安兔退货信息响应:{}", response);
-            AntuResponse<List<?>> result = JSONObject.parseObject(response,new TypeReference<AntuResponse<List<Object>>>() {}.getType());
-            List<?> data = result.getData();
+            AntuResponse<List<JSONObject>> result = JSONObject.parseObject(response,new TypeReference<AntuResponse<List<JSONObject>>>() {}.getType());
+            List<JSONObject> data = result.getData();
             int size = data.size();
             if(size == 0) {
                 break;
             }
+            data.forEach(e->e.put("authId", authId));
             allResult.addAll(data);
             currTotal = currTotal + size;
             Integer count = result.getCount();
