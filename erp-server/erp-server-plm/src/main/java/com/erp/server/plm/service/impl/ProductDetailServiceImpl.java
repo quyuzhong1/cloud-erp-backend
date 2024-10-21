@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
@@ -17,17 +18,19 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.ReportDataSourceDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.SkuApproveConfigureEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.JasperHelperUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -45,6 +48,7 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.enums.ProductTypeEnum;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -53,9 +57,11 @@ import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
@@ -69,6 +75,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -83,6 +90,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.util.JRLoader;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.python.google.common.util.concurrent.RateLimiter;
@@ -91,16 +104,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import org.thymeleaf.util.ListUtils;
+import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -257,6 +275,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private InventoryFeign inventoryFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private FileTemplateFeign fileTemplateFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -5347,5 +5368,55 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         List<SkuVO.ProductChargeInfoDTO> skuList = baseMapper.listProductChargeInfoByIds(skuIds);
         return skuList;
+    }
+
+    @Override
+    public void printEan(PrintEanDTO printEanDTO, HttpServletResponse response) {
+
+        List<String> base64List = new ArrayList<>();
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(printEanDTO.getPrintType());
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
+             OutputStream out = response.getOutputStream()) {
+                JasperReport jasperReport = (JasperReport) JRLoader.loadObject(inputStream);
+                JasperHelperUtil.prepareReport(jasperReport, FileTypeEnum.PDF.getCode());
+            for (PrintEanDTO.PrintSkuEanDTO dto : printEanDTO.getPrintSkuEanList()) {
+                String eanBase = null;
+                if (ObjectUtils.isNotEmpty(dto.getEan())) {
+                    Map<String, Object> eanMap = new HashMap<>();
+                    eanMap.put("code", dto.getEan());
+                    JasperPrint eanJasperPrint = JasperFillManager.fillReport(jasperReport, eanMap, new ReportDataSourceDTO<>(Collections.singletonList(dto.getEan())));
+                    byte[] eanBytes = JasperExportManager.exportReportToPdf(eanJasperPrint);
+                    eanBase = Base64.getEncoder().encodeToString(eanBytes);
+                }
+                Map<String, Object> skuMap = new HashMap<>();
+                skuMap.put("code", dto.getSkuNo());
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, skuMap, new ReportDataSourceDTO<>(Collections.singletonList(dto.getSkuNo())));
+                byte[] skuBytes = JasperExportManager.exportReportToPdf(jasperPrint);
+                String skuBase = Base64.getEncoder().encodeToString(skuBytes);
+                for (int i = 0; i < dto.getQty(); i++) {
+                    if (ObjectUtils.isNotEmpty(eanBase)) {
+                        base64List.add("data:application/pdf;base64," + eanBase);
+                    }
+                    base64List.add("data:application/pdf;base64," + skuBase);
+                }
+            }
+            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
+            BASE64Decoder decoder = new BASE64Decoder();
+            // 将 Base64 编码的字符串解码为字节数组
+            byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+            // 将字节数组写入到响应输出流中
+            out.write(pdfBytes);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+
     }
 }
