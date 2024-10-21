@@ -47,6 +47,10 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
         calculationTimePeriodSales(replenishmentResultDTO);
     }
 
+    /**
+     * 计算分时段销量和日均
+     * @param replenishmentResultDTO 建议
+     */
     private void calculationTimePeriodSales(ReplenishmentResultDTO replenishmentResultDTO) {
 
         //分时段销量
@@ -78,6 +82,13 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
         replenishmentResultDTO.setAvgTimePeriodSales(avgTimePeriodSales);
     }
 
+    /**
+     * 计算销量
+     * @param isIgnoreOutOfStock      是否断货排除
+     * @param replenishmentResultDTO  建议
+     * @param denoisingResults        sku去噪规则
+     * @param defaultDenoisingResults 默认去噪规则
+     */
     private void calculationSales(boolean isIgnoreOutOfStock, ReplenishmentResultDTO replenishmentResultDTO, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults) {
         for (ReplenishmentResultDTO.SalesInfoDTO salesInfo : replenishmentResultDTO.getSalesInfos()) {
             //获取符合的最大优先级销量去噪规则 (序号越小优先级越大)
@@ -116,7 +127,6 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                     salesInfo.setSalesQty(salesQty);
                     salesInfo.setDenoisingType(denoisingResult.getDenoisingType());
                 }
-
             }
         }
     }

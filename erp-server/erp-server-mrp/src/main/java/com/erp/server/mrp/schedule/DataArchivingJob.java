@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -23,9 +24,9 @@ public class DataArchivingJob {
      * 归档，全量更新数据
      */
     @XxlJob("dataArchiving")
-    public ReturnT dataArchiving() {
+    public ReturnT dataArchiving(LocalDate calculationDate) {
         XxlJobHelper.log("====开始更新信息====");
-        CompletableFuture.runAsync(() -> dataArchivingService.dataArchiving());
+        CompletableFuture.runAsync(() -> dataArchivingService.dataArchiving(calculationDate));
         return ReturnT.SUCCESS;
     }
 }
