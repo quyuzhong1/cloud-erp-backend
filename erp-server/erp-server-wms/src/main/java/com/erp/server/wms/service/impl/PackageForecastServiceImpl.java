@@ -80,6 +80,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -735,7 +736,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 orderCodeList(orderCodeList).
                 handoverOrderId("").
                 appointmentType("bigbag").
-                weight(entity.getTotalPackageWeight().setScale(0)).
+                weight(entity.getTotalPackageWeight().setScale(0, RoundingMode.HALF_UP)).
                 weightUnit(entity.getWeightUnit()).userInfo(base.getUserInfo()).
                 sellerParcelOrderList(sellerParcelOrderList).
                 type(type).client(client).locale(base.getLocale()).build();
