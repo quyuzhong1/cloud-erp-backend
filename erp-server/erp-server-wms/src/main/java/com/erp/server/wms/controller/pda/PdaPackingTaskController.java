@@ -262,4 +262,14 @@ public class PdaPackingTaskController extends BaseController {
     public ApiResult<WmsCartonDTO.PrintDTO> getPrintBarCode(@RequestParam("cartonId") String cartonId) {
         return success(packingTaskService.getPrintBarCode(cartonId));
     }
+
+    /**
+     * 根据外部箱号查询装箱的基础信息和产品明细
+     * @param cartonDetailDTO
+     * @return
+     */
+    @GetMapping("/getCartonDetailByOutBoxNo")
+    public ApiResult<WmsCartonDTO.OutBoxNoDTO> getCartonDetailByOutBoxNo(@RequestBody @Validated PackingTaskDTO.CartonDetailDTO cartonDetailDTO){
+        return success(packingTaskService.getCartonDetailByOutBoxNo(cartonDetailDTO));
+    }
 }

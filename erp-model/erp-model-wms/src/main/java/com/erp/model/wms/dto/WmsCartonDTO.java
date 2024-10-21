@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -148,6 +149,10 @@ public class WmsCartonDTO {
          * 装箱任务id
          */
         private String taskId;
+        /**
+         * 装箱任务编码
+         */
+        private String taskCode;
         /**
          * 箱子id
          */
@@ -422,5 +427,65 @@ public class WmsCartonDTO {
          * 尺寸单位
          */
         private String sizeUnit;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OutBoxNoDTO {
+        /**
+         * 箱号
+         */
+        private String outBoxNo;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 装箱任务编码
+         */
+        private String taskCode;
+        /**
+         * 发货单号
+         */
+        private String deliveryNo;
+
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+        /**
+         * 长宽高
+         */
+        private String size;
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength = BigDecimal.ZERO;
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth = BigDecimal.ZERO;
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight = BigDecimal.ZERO;
+        /**
+         * 箱子重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 装箱总数量
+         */
+        private int packTotalQty;
+
+        /**
+         * 产品明细
+         */
+        private List<WmsCartonDetailDTO.BoxDetailDTO> detailList;
     }
 }
