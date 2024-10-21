@@ -853,9 +853,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if(StringUtils.isNotBlank(firstMileDeliveryDetailEntity.getPlatformSkuNo())){
                 pagingViewDTO.setPlatformSku(firstMileDeliveryDetailEntity.getPlatformSkuNo()+"*"+pagingViewDTO.getPackQty());
             }
-            if(StringUtils.isNotBlank(firstMileDeliveryDetailEntity.getFnSku())){
-                pagingViewDTO.setFnSku(firstMileDeliveryDetailEntity.getFnSku()+"*"+pagingViewDTO.getPackQty());
-            }
         });
     }
 
