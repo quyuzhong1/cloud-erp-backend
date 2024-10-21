@@ -74,4 +74,10 @@ public interface WmsAttachmentService extends SuperService<WmsAttachmentEntity> 
      * @return void
      */
     void removeAttachment(AttachmentDTO.DeleteDTO dto);
+
+    /**
+     * 保存文件信息
+     * @param dto
+     */
+    void addByWarehouseEquipment(WmsAttachmentDTO.AddDTO dto);
 }

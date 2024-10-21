@@ -93,6 +93,10 @@ public class OpenApiController {
         }
         ApiResult<String> success = ApiResult.success(fileUrl);
         log.warn("平台上传接口统一响应报文：{}" , JSON.toJSONString(success));
+        //仓库设备发送文件信息，为了响应时间，需要在此处保存文件信息
+        if("hczn".equals(referer)){
+            openApiService.addByWarehouseEquipment(fileUrl, file.getName());
+        }
 		return success;
     }
 
