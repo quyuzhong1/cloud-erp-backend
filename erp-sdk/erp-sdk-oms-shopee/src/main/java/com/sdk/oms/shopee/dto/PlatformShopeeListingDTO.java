@@ -78,7 +78,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 // 类型 platform 平台  warehouse 仓库
                 .setPlatformType("platform")
                 // 平台spu no
-                .setPlatformProductNo(String.valueOf(itemInfo.getItemId()))
+                .setPlatformProductNo(String.valueOf(modelInfo.getModelId()))
                 // 平台sku no
                 .setPlatformSkuNo(modelInfo.getModelSku())
                 //平台产品id

@@ -324,7 +324,7 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
         detailDTO.setPlatformSkuId(String.valueOf(item.getModelId()));
 
         // 平台产品id
-        detailDTO.setPlatformSpuNo(item.getItemId().toString());
+        detailDTO.setPlatformSpuNo(item.getModelId().toString());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");

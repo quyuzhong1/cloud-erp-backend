@@ -240,14 +240,13 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @Author Jim
      * @since 2023-11-28
      * @param platformSkuList 平台SKU列表
-     * @param platformSkuIdList 平台SKU ID列表
      * @param dictPlatform 平台代码
      * @param shopId 店铺ID
      * @param platformOrderCreateTime 生效日期（查询所有=传空）
      * @param isExpire 是否过期（查询所有=传空）
      * @return Map<平台SKU, SKU映射和Listing列表>
      */
-    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire,List<String> platformSkuIdList);
+    Map<String, List<ListingInfoWithSkuMappingDTO>> mapListingByPlatformSkuNo(List<String> platformSkuList, List<String> platformSpuList, String dictPlatform, String shopId, LocalDateTime platformOrderCreateTime, Boolean isExpire);
 
     /**
      * 检查和获取映射关系
