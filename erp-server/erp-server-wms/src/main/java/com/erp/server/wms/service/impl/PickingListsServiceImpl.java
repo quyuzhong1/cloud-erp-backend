@@ -424,6 +424,20 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         return view;
                     }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getSkuNo)
                     .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)).collect(Collectors.toList());
+            //相同sku去空格
+            String currentSku = "";
+            for (PickingListsDTO.PrintDetailView printDetailView : viewList){
+                if(StringUtils.isBlank(currentSku)){
+                    currentSku = printDetailView.getSkuNo();
+                    continue;
+                }
+                if(printDetailView.getSkuNo().equals(currentSku)){
+                    printDetailView.setSkuNo("");
+                    printDetailView.setProductName("");
+                }else{
+                    currentSku = printDetailView.getSkuNo();
+                }
+            }
             printView.setPrintDetailViews(viewList);
             //封装组合品明细
 //            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
