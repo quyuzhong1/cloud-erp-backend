@@ -12,17 +12,13 @@
         approval_finish_time,
         remark
         FROM product_change
-        WHERE is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default} AND
+            is_deleted = FALSE
             <if test="searchList!=null and searchList.size>0">
                 AND source_id  IN
                <foreach collection="searchList" item="sourceId" open="(" separator="," close=")">
                    #{sourceId}
-               </foreach>
-            </if>
-            <if test="changeIdList !=null and changeIdList.size>0">
-               AND id IN
-               <foreach collection="changeIdList" item="id" open="(" separator="," close=")">
-                #{id}
                </foreach>
             </if>
         ORDER BY create_time DESC

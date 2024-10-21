@@ -423,6 +423,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (StrUtils.isNotEmpty(r.getSecondSupplier())) {
                     supplierIds.add(r.getSecondSupplier());
                 }
+                noSpecDetailById.setEan(r.getEan());
             });
             if (CollUtil.isNotEmpty(supplierIds)) {
                 Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
@@ -734,6 +735,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
 
         purchaseShowDTOList.forEach(req -> {
+            ProductDetailEntity entity = list.stream().filter(v -> v.getId().equals(req.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            entity.setEan(req.getEan());
             FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(req.getPurchaseUserId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
                 req.setCreateUserName(findUserDTO.getUserName());
@@ -3148,7 +3151,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> disableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_MANY_SKU_DETAIL_LIST, skuFiledConfigList);
         productDetail.setDisableFieldList(disableFields);
 
-        result.setProductManySkuDetail(productDetail);
 
         //多规格产品基础信息
         ProductManySpecBaseDTO manySpecDetail = productDetailMapper.getManySpecDetailById(productId);
@@ -3181,7 +3183,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 purchaseShowDTO.setCreateUserName(findUserDTO.getUserName());
             }
             result.setProductPurchaseShowDTO(purchaseShowDTO);
+            productDetail.setEan(purchaseShowDTO.getEan());
         }
+        result.setProductManySkuDetail(productDetail);
         //产品采购备注信息查询列表
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
         result.setRemarkEntityList(remarkEntityList);

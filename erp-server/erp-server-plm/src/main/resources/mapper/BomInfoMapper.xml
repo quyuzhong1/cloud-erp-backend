@@ -35,7 +35,8 @@
                bs.parent_sku_no
         FROM product_bom_sku bs LEFT JOIN product_bom_info b
         ON bs.bom_id = b.id AND b.is_deleted = FALSE
-        WHERE bs.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default} AND bs.is_deleted = FALSE
         <if test="bomIdList !=null and bomIdList.size>0">
             AND b.id IN
             <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
@@ -57,13 +58,6 @@
                 #{skuId}
             </foreach>
             )
-        </if>
-        <if test="stateList !=null and stateList.size>0">
-            AND
-            b.state IN
-            <foreach collection="stateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
         </if>
         <if test="params.permissionSql  !=null  and  params.permissionSql!='' ">
             ${params.permissionSql}
@@ -109,7 +103,7 @@
         bs.quantity
         FROM product_bom_sku bs LEFT JOIN product_bom_info b
         ON bs.bom_id = b.id AND b.is_deleted = FALSE
-        WHERE bs.is_deleted = FALSE
+        WHERE ${params.sqlMap.default} AND bs.is_deleted = FALSE
             <if test="bomIdList !=null and bomIdList.size>0">
                 AND b.id IN
                 <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
@@ -129,13 +123,6 @@
                         #{skuId}
                     </foreach>
                 )
-            </if>
-            <if test="stateList !=null and stateList.size>0">
-                AND
-                b.state IN
-                <foreach collection="stateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
             </if>
         ORDER BY b.create_time DESC
     </select>

@@ -11,6 +11,7 @@ import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.erp.server.plm.query.BomInfoHandler;
 import com.erp.server.plm.service.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +45,7 @@ public class ExportPlmFeignController {
     @Resource
     private PilotApplicationService pilotApplicationService;
     @PostMapping("/exportBom")
+    @WebAdvanceQuery(handler = BomInfoHandler.class)
     public PagingVO<BomExportExcelVO> exportBom(@RequestBody PagingDTO<SearchPagingDTO> dto) {
        return bomInfoService.exportBom(dto);
     }

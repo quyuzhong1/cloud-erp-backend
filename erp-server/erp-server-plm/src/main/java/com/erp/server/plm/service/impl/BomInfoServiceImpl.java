@@ -312,33 +312,18 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Override
     public PagingVO<BomExportExcelVO> exportBom(PagingDTO<SearchPagingDTO> dto) {
-        String searchType = dto.getParams().getSearchType();
         String searchKeyword = dto.getParams().getSearchKeyword();
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> skuIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
             skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
         }
-        List<Integer> stateList = new ArrayList<>();
         //待审核
         List<String> bomIdList = new ArrayList<>();
-        if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = UserContext.getDefaultLoginUser().getUid();
-            //获取我的待办信息
-            //TODO 2020330暂时取消审核流程，只修改状态
-/*            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
-            bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(bomIdList)) {
-                ExcelUtil.export(fileName, "BOM", new ArrayList<>(), BomExportExcelVO.class, response);
-                return;
-            }*/
-            stateList.add(BomStateEnum.WAIT_AUDIT.getState());
-            stateList.add(BomStateEnum.AUDIT_ING.getState());
-        }
 
         List<FindUserDTO> userList = commonService.getAllUser();
 
-        Page<BomPagingVO> page = baseMapper.getAllBom(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(), bomIdList, skuIdList, stateList);
+        Page<BomPagingVO> page = baseMapper.getAllBom(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(), bomIdList, skuIdList);
         List<BomPagingVO> list = page.getRecords();
         //对应sku集合
         List<String> skuNoList = list.stream().map(BomPagingVO::getSkuNo).collect(Collectors.toList());
@@ -507,7 +492,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         params.setPermissionSql(dto.getPermissionSql());
         String searchKeyword = params.getSearchKeyword();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String searchType = params.getSearchType();
         List<String> bomIdList = new ArrayList<>();
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> skuIdList = new ArrayList<>();
@@ -518,23 +502,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 return new PagingVO(pageData);
             }
         }
-
-        List<Integer> stateList = new ArrayList<>();
-        //待审核
-        if (SearchType.WAIT_AUDIT.equals(searchType)) {
-          /*  String userId = UserContext.getDefaultLoginUser().getUid();
-            //获取我的待办信息
-            //TODO 2020330暂时取消审核流程，只修改状态
-            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
-            bomIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(bomIdList)) {
-                IPage pageData = new Page();
-                return new PagingVO(pageData);
-            }*/
-            stateList.add(1);
-        }
-
-        IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList, stateList);
+        IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList);
         List<BomPagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
