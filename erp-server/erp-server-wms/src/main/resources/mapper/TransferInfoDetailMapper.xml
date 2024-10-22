@@ -42,5 +42,32 @@
             </foreach>
         </where>
     </select>
+    <select id="listApproveByMainIds" resultType="com.erp.model.wms.dto.TransferInfoDetailDTO$ApproveDTO">
+        select
+        tid.id  as id,
+        tid.main_id as mainId,
+        tid.sku_id,
+        tid.sku_no,
+        tid.qty,
+        tid.out_warehouse_id,
+        tid.in_warehouse_id,
+        tid.in_warehouse_location,
+        tid.out_warehouse_location,
+        tid.remark,
+        tid.source_detail_id,
+        inWarehouse.name as inWarehouseName,
+        inWarehouse.charge_id as inWarehouseChargeId,
+        outWarehouse.name as outWarehouseName,
+        outWarehouse.charge_id as outWarehouseChargeId
+        from transfer_info_detail AS tid
+        left join  warehouse AS  inWarehouse on tid.in_warehouse_id = inWarehouse.id
+        left join warehouse AS outWarehouse on outWarehouse.id = tid.out_warehouse_id
+        where tid.is_deleted = false and inWarehouse.is_deleted = false and outWarehouse.is_deleted = false
+        and tid.main_id in
+        <foreach collection="mainIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+    </select>
 
 </mapper>
