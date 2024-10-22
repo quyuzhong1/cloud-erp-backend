@@ -220,7 +220,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
             if(null != entity) {
                 if (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
-                    result.add("【"+entity.getCode()+"】"+ApiError.ERROR_95273);
+                    result.add("试产量产【"+entity.getCode()+"】"+ApiError.ERROR_95273.msg);
                     continue;
 //                        throw new ServiceException(ApiError.ERROR_95273);
                 }
@@ -238,7 +238,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 //根据节点标示获取到通知消息实体
                 NoticeMessageEntity notice = noticeMessageService.getByNodeFlag(noticeFlag);
                 if (Objects.isNull(notice)) {
-                    result.add("【"+entity.getCode()+"】"+ApiError.ERROR_MSG_IS_NOT_NULL);
+                    result.add("试产量产【"+entity.getCode()+"】"+ApiError.ERROR_MSG_IS_NOT_NULL.msg);
                     continue;
 //                        throw new ServiceException(ApiError.ERROR_MSG_IS_NOT_NULL);
                 }
@@ -266,6 +266,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 // 发送飞书加急消息
                 sendMessage(pressUserList, titleContent, textContent, noticeFlag, ThirdConstants.FS_MESSAGE_INTERACTIVE, Boolean.TRUE);
                 redisService.setCacheObject(redisKey, dto.getBusinessName(), 30L, TimeUnit.MINUTES);
+                result.add("试产量产【"+entity.getCode()+"】发送成功");
             }
         }
         return result;
@@ -362,16 +363,23 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         //针对试产量产类型做特殊处理
         if(CollectionUtils.isNotEmpty(pilotList)){
             List<String> pilotListPress = this.pilotListPress(pilotList);
-            pilotListPress.addAll(alreadyPress);
-            if(CollectionUtils.isNotEmpty(pilotListPress)){
+            StringBuffer sb = new StringBuffer();
+            if(CollectionUtils.isNotEmpty(alreadyPress)){
                 ApiError error = ApiError.ERROR_95274;
                 String message = error.msg;
-                StringBuffer sb = new StringBuffer();
-                for (String er : pilotListPress) {
+                for (String er : alreadyPress) {
                     sb.append(String.format(message, er));
-                    sb.append("\r\n");
+                    sb.append("<br>");
                 }
-                throw new ServiceException(error.code, sb.toString());
+            }
+            if(CollectionUtils.isNotEmpty(pilotListPress)){
+                for (String er : pilotListPress) {
+                    sb.append(er);
+                    sb.append("<br>");
+                }
+            }
+            if(StringUtils.isNotBlank(sb.toString())){
+                throw new ServiceException(sb.toString());
             }
         }else if (CollectionUtils.isNotEmpty(alreadyPress)) {
             String name = alreadyPress.stream().collect(Collectors.joining(","));
@@ -383,6 +391,5 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             throw new ServiceException(error.code, String.format(message, name));
         }
         return Boolean.TRUE;
-
     }
 }

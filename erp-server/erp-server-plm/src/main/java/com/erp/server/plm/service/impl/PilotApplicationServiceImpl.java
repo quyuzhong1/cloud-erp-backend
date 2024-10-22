@@ -1306,27 +1306,39 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     }
 
     @Override
-    public void approvePilotApplicationNotice(String id) {
+    public PilotApplicationDTO.ApprovePilotNoticeDTO getPilotApplicationNoticeData(String id) {
         // 在事务提交后执行的方法
+        PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = null;
         PilotApplicationEntity entity = this.getById(id);
         //获取试产量产明细中的skuId集合
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id).eq(PilotApplicationDetailEntity::getIsDeleted, Boolean.FALSE).list();
         List<String> skuIds = detailList.stream().map(PilotApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO.ProductChargeInfoDTO> productChargeInfoList = productDetailService.listProductChargeInfoByIds(skuIds);
         if(CollectionUtils.isNotEmpty(productChargeInfoList)){
-            PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = new PilotApplicationDTO.ApprovePilotNoticeDTO();
+            approvePilotNoticeDTO = new PilotApplicationDTO.ApprovePilotNoticeDTO();
             BeanMapperUtils.copy(productChargeInfoList.get(0),approvePilotNoticeDTO);
             //试产量产主键id
             approvePilotNoticeDTO.setId(entity.getId());
             approvePilotNoticeDTO.setCode(entity.getCode());
+            //状态
+            approvePilotNoticeDTO.setApproveStatus(entity.getApproveStatus());
             //飞书消息通知
             LoginUser loginUser = UserContext.getDefaultLoginUser();
             String userName = loginUser.getUserName();
-            if(entity.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-                noticeMessageService.approvePilotApplicationNotice(userName,approvePilotNoticeDTO, Boolean.TRUE);
-            }else {
-                noticeMessageService.approvePilotApplicationNotice(userName,approvePilotNoticeDTO, Boolean.FALSE);
+            approvePilotNoticeDTO.setUserName(userName);
+        }
+        return approvePilotNoticeDTO;
+    }
+
+    @Override
+    public void approvePilotApplicationNotice(String id) {
+        PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = this.getPilotApplicationNoticeData(id);
+        if(null != approvePilotNoticeDTO){
+            Boolean sendFlag = Boolean.FALSE;
+            if(approvePilotNoticeDTO.getApproveStatus().getStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+                sendFlag = Boolean.TRUE;
             }
+            noticeMessageService.approvePilotApplicationNotice(approvePilotNoticeDTO.getUserName(),approvePilotNoticeDTO, sendFlag);
         }
     }
 }
