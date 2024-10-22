@@ -216,8 +216,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             return;
         }
         List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
-        //过滤掉未到的数据
-        logisticsTrackEntities = logisticsTrackEntities.stream().filter(e -> Objects.nonNull(e) && !LogisticTrackStatusEnum.NOT_FIND.getCode().equals(e.getStatus())).collect(Collectors.toList());
         //获取跟踪号最新一条记录
         LogisticsTrackEntity trackEntity = this.getMaxByTrackTime(dto.getTrackNo());
         //未查询到物流轨迹 且最近一条物流轨迹是三个月前

@@ -160,19 +160,20 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
                                     }
                                     acceptedToSaveDto.setDetails(details);
                                     resultList.add(acceptedToSaveDto);
-                                } else {
-                                    List<PlatformTrackDetail> details = new ArrayList<>();
-                                    PlatformTrackDetail detail = new PlatformTrackDetail();
-                                    detail.setTrackNo(oceanTrackInfo.getTrackingNo());
-                                    //转换类型
-                                    detail.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());
-                                    LocalDateTime eventTime = LocalDateTime.parse(oceanTrackInfo.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                    detail.setTrackTime(eventTime);
-                                    detail.setContent("暂无信息");
-                                    details.add(detail);
-                                    acceptedToSaveDto.setDetails(details);
-                                    resultList.add(acceptedToSaveDto);
                                 }
+//                                else {
+//                                    List<PlatformTrackDetail> details = new ArrayList<>();
+//                                    PlatformTrackDetail detail = new PlatformTrackDetail();
+//                                    detail.setTrackNo(oceanTrackInfo.getTrackingNo());
+//                                    //转换类型
+//                                    detail.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());
+//                                    LocalDateTime eventTime = LocalDateTime.parse(oceanTrackInfo.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                                    detail.setTrackTime(eventTime);
+//                                    detail.setContent("暂无信息");
+//                                    details.add(detail);
+//                                    acceptedToSaveDto.setDetails(details);
+//                                    resultList.add(acceptedToSaveDto);
+//                                }
                             }
                         });
                     }
