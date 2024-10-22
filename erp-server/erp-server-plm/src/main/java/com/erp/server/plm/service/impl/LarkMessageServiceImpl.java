@@ -224,6 +224,19 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     continue;
 //                        throw new ServiceException(ApiError.ERROR_95273);
                 }
+                //是否存在
+                String redisValue = redisService.getCacheObject(redisKey);
+                if(StringUtils.isNotBlank(redisValue)){
+                    String[] split = redisValue.split("###");
+                    long lastTime = Long.parseLong(split[1]);
+                    Calendar cal = Calendar.getInstance();
+                    long nowTime = cal.getTimeInMillis();
+                    long min = 30 - (nowTime - lastTime) / (60 * 1000);
+                    redisValue = split[0] + " " + min + "分钟前";
+                    result.add(String.format(ApiError.ERROR_95274.msg, redisValue));
+                    continue;
+                }
+
                 noticeFlag = NoticeEnum.AUDIT_PILOT_APPLICATION;
                 long timeInMillis = Calendar.getInstance().getTimeInMillis();
                 dto.setBusinessName(businessType.getName()+"【"+entity.getCode()+"】###"+timeInMillis);
@@ -335,26 +348,21 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         List<LarkPressMessageDTO> pilotList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(businessIdList)) {
             for (String businessId : businessIdList) {
-                String redisKey = dto.getBusinessType() + "_" + businessId + redisBaseKey;
-                //是否存在
-                String redisValue = redisService.getCacheObject(redisKey);
-                if (StringUtils.isNotBlank(redisValue)) {
-                    if(dto.getBusinessType().equals(LarkPressBusinessTypeEnum.PILOT_APPLICATION.getCode())){//试产量产类型
-                        String[] split = redisValue.split("###");
-                        long lastTime = Long.parseLong(split[1]);
-                        Calendar cal = Calendar.getInstance();
-                        long nowTime = cal.getTimeInMillis();
-                        long min = 30 - (nowTime - lastTime) / (60 * 1000);
-                        redisValue = split[0] + " " + min +"分钟前";
-                    }
-                    alreadyPress.add(redisValue);
-                } else {
+                if(dto.getBusinessType().equals(LarkPressBusinessTypeEnum.PILOT_APPLICATION.getCode())) {//试产量产类型
                     LarkPressMessageDTO pressMessage = new LarkPressMessageDTO();
                     pressMessage.setBusinessId(businessId);
                     pressMessage.setBusinessType(businessType);
-                    if(dto.getBusinessType().equals(LarkPressBusinessTypeEnum.PILOT_APPLICATION.getCode())) {//试产量产类型
-                        pilotList.add(pressMessage);
-                    }else {
+                    pilotList.add(pressMessage);
+                }else {
+                    String redisKey = dto.getBusinessType() + "_" + businessId + redisBaseKey;
+                    //是否存在
+                    String redisValue = redisService.getCacheObject(redisKey);
+                    if (StringUtils.isNotBlank(redisValue)) {
+                        alreadyPress.add(redisValue);
+                    } else {
+                        LarkPressMessageDTO pressMessage = new LarkPressMessageDTO();
+                        pressMessage.setBusinessId(businessId);
+                        pressMessage.setBusinessType(businessType);
                         this.press(pressMessage);
                     }
                 }
@@ -364,20 +372,11 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         if(CollectionUtils.isNotEmpty(pilotList)){
             List<String> pilotListPress = this.pilotListPress(pilotList);
             StringBuffer sb = new StringBuffer();
-
             boolean b = pilotListPress.stream().allMatch(s -> s.contains("成功"));
-            if(!b || CollectionUtils.isNotEmpty(alreadyPress)){
+            if(!b){
                 if (CollectionUtils.isNotEmpty(pilotListPress)) {
                     for (String er : pilotListPress) {
                         sb.append(er);
-                        sb.append("<br>");
-                    }
-                }
-                if (CollectionUtils.isNotEmpty(alreadyPress)) {
-                    ApiError error = ApiError.ERROR_95274;
-                    String message = error.msg;
-                    for (String er : alreadyPress) {
-                        sb.append(String.format(message, er));
                         sb.append("<br>");
                     }
                 }
