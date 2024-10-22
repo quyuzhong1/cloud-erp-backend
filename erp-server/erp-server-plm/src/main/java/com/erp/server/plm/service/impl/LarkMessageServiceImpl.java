@@ -364,22 +364,26 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         if(CollectionUtils.isNotEmpty(pilotList)){
             List<String> pilotListPress = this.pilotListPress(pilotList);
             StringBuffer sb = new StringBuffer();
-            if(CollectionUtils.isNotEmpty(alreadyPress)){
-                ApiError error = ApiError.ERROR_95274;
-                String message = error.msg;
-                for (String er : alreadyPress) {
-                    sb.append(String.format(message, er));
-                    sb.append("<br>");
+
+            boolean b = pilotListPress.stream().allMatch(s -> s.contains("成功"));
+            if(!b || CollectionUtils.isNotEmpty(alreadyPress)){
+                if (CollectionUtils.isNotEmpty(pilotListPress)) {
+                    for (String er : pilotListPress) {
+                        sb.append(er);
+                        sb.append("<br>");
+                    }
                 }
-            }
-            if(CollectionUtils.isNotEmpty(pilotListPress)){
-                for (String er : pilotListPress) {
-                    sb.append(er);
-                    sb.append("<br>");
+                if (CollectionUtils.isNotEmpty(alreadyPress)) {
+                    ApiError error = ApiError.ERROR_95274;
+                    String message = error.msg;
+                    for (String er : alreadyPress) {
+                        sb.append(String.format(message, er));
+                        sb.append("<br>");
+                    }
                 }
-            }
-            if(StringUtils.isNotBlank(sb.toString())){
-                throw new ServiceException(sb.toString());
+                if (StringUtils.isNotBlank(sb.toString())) {
+                    throw new ServiceException(sb.toString());
+                }
             }
         }else if (CollectionUtils.isNotEmpty(alreadyPress)) {
             String name = alreadyPress.stream().collect(Collectors.joining(","));
