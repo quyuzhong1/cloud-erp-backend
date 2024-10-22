@@ -18,6 +18,13 @@ public interface LarkMessageService {
     Boolean press(LarkPressMessageDTO dto);
 
     /**
+     * 试产量产飞书催办消息
+     * @param list
+     * @return
+     */
+    List<String> pilotListPress(List<LarkPressMessageDTO> list);
+
+    /**
      * 飞书发送消息
      * @param pressUserList
      * @param titleContent
