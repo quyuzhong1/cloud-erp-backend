@@ -142,4 +142,11 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @return
      */
     List<LogisticsAuthEntity> listByMainIds(List<String> supplierIds);
+
+    /**
+     * 虾皮新增店铺授权
+     * @param authMap
+     * @return
+     */
+    Map<String, String> addShopeeShopAuth(Map<String, String> authMap);
 }

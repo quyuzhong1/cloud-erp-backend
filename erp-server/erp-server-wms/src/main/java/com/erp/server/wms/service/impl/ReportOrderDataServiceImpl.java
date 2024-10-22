@@ -14,6 +14,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.ReportOrderDataEntity;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
@@ -130,6 +131,11 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //bom信息
         List<String> skuIdList = reportOrderDataList.stream().map(ReportOrderDataEntity::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        //取销售套装bom
+        if (CollectionUtils.isNotEmpty(bomChildrenSkuList)) {
+            bomChildrenSkuList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        }
+
         //子级sku
         List<String> childSkuIdList = bomChildrenSkuList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(childSkuIdList)) {

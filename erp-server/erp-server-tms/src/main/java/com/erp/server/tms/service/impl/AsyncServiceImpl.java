@@ -43,11 +43,12 @@ public class AsyncServiceImpl implements AsyncService {
     @Async("tmsExecutor")
     @Override
     public void asyncUpdateSaleChannel(Map<String, String> authMap) {
-        if (Objects.isNull(authMap)) return;
-        if (StringUtils.isBlank(authMap.get("logisticsPlatform"))) return;
+        if (Objects.isNull(authMap)) {return;}
+        if (StringUtils.isBlank(authMap.get("logisticsPlatform"))) {return;}
         try {
             LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
             String logisticsPlatform = authMap.get("logisticsPlatform");
+            //虾皮的授权 调整
             ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
             chanelQueryVO.setAuthMap(authMap);
             ApiResult<List<LogisticsSaleChannelEntity>> channels = service.getChannel(chanelQueryVO);

@@ -20,8 +20,8 @@ public class StockInfo implements Serializable {
     private SummaryInfo summaryInfo;
 
     @Alias( "seller_stock")
-    private List<SellerStock> sellerStocks;
+    private List<SellerStock> sellerStock;
 
     @Alias( "shopee_stock")
-    private List<ShopeeStock> shopeeStocks;
+    private List<ShopeeStock> shopeeStock;
 }

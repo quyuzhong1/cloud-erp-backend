@@ -7,12 +7,12 @@ import java.util.List;
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
 
+import cn.hutool.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -96,9 +96,9 @@ public class DmpInputShopeeGlobalProductInitHandler extends DmpInputInitHandler{
 	    		}
 	    	}
 	    	JSONObject result = data.getResponse();
-	    	hasNextPage = result.getBoolean("has_next_page");
+	    	hasNextPage = result.getBool("has_next_page");
 	    	if(hasNextPage) {
-	    		productRequest.setOffset(result.getString("offset"));
+	    		productRequest.setOffset(result.getStr("offset"));
 	    	}
 	    	item.addAll(result.getJSONArray("global_item_list"));
 		}

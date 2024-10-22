@@ -174,18 +174,19 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                             }
                             acceptedToSaveDto.setDetails(details);
                             resultList.add(acceptedToSaveDto);
-                        } else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())) {
-                            List<PlatformTrackDetail> details = new ArrayList<>();
-                            PlatformTrackDetail detail = new PlatformTrackDetail();
-                            detail.setTrackNo(trackDetail.getTrackNo());
-                            detail.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
-                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                            detail.setTrackTime(eventTime);
-                            detail.setContent("暂无信息");
-                            details.add(detail);
-                            acceptedToSaveDto.setDetails(details);
-                            resultList.add(acceptedToSaveDto);
                         }
+//                        else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())) {
+//                            List<PlatformTrackDetail> details = new ArrayList<>();
+//                            PlatformTrackDetail detail = new PlatformTrackDetail();
+//                            detail.setTrackNo(trackDetail.getTrackNo());
+//                            detail.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
+//                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                            detail.setTrackTime(eventTime);
+//                            detail.setContent("暂无信息");
+//                            details.add(detail);
+//                            acceptedToSaveDto.setDetails(details);
+//                            resultList.add(acceptedToSaveDto);
+//                        }
                     }
                 }
             }

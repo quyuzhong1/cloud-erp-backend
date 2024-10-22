@@ -212,10 +212,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     @Async("tmsExecutor")
     public void processTrackData(PlatformTrackDTO dto){
         log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
-        List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
         if (StrUtil.isBlank(dto.getTrackNo())){
             return;
         }
+        List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
         //获取跟踪号最新一条记录
         LogisticsTrackEntity trackEntity = this.getMaxByTrackTime(dto.getTrackNo());
         //未查询到物流轨迹 且最近一条物流轨迹是三个月前
@@ -235,7 +235,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
                 List<LogisticsTrackEntity> lastList = logisticsTrackEntities.stream().filter(e -> Objects.nonNull(e)
                         && Objects.nonNull(e.getTrackTime())
                         && StrUtil.isNotBlank(e.getStatus())
-                        && !LogisticTrackStatusEnum.NOT_FIND.getCode().equals(e.getStatus())
                         && e.getTrackTime().isAfter(trackEntity.getTrackTime())
                 ).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(lastList)){

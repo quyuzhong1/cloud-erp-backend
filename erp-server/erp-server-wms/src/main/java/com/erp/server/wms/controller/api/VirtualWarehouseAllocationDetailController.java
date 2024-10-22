@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.core.enums.ApiError;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
@@ -201,7 +202,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<DmpPushTaskEntity> viewSyncInfo(@RequestParam(value = "detailId") String detailId) {
+    public ApiResult<DmpPushTaskDTO.SyncInfoDTO> viewSyncInfo(@RequestParam(value = "detailId") String detailId) {
        return success(virtualWarehouseAllocationDetailService.viewSyncInfo(detailId));
     }
 

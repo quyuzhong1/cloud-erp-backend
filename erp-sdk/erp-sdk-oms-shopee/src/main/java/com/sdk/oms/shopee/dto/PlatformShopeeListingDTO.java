@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,17 +33,17 @@ import java.util.Objects;
 @AllArgsConstructor
 public class PlatformShopeeListingDTO extends CleanBaseDTO {
     //
-    private ItemInfo itemInfo;
+    private ShopeeProductInfo shopeeProductInfo;
     private String shopId;
 
     /**
      * 初始化
      */
-    public PlatformShopeeListingDTO(ItemInfo itemInfo, JobTaskDTO dto) {
-        this.itemInfo = itemInfo;
+    public PlatformShopeeListingDTO(ShopeeProductInfo shopeeProductInfo, JobTaskDTO dto) {
+        this.shopeeProductInfo = shopeeProductInfo;
         this.setIsClean(0);
         this.setPlatform(PlatformDictEnum.SHOPEE.getCode());
-        this.setUniqueId(itemInfo.getId() + "_" + dto.getShopId());
+        this.setUniqueId(shopeeProductInfo.getItemInfo().getItemId() + "_"+ shopeeProductInfo.getModelInfo().getModelId() + "_" + dto.getShopId());
         this.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
         this.setLastPushTime(dto.getNextTime().toString());
         this.shopId = dto.getShopId();
@@ -55,7 +54,9 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
      */
     public static PlatformProductDTO convertDTO(PlatformShopeeListingDTO dto) {
         // 原商品信息
-        ItemInfo itemInfo = dto.getItemInfo();
+        ShopeeProductInfo shopeeProductInfo = dto.getShopeeProductInfo();
+        ModelInfo modelInfo = shopeeProductInfo.getModelInfo();
+        ItemInfo itemInfo = shopeeProductInfo.getItemInfo();
         if (Objects.isNull(itemInfo)) {
             return null;
         }
@@ -68,7 +69,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
         Image image = itemInfo.getImage();
         String imageUrl = null;
         if (Objects.nonNull(image)) {
-            List<String> urls = image.getUrls();
+            List<String> urls = image.getImageUrlList();
             if (CollectionUtils.isNotEmpty(urls)) {
                 imageUrl = urls.get(0).toString();
             }
@@ -77,17 +78,21 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 // 类型 platform 平台  warehouse 仓库
                 .setPlatformType("platform")
                 // 平台spu no
-                .setPlatformProductNo(String.valueOf(itemInfo.getId()))
+                .setPlatformProductNo(String.valueOf(modelInfo.getModelId()))
                 // 平台sku no
-                .setPlatformSkuNo(itemInfo.getItemSku())
+                .setPlatformSkuNo(modelInfo.getModelSku())
+                //平台产品id
+                .setPlatformSkuId(String.valueOf(modelInfo.getModelId()))
+                //平台sku状态
+                .setPlatformStatus(modelInfo.getModelStatus())
                 //sku名称
-                .setPlatformSkuName(itemInfo.getName())
+                .setPlatformSkuName(modelInfo.getModelName())
                 // 平台产品名称
-                .setPlatformProductName(itemInfo.getName())
+                .setPlatformProductName(itemInfo.getItemName())
                 //产品包装信息
                 .setProductPacking(processDimension(itemInfo.getDimension(), itemInfo.getWeight()))
                 //产品规格信息
-                .setProductSpec(processProductSpec(itemInfo.getAttributes()))
+                .setProductSpec(processProductSpec(itemInfo.getAttributeList()))
                 // 产品图片 url
                 .setProductImageUrl(imageUrl)
                 //店铺
@@ -105,11 +110,11 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
         if (CollectionUtils.isEmpty(attributes)) return "";
         StringBuffer stringBuffer = new StringBuffer();
         attributes.forEach(attribute -> {
-            stringBuffer.append(attribute.getAttributeName()).append(":");
+            stringBuffer.append(attribute.getOriginalAttributeName()).append(":");
             List<AttributeValue> attributeValueList = attribute.getAttributeValueList();
             if (CollectionUtils.isNotEmpty(attributeValueList)) {
                 attributeValueList.forEach(attributeValue -> {
-                    stringBuffer.append(attributeValue.getValueName());
+                    stringBuffer.append(attributeValue.getOriginalValueName());
                 });
                 stringBuffer.append(";");
             }
@@ -133,7 +138,7 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
     @Override
     public String toString() {
         return "PlatformShopeeListingDTO{" +
-                "itemInfo=" + itemInfo +
+                "shopeeProductInfo=" + shopeeProductInfo +
                 '}';
     }
 }

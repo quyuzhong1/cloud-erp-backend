@@ -238,70 +238,8 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     }
 
     @Override
-    public void getProductAll() {
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
-        findDTO.setBusinessType(appClientEnum.getBusinessType());
-        findDTO.setDictPlatform(appClientEnum.getPlatform());
-        findDTO.setPlatformType(appClientEnum.getPlatformType());
-        try {
-            CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-            if (Objects.nonNull(cfgAppClient)) {
-                //获取授权shop
-                List<ShopAuthEntity> shopAuthEntities = this.getAuthShop();
-                if (CollectionUtils.isNotEmpty(shopAuthEntities)) {
-                    List<ItemInfo> allProduct = new ArrayList<>();
-                    shopAuthEntities.stream().forEach(shopAuthEntity -> {
-                        if (Objects.nonNull(shopAuthEntity.getShopId())) {
-                            ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopAuthEntity.getShopId());
-                            if (Objects.nonNull(shopInfoEntity) && shopInfoEntity.getAuthStatus().equalsIgnoreCase(AuthStatusEnum.ALREADY.getCode())) {
-                                ProductRequest productRequest = ProductRequest.builder()
-                                        .host(cfgAppClient.getUrl())
-                                        .offset(0)
-                                        .token(shopAuthEntity.getAccessToken())
-                                        .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
-                                        .partnerId(Long.parseLong(cfgAppClient.getClientId()))
-                                        .tmpPartnerKey(cfgAppClient.getClientSecret())
-                                        .timeFrom(null)
-                                        .timeTo(null)
-                                        .build();
-                                List<ItemInfo> list = new ArrayList<>();
-                                shopeeProductService.getAllProduct(productRequest, list);
-                                if (CollectionUtils.isNotEmpty(list)) {
-                                    allProduct.addAll(list);
-                                }
-                            }
-                        }
-                    });
-                    System.out.println("allProduct:" + allProduct.size());
-                }
-            } else {
-                throw new ServiceException("虾皮基础配置未找到");
-            }
-        } catch (Exception e) {
-            throw new ServiceException("erp-dmp服务调用异常");
-        }
-    }
-
-    private List<ShopAuthEntity> getAuthShop() {
-        LambdaQueryWrapper<ShopAuthEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ShopAuthEntity::getType, AuthTypeEnum.SHOP.getCode());
-        return baseMapper.selectList(queryWrapper);
-    }
-
-    @Override
-    public void getOrderAll() {
-
-    }
-
-    @Override
     public Boolean updateShopAuthById(ShopAuthEntity shopAuthEntity) {
         return this.updateById(shopAuthEntity);
-    }
-
-    @Override
-    public List<ShopAuthEntity> listByClientId(String clientId) {
-        return this.lambdaQuery().eq(ShopAuthEntity::getAppClientId,clientId).list();
     }
 
     @Override

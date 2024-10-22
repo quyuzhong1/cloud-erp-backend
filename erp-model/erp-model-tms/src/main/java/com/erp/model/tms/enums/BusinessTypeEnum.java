@@ -17,7 +17,14 @@ public enum BusinessTypeEnum implements EnumMessage {
     GET_LABEL_LIST("getLabelList", "批量获取标签"),
     GET_CHANEL_LIST("getChanelList", "批量渠道列表"),
     UPDATE_WEIGHT("updateWeight", "更新重量"),
-    CANCEL_ORDER("cancelOrder", "取消订单")
+    CANCEL_ORDER("cancelOrder", "取消订单"),
+    SHIPPING_PARAMETER("shippingParameter", "获取标记发货参数"),
+    SHIPPING_ORDER("shippingOrder", "标记订单发货"),
+    SHIPPING_DOCUMENT_PARAMETER("shippingDocumentParameter", "获取发货面单参数"),
+    CREATE_SHIPPING_DOCUMENT("createShippingDocument", "创建发货面单"),
+    SHIPPING_DOCUMENT_RESULT("shippingDocumentResult", "获取发货面单结果"),
+    DOWNLOAD_SHIPPING_DOCUMENT("downloadShippingDocument", "下载发货面单"),
+    GET_TRACK_NUMBER("getTrackNumber", "获取物流单跟踪号"),
     ;
 
     /**

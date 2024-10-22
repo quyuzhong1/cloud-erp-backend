@@ -1,22 +1,40 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.AttachDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FileUtil;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.CfgRuleOutEnum;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
+import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -28,6 +46,15 @@ import java.util.List;
  */
 @Service
 public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapper, WmsAttachmentEntity> implements WmsAttachmentService {
+
+    @Resource
+    private PackingTaskService packingTaskService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -140,5 +167,45 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
         }
         this.remove(queryWrapper);
+    }
+
+    @Override
+    public void addByWarehouseEquipment(WmsAttachmentDTO.AddDTO dto) {
+        String fileName = dto.getFileName();
+        String url = dto.getUrl();
+        if(StringUtils.isBlank(fileName) || StringUtils.isBlank(url)){
+            return;
+        }
+        //去掉文件后缀名
+        fileName = FileUtil.removeExtension(fileName);
+        String[] fileNameArr = fileName.split("-");
+        String code = fileNameArr[0];
+        if(StringUtils.isBlank(code)){
+            return;
+        }
+        WmsAttachmentEntity entity = new WmsAttachmentEntity();
+        entity.setAttachUrl(url);
+        entity.setAttachName(dto.getFileName());
+        if(code.contains("FHD") || code.contains("YHSQ")){
+            PackingTaskEntity packingTaskEntity = packingTaskService.getBySourceCode(code);
+            if(Objects.isNull(packingTaskEntity)){
+                return;
+            }
+            Class<PackingTaskEntity> aClass = PackingTaskEntity.class;
+            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+            entity.setType(tableName.value());
+            entity.setBusinessId(packingTaskEntity.getId());
+        }else{
+            //发货单信息
+            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.getByBusinessCode(code);
+            if(Objects.isNull(soB2cDeliveryEntity)){
+                return;
+            }
+            Class<SoB2cDeliveryEntity> aClass = SoB2cDeliveryEntity.class;
+            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+            entity.setType(tableName.value());
+            entity.setBusinessId(soB2cDeliveryEntity.getId());
+        }
+        this.save(entity);
     }
 }

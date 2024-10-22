@@ -70,10 +70,6 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 		Map<String, String> map = new HashMap<>();
 		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
 
-		for (Map.Entry<String, DmpLogisticsTrackEntity> stringDmpLogisticsTrackEntityEntry : dmpLogisticsTrackEntityMap.entrySet()) {
-			stringDmpLogisticsTrackEntityEntry.getValue().getTrackNo();
-		}
-
 		List<DmpLogisticsTrackEntity> trackEntityList = new ArrayList<>(dmpLogisticsTrackEntityMap.values());
 		Map<String, List<DmpLogisticsTrackEntity>> trackMap = trackEntityList.stream().collect(Collectors.groupingBy(DmpLogisticsTrackEntity::getTrackNo));
 		for (Map.Entry<String, List<DmpLogisticsTrackEntity>> stringListEntry : trackMap.entrySet()) {

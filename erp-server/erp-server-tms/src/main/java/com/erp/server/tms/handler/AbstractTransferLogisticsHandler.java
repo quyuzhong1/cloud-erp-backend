@@ -22,9 +22,11 @@ import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.service.TransferLogisticsAuthService;
 import com.erp.server.tms.service.TransferLogisticsService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -32,9 +34,8 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -84,6 +85,22 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
 
     @Override
     public ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq, String authId) {
+        //相同sku合并数量
+        if(CollectionUtils.isNotEmpty(createOrderReq.getProductDetailList())){
+            createOrderReq.setProductDetailList(createOrderReq.getProductDetailList().stream()
+                    .collect(Collectors.groupingBy(
+                            TransferLogisticsCreateOrderReq.ProductDetail::getSkuNo,  // 以 skuNo 分组
+                            Collectors.reducing((pd1, pd2) -> {
+                                // 合并qty
+                                pd1.setQty(pd1.getQty() + pd2.getQty());
+                                return pd1;
+                            })
+                    ))
+                    .values()
+                    .stream()
+                    .map(Optional::get)
+                    .collect(Collectors.toList()));
+        }
         return handleAndRemoveContext(() -> createOrder(createOrderReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_ORDER,createOrderReq.getReferenceNo());
     }
 
