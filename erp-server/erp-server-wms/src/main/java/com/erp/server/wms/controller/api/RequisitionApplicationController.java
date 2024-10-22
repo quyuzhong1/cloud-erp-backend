@@ -3,7 +3,6 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
-import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -15,7 +14,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -529,6 +527,32 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult<T> generateDeliveryWithFba(@RequestBody @Validated RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
         requisitionApplicationService.generateDeliveryWithFba(dto);
         return success();
+    }
+
+    /**
+     * 下载货件装箱信息模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载货件装箱信息模板数据")
+    @GetMapping("/downloadPackingTemplate")
+    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
+        requisitionApplicationService.downloadPackingTemplate(response);
+        return success();
+    }
+    /**
+     * 批量导入Excel
+     * @author zdy
+     * @date: 2024/8/14 9:39
+     * @param excelImportDTO
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "批量导入Excel")
+    @PostMapping("/importFile")
+    public ApiResult<RequisitionApplicationDTO.ImportDTO> importFile(@ModelAttribute @Validated RequisitionApplicationDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        RequisitionApplicationDTO.ImportDTO dto = requisitionApplicationService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getFbaBindShipmentViewDTOS(),response);
+        return success(dto);
     }
     /**
      * 查询发货记录
