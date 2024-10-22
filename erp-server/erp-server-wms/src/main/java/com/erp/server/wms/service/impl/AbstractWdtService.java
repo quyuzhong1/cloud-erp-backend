@@ -335,7 +335,8 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CreateOtherStockoutRequest.GoodsList::getPositionNo).collect(Collectors.joining(","));
             wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
             Map<String, String> pushData = new HashMap<>();
-            pushData.put("remark", String.format("【{}】没有设置旺店通仓位映射", positionNos));
+            pushData.put("remark", String.format("【%s】没有设置旺店通仓位映射", positionNos));
+
             wmsPushMsgEntity.setPushData(JSON.toJSONString(pushData));
         }
         wmsPushMsgService.save(wmsPushMsgEntity);
@@ -391,7 +392,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CreateOtherStockinRequest.GoodsList::getPositionNo).collect(Collectors.joining(","));
             wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
             Map<String, String> pushData = new HashMap<>();
-            pushData.put("remark", String.format("【{}】没有设置旺店通仓位映射",positionNos));
+            pushData.put("remark", String.format("【%s】没有设置旺店通仓位映射",positionNos));
             wmsPushMsgEntity.setPushData(JSON.toJSONString(pushData));
         }
         wmsPushMsgService.save(wmsPushMsgEntity);
