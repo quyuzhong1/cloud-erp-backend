@@ -190,7 +190,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
                  LEFT JOIN dmp_basic_system l ON k.system_id = l.id
                  LEFT JOIN dmp_basic_system i ON h.system_id = i.id
                  LEFT JOIN dmp_push_msg m ON t.data_id = m.id
-        WHERE  t.is_deleted = false and t.status = 'cosumererror'
+        WHERE  t.is_deleted = false and t.status in('cosumererror','mqerror','error')
         <if test="params.sourceId != null and params.sourceId != ''">
             and m.source_id = #{params.sourceId}
         </if>
