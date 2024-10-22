@@ -171,10 +171,10 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * 下推要货申请列表查询
      * @Author Luo_WG
      * @Date 2023/11/17 11:19
-     * @param detailIds
+     * @param ids
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>
      **/
-    List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> detailIds);
+    List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids);
 
     /**
      * FBA货件下推要货申请保存
