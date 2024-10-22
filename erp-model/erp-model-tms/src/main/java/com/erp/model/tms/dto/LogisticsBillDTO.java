@@ -696,6 +696,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String platformCode;
         /**
+         * 包裹号【虾皮下单使用】
+         */
+        private String packageNumber;
+        /**
          * 销售平台
          */
         private String salesPlatform;
@@ -736,6 +740,7 @@ public class LogisticsBillDTO implements Serializable {
     }
 
     @Data
+    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class GenerateBillResultDTO{

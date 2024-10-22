@@ -687,7 +687,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             }
         }
         return new LogisticsChannelDTO.SignShipDTO(entity.getId(),
-                logisticsChannelId,
+                logisticsChannelId,channelEntity.getName(),
                 entity.getCode(),
                 entity.getCnName(),
                 viewDTO.getOrderDeliveryMarkType(),

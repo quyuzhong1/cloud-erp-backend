@@ -21,7 +21,7 @@ public class ItemInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Alias( "item_id")
-    private Long id;
+    private Long itemId;
 
     /**
      * shop id of the item
@@ -32,7 +32,7 @@ public class ItemInfo implements Serializable {
      * Name of the item in local language.
      */
     @Alias( "item_name")
-    private String name;
+    private String itemName;
 
     /**
      * Description of the item in local language.
@@ -77,7 +77,7 @@ public class ItemInfo implements Serializable {
      * Enumerated type that defines the current status of the item. Applicable values: NORMAL, DELETED, BANNED and UNLIST.
      */
     @Alias( "item_status")
-    private String status;
+    private String itemStatus;
     /**
      * Does it contain model.
      */
@@ -113,13 +113,13 @@ public class ItemInfo implements Serializable {
      * Image URLs of the item. It contains at most 9 URLs.
      */
     @Alias( "attribute_list")
-    private List<Attribute> attributes;
+    private List<Attribute> attributeList;
 
     /**
      * The three-digit code representing the currency unit used for the item in Shopee Listings.
      */
     @Alias( "price_info")
-    private List<PriceInfo> priceInfos;
+    private List<PriceInfo> priceInfo;
 
 
 
@@ -140,7 +140,7 @@ public class ItemInfo implements Serializable {
      * The original price of the item in the listing currency.
      */
     @Alias( "logistic_info")
-    private List<Logistics> logistics;
+    private List<Logistics> logisticInfo;
 
     /**
      * The variation of item is to list out all models of this product
@@ -158,7 +158,7 @@ public class ItemInfo implements Serializable {
      * Logistics
      */
     @Alias( "video_info")
-    private List<Video> videos;
+    private List<Video> videoInfo;
 
     /**
      * The length of package for this single item, the unit is CM
@@ -184,7 +184,7 @@ public class ItemInfo implements Serializable {
      * Please check this FAQ for more detail: https://open.shopee.com/faq?top=162&sub=166&page=1&faq=230
      */
     @Alias( "stock_info_v2")
-    private StockInfo stockInfo;
+    private StockInfo stockInfoV2;
 
     /**
      *New description field. Only whitelist sellers can use it.

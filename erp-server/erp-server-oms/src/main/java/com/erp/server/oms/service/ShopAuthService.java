@@ -80,26 +80,11 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
 
     void updateShopeeToken(ShopAuthEntity shopAuthEntity);
 
-    void getProductAll();
-
-    void getOrderAll();
-
-
     /**
      * 更改授权信息
      *
      */
     Boolean updateShopAuthById(ShopAuthEntity shopAuthEntity);
-
-    /**
-     * 方法说明
-     * @author yl
-     * @date 2023-12-12 10:46
-     * @param clientId 配置id
-     * @return
-     */
-    List<ShopAuthEntity> listByClientId(String clientId);
-
     /**
      * 刷新token
      * @author yl

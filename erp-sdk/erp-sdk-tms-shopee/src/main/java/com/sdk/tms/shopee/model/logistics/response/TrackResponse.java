@@ -24,5 +24,6 @@ public class TrackResponse implements Serializable {
     private String lastMileTrackingNumber;
     @JSONField(name = "hint")
     private String hint;
-
+    @JSONField(name = "pickup_code")
+    private String pickupCode;
 }

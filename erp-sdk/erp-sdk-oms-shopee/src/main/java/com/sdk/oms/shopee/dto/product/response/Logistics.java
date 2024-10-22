@@ -14,13 +14,13 @@ public class Logistics implements Serializable {
      * The identity of logistic channel
      */
     @Alias( "logistic_id")
-    private Long id;
+    private Long logisticId;
 
     /**
      * The name of logistic channel
      */
     @Alias( "logistic_name")
-    private String name;
+    private String logisticName;
 
     /**
      * Whether this logistic channel is enabled on shop level.
