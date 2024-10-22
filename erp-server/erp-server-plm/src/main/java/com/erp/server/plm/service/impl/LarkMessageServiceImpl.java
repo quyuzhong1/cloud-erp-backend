@@ -22,6 +22,7 @@ import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -113,13 +114,25 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     if (Objects.isNull(notice)) {
                         throw new ServiceException(ApiError.ERROR_MSG_IS_NOT_NULL);
                     }
-                    List<String> handleUserIdList = noticeMessageService.getSetPilotNotice(notice, entity, Boolean.FALSE);
-                    if(CollectionUtils.isNotEmpty(handleUserIdList)) {
-                        for (String userId : handleUserIdList) {
+                    //根据单据id查询审核流程
+                    List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessId(Collections.singletonList(dto.getBusinessId()));
+                    List<String> curApproveIds = processTaskManagementList.stream().filter(req -> req.getBusinessId().equals(dto.getBusinessId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveId).distinct().collect(Collectors.toList());
+                    if(CollectionUtils.isNotEmpty(curApproveIds)){
+                        for (String userId : curApproveIds) {
                             LarkPressMessageDTO.SendUserInfo sendUserInfo = new LarkPressMessageDTO.SendUserInfo();
                             sendUserInfo.setUserId(userId);
                             sendUserInfo.setUserName("");
                             pressUserList.add(sendUserInfo);
+                        }
+                    }else {
+                        List<String> handleUserIdList = noticeMessageService.getSetPilotNotice(notice, entity, Boolean.FALSE);
+                        if(CollectionUtils.isNotEmpty(handleUserIdList)) {
+                            for (String userId : handleUserIdList) {
+                                LarkPressMessageDTO.SendUserInfo sendUserInfo = new LarkPressMessageDTO.SendUserInfo();
+                                sendUserInfo.setUserId(userId);
+                                sendUserInfo.setUserName("");
+                                pressUserList.add(sendUserInfo);
+                            }
                         }
                     }
                 }
