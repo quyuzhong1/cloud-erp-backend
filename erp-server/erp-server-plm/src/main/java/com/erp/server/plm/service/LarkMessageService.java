@@ -23,7 +23,6 @@ public interface LarkMessageService {
      * @return
      */
     List<String> pilotListPress(List<LarkPressMessageDTO> list);
-
     /**
      * 飞书发送消息
      * @param pressUserList
