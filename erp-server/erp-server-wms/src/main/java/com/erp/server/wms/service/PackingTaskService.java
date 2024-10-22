@@ -286,8 +286,8 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     /**
      * 根据外部箱号查询装箱的基础信息和产品明细
-     * @param cartonDetailDTO
+     * @param outBoxNo
      * @return
      */
-    WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(PackingTaskDTO.CartonDetailDTO cartonDetailDTO);
+    WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(String outBoxNo);
 }

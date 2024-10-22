@@ -265,11 +265,11 @@ public class PdaPackingTaskController extends BaseController {
 
     /**
      * 根据外部箱号查询装箱的基础信息和产品明细
-     * @param cartonDetailDTO
+     * @param outBoxNo
      * @return
      */
     @GetMapping("/getCartonDetailByOutBoxNo")
-    public ApiResult<WmsCartonDTO.OutBoxNoDTO> getCartonDetailByOutBoxNo(@RequestBody @Validated PackingTaskDTO.CartonDetailDTO cartonDetailDTO){
-        return success(packingTaskService.getCartonDetailByOutBoxNo(cartonDetailDTO));
+    public ApiResult<WmsCartonDTO.OutBoxNoDTO> getCartonDetailByOutBoxNo(@RequestParam("outBoxNo") String outBoxNo){
+        return success(packingTaskService.getCartonDetailByOutBoxNo(outBoxNo));
     }
 }

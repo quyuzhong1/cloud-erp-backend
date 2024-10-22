@@ -2345,18 +2345,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     /**
      * 根据外部箱号查询装箱的基础信息和产品明细
-     * @param requestDTO
+     * @param outBoxNo
      * @return
      */
     @Override
-    public WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(PackingTaskDTO.CartonDetailDTO requestDTO) {
-        if (StringUtils.isBlank(requestDTO.getOutBoxNo())){
+    public WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(String outBoxNo) {
+        if (StringUtils.isBlank(outBoxNo)){
             throw new ServiceException("箱号不能为空");
         }
-        if (!requestDTO.getOutBoxNo().contains("-")){
+        if (!outBoxNo.contains("-")){
             throw new ServiceException("箱号格式【关联单号-箱号】错误");
         }
-        String[] split = requestDTO.getOutBoxNo().split("-");
+        String[] split = outBoxNo.split("-");
         String sourceCode = split[0];
         Integer boxNo = Integer.valueOf(split[1]);
         List<PackingTaskEntity> taskEntityList = this.listBySourceCodes(Collections.singletonList(sourceCode));
@@ -2386,7 +2386,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             });
         }
         return WmsCartonDTO.OutBoxNoDTO.builder()
-                .outBoxNo(requestDTO.getOutBoxNo())
+                .outBoxNo(outBoxNo)
                 .taskId(packingTaskEntity.getId())
                 .taskCode(packingTaskEntity.getCode())
                 .deliveryNo(getDeliveryNo(firstMileDeliveryEntityList))
