@@ -8,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -232,4 +233,19 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @param requisitionApplication
      */
     void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
+    /**
+     * 下载货件装箱信息模板数据
+     * @param response
+     */
+    void downloadPackingTemplate(HttpServletResponse response);
+
+    /**
+     * 批量导入
+     * @param excelFile
+     * @param fbaBindShipmentViewDTOS
+     * @param response
+     * @return
+     */
+    RequisitionApplicationDTO.ImportDTO importFile(MultipartFile excelFile, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS, HttpServletResponse response);
+
 }
