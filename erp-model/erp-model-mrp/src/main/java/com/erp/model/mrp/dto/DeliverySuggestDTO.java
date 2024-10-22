@@ -76,11 +76,39 @@ public class DeliverySuggestDTO implements Serializable {
          * 平台
          */
         private String platform;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 国家名称
+         */
+        private String countryName;
 
         /**
          * 编码
          */
         private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
 
         /**
          * 创建类型（auto系统，manual人工）
