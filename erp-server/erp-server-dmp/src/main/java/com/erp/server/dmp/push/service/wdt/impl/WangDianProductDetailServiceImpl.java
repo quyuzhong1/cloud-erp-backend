@@ -86,6 +86,7 @@ public class WangDianProductDetailServiceImpl implements WangDianProductDetailSe
             }
         } catch (Exception e) {
             log.error("推送旺店通失败:{}", e.getMessage(), e);
+            throw e;
         }
     }
 }
