@@ -20,6 +20,7 @@ public enum SyncOperateEnum {
     OPERATE_SUB_EFFECTIVE("operateSubEffective", "SubEffective","取消明细禁用"),
     OPERATE_SUB_UN_EFFECTIVE("operateSubUnEffective", "SubUnEffective","明细禁用"),
     OPERATE_UNDO_TO_PLAN_CONFIRM("operateUndoToPlanConfirm", "UndoToPlanConfirm","反执行至计划确认"),
+    OPERATE_SYNC_ERROR("operateSyncError", "","同步错误任务"),
 
     ;
     private String code;

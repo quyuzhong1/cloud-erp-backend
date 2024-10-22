@@ -19,10 +19,10 @@ import java.util.List;
 public class Attribute implements Serializable {
 
     @Alias( "attribute_id")
-    private Long id;
+    private Long attributeId;
 
     @Alias( "original_attribute_name")
-    private String attributeName;
+    private String originalAttributeName;
 
     /**
      * This is to indicate whether this attribute is mandantory.

@@ -100,16 +100,17 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                                 logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
                                 logisticsTrackEntities.add(logisticsTrackEntity);
                             });
-                        }else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())){
-                            LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-                            logisticsTrackEntity.setTrackNo(trackDetail.getTrackNo());
-                            logisticsTrackEntity.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
-                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                            logisticsTrackEntity.setTrackTime(eventTime);
-                            logisticsTrackEntity.setContent("暂无信息");
-                            logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
-                            logisticsTrackEntities.add(logisticsTrackEntity);
                         }
+//                        else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())){
+//                            LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+//                            logisticsTrackEntity.setTrackNo(trackDetail.getTrackNo());
+//                            logisticsTrackEntity.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
+//                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                            logisticsTrackEntity.setTrackTime(eventTime);
+//                            logisticsTrackEntity.setContent("暂无信息");
+//                            logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
+//                            logisticsTrackEntities.add(logisticsTrackEntity);
+//                        }
 
                     });
                 }
@@ -172,16 +173,17 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                                         logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
                                         logisticsTrackList.add(logisticsTrackEntity);
                                     });
-                                }else{
-                                    LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-                                    logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
-                                    logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());//转换类型
-                                    LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                    logisticsTrackEntity.setTrackTime(eventTime);
-                                    logisticsTrackEntity.setContent("暂无信息");
-                                    logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
-                                    logisticsTrackList.add(logisticsTrackEntity);
                                 }
+//                                else{
+//                                    LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+//                                    logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
+//                                    logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());//转换类型
+//                                    LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                                    logisticsTrackEntity.setTrackTime(eventTime);
+//                                    logisticsTrackEntity.setContent("暂无信息");
+//                                    logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
+//                                    logisticsTrackList.add(logisticsTrackEntity);
+//                                }
                             });
                         }
                     });

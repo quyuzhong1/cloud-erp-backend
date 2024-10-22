@@ -219,7 +219,7 @@ public class PackingTaskController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:packingTask:delete",
+            menuCode = "wms:packingTask:delete",
             serviceClass = PackingTaskService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

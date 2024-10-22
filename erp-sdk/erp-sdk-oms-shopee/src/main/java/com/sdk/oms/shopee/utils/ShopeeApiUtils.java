@@ -111,7 +111,6 @@ public class ShopeeApiUtils {
 
         return resultMap;
     }
-
     /**
      * GET 请求
      *
@@ -223,6 +222,29 @@ public class ShopeeApiUtils {
             log.error("请求异常：{}", e.getMessage());
         }
 
+        return resultMap;
+    }
+    /**
+     * 虾皮标记发货 post请求
+     *
+     * @param baseUrl 接口地址
+     * @param paramsJson
+     * @return java.lang.String
+     */
+    public static ShopeeResponse sendPost(String baseUrl, Map<String, Object> urlParams, String paramsJson) {
+        ShopeeResponse resultMap = null;
+        Map<String, String> headers = new HashMap();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept", "application/json");
+        String url = buildUrl(baseUrl, urlParams);
+        log.info("url：{}", url);
+        try {
+            String bodyStr = OkHttpUtils.doPostJson(url, paramsJson, headers);
+            log.info("bodyStr：{}", bodyStr);
+            resultMap = JSONUtil.toBean(bodyStr, ShopeeResponse.class);
+        } catch (Exception e) {
+            log.error("请求异常：{}", e.getMessage());
+        }
         return resultMap;
     }
 

@@ -271,6 +271,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
+        SoReturnNoticeEntity existEntity = this.getById(dto.getId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
         //获取用户信息
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
@@ -301,8 +302,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         entity.setId(dto.getId());
-        if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
+        if(existEntity != null && !existEntity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",existEntity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
         }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         entity.setSourceId(dto.getSourceId());

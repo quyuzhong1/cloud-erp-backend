@@ -31,6 +31,10 @@ public class PlatformOrderDetailDTO {
      * 平台sku编号
      */
     private String platformSkuNo;
+    /**
+     * 平台skuId
+     */
+    private String platformSkuId;
 
     /**
      * 平台产品id

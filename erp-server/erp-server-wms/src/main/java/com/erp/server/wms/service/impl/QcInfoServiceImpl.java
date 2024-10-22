@@ -912,6 +912,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.isNull(bill)) {
             throw new ServiceException(ApiError.ERROR_99015);
         }
+        if (!StrUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.DRAFT.getCode()) && !StrUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.WAIT_QC.getCode())) {
+            throw new ServiceException(ApiError.ERROR_99020);
+        }
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
         //采购订单id
@@ -1081,12 +1084,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
-        String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         List<QcInfoEntity> qcList = this.listByIds(ids);
-//        long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
-//        if (count > 0) {
-//            throw new ServiceException(ApiError.ERROR_99020);
-//        }
+        long count = qcList.stream().filter(s -> !Arrays.asList(QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_QC.getCode()).contains(s.getQcStatus().getCode())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99020);
+        }
         //批量检查
         batchCheckQcQty(qcList, true);
         LocalDateTime now = LocalDateTime.now();

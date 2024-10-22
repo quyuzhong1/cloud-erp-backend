@@ -1,6 +1,9 @@
 package com.sdk.tms.shopee.utils;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.utils.PdfUtil;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.base.ShopeeAuth;
@@ -10,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -154,6 +158,54 @@ public class ShopeeApiUtils {
         }
         return resultMap;
     }
+    /**
+     * 虾皮标记发货 post请求
+     *
+     * @param baseUrl 接口地址
+     * @param paramsJson
+     * @return java.lang.String
+     */
+    public static String sendPostBase64(String baseUrl, Map<String, Object> urlParams, String paramsJson) {
+        Map<String, String> headers = new HashMap();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept", "application/json");
+        String url = buildUrl(baseUrl, urlParams);
+        log.info("url：{}", url);
+        try {
+            String bodyStr = OkHttpUtils.doPostJsonBase64(url, paramsJson, headers);
+            log.info("bodyStr：{}", bodyStr);
+            return bodyStr;
+        } catch (Exception e) {
+            log.error("请求异常：{}", e.getMessage());
+            throw new ServiceException("虾皮面单获取异常"+e.getMessage());
+        }
+    }
+
+    /**
+     * 虾皮标记发货 post请求
+     *
+     * @param baseUrl 接口地址
+     * @param paramsJson
+     * @return java.lang.String
+     */
+    public static BaseResponse sendPost(String baseUrl, Map<String, Object> urlParams, String paramsJson) {
+        BaseResponse resultMap = null;
+        Map<String, String> headers = new HashMap();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept", "application/json");
+        String url = buildUrl(baseUrl, urlParams);
+        log.info("url：{}", url);
+        try {
+            String bodyStr = OkHttpUtils.doPostJson(url, paramsJson, headers);
+            log.info("bodyStr：{}", bodyStr);
+            resultMap = JSONUtil.toBean(bodyStr, BaseResponse.class);
+
+        } catch (Exception e) {
+            log.error("请求异常：{}", e.getMessage());
+        }
+        return resultMap;
+    }
+
 
     /**
      * 发送请求到沃尔玛获取令牌token

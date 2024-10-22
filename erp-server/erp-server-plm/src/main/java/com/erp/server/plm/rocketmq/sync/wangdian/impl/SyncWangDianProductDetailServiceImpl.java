@@ -34,10 +34,7 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -206,5 +203,20 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         plmPushMsgService.save(plmPushMsgEntity);
         
         return null;
+    }
+
+
+    @Override
+    public void addPlmPushMsg(ProductDetailEntity entity) {
+        Map<String, Object> pushData = new HashMap<>();
+        pushData.put("remark",String.format("【%s】删除，同步旺店通失败", entity.getSkuNo()));
+        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
+        plmPushMsgEntity.setPushData(JSON.toJSONString(pushData));
+        plmPushMsgService.save(plmPushMsgEntity);
     }
 }

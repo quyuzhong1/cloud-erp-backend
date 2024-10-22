@@ -301,7 +301,8 @@
             sod.is_generate_po as isGeneratePo,
             sod.payment_condition as paymentCondition,
             sod.plan_delivery_date as planDeliveryDate,
-            sod.bom_version as bomVersion
+            sod.bom_version as bomVersion,
+            sod.warehouse_location
         from subcontract_order so
         inner join subcontract_order_detail sod on so.id = sod.main_id  and sod.is_deleted = false
         left join supplier s on sod.supplier_id = s.id and s.is_deleted = false

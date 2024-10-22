@@ -61,7 +61,7 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         long timeFrom = Timestamp.valueOf(lastTime).getTime() / 1000;
         log.info("shopId:{},lastTime:{},timeFrom:{}",data.getShopId(), lastTime, timeFrom);
         LocalDateTime nextTime = data.getNextTime();
-        if (lastTime.compareTo(nextTime) == 0){
+        if (lastTime.isEqual(nextTime)){
             //nextTime +1天
             nextTime = lastTime.plusDays(1);
         }

@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -7,6 +8,17 @@ import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.ErpServerTmsApplication;
+import com.sdk.tms.shopee.model.base.BaseRequest;
+import com.sdk.tms.shopee.model.base.BaseResponse;
+import com.sdk.tms.shopee.model.logistics.request.Dropoff;
+import com.sdk.tms.shopee.model.logistics.request.ShipOrderRequest;
+import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
+import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
+import com.sdk.tms.shopee.model.logistics.response.ShipDetailResponse;
+import com.sdk.tms.shopee.model.logistics.response.ShipDropInfo;
+import com.sdk.tms.shopee.model.logistics.response.ShippingDocumentParameterResponse;
+import com.sdk.tms.shopee.model.logistics.response.TrackResponse;
+import com.sdk.tms.shopee.service.ShopeeLogisticsService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,16 +43,20 @@ import java.util.*;
 public class ShopeeLogisticsHandlerImplTest {
     @Resource
     private ShopeeLogisticsHandlerImpl shopeeLogisticsHandler;
+    @Resource
+    private ShopeeLogisticsService shopeeLogisticsService;
 
     private Map<String, String> authMap = new HashMap<>();
 
     public ShopeeLogisticsHandlerImplTest(){
         authMap.put("id", "1111");
         authMap.put("logisticsPlatform", "Shopee");
-        authMap.put("partnerKey", "436568524178574244445975595377664f574e6b536d786b7256744158715974");
-        authMap.put("partnerId", "2006582");
-        authMap.put("shopId", "111");
-        authMap.put("accessToken", "");
+        authMap.put("partnerKey", "5975757847654870727869546f436e696f4b454d466a74586f46696555466348");
+        authMap.put("partnerId", "1070627");
+//        authMap.put("shopId", "1843907937611972609");
+        authMap.put("shopId", "94349");
+        authMap.put("token", "74686351676b4b4c657a4b78586d6241");
+        authMap.put("host", "https://partner.test-stable.shopeemobile.com");
     }
 
     public Map<String, String> getLogisticsAuthConfig(){
@@ -184,5 +200,184 @@ public class ShopeeLogisticsHandlerImplTest {
     public void authorization() {
         ApiResult apiResult = shopeeLogisticsHandler.authorization(authMap);
         System.out.println(apiResult);
+    }
+    @Test
+    public void getShippingParameter() {
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+        String orderSn = "241014HEJQ5KGY";
+        String packageNumber = "OFG182599777214119";
+        ShipDetailResponse shippingParameter = shopeeLogisticsService.getShippingParameter(baseRequest, orderSn, packageNumber);
+        System.out.println(shippingParameter);
+    }
+    @Test
+    public void shippingOrder() {
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+//        String orderSn = "2410119RC3WKGU";
+//        String packageNumber = "OFG182340319214041";
+        String orderSn = "241015KMF3U41R";
+        String packageNumber = "OFG182674818215655";
+        ShipDetailResponse shippingParameter = shopeeLogisticsService.getShippingParameter(baseRequest, orderSn, packageNumber);
+        ShipDropInfo dropoff = shippingParameter.getDropoff();
+        ShipOrderRequest shipOrderRequest = null;
+        if (CollectionUtil.isEmpty(dropoff.getBranchInfoList())){
+            shipOrderRequest = ShipOrderRequest.builder()
+                    .orderSn(orderSn)
+                    .dropoff(Dropoff.builder().build())
+                    .build();
+        }else {
+            String logisticsChannelName = "";
+            String logisticsNo = "";
+            Dropoff dropoff1 = Dropoff.builder()
+                    .branchId(dropoff.getBranchInfoList().get(0).getBranchId())
+                    .senderRealName(logisticsChannelName)
+                    .slug(dropoff.getSlugInfoList().get(0).getSlug())
+                    .trackingNumber(logisticsNo)
+                    .build();
+            shipOrderRequest = ShipOrderRequest.builder()
+                    .orderSn(orderSn)
+                    .dropoff(dropoff1)
+                    .packageNumber(packageNumber)
+                    .build();
+        }
+        BaseResponse baseResponse = shopeeLogisticsService.shippingOrder(baseRequest, shipOrderRequest);
+        //{"error":"logistics.ship_order_not_ready_to_ship","message":"The order is not ready to ship.","request_id":"317a860d24923e8906ac682e6cd4f300:010002cde045a22a:0000002cf04e45dc"}
+        System.out.println(baseResponse);
+    }
+    @Test
+    public void getShippingDocumentParameter() {
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+        String orderSn = "241016P6BFN5KQ";
+        String packageNumber = "OFG182599777214119";
+//        String orderSn = "2410119RC3WKGU";
+//        String packageNumber = "OFG182340319214041";
+//        String orderSn = "2409068X5S22U7";//527508280
+//        String packageNumber = "OFG179307286219949";
+        List<ShippingOrderRequest > orderRequestList = new ArrayList<>();
+        ShippingOrderRequest shippingOrderRequest = ShippingOrderRequest.builder()
+                .orderSn(orderSn)
+//                .packageNumber(packageNumber)
+                .build();
+        orderRequestList.add(shippingOrderRequest);
+        List<ShippingDocumentParameterResponse> shippingDocumentParameter = shopeeLogisticsService.getShippingDocumentParameter(baseRequest, orderRequestList);
+        System.out.println(shippingDocumentParameter);
+        //{"error":"","message":"","response":{"result_list":[{"order_sn":"2410119RC3WKGU","package_number":"OFG182340319214041","suggest_shipping_document_type":"THERMAL_AIR_WAYBILL","selectable_shipping_document_type":["THERMAL_AIR_WAYBILL"]}]},"warning":null,"request_id":"317a860d2492453f041c9641451e0f00:010002b15c916242:00000024262ea989"}
+    }
+
+    @Test
+    public void getTrackNumber() {
+//        String orderSn = "2410119RC3WKGU";
+//        String packageNumber = "OFG182340319214041";
+//        String orderSn = "2409068X5S22U7";//527508280
+//        String packageNumber = "OFG179307286219949";
+        String orderSn = "241016P6BFN5KQ";//180939511
+        String packageNumber = "OFG182599777214119";
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+        TrackResponse trackNumber = shopeeLogisticsService.getTrackNumber(baseRequest, orderSn);
+
+        System.out.println(trackNumber);
+    }
+
+    @Test
+    public void createShippingDocument() {
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+        String orderSn = "241014HEJQ5KGY";//180939511
+        String trackingNumber = "180939511";
+        String packageNumber = "OFG182599777214119";
+//        String orderSn = "2410119RC3WKGU";
+//        String packageNumber = "OFG182340319214041";
+//        String orderSn = "2409068X5S22U7";//527508280
+//        String packageNumber = "OFG179307286219949";
+        List<ShippingOrderRequest > orderRequestList = new ArrayList<>();
+        ShippingOrderRequest shippingOrderRequest = ShippingOrderRequest.builder()
+                .orderSn(orderSn)
+                .packageNumber(packageNumber)
+                .trackingNumber(trackingNumber)
+                .build();
+        orderRequestList.add(shippingOrderRequest);
+        List<ShippingDocumentParameterResponse> shippingDocumentParameter = shopeeLogisticsService.createShippingDocument(baseRequest, orderRequestList);
+        //{"error":"common.batch_api_all_failed","message":"Failed, please check result_list for more details.","response":{"result_list":[{"order_sn":"2410119RC3WKGU","package_number":"OFG182340319214041","fail_error":"logistics.package_can_not_print","fail_message":"The package can not print now. Detail: The document is not yet ready for printing. Please try again later."}]},"request_id":"317a860d2492530ace56bc0bf8213100:010002a7e68b73ae:000000c649ec5e22"}
+        System.out.println(shippingDocumentParameter);
+    }
+
+    @Test
+    public void getShippingDocumentResult() {
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+        String orderSn = "241014HEJQ5KGY";//180939511
+        String trackingNumber = "180939511";
+        String packageNumber = "OFG182599777214119";
+        List<ShippingOrderRequest > orderRequestList = new ArrayList<>();
+        ShippingOrderRequest shippingOrderRequest = ShippingOrderRequest.builder()
+                .orderSn(orderSn)
+                .trackingNumber(trackingNumber)
+//                .orderSn("2410119RC3WKGU")
+                .packageNumber(packageNumber)
+//                .packageNumber("OFG182340319214041")
+                .build();
+        orderRequestList.add(shippingOrderRequest);
+        List<ShippingDocumentParameterResponse> shippingDocumentParameter = shopeeLogisticsService.getShippingDocumentResult(baseRequest, orderRequestList);
+
+        System.out.println(shippingDocumentParameter);
+    }
+
+    @Test
+    public void downloadShippingDocument() {
+        BaseRequest baseRequest = BaseRequest.builder()
+                .partnerKey(authMap.get("partnerKey"))
+                .partnerId(Long.valueOf(authMap.get("partnerId")))
+                .shopId(Long.valueOf(authMap.get("shopId")))
+                .accessToken(authMap.get("token"))
+                .host(authMap.get("host"))
+                .build();
+        String orderSn = "241016P6BFN5KQ";//180939511
+        String trackingNumber = "180939511";
+        String packageNumber = "OFG182599777214119";
+        List<ShippingOrderRequest > orderRequestList = new ArrayList<>();
+        ShippingOrderRequest shippingOrderRequest = ShippingOrderRequest.builder()
+                .orderSn(orderSn)
+//                .orderSn("2410119RC3WKGU")
+//                .packageNumber("OFG179307286219949")
+//                .packageNumber(packageNumber)
+                .build();
+        orderRequestList.add(shippingOrderRequest);
+        String shippingDocumentType = "NORMAL_AIR_WAYBILL";
+        String bytes = shopeeLogisticsService.downloadShippingDocument(baseRequest, orderRequestList, shippingDocumentType);
+
+        System.out.println(bytes);
     }
 }

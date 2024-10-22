@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.threadlocal.UserContext;
@@ -476,7 +477,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SearchPagingDTO params = dto.getParams();
         String searchKeyword = params.getSearchKeyword();
-        String searchType = params.getSearchType();
         List<String> changeIdList = new ArrayList<>();
 
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
@@ -484,24 +484,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(searchKeyword)) {
             changeSearch = baseMapper.getChangeSearchCondition(searchKeyword);
         }
-        //待审核
-        if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = UserContext.getDefaultLoginUser().getUid();
-            //获取我的待办信息
-            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
-            changeIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(changeIdList)) {
-                IPage pageData = new Page();
-                return new PagingVO(pageData);
-            }
-        }
         //如果搜索是空就返回空
         if (CollectionUtils.isEmpty(changeSearch) && StringUtils.isNotBlank(searchKeyword)) {
             IPage pageData = new Page();
             return new PagingVO(pageData);
         }
 
-        IPage pageData = baseMapper.paging(query, changeSearch, changeIdList);
+        IPage pageData = baseMapper.paging(query, changeSearch, params);
         List<ProductChangePagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(new Page());
@@ -1015,6 +1004,17 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e) && !"updateUserName".equals(e) && !"createUserName".equals(e)).distinct().collect(Collectors.toList());
         }
         return resultList;
+    }
+
+    @Override
+    public List<ProductChangePagingVO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<ProductChangePagingVO.TabListDTO> tabList = new ArrayList<>();
+        tabList.add(new ProductChangePagingVO.TabListDTO(SearchType.ALL, count()));
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        //获取我的待办信息
+        List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+        tabList.add(new ProductChangePagingVO.TabListDTO(SearchType.WAIT_AUDIT, myToDoTasks.size()));
+        return tabList;
     }
 
     private void setList(Object newObj, Object oldObj, List<String> resultList) {

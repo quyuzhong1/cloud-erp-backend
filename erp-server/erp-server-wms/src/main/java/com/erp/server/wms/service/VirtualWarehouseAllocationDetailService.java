@@ -3,7 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
@@ -66,7 +66,7 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @param id
      * @return
      */
-    DmpPushTaskEntity viewSyncInfo(String id);
+    DmpPushTaskDTO.SyncInfoDTO viewSyncInfo(String id);
 
     VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id);
 
