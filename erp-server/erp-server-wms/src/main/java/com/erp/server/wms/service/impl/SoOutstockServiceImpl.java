@@ -2024,7 +2024,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             batchResultDTOList.addAll(logisticsBillFeign.updateBatchTrackNo(batchUpdateTrackNoDTOList,false));
         }
         if(CollectionUtils.isNotEmpty(updateList)){
-            this.updateBatchById(updateList);
+            boolean update = this.updateBatchById(updateList);
+            //只批量同步更新审核通过的销售出库单
+            updateList = updateList.stream().filter(v -> v.getApproveStatus().getCode().equalsIgnoreCase(ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            if(update && CollectionUtils.isNotEmpty(updateList)){
+                //推送金蝶同步任务
+                sendPushTask(updateList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }
         }
         return batchResultDTOList;
     }
