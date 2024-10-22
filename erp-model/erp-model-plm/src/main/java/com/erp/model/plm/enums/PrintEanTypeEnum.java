@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 @Getter
 @AllArgsConstructor
@@ -15,32 +14,27 @@ public enum PrintEanTypeEnum {
     /**
      * 50 * 30
      */
-    FIFTY_THIRTY("FIFTY_THIRTY",591,354),
+    FIFTY_THIRTY,
     /**
      * 40*30
      */
-    FORTY_THIRTY("FORTY_THIRTY",472,354),
+    FORTY_THIRTY,
     /**
      * 60*40
      */
-    SIXTY_FORTY("SIXTY_FORTY",708,40),
+    SIXTY_FORTY,
     /**
      * 80*30
      */
-    EIGHTY_THIRTY("EIGHTY_THIRTY",944,354),
+    EIGHTY_THIRTY,
     /**
      * 100*30
      */
-    HUNDRED_THIRTY("HUNDRED_THIRTY",1181,354)
+    HUNDRED_THIRTY
     ;
 
-    private final String code;
-
-    private final Integer width;
-
-    private final Integer height;
     public static PrintEanTypeEnum of (String code) {
-        return Arrays.stream(PrintEanTypeEnum.values()).filter(v -> v.getCode().equals(code))
+        return Arrays.stream(PrintEanTypeEnum.values()).filter(v -> v.name().equals(code))
                 .findFirst()
                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_9028));
     }
