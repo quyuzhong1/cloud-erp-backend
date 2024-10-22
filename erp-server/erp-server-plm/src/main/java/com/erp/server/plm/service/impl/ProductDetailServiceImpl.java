@@ -88,6 +88,13 @@ import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailServic
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfDocument;
+import com.itextpdf.text.pdf.PdfWriter;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.JasperExportManager;
@@ -114,17 +121,17 @@ import org.thymeleaf.util.ListUtils;
 import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -5372,56 +5379,52 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public void printEan(PrintEanDTO printEanDTO, HttpServletResponse response) {
-
-        List<String> base64List = new ArrayList<>();
-        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
-        getOneDTO.setName(printEanDTO.getPrintType());
-        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
-        getOneDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
-        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
-        //获取fastdfs文件
-        try (InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
-             OutputStream out = response.getOutputStream()) {
-                JasperReport jasperReport = (JasperReport) JRLoader.loadObject(inputStream);
-                JasperHelperUtil.prepareReport(jasperReport, FileTypeEnum.PDF.getCode());
+        // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\"");
+        Document document = new Document();
+        PrintEanTypeEnum typeEnum = PrintEanTypeEnum.of(printEanDTO.getPrintType());
+        try (OutputStream out = response.getOutputStream()) {
+            PdfWriter.getInstance(document, out);
+            document.open();
             for (PrintEanDTO.PrintSkuEanDTO dto : printEanDTO.getPrintSkuEanList()) {
-                String eanBase = null;
                 if (ObjectUtils.isNotEmpty(dto.getEan()) && printEanDTO.getTypeList().contains("EAN")) {
-                    Map<String, Object> eanMap = new HashMap<>();
-                    eanMap.put("code", dto.getEan());
-                    JasperPrint eanJasperPrint = JasperFillManager.fillReport(jasperReport, eanMap, new ReportDataSourceDTO<>(Collections.singletonList(dto.getEan())));
-                    byte[] eanBytes = JasperExportManager.exportReportToPdf(eanJasperPrint);
-                    eanBase = Base64.getEncoder().encodeToString(eanBytes);
+                    addPdfPage(dto.getEan(), dto.getQty(), document, typeEnum);
                 }
-                String skuBase = null;
                 if (printEanDTO.getTypeList().contains("SKU")) {
-                    Map<String, Object> skuMap = new HashMap<>();
-                    skuMap.put("code", dto.getSkuNo());
-                    JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, skuMap, new ReportDataSourceDTO<>(Collections.singletonList(dto.getSkuNo())));
-                    byte[] skuBytes = JasperExportManager.exportReportToPdf(jasperPrint);
-                    skuBase = Base64.getEncoder().encodeToString(skuBytes);
-                }
-                for (int i = 0; i < dto.getQty(); i++) {
-                    if (ObjectUtils.isNotEmpty(eanBase)) {
-                        base64List.add("data:application/pdf;base64," + eanBase);
-                    }
-                    if (ObjectUtils.isNotEmpty(skuBase)) {
-                        base64List.add("data:application/pdf;base64," + skuBase);
-                    }
+                    addPdfPage(dto.getSkuNo(), dto.getQty(), document, typeEnum);
                 }
             }
-            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
-            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
-            response.setContentType("application/pdf");
-            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
-            BASE64Decoder decoder = new BASE64Decoder();
-            // 将 Base64 编码的字符串解码为字节数组
-            byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
-            // 将字节数组写入到响应输出流中
-            out.write(pdfBytes);
+            document.close();
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
 
+    }
+
+    /**
+     * pdf添加多页
+     * @param data 条码内容
+     * @param num  每条打印条数
+     * @param document pdf
+     * @param typeEnum 打印类型
+     */
+    private void addPdfPage(String data, int num, Document document, PrintEanTypeEnum typeEnum) throws WriterException, IOException, DocumentException {
+        BitMatrix bitMatrix = new com.google.zxing.MultiFormatWriter()
+                .encode(data, BarcodeFormat.CODE_128, typeEnum.getWidth(), typeEnum.getHeight());
+        BufferedImage barcodeImage = MatrixToImageWriter.toBufferedImage(bitMatrix);
+        // 将 BufferedImage 转换为 iText 图像
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(barcodeImage, "png", baos);
+        Image pdfImage = Image.getInstance(baos.toByteArray());
+        for (int i = 0; i < num; i++) {
+            // 将图像添加到 PDF
+            document.add(pdfImage);
+            // 添加条码内容文本
+            Paragraph paragraph = new Paragraph(data);
+            paragraph.setAlignment(Element.ALIGN_CENTER); // 设置文本居中
+            document.add(paragraph);
+            document.newPage(); // 每个条形码添加到新页面
+        }
     }
 }
