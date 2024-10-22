@@ -200,6 +200,14 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * 更新试产量产明细表的订单状态
      */
     void updateDetailByPilotApplicationDetailIds(Map<String,String> map);
+    /**
+     *
+     * @param id
+     * @return
+     * @author jack
+     * @date: 2024-09-23
+     */
+    PilotApplicationDTO.ApprovePilotNoticeDTO getPilotApplicationNoticeData(String id);
 
     /**
      * 审核

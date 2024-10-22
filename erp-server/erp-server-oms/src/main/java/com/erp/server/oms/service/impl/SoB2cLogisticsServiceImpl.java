@@ -284,9 +284,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
-                if (isShopee) {
-                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
-                }
+//                if (isShopee) {
+//                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
+//                }
             } else {
                 SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
                 BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
@@ -334,19 +334,19 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }
                 entity = entity2;
-                if (isShopee) {
-                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
-                }
+//                if (isShopee) {
+//                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
+//                }
             }
-        //虾皮物流订单新增 TMS物流单号记录
-        if (isShopee) {
-            try {
-                logisticsBillFeign.logisticsBillBatchSave(addDTOList);
-            } catch (Exception e) {
-                log.error("同步物流单异常：{}", addDTOList);
-            }
-
-        }
+        //虾皮物流订单新增 TMS物流单号记录--虾皮为自发货订单，不新增
+//        if (isShopee) {
+//            try {
+//                logisticsBillFeign.logisticsBillBatchSave(addDTOList);
+//            } catch (Exception e) {
+//                log.error("同步物流单异常：{}", addDTOList);
+//            }
+//
+//        }
         return entity;
     }
 
@@ -460,6 +460,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         if(TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus()) && checkBillStatus){
             throw new ServiceException(StrUtil.format("订单信息已预报，请取消订单预报后支持重新获取跟踪号"));
+        }
+        if (PlatformDictEnum.SHOPEE.getCode().equals(soB2cEntity.getDictPlatform())){
+            throw new ServiceException(ApiError.ERROR_SHOP_SHOPEE_CANCEL_LOGISTICS);
         }
         //取消物流单
         LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().

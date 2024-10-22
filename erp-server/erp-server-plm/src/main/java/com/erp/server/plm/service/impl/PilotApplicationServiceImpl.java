@@ -5,15 +5,12 @@ import cn.hutool.core.date.BetweenFormatter;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.entity.BaseEntity;
-import com.common.message.service.mq.MQProducerService;
-import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -43,7 +40,6 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import com.kenai.jffi.Array;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -59,7 +55,6 @@ import cn.hutool.core.collection.CollUtil;
 
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import java.math.BigDecimal;
@@ -72,11 +67,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PILOT_APPLICATION;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_ESTIMATED_BILL;
 
 /**
  * <p>
@@ -498,11 +490,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 }
             }
         }else {
-            List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, approveDTO.getIds()).list();
-            for (PilotApplicationDetailEntity detailEntity : detailList) {
-                Integer applyQty = detailEntity.getApplyQty();
-                Integer approveQty = detailEntity.getApproveQty();
-                pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, approveQty == 0 ? applyQty : approveQty).eq(PilotApplicationDetailEntity::getId, detailEntity.getId()).update();
+            List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, dto.getId()).list();
+            if(CollectionUtils.isNotEmpty(detailList)){
+                for (PilotApplicationDetailEntity detailEntity : detailList) {
+                    Integer applyQty = detailEntity.getApplyQty();
+                    Integer approveQty = detailEntity.getApproveQty();
+                    pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, approveQty == 0 ? applyQty : approveQty).eq(PilotApplicationDetailEntity::getId, detailEntity.getId()).update();
+                }
             }
         }
 
@@ -1301,6 +1295,28 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                     .eq(PilotApplicationDetailEntity::getId, entry.getKey())
                     .update();
         }
+    }
+
+    @Override
+    public PilotApplicationDTO.ApprovePilotNoticeDTO getPilotApplicationNoticeData(String id) {
+        PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = new PilotApplicationDTO.ApprovePilotNoticeDTO();
+        // 在事务提交后执行的方法
+        PilotApplicationEntity entity = this.getById(id);
+        //获取试产量产明细中的skuId集合
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id).eq(PilotApplicationDetailEntity::getIsDeleted, Boolean.FALSE).list();
+        List<String> skuIds = detailList.stream().map(PilotApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO.ProductChargeInfoDTO> productChargeInfoList = productDetailService.listProductChargeInfoByIds(skuIds);
+        if(CollectionUtils.isNotEmpty(productChargeInfoList)){
+            BeanMapperUtils.copy(productChargeInfoList.get(0),approvePilotNoticeDTO);
+            //试产量产主键id
+            approvePilotNoticeDTO.setId(entity.getId());
+            approvePilotNoticeDTO.setCode(entity.getCode());
+            //飞书消息通知
+            LoginUser loginUser = UserContext.getDefaultLoginUser();
+            String userName = loginUser.getUserName();
+            approvePilotNoticeDTO.setUserName(userName);
+        }
+        return approvePilotNoticeDTO;
     }
 
     @Override

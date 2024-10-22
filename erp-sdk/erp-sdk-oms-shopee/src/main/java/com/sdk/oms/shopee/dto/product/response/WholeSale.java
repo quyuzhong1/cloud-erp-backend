@@ -20,13 +20,13 @@ public class WholeSale implements Serializable {
      * The min count of this tier wholesale.
      */
     @JsonProperty("min_count")
-    private int min;
+    private int minCount;
 
     /**
      * The max count of this tier wholesale.
      */
     @JsonProperty("max_count")
-    private int max;
+    private int maxCount;
 
     /**
      * The current price of the wholesale in the listing currency.

@@ -94,16 +94,16 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
         ShopAuthDTO.ReturnDTO returnDTO = new ShopAuthDTO.ReturnDTO();
         returnDTO.setCode(dto.getCode());
         returnDTO.setId(dto.getId());
-        if(Objects.nonNull(dto.getShopId())){
-            returnDTO.setShopId(Integer.valueOf(dto.getShopId()));
+        if(StrUtil.isNotBlank(dto.getShop_id())){
+            returnDTO.setShopId(Integer.valueOf(dto.getShop_id()));
         }
         returnDTO.setMainAccountId(dto.getMain_account_id());
-        if (StringUtils.isEmpty(dto.getShopId()) && Objects.isNull(dto.getMain_account_id())){
+        if (StringUtils.isEmpty(dto.getShop_id()) && Objects.isNull(dto.getMain_account_id())){
             throw new ServiceException("虾皮授权时,店铺和主账号不能同时为空");
         }
         Boolean result = shopInfoService.getShopeeReturn(returnDTO);
         // 删除授权缓存
-        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPEE_ID, dto.getShopId());
+        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPEE_ID, dto.getShop_id());
         Object obj = redisUtil.get(key);
         if (null != obj){
             redisUtil.del(key);
