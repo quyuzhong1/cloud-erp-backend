@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.BusinessNoTypeEnum.CODE_FHJY;
+import static com.common.business.enums.BusinessNoTypeEnum.CODE_S;
 
 @Component
 public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
@@ -68,7 +68,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
         List<LocalDate> dates = rptOutOfStocks.stream().map(ReplenishmentResultDTO.RptOutOfStockDTO::getStartDate).distinct().collect(Collectors.toList());
         List<ReplenishmentResultDTO.DeliverySuggestDTO> deliverySuggests = dates.parallelStream()
                 .map(localDate -> {
-                    String code = docNoGenHelper.generateCode(CODE_FHJY);
+                    String code = docNoGenHelper.generateCode(CODE_S);
                     ReplenishmentResultDTO.DeliverySuggestDTO suggestDTO = ReplenishmentResultDTO.DeliverySuggestDTO.buildDeliverySuggestDTO(code, logisticsResult, replenishmentResultDTO.getReplenishmentDetail().getDetailId(), ExecutionTypeEnum.AUTO.getCode());
                     if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                             || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {

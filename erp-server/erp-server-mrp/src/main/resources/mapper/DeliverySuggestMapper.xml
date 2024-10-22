@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="code" property="code" />
-       <result column="create_type" property="createType" />
+       <result column="data_type" property="dataType" />
        <result column="suggest_delivery_qty" property="suggestDeliveryQty" />
        <result column="suggest_delivery_date" property="suggestDeliveryDate" />
        <result column="logistics_method" property="logisticsMethod" />
@@ -29,26 +29,30 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         ds.id,
-        ds.create_user_id,
-        ds.create_user_name,
-        ds.create_time,
-        ds.update_user_id,
-        ds.update_user_name,
-        ds.update_time,
-        ds.version,
-        ds.is_deleted,
+        ds.create_user_id as createUserId,
+        ds.create_user_name as createUserName,
+        ds.create_time as createTime,
+        ds.update_user_id as updateUserId,
+        ds.update_user_name as updateUserName,
+        ds.update_time as updateTime,
         ds.code,
-        ds.create_type,
-        ds.suggest_delivery_qty,
-        ds.suggest_delivery_date,
-        ds.logistics_method,
-        ds.logistics_days,
-        ds.estimate_sales_date,
-        ds.logistics_cost,
-        ds.invalid_status,
-        ds.invalid_remark,
-        ds.source_id,
-        ds.source_type
+        ds.data_type as dataType,
+        ds.suggest_delivery_qty as suggestDeliveryQty,
+        dss.suggest_delivery_qty as sysSuggestDeliveryQty,
+        ds.suggest_delivery_date as suggestDeliveryDate,
+        dss.suggest_delivery_date as sysSuggestDeliveryDate,
+        ds.logistics_method as logisticsMethod,
+        dss.logistics_method as sysLogisticsMethod,
+        ds.logistics_days as logisticsDays,
+        dss.logistics_days as sysLogisticsDays,
+        ds.estimate_sales_date as estimateSalesDate,
+        dss.estimate_sales_date as sysEstimateSalesDate,
+        ds.logistics_cost as logisticsCost,
+        dss.logistics_cost as sysLogisticsCost,
+        ds.invalid_status as invalidStatus,
+        ds.invalid_remark as invalidRemark,
+        ds.source_id as sourceId,
+        ds.source_type as sourceType
     </sql>
 
     <!-- 列表查询 -->
@@ -66,6 +70,7 @@
         select
             <include refid="Base_Column_List"/>
         from delivery_suggest ds
+        left join delivery_suggest_sys dss on ds.id = dss.source_id and dss.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and ds.is_deleted = false

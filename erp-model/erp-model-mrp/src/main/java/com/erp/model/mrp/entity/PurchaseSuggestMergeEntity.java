@@ -14,17 +14,17 @@ import java.time.LocalDate;
 
 /**
  * <p>
- * 发货计划
+ * 建议采购(合并后)
  * </p>
  *
  * @author will
- * @since 2024-08-27
+ * @since 2024-10-21
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("delivery_suggest")
-public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
+@TableName("purchase_suggest_merge")
+public class PurchaseSuggestMergeEntity extends BaseEntity<PurchaseSuggestMergeEntity> {
 
     /**
     * 编码
@@ -32,23 +32,22 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     @TableField("code")
     private String code;
     /**
-    * 数据类型（auto系统，manual人工）
+    * 创建类型
     */
     @TableField("data_type")
     private String dataType;
     /**
-    * 建议发货量
+    * 建议采购量
     */
-    @TableField("suggest_delivery_qty")
-    private Integer suggestDeliveryQty;
-
+    @TableField("suggest_purchase_qty")
+    private Integer suggestPurchaseQty;
     /**
-    * 建议发货日期
+    * 建议采购日期
     */
-    @TableField("suggest_delivery_date")
-    private LocalDate suggestDeliveryDate;
+    @TableField("suggest_purchase_date")
+    private LocalDate suggestPurchaseDate;
     /**
-    * 物流方式,LogisticsMethodEnum枚举
+    * 物流方式
     */
     @TableField("logistics_method")
     private String logisticsMethod;
@@ -58,15 +57,20 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     @TableField("logistics_days")
     private Integer logisticsDays;
     /**
+    * 预计入库日期
+    */
+    @TableField("estimate_instock_date")
+    private LocalDate estimateInstockDate;
+    /**
     * 预计可售日期
     */
     @TableField("estimate_sales_date")
     private LocalDate estimateSalesDate;
     /**
-    * 物流成本
+    * 采购成本
     */
-    @TableField("logistics_cost")
-    private BigDecimal logisticsCost;
+    @TableField("purchase_cost")
+    private BigDecimal purchaseCost;
     /**
     * 作废状态
     */
@@ -78,99 +82,105 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     @TableField("invalid_remark")
     private String invalidRemark;
     /**
-     * 状态
-     */
-    @TableField("status")
-    private String status;
-    /**
-    * 来源id
+    * 来源idJsonArray
     */
-    @TableField("source_id")
-    private String sourceId;
+    @TableField("source_id_json")
+    private String sourceIdJson;
     /**
     * 来源类型
     */
     @TableField("source_type")
     private String sourceType;
-
     /**
-     * 币别
-     */
+    * 币别
+    */
     @TableField("currency")
     private String currency;
-
     /**
-     * 平台类型
-     */
+    * 平台类型
+    */
     @TableField("platform_type")
     private String platformType;
-
     /**
-     * 平台
-     */
+    * 平台
+    */
     @TableField("platform")
     private String platform;
-
     /**
-     * 店铺id
-     */
+    * 店铺id
+    */
     @TableField("shop_id")
     private String shopId;
-
     /**
-     * skuid
-     */
+    * skuId
+    */
     @TableField("sku_id")
     private String skuId;
-
     /**
-     * 计划发货量（计划修正值）
-     */
-    @TableField("plan_delivery_qty")
-    private Integer planDeliveryQty;
-
+    * 状态
+    */
+    @TableField("status")
+    private String status;
     /**
-     * 实际发货量（运营确认值）
-     */
-    @TableField("actual_delivery_qty")
-    private Integer actualDeliveryQty;
-
+    * 计划采购量（计划修正值）
+    */
+    @TableField("plan_purchase_qty")
+    private Integer planPurchaseQty;
     /**
-     * 发货备货量
-     */
-    @TableField("delivery_stock_up_qty")
-    private Integer deliveryStockUpQty;
-
+    * 采购备货量
+    */
+    @TableField("purchase_stock_up_qty")
+    private Integer purchaseStockUpQty;
     /**
-     * 备注
-     */
+    * 备注
+    */
     @TableField("remark")
     private String remark;
 
 
     public static final String CODE = "code";
 
-    public static final String CREATE_TYPE = "create_type";
+    public static final String DATA_TYPE = "data_type";
 
-    public static final String SUGGEST_DELIVERY_QTY = "suggest_delivery_qty";
+    public static final String SUGGEST_PURCHASE_QTY = "suggest_purchase_qty";
 
-    public static final String SUGGEST_DELIVERY_DATE = "suggest_delivery_date";
+    public static final String SUGGEST_PURCHASE_DATE = "suggest_purchase_date";
 
     public static final String LOGISTICS_METHOD = "logistics_method";
 
     public static final String LOGISTICS_DAYS = "logistics_days";
 
+    public static final String ESTIMATE_INSTOCK_DATE = "estimate_instock_date";
+
     public static final String ESTIMATE_SALES_DATE = "estimate_sales_date";
 
-    public static final String LOGISTICS_COST = "logistics_cost";
+    public static final String PURCHASE_COST = "purchase_cost";
 
     public static final String INVALID_STATUS = "invalid_status";
 
     public static final String INVALID_REMARK = "invalid_remark";
 
-    public static final String SOURCE_ID = "source_id";
+    public static final String SOURCE_ID_JSON = "source_id_json";
 
     public static final String SOURCE_TYPE = "source_type";
+
+    public static final String CURRENCY = "currency";
+
+    public static final String PLATFORM_TYPE = "platform_type";
+
+    public static final String PLATFORM = "platform";
+
+    public static final String SHOP_ID = "shop_id";
+
+    public static final String SKU_ID = "sku_id";
+
+    public static final String STATUS = "status";
+
+    public static final String PLAN_PURCHASE_QTY = "plan_purchase_qty";
+
+    public static final String PURCHASE_STOCK_UP_QTY = "purchase_stock_up_qty";
+
+    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

@@ -14,28 +14,18 @@ import java.time.LocalDate;
 
 /**
  * <p>
- * 建议采购
+ * 建议采购变更
  * </p>
  *
  * @author will
- * @since 2024-08-29
+ * @since 2024-10-21
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("purchase_suggest")
-public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
+@TableName("purchase_suggest_sys")
+public class PurchaseSuggestSysEntity extends BaseEntity<PurchaseSuggestSysEntity> {
 
-    /**
-    * 编码
-    */
-    @TableField("code")
-    private String code;
-    /**
-    * 数据类型（auto系统，manual人工）
-    */
-    @TableField("data_type")
-    private String dataType;
     /**
     * 建议采购量
     */
@@ -72,21 +62,6 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("purchase_cost")
     private BigDecimal purchaseCost;
     /**
-    * 作废状态
-    */
-    @TableField("invalid_status")
-    private Boolean invalidStatus;
-    /**
-    * 作废原因
-    */
-    @TableField("invalid_remark")
-    private String invalidRemark;
-    /**
-     * 状态
-     */
-    @TableField("status")
-    private String status;
-    /**
     * 来源id
     */
     @TableField("source_id")
@@ -97,57 +72,6 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("source_type")
     private String sourceType;
 
-    /**
-     * 币别
-     */
-    @TableField("currency")
-    private String currency;
-
-    /**
-     * 平台类型
-     */
-    @TableField("platform_type")
-    private String platformType;
-
-    /**
-     * 平台
-     */
-    @TableField("platform")
-    private String platform;
-
-    /**
-     * 店铺id
-     */
-    @TableField("shop_id")
-    private String shopId;
-
-    /**
-     * skuid
-     */
-    @TableField("sku_id")
-    private String skuId;
-
-    /**
-     * 计划采购量（计划修正值）
-     */
-    @TableField("plan_purchase_qty")
-    private Integer planPurchaseQty;
-
-    /**
-     * 采购备货量
-     */
-    @TableField("purchase_stock_up_qty")
-    private Integer purchaseStockUpQty;
-
-    /**
-     * 备注
-     */
-    @TableField("remark")
-    private String remark;
-
-    public static final String CODE = "code";
-
-    public static final String CREATE_TYPE = "create_type";
 
     public static final String SUGGEST_PURCHASE_QTY = "suggest_purchase_qty";
 
@@ -162,10 +86,6 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     public static final String ESTIMATE_SALES_DATE = "estimate_sales_date";
 
     public static final String PURCHASE_COST = "purchase_cost";
-
-    public static final String INVALID_STATUS = "invalid_status";
-
-    public static final String INVALID_REMARK = "invalid_remark";
 
     public static final String SOURCE_ID = "source_id";
 

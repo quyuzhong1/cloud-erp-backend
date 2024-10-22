@@ -148,6 +148,7 @@ public interface BusinessNoConstant {
     //拣货波次
     String JHBC = "JHBC";
     String JSRQ = "JSRQ";
-    String FHJY = "FHJY";
-    String CGJY = "CGJY";
+    String S = "S";
+    String P = "P";
+    String PP = "PP";
 }

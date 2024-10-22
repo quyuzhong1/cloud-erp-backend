@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.BusinessNoTypeEnum.CODE_CGJY;
+import static com.common.business.enums.BusinessNoTypeEnum.CODE_P;
 
 @Component
 public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
@@ -70,7 +70,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         List<LocalDate> dates = rptOutOfStocks.stream().map(ReplenishmentResultDTO.RptOutOfStockDTO::getStartDate).distinct().collect(Collectors.toList());
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> deliverySuggests = dates.parallelStream()
                 .map(localDate -> {
-                    String code = docNoGenHelper.generateCode(CODE_CGJY);
+                    String code = docNoGenHelper.generateCode(CODE_P);
                     ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO.getReplenishmentDetail().getDetailId(), ExecutionTypeEnum.AUTO.getCode());
                     if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                             || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {

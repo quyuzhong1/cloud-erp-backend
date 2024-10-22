@@ -798,7 +798,7 @@ public class ReplenishmentResultDTO {
         public static DeliverySuggestEntity buildDeliverySuggest(DeliverySuggestDTO dto) {
             DeliverySuggestEntity entity = new DeliverySuggestEntity();
             entity.setCode(dto.getCode());
-            entity.setCreateType(dto.getCreateType());
+            entity.setDataType(dto.getCreateType());
             entity.setSuggestDeliveryQty(dto.getSuggestDeliveryQty());
             entity.setSuggestDeliveryDate(dto.getSuggestDeliveryDate());
             entity.setLogisticsMethod(dto.getLogisticsMethod());
@@ -873,7 +873,7 @@ public class ReplenishmentResultDTO {
         public static PurchaseSuggestEntity buildPurchaseSuggest(PurchaseSuggestDTO dto) {
             PurchaseSuggestEntity entity = new PurchaseSuggestEntity();
             entity.setCode(dto.getCode());
-            entity.setCreateType(dto.getCreateType());
+            entity.setDataType(dto.getCreateType());
             entity.setSuggestPurchaseQty(dto.getSuggestPurchaseQty());
             entity.setSuggestPurchaseDate(dto.getSuggestPurchaseDate());
             entity.setLogisticsMethod(dto.getLogisticsMethod());

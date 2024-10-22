@@ -72,6 +72,10 @@ public class DeliverySuggestDTO implements Serializable {
          * 主键id
          */
         private String  id;
+        /**
+         * 平台
+         */
+        private String platform;
 
         /**
          * 编码
@@ -81,12 +85,12 @@ public class DeliverySuggestDTO implements Serializable {
         /**
          * 创建类型（auto系统，manual人工）
          */
-        private String createType;
+        private String dataType;
 
         /**
          * 创建类型（auto系统，manual人工）
          */
-        private String createTypeName;
+        private String dataTypeName;
 
         /**
          * 建议发货量
@@ -94,9 +98,19 @@ public class DeliverySuggestDTO implements Serializable {
         private Integer suggestDeliveryQty;
 
         /**
+         * 建议发货量（系统）
+         */
+        private Integer sysSuggestDeliveryQty;
+
+        /**
          * 建议发货日期
          */
         private LocalDate suggestDeliveryDate;
+
+        /**
+         * 建议发货日期（系统）
+         */
+        private LocalDate sysSuggestDeliveryDate;
 
         /**
          * 物流方式,LogisticsMethodEnum枚举
@@ -104,9 +118,19 @@ public class DeliverySuggestDTO implements Serializable {
         private String logisticsMethod;
 
         /**
+         * 物流方式（系统）,LogisticsMethodEnum枚举
+         */
+        private String sysLogisticsMethod;
+
+        /**
          * 物流方式名称,LogisticsMethodEnum枚举
          */
         private String logisticsMethodName;
+
+        /**
+         * 物流方式名称（系统）,LogisticsMethodEnum枚举
+         */
+        private String sysLogisticsMethodName;
 
         /**
          * 物流时效（天）
@@ -114,15 +138,29 @@ public class DeliverySuggestDTO implements Serializable {
         private Integer logisticsDays;
 
         /**
+         * 物流时效（天）（系统）
+         */
+        private Integer sysLogisticsDays;
+
+        /**
          * 预计可售日期
          */
         private LocalDate estimateSalesDate;
+
+        /**
+         * 预计可售日期（系统）
+         */
+        private LocalDate sysEstimateSalesDate;
 
         /**
          * 物流成本
          */
         private BigDecimal logisticsCost;
 
+        /**
+         * 物流成本（系统）
+         */
+        private BigDecimal sysLogisticsCost;
     }
 
 
@@ -146,7 +184,7 @@ public class DeliverySuggestDTO implements Serializable {
         /**
         * 创建类型（auto系统，manual人工）
         */
-        private String createType;
+        private String dataType;
 
         /**
         * 建议发货量
@@ -269,7 +307,7 @@ public class DeliverySuggestDTO implements Serializable {
         */
         @NotBlank(message = "创建类型（auto系统，manual人工）不能为空")
         @Size(max = 32,message = "创建类型（auto系统，manual人工）最大长度不能超过32位")
-        private String createType;
+        private String dataType;
 
         /**
         * 建议发货量

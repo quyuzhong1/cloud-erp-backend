@@ -109,6 +109,7 @@ public enum ModuleTypeEnum {
     LABEL_INFO("99", "智能补货标签管理"),
     DELIVERY_SUGGEST("100", "发货建议"),
     PURCHASE_SUGGEST("101", "采购建议"),
+    PURCHASE_SUGGEST_MERGE("102", "采购建议（合并）"),
     ;
 
 

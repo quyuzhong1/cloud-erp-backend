@@ -13,9 +13,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
-import com.erp.model.mrp.dto.PurchaseSuggestDTO;
+import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
-import com.erp.server.mrp.service.PurchaseSuggestService;
+import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
+import com.erp.server.mrp.service.PurchaseSuggestMergeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,45 +27,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 建议采购
+ * 建议采购(合并后)
  *
  * @author will
- * @since 2024-08-29
+ * @since 2024-10-21
  */
 @Slf4j
 @RestController
-@LogSystemModule("建议采购")
-@RequestMapping("/purchaseSuggest")
-public class PurchaseSuggestController extends BaseController {
+@LogSystemModule("建议采购(合并后)")
+@RequestMapping("/purchaseSuggestMerge")
+public class PurchaseSuggestMergeController extends BaseController {
 
     @Resource
-    private PurchaseSuggestService purchaseSuggestService;
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
 
     /**
      * 列表查询
      * @author will
      * @date 2024/10/16 10:21
-     * @param dto 
+     * @param dto
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
     @WebAdvanceQuery
-    public ApiResult<PagingVO<PurchaseSuggestDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto) {
-        PagingVO<PurchaseSuggestDTO.ListDTO> pagingVO = purchaseSuggestService.paging(dto);
+    public ApiResult<PagingVO<PurchaseSuggestMergeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
+        PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingVO = purchaseSuggestMergeService.paging(dto);
         return success(pagingVO);
-    }
-
-    /**
-     * 列表查询
-     * @author will
-     * @date 2024/9/9 11:59
-     * @param params
-     * @return ApiResult<List<ListDTO>>
-     */
-    @PostMapping("/list")
-    public ApiResult<List<PurchaseSuggestDTO.ListDTO>> list(@RequestBody @Validated PurchaseSuggestDTO.ListParamDTO params) {
-        List<PurchaseSuggestDTO.ListDTO> paging = purchaseSuggestService.list(params);
-        return success(paging);
     }
 
     /**
@@ -76,8 +64,8 @@ public class PurchaseSuggestController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新")
-    public ApiResult<?> update(PurchaseSuggestDTO.UpdateDTO updateDTO) {
-        Boolean flag = purchaseSuggestService.update(updateDTO);
+    public ApiResult<?> update(PurchaseSuggestMergeDTO.UpdateDTO updateDTO) {
+        Boolean flag = purchaseSuggestMergeService.update(updateDTO);
         return flag ? success() : failure();
     }
 
@@ -85,12 +73,12 @@ public class PurchaseSuggestController extends BaseController {
      * 下载模板
      * @author will
      * @date 2024/10/16 10:51
-     * @param response 
+     * @param response
      * @return ApiResult<?>
      */
     @GetMapping("/downloadTemplate")
     public ApiResult<?> downloadTemplate(HttpServletResponse response) {
-        purchaseSuggestService.downloadTemplate(response);
+        purchaseSuggestMergeService.downloadTemplate(response);
         return success();
     }
 
@@ -108,12 +96,12 @@ public class PurchaseSuggestController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = purchaseSuggestService.locking(id);
+                resultDTO = purchaseSuggestMergeService.locking(id);
             }catch (Exception e){
-                log.error("采购建议计划 锁定失败",e);
-                PurchaseSuggestEntity entity = purchaseSuggestService.getById(id);
+                log.error("采购建议计划(合并) 锁定失败",e);
+                PurchaseSuggestMergeEntity entity = purchaseSuggestMergeService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "采购建议计划不存在, 锁定失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "采购建议计划(合并)不存在, 锁定失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -138,12 +126,12 @@ public class PurchaseSuggestController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = purchaseSuggestService.confirm(id);
+                resultDTO = purchaseSuggestMergeService.confirm(id);
             }catch (Exception e){
-                log.error("采购建议计划 确定失败",e);
-                PurchaseSuggestEntity entity = purchaseSuggestService.getById(id);
+                log.error("采购建议计划(合并) 确定失败",e);
+                PurchaseSuggestMergeEntity entity = purchaseSuggestMergeService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "采购建议计划不存在, 确定失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "采购建议计划(合并)不存在, 确定失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -168,12 +156,12 @@ public class PurchaseSuggestController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = purchaseSuggestService.invalid(id,dto.getRemark());
+                resultDTO = purchaseSuggestMergeService.invalid(id,dto.getRemark());
             }catch (Exception e){
-                log.error("采购建议计划 作废失败",e);
-                PurchaseSuggestEntity entity = purchaseSuggestService.getById(id);
+                log.error("采购建议计划(合并) 作废失败",e);
+                PurchaseSuggestMergeEntity entity = purchaseSuggestMergeService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "采购建议计划不存在, 作废失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "采购建议计划(合并)不存在, 作废失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -183,7 +171,6 @@ public class PurchaseSuggestController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
 
     /**
      * 更新备注
@@ -199,10 +186,10 @@ public class PurchaseSuggestController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = purchaseSuggestService.updateRemark(id,dto.getRemark());
+                resultDTO = purchaseSuggestMergeService.updateRemark(id,dto.getRemark());
             }catch (Exception e){
                 log.error("采购建议计划 更新备注失败",e);
-                PurchaseSuggestEntity entity = purchaseSuggestService.getById(id);
+                PurchaseSuggestMergeEntity entity = purchaseSuggestMergeService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     resultDTO = BatchResultDTO.fail(id, id, "采购建议计划不存在, 更新备注失败");
                     resultDTOS.add(resultDTO);
@@ -222,11 +209,12 @@ public class PurchaseSuggestController extends BaseController {
      * @param pagingParamDTO
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货建议")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购建议（合并）")
     @PostMapping(value = "/export")
     @WebAdvanceQuery
     public ApiResult export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
-        Boolean flag = purchaseSuggestService.export(pagingParamDTO);
+        Boolean flag = purchaseSuggestMergeService.export(pagingParamDTO);
         return flag == true ? success() : failure();
     }
+
 }

@@ -110,4 +110,13 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
      * @return Boolean
      */
     Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO);
+    /**
+     * 更新备注
+     * @author will
+     * @date 2024/10/22 17:15
+     * @param id
+     * @param remark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateRemark(String id, String remark);
 }

@@ -21,6 +21,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
+import com.erp.model.mrp.dto.DeliverySuggestSysDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
@@ -41,6 +42,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.DeliveryPlanFeign;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
 import com.erp.server.mrp.service.DeliverySuggestService;
+import com.erp.server.mrp.service.DeliverySuggestSysService;
 import com.erp.server.mrp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -74,6 +76,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Autowired
     private DeliveryPlanFeign deliveryPlanFeign;
+
+    @Autowired
+    private DeliverySuggestSysService deliverySuggestSysService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -114,6 +120,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if(!save) {
             throw new ServiceException("发货计划保存失败");
         }
+
+        //保存系统值
+        DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
+        BeanMapperUtils.copy(old,dto);
+        deliverySuggestSysService.add(dto);
         return Boolean.TRUE;
     }
 
@@ -368,8 +379,14 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             return;
         }
         for (DeliverySuggestDTO.ListDTO listDTO : list) {
-            listDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(listDTO.getCreateType()));
+            //数据类型
+            listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
+            //物流方式
             listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
+            //物流方式（系统）
+            listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
+            //状态名称
+            listDTO.sets
         }
     }
 }

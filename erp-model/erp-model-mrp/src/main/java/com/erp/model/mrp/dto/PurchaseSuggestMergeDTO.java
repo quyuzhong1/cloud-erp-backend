@@ -17,15 +17,15 @@ import java.util.Map;
 
 /**
  * <p>
- * 建议采购请求响应实体
+ * 建议采购(合并后)请求响应实体
  * </p>
  *
  * @author will
- * @since 2024-08-29
+ * @since 2024-10-21
 */
 @Data
 @NoArgsConstructor
-public class PurchaseSuggestDTO implements Serializable {
+public class PurchaseSuggestMergeDTO implements Serializable {
 
 
     /**
@@ -45,19 +45,6 @@ public class PurchaseSuggestDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
-    }
-
-    /**
-     * 列表参数
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListParamDTO {
-
-        /**
-         * 来源id
-         */
-        private String sourceId;
     }
 
     /**
@@ -168,6 +155,7 @@ public class PurchaseSuggestDTO implements Serializable {
         private BigDecimal sysPurchaseCost;
     }
 
+
     /**
     * 详情
     */
@@ -186,7 +174,7 @@ public class PurchaseSuggestDTO implements Serializable {
         private String code;
 
         /**
-        * 创建类型（auto系统，manual人工）
+        * 创建类型
         */
         private String dataType;
 
@@ -236,14 +224,64 @@ public class PurchaseSuggestDTO implements Serializable {
         private String invalidRemark;
 
         /**
-        * 来源id
+        * 来源idJsonArray
         */
-        private String sourceId;
+        private String sourceIdJson;
 
         /**
         * 来源类型
         */
         private String sourceType;
+
+        /**
+        * 币别
+        */
+        private String currency;
+
+        /**
+        * 平台类型
+        */
+        private String platformType;
+
+        /**
+        * 平台
+        */
+        private String platform;
+
+        /**
+        * 店铺id
+        */
+        private String shopId;
+
+        /**
+        * skuId
+        */
+        private String skuId;
+
+        /**
+        * 状态
+        */
+        private String status;
+
+        /**
+        * 计划采购量（计划修正值）
+        */
+        private Integer planPurchaseQty;
+
+        /**
+        * 采购备货量
+        */
+        private Integer purchaseStockUpQty;
+
+        /**
+        * 备注
+        */
+        private String remark;
+
+        /**
+        * 采购建议id集合
+        */
+        private String purchaseSuggestIdJson;
 
 
     }
@@ -263,7 +301,7 @@ public class PurchaseSuggestDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO  {
+    public static class UpdateDTO extends CommonDTO {
 
         /**
         * 主键id
@@ -271,30 +309,6 @@ public class PurchaseSuggestDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
-        /**
-         * 计划采购量（计划修正值）
-         */
-        private Integer planPurchaseQty;
-
-        /**
-         * 采购备货量
-         */
-        private Integer purchaseStockUpQty;
-
-        /**
-         * 物流方式
-         */
-        private String logisticsMethod;
-
-        /**
-         * 物流时效（天）
-         */
-        private Integer logisticsDays;
-
-        /**
-         * 建议采购日期
-         */
-        private LocalDate suggestPurchaseDate;
     }
 
     @Data
@@ -302,7 +316,7 @@ public class PurchaseSuggestDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 创建类型（auto系统，manual人工）
+        * 创建类型
         */
         private String dataType;
 
@@ -348,11 +362,10 @@ public class PurchaseSuggestDTO implements Serializable {
         private BigDecimal purchaseCost;
 
         /**
-        * 来源id
+        * 来源idJsonArray
         */
-        @NotBlank(message = "来源id不能为空")
-        @Size(max = 19,message = "来源id最大长度不能超过19位")
-        private String sourceId;
+        @NotBlank(message = "来源idJsonArray不能为空")
+        private String sourceIdJson;
 
         /**
         * 来源类型
@@ -360,6 +373,73 @@ public class PurchaseSuggestDTO implements Serializable {
         @NotBlank(message = "来源类型不能为空")
         @Size(max = 32,message = "来源类型最大长度不能超过32位")
         private String sourceType;
+
+        /**
+        * 币别
+        */
+        @NotBlank(message = "币别不能为空")
+        @Size(max = 32,message = "币别最大长度不能超过32位")
+        private String currency;
+
+        /**
+        * 平台类型
+        */
+        @NotBlank(message = "平台类型不能为空")
+        @Size(max = 32,message = "平台类型最大长度不能超过32位")
+        private String platformType;
+
+        /**
+        * 平台
+        */
+        @NotBlank(message = "平台不能为空")
+        @Size(max = 32,message = "平台最大长度不能超过32位")
+        private String platform;
+
+        /**
+        * 店铺id
+        */
+        @NotBlank(message = "店铺id不能为空")
+        @Size(max = 19,message = "店铺id最大长度不能超过19位")
+        private String shopId;
+
+        /**
+        * skuId
+        */
+        @NotBlank(message = "skuId不能为空")
+        @Size(max = 19,message = "skuId最大长度不能超过19位")
+        private String skuId;
+
+        /**
+        * 状态
+        */
+        @NotBlank(message = "状态不能为空")
+        @Size(max = 32,message = "状态最大长度不能超过32位")
+        private String status;
+
+        /**
+        * 计划采购量（计划修正值）
+        */
+        @NotNull(message = "计划采购量（计划修正值）不能为空")
+        private Integer planPurchaseQty;
+
+        /**
+        * 采购备货量
+        */
+        @NotNull(message = "采购备货量不能为空")
+        private Integer purchaseStockUpQty;
+
+        /**
+        * 备注
+        */
+        @NotBlank(message = "备注不能为空")
+        @Size(max = 255,message = "备注最大长度不能超过255位")
+        private String remark;
+
+        /**
+        * 采购建议id集合
+        */
+        @NotBlank(message = "采购建议id集合不能为空")
+        private String purchaseSuggestIdJson;
 
 
     }

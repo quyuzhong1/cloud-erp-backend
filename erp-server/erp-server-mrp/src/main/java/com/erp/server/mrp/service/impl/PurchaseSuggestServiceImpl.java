@@ -9,10 +9,10 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -21,6 +21,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestDTO;
+import com.erp.model.mrp.dto.PurchaseSuggestSysDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
@@ -36,6 +37,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
 import com.erp.server.mrp.service.OperateLogService;
 import com.erp.server.mrp.service.PurchaseSuggestService;
+import com.erp.server.mrp.service.PurchaseSuggestSysService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -71,6 +73,10 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Autowired
+    private PurchaseSuggestSysService purchaseSuggestSysService;
+
+
     @Override
     public List<PurchaseSuggestDTO.ListDTO> list(PurchaseSuggestDTO.ListParamDTO params) {
         List<PurchaseSuggestDTO.ListDTO> list = baseMapper.list(params);
@@ -90,19 +96,12 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
 
         log.info("开始新增建议采购");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_P);
         purchaseSuggestEntity.setCode(code);
         boolean save = super.save(purchaseSuggestEntity);
         if(!save) {
             throw new ServiceException("建议采购保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "建议采购" , purchaseSuggestEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, purchaseSuggestEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(purchaseSuggestEntity.getId(), code);
     }
@@ -124,6 +123,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if(!save) {
             throw new ServiceException("建议采购保存失败");
         }
+
+        //保存系统值
+        PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
+        BeanMapperUtils.copy(old,dto);
+        purchaseSuggestSysService.add(dto);
         return Boolean.TRUE;
     }
 
@@ -213,15 +217,35 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         this.updateById(old);
 
         // 操作日志
-        String msg = StrUtil.format("作废了采购建议");
+        String msg = StrUtil.format("作废了采购建议，作废原因：【{}】",remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), old.getId(), "作废");
-        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.INVALID);
     }
 
     @Override
     public Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         downloadTaskFeign.saveDownloadTask("采购建议", FileTaskEventEnum.EXPORT_MRP_PURCHASE_SUGGESTION_ENTITY.getCode(), pagingParamDTO);
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateRemark(String id, String remark) {
+        PurchaseSuggestEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        //草稿和待确认支持作废
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+        }
+        // 操作日志备注
+        String msg = StrUtil.format("更新了采购建议备注，由【{}】更新为【{}】",old.getRemark(),remark);
+
+        //更新成作废状态
+        old.setRemark(remark);
+        this.updateById(old);
+
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), old.getId(), "更新备注");
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UPDATE);
     }
 
     /**
@@ -287,8 +311,12 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             return;
         }
         for (PurchaseSuggestDTO.ListDTO listDTO : list) {
-            listDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(listDTO.getCreateType()));
+            //数据类型
+            listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
+            //物流方式
             listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
+            //物流方式（系统）
+            listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
         }
     }
 }

@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="code" property="code" />
-       <result column="create_type" property="createType" />
+       <result column="data_type" property="dataType" />
        <result column="suggest_purchase_qty" property="suggestPurchaseQty" />
        <result column="suggest_purchase_date" property="suggestPurchaseDate" />
        <result column="logistics_method" property="logisticsMethod" />
@@ -30,15 +30,32 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         ps.id,
-        ps.create_user_id,
-        ps.create_user_name,
-        ps.create_time,
-        ps.update_user_id,
-        ps.update_user_name,
-        ps.update_time,
-        ps.version,
-        ps.is_deleted,
-        ps.code, ps.create_type, ps.suggest_purchase_qty, ps.suggest_purchase_date, ps.logistics_method, ps.logistics_days, ps.estimate_instock_date, ps.estimate_sales_date, ps.purchase_cost, ps.invalid_status, ps.invalid_remark, ps.source_id, ps.source_type
+        ps.create_user_id as createUserId,
+        ps.create_user_name as createUserName,
+        ps.create_time as createTime,
+        ps.update_user_id as updateUserId,
+        ps.update_user_name as updateUserName,
+        ps.update_time as updateTime,
+        ps.code,
+        ps.data_type as dataType,
+        ps.suggest_purchase_qty as suggestPurchaseQty,
+        pss.suggest_purchase_qty as sysSuggestPurchaseQty,
+        ps.suggest_purchase_date as suggestPurchaseDate,
+        pss.suggest_purchase_qty as sysSuggestPurchaseDate,
+        ps.logistics_method as logisticsMethod,
+        pss.logistics_method as sysLogisticsMethod,
+        ps.logistics_days as logisticsDays,
+        pss.logistics_days as sysLogisticsDays,
+        ps.estimate_instock_date as estimateInstockDate,
+        pss.estimate_instock_date as sysEstimateInstockDate,
+        ps.estimate_sales_date as estimateSalesDate,
+        pss.estimate_sales_date as sysEstimateSalesDate,
+        ps.purchase_cost as purchaseCost,
+        pss.purchase_cost as sysPurchaseCost,
+        ps.invalid_status as invalidStatus,
+        ps.invalid_remark as invalidRemark,
+        ps.source_id as sourceId,
+        ps.source_type as sourceType
 
     </sql>
 
@@ -69,8 +86,9 @@
         select
             <include refid="Base_Column_List"/>
         from purchase_suggest ps
+        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
         <where>
-            ps.is_deleted = false and source_id = #{params.sourceId}
+            ps.is_deleted = false and ps.source_id = #{params.sourceId}
         </where>
     </select>
 
@@ -79,6 +97,7 @@
         select
             <include refid="Base_Column_List"/>
         from purchase_suggest ps
+        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and ps.is_deleted = false
