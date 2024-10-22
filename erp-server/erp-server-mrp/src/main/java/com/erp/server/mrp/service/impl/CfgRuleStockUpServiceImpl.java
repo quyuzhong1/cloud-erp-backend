@@ -162,12 +162,12 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:mrp:getDefaultCfgRuleStockUp",keyGenerator = "myKeyGenerator")
     public CfgRuleStockUpEntity getDefaultCfgRuleStockUp(String platformType) {
         return getDefaultByPlatformType(platformType,"");
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:mrp:getDefaultCfgRuleStockUp",keyGenerator = "myKeyGenerator")
     public List<CfgRuleStockUpEntity> getDefaultCfgRuleStockUp() {
         return list(Wrappers.<CfgRuleStockUpEntity>lambdaQuery().eq(CfgRuleStockUpEntity::getRefId,""));
     }
