@@ -475,6 +475,10 @@ public class WmsCartonDTO {
          */
         private BigDecimal packageWeight;
         /**
+         * 箱子重量[展示使用]
+         */
+        private String packageWeightStr;
+        /**
          * 重量单位
          */
         private String weightUnit;

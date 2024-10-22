@@ -2412,6 +2412,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 e.setProductName(productName);
             });
         }
+        BigDecimal packageWeight = Objects.nonNull(specEntity.getPackageWeight()) ? specEntity.getPackageWeight() : BigDecimal.ZERO;
+        String packageWeightStr = Objects.nonNull(specEntity.getPackageWeight()) ? specEntity.getPackageWeight().stripTrailingZeros().toPlainString() : "";
         return WmsCartonDTO.OutBoxNoDTO.builder()
                 .outBoxNo(outBoxNo)
                 .taskId(packingTaskEntity.getId())
@@ -2419,7 +2421,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 .deliveryNo(getDeliveryNo(firstMileDeliveryEntityList))
                 .sizeUnit(specEntity.getSizeUnit())
                 .size(getSize(specEntity))
-                .packageWeight(specEntity.getPackageWeight())
+                .packageWeight(packageWeight)
+                .packageWeightStr(packageWeightStr)
                 .weightUnit(specEntity.getWeightUnit())
                 .packTotalQty(packTotalQty)
                 .detailList(detailList)
