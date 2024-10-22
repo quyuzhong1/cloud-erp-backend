@@ -562,8 +562,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     }
 
     @Override
-    public List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
-        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
+    public List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> detailIds) {
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(detailIds);
 
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
@@ -613,6 +613,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Override
     public Boolean generateRequisitionApplicationSave(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list) {
+        if (CollectionUtils.isEmpty(list)){
+            throw new ServiceException("明细数据不能为空");
+        }
         return generateRequisitionApplication(list, Boolean.FALSE);
     }
 
