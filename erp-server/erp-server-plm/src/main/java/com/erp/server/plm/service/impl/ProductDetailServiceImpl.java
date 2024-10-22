@@ -5381,13 +5381,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             JasperReport jasperReport = (JasperReport) JRLoader.loadObject(inputStream);
             JasperHelperUtil.prepareReport(jasperReport, FileTypeEnum.PDF.getCode());
             for (PrintEanDTO.PrintSkuEanDTO dto : printEanDTO.getPrintSkuEanList()) {
-                String eanBase = null;
                 if (ObjectUtils.isNotEmpty(dto.getEan()) && printEanDTO.getTypeList().contains("EAN")) {
                     Map<String, Object> eanMap = new HashMap<>();
                     eanMap.put("code", dto.getEan());
                     JasperPrint eanJasperPrint = JasperFillManager.fillReport(jasperReport, eanMap, new ReportDataSourceDTO<>(Collections.singletonList(dto.getEan())));
                     byte[] eanBytes = JasperExportManager.exportReportToPdf(eanJasperPrint);
-                    eanBase = Base64.getEncoder().encodeToString(eanBytes);
+                    String eanBase = Base64.getEncoder().encodeToString(eanBytes);
+                    for (int i = 0; i < dto.getQty(); i++) {
+                        base64List.add("data:application/pdf;base64," + eanBase);
+                    }
                 }
                 String skuBase = null;
                 if (printEanDTO.getTypeList().contains("SKU")) {
@@ -5396,12 +5398,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, skuMap, new ReportDataSourceDTO<>(Collections.singletonList(dto.getSkuNo())));
                     byte[] skuBytes = JasperExportManager.exportReportToPdf(jasperPrint);
                     skuBase = Base64.getEncoder().encodeToString(skuBytes);
-                }
-                for (int i = 0; i < dto.getQty(); i++) {
-                    if (ObjectUtils.isNotEmpty(eanBase)) {
-                        base64List.add("data:application/pdf;base64," + eanBase);
-                    }
-                    if (ObjectUtils.isNotEmpty(skuBase)) {
+                    for (int i = 0; i < dto.getQty(); i++) {
                         base64List.add("data:application/pdf;base64," + skuBase);
                     }
                 }
