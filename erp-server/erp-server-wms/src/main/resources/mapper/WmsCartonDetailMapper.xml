@@ -54,6 +54,7 @@
     </select>
     <select id="listByTaskIds" resultType="com.erp.model.wms.entity.WmsCartonDetailEntity">
         SELECT
+        wcd.id,
         wcd.main_id,
         wcd.sku_id,
         wcd.sku_no,

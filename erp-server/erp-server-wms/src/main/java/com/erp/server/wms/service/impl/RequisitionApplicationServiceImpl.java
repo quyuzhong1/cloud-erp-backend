@@ -1304,8 +1304,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
 
         PackingTaskEntity packingTaskEntity = Optional.ofNullable(packingTaskService.getBySourceCode(entity.getCode())).orElseThrow(()-> new ServiceException("未生成装箱任务"));
-        if(!PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus())){
-            throw new ServiceException("已装箱才能下推发货单");
+        if(!PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus()) && !PackingTaskStatusEnum.PACKING.getCode().equals(packingTaskEntity.getPackingStatus())){
+            throw new ServiceException("已装箱或装箱中才能下推发货单");
         }
         List<WmsCartonEntity> cartonEntityList = Optional.ofNullable(cartonService.listByTaskIds(Arrays.asList(packingTaskEntity.getId()))).filter(list -> !list.isEmpty())
                 .orElseThrow(() -> new ServiceException("装箱数据为空"));
