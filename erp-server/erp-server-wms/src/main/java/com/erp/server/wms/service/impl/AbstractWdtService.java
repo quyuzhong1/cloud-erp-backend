@@ -177,10 +177,10 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         String warehouseId = viewDTO.getWarehouseId();
         String sourceCode = viewDTO.getSourceCode();
         Pair<List<T>, List<T>> pair = handleTransfer(goodsLists, warehouseId);
-        if(pair.getKey().isEmpty()){
-            log.error("查询&同步时没有找到仓位映射, 取消推送: {} {}", midTableId, warehouseId);
-            return;
-        }
+//        if(pair.getKey().isEmpty()){
+//            log.error("查询&同步时没有找到仓位映射, 取消推送: {} {}", midTableId, warehouseId);
+//            return;
+//        }
         boolean removeSuccess = dmpTaskFeign.deletePushTaskBySourceId(midTableId);
         if(! pair.getKey().isEmpty()){
             String codeWithPush = viewDTO.getThirdCode();
@@ -388,8 +388,8 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
         wmsPushMsgEntity.setThirdCode(outerCode);
         if(SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
-            List<CreateOtherStockinRequest.GoodsList> goodsList = (List<CreateOtherStockinRequest.GoodsList>) combinationList;
-            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CreateOtherStockinRequest.GoodsList::getPositionNo).collect(Collectors.joining(","));
+            List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
+            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).collect(Collectors.joining(","));
             wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
             Map<String, String> pushData = new HashMap<>();
             pushData.put("remark", String.format("【%s】没有设置旺店通仓位映射",positionNos));
