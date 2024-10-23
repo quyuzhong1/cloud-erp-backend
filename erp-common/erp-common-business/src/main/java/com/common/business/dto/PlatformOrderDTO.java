@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -263,6 +264,18 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+    /**
+     * 明细平台SKU列表
+     */
+    public List<String> convertPlatformSkuIdList() {
+        return this.getDetails()
+                .stream()
+                .map(PlatformOrderDetailDTO::getPlatformSkuId)
+                .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }
@@ -274,6 +287,7 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSpuNo)
+                .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }

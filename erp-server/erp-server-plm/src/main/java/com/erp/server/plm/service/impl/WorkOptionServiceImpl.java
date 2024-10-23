@@ -88,7 +88,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
                 pagingDTO.setParams(params);
                 Map<String, String> sqlMap = new HashMap<>();
                 sqlMap.put("default", "1=1");
-                params.setSqlMap(sqlMap);
+//                params.setSqlMap(sqlMap);
                 myWorkOptionDTO.setTableNumber(bomInfoService.paging(pagingDTO).getTotalCount());
             }
             if (myWorkOptionDTO.getModuleCode().equals("product_change")) {
@@ -101,7 +101,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
                 SearchPagingDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), SearchPagingDTO.class);
                 Map<String, String> sqlMap = new HashMap<>();
                 sqlMap.put("default", "1=1");
-                params.setSqlMap(sqlMap);
+//                params.setSqlMap(sqlMap);
                 pagingDTO.setParams(params);
                 PagingVO paging = productChangeService.paging(pagingDTO);
                 myWorkOptionDTO.setTableNumber(paging.getTotalCount());

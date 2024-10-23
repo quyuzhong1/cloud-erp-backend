@@ -444,6 +444,7 @@ public enum ApiError implements Serializable {
     ERROR_95189(95189, "存在未立项的项目"),
     ERROR_95190(95190, "仅在待审核,审核中可申请撤销"),
     ERROR_95191(95191, "【%s】已催办一次，请在30分钟后再催办"),
+
     ERROR_95192(95192, "已终止项目不能再次终止"),
     ERROR_95193(95193, "已暂停的项目只能进行重新启动"),
     ERROR_95194(95194, "变体名已存在，不可重复添加"),
@@ -529,7 +530,8 @@ public enum ApiError implements Serializable {
     ERROR_95270(95270, "结项日期应当晚于启动日期"),
     ERROR_95271(95271, "SKU为空，不允许进行此操作"),
     ERROR_NO_INVENTORY_SKU_NOT_EXIST(95272, "除服务、费用SKU外,不存在其他SKU信息！"),
-
+    ERROR_95273(95273, "仅支持审核中的单据支持催办提醒"),
+    ERROR_95274(95274, "%s已催办，间隔时间30min内请勿重复操作"),
     /**
      * TMS 错误
      * 从96000 开始
@@ -1339,6 +1341,8 @@ public enum ApiError implements Serializable {
     PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
     ERROR_REFRESH_TOKEN(92131,"店铺【{}】，刷新token失败：{}"),
     ERROR_SHOP_AUTHORIZE_FAIL(92108,"店铺【{}】，授权失败：【{}】"),
+    ERROR_SHOP_SHOPEE_CANCEL_LOGISTICS(92109,"虾皮平台不支持取消物流单，如有需要，请联系实施人员"),
+    ERROR_SHOP_SHOPEE_INTERCEPT_LOGISTICS(92110,"虾皮平台不支持发货拦截，如有需要，请联系实施人员"),
 
     SKU_MAPPING_NOT_ALLOW_HISTORY(92131,"当前映射关系在【{}】已存在过，无法修改"),
     IS_SO_OUT_STOCK_NOT_UPDATE_MAPPING(92132,"已生成销售出库单，不允许修改映射关系"),
@@ -1526,6 +1530,5 @@ public enum ApiError implements Serializable {
 
     public Integer code;
     public String msg;
-
 
 }

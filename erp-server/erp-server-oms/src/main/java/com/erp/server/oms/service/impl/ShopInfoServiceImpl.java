@@ -738,8 +738,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return lambdaUpdate()
                 .eq(ShopInfoEntity::getId, shopInfoEntity.getId())
                 .set(ShopInfoEntity::getIsGenTask, shopInfoEntity.getIsGenTask())
-                .set(ShopInfoEntity::getPlatformStatus, shopInfoEntity.getPlatformStatus())
-                .set(ShopInfoEntity::getDisabled, shopInfoEntity.getDisabled())
+                .set(StrUtil.isNotBlank(shopInfoEntity.getPlatformStatus()),ShopInfoEntity::getPlatformStatus, shopInfoEntity.getPlatformStatus())
+                .set(Objects.nonNull(shopInfoEntity.getDisabled()), ShopInfoEntity::getDisabled, shopInfoEntity.getDisabled())
                 .update();
     }
 

@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.tms.shopee.service.ShopeeShipperService
+   com.sdk.tms.shopee.service.ShopeeLogisticsService

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
@@ -118,8 +119,16 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	@Override
 	protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity,
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+		String id = dmpOutputTaskRecordEntity.getId();
 		String dataId = dmpOutputTaskRecordEntity.getDataId();
+		String requestData = dmpOutputTaskRecordEntity.getRequestData();
 		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
+		String syncOperate = dmpPushMsgEntity.getSyncOperate();
+		if(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode().equals(syncOperate)) {
+			String responseData = JSON.parseObject(requestData).getString("remark");
+			dmpOutputUtils.updateStatus(id, DmpOutputTaskRecordStatusEnum.ERROR.getCode(), responseData , responseData);
+			return;
+		}
 		
 		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
 		String sourceId = dmpPushMsgEntity.getSourceId();
@@ -148,14 +157,13 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		}
 		
 		String parentId = dmpPushMsgEntity.getParentId();
-		String requestData = dmpOutputTaskRecordEntity.getRequestData();
-		if(StringUtils.isNotBlank(parentId) && "operateApprove".equals(dmpPushMsgEntity.getSyncOperate())) {
+		if(StringUtils.isNotBlank(parentId) && SyncOperateEnum.OPERATE_APPROVE.getCode().equals(syncOperate)) {
 			String[] split = parentId.split(",");
 			for(String s : split) {
 				List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery()
 						.eq(DmpPushMsgEntity::getSourceId, s)
 						.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
-						.eq(DmpPushMsgEntity::getSyncOperate, dmpPushMsgEntity.getSyncOperate())
+						.eq(DmpPushMsgEntity::getSyncOperate, syncOperate)
 						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
 						.list();
 				if(CollUtil.isEmpty(list)) {
@@ -248,7 +256,6 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			}
 		}
 		
-		String id = dmpOutputTaskRecordEntity.getId();
 		String outputTypeId = dmpCfgOutputEntity.getTypeId();
 		DmpCfgApiEntity outputDmpCfgApiEntity = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(outputTypeId)).get(0);
 		String apiClass = outputDmpCfgApiEntity.getApiClass();

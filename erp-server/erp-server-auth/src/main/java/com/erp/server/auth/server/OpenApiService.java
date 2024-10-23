@@ -7,7 +7,10 @@ import java.lang.reflect.Method;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
+import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.rpc.wms.feign.AttachmentFeign;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -28,6 +31,9 @@ public class OpenApiService {
 
     @Resource
     private InitOpenApiBeanUtil initGateWayBeanUtil;
+
+    @Resource
+    private AttachmentFeign attachmentFeign;
     
     public ApiResult<?> unitPlatformService(OpenApiInputDTO input) {
     	ApiResult<?> response = null;
@@ -120,4 +126,8 @@ public class OpenApiService {
         }
     }
 
+    @Async
+    public void addByWarehouseEquipment(String fileUrl, String name) {
+        attachmentFeign.addByWarehouseEquipment(new WmsAttachmentDTO.AddDTO(name,fileUrl));
+    }
 }

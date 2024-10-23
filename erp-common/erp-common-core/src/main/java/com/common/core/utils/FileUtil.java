@@ -427,4 +427,26 @@ public class FileUtil {
             throw new ServiceException("未能获取文件");
         }
     }
+
+    /**
+     * 去除文件后缀名
+     * @param fileName
+     * @return
+     */
+    public static String removeExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return fileName;
+        }
+
+        // 获取最后一个点的位置
+        int lastDotIndex = fileName.lastIndexOf(".");
+
+        // 如果没有点或点是第一个字符，返回原文件名
+        if (lastDotIndex == -1 || lastDotIndex == 0) {
+            return fileName;
+        }
+
+        // 截取文件名的部分（去掉后缀）
+        return fileName.substring(0, lastDotIndex);
+    }
 }
