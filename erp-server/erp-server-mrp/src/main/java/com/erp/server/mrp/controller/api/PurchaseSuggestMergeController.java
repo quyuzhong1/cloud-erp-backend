@@ -14,7 +14,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
-import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
 import com.erp.server.mrp.service.PurchaseSuggestMergeService;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +63,7 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新")
-    public ApiResult<?> update(PurchaseSuggestMergeDTO.UpdateDTO updateDTO) {
+    public ApiResult<?> update(@RequestBody @Validated PurchaseSuggestMergeDTO.UpdateDTO updateDTO) {
         Boolean flag = purchaseSuggestMergeService.update(updateDTO);
         return flag ? success() : failure();
     }
@@ -91,7 +90,7 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @PostMapping("/locking")
     @LogAction(value = LogActionEnum.EXPORT, desc = "锁定")
-    public ApiResult<?> locking(BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<?> locking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -121,7 +120,7 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @PostMapping("/confirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "确认")
-    public ApiResult<?> confirm(BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<?> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -151,7 +150,7 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @PostMapping("/invalid")
     @LogAction(value = LogActionEnum.INVALID, desc = "作废")
-    public ApiResult<?> invalid(BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -181,7 +180,7 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @PostMapping("/updateRemark")
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新备注")
-    public ApiResult<?> updateRemark(BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;

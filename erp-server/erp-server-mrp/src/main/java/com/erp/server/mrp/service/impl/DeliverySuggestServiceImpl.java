@@ -185,7 +185,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         // 操作日志
         String msg = StrUtil.format("锁定了发货建议");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), old.getId(), "锁定");
-        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.LOCKING);
     }
 
     @Override
@@ -247,12 +247,16 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
         //sku映射
-        List<String> skusIdList = deliverySuggestList.stream().map(obj -> obj.getSkuId()).distinct().collect(Collectors.toList());
-        List<SkuMappingEntity> list = FeignQuery.create(SkuMappingEntity.class).in(SkuMappingEntity::getProductSkuId, skusIdList).list();
+        List<String> skuIdList = deliverySuggestList.stream().map(obj -> obj.getSkuId()).distinct().collect(Collectors.toList());
+        List<SkuMappingEntity> list = FeignQuery.create(SkuMappingEntity.class).in(SkuMappingEntity::getProductSkuId, skuIdList).list();
         
-        //listing
+        //sku映射的listing
         List<String> listingIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getListingId())).map(SkuMappingEntity::getListingId).distinct().collect(Collectors.toList());
         List<ListingInfoEntity> listingList = FeignQuery.getByIds(ListingInfoEntity.class, listingIdList);
+
+        //产品信息
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+
 
         long count = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().count();
         //校验
@@ -264,6 +268,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
         viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
         viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
+        viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
         //店铺信息
         ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
@@ -278,6 +283,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         for (DeliverySuggestEntity suggestEntity : deliverySuggestList) {
             DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
             BeanMapperUtils.copy(suggestEntity,detailDTO);
+            //sku信息
+            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), suggestEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            detailDTO.setSkuNo(productDetailEntity.getSkuNo());
+            detailDTO.setProductName(productDetailEntity.getName());
+
             //sku映射表
             SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getShopId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(skuMappingEntity)) {
@@ -327,14 +337,14 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public BatchResultDTO updateRemark(String id, String remark) {
         DeliverySuggestEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
-        //草稿和待确认支持作废
+        //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
         }
         // 操作日志备注
         String msg = StrUtil.format("更新了补货计划备注，由【{}】更新为【{}】",old.getRemark(),remark);
 
-        //更新成作废状态
+        //更新备注
         old.setRemark(remark);
         this.updateById(old);
 
@@ -429,8 +439,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             //状态名称
             listDTO.setStatusName(SuggestStatusEnum.getName(listDTO.getStatus()));
             //店铺名称
-            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
-            listDTO.setShopName(shopName);
+            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getShopId())).findFirst().orElse(new ShopInfoEntity());
+            listDTO.setShopName(shopInfoEntity.getName());
+            listDTO.setCountryName(shopInfoEntity.getCountryName());
             //sku
             ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             listDTO.setSkuNo(productDetailEntity.getSkuNo());

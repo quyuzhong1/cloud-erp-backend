@@ -134,7 +134,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         // 操作日志
         String msg = StrUtil.format("锁定了采购建议（合并）");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST_MERGE.getCode(), old.getId(), "锁定");
-        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.LOCKING);
     }
 
     @Override
@@ -189,9 +189,9 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     public BatchResultDTO updateRemark(String id, String remark) {
         PurchaseSuggestMergeEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）"));
-        //草稿和待确认支持作废
+        //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
         }
         // 操作日志备注
         String msg = StrUtil.format("更新了采购建议（合并）备注，由【{}】更新为【{}】",old.getRemark(),remark);

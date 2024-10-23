@@ -76,7 +76,7 @@ public class PurchaseSuggestController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新")
-    public ApiResult<?> update(PurchaseSuggestDTO.UpdateDTO updateDTO) {
+    public ApiResult<?> update(@RequestBody @Validated PurchaseSuggestDTO.UpdateDTO updateDTO) {
         Boolean flag = purchaseSuggestService.update(updateDTO);
         return flag ? success() : failure();
     }
@@ -103,7 +103,7 @@ public class PurchaseSuggestController extends BaseController {
      */
     @PostMapping("/locking")
     @LogAction(value = LogActionEnum.EXPORT, desc = "锁定")
-    public ApiResult<?> locking(BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<?> locking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -133,7 +133,7 @@ public class PurchaseSuggestController extends BaseController {
      */
     @PostMapping("/confirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "确认")
-    public ApiResult<?> confirm(BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<?> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -163,7 +163,7 @@ public class PurchaseSuggestController extends BaseController {
      */
     @PostMapping("/invalid")
     @LogAction(value = LogActionEnum.INVALID, desc = "作废")
-    public ApiResult<?> invalid(BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -194,7 +194,7 @@ public class PurchaseSuggestController extends BaseController {
      */
     @PostMapping("/updateRemark")
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新备注")
-    public ApiResult<?> updateRemark(BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;

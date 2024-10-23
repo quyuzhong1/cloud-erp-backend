@@ -178,7 +178,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         // 操作日志
         String msg = StrUtil.format("锁定了采购建议");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), old.getId(), "锁定");
-        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.LOCKING);
     }
 
     @Override
@@ -233,14 +233,14 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     public BatchResultDTO updateRemark(String id, String remark) {
         PurchaseSuggestEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
-        //草稿和待确认支持作废
+        //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
         }
         // 操作日志备注
         String msg = StrUtil.format("更新了采购建议备注，由【{}】更新为【{}】",old.getRemark(),remark);
 
-        //更新成作废状态
+        //更新备注
         old.setRemark(remark);
         this.updateById(old);
 
