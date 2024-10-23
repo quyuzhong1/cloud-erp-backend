@@ -107,7 +107,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		SoReturnInstockEntity soReturnInstockEntity = this.buildSoReturnInstockEntity(dto,warehouseEntity,soB2cEntity,soOutstock);
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildSoReturnInstockDetail(dto,soReturnInstockEntity,warehouseEntity);
 		if(CollectionUtils.isEmpty(detailEntityList)){
-			throw new ServiceException("明细为空");
+			throw new ServiceException("没有映射");
 		}
 		//关联销售退货单
 		this.matchSoReturn(soReturnInstockEntity,detailEntityList,dto,soB2cEntity);
@@ -159,6 +159,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 	private List<SoReturnInstockDetailEntity> buildSoReturnInstockDetail(PlatformReturnInstockDTO dto, SoReturnInstockEntity soReturnInstockEntity,WarehouseEntity warehouseEntity) {
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
+		if(CollectionUtils.isEmpty(details)){
+			throw new ServiceException("明细为空");
+		}
 		List<String> platformSkuNoList = dto.getProductDetailList().stream().map(v->v.getProductSku()).collect(Collectors.toList());
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
