@@ -102,7 +102,8 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
         }
         //先匹配到对应的记录 然后赋值
         fbaBindShipmentViewDTOS.forEach(e -> {
-            if (RequisitionApplicationDetailExcelDTO.getBoxNo().equals(e.getBoxNo())){
+            //数据已存在就不能覆盖
+            if (RequisitionApplicationDetailExcelDTO.getBoxNo().equals(e.getBoxNo()) && StrUtil.isBlank(e.getFbaBoxNo()) && StrUtil.isBlank(e.getFbaShipmentCode())){
                 e.setFbaBoxNo(RequisitionApplicationDetailExcelDTO.getFbaBoxNo());
                 e.setFbaShipmentCode(RequisitionApplicationDetailExcelDTO.getFbaShipmentCode());
             }

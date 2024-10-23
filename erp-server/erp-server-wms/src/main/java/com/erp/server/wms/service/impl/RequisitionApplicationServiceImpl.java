@@ -2481,7 +2481,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<RequisitionApplicationDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
         RequisitionApplicationDTO.ImportDTO importDTO = new RequisitionApplicationDTO.ImportDTO();
         String url = "";
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorList)) {
+        if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "SKU成本错误数据.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, InventorySkuCostDetailExcelDTO.class);
             if (!file.isDirectory()) {
