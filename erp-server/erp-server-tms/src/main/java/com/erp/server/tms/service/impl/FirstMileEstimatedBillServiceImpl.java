@@ -223,7 +223,6 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         Map<String, String> outstockIdBusinessCodeMap =new HashMap<>();
         List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getDeliveryCodeByBusinessCodes(successBusCodeList);
         if(CollectionUtils.isNotEmpty(businessDTOList)){
-//            outstockIdList = businessDTOList.stream().map(FirstMileDeliveryDTO.BusinessDTO::getId).collect(Collectors.toList());
             outstockIdBusinessCodeMap = businessDTOList.stream().collect(Collectors.toMap(FirstMileDeliveryDTO.BusinessDTO::getCode, FirstMileDeliveryDTO.BusinessDTO::getBusinessCode));
         }
         //物流单信息
