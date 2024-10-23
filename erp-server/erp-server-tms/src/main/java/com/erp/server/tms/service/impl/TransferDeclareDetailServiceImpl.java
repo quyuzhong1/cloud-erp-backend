@@ -108,13 +108,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             //删除明细对应的sku拆分记录
             transferDeclareProductService.removeByDeclareDetailIds(deleteIds);
 
-            //处理订单异常信息
-            List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
-            List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-            SoB2cErrorDTO.BatchDeleteDTO deleteDTO = new SoB2cErrorDTO.BatchDeleteDTO();
-            deleteDTO.setMainIds(soIds);
-            deleteDTO.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-            soB2cFeign.deleteErrorByMainIds(deleteDTO);
         }
 
         // 数据处理

@@ -863,9 +863,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if(StringUtils.isNotBlank(firstMileDeliveryDetailEntity.getPlatformSkuNo())){
                 pagingViewDTO.setPlatformSku(firstMileDeliveryDetailEntity.getPlatformSkuNo()+"*"+pagingViewDTO.getPackQty());
             }
-            if(StringUtils.isNotBlank(firstMileDeliveryDetailEntity.getFnSku())){
-                pagingViewDTO.setFnSku(firstMileDeliveryDetailEntity.getFnSku()+"*"+pagingViewDTO.getPackQty());
-            }
         });
     }
 
@@ -1760,10 +1757,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 .scanHeight(dto.getHeight())
                 .build();
         CfgRuleOutDTO.CheckDTO checkDTO = cfgRuleOutService.handleOverweight(overweightDTO);
-        //更新图片
-        Class<PackingTaskEntity> aClass = PackingTaskEntity.class;
-        TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
-        attachmentService.batchSave(Arrays.asList(dto.getImageUrl()),Arrays.asList(""),tableName.value(),packingTaskEntity.getId());
 
         if(checkDTO.getResult()){
             //更新装箱任务的尺寸重量，状态更新为称重成功
