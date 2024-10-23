@@ -936,6 +936,11 @@ public class SoB2cDeliveryDTO implements Serializable {
         @NotBlank(message = "拣货车类型不能为空")
         private String pickingCartTypeId;
         /**
+         * 拣货车类型
+         */
+        @NotBlank(message = "波次类型不能为空")
+        private String waveType;
+        /**
          * 发货单号
          */
         @Size(min = 1, message = "发货单不能为空")
