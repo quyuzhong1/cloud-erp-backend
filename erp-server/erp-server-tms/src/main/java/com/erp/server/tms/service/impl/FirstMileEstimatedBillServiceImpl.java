@@ -220,12 +220,21 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<String> successBusCodeList = successList.stream().filter(v -> StringUtils.isNotBlank(v.getBusinessCode())).map(FirstMileEstimatedBillExcelDTO::getBusinessCode).collect(Collectors.toList());
         //业务单号查询
         List<String> outstockIdList = new ArrayList<>();
+        Map<String, String> outstockIdBusinessCodeMap =new HashMap<>();
         List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getDeliveryCodeByBusinessCodes(successBusCodeList);
         if(CollectionUtils.isNotEmpty(businessDTOList)){
-            outstockIdList = businessDTOList.stream().map(FirstMileDeliveryDTO.BusinessDTO::getId).collect(Collectors.toList());
+//            outstockIdList = businessDTOList.stream().map(FirstMileDeliveryDTO.BusinessDTO::getId).collect(Collectors.toList());
+            outstockIdBusinessCodeMap = businessDTOList.stream().collect(Collectors.toMap(FirstMileDeliveryDTO.BusinessDTO::getCode, FirstMileDeliveryDTO.BusinessDTO::getBusinessCode));
         }
         //物流单信息
         List<FirstMileEstimatedBillDTO.LogisticsInfoDTO> logisticsInfoList = this.baseMapper.listLogisticsInfo(outstockIdList);
+        if(CollectionUtils.isNotEmpty(logisticsInfoList)){
+            for (FirstMileEstimatedBillDTO.LogisticsInfoDTO logisticsInfoDTO : logisticsInfoList) {
+                if(outstockIdBusinessCodeMap.containsKey(logisticsInfoDTO.getSourceCode())){
+                    logisticsInfoDTO.setBusinessCode(outstockIdBusinessCodeMap.get(logisticsInfoDTO.getSourceCode()));
+                }
+            }
+        }
         for (FirstMileEstimatedBillExcelDTO dto : successList) {
             Optional<FirstMileEstimatedBillDTO.LogisticsInfoDTO> existBusinessCodeOptional = logisticsInfoList.stream().filter(item -> item.getBusinessCode().equals(dto.getBusinessCode())).findFirst();
             if(StringUtils.isNotBlank(dto.getBusinessCode()) && !existBusinessCodeOptional.isPresent()){
