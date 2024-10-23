@@ -147,7 +147,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             if(UnitEnum.WeightUnitEnum.KG.getCode().equals(dto.getWeightUnit())){
                 weightByG = dto.getWeight().multiply(BigDecimal.valueOf(1000));
             }
-            if(weightByG.compareTo(new BigDecimal("1000000")) > 0){
+            if(weightByG.compareTo(new BigDecimal("1000000")) >= 0){
                 throw new ServiceException("超过1000KG，重量异常请核对");
             }
             entity.setWeight(dto.getWeight());
