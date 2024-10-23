@@ -2369,5 +2369,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         });
         return listPackingDetailDTOS;
     }
+
+    @Override
+    public List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(List<String> businessCodes) {
+        if (CollectionUtils.isEmpty(businessCodes)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getDeliveryCodeByBusinessCodes(businessCodes);
+    }
 }
 

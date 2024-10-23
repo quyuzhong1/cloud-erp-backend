@@ -1155,9 +1155,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
             }
-            if (detailEntity.getApproveQty() < detailEntity.getPickingQty()) {
-                throw new ServiceException(ApiError.ERROR_99133, detailEntity.getSkuNo());
-            }
         }
         requisitionApplicationDetailService.updateBatchById(detailEntities);
         Map<String, Integer> qtyMap = detailEntities.stream().collect(Collectors.toMap(v->v.getId(),v->v.getPickingQty()));

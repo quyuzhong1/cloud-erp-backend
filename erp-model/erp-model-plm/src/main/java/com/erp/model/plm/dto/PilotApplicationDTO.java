@@ -722,5 +722,9 @@ public class PilotApplicationDTO implements Serializable {
          * 操作人
          */
         private String userName;
+        /**
+         * 审批状态
+         */
+        private ApproveStatusEnum approveStatus;
     }
 }

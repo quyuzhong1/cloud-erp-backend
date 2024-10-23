@@ -579,6 +579,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (ObjectUtil.isEmpty(customerInfoEntity)) {
                 throw new ServiceException(ApiError.ERROR_92011);
             }
+            ShopInfoEntity other = this.lambdaQuery().eq(ShopInfoEntity::getCustomerId,customerId).ne(StringUtils.isNotBlank(shopInfo.getId()),ShopInfoEntity::getId,shopInfo.getId()).last("limit 1").one();
+            if(Objects.nonNull(other)){
+                throw new ServiceException("【{}】已绑定店铺【{}】",customerInfoEntity.getName(),other.getName());
+            }
             shopInfo.setCustomerId(customerInfoEntity.getId());
             shopInfo.setCustomerCode(customerInfoEntity.getCode());
         }else{
