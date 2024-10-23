@@ -277,4 +277,5 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     BatchResultDTO handleErrorData(String id);
 
     PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
+
 }
