@@ -231,7 +231,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     long lastTime = Long.parseLong(split[1]);
                     Calendar cal = Calendar.getInstance();
                     long nowTime = cal.getTimeInMillis();
-                    long min = 30 - (nowTime - lastTime) / (60 * 1000);
+                    long min = (nowTime - lastTime) / (60 * 1000);
                     redisValue = split[0] + " " + min + "分钟前";
                     result.add(String.format(ApiError.ERROR_95274.msg, redisValue));
                     continue;
@@ -387,9 +387,6 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         }else if (CollectionUtils.isNotEmpty(alreadyPress)) {
             String name = alreadyPress.stream().collect(Collectors.joining(","));
             ApiError error = ApiError.ERROR_95191;
-            if(dto.getBusinessType().equals(LarkPressBusinessTypeEnum.PILOT_APPLICATION.getCode())){//试产量产类型
-                error = ApiError.ERROR_95274;
-            }
             String message = error.msg;
             throw new ServiceException(error.code, String.format(message, name));
         }
