@@ -564,8 +564,8 @@ public class RequisitionApplicationController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载货件装箱信息模板数据")
-    @GetMapping("/downloadPackingTemplate")
-    public ApiResult downloadPackingTemplate(HttpServletResponse response) {
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
         requisitionApplicationService.downloadPackingTemplate(response);
         return success();
     }
