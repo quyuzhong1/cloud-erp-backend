@@ -213,11 +213,19 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.lambdaQuery().eq(TmsCfgCostEntity::getDictCostAttribution, DictCostAttributionEnum.FIRST_MILE.getCode()).list();
         //物流费用分摊
         List<FirstMileCostAllocationEntity> firstMileCostAllocationList = firstMileCostAllocationService.list();
-        //物流单信息
-        List<FirstMileEstimatedBillDTO.LogisticsInfoDTO> logisticsInfoList = this.baseMapper.listLogisticsInfo();
 
         List<FirstMileEstimatedBillExcelDTO> successList = listener.getSuccessList();
         List<FirstMileEstimatedBillExcelDTO> errorList = listener.getErrorList();
+
+        List<String> successBusCodeList = successList.stream().filter(v -> StringUtils.isNotBlank(v.getBusinessCode())).map(FirstMileEstimatedBillExcelDTO::getBusinessCode).collect(Collectors.toList());
+        //业务单号查询
+        List<String> outstockIdList = new ArrayList<>();
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getDeliveryCodeByBusinessCodes(successBusCodeList);
+        if(CollectionUtils.isNotEmpty(businessDTOList)){
+            outstockIdList = businessDTOList.stream().map(FirstMileDeliveryDTO.BusinessDTO::getId).collect(Collectors.toList());
+        }
+        //物流单信息
+        List<FirstMileEstimatedBillDTO.LogisticsInfoDTO> logisticsInfoList = this.baseMapper.listLogisticsInfo(outstockIdList);
         for (FirstMileEstimatedBillExcelDTO dto : successList) {
             Optional<FirstMileEstimatedBillDTO.LogisticsInfoDTO> existBusinessCodeOptional = logisticsInfoList.stream().filter(item -> item.getBusinessCode().equals(dto.getBusinessCode())).findFirst();
             if(StringUtils.isNotBlank(dto.getBusinessCode()) && !existBusinessCodeOptional.isPresent()){

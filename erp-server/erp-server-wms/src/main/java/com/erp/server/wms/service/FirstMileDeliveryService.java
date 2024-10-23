@@ -343,4 +343,10 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
     WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
+    /**业务单号查询发货单号
+     *
+     * @param businessCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(List<String> businessCodes);
 }
