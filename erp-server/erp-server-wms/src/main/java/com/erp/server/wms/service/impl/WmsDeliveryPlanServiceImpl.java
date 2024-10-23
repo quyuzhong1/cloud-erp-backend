@@ -17,11 +17,13 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -806,6 +808,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         }
         //来源id集合
         List<String> sourceIdList = wmsDeliveryPlanDetailList.stream().flatMap(obj -> Stream.of(BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getSourceId).toArray(String[]::new))).collect(Collectors.toList());
+        List<DeliverySuggestEntity> deliverySuggestList = FeignQuery.create(DeliverySuggestEntity.class).in(DeliverySuggestEntity::getId, sourceIdList).list();
 
         List<WmsDeliveryPlanDTO.DeliverPlanDetailViewDTO> detailList = new ArrayList<>();
         for (WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity :wmsDeliveryPlanDetailList) {
@@ -820,6 +823,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             List<WmsDeliveryPlanDTO.DescriptionViewDTO> descriptionViewDTOList = new ArrayList<>();
             for (WmsDeliveryPlanDetailDTO.SourceJsonDTO sourceJsonDTO : sourceJsonList) {
                 WmsDeliveryPlanDTO.DescriptionViewDTO descriptionViewDTO = new WmsDeliveryPlanDTO.DescriptionViewDTO();
+
+                //deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(),sourceJsonDTO.getSourceId()))
                 descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getQty());
             }
         }
