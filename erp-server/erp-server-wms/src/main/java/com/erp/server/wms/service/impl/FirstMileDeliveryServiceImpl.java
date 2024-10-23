@@ -32,6 +32,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.constant.NoticeMsgConstant;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -45,6 +51,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -62,6 +69,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
@@ -75,6 +83,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,6 +94,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -174,6 +185,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private CfgSettingService cfgSettingService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysPostFeign sysPostFeign;
+    @Resource
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
     @Autowired
     private FbaShipmentPackingService fbaShipmentPackingService;
 
@@ -347,7 +362,70 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         log.info("提交 开始记录发货单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "提交操作");
+
+        //发送飞书通知 头程发货单待处理 CfgSettingEnum.FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE
+        Map<String,String> map = new HashMap<>();
+        map.put("code",entity.getCode());
+        map.put("createUserId",entity.getCreateUserId());
+        map.put("createUserName",entity.getCreateUserName());
+        this.sendFirstMileDeliveryMsg(map,CfgSettingEnum.FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    public void sendFirstMileDeliveryMsg(Map<String,String> map, CfgSettingEnum type){
+        LoginUser loginUser = UserContext.getNonLoginUser();
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.FS_REQUISITION_NOTICE.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            log.info("未设置飞书要货申请通知配置，无需发送通知");
+            return;
+        }
+        String code = map.get("code");
+        String createUserId = map.get("createUserId");
+        String createUserName = map.get("createUserName");
+        //消息头
+        String title = null;
+        //消息体
+        String msgContent = null;
+        switch (type){
+            case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
+                title = StrUtil.format(NoticeMsgConstant.FS_FIRSTMILEDELIVERY_SETTING_HEAD);
+                msgContent = StrUtil.format(NoticeMsgConstant.FS_FIRSTMILEDELIVERY_SETTING_CONTENT, "数大臣", "头程发货单", "头程发货单单据【"+code+"】当前状态审核中，请即时处理",createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
+            default:
+                return;
+        }
+
+        //目前都是创建人，处理人，抄送人员，因此统一处理
+        List<String> noticeUserIdList = new ArrayList<>();
+        CfgSettingValueDTO.FsRequisitionNoticeDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+        if (CollectionUtils.isNotEmpty(dto.getRoleIdList())) {
+            List<String> collect = sysPostFeign.listById(dto.getRoleIdList()).stream().map(SysPostEntity::getPostName).collect(Collectors.toList());
+            for (String s : collect) {
+                if (s.equals("创建人")) {
+                    noticeUserIdList.add(createUserId);
+                }
+                if (s.equals("处理人")) {
+                    noticeUserIdList.add(loginUser.getUid());
+                }
+            }
+        }
+        //抄送人员
+        if (CollectionUtils.isNotEmpty(dto.getUserIdList())) {
+            noticeUserIdList.addAll(dto.getUserIdList());
+        }
+        noticeUserIdList = noticeUserIdList.stream().distinct().collect(Collectors.toList());
+
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(noticeUserIdList);
+        String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
+        noticeMsgInfoDTO.setTitle(title);
+        noticeMsgInfoDTO.setContent(msgContent);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                noticeMsgInfoDTO, IdUtil.simpleUUID());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            log.error("消息发送结果失败：{}", com.alibaba.fastjson2.JSONObject.toJSONString(result));
+        }
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
