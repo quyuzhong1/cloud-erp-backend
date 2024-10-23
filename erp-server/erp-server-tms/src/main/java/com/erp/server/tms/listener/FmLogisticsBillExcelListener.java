@@ -186,15 +186,12 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                     errorMsgList.add(StrUtil.format("关联单据{}尚未审核通过无法提交",firstMileDeliveryEntity.getCode()));
                 }
 
-                if(StringUtils.isBlank(entity.getCounterNo()) && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
-                    errorMsgList.add("尚未填写柜号，请填写后更新");
-                }
             }
 
             if (!errorMsgList.isEmpty()) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
-                return;
+                continue;
             }
 
             if(StringUtils.isNotBlank(excelDTO.getShippingMethodName())){
