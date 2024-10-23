@@ -13,6 +13,7 @@ import com.common.core.utils.EnumCacheUtils;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
 import com.erp.model.plm.dto.DictControllerDTO;
+import com.erp.server.oms.query.SoB2cReturnQueryHandler;
 import com.erp.server.oms.service.SoB2cReturnService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -46,7 +47,7 @@ public class SoB2cReturnController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
     public ApiResult<PagingVO<SoB2cReturnDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
         PagingVO<SoB2cReturnDTO.PagingViewDTO> pagingVO = soB2cReturnService.paging(dto);
         return success(pagingVO);
@@ -57,7 +58,7 @@ public class SoB2cReturnController extends BaseController {
      * @return
      */
     @PostMapping("/export")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
     public ApiResult export(@RequestBody @Validated PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
         soB2cReturnService.exportExcel(dto);
         return success();
