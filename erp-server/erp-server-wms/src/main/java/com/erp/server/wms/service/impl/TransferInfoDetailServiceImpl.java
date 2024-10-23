@@ -133,7 +133,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     }
 
     @Override
-    public List<TransferInfoDetailEntity> listApproveByMainIds(List<String> mainIds) {
+    public List<TransferInfoDetailEntity> listByMainIds(List<String> mainIds) {
         return lambdaQuery().in(TransferInfoDetailEntity::getMainId,mainIds).list();
     }
 

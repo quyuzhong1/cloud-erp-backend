@@ -54,7 +54,7 @@ public interface TransferInfoDetailService extends SuperService<TransferInfoDeta
      * @param mainIds
      * @return List<TransferInfoDetailEntity>
      */
-    List<TransferInfoDetailEntity> listApproveByMainIds(List<String> mainIds);
+    List<TransferInfoDetailEntity> listByMainIds(List<String> mainIds);
     /**
      * @description: 根据来源明细ids查询
      * @author Will
