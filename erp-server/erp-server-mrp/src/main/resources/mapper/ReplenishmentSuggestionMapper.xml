@@ -57,7 +57,7 @@
         rsd.stock_up_max_days,
         rsd.cfg_fba_in_transit
         from replenishment_suggestion rs
-        inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
+        left join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and rs.is_deleted = FALSE and rs.platform_type = #{params.platformType}

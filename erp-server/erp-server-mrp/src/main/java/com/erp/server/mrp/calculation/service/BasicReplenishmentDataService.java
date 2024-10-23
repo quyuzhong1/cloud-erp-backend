@@ -176,64 +176,67 @@ public class BasicReplenishmentDataService {
         //查询所有需要计算得数据
         List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(replenishmentIds);
         for (ReplenishmentResultDTO dto : suggestions) {
-            try {
-                replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.IN_SYNC.getCode());
-                ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
-                ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
-                dto.setShopIdByPlatform(shopIdByPlatform);
-                //初始化配置
-                CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
-                //获取销量配置
-                CfgRuleSalesQtyEntity defaultSalesQty = defaultCfgRuleSalesQty.stream()
-                        .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
-                        .filter(v -> v.getType().equals(detail.getSkuType()))
-                        .findFirst()
-                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
-                List<CfgRuleSalesFormulaEntity> defaultFormula = defaultFormulaList.stream()
-                        .filter(v -> v.getSalesQtyId().equals(defaultSalesQty.getId()))
-                        .collect(Collectors.toList());
-                List<CfgRuleSalesDenoisingEntity> defaultDenoising = defaultDenoisingList.stream()
-                        .filter(v -> v.getSalesQtyId().equals(defaultSalesQty.getId()))
-                        .collect(Collectors.toList());
-                CfgRuleSettingStrategy<CfgRuleSalesQtyDTO.StrategyDTO, CfgRuleSalesQtyDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
-                CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultSalesQty, defaultFormula, defaultDenoising));
-                cfgRuleStrategy.setSalesQtyResult(salesResult);
-                cfgRuleStrategy.setSettings(settings);
+            CompletableFuture.runAsync(() -> {
+                try {
+                    replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.IN_SYNC.getCode());
+                    ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
+                    ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
+                    dto.setShopIdByPlatform(shopIdByPlatform);
+                    //初始化配置
+                    CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
+                    //获取销量配置
+                    CfgRuleSalesQtyEntity defaultSalesQty = defaultCfgRuleSalesQty.stream()
+                            .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
+                            .filter(v -> v.getType().equals(detail.getSkuType()))
+                            .findFirst()
+                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
+                    List<CfgRuleSalesFormulaEntity> defaultFormula = defaultFormulaList.stream()
+                            .filter(v -> v.getSalesQtyId().equals(defaultSalesQty.getId()))
+                            .collect(Collectors.toList());
+                    List<CfgRuleSalesDenoisingEntity> defaultDenoising = defaultDenoisingList.stream()
+                            .filter(v -> v.getSalesQtyId().equals(defaultSalesQty.getId()))
+                            .collect(Collectors.toList());
+                    CfgRuleSettingStrategy<CfgRuleSalesQtyDTO.StrategyDTO, CfgRuleSalesQtyDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
+                    CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultSalesQty, defaultFormula, defaultDenoising));
+                    cfgRuleStrategy.setSalesQtyResult(salesResult);
+                    cfgRuleStrategy.setSettings(settings);
 
-                //获取仓库配置
-                getCfgRuleCommon(entity, cfgRuleStrategy, dto);
-                // todo 海外仓备货存在问题
-                //获取备货配置
-                CfgRuleStockUpEntity defaultStockUp = defaultStockUpList.stream()
-                        .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
-                        .findFirst()
-                        .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_STOCK_UP_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
-                List<CfgRuleStockingRatioEntity> defaultStockingRatio = defaultStockingRatioList.stream()
-                        .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))
-                        .collect(Collectors.toList());
-                List<CfgRuleLogisticsEntity> defaultLogistics = defaultLogisticsList.stream()
-                        .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))
-                        .collect(Collectors.toList());
-                List<String> defaultLogisticsByPlatformIds = defaultLogistics.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
-                List<CfgRuleLogisticsDetailEntity> logisticsDetails = defaultLogisticsDetailList.stream()
-                        .filter(v -> defaultLogisticsByPlatformIds.contains(v.getMainId()))
-                        .collect(Collectors.toList());
-                CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
-                CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
-                cfgRuleStrategy.setStockUpResult(stockUpResult);
-                stockingTimeHandler.handle(cfgRuleStrategy, dto);
-                replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, dto);
-                replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.SUCCESS_SYNC.getCode());
-            } catch (Exception e) {
-                log.error("计算失败 sku{},店铺{}, 原因{}", dto.getReplenishment().getSkuNo(), dto.getReplenishment().getShopId(), e.getMessage(), e);
-                replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
-            }
+                    //获取仓库配置
+                    getCfgRuleCommon(entity, cfgRuleStrategy, dto);
+                    // todo 海外仓备货存在问题
+                    //获取备货配置
+                    CfgRuleStockUpEntity defaultStockUp = defaultStockUpList.stream()
+                            .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
+                            .findFirst()
+                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_STOCK_UP_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
+                    List<CfgRuleStockingRatioEntity> defaultStockingRatio = defaultStockingRatioList.stream()
+                            .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))
+                            .collect(Collectors.toList());
+                    List<CfgRuleLogisticsEntity> defaultLogistics = defaultLogisticsList.stream()
+                            .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))
+                            .collect(Collectors.toList());
+                    List<String> defaultLogisticsByPlatformIds = defaultLogistics.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
+                    List<CfgRuleLogisticsDetailEntity> logisticsDetails = defaultLogisticsDetailList.stream()
+                            .filter(v -> defaultLogisticsByPlatformIds.contains(v.getMainId()))
+                            .collect(Collectors.toList());
+                    CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
+                    CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
+                    cfgRuleStrategy.setStockUpResult(stockUpResult);
+                    stockingTimeHandler.handle(cfgRuleStrategy, dto);
+                    replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, dto);
+                    replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.SUCCESS_SYNC.getCode());
+                } catch (Exception e) {
+                    log.error("计算失败 sku{},店铺{}, 原因{}", dto.getReplenishment().getSkuNo(), dto.getReplenishment().getShopId(), e.getMessage(), e);
+                    replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
+                }
+            }, threadPoolTaskExecutor);
         }
     }
 
 
     /**
      * 清洗历史库存及销量
+     *
      * @param calculationDate 计算日
      */
     public void cleanHistorySalesAndInventory(LocalDate calculationDate, List<ShopInfoEntity> shopInfoList) {
@@ -290,6 +293,7 @@ public class BasicReplenishmentDataService {
         }
         for (List<ReplenishmentSuggestionEntity> suggestion : replenishmentBySku.values()) {
             CompletableFuture.runAsync(() -> {
+                log.warn("开始清洗相同sku不同店铺的历史数据：{}", System.currentTimeMillis());
                 List<String> notRestockingId = new ArrayList<>();
                 List<ReplenishmentSuggestionDetailEntity> details = new ArrayList<>();
                 List<String> suggestionIds = new ArrayList<>();
@@ -364,6 +368,7 @@ public class BasicReplenishmentDataService {
 
     /**
      * 计算历史销量库存
+     *
      * @param salesInfoAllDTOS        销量数据
      * @param entity                  主表
      * @param detail                  明细
@@ -401,6 +406,7 @@ public class BasicReplenishmentDataService {
 
     /**
      * 更新数据
+     *
      * @param id 主表id
      */
     public BatchResultDTO renewData(String id) {
@@ -423,12 +429,12 @@ public class BasicReplenishmentDataService {
                 .collect(Collectors.toList());
         resultDTO.setSalesInfos(salesInfoEntityList);
         salesInfoList.forEach(v -> {
-                    v.setReplenishmentDetailId(detailDTO.getDetailId());
-                    v.setCalcVersion(detailDTO.getCalcVersion());
-                    v.setSalesQty(null);
-                    v.setIsIgnoreOutOfStock(null);
-                    v.setSalesQtyType(null);
-                });
+            v.setReplenishmentDetailId(detailDTO.getDetailId());
+            v.setCalcVersion(detailDTO.getCalcVersion());
+            v.setSalesQty(null);
+            v.setIsIgnoreOutOfStock(null);
+            v.setSalesQtyType(null);
+        });
         //保存历史销量数据到表
         salesInfoService.saveBatch(salesInfoList);
         ReplenishmentSuggestionDetailEntity entity = ReplenishmentResultDTO.DetailDTO.buildNewDetail(detailDTO);
@@ -471,9 +477,10 @@ public class BasicReplenishmentDataService {
 
     /**
      * 获取库存，建议相关默认配置
-     * @param basicDTO 建议
+     *
+     * @param basicDTO        建议
      * @param cfgRuleStrategy 配置策略
-     * @param resultDTO 结果
+     * @param resultDTO       结果
      */
     private void getCfgRuleCommon(ReplenishmentResultDTO.BasicDTO basicDTO, CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO resultDTO) {
         //获取仓库配置
