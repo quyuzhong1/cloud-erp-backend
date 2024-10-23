@@ -215,6 +215,10 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
             return list;
         }
         for (CfgPlatformMappingDTO.UpdateDTO updateDTO : updateList) {
+            //非禁用时生效时间不能为空
+            if (!updateDTO.getDisabled() && ObjectUtil.isEmpty(updateDTO.getEffectiveDate())) {
+                throw new ServiceException("非禁用数据生效时间不能为空");
+            }
             //补货建议平台
             long count = updateList.stream().filter(obj -> StrUtil.equals(obj.getType(), updateDTO.getType())).count();
             if (count > MathUtil.ONE) {

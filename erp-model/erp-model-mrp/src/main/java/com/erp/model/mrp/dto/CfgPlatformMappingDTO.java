@@ -169,7 +169,6 @@ public class CfgPlatformMappingDTO implements Serializable {
         /**
         * 定时生效时间
         */
-        @NotNull(message = "定时生效时间不能为空")
         private LocalDate effectiveDate;
 
         /**
