@@ -4,6 +4,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @AllArgsConstructor
@@ -43,6 +44,18 @@ public enum PlatformMappingTypeEnum implements EnumMessage {
         }
         if (CfgRulePlatformTypeEnum.B2B.getCode().equals(platformType)) {
             return B2B_PLATFORM.getCode();
+        }
+        return "";
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (PlatformMappingTypeEnum statusEnum : PlatformMappingTypeEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
         }
         return "";
     }

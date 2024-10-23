@@ -323,6 +323,25 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         return Boolean.TRUE;
     }
 
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        DeliverySuggestEntity old = super.getById(id);
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        //草稿和待确认支持作废
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+        }
+        // 操作日志备注
+        String msg = StrUtil.format("更新了补货计划备注，由【{}】更新为【{}】",old.getRemark(),remark);
+
+        //更新成作废状态
+        old.setRemark(remark);
+        this.updateById(old);
+
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), old.getId(), "更新备注");
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UPDATE);
+    }
+
 
     /**
     * 新增修改处理数据

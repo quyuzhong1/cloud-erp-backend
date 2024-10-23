@@ -125,4 +125,13 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return Boolean
      */
     Boolean pushDeliveryPlan(DeliverySuggestDTO.ViewPushDeliveryPlanDTO deliveryPlanDTO);
+    /**
+     * 更新备注
+     * @author will
+     * @date 2024/10/23 17:44
+     * @param id
+     * @param remark
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateRemark(String id, String remark);
 }

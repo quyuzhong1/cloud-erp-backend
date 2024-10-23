@@ -186,6 +186,36 @@ public class DeliverySuggestController extends BaseController {
     }
 
     /**
+     * 更新备注
+     * @author will
+     * @date 2024/10/22 17:14
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新备注")
+    public ApiResult<?> updateRemark(BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = deliverySuggestService.updateRemark(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("采购建议计划 更新备注失败",e);
+                DeliverySuggestEntity entity = deliverySuggestService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "采购建议计划不存在, 更新备注失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
      * 导出发货建议
      * @author will
      * @date 2024/10/16 12:12

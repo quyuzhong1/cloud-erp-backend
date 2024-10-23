@@ -13,6 +13,7 @@ import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingModeEnum;
+import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -173,7 +174,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
             BeanMapperUtils.copy(value.get(0),viewDTO);
             List<String> platformList = value.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
             viewDTO.setPlatformList(platformList);
-            viewDTO.setTypeName(CfgRulePlatformTypeEnum.getName(viewDTO.getType()));
+            viewDTO.setTypeName(PlatformMappingTypeEnum.getName(viewDTO.getType()));
             viewList.add(viewDTO);
         }
         mainViewDTO.setViewList(viewList);

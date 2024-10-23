@@ -52,7 +52,17 @@
         ds.invalid_status as invalidStatus,
         ds.invalid_remark as invalidRemark,
         ds.source_id as sourceId,
-        ds.source_type as sourceType
+        ds.source_type as sourceType,
+        ds.status,
+        ds.currency,
+        ds.platform_type as platformType,
+        ds.platform,
+        ds.shop_id as shopId,
+        ds.sku_id as skuId,
+        ds.plan_delivery_qty as planDeliveryQty,
+        ds.actual_delivery_qty as actualDeliveryQty,
+        ds.delivery_stock_up_qty as deliveryStockUpQty,
+        ds.remark
     </sql>
 
     <!-- 列表查询 -->

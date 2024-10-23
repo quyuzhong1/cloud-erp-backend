@@ -823,13 +823,16 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             List<WmsDeliveryPlanDTO.DescriptionViewDTO> descriptionViewDTOList = new ArrayList<>();
             for (WmsDeliveryPlanDetailDTO.SourceJsonDTO sourceJsonDTO : sourceJsonList) {
                 WmsDeliveryPlanDTO.DescriptionViewDTO descriptionViewDTO = new WmsDeliveryPlanDTO.DescriptionViewDTO();
-
-                //deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(),sourceJsonDTO.getSourceId()))
+                DeliverySuggestEntity suggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(), sourceJsonDTO.getSourceId())).findFirst().orElse(new DeliverySuggestEntity());
+                descriptionViewDTO.setDeliverySuggestCode(suggestEntity.getCode());
+                descriptionViewDTO.setDeliverySuggestQty(suggestEntity.getPlanDeliveryQty());
                 descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getQty());
+                descriptionViewDTOList.add(descriptionViewDTO);
             }
+            detailList.add(deliverPlanDetailViewDTO);
         }
-
-        return null;
+        deliverPlanViewDTO.setDetailList(detailList);
+        return deliverPlanViewDTO;
     }
 
     /**

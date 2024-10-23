@@ -55,8 +55,16 @@
         ps.invalid_status as invalidStatus,
         ps.invalid_remark as invalidRemark,
         ps.source_id as sourceId,
-        ps.source_type as sourceType
-
+        ps.source_type as sourceType,
+        ps.status,
+        ps.currency,
+        ps.platform_type as platformType,
+        ps.platform,
+        ps.shop_id as shopId,
+        ps.sku_id as skuId,
+        ps.plan_purchase_qty as planPurchaseQty,
+        ps.purchase_stock_up_qty as purchaseStockUpQty,
+        ps.remark
     </sql>
 
     <!-- 采购建议导出分页 -->

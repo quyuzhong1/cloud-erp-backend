@@ -41,11 +41,11 @@
         from wms_delivery_plan_detail wdpd
         left join wms_delivery_plan wdp on wdpd.main_id = wdp.id and wdp.is_deleted = false
         <where>
-            wdpd.is_deleted = false and wdp.invalid_status = false
+            wdpd.is_deleted = false and wdp.invalid_status = 'false'
             <if test="idList != null and idList.size > 0">
                and
                 <foreach collection="idList" open="(" close=")" item="item" separator="or">
-                     wdpd.source_json ~ #{item}
+                     wdpd.source_json::text like concat('%',#{item}::text,'%')
                 </foreach>
             </if>
         </where>
