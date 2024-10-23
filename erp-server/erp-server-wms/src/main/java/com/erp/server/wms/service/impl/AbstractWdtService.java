@@ -331,8 +331,8 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
         wmsPushMsgEntity.setThirdCode(outerCode);
         if (SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
-            List<CreateOtherStockoutRequest.GoodsList> goodsList = (List<CreateOtherStockoutRequest.GoodsList>) combinationList;
-            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CreateOtherStockoutRequest.GoodsList::getPositionNo).collect(Collectors.joining(","));
+            List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
+            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).collect(Collectors.joining(","));
             wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
             Map<String, String> pushData = new HashMap<>();
             pushData.put("remark", String.format("【%s】没有设置旺店通仓位映射", positionNos));
