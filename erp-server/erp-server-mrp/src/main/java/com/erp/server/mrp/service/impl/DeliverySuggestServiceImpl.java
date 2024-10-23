@@ -1,8 +1,10 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,6 +12,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -36,6 +39,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
+import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -93,8 +97,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
         log.info("开始新增发货计划");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_S);
         deliverySuggestEntity.setCode(code);
         boolean save = super.save(deliverySuggestEntity);
         if(!save) {
@@ -374,10 +377,29 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
     }
 
+    /**
+     * 数据处理
+     * @author will
+     * @date 2024/10/23 11:23
+     * @param list
+     */
     private void handleList(List<DeliverySuggestDTO.ListDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        //店铺
+        List<String> shopIdList = list.stream().map(DeliverySuggestDTO.ListDTO::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+
+        //产品信息
+        List<String> skuIdList = list.stream().map(DeliverySuggestDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+
+        //发货计划
+        List<String> idList = list.stream().map(DeliverySuggestDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(idList);
+
+
         for (DeliverySuggestDTO.ListDTO listDTO : list) {
             //数据类型
             listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
@@ -386,7 +408,28 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             //物流方式（系统）
             listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
             //状态名称
-            listDTO.sets
+            listDTO.setStatusName(SuggestStatusEnum.getName(listDTO.getStatus()));
+            //店铺名称
+            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            listDTO.setShopName(shopName);
+            //sku
+            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            listDTO.setSkuNo(productDetailEntity.getSkuNo());
+            listDTO.setProductName(productDetailEntity.getName());
+            //发货计划
+            WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = deliveryPlanDetailList.stream().filter(obj -> {
+                long count = BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), listDTO.getId())).count();
+                if (count > 0) {
+                    return Boolean.TRUE;
+                }
+                return Boolean.FALSE;
+            }).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(wmsDeliveryPlanDetailEntity)) {
+                listDTO.setDeliveryPlanCode(wmsDeliveryPlanDetailEntity.getCode());
+                //已发数量
+                Integer qty = BeanUtil.copyToList(JSONUtil.parseArray(wmsDeliveryPlanDetailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), listDTO.getId())).map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getQty).findFirst().orElse(MathUtil.ZERO);
+                listDTO.setDeliveryPlanQty(qty);
+            }
         }
     }
 }

@@ -225,4 +225,5 @@ public class DeliverySuggestController extends BaseController {
         Boolean flag = deliverySuggestService.pushDeliveryPlan(deliveryPlanDTO);
         return flag == true ? success() : failure();
     }
+
 }

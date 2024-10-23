@@ -119,16 +119,46 @@ public class DeliverySuggestDTO implements Serializable {
          * 创建类型（auto系统，manual人工）
          */
         private String dataTypeName;
+        /**
+         * 状态
+         */
+        private String status;
+        /**
+         * 状态名称
+         */
+        private String statusName;
 
         /**
-         * 建议发货量
+         * 建议发货量（系统建议值）
          */
         private Integer suggestDeliveryQty;
 
         /**
-         * 建议发货量（系统）
+         * 计划发货量（计划修正值）
          */
-        private Integer sysSuggestDeliveryQty;
+        private Integer planDeliveryQty;
+
+        /**
+         * 实际发货量（运营确认值）
+         */
+        private Integer actualDeliveryQty;
+
+        /**
+         * 发货备货量
+         */
+        private Integer deliveryStockUpQty;
+        /**
+         * 是否下推
+         */
+        private String isPushName;
+        /**
+         * 发货计划编码
+         */
+        private String deliveryPlanCode;
+        /**
+         * 已发数量
+         */
+        private Integer deliveryPlanQty;
 
         /**
          * 建议发货日期

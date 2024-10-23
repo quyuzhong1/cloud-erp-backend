@@ -3,9 +3,9 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotBlank;
 
 /**
  * <p>
@@ -201,5 +201,18 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
          * 错误url
          */
         private String errorUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SourceJsonDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 数量
+         */
+        private Integer qty;
     }
 }
