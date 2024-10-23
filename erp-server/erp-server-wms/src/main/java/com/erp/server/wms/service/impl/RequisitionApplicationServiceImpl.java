@@ -2415,8 +2415,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         RequisitionApplicationDTO.ImportDTO importDTO = new RequisitionApplicationDTO.ImportDTO();
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "SKU成本错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, InventorySkuCostDetailExcelDTO.class);
+            String fileName = "要货申请导入装箱错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, RequisitionApplicationDetailExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }

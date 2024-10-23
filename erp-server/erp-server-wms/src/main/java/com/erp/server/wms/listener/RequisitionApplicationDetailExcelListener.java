@@ -75,14 +75,14 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
         }else {
             requisitionApplication = requisitionApplicationService.getById(id);
         }
-        if (Objects.nonNull(requisitionApplication)){
+        if (Objects.isNull(requisitionApplication)){
             errorMsgList.add("要货申请记录不存在");
         }
         FbaShipmentEntity shipmentEntity = null;
         if (StrUtil.isNotBlank(RequisitionApplicationDetailExcelDTO.getFbaShipmentCode())){
             shipmentEntity = fbaShipmentService.getByCode(RequisitionApplicationDetailExcelDTO.getFbaShipmentCode());
         }
-        if (Objects.nonNull(shipmentEntity)){
+        if (Objects.isNull(shipmentEntity)){
             errorMsgList.add("FBI货件表记录不存在");
         }
         if (Objects.nonNull(shipmentEntity) && Objects.nonNull(requisitionApplication) && !Objects.equals(shipmentEntity.getShopId(), requisitionApplication.getChannelId())){
@@ -106,6 +106,12 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
             if (RequisitionApplicationDetailExcelDTO.getBoxNo().equals(e.getBoxNo()) && StrUtil.isBlank(e.getFbaBoxNo()) && StrUtil.isBlank(e.getFbaShipmentCode())){
                 e.setFbaBoxNo(RequisitionApplicationDetailExcelDTO.getFbaBoxNo());
                 e.setFbaShipmentCode(RequisitionApplicationDetailExcelDTO.getFbaShipmentCode());
+            }
+            if (StrUtil.isBlank(e.getFbaBoxNo())){
+                e.setFbaBoxNo("");
+            }
+            if (StrUtil.isBlank(e.getFbaShipmentCode())){
+                e.setFbaShipmentCode("");
             }
         });
     }

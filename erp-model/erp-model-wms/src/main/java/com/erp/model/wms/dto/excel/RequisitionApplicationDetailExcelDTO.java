@@ -24,7 +24,7 @@ public class RequisitionApplicationDetailExcelDTO implements Serializable {
      * 装箱SKU
      */
     @ExcelProperty(value = "装箱SKU", index = 1)
-    @FieldValid(fieldName = "装箱SKU", isNotBlank = true)
+    @FieldValid(fieldName = "装箱SKU")
     private String  packingSku;
 
     /**
@@ -38,7 +38,7 @@ public class RequisitionApplicationDetailExcelDTO implements Serializable {
      * 数量
      */
     @ExcelProperty(value = "数量", index = 3)
-    @FieldValid(fieldName = "数量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
+    @FieldValid(fieldName = "数量", formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
     private String  qty;
 
     /**
