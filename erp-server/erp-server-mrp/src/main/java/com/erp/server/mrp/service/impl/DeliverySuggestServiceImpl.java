@@ -425,10 +425,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 return Boolean.FALSE;
             }).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(wmsDeliveryPlanDetailEntity)) {
+                listDTO.setDeliveryPlanId(wmsDeliveryPlanDetailEntity.getId());
                 listDTO.setDeliveryPlanCode(wmsDeliveryPlanDetailEntity.getCode());
                 //已发数量
                 Integer qty = BeanUtil.copyToList(JSONUtil.parseArray(wmsDeliveryPlanDetailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), listDTO.getId())).map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getQty).findFirst().orElse(MathUtil.ZERO);
-                listDTO.setDeliveryPlanQty(qty);
+                listDTO.setHasDeliveryPlanQty(qty);
             }
         }
     }

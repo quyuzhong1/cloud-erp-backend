@@ -210,6 +210,7 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
          * 来源id
          */
         private String sourceId;
+
         /**
          * 数量
          */

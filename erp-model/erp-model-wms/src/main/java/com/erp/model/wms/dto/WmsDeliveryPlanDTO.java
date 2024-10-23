@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -696,5 +695,82 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private String type;
     }
 
+    /**
+     * 发货计划及补货计划数据显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliverPlanViewDTO {
+        /**
+         * 发货计划编码
+         */
+        private String deliverPlanCode;
 
+        /**
+         * 状态
+         */
+        private String approveStatus;
+
+        /**
+         * 状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 发货明细
+         */
+        private List<DeliverPlanDetailViewDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliverPlanDetailViewDTO {
+        /**
+         * mSku
+         */
+        private String mSku;
+        /**
+         * fnSku
+         */
+        private String fnSku;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 计划数量
+         */
+        private Integer deliveryPlanQty;
+        /**
+         * 计划数量
+         */
+        private Integer hasDeliveryPlanQty;
+
+        /**
+         * 说明
+         */
+        private List<DescriptionViewDTO> descriptionList;
+    }
+
+    /**
+     * 说明
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DescriptionViewDTO {
+        /**
+         * 备货建议编码
+         */
+        private String deliverySuggestCode;
+
+        /**
+         * 备货建议数量
+         */
+        private Integer deliverySuggestQty;
+
+        /**
+         * 已发货数量
+         */
+        private Integer hasDeliveryPlanQty;
+    }
 }

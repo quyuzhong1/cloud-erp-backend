@@ -242,4 +242,12 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
     Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus);
 
     PagingVO<WmsDeliveryPlanDTO.ListDTO> exportOverseasDeliveryPlan(PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> dto);
+    /**
+     * 发货计划显示
+     * @author will
+     * @date 2024/10/23 14:43
+     * @param id
+     * @return WmsDeliveryPlanDTO.DeliverPlanViewDTO
+     */
+    WmsDeliveryPlanDTO.DeliverPlanViewDTO deliverPlanView(String id);
 }

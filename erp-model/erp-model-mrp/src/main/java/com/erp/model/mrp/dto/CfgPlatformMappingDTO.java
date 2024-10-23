@@ -58,7 +58,7 @@ public class CfgPlatformMappingDTO implements Serializable {
         private String platformName;
 
         /**
-         * 类型
+         * 类型,amazonPlatform 亚马逊平台， overseasPlatform海 外平台，internalPlatform 国内平台，b2bPlatform B2B平台
          */
         private String type;
 
@@ -97,7 +97,7 @@ public class CfgPlatformMappingDTO implements Serializable {
         private List<String> platformList;
 
         /**
-        * 归属平台
+        * 归属平台,amazonPlatform 亚马逊平台， overseasPlatform海 外平台，internalPlatform 国内平台，b2bPlatform B2B平台
         */
         private String type;
 
@@ -154,7 +154,7 @@ public class CfgPlatformMappingDTO implements Serializable {
         private List<String> platformList;
 
         /**
-        * 归属平台
+        * 归属平台,amazonPlatform 亚马逊平台， overseasPlatform海 外平台，internalPlatform 国内平台，b2bPlatform B2B平台
         */
         @NotBlank(message = "归属平台不能为空")
         @Size(max = 32,message = "归属平台最大长度不能超过32位")

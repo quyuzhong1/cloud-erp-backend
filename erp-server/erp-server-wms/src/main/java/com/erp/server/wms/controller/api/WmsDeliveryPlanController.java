@@ -534,4 +534,18 @@ public class WmsDeliveryPlanController extends BaseController {
         }
         return success();
     }
+
+
+    /**
+     * 发货计划显示
+     * @author will
+     * @date 2024/10/23 14:43
+     * @param dto
+     * @return ApiResult<WmsDeliveryPlanDTO.DeliverPlanViewDTO>
+     */
+    @PostMapping("/deliverPlanView")
+    public ApiResult<WmsDeliveryPlanDTO.DeliverPlanViewDTO> deliverPlanView(@RequestBody @Validated BaseIdDTO dto) {
+        WmsDeliveryPlanDTO.DeliverPlanViewDTO result = wmsDeliveryPlanService.deliverPlanView(dto.getId());
+        return success(result);
+    }
 }

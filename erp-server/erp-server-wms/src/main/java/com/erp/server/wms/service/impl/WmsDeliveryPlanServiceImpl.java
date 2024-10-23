@@ -3,9 +3,9 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -20,10 +20,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -37,7 +35,10 @@ import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
+import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
+import com.erp.model.wms.enums.FbaDemandTypeEnum;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -66,6 +67,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OVERSEAS_DELIVERY_PLAN;
 
@@ -785,6 +787,44 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public WmsDeliveryPlanDTO.DeliverPlanViewDTO deliverPlanView(String id) {
+        WmsDeliveryPlanDTO.DeliverPlanViewDTO deliverPlanViewDTO = new WmsDeliveryPlanDTO.DeliverPlanViewDTO();
+        WmsDeliveryPlanEntity wmsDeliveryPlanEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(wmsDeliveryPlanEntity)) {
+            return deliverPlanViewDTO;
+        }
+        deliverPlanViewDTO.setDeliverPlanCode(wmsDeliveryPlanEntity.getCode());
+        deliverPlanViewDTO.setApproveStatus(wmsDeliveryPlanEntity.getDeliveryStatus());
+        deliverPlanViewDTO.setApproveStatusName(ApproveStatusEnum.getName(wmsDeliveryPlanEntity.getDeliveryStatus()));
+        //明细
+        List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailList = wmsDeliveryPlanDetailService.listByMainIds(Arrays.asList(id));
+        if (CollectionUtils.isEmpty(wmsDeliveryPlanDetailList)) {
+            return deliverPlanViewDTO;
+        }
+        //来源id集合
+        List<String> sourceIdList = wmsDeliveryPlanDetailList.stream().flatMap(obj -> Stream.of(BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getSourceId).toArray(String[]::new))).collect(Collectors.toList());
+
+        List<WmsDeliveryPlanDTO.DeliverPlanDetailViewDTO> detailList = new ArrayList<>();
+        for (WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity :wmsDeliveryPlanDetailList) {
+            WmsDeliveryPlanDTO.DeliverPlanDetailViewDTO deliverPlanDetailViewDTO = new WmsDeliveryPlanDTO.DeliverPlanDetailViewDTO();
+            deliverPlanDetailViewDTO.setMSku(wmsDeliveryPlanDetailEntity.getPlatformSku());
+            deliverPlanDetailViewDTO.setFnSku(wmsDeliveryPlanDetailEntity.getPlatformFnSku());
+            deliverPlanDetailViewDTO.setSkuNo(wmsDeliveryPlanDetailEntity.getSkuNo());
+            deliverPlanDetailViewDTO.setDeliveryPlanQty(wmsDeliveryPlanDetailEntity.getQty());
+            //来源json数据
+            List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonList = BeanUtil.copyToList(JSONUtil.parseArray(wmsDeliveryPlanDetailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class);
+
+            List<WmsDeliveryPlanDTO.DescriptionViewDTO> descriptionViewDTOList = new ArrayList<>();
+            for (WmsDeliveryPlanDetailDTO.SourceJsonDTO sourceJsonDTO : sourceJsonList) {
+                WmsDeliveryPlanDTO.DescriptionViewDTO descriptionViewDTO = new WmsDeliveryPlanDTO.DescriptionViewDTO();
+                descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getQty());
+            }
+        }
+
+        return null;
     }
 
     /**

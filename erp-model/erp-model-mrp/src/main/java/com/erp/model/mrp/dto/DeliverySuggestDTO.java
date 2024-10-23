@@ -152,13 +152,17 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private String isPushName;
         /**
+         * 发货计划id
+         */
+        private String deliveryPlanId;
+        /**
          * 发货计划编码
          */
         private String deliveryPlanCode;
         /**
          * 已发数量
          */
-        private Integer deliveryPlanQty;
+        private Integer hasDeliveryPlanQty;
 
         /**
          * 建议发货日期
