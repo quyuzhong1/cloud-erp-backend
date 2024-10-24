@@ -5,6 +5,7 @@ import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -35,6 +36,14 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
     * @return
     */
     Boolean update(PurchaseSuggestMergeDTO.UpdateDTO dto);
+    /**
+     * 导入修改
+     * @author will
+     * @date 2024/10/24 18:10
+     * @param updateDTO
+     * @return Boolean
+     */
+    Boolean importUpdate(PurchaseSuggestMergeDTO.ImportUpdateDTO updateDTO);
 
     /**
      * 分页查询
@@ -93,4 +102,12 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @return BatchResultDTO
      */
     BatchResultDTO updateRemark(String id, String remark);
+    /**
+     * 导入采购计划合并数据
+     * @author will
+     * @date 2024/10/24 17:24
+     * @param excelFile
+     * @param response
+     */
+    void importPurchaseSuggestMerge(MultipartFile excelFile, HttpServletResponse response);
 }

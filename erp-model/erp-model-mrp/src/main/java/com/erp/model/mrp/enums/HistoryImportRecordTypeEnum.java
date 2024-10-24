@@ -16,6 +16,7 @@ public enum HistoryImportRecordTypeEnum implements EnumMessage {
     SALES_ESTIMATE_MANUAL("salesEstimateManual", "运营月销预估"),
     DELIVERY_SUGGESTION_CONFIRM("delivery_suggestion_confirm", "发货备货确认表"),
     PURCHASE_SUGGESTION_CONFIRM("purchase_suggestion_confirm", "采购备货确认表"),
+    PURCHASE_SUGGESTION_CONFIRM_MERGE("purchase_suggestion_confirm_merge", "采购备货（合并）确认表"),
 
     ;
     /**

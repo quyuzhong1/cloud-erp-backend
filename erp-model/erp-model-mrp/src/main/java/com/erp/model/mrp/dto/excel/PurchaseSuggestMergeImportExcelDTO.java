@@ -8,12 +8,12 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 采购建议
+ * 采购建议（合并）
  * @author will
  * @date 2024/9/2 19:30
  */
 @Data
-public class PurchaseSuggestImportExcelDTO implements Serializable {
+public class PurchaseSuggestMergeImportExcelDTO implements Serializable {
 
 
     /**

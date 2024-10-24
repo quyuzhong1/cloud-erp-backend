@@ -400,8 +400,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             }
             PurchaseSuggestDTO.ImportUpdateDTO updateDTO = new PurchaseSuggestDTO.ImportUpdateDTO();
             updateDTO.setId(purchaseSuggestEntity.getId());
-            updateDTO.setPlanPurchaseQty(Integer.valueOf(excelDTO.getPlanDeliveryQty()));
-            updateDTO.setPurchaseStockUpQty(Integer.valueOf(excelDTO.getDeliveryStockUpQty()));
+            updateDTO.setPlanPurchaseQty(Integer.valueOf(excelDTO.getPlanPurchaseQty()));
+            updateDTO.setPurchaseStockUpQty(Integer.valueOf(excelDTO.getPurchaseStockUpQty()));
             updateDTO.setRemark(excelDTO.getRemark());
             this.importUpdate(updateDTO);
         }

@@ -19,6 +19,7 @@ import com.erp.server.mrp.service.PurchaseSuggestMergeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -78,6 +79,21 @@ public class PurchaseSuggestMergeController extends BaseController {
     @GetMapping("/downloadTemplate")
     public ApiResult<?> downloadTemplate(HttpServletResponse response) {
         purchaseSuggestMergeService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入采购计划（合并）
+     * @author will
+     * @date 2024/10/24 17:23
+     * @param excelFile
+     * @param response
+     * @return ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入采购计划（合并）")
+    @PostMapping("/importPurchaseSuggestMerge")
+    public ApiResult<?> importPurchaseSuggestMerge(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        purchaseSuggestMergeService.importPurchaseSuggestMerge(excelFile, response);
         return success();
     }
 
