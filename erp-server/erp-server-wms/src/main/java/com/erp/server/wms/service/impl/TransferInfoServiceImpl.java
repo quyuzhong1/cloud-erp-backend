@@ -41,7 +41,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -62,22 +61,16 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
-import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.mapper.TransferInfoMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
-import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -85,6 +78,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -161,6 +155,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
+    @Lazy
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
@@ -306,6 +303,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         TransferInfoEntity old = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(old)) {
             throw new ServiceException(ApiError.ERROR_99047);
+        }
+        if (StrUtil.isNotBlank(old.getBatchNo())){
+            throw new ServiceException(ApiError.ERROR_92248);
         }
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -1764,6 +1764,37 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             doOpHandleData(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO updateBillDate(TransferInfoEntity entity, LocalDate billDate) {
+        //已审核不允许修改
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"直接调拨单已审核不能修改调拨日期");
+        }
+        //校验下游单据是否已审核
+        if (StrUtil.isNotBlank(entity.getSourceId())){
+            List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(Collections.singletonList(entity.getSourceId()));
+            if (CollectionUtils.isNotEmpty(soOutstockEntityList) && SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())){
+                List<SoOutstockEntity> collect = soOutstockEntityList.stream().filter(e -> Objects.nonNull(e)
+                        && ApproveStatusEnum.APPROVE.equals(e.getApproveStatus())
+                        && StrUtil.isNotEmpty(e.getBatchNo()) && StrUtil.isNotEmpty(entity.getBatchNo()) && e.getBatchNo().equals(entity.getBatchNo())
+                ).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(collect)){
+                    return BatchResultDTO.fail(entity.getId(),entity.getCode(),"存在下游已审核出库单，不能修改调拨日期");
+                }
+            }else if (CollectionUtils.isNotEmpty(soOutstockEntityList)){
+                List<SoOutstockEntity> collect = soOutstockEntityList.stream().filter(e -> Objects.nonNull(e)
+                        && ApproveStatusEnum.APPROVE.equals(e.getApproveStatus())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(collect)){
+                    return BatchResultDTO.fail(entity.getId(),entity.getCode(),"存在下游已审核出库单，不能修改调拨日期");
+                }
+            }
+        }
+        this.lambdaUpdate().eq(TransferInfoEntity::getId, entity.getId()).set(TransferInfoEntity::getBillDate, billDate).update();
+        String msg = "【{}】更新了调拨日期由【{}】改为【{}】";
+        operateLogService.addModuleOperateLog(String.format(msg, UserContext.getLoginUser().getUserName(),entity.getBillDate(),billDate), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "批量修改调拨日期");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改调拨日期成功");
     }
 
     /**

@@ -17,7 +17,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
@@ -224,7 +223,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         // 数据处理
         handleData(soB2cDeliveryEntity, soB2cDeliveryDetailEntities);
-
+        //匹配中转规则
+        matchTransferRule(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
         log.info("开始新增b2c发货单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHDC);
@@ -244,6 +244,24 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         freezeVirtualInventory(soB2cDeliveryEntity,soB2cDeliveryDetailEntities);
 
         return save;
+    }
+
+    private void matchTransferRule(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
+        soB2cDeliveryEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+        List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, soB2cDeliveryEntity.getSourceId()).list();
+        if (CollectionUtil.isEmpty(receiverList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+        }
+        CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
+        dto.setType(StockOutTransferTypeEnum.B2C.getCode());
+        dto.setReceiveCountry(receiverList.get(0).getCountry());
+        dto.setFromWarehouse(soB2cDeliveryDetailList.get(0).getWarehouseId());
+        CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
+        if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
+            if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){
+                soB2cDeliveryEntity.setTransferWarehouseIds(String.join(",", matchTransferResultDTO.getTransferWarehouseIdList()));
+            }
+        }
     }
 
 
@@ -292,6 +310,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         //发货单主信息
         SoB2cDeliveryEntity deliveryEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到B2C发货单数据"));
         SoB2cDeliveryDTO.ViewDTO data = BeanMapperUtils.map(SoB2cDeliveryDTO.ViewDTO.class, deliveryEntity);
+        if (StrUtil.isNotBlank(deliveryEntity.getTransferWarehouseIds())){
+            List<String> split = StrUtil.split(deliveryEntity.getTransferWarehouseIds(), ",");
+            data.setTransferWarehouseIdList(split);
+        }
         //发货单详情
         List<SoB2cDeliveryDetailEntity> detailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(id));
         // 数据填充处理
@@ -1189,6 +1211,27 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    public BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds) {
+        //无需校验单据状态，关联的调拨单必须非审核通过、或者无关联的调拨单
+        List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getId());
+        if (CollectionUtils.isNotEmpty(transferInfoEntities)){
+            List<TransferInfoEntity> collect = transferInfoEntities.stream().filter(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)){
+                List<String> codeList = collect.stream().map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
+                throw new ServiceException(ApiError.ERROR_92138, String.join(",", codeList));
+            }
+        }
+        String transferWarehouseIdList = "";
+        if (CollectionUtils.isNotEmpty(changeIds)){
+            transferWarehouseIdList = String.join(",", changeIds);
+        }
+        this.lambdaUpdate().eq(SoB2cDeliveryEntity::getId, entity.getId()).set(SoB2cDeliveryEntity::getTransferWarehouseIds, transferWarehouseIdList).update();
+        String msg = "【{}】更新了中转仓配置由【{}】改为【{}】";
+        operateLogService.addModuleOperateLog(String.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "批量修改中转仓配置");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
+    }
+
+    @Override
     public void rollbackPickingInventory(List<String> ids) {
         //删除拣货单
         pickingListsService.deleteBySourceId(ids);
@@ -1830,15 +1873,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtil.isEmpty(receiverList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
         }
-        //是否中转
-        CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
-        dto.setType(StockOutTransferTypeEnum.B2C.getCode());
-        dto.setReceiveCountry(receiverList.get(0).getCountry());
-        dto.setFromWarehouse(soB2cDeliveryDetailList.get(0).getWarehouseId());
-        CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(soB2cDeliveryDetailList.get(0).getWarehouseId(),dto));
-        if (resultDTO.getIsTransit()) {
+        if (StrUtil.isNotBlank(entity.getTransferWarehouseIds())){
+            List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
+            //批次号
+            String batchNo = IdUtil.getSnowflake().nextIdStr();
             //生成直接调拨单
-            generateTransferInfo(entity,resultDTO.getTransitWarehouseId());
+            generateTransferInfo(entity,soB2cDeliveryDetailList,split,batchNo);
         }
         //清除异常
         SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
@@ -1930,42 +1970,59 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     /**
      * 生成直接调拨单
+     *
+     * @param entity
+     * @param soB2cDeliveryDetailList
+     * @param batchNo
      * @author will
      * @date 2024/7/11 16:13
-     * @param entity
      */
-    private void generateTransferInfo (SoB2cDeliveryEntity entity,String transitWarehouseId) {
+    private void generateTransferInfo (SoB2cDeliveryEntity entity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList, List<String> transferWarehouseIdList, String batchNo) {
         //发货单明细信息
-        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
         if (CollectionUtil.isEmpty(soB2cDeliveryDetailList)) {
             throw new ServiceException("B2C发货单明细不能为空");
         }
-
-        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-        //跨组织调拨
-        addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
-        addDTO.setBillDate(LocalDate.now());
-        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
-
-        //发货组织默认取第一条仓库的组织，现阶段单个发货单组织一致
-        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(soB2cDeliveryDetailList.get(0).getWarehouseId(),transitWarehouseId));
-
-        //调出仓库
-        WarehouseEntity outWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDeliveryDetailList.get(0).getWarehouseId())).findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(outWarehouseEntity)) {
-            throw new ServiceException("调出仓库不能为空");
-        }
-        //调入仓库
-        WarehouseEntity inWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), transitWarehouseId)).findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(inWarehouseEntity)) {
-            throw new ServiceException("调入仓库不能为空");
+        String warehouseId = soB2cDeliveryDetailList.get(0).getWarehouseId();
+        if (StrUtil.isBlank(warehouseId)){
+            throw new ServiceException(ApiError.ERROR_92137, entity.getCode());
         }
         List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(pickingList)) {
             throw new ServiceException("未找到拣货信息");
         }
-        //批次号
-        String batchNo = IdUtil.getSnowflake().nextIdStr();
+        //订单调出仓和第一个中转仓一致时从第二个中转仓开始
+        boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(warehouseId);
+        for (int i = 0; i < transferWarehouseIdList.size(); i++) {
+            if (firstWarehouseSame && 0 == i){
+                continue;//跳过第一个仓库 从第二个开始
+            }
+            if (0 == i || firstWarehouseSame){
+                addTransferOrder(Boolean.TRUE, warehouseId,transferWarehouseIdList.get(i), entity,pickingList,batchNo);
+            }else {
+                addTransferOrder(Boolean.FALSE, transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity,pickingList,batchNo);
+            }
+        }
+    }
+
+    private void addTransferOrder(Boolean isFirst, String fromWarehouseId, String toWarehouseId, SoB2cDeliveryEntity entity,List<PickingListsDTO.SourceView> pickingList, String batchNo) {
+        //发货组织默认取第一条仓库的组织，现阶段单个发货单组织一致
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(fromWarehouseId,toWarehouseId));
+        TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
+        //跨组织调拨
+        addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        addDTO.setBillDate(LocalDate.now());
+        addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        //调出仓库
+        WarehouseEntity outWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), fromWarehouseId)).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(outWarehouseEntity)) {
+            throw new ServiceException("调出仓库不能为空");
+        }
+        //调入仓库
+        WarehouseEntity inWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), toWarehouseId)).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(inWarehouseEntity)) {
+            throw new ServiceException("调入仓库不能为空");
+        }
+
         entity.setBatchNo(batchNo);
 
         addDTO.setBatchNo(batchNo);
@@ -1982,19 +2039,17 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             detailAddDTO.setSkuNo(sourceView.getSkuNo());
             detailAddDTO.setSourceDetailId(sourceView.getId());
             detailAddDTO.setQty(sourceView.getQty());
-            detailAddDTO.setOutWarehouseId(sourceView.getWarehouseId());
-            detailAddDTO.setOutWarehouseLocation(sourceView.getWarehouseLocation());
-            detailAddDTO.setInWarehouseId(inWarehouseEntity.getId());
+            detailAddDTO.setOutWarehouseId(fromWarehouseId);
+            if (isFirst){
+                detailAddDTO.setOutWarehouseLocation(sourceView.getWarehouseLocation());
+            }else {
+                detailAddDTO.setOutWarehouseLocation("");
+            }
+            detailAddDTO.setInWarehouseId(toWarehouseId);
             detailList.add(detailAddDTO);
         }
         addDTO.setDetailList(detailList);
-        String id = transferInfoService.addAndSubmit(addDTO);
-        //审核
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(Arrays.asList(id));
-        baseApproveParamDTO.setType(ApproveType.PASS);
-        TransferInfoEntity transferInfoEntity = transferInfoService.getById(id);
-        transferInfoService.approve(transferInfoEntity,ApproveType.PASS,"", null,Boolean.TRUE, Boolean.FALSE);
+        transferInfoService.addAndApprove(addDTO);
     }
 
     /**

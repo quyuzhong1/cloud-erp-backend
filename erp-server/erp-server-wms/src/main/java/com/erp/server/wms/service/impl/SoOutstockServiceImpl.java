@@ -36,7 +36,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
@@ -1674,20 +1673,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoInfoEntity soInfo = soInfoList.stream().filter(v -> v.getId().equals(generateInfo.getSoId())).findFirst().orElse(new SoInfoEntity());
                 SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(soInfo.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
                 //是否中转
-                CfgRuleOutDTO.MatchTransferDTO transferDTO = new CfgRuleOutDTO.MatchTransferDTO();
                 CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
                 ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
                 ruleDTO.setReceiveCountry(customerDTO.getCountryId());
                 ruleDTO.setFromWarehouse(generateInfo.getWarehouseId());
-                transferDTO.setMatchTransferRuleDTO(ruleDTO);
-                transferDTO.setWarehouseId(generateInfo.getWarehouseId());
-                CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferAndWarehouse(transferDTO);
+                CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);
                 String warehouseId;
                 String batchNo = "";
                 if (Boolean.TRUE.equals(resultDTO.getIsTransit())) {
                     batchNo = IdUtil.getSnowflake().nextIdStr();
-                    generateTransferInfo(generateInfo, batchNo, generateInfoList, resultDTO.getTransitWarehouseId());
-                    warehouseId = resultDTO.getTransitWarehouseId();
+                    generateTransferInfo(generateInfo, batchNo, generateInfoList, resultDTO.getTransferWarehouseIdList());
+                    warehouseId = resultDTO.getTransferWarehouseIdList().get(resultDTO.getTransferWarehouseIdList().size() - 1);
                 }else {
                     warehouseId = generateInfo.getWarehouseId();
                 }
@@ -1735,38 +1731,68 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return this.batchAdd(addList);
     }
 
-    private void generateTransferInfo(SoOutstockDTO.GenerateSoOutstockViewDTO dto, String batchNo, List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList, String warehouseId) {
-        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(Arrays.asList(dto.getWarehouseId(), warehouseId));
+    private void generateTransferInfo(SoOutstockDTO.GenerateSoOutstockViewDTO dto, String batchNo, List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList, List<String> transferWarehouseIdList) {
+
+        //订单调出仓和第一个中转仓一致时从第二个中转仓开始
+        boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(dto.getWarehouseId());
+        for (int i = 0; i < transferWarehouseIdList.size(); i++) {
+            if (firstWarehouseSame && 0 == i){
+                continue;//跳过第一个仓库 从第二个开始
+            }
+            if (0 == i || firstWarehouseSame){
+                addTransferOrder(Boolean.TRUE, dto.getWarehouseId(),transferWarehouseIdList.get(i), dto, generateInfoList, batchNo);
+            }else {
+                addTransferOrder(Boolean.FALSE, transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), dto, generateInfoList, batchNo);
+            }
+        }
+    }
+
+    private void addTransferOrder(Boolean isFirst, String fromWarehouseId, String toWarehouseId, SoOutstockDTO.GenerateSoOutstockViewDTO dto, List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList, String batchNo) {
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(fromWarehouseId, toWarehouseId));
         //获取仓库信息
-        if (CollectionUtils.isEmpty(warehouseEntities)) {
+        if (CollectionUtils.isEmpty(warehouseEntityList)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-        Map<String, String> warehouseOrgMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
+        //调出仓库
+        WarehouseEntity fromWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), fromWarehouseId)).findFirst().orElse(null);
+        if (Objects.isNull(fromWarehouseEntity)) {
+            throw new ServiceException("调出仓库不能为空");
+        }
+        //调入仓库
+        WarehouseEntity toWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), toWarehouseId)).findFirst().orElse(null);
+        if (Objects.isNull(toWarehouseEntity)) {
+            throw new ServiceException("调入仓库不能为空");
+        }
+
         TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
         transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
         transferDto.setBillDate(LocalDate.now());
         transferDto.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
-        transferDto.setInOrgId(warehouseOrgMap.get(warehouseId));
-        transferDto.setOutOrgId(warehouseOrgMap.get(dto.getWarehouseId()));
+        transferDto.setInOrgId(toWarehouseEntity.getOrgId());
+        transferDto.setOutOrgId(fromWarehouseEntity.getOrgId());
         transferDto.setSourceId(dto.getSourceId());
         transferDto.setSourceCode(dto.getSourceCode());
         transferDto.setSourceType(dto.getSourceType());
         transferDto.setBatchNo(batchNo);
-        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(generateInfoList, warehouseId);
+        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(generateInfoList, fromWarehouseId, toWarehouseId,isFirst);
         transferDto.setDetailList(detailList);
         transferInfoService.addAndApprove(transferDto);
     }
 
-    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList, String warehouseId) {
+    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList, String fromWarehouseId, String toWarehouseId,Boolean isFirst) {
         List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (SoOutstockDTO.GenerateSoOutstockViewDTO viewDTO : generateInfoList) {
             TransferInfoDetailDTO.AddDTO transferInfoDetail = new TransferInfoDetailDTO.AddDTO();
             transferInfoDetail.setSkuId(viewDTO.getSkuId());
             transferInfoDetail.setSkuNo(viewDTO.getSkuNo());
             transferInfoDetail.setQty(viewDTO.getQty());
-            transferInfoDetail.setOutWarehouseLocation(viewDTO.getWarehouseLocation());
-            transferInfoDetail.setOutWarehouseId(viewDTO.getWarehouseId());
-            transferInfoDetail.setInWarehouseId(warehouseId);
+            if (isFirst){
+                transferInfoDetail.setOutWarehouseLocation(viewDTO.getWarehouseLocation());
+            }else {
+                transferInfoDetail.setOutWarehouseLocation("");
+            }
+            transferInfoDetail.setOutWarehouseId(fromWarehouseId);
+            transferInfoDetail.setInWarehouseId(toWarehouseId);
             transferInfoDetail.setSourceDetailId(viewDTO.getSourceDetailId());
             detailList.add(transferInfoDetail);
         }

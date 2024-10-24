@@ -345,4 +345,12 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
 
     void exportBox(PackingTaskDTO.ExportDTO dto);
+
+    /**
+     * 更新中转仓库记录
+     * @param entity
+     * @param changeIds
+     * @return
+     */
+    BatchResultDTO updateTransferWarehouse(FirstMileDeliveryEntity entity, List<String> changeIds);
 }

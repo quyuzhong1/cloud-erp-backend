@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -9,7 +10,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -17,18 +17,15 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -73,7 +70,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -326,6 +322,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
         soDeliveryNoticeEntity.setWarehouseOrgId(soInfoEntity.getWarehouseOrgId());
         soDeliveryNoticeEntity.setWarehouseOrgName(soInfoEntity.getWarehouseOrgName());
+        //匹配中转规则
+        matchTransferRule(soDeliveryNoticeEntity,soInfoEntity);
         this.save(soDeliveryNoticeEntity);
         soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
         //操作日志
@@ -333,6 +331,23 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //生成装箱任务
         packingTaskService.addPackingByB2BDelivery(soDeliveryNoticeEntity);
         return soDeliveryNoticeEntity.getId();
+    }
+
+    private void matchTransferRule(SoDeliveryNoticeEntity soDeliveryNoticeEntity, SoInfoEntity soInfoEntity) {
+        soDeliveryNoticeEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+        List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(soDeliveryNoticeEntity.getSourceId()));
+        SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
+        //是否中转
+        CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+        ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
+        ruleDTO.setReceiveCountry(customerDTO.getCountryId());
+        ruleDTO.setFromWarehouse(soDeliveryNoticeEntity.getWarehouseId());
+        CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);
+        if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
+            if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){
+                soDeliveryNoticeEntity.setTransferWarehouseIds(String.join(",", matchTransferResultDTO.getTransferWarehouseIdList()));
+            }
+        }
     }
 
     @Override
@@ -387,6 +402,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
         soDeliveryNoticeEntity.setWarehouseOrgId(soInfoEntity.getWarehouseOrgId());
         soDeliveryNoticeEntity.setWarehouseOrgName(soInfoEntity.getWarehouseOrgName());
+        if (CollUtil.isNotEmpty(dto.getTransferWarehouseIdList())){
+            soDeliveryNoticeEntity.setTransferWarehouseIds(String.join(",",dto.getTransferWarehouseIdList()));
+        }else {
+            soDeliveryNoticeEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+        }
         boolean flag = this.updateById(soDeliveryNoticeEntity);
         //操作日志
         SoDeliveryNoticeEntity byId = this.getById(dto.getId());
@@ -429,6 +449,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
 
         viewDTO.setDeliveryModeDictName(DeliveryModeEnum.getName(soInfoEntity.getDeliveryMode()));
+        if (StrUtil.isNotBlank(soDeliveryNoticeEntity.getTransferWarehouseIds())){
+            List<String> split = StrUtil.split(soDeliveryNoticeEntity.getTransferWarehouseIds(), ",");
+            viewDTO.setTransferWarehouseIdList(split);
+        }
         List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Arrays.asList(soInfoEntity.getReceiveAddressId()));
         CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(new CustomerAddressEntity());
         viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
@@ -742,29 +766,17 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (Boolean.FALSE.equals(allNoInventorySku) && CollectionUtils.isEmpty(views)) {
             throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
         }
-        SoInfoEntity info = soInfoFeign.getSoInfoById(entity.getSourceId());
-        List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(entity.getSourceId()));
-        SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(info.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-
-        //是否中转
-        CfgRuleOutDTO.MatchTransferDTO transferDTO = new CfgRuleOutDTO.MatchTransferDTO();
-        CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
-        ruleDTO.setType(StockOutTransferTypeEnum.B2B.getCode());
-        ruleDTO.setReceiveCountry(customerDTO.getCountryId());
-        ruleDTO.setFromWarehouse(entity.getWarehouseId());
-        transferDTO.setMatchTransferRuleDTO(ruleDTO);
-        transferDTO.setWarehouseId(entity.getWarehouseId());
-        CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferAndWarehouse(transferDTO);
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
         String batchNo = "";
         String warehouseId;
-        if (Boolean.TRUE.equals(resultDTO.getIsTransit())) {
+        if (StrUtil.isNotBlank(entity.getTransferWarehouseIds())) {
+            List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
             batchNo = IdUtil.getSnowflake().nextIdStr();
             if (Boolean.FALSE.equals(allNoInventorySku)) {
-                generateTransferInfo(entity, batchNo, entityList, warehouseStagingList, noInventorySkuIds, resultDTO.getTransitWarehouseId());
+                generateTransferInfo(batchNo, entity, entityList, warehouseStagingList, noInventorySkuIds, split);
             }
-            warehouseId = resultDTO.getTransitWarehouseId();
+            warehouseId = split.get(split.size() - 1);
         }else {
             warehouseId = entity.getWarehouseId();
         }
@@ -790,7 +802,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             detail.setSkuId(item.getSkuId());
             detail.setSkuNo(item.getSkuNo());
             detail.setWarehouseId(warehouseId);
-            if (Boolean.TRUE.equals(resultDTO.getIsTransit())) {
+            if (StrUtil.isNotBlank(entity.getTransferWarehouseIds())) {
                 detail.setWarehouseLocation("");
             }else {
                 detail.setAttachUrlList(attachmentUrlList);
@@ -819,28 +831,78 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return BatchResultDTO.success(outId, "", "下推成功");
     }
 
-    private void generateTransferInfo(SoDeliveryNoticeEntity entity, String batchNo, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, String warehouseId) {
-        WarehouseEntity warehouse = warehouseService.getById(warehouseId);
+    /**
+     * 生成调拨单
+     *
+     * @param batchNo
+     * @param entity
+     * @param entityList
+     * @param warehouseStagingList
+     * @param noInventorySkuIds
+     * @param transferWarehouseIdList
+     * @return
+     */
+    private void generateTransferInfo(String batchNo, SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, List<String> transferWarehouseIdList) {
+        if (CollectionUtil.isEmpty(transferWarehouseIdList)){
+            throw new ServiceException(ApiError.ERROR_92134);
+        }
+        if (StrUtil.isBlank(entity.getWarehouseId())){
+            throw new ServiceException(ApiError.ERROR_92136, entity.getCode());
+        }
+        //订单调出仓和第一个中转仓一致时从第二个中转仓开始
+        boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(entity.getWarehouseId());
+//        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(transferWarehouseIdList);
+        for (int i = 0; i < transferWarehouseIdList.size(); i++) {
+            if (firstWarehouseSame && 0 == i){
+                continue;//跳过第一个仓库 从第二个开始
+            }
+            if (0 == i || firstWarehouseSame){
+                addTransferOrder(entity.getWarehouseId(),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo);
+            }else {
+                addTransferOrder(transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo);
+            }
+        }
+    }
+
+    /**
+     * 生成中转调拨单
+     *
+     * @param fromWarehouseId
+     * @param toWarehouseId
+     * @param entity
+     * @param detailEntityList
+     * @param warehouseStagingList
+     * @param noInventorySkuIds
+     * @param batchNo
+     */
+    private void addTransferOrder(String fromWarehouseId, String toWarehouseId, SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> detailEntityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, String batchNo) {
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(fromWarehouseId, toWarehouseId));
+        WarehouseEntity toWarehouse = warehouseEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(toWarehouseId)).findFirst().orElse(null);
+        if (ObjectUtil.isEmpty(toWarehouse)) {
+            throw new ServiceException(ApiError.ERROR_92263, toWarehouseId);
+        }
+        WarehouseEntity fromWarehouse = warehouseEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(fromWarehouseId)).findFirst().orElse(null);
         //获取仓库信息
-        if (ObjectUtil.isEmpty(warehouse)) {
-            throw new ServiceException(ApiError.ERROR_99002);
+        if (ObjectUtil.isEmpty(fromWarehouse)) {
+            throw new ServiceException(ApiError.ERROR_92263, fromWarehouseId);
         }
         TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
         transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
         transferDto.setBillDate(LocalDate.now());
         transferDto.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
-        transferDto.setInOrgId(warehouse.getOrgId());
-        transferDto.setOutOrgId(entity.getWarehouseOrgId());
+        transferDto.setInOrgId(toWarehouse.getOrgId());
+        transferDto.setOutOrgId(fromWarehouse.getOrgId());
         transferDto.setSourceId(entity.getId());
         transferDto.setSourceCode(entity.getCode());
+
         transferDto.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         transferDto.setBatchNo(batchNo);
-        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, entityList, warehouseId, warehouseStagingList, noInventorySkuIds);
+        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, detailEntityList, fromWarehouseId,toWarehouseId, warehouseStagingList, noInventorySkuIds);
         transferDto.setDetailList(detailList);
         transferInfoService.addAndApprove(transferDto);
     }
 
-    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, String warehouseId, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds) {
+    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, String fromWarehouseId, String toWarehouseId, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds) {
             // 获取仓库暂存区默认配置
         CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                 .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
@@ -857,8 +919,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 transferInfoDetail.setQty(view.getPickingQty());
             }
             transferInfoDetail.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
-            transferInfoDetail.setOutWarehouseId(entity.getWarehouseId());
-            transferInfoDetail.setInWarehouseId(warehouseId);
+            transferInfoDetail.setOutWarehouseId(fromWarehouseId);
+            transferInfoDetail.setInWarehouseId(toWarehouseId);
             transferInfoDetail.setSourceDetailId(view.getId());
             detailList.add(transferInfoDetail);
         }
@@ -1580,5 +1642,26 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
         }
         return new PagingVO<>(pagingViews);
+    }
+
+    @Override
+    public BatchResultDTO updateTransferWarehouse(SoDeliveryNoticeEntity entity, List<String> changeIds) {
+        //无需校验单据状态，关联的调拨单必须非审核通过、或者无关联的调拨单
+        List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getId());
+        if (CollectionUtils.isNotEmpty(transferInfoEntities)){
+            List<TransferInfoEntity> collect = transferInfoEntities.stream().filter(e -> Objects.nonNull(e) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(collect)){
+                List<String> codeList = collect.stream().map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
+                throw new ServiceException(ApiError.ERROR_92138, String.join(",", codeList));
+            }
+        }
+        String transferWarehouseIdList = "";
+        if (CollectionUtils.isNotEmpty(changeIds)){
+            transferWarehouseIdList = String.join(",", changeIds);
+        }
+        this.lambdaUpdate().eq(SoDeliveryNoticeEntity::getId, entity.getId()).set(SoDeliveryNoticeEntity::getTransferWarehouseIds, transferWarehouseIdList).update();
+        String msg = "【{}】更新了中转仓配置由【{}】改为【{}】";
+        operateLogService.addModuleOperateLog(String.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "批量修改中转仓配置");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
     }
 }

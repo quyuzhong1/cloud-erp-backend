@@ -125,6 +125,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 高
          */
         private BigDecimal height;
+        /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
 
         /**
          * 详情

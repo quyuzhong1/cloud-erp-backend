@@ -350,6 +350,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private LogisticsMappingFeign logisticsMappingFeign;
     @Resource
     private AliExpressOrderService aliExpressOrderService;
+    @Resource
+    private WmsWarehouseFeign wmsWarehouseFeign;
+    @Resource
+    private TransferInfoFeign transferInfoFeign;
 
     @Autowired
     @Qualifier("soB2cTabExecutorPool")
@@ -5694,7 +5698,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //是否中转
         Boolean isTransit = false;
-        String transitWarehouseId = "";
+        List<String> transferWarehouseIdList = null;
         // 平台仓/海外仓出库单不中转
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equalsIgnoreCase(sourceType)){
             // B2C订单根据中转规则判断是否中转
@@ -5703,12 +5707,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
             String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
             ruleDTO.setFromWarehouse(deliveryWarehouseId);
-            CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferAndWarehouse(new CfgRuleOutDTO.MatchTransferDTO(deliveryWarehouseId,ruleDTO));
+            CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);
             isTransit = resultDTO.getIsTransit();
-            transitWarehouseId = resultDTO.getTransitWarehouseId();
+            transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();
         }
         if (isTransit) {
-            warehouseId = transitWarehouseId;
+            String batchNo = IdUtil.getSnowflake().nextIdStr();
+            //进行中转调拨 返回最后一级中转仓库
+            generateTransferInfo(entity, detailList, transferWarehouseIdList,batchNo);
+            warehouseId = transferWarehouseIdList.get(transferWarehouseIdList.size() -1);
         } else {
             if(StringUtils.isBlank(warehouseId)){
                 warehouseId = detailList.get(0).getWarehouseId();
@@ -5805,6 +5812,94 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         dto.setDetailList(wantDetailList);
         return dto;
+    }
+
+    /**
+     * 销售订单生成中转调拨仓
+     *
+     * @param entity
+     * @param detailList
+     * @param transferWarehouseIdList
+     * @param batchNo
+     */
+    private void generateTransferInfo(SoB2cEntity entity, List<SoB2cDetailEntity> detailList, List<String> transferWarehouseIdList, String batchNo) {
+        if (CollectionUtil.isEmpty(transferWarehouseIdList)){
+            throw new ServiceException(ApiError.ERROR_92134);
+        }
+        if (CollectionUtils.isEmpty(detailList)){
+            throw new ServiceException(ApiError.ERROR_DETAIL_IS_ZERO, entity.getCode());
+        }
+        String warehouseId = detailList.get(0).getWarehouseId();
+        if (StrUtil.isBlank(detailList.get(0).getWarehouseId())){
+            throw new ServiceException(ApiError.ERROR_92136, entity.getCode());
+        }
+        //订单调出仓和第一个中转仓一致时从第二个中转仓开始
+        boolean firstWarehouseSame = transferWarehouseIdList.get(0).equals(warehouseId);
+        for (int i = 0; i < transferWarehouseIdList.size(); i++) {
+            if (firstWarehouseSame && 0 == i){
+                continue;//跳过第一个仓库 从第二个开始
+            }
+            if (0 == i || firstWarehouseSame){
+                addTransferOrder(Boolean.TRUE, warehouseId,transferWarehouseIdList.get(i), entity, detailList,batchNo);
+            }else {
+                addTransferOrder(Boolean.FALSE, transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity, detailList,batchNo);
+            }
+        }
+    }
+
+    /**
+     * 生成调拨单
+     *
+     * @param fromWarehouseId
+     * @param toWarehouseId
+     * @param entity
+     * @param detailList
+     * @param batchNo
+     */
+    private void addTransferOrder(Boolean isFirst, String fromWarehouseId, String toWarehouseId, SoB2cEntity entity, List<SoB2cDetailEntity> detailList, String batchNo) {
+        List<WarehouseDTO.ListDTO> listDTOS = wmsWarehouseFeign.listByIds(Arrays.asList(fromWarehouseId, toWarehouseId));
+        WarehouseDTO.ListDTO toWarehouse = listDTOS.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(toWarehouseId)).findFirst().orElse(null);
+        if (Objects.isNull(toWarehouse)) {
+            throw new ServiceException(ApiError.ERROR_92263, toWarehouseId);
+        }
+        WarehouseDTO.ListDTO fromWarehouse = listDTOS.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(fromWarehouseId)).findFirst().orElse(null);
+        //获取仓库信息
+        if (Objects.isNull(fromWarehouse)) {
+            throw new ServiceException(ApiError.ERROR_92263, fromWarehouseId);
+        }
+        TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
+        transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        transferDto.setBillDate(LocalDate.now());
+        transferDto.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+        transferDto.setInOrgId(toWarehouse.getOrgId());
+        transferDto.setOutOrgId(fromWarehouse.getOrgId());
+        transferDto.setSourceId(entity.getId());
+        transferDto.setSourceCode(entity.getCode());
+        transferDto.setSourceType(SourceTypeEnum.SO_B2C.getCode());
+        transferDto.setBatchNo(batchNo);
+        String fromWarehouseLocation = "";
+        if (isFirst){
+            fromWarehouseLocation = detailList.get(0).getWarehouseLocation();
+        }
+        List<TransferInfoDetailDTO.AddDTO> addDetailList = getAddDTOS(entity, detailList, fromWarehouseId,toWarehouseId, fromWarehouseLocation);
+        transferDto.setDetailList(addDetailList);
+        transferInfoFeign.addAndApprove(transferDto);
+    }
+
+    private List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoB2cEntity entity, List<SoB2cDetailEntity> detailList, String fromWarehouseId, String toWarehouseId, String fromWarehouseLocation) {
+        List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+        for (SoB2cDetailEntity detail : detailList) {
+            TransferInfoDetailDTO.AddDTO transferInfoDetail = new TransferInfoDetailDTO.AddDTO();
+            transferInfoDetail.setSkuId(detail.getSkuId());
+            transferInfoDetail.setSkuNo(detail.getSkuNo());
+            transferInfoDetail.setQty(detail.getQty());
+            transferInfoDetail.setOutWarehouseLocation(fromWarehouseLocation);
+            transferInfoDetail.setOutWarehouseId(fromWarehouseId);
+            transferInfoDetail.setInWarehouseId(toWarehouseId);
+            transferInfoDetail.setSourceDetailId(detail.getId());
+            addDetailList.add(transferInfoDetail);
+        }
+        return addDetailList;
     }
 
     @Override

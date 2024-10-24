@@ -21,13 +21,10 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
-import com.erp.model.wms.dto.CfgSettingValueDTO;
 import com.erp.model.wms.entity.CfgRuleOutEntity;
-import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
-import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.server.wms.mapper.CfgRuleOutMapper;
 import com.erp.server.wms.service.CfgRuleOutService;
@@ -427,7 +424,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
     }
 
     @Override
-    public Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto) {
+    public CfgRuleOutDTO.MatchTransferResultDTO matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto) {
         Map<String, Object> detailMap = new HashMap<>();
         detailMap.put("type", dto.getType());
         detailMap.put("receiveCountry", dto.getReceiveCountry());
@@ -450,34 +447,11 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             conditionList.add(0, typeConditionElement);
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionList, map);
             if(matchResult){
-                return Boolean.TRUE;
+                return new CfgRuleOutDTO.MatchTransferResultDTO(Boolean.TRUE,transferDTO.getTransferWarehouseIdList());
             }
         }
 
-        return Boolean.FALSE;
-    }
-
-    @Override
-    public CfgRuleOutDTO.MatchTransferResultDTO matchTransferAndWarehouse(CfgRuleOutDTO.MatchTransferDTO dto) {
-        if (ObjectUtil.isEmpty(dto) || StrUtil.isBlank(dto.getWarehouseId())) {
-            throw new ServiceException("中转规则和发货仓库都不能为空");
-        }
-        Boolean isTransit = matchTransferRule(dto.getMatchTransferRuleDTO());
-        if (!isTransit) {
-            return new CfgRuleOutDTO.MatchTransferResultDTO(isTransit,"");
-        }
-        //中转仓
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.TRANSIT_SETTING.getCode());
-        if(ObjectUtil.isEmpty(cfgSettingEntity)){
-            throw new ServiceException("没有找到中转仓配置");
-        }
-        CfgSettingValueDTO.TransitSettingDTO transitSettingDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.TransitSettingDTO.class);
-        if (StrUtil.isBlank(transitSettingDTO.getWarehouseId())) {
-            throw new ServiceException("中转设置仓库不能为空");
-        }
-        isTransit = !StrUtil.equals(transitSettingDTO.getWarehouseId(), dto.getWarehouseId());
-
-        return  new CfgRuleOutDTO.MatchTransferResultDTO(isTransit,isTransit ? transitSettingDTO.getWarehouseId() : "" );
+        return new CfgRuleOutDTO.MatchTransferResultDTO(Boolean.FALSE,Collections.emptyList());
     }
 
     /**

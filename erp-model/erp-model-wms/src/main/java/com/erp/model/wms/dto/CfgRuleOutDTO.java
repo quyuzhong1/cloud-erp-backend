@@ -3,8 +3,6 @@ package com.erp.model.wms.dto;
 import com.common.core.anno.StateEnumValue;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.PickingSourceTypeEnum;
-import com.common.core.entity.ConditionElement;
-import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,9 +15,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.validation.Valid;
 import javax.validation.constraints.DecimalMin;
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -451,6 +447,11 @@ public class CfgRuleOutDTO implements Serializable {
          * 类型下拉：/wms/common/enumDropDown?type=StockOutTransferType
          */
         private String type;
+        /**
+         * 中转仓库列表
+         */
+        @NotEmpty(message = "中转仓库配置不能为空")
+        private List<String> transferWarehouseIdList;
 
         /**
          * 规则列表
@@ -567,7 +568,7 @@ public class CfgRuleOutDTO implements Serializable {
         /**
          * 中转仓库
          */
-        private String transitWarehouseId;
+        private List<String> transferWarehouseIdList;
 
     }
 

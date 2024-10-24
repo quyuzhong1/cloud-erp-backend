@@ -439,4 +439,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param deliveryEntityList
      */
     void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList);
+
+    /**
+     * 更新中转仓库记录
+     * @param entity
+     * @param changeIds
+     * @return
+     */
+    BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds);
 }

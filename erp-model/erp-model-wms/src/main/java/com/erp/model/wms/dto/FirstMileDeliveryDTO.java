@@ -628,6 +628,10 @@ public class FirstMileDeliveryDTO implements Serializable {
         * 库存组织名称
         */
         private String inventoryOrgName;
+        /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
 
         /**
          * 附件名集合
@@ -687,6 +691,10 @@ public class FirstMileDeliveryDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
         /**
          * 附件名集合
          */

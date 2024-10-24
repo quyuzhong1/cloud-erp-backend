@@ -8,6 +8,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -64,4 +65,23 @@ public class BaseIdsDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DateDTO extends IdsDTO{
+
+        @NotNull(message = "日期不能为空")
+        private LocalDate LocalDate;
+    }
+
+    /**
+     * 批量修改 对应记录的 多条明细值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ChangeDTO extends IdsDTO{
+        /**
+         * 修改明细可以为空
+         */
+        private List<String> changeIds;
+    }
 }

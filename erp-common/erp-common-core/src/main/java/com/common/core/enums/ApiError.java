@@ -1039,7 +1039,11 @@ public enum ApiError implements Serializable {
     ERROR_UPLOAD_SUCCES_CAN_ORDER_FORCAST(92137,"仅支持订单预报为【待上传/上传失败】，可操作【订单预报】"),
     THIRD_WAREHOUSE_NAME_EXIST(92132,"平台【{}】第三方仓【{}】不能重复绑定多个仓库"),
     ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED(92133,"已有盘盈盘亏单【{}】不允许操作【{}】之前单据"),
-
+    ERROR_92134(92134,"中转仓库不能为空，请检查出库配置"),
+    ERROR_92135(92135,"头程发货单【{}】配置的发货仓库不能为空"),
+    ERROR_92136(92136,"发货通知单【{}】配置的发货仓库不能为空"),
+    ERROR_92137(92137,"B2C发货单【{}】配置的发货仓库不能为空"),
+    ERROR_92138(92138,"存在已审核调拨单【{}】不能修改中转仓"),
     ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 自发货费用单据已确认状态下,不允许反审核"),
     ERROR_DELIVERY_INTERCEPT_READY_PACKAGED(92139,"销售订单号【{}】已组包不支持拦截操作"),
     ERROR_92140(92140,"关联单号【{}】已审核不能修改装箱"),
@@ -1065,7 +1069,7 @@ public enum ApiError implements Serializable {
     ERROR_92260(92260,"同一个单【{}】同一个月份【{}】仅可生成一次对账单"),
     ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
     ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
-
+    ERROR_92263(92263,"未找到【{}】仓库"),
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
@@ -1160,6 +1164,7 @@ public enum ApiError implements Serializable {
     ERROR_92245(92245,"存在有效下推单据【采购订单{}】,不支持反审"),
     ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
     ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
+    ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
