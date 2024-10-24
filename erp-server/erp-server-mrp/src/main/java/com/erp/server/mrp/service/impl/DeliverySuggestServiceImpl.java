@@ -2,9 +2,12 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,20 +18,28 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.dto.FileExcelDTO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.DeliverySuggestSysDTO;
+import com.erp.model.mrp.dto.HistoryImportRecordDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.dto.excel.*;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
+import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
@@ -44,9 +55,11 @@ import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.DeliveryPlanFeign;
+import com.erp.server.mrp.listener.DeliverySuggestImportExcelListener;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
 import com.erp.server.mrp.service.DeliverySuggestService;
 import com.erp.server.mrp.service.DeliverySuggestSysService;
+import com.erp.server.mrp.service.HistoryImportRecordService;
 import com.erp.server.mrp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -54,8 +67,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -83,6 +98,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Autowired
     private DeliverySuggestSysService deliverySuggestSysService;
+
+    @Autowired
+    private HistoryImportRecordService historyImportRecordService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -128,6 +146,21 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
         BeanMapperUtils.copy(old,dto);
         deliverySuggestSysService.add(dto);
+        return Boolean.TRUE;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean importUpdate(DeliverySuggestDTO.ImportUpdateDTO updateDTO) {
+        DeliverySuggestEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货计划"));
+        DeliverySuggestEntity deliverySuggestEntity =  BeanMapperUtils.map(DeliverySuggestEntity.class, updateDTO);
+
+        log.info("编辑 开始修改发货计划数据，单号：【{}】", old.getCode());
+        boolean save = super.updateById(deliverySuggestEntity);
+        if(!save) {
+            throw new ServiceException("发货计划保存失败");
+        }
         return Boolean.TRUE;
     }
 
@@ -372,6 +405,139 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UPDATE);
     }
 
+    @Override
+    public void importDeliverySuggest(MultipartFile excelFile, String platformType, HttpServletResponse response) {
+        DeliverySuggestImportExcelListener excelListenerUtil = new DeliverySuggestImportExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), StockUpImportExcelDTO.class, excelListenerUtil).headRowNumber(1).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<DeliverySuggestImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            return;
+        }
+        //导入数据处理
+        List<DeliverySuggestImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<DeliverySuggestImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImport(successList, errorList,platformType);
+        //导入文件名称
+        String originalFilename = excelFile.getOriginalFilename();
+        //上传正确数据
+        upLoadSuccessExcel (originalFilename,successList);
+        //导出错误数据
+        exportErrorExcel (response,errorList);
+    }
+
+    private void upLoadSuccessExcel (String originalFilename, List<DeliverySuggestImportExcelDTO> successList) {
+        //全部为空则无需处理
+        if (CollectionUtils.isEmpty(successList) ) {
+            return;
+        }
+        String fileName = StrUtil.isBlank(originalFilename) ? "补货规则.xlsx" : originalFilename;
+        String pathUrl = "excel/replenishmentRule.xlsx";
+        FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
+        exportFileDTO.setFileName(fileName);
+        exportFileDTO.setPathUrl(pathUrl);
+        List<Pair<Integer, List<?>>> sheetList = new ArrayList<>();
+        sheetList.add(new Pair<>(MathUtil.ZERO,successList));
+        exportFileDTO.setSheetList(sheetList);
+
+        //添加导入记录
+        HistoryImportRecordDTO.AddDTO dto = new HistoryImportRecordDTO.AddDTO();
+        dto.setName(fileName);
+        dto.setModule(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+        dto.setType(HistoryImportRecordTypeEnum.CFG_RULE_REPLENISHMENT.getCode());
+        dto.setExportFileDTO(exportFileDTO);
+        historyImportRecordService.add(dto);
+    }
+
+    private void exportErrorExcel (HttpServletResponse response, List<DeliverySuggestImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(errorList) ) {
+            return;
+        }
+        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
+        pairList.add(new Pair<>(MathUtil.ZERO,errorList));
+        String name = "补货规则错误数据";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/replenishmentRuleError.xlsx";
+        try {
+            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("信息导出出错 >>>>>{}", e);
+            throw new ServiceException("补货规则错误数据导出失败");
+        }
+    }
+
+    /**
+     * 导入数据处理
+     * @author will
+     * @date 2024/10/24 10:53
+     * @param successList
+     * @param errorList
+     */
+    private void handleImport (List<DeliverySuggestImportExcelDTO> successList,List<DeliverySuggestImportExcelDTO> errorList,String platformType) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        //发货计划
+        List<String> codeList = successList.stream().map(DeliverySuggestImportExcelDTO::getCode).distinct().collect(Collectors.toList());
+        List<DeliverySuggestEntity> deliverySuggestList = this.listByCodeList(codeList);
+
+        //记录错误数据
+        List<DeliverySuggestImportExcelDTO>  wrongList = new ArrayList<>();
+        for (DeliverySuggestImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            //发货计划
+            DeliverySuggestEntity deliverySuggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(deliverySuggestEntity)) {
+                errorMsgList.add("未找到发货计划");
+            }
+            if (!StrUtil.equals(platformType,deliverySuggestEntity.getPlatformType())) {
+                errorMsgList.add(StrUtil.format("【{}】平台类型是{},不支持导入",CfgRulePlatformTypeEnum.getName(platformType)));
+            }
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                //错误数据
+                wrongList.add(excelDTO);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            DeliverySuggestDTO.ImportUpdateDTO updateDTO = new DeliverySuggestDTO.ImportUpdateDTO();
+            updateDTO.setId(deliverySuggestEntity.getId());
+            updateDTO.setPlanDeliveryQty(Integer.valueOf(excelDTO.getPlanDeliveryQty()));
+            updateDTO.setActualDeliveryQty(Integer.valueOf(excelDTO.getActualDeliveryQty()));
+            updateDTO.setDeliveryStockUpQty(Integer.valueOf(excelDTO.getDeliveryStockUpQty()));
+            updateDTO.setRemark(excelDTO.getRemark());
+            this.importUpdate(updateDTO);
+        }
+        successList.removeAll(wrongList);
+    }
+
+    /**
+     * 根据编码集合查询
+     * @author will
+     * @date 2024/10/24 11:09
+     * @param codeList
+     * @return List<DeliverySuggestEntity>
+     */
+    private List<DeliverySuggestEntity> listByCodeList (List<String> codeList) {
+        if (CollectionUtils.isEmpty(codeList)) {
+            return Collections.EMPTY_LIST;
+        }
+       return lambdaQuery().in(DeliverySuggestEntity::getCode,codeList).list();
+    }
 
     /**
     * 新增修改处理数据

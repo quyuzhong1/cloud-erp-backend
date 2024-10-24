@@ -422,6 +422,42 @@ public class DeliverySuggestDTO implements Serializable {
     }
 
     /**
+     * 导入修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportUpdateDTO  {
+        /**
+         * id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 计划发货量（计划修正值）
+         */
+        @NotNull(message = "计划修正值不能为空")
+        private Integer planDeliveryQty;
+
+        /**
+         * 实际发货量（运营确认值）
+         */
+        @NotNull(message = "运营确认值不能为空")
+        private Integer actualDeliveryQty;
+
+        /**
+         * 发货备货数
+         */
+        @NotNull(message = "发货备货数不能为空")
+        private Integer deliveryStockUpQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+    /**
      * 下推发货计划
      */
     @Data

@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -134,4 +135,22 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return BatchResultDTO
      */
     BatchResultDTO updateRemark(String id, String remark);
+    /**
+     * 导入补货计划
+     * @author will
+     * @date 2024/10/24 10:43
+     * @param excelFile
+     * @param platformType
+     * @param response
+     */
+    void importDeliverySuggest(MultipartFile excelFile, String platformType, HttpServletResponse response);
+
+    /**
+     * 导入更新
+     * @author will
+     * @date 2024/10/24 11:25
+     * @param updateDTO
+     * @return Boolean
+     */
+    Boolean importUpdate(DeliverySuggestDTO.ImportUpdateDTO updateDTO);
 }
