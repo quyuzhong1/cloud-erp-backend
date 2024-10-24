@@ -101,17 +101,13 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
             return;
         }
         //先匹配到对应的记录 然后赋值
+        FbaShipmentEntity finalShipmentEntity = shipmentEntity;
         fbaBindShipmentViewDTOS.forEach(e -> {
             //数据已存在就不能覆盖
             if (RequisitionApplicationDetailExcelDTO.getBoxNo().equals(e.getBoxNo()) && StrUtil.isBlank(e.getFbaBoxNo()) && StrUtil.isBlank(e.getFbaShipmentCode())){
                 e.setFbaBoxNo(RequisitionApplicationDetailExcelDTO.getFbaBoxNo());
-                e.setFbaShipmentCode(RequisitionApplicationDetailExcelDTO.getFbaShipmentCode());
-            }
-            if (StrUtil.isBlank(e.getFbaBoxNo())){
-                e.setFbaBoxNo("");
-            }
-            if (StrUtil.isBlank(e.getFbaShipmentCode())){
-                e.setFbaShipmentCode("");
+                e.setFbaShipmentCode(finalShipmentEntity.getCode());
+                e.setFbaShipmentId(finalShipmentEntity.getId());
             }
         });
     }
