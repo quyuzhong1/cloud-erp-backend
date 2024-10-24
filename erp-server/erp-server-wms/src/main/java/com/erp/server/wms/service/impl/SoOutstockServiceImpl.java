@@ -403,6 +403,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if(OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())){
             soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
         }
+        if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
+            soOutstock.setSellerId(soCustomer.getCustomerSellerId());
+        }
         //仓库id
         String warehouseKeeperId = soOutstock.getWarehouseKeeperId();
         String sellerId = soOutstock.getSellerId();
@@ -417,6 +420,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 //销售员
                 String sellerName = userList.stream().filter(obj -> obj.getUserId().equals(sellerId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
                 soOutstock.setSellerName(sellerName);
+                if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
+                    String saleDeptId = userList.stream().filter(obj -> obj.getUserId().equals(sellerId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getDepartmentId())).orElse("");
+                    soOutstock.setSalesDeptId(saleDeptId);
+                }
             }
         }
 
