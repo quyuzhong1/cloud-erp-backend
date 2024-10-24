@@ -343,9 +343,6 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             addDTO.setSourceType(SoB2cReturnSourceTypeEnum.SELF_ADD.code);
             List<SoB2cReturnDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (SoB2cDTO.GenerateSoB2cReturnViewDTO soB2cReturnViewDTO : val) {
-                if(soB2cReturnViewDTO.getReturnQty()+soB2cReturnViewDTO.getAlreadyReturnQty() > soB2cReturnViewDTO.getOutQty()){
-                    throw new ServiceException("{}-sku:{}数量数量+已退不能大于出库数量",addDTO.getSoCode(),soB2cReturnViewDTO.getSkuNo());
-                }
                 SoB2cReturnDetailDTO.AddDTO detail = new SoB2cReturnDetailDTO.AddDTO();
                 detail.setSkuId(soB2cReturnViewDTO.getSkuId());
                 detail.setSkuNo(soB2cReturnViewDTO.getSkuNo());
