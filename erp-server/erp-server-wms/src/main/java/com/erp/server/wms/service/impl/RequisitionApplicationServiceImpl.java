@@ -2488,6 +2488,27 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        //转换空数据
+        excelDateList.forEach(e -> {
+            if (StrUtil.isBlank(e.getDeliveryCode())){
+                e.setDeliveryCode("");
+            }
+            if (StrUtil.isBlank(e.getFbaBoxNo())){
+                e.setFbaBoxNo("");
+            }
+            if (StrUtil.isBlank(e.getFbaShipmentCode())){
+                e.setFbaShipmentCode("");
+            }
+            if (StrUtil.isBlank(e.getFbaShipmentId())){
+                e.setFbaShipmentId("");
+            }
+            if (StrUtil.isBlank(e.getFbaPackingSku())){
+                e.setFbaShipmentId("");
+            }
+            if (StrUtil.isBlank(e.getFbaPackingFnSku())){
+                e.setFbaShipmentId("");
+            }
+        });
         importDTO.setSuccessList(excelDateList);
         importDTO.setErrorUrl(url);
         return importDTO;
