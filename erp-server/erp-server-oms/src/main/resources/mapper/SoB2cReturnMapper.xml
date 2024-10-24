@@ -74,7 +74,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by sbr.create_time
+        order by sbr.create_time desc
     </select>
     <select id="generateSoReturnNoticeView"
             resultType="com.erp.model.oms.dto.SoB2cReturnDTO$GenerateSoReturnNoticeView">
