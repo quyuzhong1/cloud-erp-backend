@@ -5,10 +5,7 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -488,7 +485,7 @@ public class DeliverySuggestDTO implements Serializable {
         /**
          * 编号
          */
-        private String code;
+        private List<DeliverySuggestInfoDTO> deliverySuggestList;
         /**
          * skuId
          */
@@ -523,6 +520,115 @@ public class DeliverySuggestDTO implements Serializable {
          * ASIN
          */
         private String asin;
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliverySuggestInfoDTO {
+        /**
+         * 编码
+         */
+        private String sourceId;
+        /**
+         * 编码
+         */
+        private String sourceCode;
+        /**
+         * 数量
+         */
+        private Integer planDeliveryQty;
+    }
+
+    /**
+     * 添加发货计划
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddPushDeliveryPlanDTO {
+
+        /**
+         * 店铺id
+         */
+        @NotBlank(message = "店铺id不能为空")
+        private String shopId;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+
+        /**
+         * 国家
+         */
+        @NotBlank(message = "国家不能为空")
+        private String country;
+
+        /**
+         * 期望发货时间
+         */
+        @NotBlank(message = "期望发货时间不能为空")
+        private LocalDate deliveryDate;
+
+        /**
+         * 期望物流方式
+         */
+        @NotBlank(message = "期望物流方式不能为空")
+        private String logisticsMethod;
+
+        /**
+         * 备注
+         */
+        @NotBlank(message = "备注不能为空")
+        private String remark;
+
+        /**
+         * 明细
+         */
+        @NotEmpty(message = "明细不能为空")
+        private List<PushDeliveryPlanDetailDTO> detailList;
+    }
+
+    /**
+     * 明细保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushDeliveryPlanDetailDTO {
+        /**
+         * 发货建议信息
+         */
+        private List<DeliverySuggestInfoDTO> deliverySuggestList;
+
+        /**
+         * sku
+         */
+        private String skuId;
+
+        /**
+         * 计划发货量（计划修正值）
+         */
+        private Integer planDeliveryQty;
+
+        /**
+         * MSKU
+         */
+        private String mSKu;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ASIN
+         */
+        private String asin;
+
         /**
          * 平台产品名称
          */

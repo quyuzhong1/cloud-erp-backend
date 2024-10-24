@@ -826,7 +826,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 DeliverySuggestEntity suggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(), sourceJsonDTO.getSourceId())).findFirst().orElse(new DeliverySuggestEntity());
                 descriptionViewDTO.setDeliverySuggestCode(suggestEntity.getCode());
                 descriptionViewDTO.setDeliverySuggestQty(suggestEntity.getPlanDeliveryQty());
-                descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getQty());
+                descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getPlanDeliveryQty());
                 descriptionViewDTOList.add(descriptionViewDTO);
             }
             detailList.add(deliverPlanDetailViewDTO);

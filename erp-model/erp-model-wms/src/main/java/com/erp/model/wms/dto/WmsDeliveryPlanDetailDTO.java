@@ -187,6 +187,10 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
          */
         private Integer boxQty;
 
+        /**
+         * 来源json
+         */
+        private List<SourceJsonDTO>  sourceJsonList;
     }
 
     @Data
@@ -214,6 +218,6 @@ public class WmsDeliveryPlanDetailDTO implements Serializable {
         /**
          * 数量
          */
-        private Integer qty;
+        private Integer planDeliveryQty;
     }
 }

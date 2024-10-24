@@ -124,7 +124,7 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @param deliveryPlanDTO
      * @return Boolean
      */
-    Boolean pushDeliveryPlan(DeliverySuggestDTO.ViewPushDeliveryPlanDTO deliveryPlanDTO);
+    Boolean pushDeliveryPlan(DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO);
     /**
      * 更新备注
      * @author will

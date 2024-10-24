@@ -251,7 +251,7 @@ public class DeliverySuggestController extends BaseController {
      * @return ApiResult<ViewPushDeliveryPlanDTO>
      */
     @PostMapping(value = "/pushDeliveryPlan")
-    public ApiResult<DeliverySuggestDTO.ViewPushDeliveryPlanDTO> pushDeliveryPlan(@RequestBody DeliverySuggestDTO.ViewPushDeliveryPlanDTO deliveryPlanDTO) {
+    public ApiResult pushDeliveryPlan(@RequestBody DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO) {
         Boolean flag = deliverySuggestService.pushDeliveryPlan(deliveryPlanDTO);
         return flag == true ? success() : failure();
     }

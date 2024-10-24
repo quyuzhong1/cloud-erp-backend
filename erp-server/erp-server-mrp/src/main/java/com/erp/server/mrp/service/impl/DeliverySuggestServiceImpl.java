@@ -248,15 +248,17 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
         //sku映射
         List<String> skuIdList = deliverySuggestList.stream().map(obj -> obj.getSkuId()).distinct().collect(Collectors.toList());
-        List<SkuMappingEntity> list = FeignQuery.create(SkuMappingEntity.class).in(SkuMappingEntity::getProductSkuId, skuIdList).list();
+        List<SkuMappingEntity> list = FeignQuery.create(SkuMappingEntity.class)
+                .in(SkuMappingEntity::getProductSkuId, skuIdList).
+                eq(SkuMappingEntity::getIsExpire,Boolean.FALSE).list();
         
         //sku映射的listing
-        List<String> listingIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getListingId())).map(SkuMappingEntity::getListingId).distinct().collect(Collectors.toList());
+        List<String> listingIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getListingId()))
+                .map(SkuMappingEntity::getListingId).distinct().collect(Collectors.toList());
         List<ListingInfoEntity> listingList = FeignQuery.getByIds(ListingInfoEntity.class, listingIdList);
 
         //产品信息
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
-
 
         long count = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().count();
         //校验
@@ -280,13 +282,27 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> detailList = new ArrayList<>();
 
-        for (DeliverySuggestEntity suggestEntity : deliverySuggestList) {
+        Map<String, List<DeliverySuggestEntity>> map = deliverySuggestList.stream().collect(Collectors.groupingBy(DeliverySuggestEntity::getSkuId));
+        for (Map.Entry<String, List<DeliverySuggestEntity>> entry : map.entrySet()) {
+            List<DeliverySuggestEntity> value = entry.getValue();
+            DeliverySuggestEntity suggestEntity = value.get(0);
+
             DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
             BeanMapperUtils.copy(suggestEntity,detailDTO);
             //sku信息
             ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), suggestEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             detailDTO.setSkuNo(productDetailEntity.getSkuNo());
             detailDTO.setProductName(productDetailEntity.getName());
+            //发货建议
+            List<DeliverySuggestDTO.DeliverySuggestInfoDTO> suggestInfoList = new ArrayList<>();
+            for (DeliverySuggestEntity deliverySuggestEntity : value) {
+                DeliverySuggestDTO.DeliverySuggestInfoDTO deliverySuggestInfoDTO = new DeliverySuggestDTO.DeliverySuggestInfoDTO();
+                deliverySuggestInfoDTO.setSourceId(deliverySuggestEntity.getId());
+                deliverySuggestInfoDTO.setSourceCode(deliverySuggestEntity.getCode());
+                deliverySuggestInfoDTO.setPlanDeliveryQty(deliverySuggestEntity.getSuggestDeliveryQty());
+                suggestInfoList.add(deliverySuggestInfoDTO);
+            }
+            detailDTO.setDeliverySuggestList(suggestInfoList);
 
             //sku映射表
             SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getShopId())).findFirst().orElse(null);
@@ -311,14 +327,14 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     }
 
     @Override
-    public Boolean pushDeliveryPlan(DeliverySuggestDTO.ViewPushDeliveryPlanDTO deliveryPlanDTO) {
+    public Boolean pushDeliveryPlan(DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO) {
         WmsDeliveryPlanDTO.AddDTO addDTO = new WmsDeliveryPlanDTO.AddDTO();
         addDTO.setShopId(deliveryPlanDTO.getShopId());
-        addDTO.setType(deliveryPlanDTO.getType());
+        addDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
         addDTO.setPlanDeliveryDate(deliveryPlanDTO.getDeliveryDate());
         addDTO.setToWarehouseId(deliveryPlanDTO.getWarehouseId());
         List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
-        for (DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO: deliveryPlanDTO.getDetailList()) {
+        for (DeliverySuggestDTO.PushDeliveryPlanDetailDTO detailDTO: deliveryPlanDTO.getDetailList()) {
             WmsDeliveryPlanDetailDTO.AddDTO addDetailDTO = new WmsDeliveryPlanDetailDTO.AddDTO();
             addDetailDTO.setMSKU(detailDTO.getMSKu());
             addDetailDTO.setFnSku(detailDTO.getFnSku());
@@ -327,6 +343,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             addDetailDTO.setPlatformSku(detailDTO.getMSKu());
             addDetailDTO.setSkuId(detailDTO.getSkuId());
             addDetailDTO.setQty(detailDTO.getPlanDeliveryQty());
+            //来源信息
+            List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonDTOList = BeanMapperUtils.copyList(WmsDeliveryPlanDetailDTO.SourceJsonDTO.class, detailDTO.getDeliverySuggestList());
+            addDetailDTO.setSourceJsonList(sourceJsonDTOList);
+            detailList.add(addDetailDTO);
         }
         addDTO.setDetailList(detailList);
         deliveryPlanFeign.addDeliveryPlan(addDTO);
@@ -458,7 +478,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 listDTO.setDeliveryPlanId(wmsDeliveryPlanDetailEntity.getId());
                 listDTO.setDeliveryPlanCode(wmsDeliveryPlanDetailEntity.getCode());
                 //已发数量
-                Integer qty = BeanUtil.copyToList(JSONUtil.parseArray(wmsDeliveryPlanDetailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), listDTO.getId())).map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getQty).findFirst().orElse(MathUtil.ZERO);
+                Integer qty = BeanUtil.copyToList(JSONUtil.parseArray(wmsDeliveryPlanDetailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), listDTO.getId())).map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getPlanDeliveryQty).findFirst().orElse(MathUtil.ZERO);
                 listDTO.setHasDeliveryPlanQty(qty);
             }
         }
