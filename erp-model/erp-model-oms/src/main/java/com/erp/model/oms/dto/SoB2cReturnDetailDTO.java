@@ -138,7 +138,10 @@ public class SoB2cReturnDetailDTO implements Serializable {
         */
         private String remark;
 
-
+        /**
+         * 销售明细id
+         */
+        private String soDetailId;
     }
 
 

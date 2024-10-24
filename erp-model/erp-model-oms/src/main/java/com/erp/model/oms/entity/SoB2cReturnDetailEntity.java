@@ -59,6 +59,11 @@ public class SoB2cReturnDetailEntity extends BaseEntity<SoB2cReturnDetailEntity>
     */
     @TableField("remark")
     private String remark;
+    /**
+     * 销售明细id
+     */
+    @TableField("so_detail_id")
+    private String soDetailId;
 
     @TableField(exist = false)
     private String soId;

@@ -4,13 +4,16 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformRefundOrderDTO;
 import com.common.business.dto.PlatformReturnOrderDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
 import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
@@ -18,10 +21,7 @@ import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.rpc.wms.feign.SoReturnInstockFeign;
-import com.erp.server.oms.service.ShopInfoService;
-import com.erp.server.oms.service.SoB2cDetailService;
-import com.erp.server.oms.service.SoB2cReturnService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -60,6 +61,9 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 	@Resource
 	private SoB2cDetailService soB2cDetailService;
 
+	@Resource
+	private SkuMappingService skuMappingService;
+
 	@Override
 	public String getBizName() {
 		return "平台退货订单";
@@ -85,17 +89,16 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCode(dto.getPlatformOrderNo());
 			//过滤手工单
 			soB2cEntityList = soB2cEntityList.stream().filter(v-> !SourceTypeEnum.SELF_ADD.getCode().equals(v.getSourceType())).collect(Collectors.toList());
+			if(CollectionUtils.isNotEmpty(soB2cEntityList)){
+				soB2cEntity = soB2cEntityList.get(0);
+			}
 			List<String> soIds = soB2cEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
 			soB2cDetailEntityList = soB2cDetailService.listByMainIds(soIds);
-			List<String> platformSkuNo = dto.getDetailList().stream().map(v->v.getPlatformSkuNo()).collect(Collectors.toList());
-			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(v->platformSkuNo.contains(platformSkuNo)).findFirst().orElse(null);
-			if(Objects.nonNull(soB2cDetailEntity)){
-				soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(soB2cDetailEntity.getMainId())).findFirst().orElse(new SoB2cEntity());
-			}else{
-				return;
-			}
 		}
-		SoB2cReturnEntity soB2cReturnEntity = this.buildReturn(dto,soB2cEntity,soB2cDetailEntityList);
+		if(Objects.isNull(soB2cEntity)){
+			return;
+		}
+		SoB2cReturnEntity soB2cReturnEntity = this.buildReturn(dto,soB2cEntity);
 		List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = this.buildRefundDetail(dto,soB2cDetailEntityList);
 		soB2cReturnService.addByPlatform(soB2cReturnEntity,soB2cReturnDetailEntityList);
 
@@ -155,12 +158,13 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			refundOrderDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
 			refundOrderDetailEntity.setReturnQty(detail.getReturnQty());
 			refundOrderDetailEntity.setRemark(detail.getRemark());
+			refundOrderDetailEntity.setSoDetailId(soB2cDetailEntity.getId());
 			list.add(refundOrderDetailEntity);
 		}
 		return list;
 	}
 
-	private SoB2cReturnEntity buildReturn(PlatformReturnOrderDTO dto, SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList) {
+	private SoB2cReturnEntity buildReturn(PlatformReturnOrderDTO dto, SoB2cEntity soB2cEntity) {
 		SoB2cReturnEntity soB2cReturnEntity = new SoB2cReturnEntity();
 		soB2cReturnEntity.setPlatformOrderNo(dto.getPlatformOrderNo());
 		soB2cReturnEntity.setPlatformReturnNo(dto.getPlatformReturnNo());

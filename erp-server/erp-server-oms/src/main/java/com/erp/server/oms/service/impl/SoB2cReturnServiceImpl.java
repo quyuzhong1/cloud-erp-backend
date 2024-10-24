@@ -347,6 +347,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
                 detail.setReturnQty(soB2cReturnViewDTO.getReturnQty());
                 detail.setPlatformSkuNo(soB2cReturnViewDTO.getPlatformSkuNo());
                 detail.setRemark(soB2cReturnViewDTO.getRemark());
+                detail.setSoDetailId(soB2cReturnViewDTO.getDetailId());
                 detailList.add(detail);
             }
             addDTO.setDetailList(detailList);
