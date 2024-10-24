@@ -1618,6 +1618,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private void generateReplenish (List<SoB2cDeliveryDetailEntity> detailList, SoB2cDeliveryEntity deliveryEntity, List<String> skus) {
         //根据sku、仓库合并生成数据
         Map<String, List<SoB2cDeliveryDetailEntity>> map = detailList.stream().filter(obj -> skus.contains(obj.getSkuNo())).collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId())));
+        List<WarehouseLocationReplenishDTO.AddDTO> addList = new ArrayList<>();
         for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
             SoB2cDeliveryDetailEntity detailEntity = entry.getValue().get(0);
 
@@ -1631,7 +1632,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //合计数量
             Integer qty = entry.getValue().stream().map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             addReplenishDTO.setQty(qty);
-            warehouseLocationReplenishService.add(addReplenishDTO);
+            addList.add(addReplenishDTO);
+        }
+        if(CollectionUtils.isNotEmpty(addList)){
+            warehouseLocationReplenishService.addList(addList);
         }
     }
 
