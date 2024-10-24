@@ -91,7 +91,7 @@ public class AntuReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTaskH
 		}
 		String returnStatus = dmpMainEntity.getReturnType();
 		// T状态转换
-		String erpStatus = GoodCangEnums.ReturnInstockTypeEnum.getErpStatus(returnStatus);
+		String erpStatus = AntuEnums.ReturnInstockTypeEnum.getErpStatus(returnStatus);
 		if (StringUtils.isBlank(erpStatus)) {
 			return null;
 		}
