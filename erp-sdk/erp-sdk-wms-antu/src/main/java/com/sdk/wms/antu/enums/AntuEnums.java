@@ -236,5 +236,14 @@ public enum AntuEnums {
                     .findFirst()
                     .orElse(null);
         }
+
+        public static String getErpStatus(String code){
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(item -> item.getCode().toString().equalsIgnoreCase(code))
+                    .findFirst()
+                    .map(ReturnInstockTypeEnum::getErpEnum)
+                    .map(SoB2cReturnTypeEnum::getCode)
+                    .orElse("");
+        }
     }
 }
