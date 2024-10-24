@@ -257,6 +257,7 @@
         lb.to_country as country,
         lb.order_time as orderTime,
         lbd.sign_time as  signTime,
+        lbd.ship_time as  shipTime,
         lb.remark,
         case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
         else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour

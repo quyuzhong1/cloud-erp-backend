@@ -82,6 +82,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -580,12 +581,13 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             pagingVO.setCompleteEstimatedFee(pagingVO.getCurrencySymbol()+(Objects.isNull(pagingVO.getEstimatedFee())?"":pagingVO.getEstimatedFee()));
             pagingVO.setCompleteActualFee(pagingVO.getCurrencySymbol()+(Objects.isNull(pagingVO.getActualFee())?"":pagingVO.getActualFee()));
             //处理实际时效和预警
-            if(pagingVO.getActualHour() != null){
-                int days = pagingVO.getActualHour() / 24; // 计算天数部分
-                int remainingHours = pagingVO.getActualHour() % 24; // 计算剩余小时数部分
-                String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
-                pagingVO.setActualDesc(actualDesc);
-            }
+//            if(pagingVO.getActualHour() != null){
+//                int days = pagingVO.getActualHour() / 24; // 计算天数部分
+//                int remainingHours = pagingVO.getActualHour() % 24; // 计算剩余小时数部分
+//                String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
+//                pagingVO.setActualDesc(actualDesc);
+                pagingVO.setActualDesc(getActualDesc(pagingVO.getLogisticsStatus(),pagingVO.getOrderTime(),pagingVO.getSignTime(),pagingVO.getShipTime()));
+//            }
             if(StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTime()) && !logisticsChannelEntity.getEffectiveTime().equals("0")
                     && StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTimeUnit())){
                 //判断是否是数字，不是数字的话不计算预警，直接返回中文
@@ -622,6 +624,36 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 pagingVO.setBusinessCode("");
             }
         });
+    }
+
+    private String getActualDesc(String logisticsStatus, LocalDateTime orderTime, LocalDateTime signTime, LocalDateTime shipTime) {
+        String actualDesc = StrUtil.EMPTY;
+        //无下单时间：默认展示为空
+        if (Objects.isNull(orderTime)){
+            return actualDesc;
+        }
+        Duration duration = null;
+        if (Objects.isNull(shipTime)){
+            if (!FmLogisticTrackStatusEnum.SIGN.getCode().equals(logisticsStatus)){
+                //有下单时间无开船时间-运输中：[当前时间-下单时间]
+                duration = Duration.between(LocalDateTime.now(), orderTime);
+            }else {
+                //有下单时间无开船时间-已签收：[签收时间-下单时间]
+                duration = Duration.between(signTime, orderTime);
+            }
+        }else {
+            if (!FmLogisticTrackStatusEnum.SIGN.getCode().equals(logisticsStatus)){
+                //有下单时间有开船时间-运输中：[当前时间-开船时间]
+                duration = Duration.between(LocalDateTime.now(), shipTime);
+            }else {
+                //有下单时间有开船时间-已签收：[签收时间-开船时间]
+                duration = Duration.between(signTime, shipTime);
+            }
+        }
+        if (Objects.nonNull(duration)){
+            actualDesc = duration.toDays() + "天" + duration.toHours() % 24 + "小时";
+        }
+        return actualDesc;
     }
 
     private void fillViewDb(TmsFirstMileLogisticDTO.ViewDTO dto) {
