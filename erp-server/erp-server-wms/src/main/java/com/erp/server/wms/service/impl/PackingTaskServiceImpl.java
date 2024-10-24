@@ -460,6 +460,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         updatePackingStatus(groupSkuList, dto.getTaskId());
         //发送飞书通知
         this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent());
+
         return Boolean.TRUE;
     }
 

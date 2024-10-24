@@ -5,10 +5,12 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -227,9 +229,9 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * 要货申请完成飞书通知
      * @author jack
      * @date 2024/10/9
-     * @param requisitionApplication
+     * @param map
      */
-    void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
+    void sendRequisitionMsg(Map<String,String> map , CfgSettingEnum type);
 
     /**
      * 打印fnsku预览

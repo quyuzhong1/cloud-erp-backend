@@ -20,18 +20,20 @@ import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.omg.CORBA.OBJ_ADAPTER;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * PDA装箱任务
@@ -48,6 +50,9 @@ import java.util.Objects;
 public class PdaPackingTaskController extends BaseController {
     @Resource
     private PackingTaskService packingTaskService;
+
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
     /**
      * 获取状态统计
      *
@@ -175,7 +180,24 @@ public class PdaPackingTaskController extends BaseController {
     public ApiResult<WmsCartonDTO.PrintDTO> pdaPackingSave(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
         dto.setOperation("装箱操作");
         dto.setContent("完成装箱");
-        return success(packingTaskService.pdaPackingSave(dto));
+        WmsCartonDTO.PrintDTO printDTO = packingTaskService.pdaPackingSave(dto);
+        PackingTaskEntity packingTaskEntity = packingTaskService.getById(dto.getTaskId());
+        //装箱完成
+        if (null!= packingTaskEntity
+                && packingTaskEntity.getSourceType().equals(PickingSourceTypeEnum.THIRD.getCode())
+                && packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())) {
+            //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
+            RequisitionApplicationEntity entity = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
+            if(null != entity){
+                Map<String,String> map = new HashMap<>();
+                map.put("code",entity.getCode());
+                map.put("createUserId",entity.getCreateUserId());
+                map.put("createUserName",entity.getCreateUserName());
+                map.put("packingCode",packingTaskEntity.getCode());
+                requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE);
+            }
+        }
+        return success(printDTO);
     }
 
     /**

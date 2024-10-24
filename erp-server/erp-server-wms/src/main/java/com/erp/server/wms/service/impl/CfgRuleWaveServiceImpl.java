@@ -442,7 +442,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 log.error("发货单【{}】未找到明细数据", deliveryEntity.getCode());
                 continue;
             }
-            List<String> skus = soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList);
+            List<String> skus = soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList,entity.getWaveType());
             if (CollectionUtil.isNotEmpty(skus)) {
                 //生成缺货补货数据
                 generateReplenish(detailList, deliveryEntity, skus);
