@@ -6,11 +6,15 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
@@ -253,9 +257,9 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 if (CollUtil.isNotEmpty(curReturnInfoList)) {
                     for (DmpSoRefundInfoEntity soRefundInfoEntity : curReturnInfoList) {
                         List<DmpSoRefundDetailEntity> refundEntityList = dmpSoRefundDetailEntityMap.get(soRefundInfoEntity.getId());
-                        if (CollUtil.isEmpty(refundEntityList)) {
-                            ServiceException.runError("Shopify退款单数据异常，找不到明细：mainId={}", soRefundInfoEntity.getId());
-                        }
+//                        if (CollUtil.isEmpty(refundEntityList)) {
+//                            ServiceException.runError("Shopify退款单数据异常，找不到明细：mainId={}", soRefundInfoEntity.getId());
+//                        }
                         changeRefundMap.put(soRefundInfoEntity, refundEntityList);
                     }
                 }
@@ -624,8 +628,12 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             dto.setDictPlatform(dmpEntity.getSourceSystem());
             dto.setPlatform(dmpEntity.getSourceSystem());
             dto.setDmpSyncTaskId(cfgOutputId);
-            // 明细
-            List<PlatformRefundOrderDTO.Detail> detailList = parseRefundDetailList(dmpDetailList);
+            List<PlatformRefundOrderDTO.Detail> detailList = new LinkedList<>();
+            // 退款单可能存在没有明细
+            if (!CollectionUtils.isEmpty(dmpDetailList)){
+                // 明细
+                detailList = parseRefundDetailList(dmpDetailList);
+            }
             dto.setDetailList(detailList);
 
             resultList.add(dto);
@@ -646,4 +654,46 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         }
         return resultList;
     }
+
+    @Override
+    public void getRetryPushSourceData(List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList,
+                                       DmpOutputTaskRequest dmpOutputTaskRequest) {
+        DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
+        List<String> mainIds = dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().get(dmpCfgInputConvertEntity).stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<String> soReturnIds = null;
+        List<String> soRefundIds = null;
+        for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
+            DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
+            String storageName = childDmpCfgInputConvertEntity.getStorageName();
+            ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(storageName, true) + "ServiceImpl" , ServiceImpl.class);
+            QueryWrapper<?> wrapper = new QueryWrapper<>();
+            if("dmp_so_return_info".equals(storageName)) {
+                wrapper.in("source_id", mainIds);
+            } else if("dmp_so_return_detail".equals(storageName)){
+                if(CollUtil.isEmpty(soReturnIds)) {
+                    continue;
+                }
+                wrapper.in("main_id", soReturnIds);
+            } else if("dmp_so_refund_info".equals(storageName)){
+                wrapper.in("source_id", mainIds);
+            } else if("dmp_so_refund_detail".equals(storageName)){
+                if(CollUtil.isEmpty(soRefundIds)) {
+                    continue;
+                }
+                wrapper.in("main_id", soRefundIds);
+            } else {
+                wrapper.in("main_id", mainIds);
+            }
+            List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
+            if("dmp_so_return_info".equals(storageName)) {
+                soReturnIds = childEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            }
+            if("dmp_so_refund_info".equals(storageName)) {
+                soRefundIds = childEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            }
+            dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
+            dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
+        }
+    }
+
 }

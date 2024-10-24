@@ -87,4 +87,14 @@ public class ShopifyRefundOrderDmpHandler extends DmpInputDoNextDmpHandler{
         }
         return resultList;
     }
+
+    @Override
+    protected void afterConvertData(Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps) {
+        for (List<TreeMap<String, Object>> dmpInputMongoList : dmpInputDataDmpRelationMaps.values()) {
+            for (TreeMap<String, Object> detailMap : dmpInputMongoList) {
+                String mainId = detailMap.get("mainId").toString();
+                detailMap.put("sourceId", mainId);
+            }
+        }
+    }
 }
