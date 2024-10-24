@@ -34,7 +34,7 @@ public class SoDeliveryNoticeChangeEntity extends BaseEntity<SoDeliveryNoticeCha
     * 审核状态 
     */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private String approveStatus;
     /**
     * 来源单号
     */

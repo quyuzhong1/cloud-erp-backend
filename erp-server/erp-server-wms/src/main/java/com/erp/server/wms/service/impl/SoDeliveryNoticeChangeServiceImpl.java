@@ -6,17 +6,21 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
+import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
 import com.erp.server.wms.mapper.SoDeliveryNoticeChangeMapper;
 import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import com.erp.server.wms.service.SoDeliveryNoticeService;
+import jodd.util.StringUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,23 +32,18 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -66,6 +65,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     private DocNoGenHelper docNoGenHelper;
     @Autowired
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SoDeliveryNoticeService soDeliveryNoticeService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -105,9 +107,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         SoDeliveryNoticeChangeEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货通知变更单"));
         // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
-        }
+//        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
+//            throw new ServiceException(ApiError.ERROR_1029);
+//        }
         SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity =  BeanMapperUtils.map(SoDeliveryNoticeChangeEntity.class, updateDTO);
 
         // 数据处理
@@ -370,13 +372,37 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     }
 
     @Override
-    public SoDeliveryNoticeChangeDTO.ViewDTO view(String id) {
-        SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到发货通知变更单数据"));
-        SoDeliveryNoticeChangeDTO.ViewDTO data = BeanMapperUtils.map(SoDeliveryNoticeChangeDTO.ViewDTO.class, soDeliveryNoticeChangeEntity);
-        // 数据填充处理
-        fillOne(data);
-        // TODO 查询明细数据（如果有的话）
-        return data;
+    public SoDeliveryNoticeChangeDTO.ViewDTO view(SoDeliveryNoticeChangeDTO.ViewIdDTO viewIdDTO) {
+        String type = viewIdDTO.getType();
+        String id = viewIdDTO.getId();
+        SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity = new SoDeliveryNoticeChangeEntity();
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity;
+        if("pushDown".equals(type)){
+            soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
+        }else{
+            soDeliveryNoticeChangeEntity = this.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知变更单数据"));
+            soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(soDeliveryNoticeChangeEntity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
+        }
+        SoDeliveryNoticeDTO.View noticeView = soDeliveryNoticeService.view(soDeliveryNoticeEntity.getId());
+        SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = BeanUtil.toBean(noticeView,SoDeliveryNoticeChangeDTO.ViewDTO.class);
+        viewDTO.setId(soDeliveryNoticeChangeEntity.getId());
+        viewDTO.setNoticeId(soDeliveryNoticeEntity.getId());
+        viewDTO.setCode(soDeliveryNoticeChangeEntity.getCode());
+        viewDTO.setNoticeCode(soDeliveryNoticeEntity.getCode());
+        viewDTO.setApproveStatus(soDeliveryNoticeChangeEntity.getApproveStatus());
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(soDeliveryNoticeChangeEntity.getApproveStatus()));
+        viewDTO.setSoId(soDeliveryNoticeEntity.getSourceId());
+        viewDTO.setSoCode(soDeliveryNoticeEntity.getSourceCode());
+        viewDTO.setChangeReason(soDeliveryNoticeChangeEntity.getChangeReason());
+        if(StringUtil.isNotBlank(soDeliveryNoticeChangeEntity.getId())){
+            List<SoDeliveryNoticeChangeDTO.ViewDetail> detailList = baseMapper.listViewDetailList(soDeliveryNoticeChangeEntity.getId());
+            for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : detailList) {
+                viewDetail.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(viewDetail.getChangeType()));
+                viewDetail.setMaxCanChangeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() - viewDetail.getCurrentNoticeQty());
+            }
+            viewDTO.setViewDetailList(detailList);
+        }
+        return viewDTO;
     }
     /**
     * 启动流程
@@ -467,9 +493,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     */
     private void validateSubmit(SoDeliveryNoticeChangeEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
-        }
+//        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+//            throw new ServiceException(ApiError.ERROR_98010);
+//        }
         return;
     }
 

@@ -54,13 +54,14 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     List<SoDeliveryNoticeChangeDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
-    * 详情
-    * @author lrp
-    * @date: 2024-10-23
-    * @param id
-    * @return
-    */
-    SoDeliveryNoticeChangeDTO.ViewDTO view(String id);
+     * 详情
+     *
+     * @param viewIdDTO
+     * @return
+     * @author lrp
+     * @date: 2024-10-23
+     */
+    SoDeliveryNoticeChangeDTO.ViewDTO view(SoDeliveryNoticeChangeDTO.ViewIdDTO viewIdDTO);
 
     /**
     * 新增并提交审核

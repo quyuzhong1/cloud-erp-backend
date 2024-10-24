@@ -41,6 +41,17 @@ public class SoDeliveryNoticeChangeController extends BaseController {
 
     @Resource
     private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
+    /**
+     * 详情/下推
+     * @author lrp
+     * @date:  2024-10-23
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/view")
+    public ApiResult<SoDeliveryNoticeChangeDTO.ViewDTO> view(@RequestBody @Validated SoDeliveryNoticeChangeDTO.ViewIdDTO dto) {
+        return success(soDeliveryNoticeChangeService.view(dto));
+    }
 
     /**
     * 新增
@@ -330,24 +341,6 @@ public class SoDeliveryNoticeChangeController extends BaseController {
             resultDTOS.add(cancelResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-    * 详情
-    * @author lrp
-    * @date:  2024-10-23
-    * @param id
-    * @return ApiResult<SoDeliveryNoticeChangeDTO.ViewDTO>>
-    */
-    @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:soDeliveryNoticeChange:view",
-            serviceClass = SoDeliveryNoticeChangeService.class,
-            keyIdName = "id")
-    @LogViewService
-    public ApiResult<SoDeliveryNoticeChangeDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(soDeliveryNoticeChangeService.view(id));
     }
 
     /**

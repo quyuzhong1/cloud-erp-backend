@@ -63,5 +63,26 @@
         </if>
         GROUP BY approve_status
     </select>
+    <select id="listViewDetailList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ViewDetail">
+        select sdncd.id as detailId,
+               sdncd.source_detail_id as sourceDetailId,
+               sdncd.so_detail_id as soDetailId,
+               sdncd.sku_id as skuId,
+               sdncd.sku_no as skuNo,
+               sdncd.product_name as productName,
+               sdncd.change_type as changeType,
+               sd.qty as saleQty,
+                (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sdnd.source_detail_id and a.is_deleted = false) as allNoticeQty,
+                sdnd.delivery_qty as currentNoticeQty,
+                (select  COALESCE(sum(a.picked_qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
+               sdnd.remark
+                from so_delivery_notice_change sdnc
+        inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id
+        inner join so_delivery_notice_detail sdnd on sdnd.id = sdncd.source_detail_id
+        inner join so_detail sd on sd.id = sdncd.so_detail_id
+        where sdnc.is_deleted = false and sdncd.is_deleted = false and sdnd.is_deleted = false
+        and sd.is_deleted = false
+        and sdnc.id = #{id}
+        </select>
 
 </mapper>

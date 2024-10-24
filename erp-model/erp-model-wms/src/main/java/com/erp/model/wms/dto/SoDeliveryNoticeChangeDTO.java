@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -176,6 +177,25 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         private List<String> ids;
     }
 
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewIdDTO {
+        /**
+         * 发货通知单id 或者是发货通知变更单id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 类型，pushDown：下推, edit：编辑
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+    }
     /**
     * 详情
     */
@@ -184,78 +204,243 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
+        * 发货通知变更单id
         */
         private String  id;
 
         /**
-        * 单据编号
+         * 发货通知单号id
+         */
+        private String  noticeId;
+        /**
+        * 发货通知变更单号
         */
         private String code;
 
         /**
-        * 审核状态 
-        */
+         * 发货通知单号
+         */
+        private String noticeCode;
+
+        /**
+         * 审核状态
+         */
         private String approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+        /**
+         * 单据类型
+         */
+        private String type;
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
 
         /**
-        * 来源单号
-        */
-        private String sourceCode;
-
+         * 销售id
+         */
+        private String soId;
         /**
-        * 来源Id
-        */
-        private String sourceId;
-
-        /**
-        * 销售订单编号
-        */
+         * 销售单号
+         */
         private String soCode;
 
         /**
-        * 销售订单id
-        */
-        private String soId;
+         * 销售组织id
+         */
+        private String salesOrgId;
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
 
         /**
-        * 作废状态
-        */
-        private Boolean invalidStatus;
+         * 实际发货日期
+         */
+        private LocalDate actualDeliveryDate;
 
         /**
-        * 客户表id
-        */
-        private String customerId;
+         * 要货日期
+         */
+        private LocalDate requireDate;
 
         /**
-        * 客户名称
-        */
-        private String customerName;
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
 
         /**
-        * 审核人id
-        */
-        private String approveUserId;
+         * 完成打包日期
+         */
+        private LocalDate packDate;
 
         /**
-        * 审核人名称
-        */
-        private String approveUserName;
+         * 出货仓库
+         */
+        private String warehouseId;
+        /**
+         * 出货仓库名称
+         */
+        private String warehouseName;
 
         /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
+         * 库存组织id
+         */
+        private String warehouseOrgId;
+        /**
+         * 库存组织名称
+         */
+        private String warehouseOrgName;
+        /**
+         * 承运商id
+         */
+        private String carrierId;
+        /**
+         * 承运商名称
+         */
+        private String carrierName;
+        /**
+         * 运输单号
+         */
+        private String trackNo;
 
         /**
-        * 变更原因
-        */
+         * 变更原因
+         */
         private String changeReason;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         * 客户名称
+         */
+        private String customerName;
+        /**
+         * 收货人
+         */
+        private String receiverName;
+        /**
+         * 联系电话
+         */
+        private String telNumber;
+        /**
+         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
+         * 描述：deliverGoods（发货）selfExtraction（自提）
+         */
+        private String deliveryModeDict;
+        /**
+         * 交货方式名称
+         */
+        private String deliveryModeDictName;
+        /**
+         * 收货地址
+         */
+        private String receiveAddress;
 
-
+        /**
+         * 明细
+         */
+        private List<ViewDetail> viewDetailList;
     }
 
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDetail {
+
+        /**
+         * 明细Id
+         */
+        private String detailId;
+
+        /**
+         * 来源明细Id
+         */
+        private String sourceDetailId;
+        /**
+         * 销售明细Id
+         */
+        private String soDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 变更类型
+         */
+        private String changeType;
+        /**
+         * 变更类型名称
+         */
+        private String changeTypeName;
+
+        /**
+         * 销售数量
+         */
+        private Integer saleQty;
+
+        /**
+         * 已下推发货通知数量
+         */
+        private Integer allNoticeQty;
+
+        /**
+         * 原发货通知数量
+         */
+        private Integer currentNoticeQty;
+
+        /**
+         * 已拣货
+         */
+        private Integer pickedQty;
+
+        /**
+         * 最大可变更数量
+         */
+        private Integer maxCanChangeQty;
+
+        /**
+         * 新发货通知数量
+         */
+        private Integer newNoticeQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
     /**
     * 新增
     */
