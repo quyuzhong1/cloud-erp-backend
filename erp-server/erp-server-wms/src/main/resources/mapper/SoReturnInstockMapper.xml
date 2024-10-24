@@ -20,6 +20,7 @@
         sri.invalid_status AS invalidStatus,
         sri.seller_id AS sellerId,
         sri.seller_name AS sellerName,
+        sri.so_id as soId,
         srid.id as detailId,
         srid.sku_id AS skuId,
         srid.sku_no AS skuNo,

@@ -104,6 +104,10 @@ public class SoReturnInstockDTO {
          */
         private String id;
         /**
+         * id
+         */
+        private String soId;
+        /**
          * 明细id
          */
         private String detailId;
