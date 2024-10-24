@@ -245,11 +245,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 if(obj.getType().equals("B2C")){
                     SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(obj.getSoId())).findFirst().orElse(new SoB2cEntity());
                     List<SoB2cDetailEntity> soB2cDetailEntity = soB2cDetailEntityList.stream().filter(detail -> detail.getMainId().equals(soB2cEntity.getId()) && detail.getSkuId().equals(obj.getSkuId())).collect(Collectors.toList());
-                    SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(detail -> detail.getId().equals(obj.getSoReturnDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
-                    SoB2cReturnEntity soB2cReturnEntity = soB2cReturnEntityList.stream().filter(v->v.getId().equals(obj.getSoReturnId())).findFirst().orElse(new SoB2cReturnEntity());
                     obj.setSalesQty(soB2cDetailEntity.stream().mapToInt(SoB2cDetailEntity::getQty).sum());
                     obj.setReturnTypeDict(SoB2cReturnTypeEnum.getName(obj.getReturnTypeDict()));
-                    obj.setMustQty(soB2cReturnDetailEntity.getReturnQty());
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail ->detail.getSoId().equals(obj.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setDeliveryQty(actualQty);
                     Integer receiveQty = soReturnReceiveDetailEntitiesSourceIds.stream().filter(req -> obj.getSourceDetailId().equals(req.getId())  && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
