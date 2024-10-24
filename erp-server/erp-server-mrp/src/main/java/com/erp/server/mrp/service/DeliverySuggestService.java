@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * <p>
- * 发货计划 服务类
+ * 补货计划 服务类
  * </p>
  *
  * @author will

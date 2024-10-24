@@ -27,14 +27,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 发货计划
+ * 补货计划
  *
  * @author will
  * @since 2024-08-27
  */
 @Slf4j
 @RestController
-@LogSystemModule("发货计划")
+@LogSystemModule("补货计划")
 @RequestMapping("/deliverySuggest")
 public class DeliverySuggestController extends BaseController {
 
@@ -249,7 +249,7 @@ public class DeliverySuggestController extends BaseController {
     }
 
     /**
-     * 下推发货计划
+     * 下推补货计划
      * @author will
      * @date 2024/10/17 18:22
      * @param idsDTO
@@ -262,7 +262,7 @@ public class DeliverySuggestController extends BaseController {
     }
 
     /**
-     * 下推发货计划保存
+     * 下推补货计划保存
      * @author will
      * @date 2024/10/18 10:09
      * @param deliveryPlanDTO

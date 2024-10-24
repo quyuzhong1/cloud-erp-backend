@@ -89,27 +89,27 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void importRule(MultipartFile excelFile, HttpServletResponse response) {
+    public void importRule(MultipartFile excelFile,String platformType, HttpServletResponse response) {
         //平台信息
         List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
 
         //备货
-        Pair<List<StockUpImportExcelDTO>, List<StockUpImportExcelDTO>> stockUpPair = importStockUp(excelFile,platformViewList);
+        Pair<List<StockUpImportExcelDTO>, List<StockUpImportExcelDTO>> stockUpPair = importStockUp(excelFile,platformViewList,platformType);
         //动态备货系数
-        Pair<List<StockingRatioImportExcelDTO>, List<StockingRatioImportExcelDTO>> stockingRatioPair = importStockingRatio(excelFile,platformViewList);
+        Pair<List<StockingRatioImportExcelDTO>, List<StockingRatioImportExcelDTO>> stockingRatioPair = importStockingRatio(excelFile,platformViewList,platformType);
         //默认日销量
-        Pair<List<DefaultSalesQtyImportExcelDTO>, List<DefaultSalesQtyImportExcelDTO>> defaultSalesQtyPair = importDefaultSalesQty(excelFile,platformViewList);
+        Pair<List<DefaultSalesQtyImportExcelDTO>, List<DefaultSalesQtyImportExcelDTO>> defaultSalesQtyPair = importDefaultSalesQty(excelFile,platformViewList,platformType);
         //动态日销量
-        Pair<List<DynamicSalesQtyImportExcelDTO>, List<DynamicSalesQtyImportExcelDTO>> dynamicSalesQtyPair = importDynamicSalesQty(excelFile,platformViewList);
+        Pair<List<DynamicSalesQtyImportExcelDTO>, List<DynamicSalesQtyImportExcelDTO>> dynamicSalesQtyPair = importDynamicSalesQty(excelFile,platformViewList,platformType);
         //固定日销量
-        Pair<List<FixedSalesQtyImportExcelDTO>, List<FixedSalesQtyImportExcelDTO>> fixedSalesQtyPair = importFixedSalesQty(excelFile,platformViewList);
+        Pair<List<FixedSalesQtyImportExcelDTO>, List<FixedSalesQtyImportExcelDTO>> fixedSalesQtyPair = importFixedSalesQty(excelFile,platformViewList,platformType);
         //固定日销量
-        Pair<List<SalesDenoisingImportExcelDTO>, List<SalesDenoisingImportExcelDTO>> salesDenoisingPair = importSalesDenoising(excelFile,platformViewList);
+        Pair<List<SalesDenoisingImportExcelDTO>, List<SalesDenoisingImportExcelDTO>> salesDenoisingPair = importSalesDenoising(excelFile,platformViewList,platformType);
         //导入文件名称
         String originalFilename = excelFile.getOriginalFilename();
         //上传正确数据
         upLoadSuccessExcel (originalFilename,stockUpPair.getKey(),stockingRatioPair.getKey(),defaultSalesQtyPair.getKey(),
-                dynamicSalesQtyPair.getKey(),fixedSalesQtyPair.getKey(),salesDenoisingPair.getKey());
+                dynamicSalesQtyPair.getKey(),fixedSalesQtyPair.getKey(),salesDenoisingPair.getKey(),platformType);
         //导出错误数据
         exportErrorExcel (response,stockUpPair.getValue(),stockingRatioPair.getValue(),defaultSalesQtyPair.getValue(),
                 dynamicSalesQtyPair.getValue(),fixedSalesQtyPair.getValue(),salesDenoisingPair.getValue());
@@ -126,7 +126,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param salesDenoisingList
      */
     private void upLoadSuccessExcel (String originalFilename,List<StockUpImportExcelDTO> stockUpList,List<StockingRatioImportExcelDTO> stockingRatioList,List<DefaultSalesQtyImportExcelDTO> defaultSalesQtyList,
-                                   List<DynamicSalesQtyImportExcelDTO> dynamicSalesQtyList,List<FixedSalesQtyImportExcelDTO> fixedSalesQtyList,List<SalesDenoisingImportExcelDTO> salesDenoisingList) {
+                                   List<DynamicSalesQtyImportExcelDTO> dynamicSalesQtyList,List<FixedSalesQtyImportExcelDTO> fixedSalesQtyList,List<SalesDenoisingImportExcelDTO> salesDenoisingList,String platformType) {
         //全部为空则无需处理
         if (CollectionUtils.isEmpty(stockUpList) && CollectionUtils.isEmpty(stockingRatioList)  && CollectionUtils.isEmpty(defaultSalesQtyList)
                 && CollectionUtils.isEmpty(dynamicSalesQtyList) && CollectionUtils.isEmpty(fixedSalesQtyList) && CollectionUtils.isEmpty(salesDenoisingList)) {
@@ -152,6 +152,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         dto.setModule(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
         dto.setType(HistoryImportRecordTypeEnum.CFG_RULE_REPLENISHMENT.getCode());
         dto.setExportFileDTO(exportFileDTO);
+        dto.setPlatformType(platformType);
         historyImportRecordService.add(dto);
     }
 
@@ -197,7 +198,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     /**
      * 备货
      */
-    private Pair<List<StockUpImportExcelDTO>,List<StockUpImportExcelDTO>> importStockUp (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private Pair<List<StockUpImportExcelDTO>,List<StockUpImportExcelDTO>> importStockUp (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         StockUpImportExcelListener excelListenerUtil = new StockUpImportExcelListener();
 
         try {
@@ -219,7 +220,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //导出错误数据
         List<StockUpImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理校验导入成功数据
-        handleImportStockUp(successList, errorList,platformViewList);
+        handleImportStockUp(successList, errorList,platformViewList,platformType);
         return new Pair<>(successList,errorList);
     }
     /**
@@ -229,7 +230,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param errorList
      */
-    private void handleImportStockUp (List<StockUpImportExcelDTO> successList, List<StockUpImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private void handleImportStockUp (List<StockUpImportExcelDTO> successList, List<StockUpImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -444,7 +445,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     /**
      * 动态备货系数
      */
-    private  Pair<List<StockingRatioImportExcelDTO>,List<StockingRatioImportExcelDTO>> importStockingRatio (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList){
+    private  Pair<List<StockingRatioImportExcelDTO>,List<StockingRatioImportExcelDTO>> importStockingRatio (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList,String platformType){
         StockingRatioImportExcelListener excelListenerUtil = new StockingRatioImportExcelListener();
 
         try {
@@ -466,7 +467,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //导出错误数据
         List<StockingRatioImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理校验导入成功数据
-        handleImportStockingRatio(successList, errorList,platformViewList);
+        handleImportStockingRatio(successList, errorList,platformViewList,platformType);
         return new Pair<>(successList,errorList);
     }
     /**
@@ -476,7 +477,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param errorList
      */
-    private void handleImportStockingRatio (List<StockingRatioImportExcelDTO> successList, List<StockingRatioImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private void handleImportStockingRatio (List<StockingRatioImportExcelDTO> successList, List<StockingRatioImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -523,6 +524,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
             }
             //备货信息
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
@@ -584,7 +588,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     /**
      * 导入默认日销量
      */
-    private Pair<List<DefaultSalesQtyImportExcelDTO>,List<DefaultSalesQtyImportExcelDTO>> importDefaultSalesQty (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private Pair<List<DefaultSalesQtyImportExcelDTO>,List<DefaultSalesQtyImportExcelDTO>> importDefaultSalesQty (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         DefaultSalesQtyImportExcelListener excelListenerUtil = new DefaultSalesQtyImportExcelListener();
 
         try {
@@ -606,7 +610,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //导出错误数据
         List<DefaultSalesQtyImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理校验导入成功数据
-        handleImportDefaultSalesQty(successList,errorList,platformViewList);
+        handleImportDefaultSalesQty(successList,errorList,platformViewList,platformType);
         return new Pair<>(successList,errorList);
     }
     /**
@@ -616,7 +620,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param errorList
      */
-    private void handleImportDefaultSalesQty (List<DefaultSalesQtyImportExcelDTO> successList, List<DefaultSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private void handleImportDefaultSalesQty (List<DefaultSalesQtyImportExcelDTO> successList, List<DefaultSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -659,6 +663,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
             }
             //销量数据
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
@@ -759,7 +766,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     /**
      * 导入动态日销量
      */
-    private Pair<List<DynamicSalesQtyImportExcelDTO>,List<DynamicSalesQtyImportExcelDTO>>  importDynamicSalesQty (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private Pair<List<DynamicSalesQtyImportExcelDTO>,List<DynamicSalesQtyImportExcelDTO>>  importDynamicSalesQty (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         DynamicSalesQtyImportExcelListener excelListenerUtil = new DynamicSalesQtyImportExcelListener();
 
         try {
@@ -781,7 +788,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //导出错误数据
         List<DynamicSalesQtyImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理校验导入成功数据
-        handleImportDynamicSalesQty(successList,errorList,platformViewList);
+        handleImportDynamicSalesQty(successList,errorList,platformViewList,platformType);
         return new Pair<>(successList,errorList);
     }
 
@@ -792,7 +799,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param errorList
      */
-    private void handleImportDynamicSalesQty (List<DynamicSalesQtyImportExcelDTO> successList, List<DynamicSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private void handleImportDynamicSalesQty (List<DynamicSalesQtyImportExcelDTO> successList, List<DynamicSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -833,6 +840,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
             }
             //销量数据
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
@@ -886,7 +896,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     /**
      * 导入固定日销量
      */
-    private Pair<List< FixedSalesQtyImportExcelDTO>,List<FixedSalesQtyImportExcelDTO>> importFixedSalesQty (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private Pair<List< FixedSalesQtyImportExcelDTO>,List<FixedSalesQtyImportExcelDTO>> importFixedSalesQty (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         FixedSalesQtyImportExcelListener excelListenerUtil = new FixedSalesQtyImportExcelListener();
 
         try {
@@ -908,7 +918,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //导出错误数据
         List<FixedSalesQtyImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理校验导入成功数据
-        handleImportFixedSalesQty(successList, errorList,platformViewList);
+        handleImportFixedSalesQty(successList, errorList,platformViewList,platformType);
         return new Pair<>(successList,errorList);
     }
 
@@ -919,7 +929,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param errorList
      */
-    private void handleImportFixedSalesQty (List<FixedSalesQtyImportExcelDTO> successList, List<FixedSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private void handleImportFixedSalesQty (List<FixedSalesQtyImportExcelDTO> successList, List<FixedSalesQtyImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -960,6 +970,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
             }
             //销量数据
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
@@ -1013,7 +1026,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     /**
      * 销量去噪
      */
-    private Pair<List<SalesDenoisingImportExcelDTO>, List<SalesDenoisingImportExcelDTO>> importSalesDenoising (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private Pair<List<SalesDenoisingImportExcelDTO>, List<SalesDenoisingImportExcelDTO>> importSalesDenoising (MultipartFile excelFile, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         SalesDenoisingImportExcelListener excelListenerUtil = new SalesDenoisingImportExcelListener();
 
         try {
@@ -1035,7 +1048,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //导出错误数据
         List<SalesDenoisingImportExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理校验导入成功数据
-        handleImportSalesDenoising(successList, errorList,platformViewList);
+        handleImportSalesDenoising(successList, errorList,platformViewList,platformType);
         return new Pair<>(successList,errorList);
     }
 
@@ -1046,7 +1059,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param errorList
      */
-    private void handleImportSalesDenoising (List<SalesDenoisingImportExcelDTO> successList, List<SalesDenoisingImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList) {
+    private void handleImportSalesDenoising (List<SalesDenoisingImportExcelDTO> successList, List<SalesDenoisingImportExcelDTO> errorList, List<DictBasicDTO.ViewDTO> platformViewList,String platformType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -1087,6 +1100,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
             }
             //销量数据
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
@@ -1193,7 +1209,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
     }
 
     @Override
-    public void importSalesEstimate(MultipartFile excelFile, HttpServletResponse response) {
+    public void importSalesEstimate(MultipartFile excelFile,String platformType, HttpServletResponse response) {
         SalesEstimateExcelListener excelListenerUtil = new SalesEstimateExcelListener();
 
         try {
@@ -1218,11 +1234,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         List<String> headList = excelListenerUtil.getHeadList();
 
         //处理校验导入成功数据
-        handleImportSalesEstimate(successList, errorList,headList);
+        handleImportSalesEstimate(successList, errorList,headList,platformType);
         //导入文件名称
         String originalFilename = excelFile.getOriginalFilename();
         //上传正确数据
-        upLoadSuccessExcel(originalFilename,successList,headList);
+        upLoadSuccessExcel(originalFilename,successList,headList,platformType);
 
         //导出错误数据
         exportErrorExcel (errorList,headList,response);
@@ -1251,7 +1267,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param headList
      */
-    private void upLoadSuccessExcel (String originalFilename,List<JSONObject> successList,List<String> headList) {
+    private void upLoadSuccessExcel (String originalFilename,List<JSONObject> successList,List<String> headList,String platformType) {
         //全部为空则无需处理
         if (CollectionUtils.isEmpty(successList)) {
             return;
@@ -1269,6 +1285,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         dto.setModule(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
         dto.setType(HistoryImportRecordTypeEnum.SALES_ESTIMATE_MANUAL.getCode());
         dto.setExportFileDTO(exportFileDTO);
+        dto.setPlatformType(platformType);
         historyImportRecordService.add(dto);
     }
 
@@ -1283,7 +1300,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param successList
      * @param errorList
      */
-    private void handleImportSalesEstimate (List<JSONObject> successList, List<JSONObject> errorList,List<String> headList) {
+    private void handleImportSalesEstimate (List<JSONObject> successList, List<JSONObject> errorList,List<String> headList,String platformType) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -1344,6 +1361,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            }
+            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 wrongList.add(jsonObject);

@@ -132,6 +132,13 @@ public class HistoryImportRecordDTO implements Serializable {
         private String name;
 
         /**
+         * 平台类型
+         */
+        @NotBlank(message = "平台类型不能为空")
+        @Size(max = 32,message = "平台类型最大长度不能超过32位")
+        private String platformType;
+
+        /**
          * 导入数据
          */
         @NotNull(message = "导入数据不能为空")

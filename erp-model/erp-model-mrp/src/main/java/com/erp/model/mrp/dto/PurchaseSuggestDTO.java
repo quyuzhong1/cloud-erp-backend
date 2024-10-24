@@ -363,6 +363,34 @@ public class PurchaseSuggestDTO implements Serializable {
 
 
     }
+    /**
+     * 导入修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportUpdateDTO  {
+        /**
+         * id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
 
+        /**
+         * 计划采购量（计划修正值）
+         */
+        @NotNull(message = "计划修正值不能为空")
+        private Integer planPurchaseQty;
+
+        /**
+         * 采购备货数
+         */
+        @NotNull(message = "采购备货数不能为空")
+        private Integer purchaseStockUpQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 
 }

@@ -8,6 +8,7 @@ import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -47,6 +48,15 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
     * @return
     */
     Boolean update(PurchaseSuggestDTO.UpdateDTO dto);
+
+    /**
+     * 导入采购
+     * @author will
+     * @date 2024/10/24 15:44
+     * @param updateDTO
+     * @return Boolean
+     */
+    Boolean importUpdate(PurchaseSuggestDTO.ImportUpdateDTO updateDTO);
 
     /**
      * 采购建议导出数据查询
@@ -119,4 +129,12 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
      * @return BatchResultDTO
      */
     BatchResultDTO updateRemark(String id, String remark);
+    /**
+     * 导入采购建议
+     * @author will
+     * @date 2024/10/24 15:22
+     * @param excelFile
+     * @param response
+     */
+    void importPurchaseSuggest(MultipartFile excelFile, HttpServletResponse response);
 }

@@ -502,13 +502,14 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @author will
      * @date 2024/8/30 16:48
      * @param excelFile
+     * @param platformType
      * @param response
      * @return ApiResult<?>
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入补货规则")
     @PostMapping("/importRule")
-    public ApiResult<?> importRule(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        replenishmentSuggestionImportService.importRule(excelFile, response);
+    public ApiResult<?> importRule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "platformType") String platformType, HttpServletResponse response) {
+        replenishmentSuggestionImportService.importRule(excelFile,platformType, response);
         return success();
     }
 
@@ -536,8 +537,8 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入运营预估月销")
     @PostMapping("/importSalesEstimate")
-    public ApiResult<?> importSalesEstimate(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        replenishmentSuggestionImportService.importSalesEstimate(excelFile, response);
+    public ApiResult<?> importSalesEstimate(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "platformType") String platformType, HttpServletResponse response) {
+        replenishmentSuggestionImportService.importSalesEstimate(excelFile,platformType, response);
         return success();
     }
 

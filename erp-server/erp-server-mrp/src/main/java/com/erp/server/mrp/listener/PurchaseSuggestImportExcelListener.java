@@ -4,7 +4,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.mrp.dto.excel.DeliverySuggestImportExcelDTO;
+import com.erp.model.mrp.dto.excel.PurchaseSuggestImportExcelDTO;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,33 +13,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 补货计划导入
+ * 补货规则导入
  * @author will
  * @date 2024/8/30 16:59
  */
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class DeliverySuggestImportExcelListener extends AnalysisEventListener<DeliverySuggestImportExcelDTO> {
+public class PurchaseSuggestImportExcelListener extends AnalysisEventListener<PurchaseSuggestImportExcelDTO> {
 
 
     /**
      * 导入数据，用于判断导入是否为空
      */
-    private final List<DeliverySuggestImportExcelDTO> allList = new ArrayList<>();
+    private final List<PurchaseSuggestImportExcelDTO> allList = new ArrayList<>();
 
     /**
      * 导入错误数据
      */
-    private final List<DeliverySuggestImportExcelDTO> errorList = new ArrayList<>();
+    private final List<PurchaseSuggestImportExcelDTO> errorList = new ArrayList<>();
 
     /**
      * 导入正确数据
      */
-    private final List<DeliverySuggestImportExcelDTO> successList = new ArrayList<>();
+    private final List<PurchaseSuggestImportExcelDTO> successList = new ArrayList<>();
 
     @Override
-    public void invoke(DeliverySuggestImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(PurchaseSuggestImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
         //添加数据用于判断是否为空
         allList.add(importExcelDTO);
 

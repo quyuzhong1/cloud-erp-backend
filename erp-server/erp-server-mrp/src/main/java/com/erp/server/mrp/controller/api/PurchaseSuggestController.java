@@ -19,6 +19,7 @@ import com.erp.server.mrp.service.PurchaseSuggestService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -91,6 +92,21 @@ public class PurchaseSuggestController extends BaseController {
     @GetMapping("/downloadTemplate")
     public ApiResult<?> downloadTemplate(HttpServletResponse response) {
         purchaseSuggestService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入采购计划
+     * @author will
+     * @date 2024/10/24 15:22
+     * @param excelFile
+     * @param response
+     * @return ApiResult<?>
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入采购计划")
+    @PostMapping("/importPurchaseSuggest")
+    public ApiResult<?> importPurchaseSuggest(@RequestParam(value = "excelFile") MultipartFile excelFile,  HttpServletResponse response) {
+        purchaseSuggestService.importPurchaseSuggest(excelFile, response);
         return success();
     }
 

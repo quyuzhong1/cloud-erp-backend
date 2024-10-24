@@ -42,6 +42,11 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+        /**
+         * 平台类型
+         */
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
     }
 
     /**

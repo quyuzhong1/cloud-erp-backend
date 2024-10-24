@@ -1,7 +1,11 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.lang.Pair;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -12,20 +16,25 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.dto.FileExcelDTO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.mrp.dto.DeliverySuggestDTO;
-import com.erp.model.mrp.dto.PurchaseSuggestDTO;
-import com.erp.model.mrp.dto.PurchaseSuggestSysDTO;
-import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.mrp.dto.*;
+import com.erp.model.mrp.dto.excel.PurchaseSuggestImportExcelDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
+import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -34,7 +43,9 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.mrp.listener.PurchaseSuggestImportExcelListener;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
+import com.erp.server.mrp.service.HistoryImportRecordService;
 import com.erp.server.mrp.service.OperateLogService;
 import com.erp.server.mrp.service.PurchaseSuggestService;
 import com.erp.server.mrp.service.PurchaseSuggestSysService;
@@ -44,12 +55,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -75,6 +85,9 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
 
     @Autowired
     private PurchaseSuggestSysService purchaseSuggestSysService;
+
+    @Autowired
+    private HistoryImportRecordService historyImportRecordService;
 
 
     @Override
@@ -128,6 +141,21 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
         BeanMapperUtils.copy(old,dto);
         purchaseSuggestSysService.add(dto);
+        return Boolean.TRUE;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean importUpdate(PurchaseSuggestDTO.ImportUpdateDTO updateDTO) {
+        PurchaseSuggestEntity old = super.getById(updateDTO.getId());
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购"));
+        PurchaseSuggestEntity purchaseSuggestEntity =  BeanMapperUtils.map(PurchaseSuggestEntity.class, updateDTO);
+
+        log.info("编辑 开始修改采购计划数据，单号：【{}】", old.getCode());
+        boolean save = super.updateById(purchaseSuggestEntity);
+        if(!save) {
+            throw new ServiceException("采购计划保存失败");
+        }
         return Boolean.TRUE;
     }
 
@@ -246,6 +274,152 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
 
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), old.getId(), "更新备注");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public void importPurchaseSuggest(MultipartFile excelFile, HttpServletResponse response) {
+        PurchaseSuggestImportExcelListener excelListenerUtil = new PurchaseSuggestImportExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), PurchaseSuggestImportExcelDTO.class, excelListenerUtil).headRowNumber(1).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<PurchaseSuggestImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            return;
+        }
+        //导入数据处理
+        List<PurchaseSuggestImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<PurchaseSuggestImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImport(successList, errorList);
+        //导入文件名称
+        String originalFilename = excelFile.getOriginalFilename();
+        //上传正确数据
+        upLoadSuccessExcel (originalFilename,successList);
+        //导出错误数据
+        exportErrorExcel (response,errorList);
+    }
+
+
+
+    /**
+     * 上传正确数据
+     * @author will
+     * @date 2024/10/24 12:07
+     * @param originalFilename
+     * @param successList
+     */
+    private void upLoadSuccessExcel (String originalFilename, List<PurchaseSuggestImportExcelDTO> successList) {
+        //全部为空则无需处理
+        if (CollectionUtils.isEmpty(successList) ) {
+            return;
+        }
+        String fileName = StrUtil.isBlank(originalFilename) ? "采购计划.xlsx" : originalFilename;
+        String pathUrl = "excel/purchaseSuggest.xlsx";
+        FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
+        exportFileDTO.setFileName(fileName);
+        exportFileDTO.setPathUrl(pathUrl);
+        List<Pair<Integer, List<?>>> sheetList = new ArrayList<>();
+        sheetList.add(new Pair<>(MathUtil.ZERO,successList));
+        exportFileDTO.setSheetList(sheetList);
+
+        //添加导入记录
+        HistoryImportRecordDTO.AddDTO dto = new HistoryImportRecordDTO.AddDTO();
+        dto.setName(fileName);
+        dto.setModule(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
+        dto.setType(HistoryImportRecordTypeEnum.PURCHASE_SUGGESTION_CONFIRM.getCode());
+        dto.setExportFileDTO(exportFileDTO);
+        historyImportRecordService.add(dto);
+    }
+
+    /**
+     * 导出错误数据
+     * @author will
+     * @date 2024/10/24 12:10
+     * @param response
+     * @param errorList
+     */
+    private void exportErrorExcel (HttpServletResponse response, List<PurchaseSuggestImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(errorList) ) {
+            return;
+        }
+        List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
+        pairList.add(new Pair<>(MathUtil.ZERO,errorList));
+        String name = "采购计划错误数据";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/purchaseSuggestError.xlsx";
+        try {
+            new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("信息导出出错 >>>>>{}", e);
+            throw new ServiceException("采购计划错误数据导出失败");
+        }
+    }
+
+    /**
+     * 导入数据处理
+     * @author will
+     * @date 2024/10/24 15:36
+     * @param successList
+     * @param errorList
+     */
+    private void handleImport (List<PurchaseSuggestImportExcelDTO> successList,List<PurchaseSuggestImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        //发货计划
+        List<String> codeList = successList.stream().map(PurchaseSuggestImportExcelDTO::getCode).distinct().collect(Collectors.toList());
+        List<PurchaseSuggestEntity> purchaseSuggestList = this.listByCodeList(codeList);
+
+        //记录错误数据
+        List<PurchaseSuggestImportExcelDTO>  wrongList = new ArrayList<>();
+        for (PurchaseSuggestImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+            //发货计划
+            PurchaseSuggestEntity purchaseSuggestEntity = purchaseSuggestList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(purchaseSuggestEntity)) {
+                errorMsgList.add("未找到采购计划");
+            }
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                //错误数据
+                wrongList.add(excelDTO);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
+            PurchaseSuggestDTO.ImportUpdateDTO updateDTO = new PurchaseSuggestDTO.ImportUpdateDTO();
+            updateDTO.setId(purchaseSuggestEntity.getId());
+            updateDTO.setPlanPurchaseQty(Integer.valueOf(excelDTO.getPlanDeliveryQty()));
+            updateDTO.setPurchaseStockUpQty(Integer.valueOf(excelDTO.getDeliveryStockUpQty()));
+            updateDTO.setRemark(excelDTO.getRemark());
+            this.importUpdate(updateDTO);
+        }
+        successList.removeAll(wrongList);
+    }
+
+    /**
+     * 根据编码集合查询
+     * @author will
+     * @date 2024/10/24 15:34
+     * @param codeList
+     * @return List<PurchaseSuggestEntity>
+     */
+    private List<PurchaseSuggestEntity> listByCodeList(List<String> codeList) {
+        if (CollectionUtils.isEmpty(codeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(PurchaseSuggestEntity::getCode,codeList).list();
     }
 
     /**
