@@ -2462,7 +2462,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public RequisitionApplicationDTO.ImportDTO importFile(MultipartFile excelFile, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS, HttpServletResponse response) {
-        changeNullToEmpty(fbaBindShipmentViewDTOS);
         RequisitionApplicationDetailExcelListener excelListenerUtil = new RequisitionApplicationDetailExcelListener(fbaBindShipmentViewDTOS);
         try {
             EasyExcel.read(excelFile.getInputStream(), RequisitionApplicationDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -2492,23 +2491,5 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         importDTO.setSuccessList(excelDateList);
         importDTO.setErrorUrl(url);
         return importDTO;
-    }
-
-    private void changeNullToEmpty(List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS) {
-        //转换空数据
-        fbaBindShipmentViewDTOS.forEach(e -> {
-            e.setId(StrUtil.isNotBlank(e.getId()) ? e.getId() : "");
-            e.setTaskId(StrUtil.isNotBlank(e.getTaskId()) ? e.getTaskId() : "");
-            e.setCartonId(StrUtil.isNotBlank(e.getCartonId()) ? e.getCartonId() : "");
-            e.setBoxNo(StrUtil.isNotBlank(e.getBoxNo()) ? e.getBoxNo() : "");
-            e.setPackingSku(StrUtil.isNotBlank(e.getPackingSku()) ? e.getPackingSku() : "");
-            e.setPackingFnSku(StrUtil.isNotBlank(e.getPackingFnSku()) ? e.getPackingFnSku() : "");
-            e.setFbaShipmentId(StrUtil.isNotBlank(e.getFbaShipmentId()) ? e.getFbaShipmentId() : "");
-            e.setFbaShipmentCode(StrUtil.isNotBlank(e.getFbaShipmentCode()) ? e.getFbaShipmentCode() : "");
-            e.setFbaBoxNo(StrUtil.isNotBlank(e.getFbaBoxNo()) ? e.getFbaBoxNo() : "");
-            e.setFbaPackingSku(StrUtil.isNotBlank(e.getFbaPackingSku()) ? e.getFbaPackingSku() : "");
-            e.setFbaPackingFnSku(StrUtil.isNotBlank(e.getFbaPackingFnSku()) ? e.getFbaPackingFnSku() : "");
-            e.setDeliveryCode(StrUtil.isNotBlank(e.getDeliveryCode()) ? e.getDeliveryCode() : "");
-        });
     }
 }

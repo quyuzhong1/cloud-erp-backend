@@ -47,6 +47,22 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
 
 
     public RequisitionApplicationDetailExcelListener(List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS) {
+        if (CollectionUtils.isNotEmpty(fbaBindShipmentViewDTOS)){
+            fbaBindShipmentViewDTOS.forEach(e -> {
+                e.setId(StrUtil.isNotBlank(e.getId()) && !Objects.equals(e.getId(),"null") ? e.getId() : "");
+                e.setTaskId(StrUtil.isNotBlank(e.getTaskId()) && !Objects.equals(e.getTaskId(),"null") ? e.getTaskId() : "");
+                e.setCartonId(StrUtil.isNotBlank(e.getCartonId()) && !Objects.equals(e.getCartonId(),"null") ? e.getCartonId() : "");
+                e.setBoxNo(StrUtil.isNotBlank(e.getBoxNo()) && !Objects.equals(e.getBoxNo(),"null") ? e.getBoxNo() : "");
+                e.setPackingSku(StrUtil.isNotBlank(e.getPackingSku()) && !Objects.equals(e.getPackingSku(),"null") ? e.getPackingSku() : "");
+                e.setPackingFnSku(StrUtil.isNotBlank(e.getPackingFnSku()) && !Objects.equals(e.getPackingFnSku(),"null") ? e.getPackingFnSku() : "");
+                e.setFbaShipmentId(StrUtil.isNotBlank(e.getFbaShipmentId()) && !Objects.equals(e.getFbaShipmentId(),"null") ? e.getFbaShipmentId() : "");
+                e.setFbaShipmentCode(StrUtil.isNotBlank(e.getFbaShipmentCode()) && !Objects.equals(e.getFbaShipmentCode(),"null") ? e.getFbaShipmentCode() : "");
+                e.setFbaBoxNo(StrUtil.isNotBlank(e.getFbaBoxNo()) && !Objects.equals(e.getFbaBoxNo(),"null") ? e.getFbaBoxNo() : "");
+                e.setFbaPackingSku(StrUtil.isNotBlank(e.getFbaPackingSku()) && !Objects.equals(e.getFbaPackingSku(),"null") ? e.getFbaPackingSku() : "");
+                e.setFbaPackingFnSku(StrUtil.isNotBlank(e.getFbaPackingFnSku()) && !Objects.equals(e.getFbaPackingFnSku(),"null") ? e.getFbaPackingFnSku() : "");
+                e.setDeliveryCode(StrUtil.isNotBlank(e.getDeliveryCode()) && !Objects.equals(e.getDeliveryCode(),"null") ? e.getDeliveryCode() : "");
+            });
+        }
         this.fbaBindShipmentViewDTOS  = CollectionUtils.isEmpty(fbaBindShipmentViewDTOS) ? Collections.emptyList() : fbaBindShipmentViewDTOS;
     }
 
