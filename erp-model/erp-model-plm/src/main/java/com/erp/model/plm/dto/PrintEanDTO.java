@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.erp.model.plm.enums.ProductContentEnum;
 import com.itextpdf.text.Element;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +8,9 @@ import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -61,6 +64,13 @@ public class PrintEanDTO {
      */
     private List<PrintSkuEanDTO> printSkuEanList;
 
+    public void setTextContent(List<String> textContent) {
+        this.textContent = textContent.stream()
+                .map(ProductContentEnum::ofCode) // 将字符串转换为枚举常量
+                .sorted(Comparator.comparing(ProductContentEnum::getOrder)) // 根据 order 排序
+                .map(ProductContentEnum::getCode) // 转换回字符串
+                .collect(Collectors.toList());
+    }
 
     /**
      * 打印sku参数
