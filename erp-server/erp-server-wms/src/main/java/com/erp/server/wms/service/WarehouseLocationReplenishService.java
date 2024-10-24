@@ -65,4 +65,12 @@ public interface WarehouseLocationReplenishService extends SuperService<Warehous
      * @author: jack
      */
     List<BatchResultDTO> generateReplenishBill();
+    /**
+     * 新增补货单
+     * @param addList
+     * @return
+     * @date: 2024-10-24
+     * @author: jack
+     */
+    List<BatchResultDTO> addList(List<WarehouseLocationReplenishDTO.AddDTO> addList);
 }
