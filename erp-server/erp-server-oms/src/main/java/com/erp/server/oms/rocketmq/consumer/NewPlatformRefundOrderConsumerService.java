@@ -3,6 +3,7 @@ package com.erp.server.oms.rocketmq.consumer;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformRefundOrderDTO;
 import com.common.business.dto.PlatformReturnOrderDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
@@ -24,6 +25,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 平台退款订单单消费者
@@ -69,6 +71,9 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 		List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
 		if(StringUtils.isNotBlank(dto.getPlatformOrderNo())){
 			List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCode(dto.getPlatformOrderNo());
+			//过滤手工单
+			soB2cEntityList = soB2cEntityList.stream().filter(v-> !SourceTypeEnum.SELF_ADD.getCode().equals(v.getSourceType())).collect(Collectors.toList());
+
 			if(CollectionUtils.isNotEmpty(soB2cEntityList)){
 				soB2cEntity = soB2cEntityList.get(0);
 				soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
