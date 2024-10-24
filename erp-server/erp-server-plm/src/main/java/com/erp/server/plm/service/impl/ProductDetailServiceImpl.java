@@ -5506,11 +5506,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         Font font = new Font(baseFont, fontSize);
         List<String> textContent = printEanDTO.getTextContent();
-        textContent.remove(ProductContentEnum.SKU.name());
+        textContent.remove(ProductContentEnum.SKU.getCode());
         StringBuilder text = new StringBuilder();
         int maxTextLength = 0;
         for (String content : textContent) {
-            ProductContentEnum contentEnum = ProductContentEnum.valueOf(content);
+            ProductContentEnum contentEnum = ProductContentEnum.ofCode(content);
             String addText = addText(dto, contentEnum, printEanDTO);
             if (ObjectUtils.isEmpty(addText)) {
                 continue;
@@ -5577,11 +5577,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
         Font font = new Font(baseFont, fontSize);
         List<String> textContent = printEanDTO.getTextContent();
-        textContent.remove(ProductContentEnum.EAN.name());
+        textContent.remove(ProductContentEnum.EAN.getCode());
         StringBuilder text = new StringBuilder();
         int maxTextLength = 0;
         for (String content : textContent) {
-            ProductContentEnum contentEnum = ProductContentEnum.valueOf(content);
+            ProductContentEnum contentEnum = ProductContentEnum.ofCode(content);
             String addText = addText(dto, contentEnum, printEanDTO);
             if (ObjectUtils.isEmpty(addText)) {
                 continue;
