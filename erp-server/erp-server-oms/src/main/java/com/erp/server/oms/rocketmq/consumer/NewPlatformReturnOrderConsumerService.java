@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformRefundOrderDTO;
 import com.common.business.dto.PlatformReturnOrderDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -82,6 +83,8 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		List<SoB2cDetailEntity> soB2cDetailEntityList = new ArrayList<>();
 		if(StringUtils.isNotBlank(dto.getPlatformOrderNo())){
 			List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCode(dto.getPlatformOrderNo());
+			//过滤手工单
+			soB2cEntityList = soB2cEntityList.stream().filter(v-> !SourceTypeEnum.SELF_ADD.getCode().equals(v.getSourceType())).collect(Collectors.toList());
 			List<String> soIds = soB2cEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
 			soB2cDetailEntityList = soB2cDetailService.listByMainIds(soIds);
 			List<String> platformSkuNo = dto.getDetailList().stream().map(v->v.getPlatformSkuNo()).collect(Collectors.toList());
