@@ -815,4 +815,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @date 2024-09-20
      */
     List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(List<String> skuIds);
+
+    /**
+     * 打印EAN
+     * @param printEanDTO 打印参数
+     * @param response    响应
+     */
+    void printEan(PrintEanDTO printEanDTO, HttpServletResponse response);
 }

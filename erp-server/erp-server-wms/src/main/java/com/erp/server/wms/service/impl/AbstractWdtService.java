@@ -332,7 +332,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         wmsPushMsgEntity.setThirdCode(outerCode);
         if (SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
             List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
-            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).collect(Collectors.joining(","));
+            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).distinct().collect(Collectors.joining(","));
             wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
             Map<String, String> pushData = new HashMap<>();
             pushData.put("remark", String.format("【%s】没有设置旺店通仓位映射", positionNos));
@@ -389,7 +389,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         wmsPushMsgEntity.setThirdCode(outerCode);
         if(SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
             List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
-            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).collect(Collectors.joining(","));
+            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).distinct().collect(Collectors.joining(","));
             wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
             Map<String, String> pushData = new HashMap<>();
             pushData.put("remark", String.format("【%s】没有设置旺店通仓位映射",positionNos));

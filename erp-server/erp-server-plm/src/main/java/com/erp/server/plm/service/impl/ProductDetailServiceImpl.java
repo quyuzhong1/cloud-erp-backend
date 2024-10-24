@@ -69,6 +69,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -79,11 +80,16 @@ import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
+import com.erp.server.plm.utils.UnitConverterUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.zxing.WriterException;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.python.google.common.util.concurrent.RateLimiter;
 import org.springframework.beans.BeanUtils;
@@ -101,11 +107,14 @@ import org.thymeleaf.util.ListUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -257,6 +266,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private InventoryFeign inventoryFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private FileTemplateFeign fileTemplateFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -5350,4 +5362,312 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<SkuVO.ProductChargeInfoDTO> skuList = baseMapper.listProductChargeInfoByIds(skuIds);
         return skuList;
     }
+
+    @Override
+    public void printEan(PrintEanDTO printEanDTO, HttpServletResponse response) {
+        // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\"");
+        // 创建字体
+        ProductPrintFormatEnum formatEnum = ProductPrintFormatEnum.valueOf(printEanDTO.getPrintFormat());
+        Document document = new Document(new com.itextpdf.text.Rectangle(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()),
+                UnitConverterUtil.mmToPoints(printEanDTO.getHeight())));
+        try (OutputStream out = response.getOutputStream()) {
+            InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("net/sf/jasperreports/fonts/dejavu/HarmonyOS_Sans_SC_Regular.ttf");
+            BaseFont baseFont = BaseFont.createFont("HarmonyOS_Sans_Regular.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED, true, IOUtils.toByteArray(stream), null);
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+            document.open();
+            for (PrintEanDTO.PrintSkuEanDTO dto : printEanDTO.getPrintSkuEanList()) {
+                switch (formatEnum) {
+                    case SEPARATELY_SKU_EAN:
+                        separatelySkuEan(dto, printEanDTO, document, writer, baseFont);
+                        break;
+                    case EAN:
+                        printEan(dto, printEanDTO, document, writer, baseFont);
+                        break;
+                    case SKU:
+                        printSku(dto, printEanDTO, document, writer, baseFont);
+                        break;
+                    case MERGE_SKU_EAN:
+                        mergeSkuEan(dto, printEanDTO, document, writer, baseFont);
+                        break;
+                    default:
+                        throw new ServiceException(ApiError.ERROR_9028);
+                }
+            }
+            document.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015, e.getMessage());
+        }
+    }
+
+    /**
+     * 合并打印
+     * @param dto         sku数据
+     * @param printEanDTO 参数
+     * @param document    页面元素
+     * @param writer      打印
+     * @param baseFont    字体
+     */
+    private void mergeSkuEan(PrintEanDTO.PrintSkuEanDTO dto, PrintEanDTO printEanDTO, Document document, PdfWriter writer, BaseFont baseFont) throws DocumentException, IOException {
+
+        Image image = getImage(dto.getSkuNo(), printEanDTO, writer, baseFont);
+        scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
+        // 计算条形码居中的 X 坐标
+        float xPosition = getXPosition(printEanDTO, document, image);
+        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        Image eanImage = null;
+        float eanPosition = 0;
+        float eanBarcodeYPosition = 0;
+        if (!ObjectUtils.isEmpty(dto.getEan())) {
+            eanImage = getImage(dto.getEan(), printEanDTO, writer, baseFont);
+            scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, eanImage);
+            eanPosition = getXPosition(printEanDTO, document, eanImage);
+            eanBarcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - eanImage.getScaledHeight() - 15;
+        }
+        // 绘制条形码
+        PdfContentByte canvas = writer.getDirectContent();
+        for (int i = 0; i < dto.getQty(); i++) {
+            // 将图像添加到 PDF
+            canvas.addImage(image, image.getScaledWidth(), 0, 0, image.getScaledHeight(), xPosition, barcodeYPosition);
+            if (!ObjectUtils.isEmpty(dto.getEan()) && ObjectUtil.isNotEmpty(eanImage)) {
+                canvas.addImage(eanImage, eanImage.getScaledWidth(), 0, 0, eanImage.getScaledHeight(), eanPosition, eanBarcodeYPosition);
+            }
+            document.newPage(); // 每个条形码添加到新页面
+        }
+    }
+
+    /**
+     * 设置缩放比例
+     * @param maxWidth 最大宽度
+     * @param image    图片
+     */
+    private void scaleFactor(float maxWidth, Image image) {
+        float scaleFactor = maxWidth / image.getScaledWidth(); // 计算缩放比例
+        // 确保条形码不超过最大宽度
+        if (scaleFactor < 1) {
+            image.scaleAbsolute(maxWidth, image.getScaledHeight() * scaleFactor);
+        }
+    }
+
+    /**
+     * 设置缩放比例
+     * @param maxWidth 最大宽度
+     * @param scaledWidth    图片宽度
+     */
+    private float scaleFactorFontSize(float maxWidth, float scaledWidth) {
+        float scaleFactor = maxWidth / scaledWidth; // 计算缩放比例
+        // 确保条形码不超过最大宽度
+        if (scaleFactor < 1) {
+            return 8 * scaleFactor;
+        }
+        return 8 ;
+    }
+
+    /**
+     * 生成条形码图片
+     *
+     * @param content     条形码内容
+     * @param printEanDTO 参数
+     * @param writer      打印
+     * @param baseFont    字体
+     */
+    private Image getImage(String content, PrintEanDTO printEanDTO, PdfWriter writer, BaseFont baseFont) {
+        PdfContentByte cb = writer.getDirectContent();
+        Barcode128 barcode = new Barcode128();
+        barcode.setCode(content);  // 设置条形码的内容
+        barcode.setCodeType(Barcode.CODE128);
+        barcode.setFont(baseFont);
+        barcode.setBarHeight(30f);
+        barcode.setTextAlignment(printEanDTO.getTextPosition());
+        if (Boolean.FALSE.equals(printEanDTO.getIsPrintText())) {
+            barcode.setFont(null);
+        }
+        return barcode.createImageWithBarcode(cb, null, null);
+    }
+
+    /**
+     * 打印sku
+     *
+     * @param dto         sku数据
+     * @param printEanDTO 参数
+     * @param document    页面元素
+     * @param writer      打印
+     * @param baseFont    字体
+     */
+    private void printSku(PrintEanDTO.PrintSkuEanDTO dto, PrintEanDTO printEanDTO, Document document, PdfWriter writer, BaseFont baseFont) throws DocumentException {
+
+        Image image = getImage(dto.getSkuNo(), printEanDTO, writer, baseFont);
+        float fontSize = scaleFactorFontSize(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image.getScaledWidth());
+        scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
+        // 计算条形码居中的 X 坐标
+        float xPosition = getXPosition(printEanDTO, document, image);
+        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+
+        Font font = new Font(baseFont, fontSize);
+        List<String> textContent = printEanDTO.getTextContent();
+        textContent.remove(ProductContentEnum.SKU.getCode());
+        StringBuilder text = new StringBuilder();
+        int maxTextLength = 0;
+        for (String content : textContent) {
+            ProductContentEnum contentEnum = ProductContentEnum.ofCode(content);
+            String addText = addText(dto, contentEnum, printEanDTO);
+            if (ObjectUtils.isEmpty(addText)) {
+                continue;
+            }
+            maxTextLength = Math.max(maxTextLength, addText.length());
+            text.append(addText).append("\n");
+        }
+        // 获取页面宽度
+        float pageWidth = document.getPageSize().getWidth();
+        // 创建一个 Phrase，并设置字体
+        Phrase phrase = new Phrase(fontSize, text.toString(), font);
+        float bottomY = barcodeYPosition - (textContent.size() * fontSize);
+        for (int i = 0; i < dto.getQty(); i++) {
+            PdfContentByte canvas = writer.getDirectContent();
+            // 将图像添加到 PDF
+            canvas.addImage(image, image.getScaledWidth(), 0, 0, image.getScaledHeight(), xPosition, barcodeYPosition);
+            ColumnText ct = new ColumnText(canvas);
+            ct.setLeading(fontSize * 1.5f);
+            ct.setText(phrase);
+            // 设置文本绘制区域
+            ct.setSimpleColumn(5, bottomY - 100, pageWidth - 5, barcodeYPosition);
+            ct.setAlignment(printEanDTO.getTextPosition());
+            // 绘制文本
+            ct.go();
+            document.newPage(); // 每个条形码添加到新页面
+        }
+    }
+
+    /**
+     * 获取左边起点位置
+     *
+     * @param printEanDTO 参数
+     * @param document    页面
+     * @param image       图片
+     */
+    private float getXPosition(PrintEanDTO printEanDTO, Document document, Image image) {
+        if (Element.ALIGN_LEFT == printEanDTO.getTextPosition()) {
+            return  5; // 左对齐，距离左边50个单位
+        } else if (Element.ALIGN_CENTER == printEanDTO.getTextPosition()) {
+            return  (document.getPageSize().getWidth() - image.getScaledWidth()) / 2;
+        } else {
+            return document.getPageSize().getWidth() - image.getScaledWidth() - 5; // 右对齐，距离右边50个单位
+        }
+    }
+
+    /**
+     * 打印ean
+     *
+     * @param dto         sku数据
+     * @param printEanDTO 参数
+     * @param document    页面元素
+     * @param writer      打印
+     * @param baseFont    字体
+     */
+    private void printEan(PrintEanDTO.PrintSkuEanDTO dto, PrintEanDTO printEanDTO, Document document, PdfWriter writer, BaseFont baseFont) throws DocumentException, IOException, WriterException {
+        if (ObjectUtils.isEmpty(dto.getEan())) {
+            return;
+        }
+        Image image = getImage(dto.getEan(), printEanDTO, writer, baseFont);
+        float fontSize = scaleFactorFontSize(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image.getScaledWidth());
+        scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
+        // 计算条形码居中的 X 坐标
+        float xPosition = getXPosition(printEanDTO, document, image);
+        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        Font font = new Font(baseFont, fontSize);
+        List<String> textContent = printEanDTO.getTextContent();
+        textContent.remove(ProductContentEnum.EAN.getCode());
+        StringBuilder text = new StringBuilder();
+        int maxTextLength = 0;
+        for (String content : textContent) {
+            ProductContentEnum contentEnum = ProductContentEnum.ofCode(content);
+            String addText = addText(dto, contentEnum, printEanDTO);
+            if (ObjectUtils.isEmpty(addText)) {
+                continue;
+            }
+            maxTextLength = Math.max(maxTextLength, addText.length());
+            text.append(addText).append("\n");
+        }
+        // 获取页面宽度
+        float pageWidth = document.getPageSize().getWidth();
+        // 创建一个 Phrase，并设置字体
+        Phrase phrase = new Phrase(fontSize, text.toString(), font);
+        float bottomY = barcodeYPosition - (textContent.size() * fontSize);
+        for (int i = 0; i < dto.getQty(); i++) {
+            PdfContentByte canvas = writer.getDirectContent();
+            // 将图像添加到 PDF
+            canvas.addImage(image, image.getScaledWidth(), 0, 0, image.getScaledHeight(), xPosition, barcodeYPosition);
+            ColumnText ct = new ColumnText(canvas);
+            ct.setLeading(fontSize * 1.5f);
+            ct.setText(phrase);
+            // 设置文本绘制区域
+            ct.setSimpleColumn(5, bottomY - 100, pageWidth - 5, barcodeYPosition);
+            ct.setAlignment(printEanDTO.getTextPosition());
+            // 绘制文本
+            ct.go();
+            document.newPage(); // 每个条形码添加到新页面
+        }
+    }
+
+    /**
+     * 分开打印
+     *
+     * @param dto         sku数据
+     * @param printEanDTO 打印参数
+     * @param document    元素
+     * @param writer      写流
+     * @param baseFont    字体
+     */
+    private void separatelySkuEan(PrintEanDTO.PrintSkuEanDTO dto, PrintEanDTO printEanDTO, Document document, PdfWriter writer, BaseFont baseFont) throws DocumentException {
+        PdfContentByte canvas = writer.getDirectContent();
+        Image image = getImage(dto.getSkuNo(), printEanDTO, writer, baseFont);
+        scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, image);
+        // 计算条形码居中的 X 坐标
+        float xPosition = getXPosition(printEanDTO, document, image);
+        float barcodeYPosition = document.getPageSize().getHeight() - image.getScaledHeight() - 5;
+        for (int i = 0; i < dto.getQty(); i++) {
+            // 将图像添加到 PDF
+            canvas.addImage(image, image.getScaledWidth(), 0, 0, image.getScaledHeight(), xPosition, barcodeYPosition);
+            document.newPage(); // 每个条形码添加到新页面
+        }
+        if (!ObjectUtils.isEmpty(dto.getEan())) {
+            Image eanImage = getImage(dto.getEan(), printEanDTO, writer, baseFont);
+            scaleFactor(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()) - 10, eanImage);
+            float eanPosition = getXPosition(printEanDTO, document, eanImage);
+            float eanBarcodeYPosition = document.getPageSize().getHeight() - eanImage.getScaledHeight() - 5;
+            // 绘制条形码
+            for (int i = 0; i < dto.getQty(); i++) {
+                canvas.addImage(eanImage, eanImage.getScaledWidth(), 0, 0, eanImage.getScaledHeight(), eanPosition, eanBarcodeYPosition);
+                document.newPage(); // 每个条形码添加到新页面
+            }
+        }
+    }
+
+    /**
+     * 添加文本
+     *
+     * @param dto         sku数据
+     * @param contentEnum 枚举
+     * @param printEanDTO 参数
+     */
+    private String addText(PrintEanDTO.PrintSkuEanDTO dto, ProductContentEnum contentEnum, PrintEanDTO printEanDTO) {
+        switch (contentEnum) {
+            case SKU:
+                return dto.getSkuNo();
+            case EAN:
+                return Optional.ofNullable(dto.getEan()).orElse("");
+            case PRODUCT_NAME:
+                return dto.getProductName();
+            case CUSTOM:
+                return printEanDTO.getCustomText();
+            case MADE_IN_CHINA:
+                return "MADE IN CHINA";
+            case DATE:
+                return LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+            default:
+                throw new ServiceException(ApiError.ERROR_9028);
+        }
+    }
+
 }
