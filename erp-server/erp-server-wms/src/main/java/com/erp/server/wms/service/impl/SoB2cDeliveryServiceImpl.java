@@ -1585,7 +1585,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         for (SoB2cDeliveryEntity entity : b2cDelivery) {
             List<SoB2cDeliveryDetailEntity> detailEntities = detailList.stream().filter(v -> v.getMainId().equals(entity.getId())).collect(Collectors.toList());
-            List<String> skus = generatePickingDetail(entity, detailEntities);
+            List<String> skus = generatePickingDetail(entity, detailEntities,dto.getWaveType());
             if (CollectionUtils.isNotEmpty(skus)) {
                 generateReplenish(detailEntities, entity, skus);
                 //生成拣货单失败，发货单生成异常
@@ -1636,12 +1636,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities) {
-        return generatePickingDetail(soB2cDeliveryEntity, soB2cDeliveryDetailEntities, null);
+    public List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, String waveType) {
+        return generatePickingDetail(soB2cDeliveryEntity, soB2cDeliveryDetailEntities, null,waveType);
     }
 
     @Override
-    public List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results) {
+    public List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results, String waveType) {
         List<String> skuIds = soB2cDeliveryDetailEntities.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
@@ -1667,6 +1667,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         executionData.setBillType(PickingBillTypeEnum.B2C.getCode());
         executionData.setSourceCode(soB2cDeliveryEntity.getCode());
         executionData.setDetails(detailList);
+        if(StringUtils.isNotBlank(waveType)){//波次类型
+            executionData.setWaveType(waveType);
+        }
         return pickingListsService.generateSoB2cPicking(soB2cDeliveryEntity, executionData, warehouseMap, results);
     }
 

@@ -361,8 +361,9 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      *
      * @param soB2cDeliveryEntity         发货单
      * @param soB2cDeliveryDetailEntities 发货单明细
+     * @param waveType 波次类型
      */
-    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities);
+    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities,String waveType);
 
     /**
      * B2C生成拣货单 (规则前置执行)
@@ -370,8 +371,9 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param soB2cDeliveryEntity         发货单
      * @param soB2cDeliveryDetailEntities 发货单明细
      * @param results 前置规则返回的仓位
+     * @param waveType 波次类型
      */
-    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results);
+    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results,String waveType);
     /**
      * 取消发货
      */
