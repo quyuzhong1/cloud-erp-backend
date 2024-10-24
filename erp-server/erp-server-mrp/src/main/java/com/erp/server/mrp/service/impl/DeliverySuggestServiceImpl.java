@@ -410,7 +410,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestImportExcelListener excelListenerUtil = new DeliverySuggestImportExcelListener();
 
         try {
-            EasyExcel.read(excelFile.getInputStream(), StockUpImportExcelDTO.class, excelListenerUtil).headRowNumber(1).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), DeliverySuggestImportExcelDTO.class, excelListenerUtil).headRowNumber(1).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -437,13 +437,20 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         exportErrorExcel (response,errorList);
     }
 
+    /**
+     * 上传正确数据
+     * @author will
+     * @date 2024/10/24 12:07
+     * @param originalFilename
+     * @param successList
+     */
     private void upLoadSuccessExcel (String originalFilename, List<DeliverySuggestImportExcelDTO> successList) {
         //全部为空则无需处理
         if (CollectionUtils.isEmpty(successList) ) {
             return;
         }
-        String fileName = StrUtil.isBlank(originalFilename) ? "补货规则.xlsx" : originalFilename;
-        String pathUrl = "excel/replenishmentRule.xlsx";
+        String fileName = StrUtil.isBlank(originalFilename) ? "发货计划.xlsx" : originalFilename;
+        String pathUrl = "excel/deliverySuggest.xlsx";
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);
         exportFileDTO.setPathUrl(pathUrl);
@@ -454,29 +461,36 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //添加导入记录
         HistoryImportRecordDTO.AddDTO dto = new HistoryImportRecordDTO.AddDTO();
         dto.setName(fileName);
-        dto.setModule(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
-        dto.setType(HistoryImportRecordTypeEnum.CFG_RULE_REPLENISHMENT.getCode());
+        dto.setModule(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
+        dto.setType(HistoryImportRecordTypeEnum.DELIVERY_SUGGESTION_CONFIRM.getCode());
         dto.setExportFileDTO(exportFileDTO);
         historyImportRecordService.add(dto);
     }
 
+    /**
+     * 导出错误数据
+     * @author will
+     * @date 2024/10/24 12:10
+     * @param response
+     * @param errorList
+     */
     private void exportErrorExcel (HttpServletResponse response, List<DeliverySuggestImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(errorList) ) {
             return;
         }
         List<Pair<Integer, List<?>>> pairList = new ArrayList<>();
         pairList.add(new Pair<>(MathUtil.ZERO,errorList));
-        String name = "补货规则错误数据";
+        String name = "发货计划错误数据";
         StringBuffer sb = new StringBuffer();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
-        String excelPath = "excel/replenishmentRuleError.xlsx";
+        String excelPath = "excel/deliverySuggestError.xlsx";
         try {
             new ExcelPrintUtils().sheetPatchExport(pairList, response, sb.toString(), excelPath);
         } catch (IOException e) {
             log.error("信息导出出错 >>>>>{}", e);
-            throw new ServiceException("补货规则错误数据导出失败");
+            throw new ServiceException("发货计划错误数据导出失败");
         }
     }
 
@@ -503,9 +517,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             DeliverySuggestEntity deliverySuggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(deliverySuggestEntity)) {
                 errorMsgList.add("未找到发货计划");
-            }
-            if (!StrUtil.equals(platformType,deliverySuggestEntity.getPlatformType())) {
-                errorMsgList.add(StrUtil.format("【{}】平台类型是{},不支持导入",CfgRulePlatformTypeEnum.getName(platformType)));
+            } else {
+                if (!StrUtil.equals(platformType,deliverySuggestEntity.getPlatformType())) {
+                    errorMsgList.add(StrUtil.format("【{}】平台类型是{},不支持导入",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 //错误数据

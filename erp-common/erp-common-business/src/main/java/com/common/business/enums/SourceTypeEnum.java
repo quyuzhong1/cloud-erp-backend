@@ -134,6 +134,7 @@ public enum SourceTypeEnum {
 
     //MRP
     REPLENISHMENT_SUGGESTION("replenishmentSuggestion", "补货建议","replenishment_suggestion"),
+    DELIVERY_SUGGESTION("deliverySuggestion", "发货建议","delivery_suggestion"),
 
 
     //Mabang
