@@ -70,7 +70,7 @@ public class BaseIdsDTO implements Serializable {
     public static class DateDTO extends IdsDTO{
 
         @NotNull(message = "日期不能为空")
-        private LocalDate LocalDate;
+        private LocalDate billDate;
     }
 
     /**

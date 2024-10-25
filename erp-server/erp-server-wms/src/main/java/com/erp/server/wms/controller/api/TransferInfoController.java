@@ -363,7 +363,7 @@ public class TransferInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(transferInfoService.updateBillDate(entity,dto.getLocalDate()));
+                resultDTOS.add(transferInfoService.updateBillDate(entity,dto.getBillDate()));
             }catch (Exception e){
                 log.error("直接调拨单修改调拨日期失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

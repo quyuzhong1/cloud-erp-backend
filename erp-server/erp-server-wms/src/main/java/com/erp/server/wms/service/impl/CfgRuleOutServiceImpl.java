@@ -110,7 +110,14 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             });
             Map<String, Object> transferDTOMap = BeanUtil.beanToMap(transferDTO);
             this.checkTransferRule(transferDTO);
-
+            List<String> transferWarehouseIdList = transferDTO.getTransferWarehouseIdList();
+            if (CollectionUtil.isEmpty(transferWarehouseIdList)){
+                throw new ServiceException("中转仓配置不能为空");
+            }
+            List<String> collect = transferWarehouseIdList.stream().filter(StrUtil::isBlank).collect(Collectors.toList());
+            if (CollectionUtil.isNotEmpty(collect)){
+                throw new ServiceException("中转仓配置id不能存在空值");
+            }
             CfgRuleOutEntity transferEntity = new CfgRuleOutEntity();
             transferEntity.setType(CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode());
             transferEntity.setRuleContent(transferDTOMap);
