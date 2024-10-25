@@ -1812,13 +1812,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
         addDTO.setOutstockId(firstMileDeliveryEntity.getId());
         //走TMS生成物流单逻辑
-        try {
-            this.add(addDTO);
-            return BatchResultDTO.success(addDTO.getOutstockId(),"", "头程物流单创建成功");
-        }catch (Exception e){
-            log.error("头程发货单{} 审核后自动生成物流单失败>>>>>>{}", firstMileDeliveryEntity.getCode(), e.getMessage());
-            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),StrUtil.format("头程发货单{} 手动下推生成物流单失败：{}", firstMileDeliveryEntity.getCode(), e.getMessage()));
-        }
-
+        this.add(addDTO);
+        return BatchResultDTO.success(addDTO.getOutstockId(),"", "头程物流单创建成功");
     }
 }
