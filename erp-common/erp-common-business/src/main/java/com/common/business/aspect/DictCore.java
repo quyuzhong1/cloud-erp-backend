@@ -107,7 +107,7 @@ public class DictCore {
         }else if(result instanceof List) {
         	Object recordObj = this.parseDictTextPlus(result, lang , true);
         	List<Object> items = new ArrayList<>();
-        	((List) result).clear();
+        	result = new ArrayList<>();
         	for (Object record : ((List) recordObj)) {
         		((List) result).add(record);
             }
