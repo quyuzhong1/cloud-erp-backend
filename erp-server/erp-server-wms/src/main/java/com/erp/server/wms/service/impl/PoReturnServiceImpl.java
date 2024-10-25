@@ -2282,7 +2282,13 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDetailDTO.setSourceDetailId(detailEntity.getId());
                 addDetailDTO.setSkuId(detailEntity.getSkuId());
                 addDetailDTO.setSkuNo(detailEntity.getSkuNo());
-                addDetailDTO.setPurchaseQty(detailEntity.getReplenishQty());
+                int purchaseQty = 0;
+                if (ReturnModeEnum.DEDUCTION.getCode().equals(entity.getReturnMode())){
+                    purchaseQty = detailEntity.getDeductAmountQty();
+                }else if (ReturnModeEnum.REPLENISHMENT.getCode().equals(entity.getReturnMode())){
+                    purchaseQty = detailEntity.getReplenishQty();
+                }
+                addDetailDTO.setPurchaseQty(purchaseQty);
                 addDetailDTO.setPlanDeliveryDate(null);
                 addDetailDTO.setRemark(detailEntity.getRemark());
                 addDetailDTO.setCurrency(detailEntity.getCurrency());
