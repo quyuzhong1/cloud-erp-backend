@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -194,6 +195,19 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         viewDTO.setPlatformList(platformList);
         viewDTO.setTypeName(CfgRulePlatformTypeEnum.getName(viewDTO.getType()));
         return viewDTO;
+    }
+
+    @Override
+    public List<String> listEffectiveByPlatform(String code) {
+        List<CfgPlatformMappingEntity> list = list(Wrappers.<CfgPlatformMappingEntity>lambdaQuery()
+                .eq(CfgPlatformMappingEntity::getType, code)
+                .eq(CfgPlatformMappingEntity::getDisabled, false)
+                .le(CfgPlatformMappingEntity::getEffectiveDate, LocalDate.now())
+                .select(CfgPlatformMappingEntity::getPlatform)
+        );
+        return list.stream()
+                .map(CfgPlatformMappingEntity::getPlatform)
+                .collect(Collectors.toList());
     }
 
 

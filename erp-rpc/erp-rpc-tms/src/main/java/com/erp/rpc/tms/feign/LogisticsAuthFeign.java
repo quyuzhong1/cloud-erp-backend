@@ -42,4 +42,10 @@ public interface LogisticsAuthFeign {
      **/
     @PostMapping("/feign/logisticsAuth/listAuthChannelView")
     List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(@RequestBody List<String> channelIdList);
+
+    /**
+     * 获取所有海外仓发货的渠道
+     */
+    @PostMapping("/feign/logisticsAuth/listAllChannelByOverseas")
+    List<String> listAllChannelByOverseas();
 }

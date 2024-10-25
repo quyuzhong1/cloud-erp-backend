@@ -44,4 +44,54 @@
         GROUP BY sb.platform_order_create_time::DATE, sb.shop_id, sbd.sku_id
 
     </select>
+    <select id="listAllOverseasSalesBySob2c"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$SalesInfoAllDTO">
+        SELECT sb.platform_order_create_time::DATE AS date,
+        SUM(sbd.qty)                        AS originalSalesQty,
+        sb.shop_id                          AS shopId,
+        sbd.sku_id                          AS skuId
+        FROM ${tableName} AS sb
+        INNER JOIN ${tableDetailName} sbd ON sbd.is_deleted = FALSE
+        AND sb.id = sbd.main_id
+        WHERE sb.is_deleted = FALSE
+        AND sb.dict_platform IN
+        <foreach collection="platforms" item="platform" open="(" separator="," close=")">
+            #{platform}
+        </foreach>
+        AND sb.platform_order_create_time > #{localDate}
+        <choose>
+            <when test="'FBA'.equals(orderType)">
+                AND sb.label_json LIKE '%AFN%'
+            </when>
+            <when test="'FBM'.equals(orderType)">
+                AND sb.label_json NOT LIKE '%AFN%'
+            </when>
+        </choose>
+        GROUP BY sb.platform_order_create_time::DATE, sb.shop_id, sbd.sku_id
+    </select>
+    <select id="listAllOverseasSalesBySoOutStock"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$SalesInfoAllDTO">
+        SELECT so.bill_date        AS date,
+        SUM(sod.actual_qty) AS originalSalesQty,
+        sb.shop_id          AS shopId,
+        sod.sku_id          AS skuId
+        FROM ${tableName} AS so
+        INNER JOIN ${tableDetailName} AS sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
+        INNER JOIN ${soB2cName} AS sb ON sb.is_deleted = FALSE AND sb.id = so.so_id
+        WHERE so.is_deleted = FALSE
+        AND sb.dict_platform IN
+        <foreach collection="platforms" item="platform" open="(" separator="," close=")">
+            #{platform}
+        </foreach>
+        AND sb.bill_date > #{localDate}
+        <choose>
+            <when test="'FBA'.equals(orderType)">
+                AND sb.label_json LIKE '%AFN%'
+            </when>
+            <when test="'FBM'.equals(orderType)">
+                AND sb.label_json NOT LIKE '%AFN%'
+            </when>
+        </choose>
+        GROUP BY so.bill_date, sod.sku_id, sb.shop_id
+    </select>
 </mapper>

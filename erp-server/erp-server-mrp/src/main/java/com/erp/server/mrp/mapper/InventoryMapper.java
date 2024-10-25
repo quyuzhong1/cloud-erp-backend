@@ -1,5 +1,6 @@
 package com.erp.server.mrp.mapper;
 
+import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
@@ -56,7 +57,9 @@ public interface InventoryMapper {
     /**
      * 查询发货计划
      */
-    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getPlanDelivery(@Param("type") String type, @Param("codes") Set<String> strategyCodes, @Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getPlanDelivery(@Param("type") String type, @Param("codes") Set<String> strategyCodes,
+                                                                            @Param("result") ReplenishmentResultDTO replenishmentResultDTO,
+                                                                            @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("sourceType") String sourceType);
 
     /**
      * 查询海外仓可用库存
@@ -120,4 +123,11 @@ public interface InventoryMapper {
      *
      */
     List<VirtualInventoryEntity> getAllVirtualHistoryInventory(@Param("tableName") String tableName);
+
+    /**
+     * 查询补货计划
+     */
+    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getReplenishmentPlan(@Param("codes") Set<String> replenishmentPlan,
+                                                                                 @Param("result") ReplenishmentResultDTO replenishmentResultDTO,@Param("tableName") String tableName,
+                                                                                 @Param("otherTableName") String otherTableName, @Param("otherTableDetailName") String otherTableDetailName);
 }

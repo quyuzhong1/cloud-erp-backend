@@ -19,6 +19,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
+import com.erp.server.mrp.calculation.factory.PlatformCalculationFactory;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
 import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.service.*;
@@ -65,8 +66,6 @@ public class BasicReplenishmentDataService {
     @Resource
     private CfgSettingFactory cfgSettingFactory;
     @Resource
-    private SalesService salesService;
-    @Resource
     private CfgRuleStockUpService cfgRuleStockUpService;
 
     @Resource
@@ -95,6 +94,8 @@ public class BasicReplenishmentDataService {
     private InventoryService inventoryService;
     @Resource
     private ReplenishmentTaskService replenishmentTaskService;
+    @Resource
+    private PlatformCalculationFactory platformCalculationFactory;
 
     @Resource
     @Lazy
@@ -202,7 +203,7 @@ public class BasicReplenishmentDataService {
 
                 //获取仓库配置
                 getCfgRuleCommon(entity, cfgRuleStrategy, dto);
-                // todo 海外仓备货存在问题
+
                 //获取备货配置
                 CfgRuleStockUpEntity defaultStockUp = defaultStockUpList.stream()
                         .filter(v -> v.getPlatformType().equals(entity.getPlatformType()))
@@ -219,7 +220,7 @@ public class BasicReplenishmentDataService {
                         .filter(v -> defaultLogisticsByPlatformIds.contains(v.getMainId()))
                         .collect(Collectors.toList());
                 CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
-                CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
+                CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(dto, defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
                 cfgRuleStrategy.setStockUpResult(stockUpResult);
                 stockingTimeHandler.handle(cfgRuleStrategy, dto);
                 replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, dto);
@@ -267,15 +268,8 @@ public class BasicReplenishmentDataService {
         List<FbaHistoryInventoryEntity> fbaHistoryInventoryList = fbaHistoryInventoryService.list();
         Map<String, List<ReplenishmentResultDTO.SalesInfoAllDTO>> salesByPlatformType = new HashMap<>();
         for (CfgRuleSalesQtyEntity cfgRuleSalesQty : defaultCfgRuleSalesQty) {
-            List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList;
-            // 以销售订单订单创建时间计算销量
-            if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(cfgRuleSalesQty.getSalesQtyType())) {
-                salesInfoAllList = salesService.listAllAmzSalesBySob2c(calcDate, cfgRuleSalesQty.getOrderType());
-            } else {
-                // 以销售出库单出库时间计算销量
-                salesInfoAllList = salesService.listAllAmzSalesBySoOutStock(calcDate, cfgRuleSalesQty.getOrderType());
-            }
-            //todo 获取海外仓本地B2B销量
+            List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList = platformCalculationFactory.getPlatformCalculation(cfgRuleSalesQty.getPlatformType())
+                    .calculationHistorySale(calcDate, cfgRuleSalesQty);
             salesByPlatformType.put(cfgRuleSalesQty.getPlatformType() + ":" + cfgRuleSalesQty.getType(), salesInfoAllList);
         }
         Map<String, List<ReplenishmentSuggestionEntity>> replenishmentBySku = suggestions.stream()
@@ -462,7 +456,7 @@ public class BasicReplenishmentDataService {
         List<String> defaultLogisticsIds = defaultLogistics.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
         List<CfgRuleLogisticsDetailEntity> defaultLogisticsDetailList = cfgRuleLogisticsDetailService.listByMainIdList(defaultLogisticsIds);
         CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
-        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(basicDTO, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, defaultLogisticsDetailList));
+        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(resultDTO, defaultStockUp, defaultStockingRatio, defaultLogistics, defaultLogisticsDetailList));
         cfgRuleStrategy.setStockUpResult(stockUpResult);
         stockingTimeHandler.handle(cfgRuleStrategy, resultDTO);
         replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, resultDTO);

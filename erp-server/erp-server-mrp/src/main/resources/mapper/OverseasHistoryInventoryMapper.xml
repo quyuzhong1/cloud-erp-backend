@@ -33,5 +33,56 @@
         <result column="download_time" property="downloadTime" />
         <result column="bill_date" property="billDate" />
     </resultMap>
+    <select id="paging" resultType="com.erp.model.mrp.dto.OverseasHistoryInventoryDTO$ListDTO">
+        SELECT
+            oi.id,
+            oi.create_time,
+            oi.update_time as updateTime,
+            oi.create_user_name,
+            oi.create_user_id,
+            oi.update_user_name,
+            oi.update_user_id,
+            oi.version,
+            oi.is_deleted,
+            oi.warehouse_code,
+            oi.dict_platform,
+            oi.platform_sku,
+            oi.platform_sku_name,
+            oi.product_name,
+            oi.sku_no,
+            oi.sku_id,
+            oi.deliver_onway_qty as deliverOnwayQty,
+            oi.pending_qty as pendingQty,
+            oi.sellable_qty as sellableQty,
+            oi.unsellable_qty as unsellableQty,
+            oi.reserved_qty as reservedQty,
+            oi.onway_qty as onwayQty,
+            oi.lack_qty as lackQty,
+            oi.frozen_qty as frozenQty,
+            oi.shipped_qty as shippedQty,
+            oi.download_time as downloadTime
+        FROM overseas_history_inventory as oi
+        where ${params.sqlMap.default}
+        and is_deleted = false
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND (oi.deliver_onway_qty > 0
+            OR oi.pending_qty > 0
+            OR oi.sellable_qty > 0
+            OR oi.unsellable_qty > 0
+            OR oi.reserved_qty > 0
+            OR oi.onway_qty > 0
+            OR oi.lack_qty > 0
+            OR oi.frozen_qty > 0
+            OR oi.shipped_qty > 0)
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        oi.create_time DESC
+    </select>
 
 </mapper>

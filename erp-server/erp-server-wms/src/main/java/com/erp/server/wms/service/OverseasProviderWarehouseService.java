@@ -91,4 +91,11 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * @return
      */
     Boolean isApiWarehouse(String destWarehouseId);
+
+
+    /**
+     * 高级查询查code
+     * @param compareCodeSplicingValueSql sql
+     */
+    List<String> listProviderWarehouseBySql(String compareCodeSplicingValueSql);
 }

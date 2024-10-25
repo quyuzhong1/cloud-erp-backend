@@ -34,8 +34,11 @@ public interface InventoryService {
      * @param replenishmentResultDTO 参数
      * @param strategyCodes          编码
      * @param stockUpResult          备货配置
+     * @param type                   类型
      */
-    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, Set<String> strategyCodes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult);
+    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getFbaPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, Set<String> strategyCodes,
+                                                                               CfgRuleStockUpDTO.StrategyResultDTO stockUpResult,
+                                                                               String type);
 
     /**
      * 获取海外仓可用库存
@@ -97,4 +100,12 @@ public interface InventoryService {
      */
     int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult);
 
+    /**
+     * 补货计划
+     * @param replenishmentResultDTO 建议
+     * @param replenishmentPlan      单据状态
+     * @param stockUpResult          备货配置
+     */
+    List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getReplenishmentPlan(ReplenishmentResultDTO replenishmentResultDTO, Set<String> replenishmentPlan,
+                                                                                 CfgRuleStockUpDTO.StrategyResultDTO stockUpResult);
 }

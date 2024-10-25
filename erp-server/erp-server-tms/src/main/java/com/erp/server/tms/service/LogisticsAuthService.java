@@ -142,4 +142,11 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @return
      */
     List<LogisticsAuthEntity> listByMainIds(List<String> supplierIds);
+
+    /**
+     * 获取所有海外仓平台发货的物流渠道
+     * @return
+     */
+    List<String> listAllChannelByOverseas();
+
 }

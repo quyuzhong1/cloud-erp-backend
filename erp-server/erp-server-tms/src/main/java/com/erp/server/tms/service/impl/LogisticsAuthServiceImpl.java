@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -190,6 +191,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(LogisticsAuthEntity::getMainId, supplierIds).list();
+    }
+
+    @Override
+    public List<String> listAllChannelByOverseas() {
+        return this.baseMapper.listAllChannelByOverseas(OmsPlatformEnum.allPlatform());
     }
 
     public LogisticsAuthEntity getDbByMainId(String mainId){

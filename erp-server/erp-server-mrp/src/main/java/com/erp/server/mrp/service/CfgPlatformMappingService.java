@@ -66,4 +66,10 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
      * @return ViewDTO
      */
     CfgPlatformMappingDTO.ViewDTO getByPlatformType(String platformType);
+
+    /**
+     * 根据平台映射获取具体平台
+     * @param code
+     */
+    List<String> listEffectiveByPlatform(String code);
 }

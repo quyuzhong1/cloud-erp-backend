@@ -118,7 +118,7 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
         } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(dto.getPlatformType())) {
             //先获取海外仓 再获取不到则取外层数据
             detail = cfgRuleLogisticsDetails.stream()
-                    .filter(v -> v.getWarehouseId().equals(dto.getWarehouseId()))
+                    .filter(v -> dto.getWarehouseId().contains(v.getWarehouseId()))
                     .findFirst().orElse(null);
         }
         if (ObjectUtils.isEmpty(detail)) {
@@ -150,7 +150,7 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
             //获取海外仓
             ruleLogisticsDetails = cfgRuleLogisticsDetails.stream()
                     .filter(v -> v.getMainId().equals(logisticId))
-                    .filter(v -> v.getWarehouseId().equals(dto.getWarehouseId()))
+                    .filter(v -> dto.getWarehouseId().contains(v.getWarehouseId()))
                     .collect(Collectors.toList());
         }
         return ruleLogisticsDetails;

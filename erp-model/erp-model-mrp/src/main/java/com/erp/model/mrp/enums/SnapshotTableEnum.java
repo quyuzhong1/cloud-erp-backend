@@ -37,6 +37,7 @@ public enum SnapshotTableEnum implements EnumMessage {
     PO_RETURN("po_return", "采购退货单"),
     TRANSFER_OUT("transfer_out", "分布式调出单"),
     TRANSFER_IN("transfer_in", "分布式调入单"),
+    DELIVERY_SUGGEST("delivery_suggest", "发货建议"),
     ;
 
     private final String code;

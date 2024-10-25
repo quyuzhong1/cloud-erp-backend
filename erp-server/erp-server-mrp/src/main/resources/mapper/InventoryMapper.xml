@@ -107,9 +107,17 @@
         INNER JOIN ${tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
         AND wdpd.main_id = wdp.id
         WHERE
-        wdp.is_deleted = FALSE
+        wdp.is_deleted = FALSE  and wdp.invalid_status = false
         AND wdp."type" = #{type} AND wdp.shop_id = #{result.replenishment.shopId} AND wdpd.sku_id =
         #{result.replenishment.skuId}
+        <choose>
+            <when test="sourceType == 'replenishment_plan'">
+                source_type = 'replenishment_plan'
+            </when>
+            <otherwise>
+                source_type is null
+            </otherwise>
+        </choose>
         <if test="codes != null and !codes.isEmpty()">
             <!-- 当 codes 只有 'approve' 时，单独处理 -->
             <if test="codes.size() == 1 and 'approve' in codes">
@@ -469,6 +477,45 @@
                qty
         from ${tableName}
         where is_deleted = false
+    </select>
+    <select id="getReplenishmentPlan"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedDeliveryDetailDTO">
+        SELECT ds.id AS sourceId,
+        ds.code AS sourceCode,
+        ds.status AS status,
+        ds.suggest_delivery_qty AS qty,
+        ds.estimate_sales_date AS estimateSalesDate
+        FROM
+            ${tableName} ds
+        WHERE
+        ds.shop_id = #{result.replenishment.shopId} AND ds.sku_id =
+            #{result.replenishment.skuId}
+        <if test="codes != null and !codes.isEmpty()">
+            <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
+            <if test="codes.size() == 1 and 'finish' in codes">
+                AND ds.status = 'finish'
+                AND NOT EXISTS (SELECT 1 FROM ${otherTableDetailName} wdpd
+                left join ${otherTableName} wdp on wdp.id = wdpd.main_id and wdp.is_deleted = false and wdpd.is_deleted = false
+                WHERE wdpd.source_json->>'id' = ds.id::text )
+            </if>
+            <!-- 当 codes 包含 'approve' 以及其他状态时 -->
+            <if test="codes.size() > 1 and 'finish' in codes">
+                AND ds.status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+                AND NOT EXISTS (SELECT 1 FROM ${otherTableDetailName} wdpd
+                    left join ${otherTableName} wdp on wdp.id = wdpd.main_id and wdp.is_deleted = false and wdpd.is_deleted = false
+                                         WHERE wdpd.source_json->>'id' = ds.id::text )
+            </if>
+            <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
+            <if test="'finish' not in codes">
+                AND ds.status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </if>
     </select>
 
 </mapper>
