@@ -1331,26 +1331,23 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
     private List<TmsFirstMileReconciliationDetailDTO.ListDTO> resetSaveData(List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO, List<TmsFirstMileReconciliationDetailDTO.ListDTO> oldListDTO) {
         if (CollectionUtils.isEmpty(oldListDTO)){
-            return saveListDTO;
+            oldListDTO = saveListDTO;
+            return oldListDTO;
         }
         if (CollectionUtils.isEmpty(saveListDTO)){
-            saveListDTO = oldListDTO;
-            return saveListDTO;
+            return oldListDTO;
         }
+
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> finalOldListDTO = oldListDTO;
         saveListDTO.forEach(e -> {
-            TmsFirstMileReconciliationDetailDTO.ListDTO listDTO = oldListDTO.stream().filter(f -> StrUtil.isNotBlank(e.getType()) && StrUtil.isNotBlank(e.getSourceId())
+            TmsFirstMileReconciliationDetailDTO.ListDTO listDTO = finalOldListDTO.stream().filter(f -> StrUtil.isNotBlank(e.getType()) && StrUtil.isNotBlank(e.getSourceId())
                     && StrUtil.isNotBlank(f.getType()) && StrUtil.isNotBlank(f.getSourceId())
                     && Objects.equals(f.getType(), e.getType()) && Objects.equals(e.getSourceId(), f.getSourceId())).findFirst().orElse(null);
-            if (Objects.nonNull(listDTO)){
-                e.setId(listDTO.getId());
-                e.setMainId(listDTO.getMainId());
-                e.setReconciliationCount(listDTO.getReconciliationCount());
-                e.setReconciliationId(listDTO.getReconciliationId());
-                e.setReconciliationStatus(listDTO.getReconciliationStatus());
-                e.setReconciliationType(listDTO.getReconciliationType());
+            if (Objects.isNull(listDTO)){
+                finalOldListDTO.add(e);
             }
         });
-        return saveListDTO;
+        return finalOldListDTO;
     }
 
     @Override
