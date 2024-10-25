@@ -17,6 +17,8 @@
        <result column="sku_no" property="skuNo" />
        <result column="qty" property="qty" />
        <result column="is_combination" property="isCombination" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_json" property="sourceJson" jdbcType="OTHER" typeHandler="com.erp.server.wms.handler.ObjectJsonArrayHandler" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
