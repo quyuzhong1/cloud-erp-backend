@@ -118,6 +118,7 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void add(RefundOrderEntity refundOrderEntity, List<RefundOrderDetailEntity> refundOrderDetailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TKD);
+        refundOrderEntity.setCode(code);
         this.save(refundOrderEntity);
 
         //操作日志

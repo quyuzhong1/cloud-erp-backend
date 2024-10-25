@@ -57,7 +57,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by ro.create_time
+        order by ro.create_time desc
     </select>
 
 </mapper>
