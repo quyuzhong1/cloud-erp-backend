@@ -163,6 +163,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private TransferInfoDetailService transferInfoDetailService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -1100,7 +1102,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public void generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking) {
+    public List<WarehouseLocationMoveDTO.GenPickToSkuMove> generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking) {
         SoDeliveryNoticeEntity soDeliveryNotice = getById(picking.getId());
         if (ObjectUtil.isEmpty(soDeliveryNotice)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
@@ -1147,8 +1149,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     return detail;
                 }).collect(Collectors.toList());
         addDTO.setDetails(detailList);
+
+        // 执行拣货规则
+        List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = requisitionApplicationService.genPickToSkuMove(soDeliveryNotice.getWarehouseId(), soDeliveryNotice.getWarehouseName(), addDTO);
+        if(CollectionUtils.isNotEmpty(moves)){
+            return moves;
+        }
         pickingListsService.add(addDTO);
         soDeliveryNoticeDetailService.updateBatchById(updateDetails);
+        return Collections.emptyList();
     }
 
     @Override

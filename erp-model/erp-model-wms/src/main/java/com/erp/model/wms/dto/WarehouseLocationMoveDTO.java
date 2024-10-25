@@ -945,4 +945,69 @@ public class WarehouseLocationMoveDTO implements Serializable {
          */
         private String inInventoryStatus;
     }
+
+
+    /**
+     * 生成拣货单--缺货--仓位移动实体
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenPickToSkuMove{
+
+        /**
+         *
+         */
+        private String id;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 调拨数量
+         */
+        private Integer qty;
+        /**
+         * 仓位
+         */
+        private String inWarehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
+         * 取出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 取出仓位名称
+         */
+        private String outWarehouseLocationName;
+
+        /**
+         * 取货仓位库存状态
+         */
+        private String outInventoryStatus;
+        /**
+         * 上架仓位库存状态
+         */
+        private String inInventoryStatus;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouse;
+    }
 }
