@@ -406,7 +406,7 @@ public class SoDeliveryNoticeController extends BaseController {
     @PostMapping("/generatePickingList")
     public ApiResult<List<WarehouseLocationMoveDTO.GenPickToSkuMove>> generatePickingList(@RequestBody @Validated SoDeliveryNoticeDTO.GeneratePickingDTO picking) {
         List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = soDeliveryNoticeService.generatePickingList(picking);
-        return CollectionUtils.isEmpty(moves) ? success() : failure(moves);
+        return success(moves);
     }
 
     /**
