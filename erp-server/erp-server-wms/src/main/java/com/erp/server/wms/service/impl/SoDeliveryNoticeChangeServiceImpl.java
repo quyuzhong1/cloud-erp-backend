@@ -6,10 +6,12 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeChangeMapper;
 import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -68,6 +70,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -372,6 +377,33 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     }
 
     @Override
+    public PagingVO<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaging(PagingDTO<SoDeliveryNoticeChangeDTO.ProductAddDTO> pagingParamDTO) {
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<SoDeliveryNoticeChangeDTO.ProductDTO> pageData = this.baseMapper.productPaging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        List<String> skuIds = pageData.getRecords().stream().map(v->v.getSkuId()).collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        // 数据处理
+        for (SoDeliveryNoticeChangeDTO.ProductDTO record : pageData.getRecords()) {
+            record.setMaxCanChangeQty(record.getSaleQty() - record.getAllNoticeQty() + record.getCurrentNoticeQty());
+            SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(record.getSkuId())).findFirst().orElse(new SkuVO());
+            record.setProductName(skuVO.getSkuName());
+        }
+        List<String> skuNos = pagingParamDTO.getParams().getSkuNoList();
+        if(CollUtil.isNotEmpty(skuNos)){
+            List<SoDeliveryNoticeChangeDTO.ProductDTO> productDTOS = new ArrayList<>();
+            for (String skuNo : skuNos) {
+                SoDeliveryNoticeChangeDTO.ProductDTO productDTO = pageData.getRecords().stream().filter(v->v.getSkuNo().equals(skuNo)).findFirst().orElse(new SoDeliveryNoticeChangeDTO.ProductDTO());
+                productDTOS.add(productDTO);
+            }
+            pageData.setRecords(productDTOS);
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public SoDeliveryNoticeChangeDTO.ViewDTO view(SoDeliveryNoticeChangeDTO.ViewIdDTO viewIdDTO) {
         String type = viewIdDTO.getType();
         String id = viewIdDTO.getId();
@@ -398,7 +430,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             List<SoDeliveryNoticeChangeDTO.ViewDetail> detailList = baseMapper.listViewDetailList(soDeliveryNoticeChangeEntity.getId());
             for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : detailList) {
                 viewDetail.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(viewDetail.getChangeType()));
-                viewDetail.setMaxCanChangeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() - viewDetail.getCurrentNoticeQty());
+                viewDetail.setMaxCanChangeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() + viewDetail.getCurrentNoticeQty());
             }
             viewDTO.setViewDetailList(detailList);
         }

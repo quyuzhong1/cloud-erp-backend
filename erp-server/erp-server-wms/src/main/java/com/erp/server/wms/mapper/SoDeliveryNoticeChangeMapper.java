@@ -54,4 +54,6 @@ public interface SoDeliveryNoticeChangeMapper extends BaseMapper<SoDeliveryNotic
     List<SoDeliveryNoticeChangeDTO.TabListDTO> tabList(@Param("params") SoDeliveryNoticeChangeDTO.PagingParamDTO searchParam);
 
     List<SoDeliveryNoticeChangeDTO.ViewDetail> listViewDetailList(@Param("id") String id);
+
+    IPage<SoDeliveryNoticeChangeDTO.ProductDTO> productPaging(Page query, @Param("params") SoDeliveryNoticeChangeDTO.ProductAddDTO params);
 }

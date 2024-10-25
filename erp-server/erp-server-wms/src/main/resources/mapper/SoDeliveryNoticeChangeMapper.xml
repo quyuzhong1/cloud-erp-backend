@@ -75,7 +75,7 @@
                 (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sdnd.source_detail_id and a.is_deleted = false) as allNoticeQty,
                 sdnd.delivery_qty as currentNoticeQty,
                 (select  COALESCE(sum(a.picked_qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
-               sdnd.remark
+               sd.remark
                 from so_delivery_notice_change sdnc
         inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id
         inner join so_delivery_notice_detail sdnd on sdnd.id = sdncd.source_detail_id
@@ -84,5 +84,29 @@
         and sd.is_deleted = false
         and sdnc.id = #{id}
         </select>
+    <select id="productPaging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ProductDTO">
+        select
+            sd.id as soDetailId,
+            sdnd.id as sourceDetailId,
+            sd.sku_id as skuId,
+            sd.sku_no as skuNo,
+            sd.qty as saleQty,
+        (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sd.id and a.is_deleted = false) as allNoticeQty,
+        COALESCE(sdnd.delivery_qty,0) as currentNoticeQty,
+        (select  COALESCE(sum(a.picked_qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
+        sd.remark
+        from so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        inner join so_delivery_notice sdn on sdn.source_id = si.id and sdn.is_deleted = false and sdn.id = #{params.noticeId}
+        left join so_delivery_notice_detail sdnd on sdnd.is_deleted = false and sdnd.source_detail_id = sd.id and sdnd.main_id = sdn.id
+        where ${params.sqlMap.default}
+          and si.is_deleted = false and si.id = #{params.soId}
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND sd.sku_no IN
+            <foreach collection="params.skuNoList" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+    </select>
 
 </mapper>

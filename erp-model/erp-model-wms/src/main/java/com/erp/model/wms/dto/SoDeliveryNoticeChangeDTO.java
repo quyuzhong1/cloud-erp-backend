@@ -48,6 +48,39 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
          private Integer count;
 
      }
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductAddDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 销售id
+         */
+        @NotBlank(message = "销售id不能为空")
+        private String  soId;
+        /**
+         * 发货通知单id
+         */
+        @NotBlank(message = "发货通知单不能为空")
+        private String  noticeId;
+
+        /**
+         * sku,快粘贴传
+         */
+        private List<String> skuNoList;
+    }
      /**
      * 分页列表查询参数
      */
@@ -64,7 +97,6 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
-
      }
     /**
     * 分页列表
@@ -196,6 +228,68 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         @NotBlank(message = "类型不能为空")
         private String type;
     }
+
+    /**
+     * 产品dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductDTO {
+
+        /**
+         * 来源明细Id
+         */
+        private String sourceDetailId;
+        /**
+         * 销售明细Id
+         */
+        private String soDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer saleQty;
+
+        /**
+         * 已下推发货通知数量
+         */
+        private Integer allNoticeQty;
+
+        /**
+         * 原发货通知数量
+         */
+        private Integer currentNoticeQty;
+
+        /**
+         * 已拣货
+         */
+        private Integer pickedQty;
+
+        /**
+         * 最大可变更数量
+         */
+        private Integer maxCanChangeQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
     /**
     * 详情
     */

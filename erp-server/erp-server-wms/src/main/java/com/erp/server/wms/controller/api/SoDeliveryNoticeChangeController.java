@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -51,6 +52,18 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     @PostMapping("/view")
     public ApiResult<SoDeliveryNoticeChangeDTO.ViewDTO> view(@RequestBody @Validated SoDeliveryNoticeChangeDTO.ViewIdDTO dto) {
         return success(soDeliveryNoticeChangeService.view(dto));
+    }
+    /**
+     * 添加产品分页查询
+     * @author lrp
+     * @date:  2024-10-23
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/addProductPaging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SoDeliveryNoticeChangeDTO.ProductDTO>> addProductPaging(@RequestBody @Validated PagingDTO<SoDeliveryNoticeChangeDTO.ProductAddDTO> dto) {
+        return success(soDeliveryNoticeChangeService.addProductPaging(dto));
     }
 
     /**
