@@ -15,12 +15,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -402,9 +404,9 @@ public class SoDeliveryNoticeController extends BaseController {
      * @param picking 参数
      */
     @PostMapping("/generatePickingList")
-    public ApiResult<String> generatePickingList(@RequestBody @Validated SoDeliveryNoticeDTO.GeneratePickingDTO picking) {
-        soDeliveryNoticeService.generatePickingList(picking);
-        return success();
+    public ApiResult<List<WarehouseLocationMoveDTO.GenPickToSkuMove>> generatePickingList(@RequestBody @Validated SoDeliveryNoticeDTO.GeneratePickingDTO picking) {
+        List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = soDeliveryNoticeService.generatePickingList(picking);
+        return CollectionUtils.isEmpty(moves) ? success() : failure(moves);
     }
 
     /**

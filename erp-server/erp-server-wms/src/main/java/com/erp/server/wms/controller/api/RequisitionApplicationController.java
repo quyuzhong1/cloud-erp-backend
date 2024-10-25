@@ -14,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -369,9 +370,9 @@ public class RequisitionApplicationController extends BaseController {
      * @param picking 参数
      */
     @PostMapping("/generatePickingList")
-    public ApiResult<String> generatePickingList(@RequestBody @Validated RequisitionApplicationDTO.GeneratePickingDTO picking) {
-        requisitionApplicationService.generatePickingList(picking);
-        return success();
+    public ApiResult<List<WarehouseLocationMoveDTO.GenPickToSkuMove>> generatePickingList(@RequestBody @Validated RequisitionApplicationDTO.GeneratePickingDTO picking) {
+        List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = requisitionApplicationService.generatePickingList(picking);
+        return CollectionUtils.isEmpty(moves) ? success() : failure(moves);
     }
 
     /**

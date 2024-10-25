@@ -4,6 +4,8 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import org.springframework.web.multipart.MultipartFile;
@@ -176,7 +178,7 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * 生成拣货单
      * @param picking 拣货参数
      */
-    void generatePickingList(RequisitionApplicationDTO.GeneratePickingDTO picking);
+    List<WarehouseLocationMoveDTO.GenPickToSkuMove> generatePickingList(RequisitionApplicationDTO.GeneratePickingDTO picking);
 
     List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto);
 
@@ -256,4 +258,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return
      */
     RequisitionApplicationDTO.ImportDTO importFile(MultipartFile excelFile, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS, HttpServletResponse response);
+
+    List<WarehouseLocationMoveDTO.GenPickToSkuMove> genPickToSkuMove(String warehouseId, String warehouseName, PickingListsDTO.AddDTO addDTO);
 }
