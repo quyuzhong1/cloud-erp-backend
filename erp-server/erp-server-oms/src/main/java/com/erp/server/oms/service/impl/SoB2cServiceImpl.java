@@ -358,6 +358,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     @Qualifier("soB2cTabExecutorPool")
     private ExecutorService soB2cTabExecutorPool;
+    @Autowired
+    private CustomerInfoService customerInfoService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -5602,6 +5604,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(shopInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        CustomerInfoEntity customerInfo = customerInfoService.getById(shopInfoEntity.getCustomerId());
         SoOutstockDTO.GenerateB2cDTO dto = new SoOutstockDTO.GenerateB2cDTO();
         dto.setOrderType(OrderTypeEnum.B2C.getCode());
         dto.setSoId(entity.getId());
@@ -5616,14 +5619,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String chargeId = shopInfoEntity.getChargeId();
         dto.setCustomerId(shopInfoEntity.getCustomerId());
         dto.setCustomerName(shopInfoEntity.getName());
-        dto.setSellerId(chargeId);
-        dto.setSellerName(shopInfoEntity.getChargeName());
+        if(Objects.nonNull(customerInfo)){
+            dto.setSellerId(customerInfo.getSellerId());
+            dto.setSellerName(customerInfo.getSellerName());
+        }else{
+            dto.setSellerId(chargeId);
+            dto.setSellerName(shopInfoEntity.getChargeName());
+        }
         if (Objects.nonNull(soB2cReceiver)) {
             dto.setCountry(soB2cReceiver.getCountry());
         }
         SysDepartmentUserNumberDTO deptUser = null;
-        if (!StringUtil.isEmpty(chargeId)) {
-            deptUser = sysUserFeign.getDeptByUserId(chargeId);
+        if (!StringUtil.isEmpty(dto.getSellerId())) {
+            deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
         }
         if (Objects.nonNull(deptUser)) {
             dto.setSalesDeptId(deptUser.getDepartmentId());
