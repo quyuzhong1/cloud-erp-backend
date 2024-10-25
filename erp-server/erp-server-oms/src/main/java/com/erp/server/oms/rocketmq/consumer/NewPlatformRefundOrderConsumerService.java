@@ -2,7 +2,6 @@ package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformRefundOrderDTO;
-import com.common.business.dto.PlatformReturnOrderDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -112,7 +111,7 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 		refundOrderEntity.setCurrency(dto.getCurrency());
 		refundOrderEntity.setReason(dto.getRemark());
 		refundOrderEntity.setRefundTime(dto.getRefundTime());
-		refundOrderEntity.setPlatformCreateTime(dto.getCreateTime());
+		refundOrderEntity.setPlatformCreateTime(dto.getPlatformCreateTime());
 		if(Objects.nonNull(soB2cEntity)){
 			refundOrderEntity.setShopId(soB2cEntity.getShopId());
 			ShopInfoEntity shopInfo = shopInfoService.getById(soB2cEntity.getShopId());

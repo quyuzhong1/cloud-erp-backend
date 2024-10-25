@@ -19,9 +19,9 @@ import java.util.List;
 public class PlatformRefundOrderDTO extends UniqueDto {
 
     /**
-     * 创建时间
+     *平台创建时间
      */
-    private LocalDateTime createTime;
+    private LocalDateTime platformCreateTime;
     /**
      * 平台退款单号
      */

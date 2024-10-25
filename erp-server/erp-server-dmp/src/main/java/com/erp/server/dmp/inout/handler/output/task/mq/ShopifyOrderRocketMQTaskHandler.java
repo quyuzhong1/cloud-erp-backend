@@ -22,6 +22,7 @@ import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -577,6 +578,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             List<DmpSoReturnDetailEntity> dmpDetailList = entry.getValue();
 
             PlatformReturnOrderDTO dto = new PlatformReturnOrderDTO();
+            BeanUtils.copyProperties(dmpEntity, dto);
             dto.setUniqueId(dmpEntity.getThirdCode());
             dto.setPlatformReturnNo(dmpEntity.getThirdCode());
             dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
@@ -621,6 +623,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             List<DmpSoRefundDetailEntity> dmpDetailList = entry.getValue();
 
             PlatformRefundOrderDTO dto = new PlatformRefundOrderDTO();
+            BeanUtils.copyProperties(dmpEntity, dto);
             dto.setUniqueId(dmpEntity.getThirdCode());
             dto.setPlatformRefundNo(dmpEntity.getThirdCode());
             dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
