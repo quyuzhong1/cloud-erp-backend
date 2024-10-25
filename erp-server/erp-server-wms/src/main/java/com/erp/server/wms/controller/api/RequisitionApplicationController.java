@@ -342,7 +342,7 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/generatePickingList")
     public ApiResult<List<WarehouseLocationMoveDTO.GenPickToSkuMove>> generatePickingList(@RequestBody @Validated RequisitionApplicationDTO.GeneratePickingDTO picking) {
         List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = requisitionApplicationService.generatePickingList(picking);
-        return CollectionUtils.isEmpty(moves) ? success() : failure(moves);
+        return success(moves);
     }
 
     /**
