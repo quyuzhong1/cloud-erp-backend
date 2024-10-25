@@ -25,9 +25,9 @@ public enum SoB2cReturnReasonEnum implements EnumMessage {
     UNWANTED("UNWANTED","UNWANTED","platform"),
     WRONG_ITEM("WRONG_ITEM","WRONG_ITEM","platform"),
     DESCRIPTION_NOT_MATCH("DESCRIPTION_NOT_MATCH","描述不符","erp"),
-    QUALITY_ISSUES("QUALITY_ISSUES","质量问题","erp"),
+    QUALITY_ISSUES("qualityProblem","质量问题","erp"),
     ORDER_ERROR("ORDER_ERROR","下单错误","erp"),
-    OTHER_ERP("OTHER_ERP","其他","erp"),
+    OTHER_ERP("other","其他","erp"),
     ;
 
     SoB2cReturnReasonEnum(String code, String name,String type) {
