@@ -1,18 +1,21 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeChangeMapper;
+import com.erp.server.wms.service.SoDeliveryNoticeChangeDetailService;
 import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -72,35 +75,44 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     private SoDeliveryNoticeService soDeliveryNoticeService;
 
     @Resource
+    private SoDeliveryNoticeChangeDetailService detailService;
+
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(SoDeliveryNoticeChangeDTO.AddDTO addDTO) {
-        SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity = new SoDeliveryNoticeChangeEntity();
-        BeanMapperUtils.copy(addDTO, soDeliveryNoticeChangeEntity);
-
+    public BaseResultDTO.AddDTO add(SoDeliveryNoticeChangeDTO.ViewDTO addDTO) {
+        SoDeliveryNoticeChangeEntity exist = this.lambdaQuery().eq(SoDeliveryNoticeChangeEntity::getSourceId, addDTO.getNoticeId()).ne(SoDeliveryNoticeChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()).eq(SoDeliveryNoticeChangeEntity::getInvalidStatus,false).last("limit 1").one();
+        if(Objects.nonNull(exist)){
+            throw new ServiceException("发货通知单存在未审核且未作废变更单，请勿重复提交");
+        }
+        SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity = this.buildEntity(addDTO);
         // 数据处理
         handleData(soDeliveryNoticeChangeEntity);
-
-        log.info("开始新增发货通知变更单");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_FHBG);
         soDeliveryNoticeChangeEntity.setCode(code);
         boolean save = super.save(soDeliveryNoticeChangeEntity);
         if(!save) {
             throw new ServiceException("发货通知变更单保存失败");
         }
-
+        detailService.add(addDTO,soDeliveryNoticeChangeEntity);
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货通知变更单" , soDeliveryNoticeChangeEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, soDeliveryNoticeChangeEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), soDeliveryNoticeChangeEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(soDeliveryNoticeChangeEntity.getId(), code);
+    }
+
+    private SoDeliveryNoticeChangeEntity buildEntity(SoDeliveryNoticeChangeDTO.ViewDTO addDTO) {
+        SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity = new SoDeliveryNoticeChangeEntity();
+        soDeliveryNoticeChangeEntity.setSourceCode(addDTO.getNoticeCode());
+        soDeliveryNoticeChangeEntity.setSourceId(addDTO.getNoticeId());
+        soDeliveryNoticeChangeEntity.setSoCode(addDTO.getSoCode());
+        soDeliveryNoticeChangeEntity.setSoId(addDTO.getSoId());
+        soDeliveryNoticeChangeEntity.setCustomerId(addDTO.getCustomerId());
+        soDeliveryNoticeChangeEntity.setCustomerName(addDTO.getCustomerName());
+        soDeliveryNoticeChangeEntity.setChangeReason(addDTO.getChangeReason());
+        return soDeliveryNoticeChangeEntity;
     }
 
     /**
@@ -215,7 +227,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addAndSubmit(SoDeliveryNoticeChangeDTO.AddDTO dto) {
+    public BaseResultDTO.AddDTO addAndSubmit(SoDeliveryNoticeChangeDTO.ViewDTO dto) {
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
@@ -415,6 +427,11 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeChangeEntity = this.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知变更单数据"));
             soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(soDeliveryNoticeChangeEntity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
         }
+        if(!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
+                || ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
+            throw new ServiceException("只有待提交、待审核状态允许下推");
+        }
+
         SoDeliveryNoticeDTO.View noticeView = soDeliveryNoticeService.view(soDeliveryNoticeEntity.getId());
         SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = BeanUtil.toBean(noticeView,SoDeliveryNoticeChangeDTO.ViewDTO.class);
         viewDTO.setId(soDeliveryNoticeChangeEntity.getId());

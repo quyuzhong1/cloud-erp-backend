@@ -24,7 +24,7 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(SoDeliveryNoticeChangeDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(SoDeliveryNoticeChangeDTO.ViewDTO dto);
 
     /**
     * 修改
@@ -70,7 +70,7 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     * @param dto
     * @return BaseResultDTO.AddDTO
     */
-    BaseResultDTO.AddDTO addAndSubmit(SoDeliveryNoticeChangeDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addAndSubmit(SoDeliveryNoticeChangeDTO.ViewDTO dto);
 
     /**
     * 修改并提交审核

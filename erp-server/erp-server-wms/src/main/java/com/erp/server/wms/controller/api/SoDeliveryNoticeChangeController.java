@@ -75,7 +75,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "发货通知变更单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoDeliveryNoticeChangeDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SoDeliveryNoticeChangeDTO.ViewDTO dto) {
         return success(soDeliveryNoticeChangeService.add(dto));
     }
 
@@ -137,7 +137,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SoDeliveryNoticeChangeDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SoDeliveryNoticeChangeDTO.ViewDTO dto) {
         BaseResultDTO.AddDTO result = soDeliveryNoticeChangeService.addAndSubmit(dto);
         return success(result);
     }

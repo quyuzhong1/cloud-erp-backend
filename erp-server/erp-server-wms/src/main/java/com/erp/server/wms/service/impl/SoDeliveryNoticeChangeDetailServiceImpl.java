@@ -3,14 +3,19 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeDetailEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
+import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
 import com.erp.server.wms.mapper.SoDeliveryNoticeChangeDetailMapper;
-import com.erp.server.wms.service.SoDeliveryNoticeChangeDetailService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.ehcache.impl.internal.store.heap.holders.SerializedOnHeapValueHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,8 +23,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 发货通知变更单明细 服务实现类
@@ -34,63 +44,75 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
+    @Resource
+    private SoDeliveryNoticeService soDeliveryNoticeService;
+
+    @Resource
+    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
+    private PickingDetailService pickingDetailService;
+
     @Override
-    public BaseResultDTO.AddDTO add(SoDeliveryNoticeChangeDetailDTO.AddDTO addDTO) {
-        SoDeliveryNoticeChangeDetailEntity soDeliveryNoticeChangeDetailEntity = new SoDeliveryNoticeChangeDetailEntity();
-        BeanMapperUtils.copy(addDTO, soDeliveryNoticeChangeDetailEntity);
-
-        // 数据处理
-        handleData(soDeliveryNoticeChangeDetailEntity);
-
-        log.info("开始新增发货通知变更单明细");
-        boolean save = super.save(soDeliveryNoticeChangeDetailEntity);
-        if(!save) {
-            throw new ServiceException("发货通知变更单明细保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货通知变更单明细" , soDeliveryNoticeChangeDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, soDeliveryNoticeChangeDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(soDeliveryNoticeChangeDetailEntity.getId(), soDeliveryNoticeChangeDetailEntity.getId());
+    @Transactional(rollbackFor = Exception.class)
+    public void add(SoDeliveryNoticeChangeDTO.ViewDTO addDTO, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
+        this.checkData(addDTO.getViewDetailList(),soDeliveryNoticeChangeEntity);
+        List<SoDeliveryNoticeChangeDetailEntity> detailEntityList = this.buildDetail(addDTO,soDeliveryNoticeChangeEntity);
+        this.saveBatch(detailEntityList);
     }
 
     /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(SoDeliveryNoticeChangeDetailDTO.UpdateDTO updateDTO) {
-        SoDeliveryNoticeChangeDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货通知变更单明细"));
-        SoDeliveryNoticeChangeDetailEntity soDeliveryNoticeChangeDetailEntity =  BeanMapperUtils.map(SoDeliveryNoticeChangeDetailEntity.class, updateDTO);
+     * 校验明细数据
+     * @param soDeliveryNoticeChangeEntity
+     */
+    private void checkData( List<SoDeliveryNoticeChangeDTO.ViewDetail> viewDetailList, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
+        List<String> noticeDetailIds = viewDetailList.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listByIds(noticeDetailIds);
+        List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(noticeDetailIds);
+        for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : viewDetailList) {
+            if(Objects.nonNull(viewDetail.getNewNoticeQty()) && viewDetail.getNewNoticeQty() > viewDetail.getMaxCanChangeQty()){
+                throw new ServiceException("{} 变更数量不能大于可变更数量",viewDetail.getSkuNo());
+            }
+            if(SoDeliveryNoticeChangeTypeEnum.UPDATE.getCode().equals(viewDetail.getChangeType())){
+                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailEntityList.stream().filter(v->v.getId().equals(viewDetail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("变更明细数据错误"));
+                if(viewDetail.getNewNoticeQty() > soDeliveryNoticeDetailEntity.getDeliveryQty()){
+                    continue;
+                }
+                List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getSourceDetailId())).collect(Collectors.toList());
+                Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
+                if(viewDetail.getNewNoticeQty() > pickedQty){
+                    throw new ServiceException("【{}】发货数量不能小于已拣货数量【{}】",viewDetail.getSkuNo(),pickedQty);
+                }
+            }else if(SoDeliveryNoticeChangeTypeEnum.ADD.getCode().equals(viewDetail.getChangeType())){
 
-        // 数据处理
-        handleData(soDeliveryNoticeChangeDetailEntity);
-        log.info("编辑 开始修改发货通知变更单明细数据，id：【{}】", old.getId());
-        boolean save = super.updateById(soDeliveryNoticeChangeDetailEntity);
-        if(!save) {
-            throw new ServiceException("发货通知变更单明细保存失败");
+            }else if(SoDeliveryNoticeChangeTypeEnum.DELETE.getCode().equals(viewDetail.getChangeType())){
+                List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getSourceDetailId())).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(currentPickList)){
+                    Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
+                    throw new ServiceException("【{}】已拣货【{}】，不允许删除",viewDetail.getSkuNo(),pickedQty);
+                }
+            }else {
+                throw new ServiceException("变更类型错误");
+            }
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录发货通知变更单明细日志数据，id：【{}】", soDeliveryNoticeChangeDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soDeliveryNoticeChangeDetailEntity.getId(), "发货通知变更单明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeChangeDetailEntity, null, soDeliveryNoticeChangeDetailEntity.getId(), msg);
-        return Boolean.TRUE;
     }
 
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(SoDeliveryNoticeChangeDetailEntity soDeliveryNoticeChangeDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+    private List<SoDeliveryNoticeChangeDetailEntity> buildDetail(SoDeliveryNoticeChangeDTO.ViewDTO addDTO, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
+        List<SoDeliveryNoticeChangeDTO.ViewDetail> viewDetailList = addDTO.getViewDetailList();
+        List<SoDeliveryNoticeChangeDetailEntity> list = new ArrayList<>();
+        for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : viewDetailList) {
+            SoDeliveryNoticeChangeDetailEntity soDeliveryNoticeChangeDetailEntity = new SoDeliveryNoticeChangeDetailEntity();
+            soDeliveryNoticeChangeDetailEntity.setMainId(soDeliveryNoticeChangeEntity.getId());
+            soDeliveryNoticeChangeDetailEntity.setSkuId(viewDetail.getSkuId());
+            soDeliveryNoticeChangeDetailEntity.setSkuNo(viewDetail.getSkuNo());
+            soDeliveryNoticeChangeDetailEntity.setSourceDetailId(viewDetail.getSourceDetailId());
+            soDeliveryNoticeChangeDetailEntity.setChangeType(viewDetail.getChangeType());
+            soDeliveryNoticeChangeDetailEntity.setOriginQty(viewDetail.getCurrentNoticeQty());
+            soDeliveryNoticeChangeDetailEntity.setNewQty(viewDetail.getNewNoticeQty());
+            soDeliveryNoticeChangeDetailEntity.setProductName(viewDetail.getProductName());
+            soDeliveryNoticeChangeDetailEntity.setSoDetailId(viewDetail.getSoDetailId());
+            list.add(soDeliveryNoticeChangeDetailEntity);
+        }
+        return list;
     }
 }

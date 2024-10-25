@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -305,6 +306,7 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         /**
          * 发货通知单号id
          */
+        @NotBlank(message = "发货通知id不能为空")
         private String  noticeId;
         /**
         * 发货通知变更单号
@@ -314,6 +316,7 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         /**
          * 发货通知单号
          */
+        @NotBlank(message = "发货通知单号不能为空")
         private String noticeCode;
 
         /**
@@ -336,10 +339,12 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         /**
          * 销售id
          */
+        @NotBlank(message = "销售id不能为空")
         private String soId;
         /**
          * 销售单号
          */
+        @NotBlank(message = "销售单号不能为空")
         private String soCode;
 
         /**
@@ -420,6 +425,7 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         /**
          * 变更原因
          */
+        @NotBlank(message = "变更原因不能为空")
         private String changeReason;
         /**
          * 客户id
@@ -454,6 +460,8 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         /**
          * 明细
          */
+        @NotEmpty(message = "明细不能为空")
+        @Valid
         private List<ViewDetail> viewDetailList;
     }
 
@@ -472,20 +480,24 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         /**
          * 来源明细Id
          */
+        @NotBlank(message = "来源明细Id不能为空")
         private String sourceDetailId;
         /**
          * 销售明细Id
          */
+        @NotBlank(message = "销售明细Id不能为空")
         private String soDetailId;
 
         /**
          * skuId
          */
+        @NotBlank(message = "skuId不能为空")
         private String skuId;
 
         /**
          * sku编号
          */
+        @NotBlank(message = "sku编号不能为空")
         private String skuNo;
         /**
          * 产品名称
@@ -494,6 +506,7 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         /**
          * 变更类型
          */
+        @NotBlank(message = "变更类型不能为空")
         private String changeType;
         /**
          * 变更类型名称
