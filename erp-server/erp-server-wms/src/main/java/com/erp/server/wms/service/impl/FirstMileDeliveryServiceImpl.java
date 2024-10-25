@@ -407,8 +407,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         String msgContent = null;
         switch (type){
             case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
-                title = StrUtil.format(NoticeMsgConstant.FS_FIRSTMILEDELIVERY_SETTING_HEAD);
-                msgContent = StrUtil.format(NoticeMsgConstant.FS_FIRSTMILEDELIVERY_SETTING_CONTENT, "数大臣", "头程发货单", "头程发货单单据【"+code+"】当前状态审核中，请即时处理",createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                title = String.format(NoticeMsgConstant.FS_FIRSTMILEDELIVERY_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_FIRSTMILEDELIVERY_SETTING_CONTENT, "数大臣", "头程发货单", "头程发货单单据【"+code+"】当前状态审核中，请即时处理",createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 break;
             default:
                 return;
