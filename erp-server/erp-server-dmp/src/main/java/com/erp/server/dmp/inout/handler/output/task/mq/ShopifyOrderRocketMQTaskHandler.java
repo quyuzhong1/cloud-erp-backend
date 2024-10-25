@@ -630,6 +630,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             dto.setRemark(dmpEntity.getRemark());
             dto.setDictPlatform(dmpEntity.getSourceSystem());
             dto.setPlatform(dmpEntity.getSourceSystem());
+            dto.setRefundAmount(dmpEntity.getAmount());
             dto.setDmpSyncTaskId(cfgOutputId);
             List<PlatformRefundOrderDTO.Detail> detailList = new LinkedList<>();
             // 退款单可能存在没有明细
