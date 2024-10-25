@@ -1242,13 +1242,18 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (CollectionUtils.isEmpty(detailList)) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
         }
+        detailList = detailList.stream().filter(obj -> Arrays.asList("1849287474372714497","1849287474376908802","1849287474376908803","1849287474385297410","1849287474385297411","1849287474385297412").contains(obj.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailList)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        }
+        handleApplication(entity,detailList);
         //处理申请单
         if (isFlag) {
-            handleApplication(entity,detailList);
             handleTransferInfo(id,detailList);
+        } else {
+            //处理发货单生成直接调拨单库存
+            handleFirstMileTransferInfo(entity,detailList);
         }
-        //处理发货单生成直接调拨单库存
-        handleFirstMileTransferInfo(entity,detailList);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
@@ -1554,11 +1559,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             outInStockDTO.setQty(detailEntity.getPickingQty());
             allocationParamList.add(outInStockDTO);
         }
-        //添加可用
+       /* //添加可用
         VirtualInventoryStockDTO.StockParamDTO usableDTO = new VirtualInventoryStockDTO.StockParamDTO();
         usableDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
         usableDTO.setParamList(allocationParamList);
-        virtualInventoryTransCoreService.approve(usableDTO);
+        virtualInventoryTransCoreService.approve(usableDTO);*/
 
         //转冻结
         VirtualInventoryStockDTO.StockParamDTO frozenDTO = new VirtualInventoryStockDTO.StockParamDTO();
