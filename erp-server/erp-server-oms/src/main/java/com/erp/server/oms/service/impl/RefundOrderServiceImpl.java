@@ -6,6 +6,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -144,17 +145,13 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
      * @param list
      */
     private void fillDb(List<RefundOrderDTO.PagingViewDTO> list) {
-        String key = DictBasicTypeEnum.PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
         List<String> soIds = list.stream().map(v->v.getSoId()).distinct().collect(Collectors.toList());
         List<String> skuIds = list.stream().map(v->v.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVoList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<SoOutstockDetailEntity> allOutList = soOutstockFeign.listDetailBySoIds(soIds);
         for (RefundOrderDTO.PagingViewDTO item : list) {
             String dictPlatform = item.getDictPlatform();
-            String platformName = dictBasicList.stream().filter(d -> d.getValue().equals(dictPlatform)).
-                    map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
-            item.setPlatformName(platformName);
+            item.setPlatformName(PlatformDictEnum.getNameByCode(dictPlatform));
             String status = item.getStatus();
             String name = RefundOrderStatusEnum.getName(status);
             item.setStatusName(name);
