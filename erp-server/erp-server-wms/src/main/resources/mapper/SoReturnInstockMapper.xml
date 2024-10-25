@@ -172,6 +172,7 @@
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and (  sri.code ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
+        and sri.invalid_status = false
         order by
         sri.code
     </select>
