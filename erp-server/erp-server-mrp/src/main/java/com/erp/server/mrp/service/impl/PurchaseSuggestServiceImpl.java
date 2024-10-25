@@ -484,9 +484,30 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        //产品信息
+        List<String> skuIdList = list.stream().map(PurchaseSuggestDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+
+        //平台信息
+        List<String> platformList = list.stream().map(PurchaseSuggestDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
         for (PurchaseSuggestDTO.ListDTO listDTO : list) {
+            //产品信息
+            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            listDTO.setSkuNo(productDetailEntity.getSkuNo());
+            listDTO.setProductName(productDetailEntity.getName());
+            listDTO.setSkuImgUrl(productDetailEntity.getImagesUrl());
+
             //数据类型
             listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
+            //平台类型
+            listDTO.setPlatformTypeName(CfgRulePlatformTypeEnum.getName(listDTO.getPlatformType()));
+            //平台名称
+            String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),listDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            listDTO.setPlatformName(platformName);
+            //状态
+            listDTO.setStatusName(SuggestStatusEnum.getName(listDTO.getStatus()));
             //物流方式
             listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
             //物流方式（系统）

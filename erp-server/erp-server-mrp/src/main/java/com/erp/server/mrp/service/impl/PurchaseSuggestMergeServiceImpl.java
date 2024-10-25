@@ -33,9 +33,12 @@ import com.erp.model.mrp.dto.HistoryImportRecordDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.mrp.dto.excel.PurchaseSuggestMergeImportExcelDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -399,21 +402,61 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
      * @date 2024/9/9 11:55
      * @param list
      */
-    private void handleList(List<PurchaseSuggestMergeDTO.ListDTO> list) {
+    private List<PurchaseSuggestMergeDTO.ListDTO> handleList(List<PurchaseSuggestMergeDTO.ListDTO> list) {
+        List<PurchaseSuggestMergeDTO.ListDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(list)) {
-            return;
+            return resultList;
         }
         //产品信息
         List<String> skuIdList = list.stream().map(PurchaseSuggestMergeDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
-        for (PurchaseSuggestMergeDTO.ListDTO listDTO : list) {
-            //数据类型
-            listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
-            //物流方式
-            listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
-            //物流方式（系统）
-            listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
+        //平台信息
+        List<String> platformList = list.stream().map(PurchaseSuggestMergeDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
+        Map<String, List<PurchaseSuggestMergeDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId()));
+
+        for (Map.Entry<String, List<PurchaseSuggestMergeDTO.ListDTO>> entry : map.entrySet()) {
+            List<PurchaseSuggestMergeDTO.ListDTO> value = entry.getValue();
+            PurchaseSuggestMergeDTO.ListDTO parentDTO = new PurchaseSuggestMergeDTO.ListDTO();
+            //产品信息
+            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            parentDTO.setSkuId(value.get(0).getSkuId());
+            parentDTO.setSkuNo(productDetailEntity.getSkuNo());
+            parentDTO.setProductName(productDetailEntity.getName());
+
+            //系统建议值
+            Integer suggestPurchaseQty = value.stream().map(PurchaseSuggestMergeDTO.ListDTO::getSuggestPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            parentDTO.setSuggestPurchaseQty(suggestPurchaseQty);
+            //计划修正值
+            Integer planPurchaseQty = value.stream().map(PurchaseSuggestMergeDTO.ListDTO::getPlanPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            parentDTO.setPlanPurchaseQty(planPurchaseQty);
+            //采购备货数
+            Integer purchaseStockUpQty = value.stream().map(PurchaseSuggestMergeDTO.ListDTO::getPurchaseStockUpQty).reduce(MathUtil.ZERO, Integer::sum);
+            parentDTO.setPurchaseStockUpQty(purchaseStockUpQty);
+            resultList.add(parentDTO);
+
+            for (PurchaseSuggestMergeDTO.ListDTO listDTO : value) {
+                //SKU
+                listDTO.setSkuNo(productDetailEntity.getSkuNo());
+                listDTO.setProductName(productDetailEntity.getName());
+                listDTO.setSkuImgUrl(productDetailEntity.getImagesUrl());
+                //数据类型
+                listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
+                //平台类型
+                listDTO.setPlatformTypeName(CfgRulePlatformTypeEnum.getName(listDTO.getPlatformType()));
+                //平台名称
+                String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),listDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+                listDTO.setPlatformName(platformName);
+                //状态
+                listDTO.setStatusName(SuggestStatusEnum.getName(listDTO.getStatus()));
+                //物流方式
+                listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
+                //物流方式（系统）
+                listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
+            }
         }
+        return  resultList;
     }
 }

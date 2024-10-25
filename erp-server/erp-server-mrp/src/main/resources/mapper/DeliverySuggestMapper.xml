@@ -58,6 +58,7 @@
         ds.platform_type as platformType,
         ds.platform,
         ds.shop_id as shopId,
+        ds.country,
         ds.sku_id as skuId,
         ds.plan_delivery_qty as planDeliveryQty,
         ds.actual_delivery_qty as actualDeliveryQty,

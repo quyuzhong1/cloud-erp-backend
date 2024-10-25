@@ -118,6 +118,12 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     private String shopId;
 
     /**
+     * 国家
+     */
+    @TableField("country")
+    private String country;
+
+    /**
      * skuid
      */
     @TableField("sku_id")

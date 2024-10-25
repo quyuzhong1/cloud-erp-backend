@@ -41,6 +41,7 @@
         ps.suggest_purchase_qty as suggestPurchaseQty,
         pss.suggest_purchase_qty as sysSuggestPurchaseQty,
         ps.suggest_purchase_date as suggestPurchaseDate,
+        pss.suggest_purchase_date as sysSuggestPurchaseDate,
         pss.suggest_purchase_qty as sysSuggestPurchaseDate,
         ps.logistics_method as logisticsMethod,
         pss.logistics_method as sysLogisticsMethod,
@@ -106,6 +107,7 @@
             <include refid="Base_Column_List"/>
         from purchase_suggest ps
         left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
+        left join product_detail pd on pss.sku_id = pd.id and pd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and ps.is_deleted = false
