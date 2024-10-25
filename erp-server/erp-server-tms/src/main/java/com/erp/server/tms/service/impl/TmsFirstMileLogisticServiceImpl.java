@@ -165,6 +165,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     private TmsCfgCostService tmsCfgCostService;
 
     @Resource
+    private LogisticsBillService logisticsBillService;
+
+    @Resource
     @Lazy
     private TmsFirstMileLogisticService service;
 
@@ -1168,6 +1171,19 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO singleGenerateReconciliation(String id, String reconciliationId, List<LocalDate> dateList, Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap,String reconciliationType) {
+//        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(id);
+//        if (Objects.isNull(logisticsBillEntity)){
+//            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流单");
+//        }
+//        List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(Collections.singletonList(logisticsBillEntity.getId()));
+//        boolean notSign = logisticsBillDetailEntityList.stream()
+//                .anyMatch(e -> !LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(e.getTrackStatus()));
+//        if (notSign){
+//            throw new ServiceException("物流单未签收");
+//        }
+//        List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.listByLogisticsBillIdList(Collections.singletonList(logisticsBillEntity.getId()));
+//        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getSourceId()));
+//        String businessCode = CollectionUtil.isEmpty(businessDTOList) ? "" : businessDTOList.get(0).getBusinessCode();
         // 校验物理商是否一致
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = this.listReconciliationByMainIds(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(sourceDetailList)){
@@ -1184,6 +1200,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             } else {
                 e.setBusinessCode("");
             }
+            e.setReconciliationId(reconciliationId);
+            if (StrUtil.isBlank(reconciliationId)){
+                e.setReconciliationStatus(null);
+            }
         });
 //        boolean notGenerate = sourceDetailList.stream()
 //                .anyMatch(e -> !ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(e.getReconciliationStatus()));
@@ -1198,6 +1218,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         // 填充信息
 //        String currency = sourceDetailList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getCurrency).findFirst().orElse("");
+//        List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailList = buildReconciliationDetailData(reconciliationId,logisticsBillEntity,logisticsBillDetailEntityList,logisticsBillCostEntityList);
         tmsFirstMileReconciliationDetailService.fillWaitReconciliationList(sourceDetailList, reconciliationId);
         TmsFirstMileReconciliationDetailDTO.ListDTO curListDTO = sourceDetailList.stream().findFirst().orElse(null);
         if (null == curListDTO){
@@ -1328,6 +1349,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         return BatchResultDTO.success(id, curListDTO.getTransportNo(), OperationTypeEnum.ADD);
     }
+
+//    private List<TmsFirstMileReconciliationDetailDTO.ListDTO> buildReconciliationDetailData(String reconciliationId, LogisticsBillEntity logisticsBillEntity, List<LogisticsBillDetailEntity> logisticsBillDetailEntityList, List<LogisticsBillCostEntity> logisticsBillCostEntityList) {
+//        //根据物流单匹配对应的费用项
+//        List<TmsFirstMileReconciliationDetailDTO.ListDTO> list = new ArrayList<>();
+//
+//    }
 
     private List<TmsFirstMileReconciliationDetailDTO.ListDTO> resetSaveData(List<TmsFirstMileReconciliationDetailDTO.ListDTO> saveListDTO, List<TmsFirstMileReconciliationDetailDTO.ListDTO> oldListDTO) {
         if (CollectionUtils.isEmpty(oldListDTO)){
