@@ -469,25 +469,21 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String msgContent = null;
         switch (type){
             case FS_REQUISITION_NOTICE:
-                title = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
-                msgContent = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前已处理完成，请即时下推发货单出库" , createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前已处理完成，请即时下推发货单出库" , createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 break;
             case FS_REQUISITION_WAITHANDLE_NOTICE:
-                title = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
-                msgContent = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前状态待处理，请即时处理"  ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前状态待处理，请即时处理"  ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 break;
             case FS_REQUISITION_HANDLEING_NOTICE:
-                title = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
-                msgContent = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前状态处理中，请即时处理" ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前状态处理中，请即时处理" ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 break;
             case FS_REQUISITION_PACKING_NOTICE:
-                title = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
-                msgContent = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】关联装箱任务【"+packingCode+"】已装箱完成，请即时处理" ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】关联装箱任务【"+packingCode+"】已装箱完成，请即时处理" ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 break;
-//            case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
-//                title = StrUtil.format(NoticeMsgConstant.FS_FIRSTMILEDELIVERY_SETTING_HEAD);
-//                msgContent = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "头程发货单", requisitionApplication.getCode(),requisitionApplication.getCreateUserName(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-//                break;
             default:
                 return;
         }
