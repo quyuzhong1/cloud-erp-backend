@@ -99,6 +99,7 @@ public class AntuReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTaskH
 		String sourcePlatform = dmpMainEntity.getSourcePlatform();
 		dto.setPlatform(sourcePlatform);
 		dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
+		dto.setReturnType(erpStatus);
 		// 明细
 		List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
 		dto.setProductDetailList(detailList);
