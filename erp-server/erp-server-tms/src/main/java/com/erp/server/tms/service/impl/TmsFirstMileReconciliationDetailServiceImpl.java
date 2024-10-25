@@ -811,7 +811,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 //                }
                 continue;
             }
-            if (!ReconciliationStatusEnum.TO_BE_GENERATED.getCode().equalsIgnoreCase(listDTO.get(0).getReconciliationStatus())) {
+            List<TmsFirstMileReconciliationDetailDTO.ListDTO> collect = listDTO.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getReconciliationId()) && Objects.equals(e.getReconciliationId(), mainId) && !Objects.equals(e.getReconciliationStatus(), ReconciliationStatusEnum.TO_BE_GENERATED.getCode())).collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(collect)) {
                 throw new ServiceException("该物流单已生成对账单,物流运单号=" + listDTO.get(0).getTransportNo());
             }
         }
