@@ -61,9 +61,51 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private String  id;
 
         /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
+         * 平台类型名称
+         */
+        private String platformTypeName;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+
+        /**
          * 编码
          */
         private String code;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * sku图片
+         */
+        private String skuImgUrl;
 
         /**
          * 创建类型（auto系统，manual人工）
@@ -80,9 +122,14 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private Integer suggestPurchaseQty;
 
         /**
-         * 建议采购量（系统）
+         * 计划采购量（计划修正值）
          */
-        private Integer sysSuggestPurchaseQty;
+        private Integer planPurchaseQty;
+
+        /**
+         * 采购备货量
+         */
+        private Integer purchaseStockUpQty;
 
         /**
          * 建议采购日期
@@ -153,6 +200,26 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 采购成本（系统）
          */
         private BigDecimal sysPurchaseCost;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        private String createTime;
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private String updateTime;
     }
 
 

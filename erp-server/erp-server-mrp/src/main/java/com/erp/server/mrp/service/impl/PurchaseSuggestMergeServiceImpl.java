@@ -18,6 +18,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.dto.FileExcelDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -35,6 +36,7 @@ import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
 import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -401,6 +403,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        //产品信息
+        List<String> skuIdList = list.stream().map(PurchaseSuggestMergeDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+
         for (PurchaseSuggestMergeDTO.ListDTO listDTO : list) {
             //数据类型
             listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));

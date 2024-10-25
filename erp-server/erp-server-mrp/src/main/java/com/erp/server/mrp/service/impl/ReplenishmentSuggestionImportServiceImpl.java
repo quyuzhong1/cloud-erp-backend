@@ -524,10 +524,12 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            } else {
+                if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                    errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
-            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
-                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
-            }
+
             //备货信息
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
             CfgRuleStockUpEntity cfgRuleStockUpEntity = cfgRuleStockUpList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), suggestId)).findFirst().orElse(new CfgRuleStockUpEntity());
@@ -663,10 +665,12 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            } else {
+                if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                    errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
-            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
-                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
-            }
+
             //销量数据
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
             CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), suggestId)).findFirst().orElse(new CfgRuleSalesQtyEntity());
@@ -840,9 +844,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
-            }
-            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
-                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+            } else {
+                if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                    errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
             //销量数据
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
@@ -970,10 +975,12 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            } else {
+                if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                    errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
-            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
-                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
-            }
+
             //销量数据
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
             CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), suggestId)).findFirst().orElse(new CfgRuleSalesQtyEntity());
@@ -1100,10 +1107,12 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            } else {
+                if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                    errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
-            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
-                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
-            }
+
             //销量数据
             String suggestId = ObjectUtil.isEmpty(entity) ? "" : entity.getId();
             CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), suggestId)).findFirst().orElse(new CfgRuleSalesQtyEntity());
@@ -1328,6 +1337,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         //错误信息序号
         Integer errorIndex = getMapKey(headMap, "错误信息");
 
+        if (ObjectUtil.isEmpty(errorIndex)) {
+            throw new ServiceException("导入模板错误");
+        }
         //记录错误数据
         List<JSONObject>  wrongList = new ArrayList<>();
         for (JSONObject jsonObject : successList) {
@@ -1361,10 +1373,12 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            } else {
+                if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                    errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
-            if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
-                errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
-            }
+
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 wrongList.add(jsonObject);
                 jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(errorMsgList));
