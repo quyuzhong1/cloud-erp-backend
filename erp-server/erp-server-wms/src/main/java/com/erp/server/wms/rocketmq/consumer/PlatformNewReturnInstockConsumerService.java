@@ -204,8 +204,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setSourceType(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode());
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
 		soReturnInstockEntity.setCreated(dto.getCreateTime());
+		soReturnInstockEntity.setType("B2C");
 		if(Objects.nonNull(soB2cEntity)){
-			soReturnInstockEntity.setType("B2C");
 			soReturnInstockEntity.setSalesOrgId(soB2cEntity.getOrgId());
 			soReturnInstockEntity.setSalesOrgName(soB2cEntity.getOrgName());
 			ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(soB2cEntity.getShopId());
