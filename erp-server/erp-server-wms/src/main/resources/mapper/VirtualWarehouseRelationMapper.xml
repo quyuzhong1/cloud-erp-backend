@@ -101,7 +101,7 @@
             vw.disabled,
             vwc.relation_id as relationId,
             vwc.dict_platform as dictPlatform,
-            vwc.type,
+            vwc.type
         from virtual_warehouse_relation vwr
         inner join virtual_warehouse vw on vwr.virtual_warehouse_id=vw.id and vw.is_deleted=false and vw.disabled=false
         inner join virtual_warehouse_channel vwc on vw.id = vwc.virtual_warehouse_id and vwc.is_deleted =false
