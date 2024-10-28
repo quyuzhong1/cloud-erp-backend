@@ -370,6 +370,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void addByPlatform(SoB2cReturnEntity soB2cReturnEntity, List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.THD);
+        soB2cReturnEntity.setCode(code);
         this.save(soB2cReturnEntity);
 
         //操作日志
