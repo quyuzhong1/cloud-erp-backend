@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -111,8 +110,8 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
             String platformNames = platformViewList.stream().filter(obj -> platformList.contains(obj.getValue()))
                     .map(DictBasicDTO.ViewDTO::getName)
                     .collect(Collectors.joining(","));
-            String content = StrUtil.format("补货建议平台【{}】，平台【{}】，备货模式【{}】，是否启用【{}】，定时生效【{}】;<br>", CfgRulePlatformTypeEnum.getName(value.get(0).getType()),platformNames,
-                    CfgRuleStockingModeEnum.getName(entity.getStockingMode()),entity.getDisabled() ? "是":"否", entity.getEffectiveDate());
+            String content = StrUtil.format("补货建议平台【{}】，平台【{}】，备货模式【{}】，是否启用【{}】，定时生效【{}】;<br>", PlatformMappingTypeEnum.getName(value.get(0).getType()),platformNames,
+                    CfgRuleStockingModeEnum.getName(entity.getStockingMode()),entity.getDisabled() ? "否":"是", entity.getEffectiveDate());
             msg.append(content);
         }
         if (StrUtil.isBlank(msg)) {

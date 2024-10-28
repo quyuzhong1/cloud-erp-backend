@@ -15,6 +15,7 @@ import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -99,7 +100,11 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         }
         //日志
         StringBuffer msg = new StringBuffer();
-        msg.append( StrUtil.format("本地发FBA：<br>"));
+        String title = "本地发FBA：";
+        if (StrUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())) {
+            title = "本地发海外：";
+        }
+        msg.append( StrUtil.format("{}<br>",title));
         for (CfgRuleLogisticsEntity logisticsEntity : list) {
             String parentMsg = StrUtil.format("物流方式【{}】、物流时效【{}】、发货频率【{}】<br>",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
             msg.append(parentMsg);
