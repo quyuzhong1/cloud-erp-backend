@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -37,10 +38,7 @@ import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
-import com.erp.model.wms.enums.FbaDeliveryStatusEnum;
-import com.erp.model.wms.enums.FbaDemandTypeEnum;
-import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -157,6 +155,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        if (StrUtil.equals(old.getSourceType(),SourceTypeEnum.DELIVERY_SUGGESTION.getCode())) {
+            throw new ServiceException("发货建议下推的发货计划不支持编辑!");
+        }
+
         WmsDeliveryPlanEntity wmsDeliveryPlanEntity =  BeanMapperUtils.map(WmsDeliveryPlanEntity.class, updateDTO);
 
         // 数据处理
@@ -954,7 +956,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setDeliveryStatusName(FbaDeliveryStatusEnum.getName(data.getDeliveryStatus()));
-
+            //物流方式
+            data.setExpectLogisticsMethodName(LogisticsMethodEnum.getName(data.getExpectLogisticsMethod()));
             //设置发货单号拿最新的一个发货单
             if(data.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
                 RequisitionApplicationEntity requisitionApplication = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).findFirst().orElse(new RequisitionApplicationEntity());
@@ -980,8 +983,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 data.setDeliveryQty(deliveryQty);
 
             }
-
-
+            //来源单号
+            JSONArray sourceJson = data.getSourceJson();
+            if (ObjectUtil.isNotEmpty(sourceJson)) {
+                String sourceCodes = BeanUtil.copyToList(JSONUtil.parseArray(sourceJson), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class)
+                        .stream().map(obj -> obj.getSourceCode()).distinct().collect(Collectors.joining(","));
+                data.setSourceCodes(sourceCodes);
+            }
 
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(data.getSkuId())).collect(Collectors.toList());

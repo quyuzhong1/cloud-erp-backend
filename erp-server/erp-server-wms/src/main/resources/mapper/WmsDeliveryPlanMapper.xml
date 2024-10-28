@@ -71,7 +71,10 @@
             odpd.platform_fn_sku as platformFnSku,
             odp.type,
             odp.shop_id as shopId,
-            odp.shop_name as shopName
+            odp.shop_name as shopName,
+            odp.expect_delivery_date as expectDeliveryDate,
+            odp.expect_logistics_method as expectLogisticsMethod,
+            odpd.source_json as sourceJson
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         WHERE
@@ -121,7 +124,10 @@
         odpd.platform_fn_sku as platformFnSku,
         odp.type,
         odp.shop_id as shopId,
-        odp.shop_name as shopName
+        odp.shop_name as shopName,
+        odp.expect_delivery_date as expectDeliveryDate,
+        odp.expect_logistics_method as expectLogisticsMethod,
+        odpd.source_json as sourceJson
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = odp.to_warehouse_id and opw.is_deleted = false

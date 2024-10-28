@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -254,6 +255,30 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * 期望发货时间
+         */
+        private String expectDeliveryDate;
+
+        /**
+         * 期望物流方式
+         */
+        private String expectLogisticsMethod;
+
+        /**
+         * 期望物流方式名称
+         */
+        private String expectLogisticsMethodName;
+        /**
+         * 来源json
+         */
+        private JSONArray sourceJson;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCodes;
     }
 
     /**
@@ -410,7 +435,15 @@ public class WmsDeliveryPlanDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 期望发货时间
+         */
+        private String expectDeliveryDate;
 
+        /**
+         * 期望物流方式
+         */
+        private String expectLogisticsMethod;
     }
 
     /**

@@ -372,6 +372,11 @@ public class PurchaseSuggestDTO implements Serializable {
          * 建议采购日期
          */
         private LocalDate suggestPurchaseDate;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     @Data

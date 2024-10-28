@@ -88,12 +88,6 @@ public class WmsDeliveryPlanDetailEntity extends BaseEntity<WmsDeliveryPlanDetai
     private JSONObject sourceJson;
 
     /**
-     * 来源类型
-     */
-    @TableField("source_type")
-    private String sourceType;
-
-    /**
      * 主表编码,辅助字段
      */
     @TableField(exist = false)

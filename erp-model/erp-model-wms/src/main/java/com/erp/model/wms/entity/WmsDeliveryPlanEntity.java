@@ -123,6 +123,24 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
     @TableField("type")
     private String type;
 
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 期望发货时间
+     */
+    @TableField("expect_delivery_date")
+    private String expectDeliveryDate;
+
+    /**
+     * 期望物流方式
+     */
+    @TableField("expect_logistics_method")
+    private String expectLogisticsMethod;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
