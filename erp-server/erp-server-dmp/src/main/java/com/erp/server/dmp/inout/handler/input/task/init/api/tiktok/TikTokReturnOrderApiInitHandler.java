@@ -1,6 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.tiktok;
 
-import cn.hutool.core.collection.CollectionUtil;
+
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -10,16 +10,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputTikTokApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.listing.ListingDTO;
-import com.sdk.oms.tiktok.dto.tiktok.listing.view.ListingViewDTO;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.OrderViewDTO;
+import com.sdk.oms.tiktok.dto.tiktok.returnOrder.ReturnDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.oms.tiktok.util.EncryptionUtils;
 import jodd.util.StringUtil;
@@ -30,16 +27,15 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
+import java.time.ZoneOffset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @Scope("prototype")
-public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
+public class TikTokReturnOrderApiInitHandler implements DmpInputApiInitHandler {
     @Resource
     private TikTokSdkClientService tikTokSdkClientService;
-
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -52,8 +48,8 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
             throw new ServiceException("TikTok店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
 
-        //每次最多获取200条
-        Integer pageSize = 100;
+        //每次最多获取50条
+        Integer pageSize = 50;
         //分页token
         String pageToken = "";
         //平台接口地址
@@ -87,7 +83,8 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
             headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
 
             //请求body，平台用于计算签名
-            Map<String, String> bodyMap = new HashMap<>();
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("return_types", Arrays.asList("RETURN_AND_REFUND", "REPLACEMENT"));
 
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
@@ -111,31 +108,33 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
             //拉取数据
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
             if (!Objects.equals(apiResult.getCode(), 200)) {
-                log.error("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}",
+                log.error("调用url={},入参params={}, TikTok查询退货订单数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询退货订单数据失败，返回值 responseMap={}",
                         sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
             //解析数据
             ObjectMapper objectMapper = new ObjectMapper();
-            ListingDTO listingDTO = null;
+            ReturnDTO returnDTO = null;
             try {
-                listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ListingDTO.class);
-            } catch (JsonProcessingException e) {
+                returnDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), ReturnDTO.class);
+            } catch (Exception e) {
                 log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-            if (CollectionUtils.isEmpty(listingDTO.getData().getProducts())) {
+
+            if (CollectionUtils.isEmpty(returnDTO.getData().getReturnOrders())) {
                 break;
             }
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(listingDTO.getData().getProducts()));
+            dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(returnDTO.getData().getReturnOrders()));
             dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 
-            pageToken = listingDTO.getData().getNextPageToken();
-            if (StringUtil.isBlank(pageToken)) {
+            pageToken = returnDTO.getData().getNextPageToken();
+
+            if (StringUtil.isBlank(returnDTO.getData().getNextPageToken())) {
                 break;
             }
 
