@@ -37,15 +37,19 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
      @NoArgsConstructor
      @AllArgsConstructor
      public static class TabListDTO {
-
          /**
-         * 类型
-         */
+          * 类型
+          */
          private String tabFlag;
 
          /**
-         * 数量
-         */
+          * tab名称
+          */
+         private String tabFlagName;
+
+         /**
+          * 数量
+          */
          private Integer count;
 
      }

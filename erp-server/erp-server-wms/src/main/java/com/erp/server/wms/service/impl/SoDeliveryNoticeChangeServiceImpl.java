@@ -166,11 +166,24 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         List<String> existStatusList = list.stream().map(SoDeliveryNoticeChangeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new SoDeliveryNoticeChangeDTO.TabListDTO(status, 0));
+            list.add(new SoDeliveryNoticeChangeDTO.TabListDTO(status,"", 0));
         }
         });
-        list.add(new SoDeliveryNoticeChangeDTO.TabListDTO("all", list.stream().mapToInt(SoDeliveryNoticeChangeDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
+        list.forEach(v->{
+            if(v.getTabFlag().equals(ApproveStatusEnum.WAIT_SUBMIT.getCode())){
+                v.setTabFlagName("待提交");
+            }
+            if(v.getTabFlag().equals(ApproveStatusEnum.APPROVE_ING.getCode())){
+                v.setTabFlagName("待我审核");
+            }
+            if(v.getTabFlag().equals(ApproveStatusEnum.APPROVE.getCode())){
+                v.setTabFlagName("审核通过");
+            }
+            if(v.getTabFlag().equals(ApproveStatusEnum.REJECT.getCode())){
+                v.setTabFlagName("审核不通过");
+            }
+        });
+        list.add(new SoDeliveryNoticeChangeDTO.TabListDTO("","全部", list.stream().mapToInt(SoDeliveryNoticeChangeDTO.TabListDTO::getCount).sum()));
         return list;
     }
 
