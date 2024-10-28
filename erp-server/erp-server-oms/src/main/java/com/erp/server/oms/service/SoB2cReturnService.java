@@ -54,7 +54,7 @@ public interface SoB2cReturnService extends SuperService<SoB2cReturnEntity> {
 
     Boolean delete(List<String> ids);
 
-    void exportExcel(PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto);
+    void exportExcel(SoB2cReturnDTO.PagingParamDTO dto);
 
     List<SoB2cReturnEntity> listBySoIds(List<String> soIds);
 
