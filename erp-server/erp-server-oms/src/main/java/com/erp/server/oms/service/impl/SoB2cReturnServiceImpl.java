@@ -27,6 +27,7 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
+import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -420,20 +421,14 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         if(CollectionUtils.isEmpty(list)){
             return;
         }
-        String key = DictBasicTypeEnum.PLATFORM.getType();
-        List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
         List<String> shopIds = list.stream().map(SoB2cReturnDTO.GenerateSoReturnNoticeView::getShopId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity>shopInfoEntityList = CollectionUtils.isNotEmpty(shopIds)?shopInfoService.listByIds(shopIds):new ArrayList<>();
         List<String> skuIds = list.stream().map(SoB2cReturnDTO.GenerateSoReturnNoticeView::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
         List<String> soIds = list.stream().map(SoB2cReturnDTO.GenerateSoReturnNoticeView::getSoId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<String> ids = list.stream().map(SoB2cReturnDTO.GenerateSoReturnNoticeView::getId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> allSoOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
         for (SoB2cReturnDTO.GenerateSoReturnNoticeView pagingViewDTO : list) {
-            String dictPlatform = pagingViewDTO.getPlatform();
-            String platformName = dictBasicList.stream().filter(d -> d.getValue().equals(dictPlatform)).
-                    map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
-            pagingViewDTO.setPlatformName(platformName);
+            pagingViewDTO.setPlatformName(PlatformDictEnum.getNameByCode(pagingViewDTO.getPlatform()));
             ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(pagingViewDTO.getShopId())).findFirst().orElse(new ShopInfoEntity());
             pagingViewDTO.setShopName(shopInfoEntity.getName());
             SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId())).findFirst().orElse(new SkuVO());
@@ -470,7 +465,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = allSoReturnInstockDetailList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode()) &&v.getReturnId().equals(pagingViewDTO.getId())).collect(Collectors.toList());
             String instockCode = soReturnInstockDetailEntityList.stream().map(v->v.getCode()).collect(Collectors.joining());
             pagingViewDTO.setInstockCode(instockCode);
-            pagingViewDTO.setReason(SoB2cReturnReasonEnum.getName(pagingViewDTO.getReason()));
+            pagingViewDTO.setReason(ReturnReasonEnum.getName(pagingViewDTO.getReason()));
             pagingViewDTO.setInstockQty(soReturnInstockDetailEntityList.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId())).map(v->v.getRealQty()).reduce(MathUtil.ZERO, Integer::sum));
             if(CollectionUtils.isNotEmpty(soReturnInstockDetailEntityList)){
                 pagingViewDTO.setSysInstockTime(soReturnInstockDetailEntityList.stream().filter(v->Objects.nonNull(v.getApproveTime())).findFirst().orElse(new SoReturnInstockDetailEntity()).getApproveTime());
