@@ -383,7 +383,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             //是否存在虚拟仓
             VirtualWarehouseRelationDTO.IsExistVirtualResultDTO isExistVirtualResultDTO = existVirtualWarehouseList.stream()
-                    .filter(obj -> StrUtil.equals(obj.getWarehouseId(), handleListDTO.getFromWarehouseId()) && (StrUtil.equals(obj.getShopId(),channelId)))
+                    .filter(obj -> StrUtil.equals(obj.getWarehouseId(), handleListDTO.getFromWarehouseId()) && (StrUtil.equals(obj.getRelationId(),channelId)))
                     .findFirst().orElse(null);
             if (isExistVirtualResultDTO.getIsExistVirtual() && StrUtil.isBlank(handleListDTO.getFromVirtualWarehouseId())) {
                 throw new ServiceException("实体仓有关联虚拟仓，需要编辑保存虚拟仓后处理");

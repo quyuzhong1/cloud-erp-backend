@@ -197,9 +197,9 @@ public class VirtualWarehouseRelationDTO implements Serializable {
     public static class IsExistVirtualDTO {
 
         /**
-         * 店铺id
+         * 渠道id
          */
-        private String shopId;
+        private String relationId;
 
         /**
          * 实体仓id
@@ -217,9 +217,9 @@ public class VirtualWarehouseRelationDTO implements Serializable {
         private String warehouseId;
 
         /**
-         * 店铺id
+         * 渠道id
          */
-        private String shopId;
+        private String relationId;
 
         /**
          * 是否存在虚拟仓
