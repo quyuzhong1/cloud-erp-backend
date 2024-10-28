@@ -234,7 +234,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             return new PagingVO<>(pageData);
         }
         // 数据处理
-        fillWaitReconciliationData(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
@@ -962,9 +961,29 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .distinct()
                 .collect(Collectors.toList());
         // 物流费用 有物流单没有关联对账单数据
-        Map<String, String> billIdCostIdMap = logisticsBillCostService.listByLogisticsBillIdList(logisticsBillIds)
-                .stream().filter(e -> StrUtil.isBlank(e.getReconciliationId()))
-                .collect(Collectors.toMap(LogisticsBillCostEntity::getLogisticsBillId, BaseEntity::getId));
+        List<LogisticsBillCostEntity> logisticsBillCostEntityAllList = logisticsBillCostService.listByLogisticsBillIdList(logisticsBillIds);
+        List<LogisticsBillCostEntity> logisticsBillCostEntityList = new ArrayList<>();
+        for (String logisticsBillId : logisticsBillIds) {
+            TmsFirstMileReconciliationDetailDTO.ListDTO listDTO = records.stream().filter(e -> StrUtil.isNotBlank(e.getSourceId())
+                    && Objects.equals(e.getSourceId(), logisticsBillId)).findFirst().orElse(null);
+            if (Objects.isNull(listDTO)){
+                continue;
+            }
+            LogisticsBillCostEntity billCostEntity = null;
+            if (StrUtil.isBlank(listDTO.getReconciliationId())){
+                billCostEntity = logisticsBillCostEntityAllList.stream().filter(e -> StrUtil.isNotBlank(e.getLogisticsBillId())
+                        && Objects.equals(e.getLogisticsBillId(), logisticsBillId) && StrUtil.isBlank(e.getReconciliationId())).findFirst().orElse(null);
+            }else {
+                billCostEntity = logisticsBillCostEntityAllList.stream().filter(e -> StrUtil.isNotBlank(e.getLogisticsBillId())
+                        && Objects.equals(e.getLogisticsBillId(), logisticsBillId)
+                        && StrUtil.isNotBlank(e.getReconciliationId()) && Objects.equals(listDTO.getReconciliationId(), e.getReconciliationId())).findFirst().orElse(null);
+            }
+            if (Objects.nonNull(billCostEntity)){
+                logisticsBillCostEntityList.add(billCostEntity);
+            }
+        }
+        Map<String, String> billIdCostIdMap = logisticsBillCostEntityList
+                .stream().collect(Collectors.toMap(LogisticsBillCostEntity::getLogisticsBillId, BaseEntity::getId));
 
         List<TmsCostDetailEntity> costList = tmsCostDetailService.sumCostByMainIdAndCostId(LogisticsBillCostTypeEnum.ESTIMATED.getCode(),
                 billIdCostIdMap.values(),
