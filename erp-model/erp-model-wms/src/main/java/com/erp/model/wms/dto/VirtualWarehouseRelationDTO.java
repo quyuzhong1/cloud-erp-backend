@@ -140,6 +140,14 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          */
         private String relationId;
         /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 类型
+         */
+        private String type;
+        /**
          * 实体仓id
          */
         private String warehouseId;
