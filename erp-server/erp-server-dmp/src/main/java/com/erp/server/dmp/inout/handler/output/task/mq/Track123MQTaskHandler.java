@@ -115,4 +115,9 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 		platformTrackDTO.setUniqueId(UUID.randomUUID().toString());
         return platformTrackDTO;
     }
+
+	@Override
+	protected List<String> getSourceCodeKeys() {
+		return Arrays.asList("trackNo");
+	}
 }
