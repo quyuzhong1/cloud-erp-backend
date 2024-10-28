@@ -71,6 +71,7 @@
         select
         <include refid="Base_Column_List"/>
         from delivery_suggest ds
+        left join delivery_suggest_sys dss on ds.id = dss.source_id and dss.is_deleted = false
         <where>
             ds.is_deleted = false and ds.source_id = #{params.sourceId}
         </where>
