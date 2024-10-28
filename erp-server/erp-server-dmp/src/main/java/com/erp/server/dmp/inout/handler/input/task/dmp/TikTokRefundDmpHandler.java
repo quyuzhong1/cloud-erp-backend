@@ -60,7 +60,7 @@ public class TikTokRefundDmpHandler extends DmpInputDbConvertDmpHandler {
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 dmpDataMap.put("nextLevelId", dmpDataMap.get("nextLevelId"));
                 dmpDataMap.put("shopId", dmpDataMap.get("nextLevelId"));
-                Object statusObj = dmpDataMap.get("platformStatus");
+                Object statusObj = dmpDataMap.get("platformOriginalStatus");
                 if (statusObj != null) {
                     String status = String.valueOf(statusObj);
                     if ("RETURN_OR_REFUND_REQUEST_PENDING".equalsIgnoreCase(status)) {

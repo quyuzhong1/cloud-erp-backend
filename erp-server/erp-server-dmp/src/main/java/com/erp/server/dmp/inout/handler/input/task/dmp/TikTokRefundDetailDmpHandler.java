@@ -14,7 +14,7 @@ import java.util.TreeMap;
  */
 @Service
 @Scope("prototype")
-public class TikTokRefundDetailDmpHandler extends TikTokReturnGetDetailDmpHandler {
+public class TikTokRefundDetailDmpHandler extends TikTokRefundGetDetailDmpHandler {
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
@@ -41,11 +41,11 @@ public class TikTokRefundDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
                     dmpDataMap.put("extendData", JSON.toJSONString(data));
                     dmpDataMap.put("amount", refundAmountMap.get("refundTotal"));
                     dmpDataMap.put("taxAmount", refundAmountMap.get("refundTax"));
-
+                    dmpDataMap.put("srcOrderDetailId", refundAmountMap.get("orderLineItemId"));
 
                     dmpDataMap.put("thirdOrderCode", dmpDataMap.get("orderId"));
                     dmpDataMap.put("platformOrderCode", dmpDataMap.get("orderId"));
-                    dmpDataMap.put("srcOrderDetailId", refundAmountMap.get("orderLineItemId"));
+
                 }
             }
         }

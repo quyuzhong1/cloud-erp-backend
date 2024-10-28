@@ -90,6 +90,8 @@ public class DmpSoRefundDetailEntity extends BaseEntity<DmpSoRefundDetailEntity>
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
+
+
     /**
      * 拓展字段
      */
