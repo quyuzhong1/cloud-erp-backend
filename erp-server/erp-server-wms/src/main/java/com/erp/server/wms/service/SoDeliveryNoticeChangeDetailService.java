@@ -23,4 +23,6 @@ public interface SoDeliveryNoticeChangeDetailService extends SuperService<SoDeli
     void update(SoDeliveryNoticeChangeDTO.ViewDTO updateDTO,SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity);
 
     List<SoDeliveryNoticeChangeDetailEntity> listByMainIds(List<String> mainIds);
+
+    void removeByMainId(String id);
 }

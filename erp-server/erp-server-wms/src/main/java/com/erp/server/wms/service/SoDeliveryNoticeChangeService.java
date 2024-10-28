@@ -135,4 +135,6 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     Boolean approveEnd(ApproveOneDTO dto, SoDeliveryNoticeChangeEntity entity);
 
     PagingVO<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaging(PagingDTO<SoDeliveryNoticeChangeDTO.ProductAddDTO> dto);
+
+    BatchResultDTO invalid(String id);
 }

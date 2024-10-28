@@ -256,7 +256,6 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<SoDeliveryNoticeChangeEntity> list = soDeliveryNoticeChangeService.lambdaQuery().in(SoDeliveryNoticeChangeEntity::getId, ids).list();
 		Map<String, SoDeliveryNoticeChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoDeliveryNoticeChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -268,6 +267,44 @@ public class SoDeliveryNoticeChangeController extends BaseController {
                 SoDeliveryNoticeChangeEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     deleteResult = BatchResultDTO.fail(id, id, "发货通知变更单不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 作废
+     * @author lrp
+     * @date:  2024-10-23
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soDeliveryNoticeChange:invalid",
+            serviceClass = SoDeliveryNoticeChangeService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.INVALID, desc = "发货通知变更单作废")
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoDeliveryNoticeChangeEntity> list = soDeliveryNoticeChangeService.lambdaQuery().in(SoDeliveryNoticeChangeEntity::getId, ids).list();
+        Map<String, SoDeliveryNoticeChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoDeliveryNoticeChangeEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = soDeliveryNoticeChangeService.invalid(id);
+            }catch (Exception e){
+                log.error("发货通知变更单作废失败",e);
+                SoDeliveryNoticeChangeEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "发货通知变更单不存在, 作废失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }

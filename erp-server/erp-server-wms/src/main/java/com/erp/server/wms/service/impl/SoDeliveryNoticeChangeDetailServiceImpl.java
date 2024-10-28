@@ -114,6 +114,15 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
         return lambdaQuery().in(SoDeliveryNoticeChangeDetailEntity::getMainId,mainIds).list();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByMainId(String id) {
+        if(StringUtils.isBlank(id)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoDeliveryNoticeChangeDetailEntity::getMainId,id).remove();
+    }
+
     /**
      * 校验明细数据
      * @param soDeliveryNoticeChangeEntity

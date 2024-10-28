@@ -308,16 +308,13 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     public BatchResultDTO delete(String id) {
         SoDeliveryNoticeChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知变更单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
+            throw new ServiceException("只有待提交或审核不通过数据支持作废");
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
+        detailService.removeByMainId(entity.getId());
         // 删除主单数据
-        log.info("删除 开始删除发货通知变更单主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
-        log.info("删除 开始删除发货通知变更单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除发货通知变更单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
@@ -393,6 +390,25 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             pageData.setRecords(productDTOS);
         }
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public BatchResultDTO invalid(String id) {
+        SoDeliveryNoticeChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知变更单数据"));
+        // 只有待提交数据允许作废
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
+            throw new ServiceException("只有待提交或审核不通过数据支持作废");
+        }
+        if(entity.getInvalidStatus()){
+            throw new ServiceException("该数据已作废");
+        }
+        // 删除主单数据
+        entity.setInvalidStatus(true);
+        super.updateById(entity);
+        // 删除日志数据
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
+        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "作废发货通知变更单数据");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
     @Override
