@@ -1,12 +1,14 @@
 package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -133,7 +135,18 @@ public class VirtualWarehouseRelationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SelectResultDTO {
-
+        /**
+         * 店铺id
+         */
+        private String relationId;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 类型
+         */
+        private String type;
         /**
          * 实体仓id
          */
@@ -182,5 +195,43 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+    }
+
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class IsExistVirtualDTO {
+
+        /**
+         * 渠道id
+         */
+        private String relationId;
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class IsExistVirtualResultDTO {
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
+         * 渠道id
+         */
+        private String relationId;
+
+        /**
+         * 是否存在虚拟仓
+         */
+        private Boolean isExistVirtual;
     }
 }

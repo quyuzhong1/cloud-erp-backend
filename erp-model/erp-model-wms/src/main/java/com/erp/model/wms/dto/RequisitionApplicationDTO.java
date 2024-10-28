@@ -917,6 +917,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String productName;
         /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
          * 要货数量
          */
         private Integer requisitionQty;

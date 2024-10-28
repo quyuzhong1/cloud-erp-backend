@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
@@ -113,7 +114,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
-                .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
+                .set(StrUtil.isNotBlank(fromVirtualWarehouseId),RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
                 .eq(RequisitionApplicationDetailEntity::getId, id);
         String virtualWarehouseIdToSet = StringUtils.isNotBlank(fromVirtualWarehouseId) ? fromVirtualWarehouseId : "";
         String virtualWarehouseNameToSet = StringUtils.isNotBlank(fromVirtualWarehouseName) ? fromVirtualWarehouseName : "";
