@@ -42,7 +42,35 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ListDTO">
-
+        select sdnc.id,
+               sdnc.code,
+               sdnc.source_id as noticeId,
+               sdnc.source_code as noticeCode,
+               sdnc.so_id as soId,
+               sdnc.so_code as soCode,
+               sdnc.approve_status as approveStatus,
+        sdnc.invalid_status as invalidStatus,
+        sdnc.customer_name as customerName,
+        sdncd.sku_id as skuId,
+        sdncd.sku_no as skuNo,
+        sdncd.product_name as productName,
+        sdncd.source_detail_id as sourceDetailId,
+        sdncd.so_detail_id as soDetailId,
+        sdncd.change_type as changeType,
+        sdncd.origin_qty as originQty,
+        sdncd.new_qty as newQty,
+        sdnc.create_user_name as createUserName,
+        sdnc.approve_user_name as approveUserName,
+        sdnc.create_time as createTime,
+        sdnc.approve_time as approveTime
+        from so_delivery_notice_change sdnc
+        inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id and sdncd.is_deleted = false
+        where   ${params.sqlMap.default}
+        and sdnc.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by sdnc.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">

@@ -6,24 +6,25 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeChangeMapper;
-import com.erp.server.wms.service.SoDeliveryNoticeChangeDetailService;
-import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.server.wms.service.SoDeliveryNoticeService;
 import jodd.util.StringUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
+
+    @Resource
+    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
+    private PickingDetailService pickingDetailService;
 
     @Resource
     private SoDeliveryNoticeChangeDetailService detailService;
@@ -532,12 +539,22 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         if(CollUtil.isEmpty(list)) {
            return;
         }
-
+        List<String> soDetailIds = list.stream().map(v->v.getSoDetailId()).collect(Collectors.toList());
+        List<String> sourceDetails = list.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntityList = FeignQuery.getByIds(SoDetailEntity.class,soDetailIds);
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
+        List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(sourceDetails);
         // 属性赋值
         for(SoDeliveryNoticeChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(v->v.getId().equals(data.getSoDetailId())).findFirst().orElse(new SoDetailEntity());
+            data.setSaleQty(soDetailEntity.getQty());
+            List<SoDeliveryNoticeDetailEntity> currentNoticeDetailList = soDeliveryNoticeDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(data.getSoDetailId())).collect(Collectors.toList());
+            data.setAllNoticeQty(currentNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(0, Integer::sum));
+            data.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(data.getChangeType()));
+            List<PickingDetailEntity> currentPickingDetailList = pickingDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(data.getSourceDetailId())).collect(Collectors.toList());
+            data.setPickedQty(currentPickingDetailList.stream().map(PickingDetailEntity::getPickedQty).reduce(0, Integer::sum));
         }
     }
     /**

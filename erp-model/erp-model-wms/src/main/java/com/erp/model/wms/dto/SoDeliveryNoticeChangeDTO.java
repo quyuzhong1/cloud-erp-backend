@@ -121,85 +121,128 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         private String code;
 
         /**
-        * 审核状态 
-        */
-        private String approveStatus;
+         * 发货通知id
+         */
+        private String noticeId;
 
         /**
-        * 来源单号
-        */
-        private String sourceCode;
+         * 发货通知单号
+         */
+        private String noticeCode;
 
         /**
-        * 来源Id
-        */
-        private String sourceId;
-
-        /**
-        * 销售订单编号
-        */
-        private String soCode;
-
-        /**
-        * 销售订单id
-        */
+         * 销售id
+         */
         private String soId;
 
         /**
-        * 作废状态
-        */
-        private Boolean invalidStatus;
+         * 销售单号
+         */
+        private String soCode;
 
         /**
-        * 客户表id
+        * 审核状态 
         */
-        private String customerId;
-
+        private String approveStatus;
         /**
-        * 客户名称
-        */
-        private String customerName;
-
-        /**
-        * 审核人id
-        */
-        private String approveUserId;
-
-        /**
-        * 审核人名称
-        */
-        private String approveUserName;
-
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-
-        /**
-        * 变更原因
-        */
-        private String changeReason;
-
-
-        /**
-        * 审核状态名称
-        */
+         * 审核状态名称
+         */
         private String approveStatusName;
 
         /**
-        * 作废状态名称
-        */
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
+         * 作废状态名称
+         */
         private String invalidStatusName;
 
         /**
-        * 创建时间
-        */
-        private LocalDateTime createTime;
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
+         * 通知单明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 销售明细id
+         */
+        private String soDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer saleQty;
+
+        /**
+         * 已下推发货通知数量
+         */
+        private Integer allNoticeQty;
+
+        /**
+         * 变更类型
+         */
+        private String changeType;
+
+        /**
+         * 变更类型名称
+         */
+        private String changeTypeName;
+
+        /**
+         * 原发货通知数量
+         */
+        private Integer originQty;
+
+        /**
+         * 已拣货数量
+         */
+        private Integer pickedQty;
+
+        /**
+         * 新发货通知数量
+         */
+        private Integer newQty;
 
         /**
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 审核人名称
+         */
+        private String approveUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
     }
 
     /**

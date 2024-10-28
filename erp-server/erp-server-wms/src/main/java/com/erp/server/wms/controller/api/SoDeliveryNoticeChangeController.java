@@ -123,8 +123,9 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:soDeliveryNoticeChange:paging",
-            tableAlias = ""
+            tableAlias = "sdnc"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SoDeliveryNoticeChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoDeliveryNoticeChangeDTO.PagingParamDTO> dto) {
         return success(soDeliveryNoticeChangeService.paging(dto));
     }
