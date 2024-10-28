@@ -231,4 +231,30 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
         return list;
     }
 
+    @Override
+    public List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO> isExistVirtualWarehouse(List<VirtualWarehouseRelationDTO.IsExistVirtualDTO> paramList) {
+        //关联信息
+        List<String> warehouseIdList = paramList.stream().map(VirtualWarehouseRelationDTO.IsExistVirtualDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> shopIdList = paramList.stream().map(VirtualWarehouseRelationDTO.IsExistVirtualDTO::getShopId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseRelationDTO.SelectResultDTO> list = baseMapper.listByWarehouseIdListAndShopIdList(warehouseIdList,shopIdList);
+
+        List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO> resultDTOList = new ArrayList<>();
+        for (VirtualWarehouseRelationDTO.IsExistVirtualDTO dto :paramList) {
+            VirtualWarehouseRelationDTO.IsExistVirtualResultDTO isExistVirtualResultDTO = new VirtualWarehouseRelationDTO.IsExistVirtualResultDTO();
+            isExistVirtualResultDTO.setWarehouseId(dto.getWarehouseId());
+            isExistVirtualResultDTO.setShopId(dto.getShopId());
+            long count = list.stream().filter(obj ->
+                    StrUtil.equals(obj.getWarehouseId(), dto.getWarehouseId())
+                    && (StrUtil.isBlank(dto.getShopId()) || (StrUtil.isNotBlank(dto.getShopId()) && StrUtil.equals(obj.getRelationId(),dto.getShopId())))
+            ).count();
+            if (count > 0) {
+                isExistVirtualResultDTO.setIsExistVirtual(Boolean.TRUE);
+            } else {
+                isExistVirtualResultDTO.setIsExistVirtual(Boolean.FALSE);
+            }
+            resultDTOList.add(isExistVirtualResultDTO);
+        }
+        return resultDTOList;
+    }
+
 }

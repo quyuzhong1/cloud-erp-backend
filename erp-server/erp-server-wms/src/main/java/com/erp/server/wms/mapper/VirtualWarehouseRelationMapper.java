@@ -22,4 +22,12 @@ public interface VirtualWarehouseRelationMapper extends BaseMapper<VirtualWareho
 
     IPage<VirtualWarehouseRelationDTO.SelectResultDTO> warehousePagingSelect(Page query, @Param("params") VirtualWarehouseRelationDTO.SelectDTO params);
     IPage<VirtualWarehouseRelationDTO.SelectResultDTO> vmPagingSelect(Page query, @Param("params") VirtualWarehouseRelationDTO.SelectDTO params);
+    /**
+     * 根据仓库id集合查询
+     * @author will
+     * @date 2024/10/25 14:31
+     * @param warehouseIdList
+     * @return List<VirtualWarehouseRelationEntity>
+     */
+    List<VirtualWarehouseRelationDTO.SelectResultDTO> listByWarehouseIdListAndShopIdList(@Param("warehouseIdList") List<String> warehouseIdList,@Param("shopIdList")List<String> shopIdList);
 }

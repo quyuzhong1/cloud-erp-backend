@@ -78,5 +78,28 @@
         vw.id) virtualWarehouse
     </select>
 
-
+    <!-- 根据仓库id查询 -->
+    <select id="listByWarehouseIdListAndShopIdList" resultType="com.erp.model.wms.dto.VirtualWarehouseRelationDTO$SelectResultDTO">
+        select
+        vwr.warehouse_id as warehouseId,
+        vw.id as virtualWarehouseId,
+        vw.name as virtualWarehouseName,
+        vw.disabled,
+        vwc.relation_id as relationId
+        from virtual_warehouse_relation vwr
+        inner join virtual_warehouse vw on vwr.virtual_warehouse_id=vw.id and vw.is_deleted=false and vw.disabled=false
+        inner join virtual_warehouse_channel vwc on vw.id = vwc.virtual_warehouse_id and vwc.is_deleted =false
+        where vwr.is_deleted = false and vwr.disabled = false
+        and vwr.warehouse_id in
+        <foreach collection="warehouseIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        <if test="shopIdList != null and shopIdList.size > 0">
+            and vwc.relation_id in
+            <foreach collection="shopIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        order by vw.id
+    </select>
 </mapper>
