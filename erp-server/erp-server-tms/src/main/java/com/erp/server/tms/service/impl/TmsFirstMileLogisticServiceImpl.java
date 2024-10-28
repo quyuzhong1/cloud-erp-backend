@@ -1291,7 +1291,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (currenAddMainEntity){
             // 添加到当前账单记录
             currentMainEntityMap.put(mainKey, reconciliationEntity);
-            TmsFirstMileReconciliationDetailEntity maxDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getMainId())).max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+            TmsFirstMileReconciliationDetailEntity maxDetailEntity = tmsFirstMileReconciliationDetailEntityList.stream()
+                    .filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getMainId()))
+                    .max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
             if (Objects.nonNull(maxDetailEntity)){
                 reconciliationCount = maxDetailEntity.getReconciliationCount() + 1;
             }
@@ -1302,6 +1304,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     .findFirst().orElse(null);
             if (Objects.nonNull(maxDetailEntity)){
                 reconciliationCount = maxDetailEntity.getReconciliationCount();
+            }else {
+                //其他对账单是否存在记录
+                TmsFirstMileReconciliationDetailEntity maxDetailEntity2 = tmsFirstMileReconciliationDetailEntityList.stream()
+                        .filter(e -> Objects.nonNull(e) && StringUtils.isNotBlank(e.getMainId()))
+                        .max(Comparator.comparing(TmsFirstMileReconciliationDetailEntity::getReconciliationCount)).orElse(null);
+                if (Objects.nonNull(maxDetailEntity2)){
+                    reconciliationCount = maxDetailEntity2.getReconciliationCount() + 1;
+                }
             }
         }
 
