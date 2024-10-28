@@ -57,7 +57,7 @@
     </select>
     <select id="getSoReturnInstockByReturnIds"
             resultType="com.erp.model.wms.entity.SoReturnInstockDetailEntity">
-        SELECT srid.*,sri.so_return_id as returnId,sri.code,sri.approve_time as approveTime
+        SELECT srid.*,sri.so_return_id as returnId,sri.code,sri.approve_time as approveTime,sri.approve_status
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
         WHERE sri.is_deleted = FALSE
