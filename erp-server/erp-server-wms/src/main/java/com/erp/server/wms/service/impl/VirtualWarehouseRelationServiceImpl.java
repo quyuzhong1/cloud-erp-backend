@@ -268,11 +268,13 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                 resultDTOList.add(isExistVirtualResultDTO);
                 continue;
             }
+            //平台
+            String platform = shopList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getRelationId())).map(ShopInfoEntity::getDictPlatform).findFirst().orElse("");
 
             //关联仓库按平台
             String type = selectResultList.get(0).getType();
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(type)) {
-                List<ShopInfoEntity> platformShopList = shopList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), selectResultList.get(0).getDictPlatform())).collect(Collectors.toList());
+                List<ShopInfoEntity> platformShopList = shopList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), platform)).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(platformShopList)) {
                     isExistVirtualResultDTO.setIsExistVirtual(Boolean.FALSE);
                     resultDTOList.add(isExistVirtualResultDTO);
