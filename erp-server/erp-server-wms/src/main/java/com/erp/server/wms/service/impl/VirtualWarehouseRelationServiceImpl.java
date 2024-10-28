@@ -236,7 +236,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
         //关联信息
         List<String> warehouseIdList = paramList.stream().map(VirtualWarehouseRelationDTO.IsExistVirtualDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<String> shopIdList = paramList.stream().map(VirtualWarehouseRelationDTO.IsExistVirtualDTO::getRelationId).distinct().collect(Collectors.toList());
-        List<VirtualWarehouseRelationDTO.SelectResultDTO> list = baseMapper.listByWarehouseIdListAndShopIdList(warehouseIdList,shopIdList);
+        List<VirtualWarehouseRelationDTO.SelectResultDTO> list = baseMapper.listWarehouseIdList(warehouseIdList,shopIdList);
 
         List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO> resultDTOList = new ArrayList<>();
         for (VirtualWarehouseRelationDTO.IsExistVirtualDTO dto :paramList) {

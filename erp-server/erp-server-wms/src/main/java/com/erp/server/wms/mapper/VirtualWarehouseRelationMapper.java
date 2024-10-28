@@ -29,5 +29,5 @@ public interface VirtualWarehouseRelationMapper extends BaseMapper<VirtualWareho
      * @param warehouseIdList
      * @return List<VirtualWarehouseRelationEntity>
      */
-    List<VirtualWarehouseRelationDTO.SelectResultDTO> listByWarehouseIdListAndShopIdList(@Param("warehouseIdList") List<String> warehouseIdList,@Param("shopIdList")List<String> shopIdList);
+    List<VirtualWarehouseRelationDTO.SelectResultDTO> listWarehouseIdList(@Param("warehouseIdList") List<String> warehouseIdList,@Param("shopIdList")List<String> shopIdList);
 }

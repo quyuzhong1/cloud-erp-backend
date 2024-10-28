@@ -79,7 +79,7 @@
     </select>
 
     <!-- 根据仓库id查询 -->
-    <select id="listByWarehouseIdListAndShopIdList" resultType="com.erp.model.wms.dto.VirtualWarehouseRelationDTO$SelectResultDTO">
+    <select id="listWarehouseIdList" resultType="com.erp.model.wms.dto.VirtualWarehouseRelationDTO$SelectResultDTO">
         select
         vwr.warehouse_id as warehouseId,
         vw.id as virtualWarehouseId,
@@ -94,12 +94,6 @@
         <foreach collection="warehouseIdList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
-        <if test="shopIdList != null and shopIdList.size > 0">
-            and vwc.relation_id in
-            <foreach collection="shopIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
         order by vw.id
     </select>
 </mapper>
