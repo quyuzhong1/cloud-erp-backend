@@ -82,6 +82,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                detailEntity.setNoticeDetailId(detailDto.getNoticeDetailId());
                 Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 if(dto.getType().equals("B2C")){
                     returnQty = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);

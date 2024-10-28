@@ -765,7 +765,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
 
         for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : list) {
-            Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(detail -> view.getSourceDetailId().equals(detail.getSourceDetailId()) && detail.getSkuId().equals(view.getSkuId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(detail -> view.getId().equals(detail.getNoticeDetailId()) && detail.getSkuId().equals(view.getSkuId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
 
             view.setReceiveQty(view.getReturnQty() - receiveQty);
             //产品sku信息
