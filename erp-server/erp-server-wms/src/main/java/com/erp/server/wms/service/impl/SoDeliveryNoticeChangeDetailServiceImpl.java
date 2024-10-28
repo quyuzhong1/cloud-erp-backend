@@ -14,6 +14,7 @@ import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
+import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.ehcache.impl.internal.store.heap.holders.SerializedOnHeapValueHolder;
 import org.springframework.stereotype.Service;
@@ -57,8 +58,60 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
     @Transactional(rollbackFor = Exception.class)
     public void add(SoDeliveryNoticeChangeDTO.ViewDTO addDTO, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
         this.checkData(addDTO.getViewDetailList(),soDeliveryNoticeChangeEntity);
-        List<SoDeliveryNoticeChangeDetailEntity> detailEntityList = this.buildDetail(addDTO,soDeliveryNoticeChangeEntity);
+        List<SoDeliveryNoticeChangeDetailEntity> detailEntityList = this.buildDetail(addDTO.getViewDetailList(),soDeliveryNoticeChangeEntity);
         this.saveBatch(detailEntityList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void update(SoDeliveryNoticeChangeDTO.ViewDTO addDTO,SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
+        this.checkData(addDTO.getViewDetailList(),soDeliveryNoticeChangeEntity);
+        List<SoDeliveryNoticeChangeDetailEntity> dbDetailList = this.listByMainIds(Arrays.asList(addDTO.getId()));
+        List<SoDeliveryNoticeChangeDTO.ViewDetail> detailViewList = addDTO.getViewDetailList();
+        List<String> updateViewIds = detailViewList.stream().map(v->v.getDetailId()).collect(Collectors.toList());
+        List<SoDeliveryNoticeChangeDTO.ViewDetail> addViewList = detailViewList.stream().filter(v-> StringUtils.isBlank(v.getDetailId())).collect(Collectors.toList());
+
+        List<SoDeliveryNoticeChangeDetailEntity> addList = this.buildDetail(addViewList,soDeliveryNoticeChangeEntity);
+        List<SoDeliveryNoticeChangeDetailEntity> updateList = new ArrayList<>();
+        List<SoDeliveryNoticeChangeDetailEntity> deleteList = dbDetailList.stream().filter(v->!updateViewIds.contains(v.getId())).collect(Collectors.toList());
+
+        for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : detailViewList) {
+            SoDeliveryNoticeChangeDetailEntity dbEntity = dbDetailList.stream().filter(v->v.getId().equals(viewDetail.getDetailId())).findFirst().orElse(null);
+            if(Objects.isNull(dbEntity)){
+                continue;
+            }
+            dbEntity.setSkuId(viewDetail.getSkuId());
+            dbEntity.setSkuNo(viewDetail.getSkuNo());
+            dbEntity.setSourceDetailId(viewDetail.getSourceDetailId());
+            dbEntity.setChangeType(viewDetail.getChangeType());
+            dbEntity.setNewQty(viewDetail.getNewNoticeQty());
+            dbEntity.setProductName(viewDetail.getProductName());
+            dbEntity.setSoDetailId(viewDetail.getSoDetailId());
+            updateList.add(dbEntity);
+        }
+        this.update(addList,updateList,deleteList);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void update(List<SoDeliveryNoticeChangeDetailEntity> addList, List<SoDeliveryNoticeChangeDetailEntity> updateList, List<SoDeliveryNoticeChangeDetailEntity> deleteList) {
+        if(CollectionUtils.isNotEmpty(addList)){
+            this.saveBatch(addList);
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+        if(CollectionUtils.isNotEmpty(deleteList)){
+            List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
+            this.removeByIds(deleteIds);
+        }
+    }
+
+    @Override
+    public List<SoDeliveryNoticeChangeDetailEntity> listByMainIds(List<String> mainIds) {
+        if(CollectionUtils.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(SoDeliveryNoticeChangeDetailEntity::getMainId,mainIds).list();
     }
 
     /**
@@ -97,8 +150,7 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
         }
     }
 
-    private List<SoDeliveryNoticeChangeDetailEntity> buildDetail(SoDeliveryNoticeChangeDTO.ViewDTO addDTO, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
-        List<SoDeliveryNoticeChangeDTO.ViewDetail> viewDetailList = addDTO.getViewDetailList();
+    private List<SoDeliveryNoticeChangeDetailEntity> buildDetail(List<SoDeliveryNoticeChangeDTO.ViewDetail> viewDetailList, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
         List<SoDeliveryNoticeChangeDetailEntity> list = new ArrayList<>();
         for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : viewDetailList) {
             SoDeliveryNoticeChangeDetailEntity soDeliveryNoticeChangeDetailEntity = new SoDeliveryNoticeChangeDetailEntity();

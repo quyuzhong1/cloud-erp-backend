@@ -6,6 +6,8 @@ import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 发货通知变更单明细 服务类
@@ -16,8 +18,9 @@ import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
  */
 public interface SoDeliveryNoticeChangeDetailService extends SuperService<SoDeliveryNoticeChangeDetailEntity> {
 
-
-
-
     void add(SoDeliveryNoticeChangeDTO.ViewDTO addDTO, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity);
+
+    void update(SoDeliveryNoticeChangeDTO.ViewDTO updateDTO,SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity);
+
+    List<SoDeliveryNoticeChangeDetailEntity> listByMainIds(List<String> mainIds);
 }

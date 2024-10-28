@@ -563,7 +563,7 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO extends ViewDTO {
 
         /**
         * 主键id

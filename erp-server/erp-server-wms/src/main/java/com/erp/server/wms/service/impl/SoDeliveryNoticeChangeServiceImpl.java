@@ -1,8 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -38,9 +37,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import com.common.core.excel.ExcelPrintUtils;
@@ -120,28 +117,26 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(SoDeliveryNoticeChangeDTO.UpdateDTO updateDTO) {
+    public Boolean update(SoDeliveryNoticeChangeDTO.ViewDTO updateDTO) {
         SoDeliveryNoticeChangeEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货通知变更单"));
         // 待提交和审核不通过允许修改
-//        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-//            throw new ServiceException(ApiError.ERROR_1029);
-//        }
-        SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity =  BeanMapperUtils.map(SoDeliveryNoticeChangeEntity.class, updateDTO);
+        if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(old.getApproveStatus()))) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+        SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity =  BeanMapperUtils.map(SoDeliveryNoticeChangeEntity.class, old);
+        soDeliveryNoticeChangeEntity.setChangeReason(updateDTO.getChangeReason());
 
-        // 数据处理
-        handleData(soDeliveryNoticeChangeEntity);
         log.info("编辑 开始修改发货通知变更单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(soDeliveryNoticeChangeEntity);
         if(!save) {
             throw new ServiceException("发货通知变更单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        detailService.update(updateDTO,soDeliveryNoticeChangeEntity);
 
         // 记录主单操作日志
-            log.info("编辑 开始记录发货通知变更单日志数据，单号：【{}】", soDeliveryNoticeChangeEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soDeliveryNoticeChangeEntity.getCode(), "发货通知变更单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        log.info("编辑 开始记录发货通知变更单日志数据，单号：【{}】", soDeliveryNoticeChangeEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soDeliveryNoticeChangeEntity.getCode(), "发货通知变更单");
         operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeChangeEntity, null, soDeliveryNoticeChangeEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -210,17 +205,13 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         }
         validateSubmit(entity);
         // 更新单据审核状态
-        log.info("提交 开始修改发货通知变更单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动发货通知变更单流程，id=：【{}】", entity.getId());
         startProcess(entity);
         // 记录操作日志
-        log.info("提交 开始记录发货通知变更单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -465,8 +456,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -542,10 +532,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     */
     private void validateSubmit(SoDeliveryNoticeChangeEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-//        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-//            throw new ServiceException(ApiError.ERROR_98010);
-//        }
-        return;
+        if(!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getApproveStatus()))) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
     }
 
     /**

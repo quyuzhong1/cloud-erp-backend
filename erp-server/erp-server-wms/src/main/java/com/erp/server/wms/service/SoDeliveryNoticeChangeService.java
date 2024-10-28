@@ -33,7 +33,7 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     * @param dto
     * @return
     */
-    Boolean update(SoDeliveryNoticeChangeDTO.UpdateDTO dto);
+    Boolean update(SoDeliveryNoticeChangeDTO.ViewDTO dto);
 
     /**
     * 分页列表查询

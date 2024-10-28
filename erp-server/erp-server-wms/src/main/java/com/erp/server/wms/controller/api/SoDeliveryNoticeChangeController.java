@@ -93,7 +93,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
         menuCode = "wms:soDeliveryNoticeChange:update",
         serviceClass = SoDeliveryNoticeChangeService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated SoDeliveryNoticeChangeDTO.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated SoDeliveryNoticeChangeDTO.ViewDTO dto) {
         soDeliveryNoticeChangeService.update(dto);
         return success();
     }
