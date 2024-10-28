@@ -90,8 +90,11 @@ public class DmpSoRefundDetailEntity extends BaseEntity<DmpSoRefundDetailEntity>
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
-
-
+    /**
+     * 当前明细总税费(币种跟主单一致)
+     */
+    @TableField("tax_amount")
+    private BigDecimal taxAmount;
     /**
      * 拓展字段
      */
