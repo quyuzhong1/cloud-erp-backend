@@ -224,7 +224,11 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setSalesDeptName(deptName);
         entity.setSellerId(dto.getSellerId());
         String userName = userList.stream().filter(d -> d.getUserId().equals(dto.getSellerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-        entity.setSellerName(userName);
+        if(StringUtils.isNotBlank(dto.getSellerName())){
+            entity.setSellerName(dto.getSellerName());
+        }else{
+            entity.setSellerName(userName);
+        }
         entity.setCustomerId(dto.getCustomerId());
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(dto.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
@@ -741,6 +745,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             dto.setSalesDeptId(noticeEntity.getSalesDeptId());
             dto.setSellerId(noticeEntity.getSellerId());
             dto.setReturnLogisticCode(viewList.get(0).getReturnLogisticCode());
+            dto.setSellerName(noticeEntity.getSellerName());
             List<SoReturnReceiveDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
                 dto.setSourceId(view.getSourceId());
