@@ -240,46 +240,6 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     }
 
     /**
-    * 反审核
-    * @author lrp
-    * @date:  2024-10-23
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/disApprove")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:soDeliveryNoticeChange:disApprove",
-            serviceClass = SoDeliveryNoticeChangeService.class,
-            keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "发货通知变更单反审核")
-    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<SoDeliveryNoticeChangeEntity> list = soDeliveryNoticeChangeService.lambdaQuery().in(SoDeliveryNoticeChangeEntity::getId, ids).list();
-		Map<String, SoDeliveryNoticeChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(SoDeliveryNoticeChangeEntity::getId, w -> w));
-        for (String id : dto.getIds()) {
-            BatchResultDTO disApproveResult;
-            try {
-                disApproveResult = soDeliveryNoticeChangeService.disApprove(id);
-            }catch (Exception e){
-                log.error("发货通知变更单反审核失败",e);
-                SoDeliveryNoticeChangeEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "发货通知变更单不存在, 反审核失败");
-                    resultDTOS.add(disApproveResult);
-                    continue;
-                }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(disApproveResult);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-
-    /**
     * 删除
     * @author lrp
     * @date:  2024-10-23
@@ -362,18 +322,17 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     * @author lrp
     * @date:  2024-10-23
     * @param dto
-    * @param response
     * @return
     */
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:soDeliveryNoticeChange:export",
-            tableAlias = ""
+            tableAlias = "sdnc"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "发货通知变更单导出Excel数据")
-    public void exportList(@RequestBody @Validated SoDeliveryNoticeChangeDTO.ExportDTO dto, HttpServletResponse response) {
-        soDeliveryNoticeChangeService.exportList(dto, response);
+    public void exportList(@RequestBody @Validated SoDeliveryNoticeChangeDTO.PagingParamDTO dto) {
+        soDeliveryNoticeChangeService.exportList(dto);
     }
 
 

@@ -31,20 +31,6 @@ public interface SoDeliveryNoticeChangeMapper extends BaseMapper<SoDeliveryNotic
     */
     IPage<SoDeliveryNoticeChangeDTO.ListDTO> paging(Page query, @Param("params") SoDeliveryNoticeChangeDTO.PagingParamDTO params);
 
-    /**
-    * 状态数量
-    * @param params
-    * @return
-    */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") SoDeliveryNoticeChangeDTO.PagingParamDTO params);
-
-    /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<SoDeliveryNoticeChangeDTO.ListDTO> listExport(@Param("params") SoDeliveryNoticeChangeDTO.ExportDTO params);
-
 
     /**
     * 获取状态统计

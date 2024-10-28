@@ -100,15 +100,6 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
-    * 反审核
-    * @author lrp
-    * @date: 2024-10-23
-    * @param id
-    * @return
-    */
-    BatchResultDTO disApprove(String id);
-
-    /**
     * 删除
     * @author lrp
     * @date: 2024-10-23
@@ -131,10 +122,9 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     * @author lrp
     * @date: 2024-10-23
     * @param dto
-    * @param response
     * @return
     */
-    void exportList(SoDeliveryNoticeChangeDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SoDeliveryNoticeChangeDTO.PagingParamDTO dto);
 
     /**
     * 审核通过回调方法

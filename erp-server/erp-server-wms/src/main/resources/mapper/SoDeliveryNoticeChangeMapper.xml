@@ -73,13 +73,6 @@
         order by sdnc.create_time desc
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from so_delivery_notice_change where is_deleted = false group by approve_status
-    </select>
-
-    <select id="listExport" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ListDTO">
-
-    </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$TabListDTO">
         SELECT
         approve_status AS tabFlag,
