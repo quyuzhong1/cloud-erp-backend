@@ -462,7 +462,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = allSoOutstockDetailEntityList.stream().filter(v->v.getSoId().equals(pagingViewDTO.getSoId()) && v.getSkuId().equals(pagingViewDTO.getSkuId())).collect(Collectors.toList());
             pagingViewDTO.setOutQty(soOutstockDetailEntityList.stream().map(v->v.getActualQty()).reduce(MathUtil.ZERO, Integer::sum));
 
-            List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = allSoReturnInstockDetailList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode()) &&v.getReturnId().equals(pagingViewDTO.getId())).collect(Collectors.toList());
+            List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = allSoReturnInstockDetailList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode()) &&v.getSoReturnDetailId().equals(pagingViewDTO.getDetailId())).collect(Collectors.toList());
             String instockCode = soReturnInstockDetailEntityList.stream().map(v->v.getCode()).collect(Collectors.joining());
             pagingViewDTO.setInstockCode(instockCode);
             pagingViewDTO.setReason(ReturnReasonEnum.getName(pagingViewDTO.getReason()));
