@@ -380,7 +380,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             if (Objects.isNull(logisticsBillEntity)){
                 continue;
             }
-            LogisticsBillCostEntity entity = billEntityList.stream().filter(e -> Objects.nonNull(e) && (StrUtil.isBlank(e.getReconciliationId()) || Objects.equals(mainId, e.getReconciliationId()))).findFirst().orElse(new LogisticsBillCostEntity());
+            LogisticsBillCostEntity entity = billEntityList.stream()
+                    .filter(e -> Objects.nonNull(e) &&  Objects.equals(billId, e.getLogisticsBillId())
+                            && (StrUtil.isBlank(e.getReconciliationId()) || Objects.equals(mainId, e.getReconciliationId()))).findFirst().orElse(new LogisticsBillCostEntity());
             entity.setLogisticsBillId(billId);
 
             TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(entity.getLogisticsBillId());
