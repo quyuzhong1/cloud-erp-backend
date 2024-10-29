@@ -135,6 +135,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
      */
     @Override
     public List<BatchResultDTO> processTrackData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {
+        if (CollectionUtils.isEmpty(records) || StringUtils.isBlank(platformType)){
+            return Collections.emptyList();
+        }
         List<BatchResultDTO> resultDTOS = new ArrayList<>(records.size());
         LogisticsService service = logisticsRegistry.getHandler(platformType);
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformType);
