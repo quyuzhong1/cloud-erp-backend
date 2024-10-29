@@ -752,6 +752,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 detailDTO.setStatus(sku.getStatus());
                 detailDTO.setStatusName(ProductDetailStatusEnum.getName(sku.getStatus()));
             });
+            //类型 试产trial  量产batch
+            if(detailDTO.getType().equals(PilotApplicationTypeEnum.TRIAL)){
+                detailDTO.setTypeName(PilotApplicationTypeEnum.TRIAL.getName());
+            }else if(detailDTO.getType().equals(PilotApplicationTypeEnum.BATCH)){
+                detailDTO.setTypeName(PilotApplicationTypeEnum.BATCH.getName());
+            }
         }
         //处理关联任务
         for (PilotApplicationRefTaskDTO.ViewDTO taskDTO : taskViewList) {
