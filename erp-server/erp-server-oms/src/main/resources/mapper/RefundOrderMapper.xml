@@ -29,6 +29,7 @@
     <select id="paging" resultType="com.erp.model.oms.dto.RefundOrderDTO$PagingViewDTO">
         SELECT
             ro.id,
+            rod.id as detailId,
             ro.code,
             ro.dict_platform as dictPlatform,
             ro.shop_id as shopId,
