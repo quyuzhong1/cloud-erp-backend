@@ -254,15 +254,15 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         }
         SoDeliveryNoticeChangeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -276,8 +276,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -294,15 +293,6 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         }
     }
 
-    private Boolean validateDisApprove(SoDeliveryNoticeChangeEntity entity) {
-        // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
-        }
-        // TODO 下游盘点计划单反审核
-        return true;
-    }
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO delete(String id) {
@@ -316,7 +306,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         super.removeById(id);
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除发货通知变更单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getCode(), "删除发货通知变更单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -332,21 +322,15 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
-
-        log.info("撤销 开始修改发货通知变更单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -360,8 +344,8 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
 
+        //TODO 审核通过修改发货通知单数据
         return Boolean.TRUE;
     }
 
@@ -491,21 +475,6 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             .set(SoDeliveryNoticeChangeEntity::getApproveTime, LocalDateTime.now())
             .update(new SoDeliveryNoticeChangeEntity());
      }
-
-    /**
-    * 反审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(String id, String approveStatus) {
-        this.lambdaUpdate().eq(SoDeliveryNoticeChangeEntity::getId, id)
-            .set(SoDeliveryNoticeChangeEntity::getApproveUserId, "")
-            .set(SoDeliveryNoticeChangeEntity::getApproveUserName, "")
-            .set(SoDeliveryNoticeChangeEntity::getApproveStatus, approveStatus)
-            .set(SoDeliveryNoticeChangeEntity::getApproveTime, null)
-            .update(new SoDeliveryNoticeChangeEntity());
-        }
 
     /**
     * 更新审核状态
