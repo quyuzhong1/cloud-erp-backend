@@ -89,7 +89,7 @@ public class DmpCfgInputDetailEntity extends BaseEntity<DmpCfgInputDetailEntity>
      private String taskType;
 
     /**
-     * 最大间隔时间长度单位=秒:0=按interval_time
+     * 最大间隔时间长度单位:秒, 0=按interval_time，-1=按当前时间-延迟时间
      */
     @TableField("max_interval_time")
     private Integer maxIntervalTime;
