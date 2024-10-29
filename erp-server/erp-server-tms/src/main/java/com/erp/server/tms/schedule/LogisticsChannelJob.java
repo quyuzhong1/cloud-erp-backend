@@ -221,12 +221,6 @@ public class LogisticsChannelJob {
         }
         log.info("========同步物流轨迹数据完成==========");
     }
-
-    private void processRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {
-        if (CollectionUtils.isNotEmpty(records)) {
-            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), records,transportType);
-        }
-    }
     /**
      * 同步小包（快递）物流轨迹 从dmp到tms
      */

@@ -45,4 +45,12 @@ public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetai
      * @param signTime
      */
     void updateTransportNo(@Param("trackNoList") List<String> trackNoList, @Param("aTrue") Boolean aTrue, @Param("trackStatus") String trackStatus, @Param("signTime") LocalDateTime signTime, @Param("trackTime") LocalDateTime trackTime);
+
+    /**
+     * 根据运单号更新注册状态
+     * @param transportNo
+     * @param platformOrderNo
+     * @param status
+     */
+    void updateRegisticsStatus(@Param("transportNo") String transportNo, @Param("platformOrderNo") String platformOrderNo, @Param("status") int status);
 }

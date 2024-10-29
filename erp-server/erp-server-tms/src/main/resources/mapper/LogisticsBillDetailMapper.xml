@@ -55,14 +55,28 @@
                  LEFT JOIN logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
         where
             lb.id = logistics_bill_detail.main_id
-          and logistics_bill_detail.is_deleted = false
-          and lc.track_query_type = 'transportNo'
+          and logistics_bill_detail.is_deleted = false and logistics_bill_detail.track_status != #{trackStatus}
           <if test="trackNoList != null and trackNoList.size > 0">
               and lb.transport_no in
               <foreach collection="trackNoList" item="item" open="(" separator="," close=")">
                   #{item}
               </foreach>
           </if>
+    </update>
+    <update id="updateRegisticsStatus">
+        update logistics_bill_detail
+        set
+        register_status = #{status},
+        <if test="platformOrderNo != null and platformOrderNo != ''">
+            platform_order_no = #{platformOrderNo},
+        </if>
+        update_time = NOW()
+        from logistics_bill lb
+        LEFT JOIN logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
+        where lb.id = logistics_bill_detail.main_id
+        and logistics_bill_detail.is_deleted = false
+        and logistics_bill_detail.register_status != #{status}
+        and lb.transport_no = #{transportNo}
     </update>
 
     <select id="getTrackPage" resultMap="BaseResultMap">
@@ -147,7 +161,6 @@
         <if test="query.trackEnable != null">
             and lbd.track_enable = #{query.trackEnable}
         </if>
-        order by lbd.update_time limit 50000
     </select>
 
     <!-- 根据平台单和物流跟踪单号查询 -->
