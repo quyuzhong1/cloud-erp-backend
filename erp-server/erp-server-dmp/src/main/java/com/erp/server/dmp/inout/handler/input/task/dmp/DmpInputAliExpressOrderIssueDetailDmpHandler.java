@@ -38,6 +38,17 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 				Object platform_solution_list_obj = dmpInputMongoChild.get("platform_solution_list");
 				if(platform_solution_list_obj != null) {
+					Boolean receiveGoods = false;
+					Object process_dto_list_obj = dmpInputMongoChild.get("process_dto_list");
+					if(process_dto_list_obj != null) {
+						Map<String, Object> process_dto_list = (Map<String, Object>) process_dto_list_obj;
+						Object api_issue_process_dto_obj = process_dto_list.get("api_issue_process_dto");
+						if(api_issue_process_dto_obj != null) {
+							List<Map<String, Object>> api_issue_process_dto = (List<Map<String, Object>>) api_issue_process_dto_obj;
+							receiveGoods = api_issue_process_dto.stream().anyMatch(a -> Boolean.TRUE.equals(a.get("receive_goods")));
+						}
+					}
+					
 					Map<String, Object> platform_solution_list = (Map<String, Object>) platform_solution_list_obj;
 					Object solution_api_dto_obj = platform_solution_list.get("solution_api_dto");
 					if(solution_api_dto_obj != null) {
@@ -62,6 +73,9 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 							resultDmpInputMongoChild.put("currency" , solution_api_dto.get("refund_money_currency"));
 							resultDmpInputMongoChild.put("sellPrice" , solution_api_dto.get("refund_money_post"));
 							resultDmpInputMongoChild.put("solutionType" , solution_api_dto.get("solution_type"));
+							resultDmpInputMongoChild.put("isGift" , receiveGoods);
+							
+							
 							
 							resultDmpInputMongoChild.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
 							resultDmpInputMongoChild.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));

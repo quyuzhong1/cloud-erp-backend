@@ -156,6 +156,12 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
 	 */
 	@TableField("solution_type")
 	private String solutionType = "";
+	
+	/**
+	 * 是否收到货：true/false
+	*/
+    @TableField("receive_goods")
+    private Boolean receiveGoods;
     
     /**
     * 输入任务id
