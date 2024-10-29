@@ -469,6 +469,11 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private String sourceDetailId;
 
         /**
+         * 要货数量
+         */
+        private Integer alreadyRequisitionQty;
+
+        /**
          * 发货计划单号
          */
         private String sourceCode;
