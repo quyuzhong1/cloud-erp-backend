@@ -387,6 +387,7 @@ public class DeliverySuggestDTO implements Serializable {
         /**
         * 建议发货日期
         */
+        @NotNull(message = "建议发货日期不能为空")
         private LocalDate suggestDeliveryDate;
 
         /**
@@ -422,7 +423,7 @@ public class DeliverySuggestDTO implements Serializable {
         private String sourceId;
 
         /**
-        * 来源类型
+        * 来源类型，replenishmentSuggestion补货建议
         */
         @NotBlank(message = "来源类型不能为空")
         @Size(max = 32,message = "来源类型最大长度不能超过32位")

@@ -4,6 +4,7 @@ package com.erp.server.mrp.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -66,6 +67,19 @@ public class DeliverySuggestController extends BaseController {
     public ApiResult<List<DeliverySuggestDTO.ListDTO>> list(@RequestBody @Validated DeliverySuggestDTO.ListParamDTO params) {
         List<DeliverySuggestDTO.ListDTO> paging = deliverySuggestService.list(params);
         return success(paging);
+    }
+
+    /**
+     * 新增
+     * @author will
+     * @date:  2024-08-27
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "发货计划新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DeliverySuggestDTO.AddDTO dto) {
+        return success(deliverySuggestService.add(dto));
     }
 
     /**

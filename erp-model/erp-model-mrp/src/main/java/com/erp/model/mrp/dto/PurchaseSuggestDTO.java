@@ -397,6 +397,7 @@ public class PurchaseSuggestDTO implements Serializable {
         /**
         * 建议采购日期
         */
+        @NotNull(message = "建议采购日期不能为空")
         private LocalDate suggestPurchaseDate;
 
         /**
@@ -437,7 +438,7 @@ public class PurchaseSuggestDTO implements Serializable {
         private String sourceId;
 
         /**
-        * 来源类型
+        * 来源类型，replenishmentSuggestion补货建议
         */
         @NotBlank(message = "来源类型不能为空")
         @Size(max = 32,message = "来源类型最大长度不能超过32位")

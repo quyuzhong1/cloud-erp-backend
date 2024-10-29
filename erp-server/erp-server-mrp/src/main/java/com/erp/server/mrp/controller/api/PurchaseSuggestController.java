@@ -4,6 +4,7 @@ package com.erp.server.mrp.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -66,6 +67,19 @@ public class PurchaseSuggestController extends BaseController {
     public ApiResult<List<PurchaseSuggestDTO.ListDTO>> list(@RequestBody @Validated PurchaseSuggestDTO.ListParamDTO params) {
         List<PurchaseSuggestDTO.ListDTO> paging = purchaseSuggestService.list(params);
         return success(paging);
+    }
+
+    /**
+     * 新增
+     * @author will
+     * @date:  2024-08-29
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "建议采购新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated PurchaseSuggestDTO.AddDTO dto) {
+        return success(purchaseSuggestService.add(dto));
     }
 
     /**
