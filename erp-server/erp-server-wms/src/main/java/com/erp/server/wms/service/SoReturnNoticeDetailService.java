@@ -4,6 +4,7 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.entity.SoReturnNoticeEntity;
 
 import java.util.List;
 
@@ -34,7 +35,7 @@ public interface SoReturnNoticeDetailService extends SuperService<SoReturnNotice
      * @param dto dto
      * @return java.lang.Boolean
      **/
-    Boolean update(SoReturnNoticeDTO.Update dto);
+    Boolean update(SoReturnNoticeEntity entity,SoReturnNoticeDTO.Update dto);
 
     /**
      * 根据主表id删除

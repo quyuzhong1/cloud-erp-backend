@@ -283,6 +283,7 @@ public class SoReturnNoticeDTO {
          * 主键id
          */
         private String id;
+
         /**
          * 销售单id
          */

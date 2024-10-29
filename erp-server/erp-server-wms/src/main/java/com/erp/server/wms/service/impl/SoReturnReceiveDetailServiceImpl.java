@@ -155,6 +155,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             //获取退货单详情表id
             List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
             List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
+            List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
             List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
             List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
             //原明细数据
@@ -169,24 +170,39 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             }
             for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
-                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
-                }
+
                 //此单历史签收数量
                 Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (StringUtils.isNotBlank(detailDto.getId())) {
                     detailEntity.setId(detailDto.getId());
                     historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
-                Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
-                    throw new ServiceException(ApiError.ERROR_92020);
+                if("B2C".equals(dto.getType())){
+                    SoB2cReturnDetailEntity soReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
+                        throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
+                    }
+                    Integer returnQty = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
+                        throw new ServiceException(ApiError.ERROR_92020);
+                    }
+                    detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
+                    detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+                }else{
+                    SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
+                        throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
+                    }
+                    Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
+                        throw new ServiceException(ApiError.ERROR_92020);
+                    }
+                    detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
+                    detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
                 }
+
                 detailEntity.setId(detailDto.getId());
                 detailEntity.setMainId(dto.getId());
-                detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
-                detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
                 detailEntity.setReturnQty(detailDto.getReturnQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setRemark(detailDto.getRemark());
