@@ -465,7 +465,15 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = allSoReturnInstockDetailList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode()) &&v.getSoReturnDetailId().equals(pagingViewDTO.getDetailId())).collect(Collectors.toList());
             String instockCode = allSoReturnInstockDetailEntityList.stream().map(v->v.getCode()).collect(Collectors.joining(","));
             pagingViewDTO.setInstockCode(instockCode);
-            pagingViewDTO.setReason(ReturnReasonEnum.getName(pagingViewDTO.getReason()));
+
+            if(StringUtils.isBlank(ReturnReasonEnum.getName(pagingViewDTO.getReason()))){
+                if(StringUtils.isNotBlank(SoB2cReturnReasonEnum.getName(pagingViewDTO.getReason()))){
+                    pagingViewDTO.setReason(SoB2cReturnReasonEnum.getName(pagingViewDTO.getReason()));
+                }
+            }else{
+                pagingViewDTO.setReason(ReturnReasonEnum.getName(pagingViewDTO.getReason()));
+            }
+
             pagingViewDTO.setInstockQty(soReturnInstockDetailEntityList.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId())).map(v->v.getRealQty()).reduce(MathUtil.ZERO, Integer::sum));
             if(CollectionUtils.isNotEmpty(soReturnInstockDetailEntityList)){
                 pagingViewDTO.setSysInstockTime(soReturnInstockDetailEntityList.stream().filter(v->Objects.nonNull(v.getApproveTime())).findFirst().orElse(new SoReturnInstockDetailEntity()).getApproveTime());
