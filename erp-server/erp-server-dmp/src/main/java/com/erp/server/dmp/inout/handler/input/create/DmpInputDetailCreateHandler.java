@@ -115,7 +115,7 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 			LocalDateTime endTime = dmpCfgInputDetailEntity.getNextTime();
 			// 正常任务最大允许拉取的时间获取
 			if (DmpInputTaskTaskTypeEnum.NORMAL.getCode().equalsIgnoreCase(getDmpInputTaskTaskTypeEnum().getCode())){
-				endTime = checkAndGetMaxFetchTime(endTime, dmpCfgInputEntity, dmpCfgInputDetailEntity);
+				endTime = checkAndGetMaxFetchTime(endTime, dmpCfgInputDetailEntity);
 			}
 
 			// 2024-06-19 12:00:00
@@ -143,23 +143,17 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 	/**
 	 * 检查最大拉取时间
 	 */
-	protected LocalDateTime checkAndGetMaxFetchTime(LocalDateTime curEndTime, DmpCfgInputEntity dmpCfgInputEntity, DmpCfgInputDetailEntity dmpCfgInputDetailEntity) {
-		if (StringUtils.isNotBlank(dmpCfgInputEntity.getExtendJson())){
-			JSONObject extendJsonObj = JSONObject.parseObject(dmpCfgInputEntity.getExtendJson());
-			if (null != extendJsonObj){
-				// 当前时间优先
-				String maxAllowedTimeTypeStr = extendJsonObj.getString("maxTimeType");
-				if (DmpInputTaskMaxTimeTypeEnum.NOW.getCode().equalsIgnoreCase(maxAllowedTimeTypeStr)){
-					// 全量拉取按当前时间-延时时间
-					return LocalDateTime.now(ZoneId.systemDefault()).minusSeconds(dmpCfgInputDetailEntity.getDealyTime());
-				}
-			}
-		}
-
+	protected LocalDateTime checkAndGetMaxFetchTime(LocalDateTime curEndTime, DmpCfgInputDetailEntity dmpCfgInputDetailEntity) {
 		Integer maxIntervalTime = dmpCfgInputDetailEntity.getMaxIntervalTime();
 		if (null == maxIntervalTime || 0 == maxIntervalTime || null == dmpCfgInputDetailEntity.getLastTime()){
 			return curEndTime;
 		}
+		// 小于按当前时间获取
+		if (0 > maxIntervalTime){
+			// 全量拉取按当前时间-延迟时间
+			return LocalDateTime.now(ZoneId.systemDefault()).minusSeconds(dmpCfgInputDetailEntity.getDealyTime());
+		}
+
 		// 配置允许的最大时间
 		LocalDateTime cfgMaxDateTime = dmpCfgInputDetailEntity.getLastTime().plusSeconds(dmpCfgInputDetailEntity.getMaxIntervalTime());
 		// 当前时间-延时时间
