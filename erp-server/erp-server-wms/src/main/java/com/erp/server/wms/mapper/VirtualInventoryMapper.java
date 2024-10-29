@@ -62,6 +62,16 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      */
     IPage<VirtualInventoryDiffDTO.ListDTO> diffPaging(Page query,@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
     /**
+     * 根据sku集合和仓库集合查询
+     * @author will
+     * @date 2024/10/29 14:46
+     * @param skuIdList
+     * @param warehouseIdList
+     * @return List<ListDetailQtyDTO>
+     */
+    List<VirtualInventoryDiffDTO.ListDetailQtyDTO> listAllDiffDetail(@Param("skuIdList")List<String> skuIdList, @Param("warehouseIdList")List<String> warehouseIdList);
+
+    /**
      * 库存差异数量
      * @author will
      * @date 2024/6/11 10:06
@@ -142,4 +152,5 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      */
     List<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params, @Param("lastId") String lastId);
     Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("page")  Page<VirtualInventoryDiffDTO.SearchParamDTO> page, @Param("params") VirtualInventoryDiffDTO.SearchParamDTO params, @Param("lastId") String lastId);
+
 }

@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -220,6 +221,8 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
     @Override
     public PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //库存差异
         Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isDiff)) {
@@ -230,10 +233,11 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         if (ObjectUtil.isNotNull(isExceed)) {
             dto.getParams().setIsExceed(Boolean.valueOf(isExceed.toString()));
         }
-        Page<VirtualInventoryDiffDTO.ListDiffExportDataDTO> page = baseMapper.listDiffExportData(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
-        //数据赋值处理
-        fillExportData(page.getRecords());
-        return new PagingVO<>(page);
+        IPage<VirtualInventoryDiffDTO.ListDTO> pageData = this.baseMapper.diffPaging(query, dto.getParams());
+       //填充名称
+        List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> listDiffExportDataList = fillExportData(pageData.getRecords());
+        return new PagingVO<>(listDiffExportDataList, (int) pageData.getTotal(), dto.getPageSize(), dto.getCurrPage());
+
     }
 
     @Override
@@ -299,38 +303,21 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
      * @date 2024/6/11 15:43
      * @param list
      */
-    private void fillExportData (List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> list) {
+    private List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> fillExportData (List<VirtualInventoryDiffDTO.ListDTO> list) {
         if (CollectionUtil.isEmpty(list)) {
-            return;
+            return Collections.EMPTY_LIST;
         }
+        //明细数据
+        List<String> skuIdList = list.stream().map(VirtualInventoryDiffDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualInventoryDiffDTO.ListDetailQtyDTO> detailList = baseMapper.listAllDiffDetail(skuIdList,warehouseIdList);
+
         //虚拟仓库
-        List<String> virtualWarehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
-        List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
+        List<String> virtualWarehouseIdList = detailList.stream().map(VirtualInventoryDiffDTO.ListDetailQtyDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseEntityList = CollectionUtils.isEmpty(virtualWarehouseIdList) ? new ArrayList<>() : virtualWarehouseService.listByIds(virtualWarehouseIdList);
 
-        //标识,用于判断是否需要赋值（相同sku、仓库只需要第一条赋值）
-        List<String> flagList = new ArrayList<>();
-
-        for (VirtualInventoryDiffDTO.ListDiffExportDataDTO listDTO : list) {
-            //虚拟仓库
-            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getVirtualWarehouseId()))
-                    .findFirst().orElse(new VirtualWarehouseEntity());
-            listDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
-            listDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-            //标识
-            String flag = StrUtil.format("{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId());
-            if (flagList.contains(flag)) {
-                listDTO.setSkuNo("");
-                listDTO.setProductName("");
-                listDTO.setWarehouseName("");
-                listDTO.setRealQty(null);
-                listDTO.setUsableQty(null);
-                listDTO.setFrozenQty(null);
-                listDTO.setInTransitQty(null);
-                listDTO.setWaitQcQty(null);
-                continue;
-            }
-            flagList.add(flag);
-            //是否差异
+        List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> resultList = new ArrayList<>();
+        for (VirtualInventoryDiffDTO.ListDTO listDTO : list) {
             //是否有差异
             boolean isDiff = listDTO.getTotalVirtualQty() > listDTO.getRealQty();
             listDTO.setIsDiff(isDiff);
@@ -339,6 +326,38 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
             listDTO.setDistributionQty(listDTO.getTotalVirtualQty());
             //未分配数量
             listDTO.setUnDistributionQty(listDTO.getRealQty() - listDTO.getDistributionQty());
+
+            List<VirtualInventoryDiffDTO.ListDetailQtyDTO> listDetailQtyList = detailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(),listDTO.getSkuId()) && StrUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(listDetailQtyList)) {
+                VirtualInventoryDiffDTO.ListDiffExportDataDTO diffExportDataDTO = BeanMapperUtils.map(VirtualInventoryDiffDTO.ListDiffExportDataDTO.class, listDTO);
+                resultList.add(diffExportDataDTO);
+                continue;
+            }
+            //标识,用于判断是否需要赋值（相同sku、仓库只需要第一条赋值）
+            List<String> flagList = new ArrayList<>();
+            //虚拟仓数据
+            for (VirtualInventoryDiffDTO.ListDetailQtyDTO listDetailQtyDTO : listDetailQtyList) {
+                VirtualInventoryDiffDTO.ListDiffExportDataDTO diffExportDataDTO = new VirtualInventoryDiffDTO.ListDiffExportDataDTO();
+                //标识
+                String flag = StrUtil.format("{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId());
+                if (flagList.contains(flag)) {
+                    diffExportDataDTO = new VirtualInventoryDiffDTO.ListDiffExportDataDTO();
+                } else {
+                    BeanMapperUtils.copy(listDTO,diffExportDataDTO);
+                    flagList.add(flag);
+                }
+                //虚拟仓库
+                VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDetailQtyDTO.getVirtualWarehouseId()))
+                        .findFirst().orElse(new VirtualWarehouseEntity());
+                diffExportDataDTO.setVirtualWarehouseId(listDetailQtyDTO.getVirtualWarehouseId());
+                diffExportDataDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
+                diffExportDataDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+                diffExportDataDTO.setVirtualQty(listDetailQtyDTO.getVirtualQty());
+                diffExportDataDTO.setVirtualUsableQty(listDetailQtyDTO.getVirtualUsableQty());
+                diffExportDataDTO.setVirtualFrozenQty(listDetailQtyDTO.getVirtualFrozenQty());
+                resultList.add(diffExportDataDTO);
+            }
         }
+        return resultList;
     }
 }
