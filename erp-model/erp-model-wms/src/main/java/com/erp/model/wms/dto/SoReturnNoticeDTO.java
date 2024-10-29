@@ -100,6 +100,10 @@ public class SoReturnNoticeDTO {
          */
         private String id;
         /**
+         * 销售id
+         */
+        private String soId;
+        /**
          * 明细主键id
          */
         private String detailId;
@@ -209,6 +213,11 @@ public class SoReturnNoticeDTO {
          * 退货物流单号
          */
         private String returnLogisticCode;
+
+        /**
+         * 类型
+         */
+        private String type;
     }
 
     /**
@@ -274,6 +283,7 @@ public class SoReturnNoticeDTO {
          * 主键id
          */
         private String id;
+
         /**
          * 销售单id
          */
@@ -444,6 +454,8 @@ public class SoReturnNoticeDTO {
          * id
          */
         private String id;
+
+        private String type;
         /**
          * 主表id
          */
