@@ -209,6 +209,7 @@
             wcd.sku_id,
             wcd.sku_no,
         wcd.pack_qty,
+        wcd.fn_sku,
             concat(wcd.sku_no,'*',wcd.pack_qty) AS sku,
         fsp.box_no  as outCode
         FROM wms_carton_detail wcd

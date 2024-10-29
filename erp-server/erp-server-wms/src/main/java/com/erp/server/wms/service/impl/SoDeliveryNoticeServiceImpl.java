@@ -1204,6 +1204,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             if (detailEntity.getDeliveryQty() < detailEntity.getPickingQty()) {
                 throw new ServiceException(ApiError.ERROR_99127, detailEntity.getSkuNo());
             }
+
         }
         // 增加当次拣货数量和
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);

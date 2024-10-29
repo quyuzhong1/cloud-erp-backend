@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.create;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,6 +10,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.alibaba.fastjson.JSONObject;
+import com.erp.model.dmp.enums.DmpInputTaskMaxTimeTypeEnum;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,6 +113,11 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 			
 			// 2024-06-19 18:00:00
 			LocalDateTime endTime = dmpCfgInputDetailEntity.getNextTime();
+			// 正常任务最大允许拉取的时间获取
+			if (DmpInputTaskTaskTypeEnum.NORMAL.getCode().equalsIgnoreCase(getDmpInputTaskTaskTypeEnum().getCode())){
+				endTime = checkAndGetMaxFetchTime(endTime, dmpCfgInputDetailEntity);
+			}
+
 			// 2024-06-19 12:00:00
 			dmpInputTaskEntity.setEndTime(endTime);
 			dmpInputTaskEntity.setStatus(DmpInputTaskStatusEnum.INIT.getCode());
@@ -129,6 +138,31 @@ public abstract class DmpInputDetailCreateHandler extends DmpInputBaseCreateHand
 		dmpCfgInputDetailService.updateBatchById(dmpCfgInputDetailEntityList);
 		
 		return dmpInputTaskEntityList;
+	}
+
+	/**
+	 * 检查最大拉取时间
+	 */
+	protected LocalDateTime checkAndGetMaxFetchTime(LocalDateTime curEndTime, DmpCfgInputDetailEntity dmpCfgInputDetailEntity) {
+		Integer maxIntervalTime = dmpCfgInputDetailEntity.getMaxIntervalTime();
+		if (null == maxIntervalTime || 0 == maxIntervalTime || null == dmpCfgInputDetailEntity.getLastTime()){
+			return curEndTime;
+		}
+		// 小于按当前时间获取
+		if (0 > maxIntervalTime){
+			// 全量拉取按当前时间-延迟时间
+			return LocalDateTime.now(ZoneId.systemDefault()).minusSeconds(dmpCfgInputDetailEntity.getDealyTime());
+		}
+
+		// 配置允许的最大时间
+		LocalDateTime cfgMaxDateTime = dmpCfgInputDetailEntity.getLastTime().plusSeconds(dmpCfgInputDetailEntity.getMaxIntervalTime());
+		// 当前时间-延时时间
+		LocalDateTime nowDelayTime = LocalDateTime.now(ZoneId.systemDefault()).minusSeconds(dmpCfgInputDetailEntity.getDealyTime());
+		// 和当前时间对比
+		LocalDateTime allowMaxDateTime = cfgMaxDateTime.isAfter(nowDelayTime) ? nowDelayTime : cfgMaxDateTime;
+
+		// 比较取最大时间
+		return allowMaxDateTime.isAfter(curEndTime) ? allowMaxDateTime : curEndTime;
 	}
 
 	public abstract DmpInputTaskTaskTypeEnum getDmpInputTaskTaskTypeEnum();

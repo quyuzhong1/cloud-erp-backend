@@ -393,7 +393,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        diff.id
+        diff.id asc,diff.virtualWarehouseId asc
     </select>
 
 
