@@ -1018,7 +1018,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         returnAddDTO.setReturnType(SourceTypeEnum.AUTO_ADD.getCode());
         returnAddDTO.setParentReturnCode(entity.getCode());
         returnAddDTO.setReturnMode(entity.getReturnMode());
-        returnAddDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
         returnAddDTO.setReturnOrgId(orderEntity.getReceiveOrgId());
         returnAddDTO.setReturnWarehouseId(orderEntity.getDeliveryWarehouseId());
         returnAddDTO.setBillDate(LocalDate.now());
@@ -1062,7 +1061,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
             PurchaseReturnOrderDetailDTO.AddDTO dto = new PurchaseReturnOrderDetailDTO.AddDTO();
             dto.setCurrency(detail.getCurrency());
-            dto.setWarehouseLocation(detail.getWarehouseLocation());
+            //质检退货不存仓位
+            dto.setWarehouseLocation(StrUtil.equals(returnAddDTO.getSourceType(),SourceTypeEnum.QC_INFO.getCode()) ? "" : detail.getWarehouseLocation());
             dto.setReturnPrice(detail.getTaxPrice());
             dto.setReturnQty(poReturnDetailEntity.getReturnQty() * quantity);
             dto.setCurrencySymbol(detail.getCurrencySymbol());
