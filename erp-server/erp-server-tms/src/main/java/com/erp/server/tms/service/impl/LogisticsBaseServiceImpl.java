@@ -159,6 +159,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
                 BatchResultDTO dto = new BatchResultDTO();
                 String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+                if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTransportNo())){
+                    trackNo = record.getTransportNo();
+                }
                 if (StrUtil.isBlank(trackNo)){
                     continue;
                 }
@@ -182,6 +185,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 BatchResultDTO dto = new BatchResultDTO();
                 dto.setId(record.getId());
                 String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+                if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTransportNo())){
+                    trackNo = record.getTransportNo();
+                }
                 dto.setCode(trackNo);
                 dto.setSuccess(false);
                 dto.setMsg(track.getMsg());
@@ -208,6 +214,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         //根据配置进行组装注册数据
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
             String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+            if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTransportNo())){
+                trackNo = record.getTransportNo();
+            }
             if (StrUtil.isBlank(trackNo)){
                 continue;
             }
@@ -263,6 +272,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
     @Override
     public void processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {
+        if (CollectionUtils.isEmpty(records)){
+            return;
+        }
         LogisticsService service = logisticsRegistry.getHandler(platformType);
         List<Map<String, String>> mapList = service.getLogisticsAuthConfigByPlatform(platformType);
         if (CollectionUtils.isEmpty(mapList)) {
@@ -286,11 +298,15 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 continue;
             }
             String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+            if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTransportNo())){
+                trackNo = record.getTransportNo();
+            }
             if (StrUtil.isBlank(trackNo)){
                 errorIds.add(record.getId());
                 continue;
             }
-            RegisterResponseVO registerResponseVO = listApiResult.getData().stream().filter(e -> Objects.equals(trackNo, e.getTrackNo())).findFirst().orElse(null);
+            String finalTrackNo = trackNo;
+            RegisterResponseVO registerResponseVO = listApiResult.getData().stream().filter(e -> Objects.equals(finalTrackNo, e.getTrackNo())).findFirst().orElse(null);
             if (Objects.isNull(registerResponseVO)){
                 errorIds.add(record.getId());
                 continue;
@@ -322,6 +338,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         //根据配置进行组装注册数据
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
             String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+            if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTransportNo())){
+                trackNo = record.getTransportNo();
+            }
             if (StrUtil.isBlank(trackNo)){
                 continue;
             }

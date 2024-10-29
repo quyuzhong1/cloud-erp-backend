@@ -25,6 +25,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +62,14 @@ public class LogisticsChannelJob {
     public ReturnT registerLogisticsNumber() {
 
         XxlJobHelper.log("====开始注册物流单号====");
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> trackNoList = new ArrayList<>();
+        List<String> transportNoList = new ArrayList<>();
+        if (StringUtils.isNotBlank(jobParam)){
+            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
+            trackNoList = jsonObject.getBeanList("trackNoList", String.class);
+            transportNoList = jsonObject.getBeanList("transportNoList", String.class);
+        }
         long current = 1;
         //获取物流编号
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
@@ -69,6 +78,8 @@ public class LogisticsChannelJob {
                 .current(current)
                 .registerStatus(0)
                 .trackEnable(true)
+                .transportNoList(transportNoList)
+                .trackNoList(trackNoList)
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
         getRegisterData(query);

@@ -161,6 +161,18 @@
         <if test="query.trackEnable != null">
             and lbd.track_enable = #{query.trackEnable}
         </if>
+        <if test="query.trackNoList != null and query.trackNoList.size > 0">
+            and lbd.track_no in
+            <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.transportNoList != null and query.transportNoList.size > 0">
+            and lb.transport_no in
+            <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
     <!-- 根据平台单和物流跟踪单号查询 -->
