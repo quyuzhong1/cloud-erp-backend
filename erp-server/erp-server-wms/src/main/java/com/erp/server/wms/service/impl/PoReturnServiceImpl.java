@@ -1027,6 +1027,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         returnAddDTO.setPurchaseUserId(orderEntity.getPurchaseUserId());
         returnAddDTO.setReturnUserId(userInfo.getUid());
         returnAddDTO.setSourceId(entity.getId());
+        returnAddDTO.setSourceType(entity.getSourceType());
         returnAddDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
         returnAddDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
         //明细
