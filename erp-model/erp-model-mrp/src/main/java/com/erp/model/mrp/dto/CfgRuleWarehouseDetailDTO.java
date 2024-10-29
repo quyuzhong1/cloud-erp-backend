@@ -169,5 +169,16 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private String virtualWarehouseId;
     }
 
-
+    @Data
+    @NoArgsConstructor
+    public static class OverseasWarehouseDTO {
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+    }
 }

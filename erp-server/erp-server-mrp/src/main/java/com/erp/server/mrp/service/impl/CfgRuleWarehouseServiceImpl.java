@@ -207,6 +207,22 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         return resultDTO;
     }
 
+    @Override
+    public List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO> listOverseasWarehouse(String platformType) {
+        CfgRuleWarehouseEntity oldEntity = this.getByPlatformType(platformType);
+        if (ObjectUtil.isEmpty(oldEntity)) {
+            return Collections.EMPTY_LIST;
+        }
+        //仓库设置明细
+        List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listViewByMainIdList(Arrays.asList(oldEntity.getId()));
+        //海外仓设置
+        List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgOverseasWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.OVERSEAS.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(cfgOverseasWarehouseList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return BeanMapperUtils.copyList(CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO.class,cfgOverseasWarehouseList);
+    }
+
     /**
      * 处理验证店铺数据
      * @author will
