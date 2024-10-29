@@ -530,6 +530,32 @@ public class RequisitionApplicationController extends BaseController {
         requisitionApplicationService.generateDeliveryWithFba(dto);
         return success();
     }
+
+    /**
+     * 下载货件装箱信息模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载货件装箱信息模板数据")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        requisitionApplicationService.downloadPackingTemplate(response);
+        return success();
+    }
+    /**
+     * 批量导入Excel
+     * @author zdy
+     * @date: 2024/8/14 9:39
+     * @param excelImportDTO
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "批量导入Excel")
+    @PostMapping("/importFile")
+    public ApiResult<RequisitionApplicationDTO.ImportDTO> importFile(@ModelAttribute @Validated RequisitionApplicationDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        RequisitionApplicationDTO.ImportDTO dto = requisitionApplicationService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getFbaBindShipmentViewDTOS(),response);
+        return success(dto);
+    }
     /**
      * 查询发货记录
      **/

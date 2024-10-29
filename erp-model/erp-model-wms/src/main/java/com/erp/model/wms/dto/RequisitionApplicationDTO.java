@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -1456,6 +1457,34 @@ public class RequisitionApplicationDTO implements Serializable {
          * 标记
          */
         private Boolean isFlag;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExcelImportDTO {
+        /**
+         * 导入文件
+         */
+        @NotNull(message = "导入文件不能为空")
+        private MultipartFile excelFile;
+        /**
+         * 明细
+         */
+        @Valid
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
     }
 
     /**
