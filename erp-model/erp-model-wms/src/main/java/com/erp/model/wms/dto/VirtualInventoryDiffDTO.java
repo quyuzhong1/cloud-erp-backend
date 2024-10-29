@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -119,6 +120,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private Integer unDistributionQty;
         /**
+         * 实体仓已下推数量
+         */
+        private Integer totalVirtualQty;
+        /**
          * 虚拟仓库存
          */
         private Integer virtualQty;
@@ -135,6 +140,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private Boolean isDiff;
         /**
+         * 库存差异，true是，false否
+         */
+        private String isDiffName;
+        /**
          * 超出分配
          */
         private Boolean isExceed;
@@ -150,6 +159,7 @@ public class VirtualInventoryDiffDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class SearchParamDetailDTO extends SortDTO {
         /**
          * skuId

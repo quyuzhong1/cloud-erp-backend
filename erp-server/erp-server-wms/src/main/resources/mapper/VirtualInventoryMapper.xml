@@ -184,7 +184,7 @@
             COALESCE(i.frozenQty, 0) AS frozenQty,
             COALESCE(i.inTransitQty, 0) AS inTransitQty,
             COALESCE(i.waitQcQty, 0) AS waitQcQty,
-            sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id) AS totalVirtualQty
+            COALESCE(sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id),0) AS totalVirtualQty
         FROM
         Inventory i
         LEFT JOIN (
@@ -228,7 +228,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        diff.id
+        diff.skuId asc,diff.warehouseId asc
     </select>
 
     <!-- 库存差异列表数量 -->
@@ -275,6 +275,31 @@
             </foreach>
         </if>
         vi.virtual_warehouse_id
+    </select>
+
+    <!-- 根据sku集合和仓库集合查询 -->
+    <select id="listAllDiffDetail" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailQtyDTO">
+        select
+            vi.sku_id as skuId,
+            vi.warehouse_id as warehouseId,
+            vi.virtual_warehouse_id as virtualWarehouseId,
+            COALESCE(sum(vi.qty),0) as virtualQty,
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
+            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false
+            and vi.sku_id in
+             <foreach collection="skuIdList" open="(" close=")" separator="," item="item">
+                 #{item}
+             </foreach>
+              and vi.warehouse_id in
+              <foreach collection="warehouseIdList" open="(" close=")" item="item" separator=",">
+                    #{item}
+              </foreach>
+        </where>
+        group by vi.virtual_warehouse_id,vi.sku_id,vi.warehouse_id
+        order by vi.virtual_warehouse_id
     </select>
 
     <!-- 虚拟库存数据 -->
