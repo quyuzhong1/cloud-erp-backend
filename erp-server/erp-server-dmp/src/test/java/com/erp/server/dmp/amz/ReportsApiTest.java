@@ -386,7 +386,7 @@ public class ReportsApiTest {
 //        List<String> processingStatuses = null;
 //        List<String> marketplaceIds = Arrays.asList("A1VC38T7YXB528");
         ;
-        Integer pageSize = 30;
+        Integer pageSize = 20;
         String createdSince = null;
         String createdUntil = null;
         String nextToken = null;
