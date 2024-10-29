@@ -70,7 +70,13 @@
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        order by sdnc.create_time desc
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sdnc.create_time desc
     </select>
 
     <select id="tabList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$TabListDTO">

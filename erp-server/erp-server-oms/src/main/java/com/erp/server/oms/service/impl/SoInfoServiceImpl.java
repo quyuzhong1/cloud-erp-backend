@@ -1973,16 +1973,23 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         List<String> customerIds = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
+        List<SoInfoDTO.GenerateDeliveryView> resultList = new ArrayList<>();
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
-            view.setDeliveryQty(view.getSalesQty());
+            view.setDeliveryQty(view.getSalesQty() - view.getAlreadyDeliveryQty());
             view.setPlanDeliveryDate(view.getRequireDate());
             String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             view.setCustomerName(customerName);
+            if(view.getDeliveryQty()>0){
+                resultList.add(view);
+            }
         }
-        return viewList;
+        if(CollectionUtils.isEmpty(resultList)){
+            throw new ServiceException("没有待发货明细");
+        }
+        return resultList;
     }
 
     /**
