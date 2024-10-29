@@ -104,6 +104,10 @@ public class SoReturnInstockDTO {
          */
         private String id;
         /**
+         * id
+         */
+        private String soId;
+        /**
          * 明细id
          */
         private String detailId;
@@ -119,6 +123,10 @@ public class SoReturnInstockDTO {
          * 退货明细id
          */
         private String soReturnDetailId;
+        /**
+         * 退货明细id
+         */
+        private String soReturnId;
         /**
          * 退货入库单号
          */
@@ -173,6 +181,11 @@ public class SoReturnInstockDTO {
          * 销售员Id
          */
         private String sellerId;
+
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
         /**
          * 销售员
          */
@@ -983,5 +996,20 @@ public class SoReturnInstockDTO {
          */
         private String childWarehouseLocation;
 
+    }
+    @Data
+    public static class SearchDTO {
+
+        private String id;
+
+        private String code;
+    }
+    @Data
+    public static class SelectDTO {
+
+        /**
+         * code
+         */
+        private String searchKeyword;
     }
 }

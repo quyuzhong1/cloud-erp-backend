@@ -26,6 +26,7 @@ public interface SoReturnNoticeDetailService extends SuperService<SoReturnNotice
      **/
     Boolean add(SoReturnNoticeDTO.Add dto, String id);
 
+    Boolean addB2c(SoReturnNoticeDTO.Add dto, String id);
     /**
      * 修改
      * @Author Luo_WG

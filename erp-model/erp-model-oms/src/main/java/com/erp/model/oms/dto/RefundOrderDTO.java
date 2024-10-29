@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -26,53 +28,14 @@ public class RefundOrderDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
-         * 单据编号
+         * 页面高级查询
          */
-        private String code;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 平台集合
+         * sqlMap 默认key default
          */
-        private List<String> dictPlatformList;
-
-        /**
-         * 店铺集合
-         */
-        private List<String> shopIdList;
-
-        /**
-         * 平台订单号
-         */
-        private String platformOrderNo;
-
-
-        /**
-         * 平台退款号
-         */
-        private String platformRefundNo;
-
-        /**
-         * 退款原因
-         */
-        private String reason;
-
-        /**
-         * 状态
-         */
-        private List<String> statusList;
-
-
-
-        /**
-         * 创建时间集合
-         */
-        private List<LocalDateTime> createTimeList;
-
-
-        /**
-         * 退款时间
-         */
-        private List<LocalDateTime> refundTimeList;
+        private Map<String,String> sqlMap;
 
     }
 
@@ -80,6 +43,7 @@ public class RefundOrderDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingViewDTO {
 
+        private String id;
         /**
          * 单据单号
          */
@@ -117,6 +81,15 @@ public class RefundOrderDTO implements Serializable {
         private String platformRefundNo;
 
         /**
+         * 销售单号
+         */
+        private String soCode;
+
+        /**
+         * 销售单号
+         */
+        private String soId;
+        /**
          * 状态
          */
         private String status;
@@ -130,6 +103,11 @@ public class RefundOrderDTO implements Serializable {
          * 退款金额
          */
         private BigDecimal refundAmount;
+
+        /**
+         * 退款金额 + 币别
+         */
+        private String completeRefundAmount;
 
         /**
          * 退款人名币
@@ -152,31 +130,48 @@ public class RefundOrderDTO implements Serializable {
         private String reason;
 
         /**
-         * 退款时间
+         * 平台退款时间
          */
-        private Date refundTime;
+        private LocalDateTime refundTime;
 
         /**
-         * 创建人
+         * 平台创建时间
          */
-        private String createUserName;
+        private LocalDateTime platformCreateTime;
 
         /**
-         * 创建时间时间
+         * 平台sku
          */
-        private LocalDateTime createTime;
-
+        private String platformSkuNo;
 
         /**
-         * 修改人
+         * skuId
          */
-        private String updateUserName;
+        private String skuId;
 
         /**
-         * 创建时间时间
+         * sku
          */
-        private LocalDateTime updateTime;
+        private String skuNo;
 
+        /**
+         * 产品名称
+         */
+        private String productName;
 
+        /**
+         * 销售数量
+         */
+        private Integer saleQty;
+
+        /**
+         * 退款数量
+         */
+        private Integer refundQty;
+
+        /**
+         * 出库数量
+         */
+        private Integer outQty;;
     }
 }
