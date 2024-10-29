@@ -73,7 +73,7 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 							resultDmpInputMongoChild.put("currency" , solution_api_dto.get("refund_money_currency"));
 							resultDmpInputMongoChild.put("sellPrice" , solution_api_dto.get("refund_money_post"));
 							resultDmpInputMongoChild.put("solutionType" , solution_api_dto.get("solution_type"));
-							resultDmpInputMongoChild.put("isGift" , receiveGoods);
+							resultDmpInputMongoChild.put("receiveGoods" , receiveGoods);
 							
 							
 							
