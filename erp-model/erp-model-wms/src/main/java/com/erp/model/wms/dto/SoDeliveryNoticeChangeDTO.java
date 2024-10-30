@@ -256,6 +256,7 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class ViewIdDTO {
         /**
          * 发货通知单id 或者是发货通知变更单id

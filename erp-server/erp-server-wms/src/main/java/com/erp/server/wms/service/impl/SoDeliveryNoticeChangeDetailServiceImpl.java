@@ -51,7 +51,7 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(SoDeliveryNoticeChangeDTO.ViewDTO addDTO, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
-        this.checkData(addDTO.getViewDetailList(),soDeliveryNoticeChangeEntity);
+        this.checkData(addDTO.getViewDetailList());
         List<SoDeliveryNoticeChangeDetailEntity> detailEntityList = this.buildDetail(addDTO.getViewDetailList(),soDeliveryNoticeChangeEntity);
         this.saveBatch(detailEntityList);
     }
@@ -59,7 +59,7 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(SoDeliveryNoticeChangeDTO.ViewDTO addDTO,SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
-        this.checkData(addDTO.getViewDetailList(),soDeliveryNoticeChangeEntity);
+        this.checkData(addDTO.getViewDetailList());
         List<SoDeliveryNoticeChangeDetailEntity> dbDetailList = this.listByMainIds(Arrays.asList(addDTO.getId()));
         List<SoDeliveryNoticeChangeDTO.ViewDetail> detailViewList = addDTO.getViewDetailList();
         List<String> updateViewIds = detailViewList.stream().map(v->v.getDetailId()).collect(Collectors.toList());
@@ -95,6 +95,8 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
         deleteList.forEach(v->{
             operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除一行sku{}",v.getSkuNo()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),v.getMainId(),"编辑操作"));
         });
+
+        this.checkData(addDTO.getViewDetailList());
         this.update(addList,updateList,deleteList);
         operateLogService.batchAddModuleOperateLog(operateLogList);
     }
@@ -140,9 +142,9 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
 
     /**
      * 校验明细数据
-     * @param soDeliveryNoticeChangeEntity
      */
-    private void checkData( List<SoDeliveryNoticeChangeDTO.ViewDetail> viewDetailList, SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity) {
+    @Override
+    public void checkData( List<SoDeliveryNoticeChangeDTO.ViewDetail> viewDetailList) {
         List<String> noticeDetailIds = viewDetailList.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listByIds(noticeDetailIds);
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(noticeDetailIds);

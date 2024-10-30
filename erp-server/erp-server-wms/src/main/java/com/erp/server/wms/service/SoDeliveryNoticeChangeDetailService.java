@@ -23,6 +23,7 @@ public interface SoDeliveryNoticeChangeDetailService extends SuperService<SoDeli
     List<SoDeliveryNoticeChangeDetailEntity> listByMainIds(List<String> mainIds);
 
     void removeByMainId(String id);
+    void checkData( List<SoDeliveryNoticeChangeDTO.ViewDetail> viewDetailList);
     /**
      * 根据主表id查询
      * @author will

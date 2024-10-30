@@ -227,6 +227,8 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
         }
         validateSubmit(entity);
+        SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO());
+        detailService.checkData(viewDTO.getViewDetailList());
         // 更新单据审核状态
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
 
@@ -271,11 +273,6 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
-        }
-        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
-        if(!(soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-                || soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()))) {
-            throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -362,6 +359,13 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
+        if(!(soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()))) {
+            throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
+        }
+        SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO());
+        detailService.checkData(viewDTO.getViewDetailList());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         List<SoDeliveryNoticeChangeDetailEntity> detailList = detailService.listByMainId(entity.getId());
