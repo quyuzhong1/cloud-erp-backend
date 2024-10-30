@@ -76,9 +76,13 @@ public class ReplenishmentResultDTO {
     private List<RptOutOfStockDTO> rptOutOfStocks;
 
     /**
-     * 销量
+     * 销量(去噪销量加历史销量)
      */
     private List<SalesInfoDTO> salesInfos;
+    /**
+     * 去噪销量
+     */
+    private List<SalesInfoDTO> salesInfoList;
 
     /**
      * 分时段销量
@@ -118,6 +122,14 @@ public class ReplenishmentResultDTO {
      * 最近建议明细
      */
     private List<RecentSuggestionDTO> recentSuggestions;
+    /**
+     * 获取历史库存
+     */
+    private Map<LocalDate, Integer> historyInventoryList;
+    /**
+     * 获取历史销量
+     */
+    private Map<LocalDate, Integer> historySalesList;
 
     /**
      * 采购单价
@@ -205,6 +217,57 @@ public class ReplenishmentResultDTO {
             return dto;
         }
     }
+
+    @Getter
+    @Setter
+    public static class InventoryHistoryDTO {
+        /**
+         * 建议 id
+         */
+        private String replenishmentId;
+        /**
+         * 日期
+         */
+        private LocalDate date;
+        /**
+         * 原始库存
+         */
+        private Integer originalInventQty;
+
+        public static InventoryHistoryDTO buildInventoryHistory(String replenishmentId, LocalDate date, Integer originalInventQty) {
+            InventoryHistoryDTO inventoryHistoryDTO = new InventoryHistoryDTO();
+            inventoryHistoryDTO.setReplenishmentId(replenishmentId);
+            inventoryHistoryDTO.setDate(date);
+            inventoryHistoryDTO.setOriginalInventQty(originalInventQty);
+            return inventoryHistoryDTO;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class SalesHistoryDTO {
+        /**
+         * 建议 id
+         */
+        private String replenishmentId;
+        /**
+         * 日期
+         */
+        private LocalDate date;
+        /**
+         * 原始销量
+         */
+        private Integer originalSalesQty;
+
+        public static SalesHistoryDTO buildSalesHistory(String replenishmentId, LocalDate date, Integer originalSalesQty) {
+            SalesHistoryDTO dto = new SalesHistoryDTO();
+            dto.setReplenishmentId(replenishmentId);
+            dto.setDate(date);
+            dto.setOriginalSalesQty(originalSalesQty);
+            return dto;
+        }
+    }
+
 
     @Getter
     @Setter
@@ -493,6 +556,15 @@ public class ReplenishmentResultDTO {
             return entity;
         }
 
+        public static ReplenishmentSuggestionDetailEntity buildNewDetail(String code, String calcDate, String mainId) {
+            ReplenishmentSuggestionDetailEntity detail = new ReplenishmentSuggestionDetailEntity();
+            detail.setId(IdWorker.getIdStr());
+            detail.setCalcVersion(code);
+            detail.setCalcDate(calcDate);
+            detail.setMainId(mainId);
+            return detail;
+        }
+
         public static Integer getAttributeValue(DetailDTO detail, String code) {
             if (CfgRuleSuggestedAmountNodeEnum.PURCHASE_APPROVE_DAYS.getCode().equals(code)) {
                 return detail.getPurchaseApproveDays();
@@ -681,24 +753,6 @@ public class ReplenishmentResultDTO {
          */
         private String denoisingType;
 
-        /**
-         * 原始销量
-         */
-        private Integer originalSalesQty;
-
-        /**
-         * 原始库存
-         */
-        private Integer originalInventoryQty;
-
-        public static SalesInfoDTO buildSalesInfoDTO(SalesInfoEntity entity) {
-            SalesInfoDTO dto = new SalesInfoDTO();
-            dto.setId(entity.getId());
-            dto.setDate(entity.getDate());
-            dto.setOriginalSalesQty(entity.getOriginalSalesQty());
-            dto.setOriginalInventoryQty(entity.getOriginalInventoryQty());
-            return dto;
-        }
 
         public static SalesInfoEntity buildSalesInfo(SalesInfoDTO dto, String replenishmentDetailId, String calcVersion) {
             SalesInfoEntity entity = new SalesInfoEntity();
@@ -708,8 +762,6 @@ public class ReplenishmentResultDTO {
             entity.setSalesQty(dto.getSalesQty());
             entity.setIsIgnoreOutOfStock(dto.getIsIgnoreOutOfStock());
             entity.setSalesQtyType(dto.getDenoisingType());
-            entity.setOriginalSalesQty(dto.getOriginalSalesQty());
-            entity.setOriginalInventoryQty(dto.getOriginalInventoryQty());
             entity.setCalcVersion(calcVersion);
             return entity;
         }
@@ -1296,15 +1348,13 @@ public class ReplenishmentResultDTO {
          */
         private String shopId;
         /**
+         * 订单类型
+         */
+        private String orderType;
+        /**
          * 原始销量
          */
         private Integer originalSalesQty;
-
-        /**
-         * 原始库存
-         */
-        private Integer originalInventoryQty;
-
     }
 
     @Getter

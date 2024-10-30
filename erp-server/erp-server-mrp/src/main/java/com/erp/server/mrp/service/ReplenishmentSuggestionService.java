@@ -10,7 +10,9 @@ import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -185,8 +187,9 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
 
     /**
      * 获取所有需要计算的数据
+     * @param platformType 类型
      */
-    List<ReplenishmentSuggestionEntity> listCalculationData();
+    List<ReplenishmentSuggestionEntity> listCalculationData(String platformType);
     /**
      * 根据id查询标签
      * @author will
@@ -271,8 +274,38 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      */
     void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult);
 
+    /**
+     * 查询需要计算的数据
+     *
+     * @param platformType    平台
+     * @param salesQtyType    计算类型
+     * @param orderType       订单类型
+     * @param calculationDate 计算日
+     */
+    List<ReplenishmentResultDTO> listAllCalculationData(String platformType,String salesQtyType, String orderType, LocalDate calculationDate);
 
-    List<ReplenishmentResultDTO> listAllCalculationData(List<String> suggestionIds);
+    /**
+     * 根据数据类型和订单类型查询历史销量
+     *
+     * @param replenishmentIds 建议主表id
+     * @param salesQtyType     销量数据类型
+     * @param orderType        订单类型
+     * @param startDate        开始时间
+     * @param endDate          结束时间
+     */
+    List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<String> replenishmentIds, String salesQtyType, String orderType, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 根据数据类型和订单类型查询历史销量
+     *
+     * @param replenishmentId 建议主表id
+     * @param salesQtyType    销量数据类型
+     * @param orderType       订单类型
+     * @param startDate       开始时间
+     * @param endDate         结束时间
+     */
+    Map<LocalDate, Integer> listSalesHistoryMap(String replenishmentId, String salesQtyType, String orderType, LocalDate startDate, LocalDate endDate);
+
 
     /**
      * 库存预测
@@ -312,4 +345,10 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @return Boolean
      */
     Boolean exportDeliverySuggest(ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO);
+
+    /**
+     * 根据平台类型查询数据
+     * @param platformType 平台类型
+     */
+    List<ReplenishmentSuggestionEntity> listByPlatform(String platformType);
 }

@@ -1,4 +1,4 @@
-package com.erp.server.mrp.esentity;
+package com.erp.server.mrp.es.entity;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;

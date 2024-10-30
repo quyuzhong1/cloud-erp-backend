@@ -1,12 +1,12 @@
-package com.erp.server.mrp.esrepository;
-import java.util.List;
+package com.erp.server.mrp.es.repository;
 
+import com.erp.server.mrp.es.entity.TestEsEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
-import com.erp.server.mrp.esentity.TestEsEntity;
+import java.util.List;
  
 /**
  * 在 Spring Data Elasticsearch 中，像 findByTitle 这样的方法命名并不是一个固定的约定，而是根据一定的命名规则自动生成查询方法。

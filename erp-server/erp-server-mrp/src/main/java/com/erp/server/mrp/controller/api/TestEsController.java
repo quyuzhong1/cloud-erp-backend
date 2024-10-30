@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.server.mrp.esentity.TestEsEntity;
-import com.erp.server.mrp.esrepository.TestEsRepository;
+import com.erp.server.mrp.es.entity.TestEsEntity;
+import com.erp.server.mrp.es.repository.TestEsRepository;
 
 @RestController
 @RequestMapping("/testEs")
