@@ -144,8 +144,9 @@
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
         LEFT JOIN logistics_channel lc on lb.channel_id = lc.id and lc.is_deleted = false
         where lbd.track_status not in('sign','manualComplete','systemComplete')
-        and lbd.is_deleted = false and lbd.track_no != ''
-        and lbd.track_time  > CURRENT_DATE - INTERVAL '3 month'
+        and lbd.is_deleted = false
+--         and lbd.track_no != ''
+--         and lbd.track_time  > CURRENT_DATE - INTERVAL '3 month'
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
             and lb.order_type in ('B2B','B2C')
         </if>
