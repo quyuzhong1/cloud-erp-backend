@@ -94,4 +94,8 @@ public enum InventoryStatusEnum  implements EnumMessage {
      * 无库位
      */
     public final static List<InventoryStatusEnum> NO_WAREHOUSE_LOCATION = new ArrayList<>(Arrays.asList(InventoryStatusEnum.IN_TRANSIT,InventoryStatusEnum.WAIT_QC));
+    /**
+     * 不受关账限制
+     */
+    public final static List<InventoryStatusEnum>  WITHOUT_LIMIT_CLOSE_ACCOUNT_STATUS = new ArrayList<>(Arrays.asList(InventoryStatusEnum.IN_TRANSIT,InventoryStatusEnum.WAIT_QC));
 }
