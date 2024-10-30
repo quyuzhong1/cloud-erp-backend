@@ -2,6 +2,28 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoDeliveryNoticeMapper">
     <select id="paging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
+        WITH so_delivery_notice_details AS (
+        SELECT
+        sdn.id AS notice_id,
+        sdnd.id AS detail_id,
+        COUNT(pd.id) OVER (PARTITION BY sdn.id) AS picked_count,
+        COUNT(sdnd.id) OVER (PARTITION BY sdn.id) AS total_count
+        FROM so_delivery_notice sdn
+        JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        LEFT JOIN picking_detail pd ON pd.source_detail_id = sdnd.id AND pd.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
+        ),
+        generation_status AS (
+        SELECT
+        notice_id,
+        CASE
+        WHEN total_count = picked_count THEN '已生成'
+        WHEN picked_count > 0 THEN '部分生成'
+        ELSE '未生成'
+        END AS generationPickStatus
+        FROM so_delivery_notice_details
+        GROUP BY notice_id, picked_count, total_count
+        )
         SELECT
             sdn.id,
             sdnd.id as detailId,
@@ -30,10 +52,13 @@
         (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
         where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id) as packingQty,
         pt.packing_status as packingStatus,
-            sdn.create_time AS createTime
+            sdn.create_time AS createTime,
+            (SELECT COALESCE(sum(pd.picked_qty),0)  from picking_detail pd where pd.is_deleted = false and pd.source_detail_id = sdnd.id ) as pickedQty,
+        g.generationPickStatus
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
         LEFT JOIN packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
+        LEFT JOIN  generation_status g ON sdn.id = g.notice_id
         WHERE
         ${params.sqlMap.default}
         and    sdnd.is_deleted = FALSE
