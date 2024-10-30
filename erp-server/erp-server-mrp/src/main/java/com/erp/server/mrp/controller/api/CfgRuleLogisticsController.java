@@ -7,7 +7,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,7 +38,7 @@ public class CfgRuleLogisticsController extends BaseController {
      * @return ApiResult<List<SelectLogisticsDTO>>
      */
     @PostMapping("/selectLogistics")
-    public ApiResult<List<CfgRuleLogisticsDTO.SelectLogisticsDTO>> selectLogistics(CfgRuleLogisticsDTO.SelectLogisticsParamDTO paramDTO) {
+    public ApiResult<List<CfgRuleLogisticsDTO.SelectLogisticsDTO>> selectLogistics(@RequestBody @Validated CfgRuleLogisticsDTO.SelectLogisticsParamDTO paramDTO) {
         List<CfgRuleLogisticsDTO.SelectLogisticsDTO> list = cfgRuleLogisticsService.selectLogistics(paramDTO);
         return success(list);
     }
