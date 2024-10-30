@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
@@ -40,6 +41,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private TransferInfoService transferInfoService;
 
+    @Resource
+    private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -71,6 +75,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case TRANSFER_INFO:
                 //直接调拨单
                 transferInfoApproveEnd(dto);
+                break;
+            case SO_DELIVERY_NOTICE_CHANGE:
+                //销售发货通知变更单
+                deliveryNoticeChangeApproveEnd(dto);
                 break;
             default:
                 break;
@@ -179,6 +187,20 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         //直接调拨单
         TransferInfoEntity entity = transferInfoService.getById(dto.getBusinessId());
         return transferInfoService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", Boolean.TRUE);
+    }
+    /**
+     * 发货通知变更
+     * @Author Luo_WG
+     * @Date 2024/9/6 18:18
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean deliveryNoticeChangeApproveEnd(EndProcessDTO dto) {
+        //发货通知变更
+        SoDeliveryNoticeChangeEntity entity = soDeliveryNoticeChangeService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+        return soDeliveryNoticeChangeService.approveEnd(approveOneDTO,entity);
     }
 
 }
