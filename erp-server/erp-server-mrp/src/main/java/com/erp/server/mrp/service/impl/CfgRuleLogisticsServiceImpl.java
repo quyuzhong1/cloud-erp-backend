@@ -21,7 +21,6 @@ import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsMapper;
 import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
