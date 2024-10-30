@@ -60,7 +60,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @CacheEvict(cacheNames = "cache:mrp:getDefaultCfgRuleStockUp", allEntries = true, beforeInvocation = true)
+    @CacheEvict(cacheNames = {"cache:mrp:getDefaultCfgRuleStockUp","cache:mrp:getDefaultByPlatform"}, allEntries = true, beforeInvocation = true)
     public Boolean update(CfgRuleStockUpDTO.UpdateDTO updateDTO) {
         CfgRuleStockUpEntity cfgRuleStockUpEntity =  BeanMapperUtils.map(CfgRuleStockUpEntity.class, updateDTO);
         //旧数据
@@ -162,17 +162,18 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:mrp:getDefaultCfgRuleStockUp",keyGenerator = "myKeyGenerator")
     public CfgRuleStockUpEntity getDefaultCfgRuleStockUp(String platformType) {
         return getDefaultByPlatformType(platformType,"");
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:mrp:getDefaultCfgRuleStockUp",keyGenerator = "myKeyGenerator")
     public List<CfgRuleStockUpEntity> getDefaultCfgRuleStockUp() {
         return list(Wrappers.<CfgRuleStockUpEntity>lambdaQuery().eq(CfgRuleStockUpEntity::getRefId,""));
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:mrp:getDefaultByPlatform",keyGenerator = "myKeyGenerator")
     public CfgRuleStockUpEntity getDefaultByPlatform(String platformType) {
         return getDefaultByPlatformType(platformType,"");
     }

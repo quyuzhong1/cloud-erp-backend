@@ -218,8 +218,21 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     }
 
     @Override
-    public List<CfgRuleSalesQtyEntity> getDefaultCfgRuleSalesQty() {
-        return list(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery().eq(CfgRuleSalesQtyEntity::getRefId, ""));
+    public CfgRuleSalesQtyEntity getDefaultCfgRuleSalesQty(String platformType) {
+        return getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery()
+                .eq(CfgRuleSalesQtyEntity::getPlatformType, platformType)
+                .eq(CfgRuleSalesQtyEntity::getRefId, "")
+                .last("LIMIT 1")
+        );
+    }
+
+
+    @Override
+    public List<CfgRuleSalesQtyEntity> listDefaultCfgRuleSalesQty(String platformType) {
+        return list(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery()
+                .eq(CfgRuleSalesQtyEntity::getPlatformType, platformType)
+                .eq(CfgRuleSalesQtyEntity::getRefId, "")
+        );
     }
 
     @Override

@@ -2,22 +2,20 @@ package com.erp.server.mrp.calculation.service;
 
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 
+import java.time.LocalDate;
+import java.time.LocalDate;
 import java.util.List;
 
 public interface SalesService {
 
     /**
      * 查询全部销售出库单销量
-     * @param calculation 计算日
-     * @param orderType 单据类型
      */
-    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySob2c(String calculation, String orderType);
+    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySob2c(LocalDate calculationDate, Integer cleanDay);
     /**
      * 查询全部销售订单销量
-     * @param calculation 计算日
-     * @param orderType 单据类型
      */
-    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySoOutStock(String calculation, String orderType);
+    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySoOutStock(LocalDate calculationDate, Integer cleanDay);
 
     /**
      * 获取海外仓销量数据

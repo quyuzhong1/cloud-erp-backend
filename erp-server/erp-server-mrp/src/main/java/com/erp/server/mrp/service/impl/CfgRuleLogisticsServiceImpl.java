@@ -30,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,6 +63,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
+    @CacheEvict(cacheNames = "cache:mrp:logistics:listByStockUpIdList", allEntries = true, beforeInvocation = true)
     public Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId,Boolean isCustom) {
         if (CollectionUtils.isEmpty(logisticsList)) {
             logisticsList = Collections.EMPTY_LIST;
@@ -141,6 +144,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     }
 
     @Override
+    @Cacheable(cacheNames = "cache:mrp:logistics:listByStockUpIdList",keyGenerator = "myKeyGenerator")
     public List<CfgRuleLogisticsEntity> listByStockUpIdList (List<String> stockUpIdList) {
         if (CollectionUtils.isEmpty(stockUpIdList)) {
             return Collections.EMPTY_LIST;

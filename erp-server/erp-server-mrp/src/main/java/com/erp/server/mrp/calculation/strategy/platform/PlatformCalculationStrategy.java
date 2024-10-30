@@ -1,10 +1,9 @@
 package com.erp.server.mrp.calculation.strategy.platform;
 
-import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
-import com.erp.model.mrp.entity.SalesInfoEntity;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -12,21 +11,41 @@ import java.util.List;
  */
 public interface PlatformCalculationStrategy {
 
-    /**
-     * 根据平台获取历史销量
-     * @param cfgRuleSalesQty 销量配置
-     */
-    List<ReplenishmentResultDTO.SalesInfoAllDTO> calculationHistorySale(String calcDate, CfgRuleSalesQtyEntity cfgRuleSalesQty);
-
-//    List<SalesInfoEntity> getHistoryInventory();
-
     default boolean isMatch(String platform) {
         return getPlatform().getCode().equals(platform);
     }
 
     /**
      * 平台
+     *
      * @return {@link CfgRulePlatformTypeEnum}
      */
     CfgRulePlatformTypeEnum getPlatform();
+
+    /**
+     * 清洗历史库存
+     *
+     * @param calculationDate 计算日
+     * @param suggestions
+     * @param cleanDay        清洗天数
+     */
+    void cleanHistoryInventory(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay);
+
+    /**
+     * 清洗历史销量
+     *
+     * @param calculationDate 计算日
+     * @param suggestions     建议数据
+     * @param cleanDay        清洗天数
+     */
+    void cleanHistorySalesByOrder(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay);
+
+    /**
+     * 清洗历史销量
+     *
+     * @param calculationDate 计算日
+     * @param suggestions     建议数据
+     * @param cleanDay        清洗天数
+     */
+    void cleanHistorySalesByOutStock(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay);
 }

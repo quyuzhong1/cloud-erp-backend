@@ -5,6 +5,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
 import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 
 import java.time.LocalDate;
@@ -27,7 +28,14 @@ public interface FbaHistoryInventoryService extends SuperService<FbaHistoryInven
      */
     void saveTodayInventory(List<FbaInventoryEntity> inventoryEntities, LocalDate calculationDate);
 
-    List<FbaHistoryInventoryEntity> listBySkuNo(String skuNo, String fbaWarehouseId);
+
+    /**
+     * 查询库存，根据计算日
+     *
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     */
+    List<FbaHistoryInventoryEntity> listByStartDateAndEndDate(LocalDate startDate, LocalDate endDate);
 
     /**
      * 分页查询

@@ -1,6 +1,5 @@
 package com.erp.server.mrp.calculation.factory;
 
-import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.calculation.strategy.platform.PlatformCalculationStrategy;
 import org.springframework.stereotype.Component;
 

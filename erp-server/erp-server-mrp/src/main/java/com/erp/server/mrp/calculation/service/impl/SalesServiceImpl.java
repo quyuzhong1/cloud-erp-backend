@@ -19,15 +19,17 @@ public class SalesServiceImpl implements SalesService {
     private SalesMapper salesMapper;
 
     @Override
-    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySoOutStock(String calcDate, String orderType) {
+    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySoOutStock(LocalDate calculationDate, Integer cleanDay) {
+        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         return salesMapper.listAllAmzSalesBySoOutStock(SnapshotTableEnum.getTableName(SO_OUT_STOCK, calcDate), SnapshotTableEnum.getTableName(SO_OUT_STOCK_DETAIL, calcDate), SnapshotTableEnum.getTableName(SO_B2C, calcDate),
-                LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(361), orderType);
+                calculationDate.minusDays(cleanDay), calculationDate.minusDays(1));
     }
 
     @Override
-    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySob2c(String calcDate, String orderType) {
+    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllAmzSalesBySob2c(LocalDate calculationDate, Integer cleanDay) {
+        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         return salesMapper.listAllAmzSalesBySob2c(SnapshotTableEnum.getTableName(SO_B2C, calcDate), SnapshotTableEnum.getTableName(SO_B2C_DETAIL, calcDate),
-                LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(361), orderType);
+                calculationDate.minusDays(cleanDay), calculationDate.minusDays(1));
     }
 
 

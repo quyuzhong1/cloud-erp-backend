@@ -1,5 +1,8 @@
 package com.erp.server.mrp.schedule;
 
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.server.mrp.calculation.service.DataArchivingService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -24,9 +28,13 @@ public class DataArchivingJob {
      * 归档，全量更新数据
      */
     @XxlJob("dataArchiving")
-    public ReturnT dataArchiving(LocalDate calculationDate) {
+    public ReturnT dataArchiving(String param) {
+        Map<String, String> map = JSONObject.parseObject(param, new TypeReference<Map<String,String>>(){});
+        LocalDate calculationDate = LocalDateUtil.parseStrToLocalDate(map.get("calculationDate"));
+        int days = Integer.parseInt(map.get("cleanDays"));
+    	LocalDate finCalculationDate = calculationDate;
         XxlJobHelper.log("====开始更新信息====");
-        CompletableFuture.runAsync(() -> dataArchivingService.dataArchiving(calculationDate));
+        CompletableFuture.runAsync(() -> dataArchivingService.dataArchiving(finCalculationDate, days));
         return ReturnT.SUCCESS;
     }
 }

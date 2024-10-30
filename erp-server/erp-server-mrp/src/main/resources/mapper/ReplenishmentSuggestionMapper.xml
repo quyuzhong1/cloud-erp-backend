@@ -57,7 +57,7 @@
         rsd.stock_up_max_days,
         rsd.cfg_fba_in_transit
         from replenishment_suggestion rs
-        inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
+        left join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and rs.is_deleted = FALSE and rs.platform_type = #{params.platformType}
@@ -188,6 +188,22 @@
         <foreach collection="shopIds" item="shopId" open="(" close=")" separator=",">
             #{shopId}
         </foreach>
+    </select>
+    <select id="listAllCalculationData" resultType="com.erp.model.mrp.entity.ReplenishmentSuggestionEntity">
+        select rs.id,
+               rs.platform_type,
+               rs.sku_id,
+               rs.sku_no,
+               rs.country,
+               rs.shop_id,
+               rs.platform,
+               rs.replenishment_type,
+               rs.area,
+               rs.fba_warehouse_id
+        from replenishment_suggestion rs
+        inner join replenishment_task rt on rt.replenishment_id = rs.id
+        where rs.is_deleted = false and rt.is_deleted = false and rs.platform_type = #{platformType}
+        and rs.replenishment_type = 'normal' and rt.status in ('1', '4')
     </select>
 
 </mapper>

@@ -637,8 +637,8 @@ public class ReplenishmentSuggestionController extends BaseController {
      * 归档，全量更新数据
      */
     @GetMapping("/dataArchiving")
-    public void dataArchiving(@RequestParam(required = false) LocalDate calculationDate) {
-        dataArchivingService.dataArchiving(calculationDate);
+    public void dataArchiving(@RequestParam(required = false) LocalDate calculationDate,@RequestParam(required = false) Integer cleanDay) {
+        dataArchivingService.dataArchiving(calculationDate, cleanDay);
     }
 
     /**

@@ -64,11 +64,9 @@ public class FbaHistoryInventoryServiceImpl extends SuperServiceImpl<FbaHistoryI
     }
 
     @Override
-    public List<FbaHistoryInventoryEntity> listBySkuNo(String skuNo, String fbaWarehouseId) {
+    public List<FbaHistoryInventoryEntity> listByStartDateAndEndDate(LocalDate startDate, LocalDate endDate) {
         return list(Wrappers.<FbaHistoryInventoryEntity>lambdaQuery()
-                .eq(FbaHistoryInventoryEntity::getSkuNo, skuNo)
-                .eq(FbaHistoryInventoryEntity::getWarehouseId, fbaWarehouseId)
-        );
+                .between(FbaHistoryInventoryEntity::getBillDate, startDate , endDate));
     }
 
     @Override

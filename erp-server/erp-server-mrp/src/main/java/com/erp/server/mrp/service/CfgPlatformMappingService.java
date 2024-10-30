@@ -34,6 +34,9 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
      */
     List<CfgPlatformMappingDTO.ListDTO> selectPlatformMapping(CfgPlatformMappingDTO.SelectDTO dto);
 
+    /**
+     * 获取启用得平台数据
+     */
     List<CfgPlatformMappingEntity> listByEffective();
     /**
      * 根据平台类型查询有效数据
