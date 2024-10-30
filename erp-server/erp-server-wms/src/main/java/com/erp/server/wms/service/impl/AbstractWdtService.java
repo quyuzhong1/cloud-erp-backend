@@ -207,12 +207,17 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
      * @author: tanmujin
      */
     private <T extends CommonCreateBillGoodsReq> Pair<List<T>, List<T>> handleTransfer(List<T> goodsLists, String warehouseId) {
-        List<WdtWarehouseLocationMappingEntity> mappingList = locationMappingService.list(new LambdaQueryWrapper<WdtWarehouseLocationMappingEntity>().eq(WdtWarehouseLocationMappingEntity::getSysWarehouseId, warehouseId));
+        List<String> noNeedPushPositionNo = Arrays.asList("B2B-JHZC" , "TC-JHZC");
+    	List<WdtWarehouseLocationMappingEntity> mappingList = locationMappingService.list(new LambdaQueryWrapper<WdtWarehouseLocationMappingEntity>().eq(WdtWarehouseLocationMappingEntity::getSysWarehouseId, warehouseId));
         Map<String, String> wdtLocationMap = mappingList.stream().collect(Collectors.toMap(item -> item.getSysWarehouseId() + "#" + item.getSysWarehouseLocation(), item1 -> item1.getThirdWarehouseLocation()));
         List<T> needPushList = new ArrayList<>();
         List<T> noNeedPushList = new ArrayList<>();
         for (T goods : goodsLists) {
-            String key = warehouseId + "#" + goods.getPositionNo();
+            String positionNo = goods.getPositionNo();
+            if(noNeedPushPositionNo.contains(positionNo)) {
+            	continue;
+            }
+			String key = warehouseId + "#" + positionNo;
             if(wdtLocationMap.containsKey(key)){
                 goods.setPositionNo(wdtLocationMap.get(key));
                 needPushList.add(goods);
