@@ -43,7 +43,7 @@ public class PurchaseSuggestController extends BaseController {
     private PurchaseSuggestService purchaseSuggestService;
 
     /**
-     * 列表查询
+     * 分页查询
      * @author will
      * @date 2024/10/16 10:21
      * @param dto 

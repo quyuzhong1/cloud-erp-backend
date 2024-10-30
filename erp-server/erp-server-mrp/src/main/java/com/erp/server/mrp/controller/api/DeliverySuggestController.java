@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 补货计划
+ * 建议发货
  *
  * @author will
  * @since 2024-08-27

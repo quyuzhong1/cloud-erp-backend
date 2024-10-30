@@ -426,7 +426,6 @@ public class PurchaseSuggestDTO implements Serializable {
         /**
         * 采购成本
         */
-        @NotNull(message = "采购成本不能为空")
         @Digits(integer = 12, fraction = 4, message = "采购成本整数位不能超过12位，小数位不能超过4位")
         private BigDecimal purchaseCost;
 
