@@ -1,6 +1,7 @@
 package com.erp.rpc.oms.feign;
 
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -39,5 +40,5 @@ public interface OmsListingInfoFeign {
      * 检查和更新FnSku
      **/
     @PostMapping("feign/listing/checkAndUpdateFnsku")
-    Boolean checkAndUpdateFnsku(@RequestBody @Validated ListingInfoParamDTO dto);
+    List<ListingInfoWithSkuMappingDTO> checkAndUpdateFnsku(@RequestBody @Validated ListingInfoParamDTO dto);
 }

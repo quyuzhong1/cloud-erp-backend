@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
@@ -61,7 +62,7 @@ public class ListingInfoFeignController extends BaseController {
      * 检查和更新FnSku
      **/
     @PostMapping("/checkAndUpdateFnsku")
-    public Boolean checkAndUpdateFnsku(@RequestBody @Validated ListingInfoParamDTO dto) {
+    public List<ListingInfoWithSkuMappingDTO> checkAndUpdateFnsku(@RequestBody @Validated ListingInfoParamDTO dto) {
         return listingInfoService.checkAndUpdateFnsku(dto);
     }
 

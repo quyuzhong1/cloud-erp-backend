@@ -482,20 +482,20 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean checkAndUpdateFnsku(ListingInfoParamDTO dto) {
+    public List<ListingInfoWithSkuMappingDTO> checkAndUpdateFnsku(ListingInfoParamDTO dto) {
         if (!PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())
                 || CollectionUtils.isEmpty(dto.getPlatformSkuNoList())
                 || CollectionUtils.isEmpty(dto.getShopIdList())){
-            return false;
+            return Collections.emptyList();
         }
         // 查询对应平台SKU
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(dto);
         if (CollectionUtils.isEmpty(listDto)){
-            return false;
+            return Collections.emptyList();
         }
         List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(dto.getShopIdList());
         if (CollectionUtils.isEmpty(shopInfoEntityList)){
-            return false;
+            return Collections.emptyList();
         }
         // 过滤已存在Fnsku记录
         // 根据listingId去重
@@ -504,7 +504,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getListingId, e -> e, (existing, replacement) -> existing))
                 .values());
         if (CollectionUtils.isEmpty(listingFilterDTO)){
-            return true;
+            return Collections.emptyList();
         }
         List<String> notFnskuPlatformSkuNoList = listingFilterDTO.stream().map(ListingInfoWithSkuMappingDTO::getPlatformSkuNo).distinct().collect(Collectors.toList());
 
@@ -518,7 +518,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .list();
 
         if (CollectionUtils.isEmpty(fbaInventoryEntityList)){
-            return true;
+            return Collections.emptyList();
         }
 
         for (ListingInfoWithSkuMappingDTO mappingDTO : listingFilterDTO) {
@@ -535,6 +535,8 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 log.warn("检查更新FnSku：FBA库存: platformSkuNo={},仓库ID={}，店铺ID={}",mappingDTO.getPlatformSkuNo(), warehouseId, mappingDTO.getShopId());
                 continue;
             }
+            // 记录FnSku
+            mappingDTO.setPlatformFnSku(fbaInventoryEntity.getFnSku());
             boolean update = this.lambdaUpdate()
                     .set(ListingInfoEntity::getPlatformFnSku, fbaInventoryEntity.getFnSku())
                     .eq(ListingInfoEntity::getId, mappingDTO.getListingId())
@@ -544,6 +546,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             }
 
         }
-        return true;
+        return listingFilterDTO;
     }
 }
