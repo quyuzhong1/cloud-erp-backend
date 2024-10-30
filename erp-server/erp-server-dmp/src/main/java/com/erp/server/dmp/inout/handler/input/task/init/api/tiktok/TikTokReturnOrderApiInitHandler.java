@@ -84,7 +84,7 @@ public class TikTokReturnOrderApiInitHandler implements DmpInputApiInitHandler {
 
             //请求body，平台用于计算签名
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("return_types", Arrays.asList("RETURN_AND_REFUND", "REPLACEMENT"));
+            bodyMap.put("return_types", Arrays.asList("RETURN_AND_REFUND", "REPLACEMENT", "REFUND"));
 
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名

@@ -22,6 +22,7 @@ public class TikTokReturnDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
         detailList.forEach(d -> {
             d.put("orderId", dmpInputMongoEntity.get("orderId"));
             d.put("returnReasonText", dmpInputMongoEntity.get("returnReasonText"));
+            d.put("returnType", dmpInputMongoEntity.get("returnType"));
         });
 
 
@@ -51,9 +52,22 @@ public class TikTokReturnDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
                     dmpDataMap.put("soEntryId", refundAmountMap.get("orderLineItemId"));
                 }
 
+
+
                 Object returnReasonObj = dmpDataMap.get("returnReasonText");
                 if (returnReasonObj != null) {
-                    dmpDataMap.put("reason", dmpDataMap.get("returnReasonText"));
+                    dmpDataMap.put("reason", returnReasonObj);
+                }
+
+                Object returnTypeObj = dmpDataMap.get("returnType");
+                if (returnTypeObj != null) {
+                    if ("RETURN_AND_REFUND".equals(returnTypeObj.toString())) {
+                        dmpDataMap.put("solutionType", dmpDataMap.get("return_and_refund"));
+                    } else if ("REFUND".equals(returnTypeObj.toString())) {
+                        dmpDataMap.put("solutionType", dmpDataMap.get("refund"));
+                    } else if ("REPLACEMENT".equals(returnTypeObj.toString())) {
+                        dmpDataMap.put("solutionType", dmpDataMap.get("replacement"));
+                    }
                 }
             }
         }
