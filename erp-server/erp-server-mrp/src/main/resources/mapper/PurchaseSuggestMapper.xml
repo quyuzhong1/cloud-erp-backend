@@ -73,10 +73,9 @@
             resultType="com.erp.model.mrp.dto.ReplenishmentSuggestionDTO$PurchaseSuggestionDTO">
         select
             <include refid="Base_Column_List"/>
-            ,rs.platform_type,rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
         from purchase_suggest ps
-        inner join replenishment_suggestion_detail rsd on ps.source_id = rsd.id and rsd.is_deleted = false
-        inner join replenishment_suggestion rs on rsd.main_id = rs.id and rs.is_deleted = false
+        inner join replenishment_suggestion rs on ps.source_id = rs.id and rs.is_deleted = false
+        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and ps.is_deleted = false
