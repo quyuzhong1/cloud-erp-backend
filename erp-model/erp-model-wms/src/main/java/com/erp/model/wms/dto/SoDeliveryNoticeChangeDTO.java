@@ -85,6 +85,12 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
          * sku,快粘贴传
          */
         private List<String> skuNoList;
+
+
+        /**
+         * 发货通知单明细id
+         */
+        private List<String> detailIds;
     }
      /**
      * 分页列表查询参数
@@ -257,6 +263,10 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         @NotBlank(message = "id不能为空")
         private String id;
 
+        /**
+         * 发货通知单明细id
+         */
+        private List<String> detailIds;
         /**
          * 类型，pushDown：下推, edit：编辑
          */

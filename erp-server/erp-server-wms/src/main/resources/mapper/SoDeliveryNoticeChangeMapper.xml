@@ -134,6 +134,12 @@
                 #{sku}
             </foreach>
         </if>
+        <if test="params.detailIds !=null and params.detailIds.size>0">
+            AND sdnd.id IN
+            <foreach collection="params.detailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
     </select>
 
 </mapper>

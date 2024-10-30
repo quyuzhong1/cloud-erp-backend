@@ -39,16 +39,14 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_DELIVERY_NOTICE_CHANGE;
@@ -427,6 +425,28 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             List<SoDeliveryNoticeChangeDTO.ViewDetail> detailList = baseMapper.listViewDetailList(soDeliveryNoticeChangeEntity.getId());
             for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : detailList) {
                 viewDetail.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(viewDetail.getChangeType()));
+                viewDetail.setMaxCanChangeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() + viewDetail.getCurrentNoticeQty());
+            }
+            viewDTO.setViewDetailList(detailList);
+        }
+        if(CollectionUtils.isNotEmpty(viewIdDTO.getDetailIds())){
+            Page query = new Page(1, Integer.MAX_VALUE);
+            SoDeliveryNoticeChangeDTO.ProductAddDTO params = new SoDeliveryNoticeChangeDTO.ProductAddDTO();
+            Map<String,String> map = new HashMap<>();
+            map.put("default","1=1");
+            params.setSqlMap(map);
+            params.setDetailIds(viewIdDTO.getDetailIds());
+            params.setSoId(soDeliveryNoticeEntity.getSourceId());
+            params.setNoticeId(soDeliveryNoticeEntity.getId());
+            IPage<SoDeliveryNoticeChangeDTO.ProductDTO> productPaging = this.baseMapper.productPaging(query, params);
+            List<SoDeliveryNoticeChangeDTO.ViewDetail> detailList = BeanUtil.copyToList(productPaging.getRecords(),SoDeliveryNoticeChangeDTO.ViewDetail.class);
+            List<String> skuNoList = detailList.stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSkuNo).collect(Collectors.toList());
+            List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
+            for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : detailList) {
+                SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuNo().equals(viewDetail.getSkuNo())).findFirst().orElse(new SkuVO());
+                viewDetail.setChangeType(SoDeliveryNoticeChangeTypeEnum.UPDATE.getCode());
+                viewDetail.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.UPDATE.getName());
+                viewDetail.setProductName(skuVO.getSkuName());
                 viewDetail.setMaxCanChangeQty(viewDetail.getSaleQty() - viewDetail.getAllNoticeQty() + viewDetail.getCurrentNoticeQty());
             }
             viewDTO.setViewDetailList(detailList);
