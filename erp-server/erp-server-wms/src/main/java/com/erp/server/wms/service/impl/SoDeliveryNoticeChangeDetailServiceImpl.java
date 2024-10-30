@@ -1,8 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeDetailEntity;
@@ -11,25 +11,16 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
 import com.erp.server.wms.mapper.SoDeliveryNoticeChangeDetailMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
 import io.seata.common.util.StringUtils;
-import org.apache.commons.collections4.CollectionUtils;
-import org.ehcache.impl.internal.store.heap.holders.SerializedOnHeapValueHolder;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.SoDeliveryNoticeChangeDetailDTO;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -121,6 +112,14 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
             return;
         }
         this.lambdaUpdate().eq(SoDeliveryNoticeChangeDetailEntity::getMainId,id).remove();
+    }
+
+    @Override
+    public List<SoDeliveryNoticeChangeDetailEntity> listByMainId(String id) {
+        if(StringUtils.isBlank(id)){
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().eq(SoDeliveryNoticeChangeDetailEntity::getMainId,id).list();
     }
 
     /**

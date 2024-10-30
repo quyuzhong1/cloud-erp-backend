@@ -1,9 +1,7 @@
 package com.erp.server.wms.service;
+import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.SoDeliveryNoticeChangeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 
 import java.util.List;
@@ -25,4 +23,12 @@ public interface SoDeliveryNoticeChangeDetailService extends SuperService<SoDeli
     List<SoDeliveryNoticeChangeDetailEntity> listByMainIds(List<String> mainIds);
 
     void removeByMainId(String id);
+    /**
+     * 根据主表id查询
+     * @author will
+     * @date 2024/10/30 9:38
+     * @param id
+     * @return List<SoDeliveryNoticeChangeDetailEntity>
+     */
+    List<SoDeliveryNoticeChangeDetailEntity> listByMainId(String id);
 }
