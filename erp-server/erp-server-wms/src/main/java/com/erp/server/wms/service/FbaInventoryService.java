@@ -100,4 +100,9 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * 导出
      */
     PagingVO<FbaInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaInventoryDTO.ExportDTO> dto);
+
+    /**
+     * 检查和刷新FNSKU
+     */
+    Boolean checkAndSaveFnskuToListing(List<String> platformSkuNoList, String channelId);
 }

@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -14,11 +15,17 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.WmsFbaInventoryConverter;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
@@ -33,10 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_INVENTORY;
@@ -58,6 +62,10 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
+
+
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -244,6 +252,23 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public Boolean checkAndSaveFnskuToListing(List<String> platformSkuNoList, String shopId) {
+        if (CollectionUtils.isEmpty(platformSkuNoList) || StringUtils.isBlank(shopId)){
+            return false;
+        }
+
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        paramDTO.setPlatformSkuNoList(platformSkuNoList);
+        paramDTO.setShopIdList(Collections.singletonList(shopId));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setMatchResult(true);
+
+        omsListingInfoFeign.checkAndUpdateFnsku(paramDTO);
+        return true;
     }
 
 }

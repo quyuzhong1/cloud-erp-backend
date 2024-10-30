@@ -13,19 +13,26 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.convert.SkuMappingConverter;
@@ -34,6 +41,7 @@ import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -54,6 +62,7 @@ import java.util.stream.Collectors;
  * @author Lambda
  * @since 2023-08-18
  */
+@Slf4j
 @Service
 public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, ListingInfoEntity> implements ListingInfoService {
 
@@ -469,5 +478,72 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 v.setIsCombination(count > 0);
             }
         });
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean checkAndUpdateFnsku(ListingInfoParamDTO dto) {
+        if (!PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())
+                || CollectionUtils.isEmpty(dto.getPlatformSkuNoList())
+                || CollectionUtils.isEmpty(dto.getShopIdList())){
+            return false;
+        }
+        // 查询对应平台SKU
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(dto);
+        if (CollectionUtils.isEmpty(listDto)){
+            return false;
+        }
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(dto.getShopIdList());
+        if (CollectionUtils.isEmpty(shopInfoEntityList)){
+            return false;
+        }
+        // 过滤已存在Fnsku记录
+        // 根据listingId去重
+        List<ListingInfoWithSkuMappingDTO> listingFilterDTO = new ArrayList<>(listDto.stream()
+                .filter(e -> StringUtils.isBlank(e.getPlatformFnSku()))
+                .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getListingId, e -> e, (existing, replacement) -> existing))
+                .values());
+        if (CollectionUtils.isEmpty(listingFilterDTO)){
+            return true;
+        }
+        List<String> notFnskuPlatformSkuNoList = listingFilterDTO.stream().map(ListingInfoWithSkuMappingDTO::getPlatformSkuNo).distinct().collect(Collectors.toList());
+
+        Map<String, String> shopFbaWarehouseIdsMap = shopInfoEntityList
+                .stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getWarehouseId));
+
+        List<FbaInventoryEntity> fbaInventoryEntityList = FeignQuery.create(FbaInventoryEntity.class)
+                .in(FbaInventoryEntity::getMsku, notFnskuPlatformSkuNoList)
+                .in(FbaInventoryEntity::getWarehouseId, new ArrayList<>(shopFbaWarehouseIdsMap.values()))
+                .list();
+
+        if (CollectionUtils.isEmpty(fbaInventoryEntityList)){
+            return true;
+        }
+
+        for (ListingInfoWithSkuMappingDTO mappingDTO : listingFilterDTO) {
+            String warehouseId = shopFbaWarehouseIdsMap.get(mappingDTO.getShopId());
+            if (StringUtils.isBlank(warehouseId)){
+                log.warn("检查更新FnSku：找不到仓库ID，店铺ID={}", mappingDTO.getShopId());
+                continue;
+            }
+            FbaInventoryEntity fbaInventoryEntity = fbaInventoryEntityList.stream()
+                    .filter(e -> e.getWarehouseId().equalsIgnoreCase(warehouseId) && e.getMsku().equalsIgnoreCase(mappingDTO.getPlatformSkuNo()))
+                    .findFirst()
+                    .orElse(null);
+            if (null == fbaInventoryEntity){
+                log.warn("检查更新FnSku：FBA库存: platformSkuNo={},仓库ID={}，店铺ID={}",mappingDTO.getPlatformSkuNo(), warehouseId, mappingDTO.getShopId());
+                continue;
+            }
+            boolean update = this.lambdaUpdate()
+                    .set(ListingInfoEntity::getPlatformFnSku, fbaInventoryEntity.getFnSku())
+                    .eq(ListingInfoEntity::getId, mappingDTO.getListingId())
+                    .update();
+            if (!update){
+                log.warn("检查更新FnSku失败：FBA库存: platformSkuNo={},仓库ID={}，店铺ID={}",mappingDTO.getPlatformSkuNo(), warehouseId, mappingDTO.getShopId());
+            }
+
+        }
+        return true;
     }
 }
