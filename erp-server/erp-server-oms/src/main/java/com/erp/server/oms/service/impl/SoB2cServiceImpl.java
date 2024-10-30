@@ -2778,6 +2778,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             remark =  CharSequenceUtil.format("订单【{}】合并新订单,平台订单号【{}】 ", codes, platformCodeListStr);
         }
         addDTO.setRemark(remark);
+        addDTO.setMergePlatformCode(platformCodeListStr);
         addDTO.setDetailList(detailList);
         log.info("新增合并后的B2C销售订单，addDTO = {}", addDTO);
         //新增数据
