@@ -491,7 +491,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //保存数据
-        Map<String,String> skuIdSupplierMap = new HashMap<>();
         if (approveDTO.getProductDetailList() != null && !approveDTO.getProductDetailList().isEmpty()) {
             List<PilotApplicationDetailDTO.ViewDTO> productDetailList = approveDTO.getProductDetailList();
             for (PilotApplicationDetailDTO.ViewDTO productDTO : productDetailList) {
@@ -502,7 +501,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 if (Objects.equals(approveType, ApproveTypeEnum.PASS)) {
                     pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, productDTO.getApproveQty()).eq(PilotApplicationDetailEntity::getId, productDTO.getId()).update();
                 }
-                skuIdSupplierMap.put(productDTO.getSkuId(),productDTO.getMainSupplierId()+":"+productDTO.getSecondSupplierId());
             }
         } else {
             List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, dto.getId()).list();
@@ -511,19 +509,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                     Integer applyQty = detailEntity.getApplyQty();
                     Integer approveQty = detailEntity.getApproveQty();
                     pilotApplicationDetailService.lambdaUpdate().set(PilotApplicationDetailEntity::getApproveQty, approveQty == 0 ? applyQty : approveQty).eq(PilotApplicationDetailEntity::getId, detailEntity.getId()).update();
-                    skuIdSupplierMap.put(detailEntity.getSkuId(),detailEntity.getMainSupplierId()+":"+detailEntity.getSecondSupplierId());
                 }
             }
         }
-
         // 调用流程审核
         approveProcess(entity, dto, approveDTO);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        //审批通过
-        if(approveStatus.getCode().equals(ApproveStatusEnum.APPROVE.getCode())){
-            //回写产品管理--采购信息--一级和二级供应商
-            writeBack(skuIdSupplierMap);
-        }
         //记录日志
         String format = String.format("用户【%s】单号为【%s】的【试产量产单】单据审核操作 审核结果：【%s】 审核意见：【%s】", UserContext.getNonLoginUser().getUserName(), entity.getCode(), approveType.getName(), dto.getComment());
         this.addLog(entity.getId(), "审核操作", format, null, null, null);
@@ -532,25 +523,23 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     /**
      * 回写产品管理--采购信息--一级和二级供应商
-     * @param skuIdSupplierMap
+     * @param id
      */
-    private void writeBack(Map<String,String> skuIdSupplierMap){
-        if(null == skuIdSupplierMap || skuIdSupplierMap.size() == 0){
-            return ;
-        }
-        for (Map.Entry<String, String> entry : skuIdSupplierMap.entrySet()) {
-            String suppliers = entry.getValue();
-            // 检查 suppliers 是否非空并且有内容
-            if (StringUtils.isNotBlank(suppliers)) {
-                String[] split = suppliers.split(":");
-                String mainSupplierId = split.length > 0 ? split[0] : "";
-                String secondSupplierId = split.length > 1 ? split[1] : "";
-
-                productPurchaseService.lambdaUpdate()
-                        .eq(ProductPurchaseEntity::getSkuId, entry.getKey())
-                        .set(ProductPurchaseEntity::getMainSupplier, mainSupplierId)
-                        .set(ProductPurchaseEntity::getSecondSupplier, secondSupplierId)
-                        .update();
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void writeProductPurchaseBack(String id){
+        PilotApplicationEntity entity = getById(id);
+        //审批通过 回写产品管理--采购信息--一级和二级供应商
+        if(null != entity && entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode())){
+            List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id).list();
+            if(CollectionUtils.isNotEmpty(detailList)){
+                for (PilotApplicationDetailEntity detailEntity : detailList) {
+                    productPurchaseService.lambdaUpdate()
+                            .eq(ProductPurchaseEntity::getSkuId, detailEntity.getSkuId())
+                            .set(ProductPurchaseEntity::getMainSupplier, detailEntity.getMainSupplierId())
+                            .set(ProductPurchaseEntity::getSecondSupplier, detailEntity.getSecondSupplierId())
+                            .update();
+                }
             }
         }
     }
