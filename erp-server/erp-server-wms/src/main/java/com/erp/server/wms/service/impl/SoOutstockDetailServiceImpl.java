@@ -484,7 +484,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(soIds)) {
             return new ArrayList<>();
         }
-        List<SoOutstockDetailEntity> resultList = baseMapper.listDetailBySoIds(soIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+        List<String> newSoIds = soIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(newSoIds)) {
+            return new ArrayList<>();
+        }
+		List<SoOutstockDetailEntity> resultList = baseMapper.listDetailBySoIds(newSoIds);
         return resultList;
     }
 
