@@ -200,7 +200,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 } else {
                     obj.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
                 }
-
+                obj.setIsPicked(obj.getDeliveryQty().equals(obj.getPickedQty()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 obj.setProductName(productDetailEntity.getName());
@@ -227,6 +227,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 }
             });
         }
+        Map<String,List<SoDeliveryNoticeDTO.PagingView>> map = records.stream().collect(Collectors.groupingBy(SoDeliveryNoticeDTO.PagingView::getId));
+        map.forEach((key,val)->{
+            for (SoDeliveryNoticeDTO.PagingView pagingView : val) {
+                pagingView.setIsPicked(pagingView.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())&&val.stream().allMatch(SoDeliveryNoticeDTO.PagingView::getIsPicked));
+            }
+        });
         return new PagingVO(pageData);
     }
 
