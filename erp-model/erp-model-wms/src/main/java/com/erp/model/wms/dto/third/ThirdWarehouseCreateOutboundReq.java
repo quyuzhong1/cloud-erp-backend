@@ -4,6 +4,7 @@ import com.common.business.dto.ReceiverDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -175,5 +176,18 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          * 数量
          */
         private Integer quantity;
+
+        private String skuId;
+
+        private String skuNo;
+
+        private String sourceSkuNo;
+
+        private String sourceSkuId;
+
+        public Item(String productSku, Integer quantity) {
+            this.productSku = productSku;
+            this.quantity = quantity;
+        }
     }
 }

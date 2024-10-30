@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -130,6 +131,66 @@ public class DmpFbaInventoryEntity extends BaseEntity<DmpFbaInventoryEntity> {
      */
     @TableField("unsellable_qty")
     private Integer unsellableQty;
+
+    /**
+     * 待调仓数量
+     */
+    @TableField("reserved_transfers_qty")
+    private Integer reservedTransfersQty;
+
+    /**
+     * 调仓中数量
+     */
+    @TableField("reserved_processing_qty")
+    private Integer reservedProcessingQty;
+
+    /**
+     * 买家订单数量
+     */
+    @TableField("reserved_order_qty")
+    private Integer reservedOrderQty;
+
+    /**
+     * 库龄 0-30 天的可售商品数量
+     */
+    @TableField("inventory_age_0_to_30_days")
+    private Integer inventoryAge0To30Days;
+
+    /**
+     * 库龄 31-60 天的可售商品数量
+     */
+    @TableField("inventory_age_31_to_60_days")
+    private Integer inventoryAge31To60Days;
+
+    /**
+     * 库龄 61-90 天的可售商品数量
+     */
+    @TableField("inventory_age_61_to_90_days")
+    private Integer inventoryAge61To90Days;
+
+    /**
+     * 库龄 91-180 天的可售商品数量
+     */
+    @TableField("inventory_age_91_to_180_days")
+    private Integer inventoryAge91To180Days;
+
+    /**
+     * 库龄 181-270 天的可售商品数量
+     */
+    @TableField("inventory_age_181_to_270_days")
+    private Integer inventoryAge181To270Days;
+
+    /**
+     * 库龄 271-365 天的可售商品数量
+     */
+    @TableField("inventory_age_271_to_365_days")
+    private Integer inventoryAge271To365Days;
+
+    /**
+     * 库龄 365 天以上的可售商品数量
+     */
+    @TableField("inventory_age_365_plus_days")
+    private Integer inventoryAge365PlusDays;
 
 
     public static final String ASIN = "asin";

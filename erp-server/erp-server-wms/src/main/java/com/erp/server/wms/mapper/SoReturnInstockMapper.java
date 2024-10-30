@@ -61,4 +61,5 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
      **/
     IPage<SoReturnInstockDTO.PdaPagingView> pdaPaging(Page query, @Param("params") SoReturnInstockDTO.PdaPagingParam params);
 
+    IPage<SoReturnInstockDTO.SearchDTO> b2cPagingSelect(Page query,  @Param("params") SoReturnInstockDTO.SelectDTO params);
 }
