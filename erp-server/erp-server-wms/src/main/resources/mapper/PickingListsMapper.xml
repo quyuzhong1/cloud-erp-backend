@@ -107,7 +107,7 @@
             fmd.id as sourceId,
             rad.sku_id,
             rad.sku_no,
-            rad.fn_sku,
+            rad.platform_fn_sku as fnSku,
             SUM(rad.picking_qty) as qty
         FROM first_mile_delivery fmd
         LEFT JOIN requisition_application_detail rad ON fmd.source_id = rad.main_id  AND rad.is_deleted = FALSE
@@ -119,7 +119,7 @@
         GROUP BY fmd.id,
         rad.sku_id,
         rad.sku_no,
-        rad.fn_sku
+        rad.platform_fn_sku
     </select>
 
 </mapper>
