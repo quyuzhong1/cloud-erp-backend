@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -171,6 +172,7 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class OverseasWarehouseDTO {
         /**
          * 仓库Id
