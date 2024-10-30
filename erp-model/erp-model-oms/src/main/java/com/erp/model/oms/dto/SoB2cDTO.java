@@ -1021,6 +1021,11 @@ public class SoB2cDTO implements Serializable {
          */
         private SoB2cOptionTypeEnum operateType;
 
+        /**
+         * 合并--所有子订单的平台订单编号合并，使用逗号隔开
+         * 其余情况--为空
+         */
+        private String mergePlatformCode;
     }
 
 

@@ -38,7 +38,12 @@
         sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
-        sb2c.platform_code as platformCode,
+        CASE
+	    WHEN sb2c.merge_platform_code != '' THEN
+		    sb2c.merge_platform_code
+	    ELSE
+		    sb2c.platform_code
+        END AS platformCode,
         sb2c.shop_id as shopId,
         sb2c.approve_status as approveStatus,
         sb2c.pay_status as payStatus,
