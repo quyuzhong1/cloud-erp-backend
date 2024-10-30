@@ -960,7 +960,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             List<String> curApproveName = processTaskManagementList.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             item.setApproveUserName(waitApproveUserName);
-            item.setApproveTime(approveTimeMap.get(item.getId()));
+            if(item.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+                item.setApproveTime(approveTimeMap.get(item.getId()));
+            }
             item.setCreateUserName(userMap.get(item.getCreateUserId()));
             item.setTypeName(PilotApplicationTypeEnum.getName(item.getType()));
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(v -> v.getSkuId().equals(item.getSkuId())).findFirst();
