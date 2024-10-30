@@ -148,7 +148,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseSuggestMergeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         //数据处理
-        handleList(pageData.getRecords());
+        List<PurchaseSuggestMergeDTO.ListDTO> list = handleList(pageData.getRecords());
+        pageData.setRecords(list);
         return new PagingVO(pageData);
     }
 
@@ -422,6 +423,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             PurchaseSuggestMergeDTO.ListDTO parentDTO = new PurchaseSuggestMergeDTO.ListDTO();
             //产品信息
             ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            parentDTO.setId(value.get(0).getSkuId());
             parentDTO.setSkuId(value.get(0).getSkuId());
             parentDTO.setSkuNo(productDetailEntity.getSkuNo());
             parentDTO.setProductName(productDetailEntity.getName());
@@ -438,6 +440,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             resultList.add(parentDTO);
 
             for (PurchaseSuggestMergeDTO.ListDTO listDTO : value) {
+                //父级id
+                listDTO.setParentId(listDTO.getSkuId());
                 //SKU
                 listDTO.setSkuNo(productDetailEntity.getSkuNo());
                 listDTO.setProductName(productDetailEntity.getName());

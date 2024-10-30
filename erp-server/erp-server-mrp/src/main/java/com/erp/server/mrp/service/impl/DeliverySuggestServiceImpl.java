@@ -656,6 +656,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
             //店铺名称
             ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getShopId())).findFirst().orElse(new ShopInfoEntity());
+            parentListDTO.setId(value.get(0).getShopId());
+            parentListDTO.setShopId(value.get(0).getShopId());
             parentListDTO.setShopName(shopInfoEntity.getName());
             parentListDTO.setCountryName(shopInfoEntity.getCountryName());
             //平台信息
