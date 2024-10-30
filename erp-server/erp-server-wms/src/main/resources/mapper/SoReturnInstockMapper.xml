@@ -9,6 +9,7 @@
         sri.source_id AS sourceId,
         srid.source_detail_id AS sourceDetailId,
         srid.so_return_detail_id AS soReturnDetailId,
+        sri.so_return_id as soReturnId,
         sri.code,
         sri.source_code AS sourceCode,
         sri.so_code AS soCode,
@@ -19,6 +20,7 @@
         sri.invalid_status AS invalidStatus,
         sri.seller_id AS sellerId,
         sri.seller_name AS sellerName,
+        sri.so_id as soId,
         srid.id as detailId,
         srid.sku_id AS skuId,
         srid.sku_no AS skuNo,
@@ -34,9 +36,11 @@
         sri.inventory_org_name AS inventoryOrgName,
         srid.is_sub_contract AS isSubContract,
         sri.third_code as thirdCode,
-        sri.return_logistic_code as returnLogisticCode
+        sri.return_logistic_code as returnLogisticCode,
+        sb2c.platform_code as platformOrderCode
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id
+        LEFT JOIN so_b2c sb2c  on sb2c.id = sri.so_id and sb2c.is_deleted = false
         WHERE
         ${params.sqlMap.default}
           and srid.is_deleted = FALSE
@@ -156,5 +160,20 @@
             </foreach>
         </if>
         ORDER BY sri.create_time desc
+    </select>
+    <select id="b2cPagingSelect" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$SearchDTO">
+        select
+        sri.id,
+        sri.code
+        from so_return_instock sri
+        where
+        sri.is_deleted = false
+        and sri.type = 'B2C'
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and (  sri.code ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        and sri.invalid_status = false
+        order by
+        sri.code
     </select>
 </mapper>

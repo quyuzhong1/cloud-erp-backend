@@ -246,6 +246,16 @@ public class PlatformOrderDTO extends UniqueDto {
     private Boolean isCancel;
 
     /**
+     * 退货单
+     */
+    private List<PlatformReturnOrderDTO> returnDTOList;
+
+    /**
+     * 退款单
+     */
+    private List<PlatformRefundOrderDTO> refundDTOList;
+
+    /**
      * 检查订单新增作废状态
      */
     public Boolean checkInsertInvalidStatus() {

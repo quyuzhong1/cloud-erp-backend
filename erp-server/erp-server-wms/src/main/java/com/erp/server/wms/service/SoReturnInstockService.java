@@ -299,4 +299,10 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto);
 
     PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(PagingDTO<SoReturnInstockDTO.PagingParam> dto);
+
+    PagingVO<SoReturnInstockDTO.SearchDTO> pagingSelect(PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO);
+
+    SoReturnInstockEntity getByThirdCode(String thirdCode);
+
+    void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
 }

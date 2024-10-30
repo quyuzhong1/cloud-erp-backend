@@ -11,6 +11,8 @@ public enum ReturnReasonEnum implements EnumMessage {
     QUALITY_PROBLEM("qualityProblem","质量问题", "ZLWT"),
     UNSALABLE("unsalable","滞销", "ZX"),
     OTHER("other","其他", "QT"),
+    DESCRIPTION_NOT_MATCH("DESCRIPTION_NOT_MATCH","描述不符","MSBF"),
+    ORDER_ERROR("ORDER_ERROR","下单错误","XDCW"),
     ;
 
     /**

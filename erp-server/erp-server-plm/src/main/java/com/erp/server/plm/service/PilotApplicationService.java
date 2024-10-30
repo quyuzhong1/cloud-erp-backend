@@ -218,4 +218,13 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * @date: 2024-09-23
      */
     void approvePilotApplicationNotice(String id);
+    /**
+     * 审核
+     *
+     * @param id
+     * @return
+     * @author jack
+     * @date: 2024-09-23
+     */
+    void writeProductPurchaseBack(String id);
 }

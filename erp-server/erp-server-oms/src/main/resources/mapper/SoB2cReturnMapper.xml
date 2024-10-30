@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoB2cReturnMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoB2cReturnEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="platform_order_no" property="platformOrderNo" />
+       <result column="platform_return_no" property="platformReturnNo" />
+       <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="shop_id" property="shopId" />
+       <result column="amount" property="amount" />
+       <result column="currency" property="currency" />
+       <result column="type" property="type" />
+       <result column="reason" property="reason" />
+       <result column="status" property="status" />
+       <result column="return_instock_code" property="returnInstockCode" />
+       <result column="sys_return_time" property="sysReturnTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, platform_order_no, platform_return_no, so_id, so_code, dict_platform, shop_id, amount, currency, type, reason, status, return_instock_code, sys_return_time
+    </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.SoB2cReturnDTO$PagingViewDTO">
+        SELECT
+            sbr.id,
+            sbr.code,
+            sbr.platform_return_no as platformReturnNo,
+            sbr.platform_order_no as platformOrderNo,
+            sbr.so_id as soId,
+            sbr.so_code as soCode,
+            sbr.dict_platform as platform,
+            sbr.shop_id as shopId,
+            sbr.amount as orderAmount,
+            sbr.currency,
+            concat(sbr.amount ,sbr.currency) as completeOrderAmount,
+            sbr.type,
+            sbr.reason,
+            sbr.status,
+            sbrd.id as detailId,
+            sbrd.sku_id as skuId,
+            sbrd.sku_no as skuNo,
+            sbrd.platform_sku_no as platformSkuNo,
+            sbrd.sale_qty as saleQty,
+            sbrd.return_qty as returnQty,
+            sbrd.remark,
+            sbr.create_time as sysCreateTime,
+            sbr.sys_return_time as sysReturnTime
+        from so_b2c_return sbr
+        inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
+        where ${params.sqlMap.default}
+        and sbr.is_deleted =FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by sbr.create_time desc
+    </select>
+    <select id="generateSoReturnNoticeView"
+            resultType="com.erp.model.oms.dto.SoB2cReturnDTO$GenerateSoReturnNoticeView">
+        SELECT
+        sbr.id,
+        sbr.code,
+        sbr.so_id as soId,
+        sbr.status,
+        sbr.dict_platform as platform,
+        sbr.shop_id as shopId,
+        sbrd.id as detailId,
+        sbrd.sku_id as skuId,
+        sbrd.sku_no as skuNo,
+        sbrd.sale_qty as saleQty,
+        sbrd.return_qty as returnQty
+        from so_b2c_return sbr
+        inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
+        where sbr.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        and sbr.is_deleted =FALSE
+        order by sbr.create_time
+    </select>
+    <select id="bindReturnInstockView"
+            resultType="com.erp.model.oms.dto.SoB2cReturnDTO$BindReturnInstockViewDTO">
+        SELECT sbr.id ,
+               sbrd.id as detailId,
+               sbr.code,
+               sbrd.sku_id,
+               sbrd.sku_no,
+               sbrd.return_qty
+        FROM
+            so_b2c_return sbr
+        inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
+        where sbr.is_deleted = false
+        and sbr.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="listDetailBySoIds" resultType="com.erp.model.oms.entity.SoB2cReturnDetailEntity">
+        SELECT
+        sbrd.*,
+            sbr.so_id,sbr.code
+        FROM
+        so_b2c_return sbr
+        inner join so_b2c_return_detail sbrd on sbr.id = sbrd.main_id and sbrd.is_deleted = false
+        where sbr.is_deleted = false
+        and sbr.so_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+
+</mapper>

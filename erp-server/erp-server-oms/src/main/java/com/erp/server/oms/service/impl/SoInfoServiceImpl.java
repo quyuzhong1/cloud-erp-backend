@@ -1660,6 +1660,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (customerInfo != null) {
             customerName = customerInfo.getName();
             countryId = customerInfo.getCountryId();
+            customer.setCustomerSellerId(customerInfo.getSellerId());
 //            mailAddress = customerInfo.getMailAddress();
         }
         //客户开票信息

@@ -185,6 +185,11 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     @TableField("bill_date")
     private LocalDateTime billDate;
     /**
+     * 来源ID:shopify=dmp_so_info主键id
+     */
+    @TableField("source_id")
+    private String sourceId;
+    /**
     * 卖家运费折扣
     */
     @TableField("shipping_fee_seller_discount")

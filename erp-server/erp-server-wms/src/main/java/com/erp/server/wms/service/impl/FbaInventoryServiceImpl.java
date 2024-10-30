@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -14,11 +15,19 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaInventoryDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.WmsFbaInventoryConverter;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
@@ -33,10 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_INVENTORY;
@@ -58,6 +64,10 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
+
+
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -244,6 +254,56 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<ListingInfoWithSkuMappingDTO> checkAndSaveFnskuToListing(List<String> platformSkuNoList, String shopId) {
+        if (CollectionUtils.isEmpty(platformSkuNoList) || StringUtils.isBlank(shopId)){
+            return Collections.emptyList();
+        }
+
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        paramDTO.setPlatformSkuNoList(platformSkuNoList);
+        paramDTO.setShopIdList(Collections.singletonList(shopId));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setMatchResult(true);
+
+        return omsListingInfoFeign.checkAndUpdateFnsku(paramDTO);
+    }
+
+    @Override
+    public void checkAndUpdateFnsku(RequisitionApplicationDTO.AddDTO dto) {
+        checkAndUpdateFnskuCommon(dto.getDetailList(), dto.getChannelId());
+    }
+
+    @Override
+    public void checkAndUpdateFnsku(RequisitionApplicationDTO.UpdateDTO dto) {
+        checkAndUpdateFnskuCommon(dto.getDetailList(), dto.getChannelId());
+    }
+
+    private <T extends RequisitionApplicationDetailDTO.CommonDTO> void checkAndUpdateFnskuCommon(List<T> detailList, String channelId) {
+        List<String> platformSkuNoList = detailList.stream()
+                .map(RequisitionApplicationDetailDTO.CommonDTO::getPlatformSku)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<ListingInfoWithSkuMappingDTO> updateFnSkulist = this.checkAndSaveFnskuToListing(platformSkuNoList, channelId);
+
+        if (CollectionUtils.isEmpty(updateFnSkulist)) {
+            return;
+        }
+
+        for (T addDTO : detailList) {
+            if (StringUtils.isNotBlank(addDTO.getPlatformFnSku())) {
+                continue;
+            }
+            updateFnSkulist.stream()
+                    .filter(e -> e.getShopId().equalsIgnoreCase(channelId) && e.getPlatformSkuNo().equalsIgnoreCase(addDTO.getPlatformSku()))
+                    .findFirst().ifPresent(mappingDTO -> addDTO.setPlatformFnSku(mappingDTO.getPlatformFnSku()));
+
+        }
     }
 
 }
