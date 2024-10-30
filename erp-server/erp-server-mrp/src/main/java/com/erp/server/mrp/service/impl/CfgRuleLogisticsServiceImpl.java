@@ -171,7 +171,24 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     @Override
     public List<CfgRuleLogisticsDTO.SelectLogisticsDTO> selectLogistics(CfgRuleLogisticsDTO.SelectLogisticsParamDTO paramDTO) {
         List<CfgRuleLogisticsDTO.SelectLogisticsDTO> list = baseMapper.selectLogistics(paramDTO);
+        handleSelectLogistics(list);
         return list;
+    }
+
+    /**
+     * 处理下拉物流信息
+     * @author will
+     * @date 2024/10/30 11:38
+     * @param list
+     */
+    private void handleSelectLogistics(List<CfgRuleLogisticsDTO.SelectLogisticsDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (CfgRuleLogisticsDTO.SelectLogisticsDTO selectLogisticsDTO : list) {
+            //物流方式名称
+            selectLogisticsDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(selectLogisticsDTO.getLogisticsMethod()));
+        }
     }
 
     /**
