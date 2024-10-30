@@ -69,7 +69,7 @@ public class MercadoSdkClientService {
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(1);
-        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-102321-f03bcdf2e89861f140ea4f491a82fd7b-1509269799");
+        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-102918-a4b8cdec2a33e72d1249640c9af074c3-1509269799");
 
 
 

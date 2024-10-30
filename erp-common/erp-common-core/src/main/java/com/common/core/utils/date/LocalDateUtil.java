@@ -492,5 +492,30 @@ public class LocalDateUtil {
         LocalDateTime endDateTime = LocalDateTime.of(year, Month.DECEMBER, 31, 23, 59, 59);
         return endDateTime.withNano(999_999_999); // Adjust nanoseconds to the maximum value
     }
+
+    /**
+     * 获取日期范围的每一天
+     * @Author Luo_WG
+     * @Date 2024/10/29 17:46
+     * @param startTime
+     * @param endTime
+     * @return java.util.List<java.lang.String>
+     **/
+    public static List<String> getDateDayList(LocalDateTime startTime, LocalDateTime endTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        List<String> dateList = new ArrayList<>();
+
+        LocalDateTime startDate = startTime.toLocalDate().atStartOfDay();
+        LocalDateTime endDate = endTime.toLocalDate().atStartOfDay();
+
+        LocalDateTime currentDate = startDate;
+
+        while (currentDate.isBefore(endDate) || currentDate.isEqual(endDate)) {
+            dateList.add(currentDate.format(formatter));
+            currentDate = currentDate.plusDays(1);
+        }
+
+        return dateList;
+    }
 }
 

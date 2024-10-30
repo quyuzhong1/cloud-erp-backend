@@ -124,6 +124,15 @@ public class TikTokReturnDmpHandler extends DmpInputDbConvertDmpHandler {
                     Map<String, Object> paymentMap = (Map<String, Object>) paymentObj;
                     dmpDataMap.put("allAmount", paymentMap.get("refundTotal"));
                     dmpDataMap.put("currencyCode", paymentMap.get("currency"));
+                    dmpDataMap.put("refundTax", paymentMap.get("refundTax"));
+                }
+
+                //折扣信息
+                Object discountAmountObj = dmpDataMap.get("discountAmount");
+                if (discountAmountObj != null) {
+                    Map<String, Object> discountAmountMap = (Map<String, Object>) discountAmountObj;
+                    dmpDataMap.put("shippingFeeSellerDiscount", discountAmountMap.get("shippingFeeSellerDiscount"));
+                    dmpDataMap.put("shippingFeePlatformDiscount", discountAmountMap.get("shippingFeePlatformDiscount"));
                 }
             }
         }

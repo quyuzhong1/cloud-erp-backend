@@ -23,6 +23,10 @@ public class TikTokReturnDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
             d.put("orderId", dmpInputMongoEntity.get("orderId"));
             d.put("returnReasonText", dmpInputMongoEntity.get("returnReasonText"));
         });
+
+
+
+
         return detailList;
     }
 
@@ -39,6 +43,8 @@ public class TikTokReturnDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
                     data.put("refundTax", refundAmountMap.get("refundTax"));
                     data.put("refundShippingFee", refundAmountMap.get("refundShippingFee"));
                     dmpDataMap.put("extendData", JSON.toJSONString(data));
+                    dmpDataMap.put("logisticsFeeAmount", refundAmountMap.get("refundShippingFee"));
+                    dmpDataMap.put("refundTax", refundAmountMap.get("refundTax"));
                     dmpDataMap.put("sellPrice", refundAmountMap.get("refundSubtotal"));
                     dmpDataMap.put("thirdOrderCode", dmpDataMap.get("orderId"));
                     dmpDataMap.put("platformOrderCode", dmpDataMap.get("orderId"));
