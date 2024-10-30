@@ -159,7 +159,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         // 记录主单操作日志
         log.info("编辑 开始记录发货通知变更单日志数据，单号：【{}】", soDeliveryNoticeChangeEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soDeliveryNoticeChangeEntity.getCode(), "发货通知变更单");
-        operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeChangeEntity, null, soDeliveryNoticeChangeEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeChangeEntity, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), soDeliveryNoticeChangeEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -221,6 +221,11 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到发货通知变更单数据");
         }
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
+        if(!(soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        || soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()))) {
+            throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
+        }
         validateSubmit(entity);
         // 更新单据审核状态
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -266,6 +271,11 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
+        }
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
+        if(!(soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()))) {
+            throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
         }
         // 调用流程审核
         approveProcess(entity, dto);
@@ -354,12 +364,45 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-
-        //TODO 审核通过修改发货通知单数据
         List<SoDeliveryNoticeChangeDetailEntity> detailList = detailService.listByMainId(entity.getId());
+        changeNotice(entity,detailList);
         //虚拟库存变更
         virtualInventoryChange(entity,detailList);
         return Boolean.TRUE;
+    }
+
+    private void changeNotice(SoDeliveryNoticeChangeEntity entity, List<SoDeliveryNoticeChangeDetailEntity> detailList) {
+        if(CollectionUtils.isEmpty(detailList)){
+            return;
+        }
+
+        SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainId(soDeliveryNotice.getId());
+
+        List<SoDeliveryNoticeDetailEntity> addList = new ArrayList<>();
+        List<SoDeliveryNoticeDetailEntity> updateList = new ArrayList<>();
+        List<SoDeliveryNoticeDetailEntity> deleteList = new ArrayList<>();
+        for (SoDeliveryNoticeChangeDetailEntity detail : detailList) {
+            if(SoDeliveryNoticeChangeTypeEnum.ADD.getCode().equals(detail.getChangeType())){
+                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = BeanUtil.copyProperties(detail,SoDeliveryNoticeDetailEntity.class);
+                soDeliveryNoticeDetailEntity.setMainId(entity.getId());
+                soDeliveryNoticeDetailEntity.setSourceDetailId(detail.getSoDetailId());
+                soDeliveryNoticeDetailEntity.setDeliveryQty(detail.getNewQty());
+                addList.add(soDeliveryNoticeDetailEntity);
+            }else if (SoDeliveryNoticeChangeTypeEnum.UPDATE.getCode().equals(detail.getChangeType())){
+                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到发货通知单明细数据",detail.getSkuNo()));
+                soDeliveryNoticeDetailEntity.setChangeBeforeSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
+                soDeliveryNoticeDetailEntity.setSkuId(detail.getSkuId());
+                soDeliveryNoticeDetailEntity.setSkuNo(detail.getSkuNo());
+                soDeliveryNoticeDetailEntity.setChangeBeforeQty(soDeliveryNoticeDetailEntity.getDeliveryQty());
+                soDeliveryNoticeDetailEntity.setDeliveryQty(detail.getNewQty());
+                updateList.add(soDeliveryNoticeDetailEntity);
+            }else if (SoDeliveryNoticeChangeTypeEnum.DELETE.getCode().equals(detail.getChangeType())){
+                SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到发货通知单明细数据",detail.getSkuNo()));
+                deleteList.add(soDeliveryNoticeDetailEntity);
+            }
+        }
+        soDeliveryNoticeService.updateByNoticeChange(addList,updateList,deleteList);
     }
 
 
@@ -405,7 +448,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         super.updateById(entity);
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "作废发货通知变更单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getCode(), "作废发货通知变更单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 

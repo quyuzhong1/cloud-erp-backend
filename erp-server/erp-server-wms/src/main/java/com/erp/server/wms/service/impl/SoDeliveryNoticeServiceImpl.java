@@ -1591,4 +1591,39 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         return new PagingVO<>(pagingViews);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByNoticeChange(List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList) {
+        // 添加日志
+        List<OperateLogDTO.AddModuleOperateLogDTO> logList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(addList)) {
+            addList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单新增明细sku{}",v.getSkuNo()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"新增sku"));
+            });
+            soDeliveryNoticeDetailService.saveBatch(addList);
+        }
+
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            updateList.forEach(v->{
+                if(v.getSkuNo().equals(v.getChangeBeforeSkuNo())){
+                    logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getDeliveryQty()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"修改sku"));
+                }else{
+                    logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单修改明细sku,从【{}】修改为【{}】，数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeSkuNo(),v.getChangeBeforeQty(),v.getDeliveryQty()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"修改sku"));
+                }
+            });
+            soDeliveryNoticeDetailService.updateBatchById(updateList);
+        }
+
+        if (CollectionUtils.isNotEmpty(deleteList)) {
+            deleteList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"删除明细"));
+            });
+            List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
+            soDeliveryNoticeDetailService.removeByIds(deleteIds);
+        }
+        if(CollectionUtils.isNotEmpty(logList)){
+            operateLogService.batchAddModuleOperateLog(logList);
+        }
+    }
 }

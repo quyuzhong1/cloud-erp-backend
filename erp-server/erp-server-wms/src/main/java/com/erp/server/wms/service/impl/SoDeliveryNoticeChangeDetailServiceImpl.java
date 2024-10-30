@@ -1,8 +1,11 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeDetailEntity;
@@ -66,10 +69,16 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
         List<SoDeliveryNoticeChangeDetailEntity> updateList = new ArrayList<>();
         List<SoDeliveryNoticeChangeDetailEntity> deleteList = dbDetailList.stream().filter(v->!updateViewIds.contains(v.getId())).collect(Collectors.toList());
 
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : detailViewList) {
             SoDeliveryNoticeChangeDetailEntity dbEntity = dbDetailList.stream().filter(v->v.getId().equals(viewDetail.getDetailId())).findFirst().orElse(null);
             if(Objects.isNull(dbEntity)){
                 continue;
+            }
+            if(dbEntity.getSkuNo().equals(viewDetail.getSkuNo())){
+                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新发货通知sku【{}】数量从【{}】为【{}】",dbEntity.getSkuNo(),dbEntity.getNewQty(),viewDetail.getNewNoticeQty()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),dbEntity.getMainId(),"编辑操作"));
+            }else{
+                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新发货通知sku从【{}】为【{}】,数量从【{}】为【{}】",dbEntity.getSkuNo(),viewDetail.getSkuNo(),dbEntity.getNewQty(),viewDetail.getNewNoticeQty()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),dbEntity.getMainId(),"编辑操作"));
             }
             dbEntity.setSkuId(viewDetail.getSkuId());
             dbEntity.setSkuNo(viewDetail.getSkuNo());
@@ -80,7 +89,14 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
             dbEntity.setSoDetailId(viewDetail.getSoDetailId());
             updateList.add(dbEntity);
         }
+        addList.forEach(v->{
+            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("新增一行sku{}",v.getSkuNo()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),v.getMainId(),"编辑操作"));
+        });
+        deleteList.forEach(v->{
+            operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除一行sku{}",v.getSkuNo()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),v.getMainId(),"编辑操作"));
+        });
         this.update(addList,updateList,deleteList);
+        operateLogService.batchAddModuleOperateLog(operateLogList);
     }
 
     @Transactional(rollbackFor = Exception.class)
