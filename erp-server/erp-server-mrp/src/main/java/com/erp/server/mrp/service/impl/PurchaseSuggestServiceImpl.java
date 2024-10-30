@@ -32,6 +32,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.PurchaseSuggestImportExcelDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
@@ -45,10 +46,7 @@ import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.mrp.listener.PurchaseSuggestImportExcelListener;
 import com.erp.server.mrp.mapper.PurchaseSuggestMapper;
-import com.erp.server.mrp.service.HistoryImportRecordService;
-import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.PurchaseSuggestService;
-import com.erp.server.mrp.service.PurchaseSuggestSysService;
+import com.erp.server.mrp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -89,6 +87,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Autowired
     private HistoryImportRecordService historyImportRecordService;
 
+    @Autowired
+    private ReplenishmentSuggestionService replenishmentSuggestionService;
 
     @Override
     public List<PurchaseSuggestDTO.ListDTO> list(PurchaseSuggestDTO.ListParamDTO params) {
@@ -115,7 +115,10 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if(!save) {
             throw new ServiceException("建议采购保存失败");
         }
-
+        //保存系统值
+        PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
+        BeanMapperUtils.copy(purchaseSuggestEntity,dto);
+        purchaseSuggestSysService.add(dto);
         return new BaseResultDTO.AddDTO(purchaseSuggestEntity.getId(), code);
     }
 
@@ -136,11 +139,6 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if(!save) {
             throw new ServiceException("建议采购保存失败");
         }
-
-        //保存系统值
-        PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
-        BeanMapperUtils.copy(old,dto);
-        purchaseSuggestSysService.add(dto);
         return Boolean.TRUE;
     }
 
@@ -471,7 +469,12 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     * 新增修改处理数据
     */
     private void handleData(PurchaseSuggestEntity purchaseSuggestEntity) {
-    // TODO 验证数据 & 数据赋值
+        //补货建议
+        ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(purchaseSuggestEntity.getSourceId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("补货建议不能为空");
+        }
+        BeanMapperUtils.copy(entity,purchaseSuggestEntity);
     }
 
     /**

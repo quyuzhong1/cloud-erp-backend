@@ -19,7 +19,9 @@ import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsMapper;
 import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
@@ -34,6 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * <p>
  * 备货物流（规则设置） 服务实现类
@@ -88,17 +92,27 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         //更新物流明细信息
         list.stream().forEach(obj -> cfgRuleLogisticsDetailService.update(obj.getDetailList(),obj.getId()));
 
-        //店铺
-        List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
+
         //备货信息
         CfgRuleStockUpEntity stockUpEntity = cfgRuleStockUpService.getById(stockUpId);
         if (ObjectUtil.isEmpty(stockUpEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（备货）");
         }
+        //是否海外
+        boolean isOverseas = StrUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+
+        //店铺
+        List<ShopInfoEntity> shopInfoList = isOverseas ? new ArrayList<>() :  FeignQuery.list(ShopInfoEntity.class);
+
+        //仓库
+        List<String> warehouseIdList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().filter(e -> StrUtil.isNotBlank(e.getWarehouseId()))
+                .map(CfgRuleLogisticsDetailDTO.UpdateDTO::getWarehouseId).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = CollectionUtils.isEmpty(warehouseIdList) ? new ArrayList<>() : FeignQuery.getByIds(WarehouseEntity.class, warehouseIdList);
+
         //日志
         StringBuffer msg = new StringBuffer();
         String title = "本地发FBA：";
-        if (StrUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())) {
+        if (isOverseas) {
             title = "本地发海外：";
         }
         msg.append( StrUtil.format("{}<br>",title));
@@ -110,9 +124,17 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
                 continue;
             }
             for (CfgRuleLogisticsDetailDTO.UpdateDTO updateDTO : detailList) {
-                String shopNames = CollectionUtils.isEmpty(updateDTO.getShopIdList()) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
-                String childMsg = StrUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(),StrUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, updateDTO.getLogisticsDays());
-                msg.append(childMsg);
+                if (!StrUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())) {
+                    //非海外仓
+                    String shopNames = CollectionUtils.isEmpty(updateDTO.getShopIdList()) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+                    String childMsg = StrUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(),StrUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, updateDTO.getLogisticsDays());
+                    msg.append(childMsg);
+                } else {
+                    String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+                    //海外仓
+                    String childMsg = StrUtil.format("•海外仓【{}】、时效【{}】<br>",warehouseName, updateDTO.getLogisticsDays());
+                    msg.append(childMsg);
+                }
             }
         }
         operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(stockUpEntity.getRefId(),stockUpEntity.getId()) , "备货");

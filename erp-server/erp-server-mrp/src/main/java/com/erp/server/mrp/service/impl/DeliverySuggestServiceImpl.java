@@ -35,8 +35,9 @@ import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.DeliverySuggestSysDTO;
 import com.erp.model.mrp.dto.HistoryImportRecordDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
-import com.erp.model.mrp.dto.excel.*;
+import com.erp.model.mrp.dto.excel.DeliverySuggestImportExcelDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
 import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
@@ -57,10 +58,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.DeliveryPlanFeign;
 import com.erp.server.mrp.listener.DeliverySuggestImportExcelListener;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
-import com.erp.server.mrp.service.DeliverySuggestService;
-import com.erp.server.mrp.service.DeliverySuggestSysService;
-import com.erp.server.mrp.service.HistoryImportRecordService;
-import com.erp.server.mrp.service.OperateLogService;
+import com.erp.server.mrp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -102,6 +100,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Autowired
     private HistoryImportRecordService historyImportRecordService;
 
+    @Autowired
+    private ReplenishmentSuggestionService replenishmentSuggestionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -121,6 +121,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if(!save) {
             throw new ServiceException("补货计划保存失败");
         }
+        //保存系统值
+        DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
+        BeanMapperUtils.copy(deliverySuggestEntity,dto);
+        deliverySuggestSysService.add(dto);
         return new BaseResultDTO.AddDTO(deliverySuggestEntity.getId(), code);
     }
 
@@ -141,11 +145,6 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if(!save) {
             throw new ServiceException("补货计划保存失败");
         }
-
-        //保存系统值
-        DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
-        BeanMapperUtils.copy(old,dto);
-        deliverySuggestSysService.add(dto);
         return Boolean.TRUE;
     }
 
@@ -573,7 +572,12 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     * 新增修改处理数据
     */
     private void handleData(DeliverySuggestEntity deliverySuggestEntity) {
-    // TODO 验证数据 &
+        //补货建议
+        ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(deliverySuggestEntity.getSourceId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("补货建议不能为空");
+        }
+        BeanMapperUtils.copy(entity,deliverySuggestEntity);
     }
 
 
