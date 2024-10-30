@@ -159,8 +159,8 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
                 }
                 List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getSourceDetailId())).collect(Collectors.toList());
                 Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
-                if(viewDetail.getNewNoticeQty() > pickedQty){
-                    throw new ServiceException("【{}】发货数量不能小于已拣货数量【{}】",viewDetail.getSkuNo(),pickedQty);
+                if(viewDetail.getNewNoticeQty() < pickedQty){
+                    throw new ServiceException("【{}】发货数量【{}】不能小于已拣货数量【{}】",viewDetail.getSkuNo(),viewDetail.getNewNoticeQty(),pickedQty);
                 }
             }else if(SoDeliveryNoticeChangeTypeEnum.ADD.getCode().equals(viewDetail.getChangeType())){
 
