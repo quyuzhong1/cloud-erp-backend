@@ -271,7 +271,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         }else {
             List<String> md5List = oldList.stream().map(LogisticsTrackEntity::getMd5).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
             List<LogisticsTrackEntity> noExistList = newList.stream().filter(e -> StrUtil.isNotBlank(e.getMd5()) && !md5List.contains(e.getMd5())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(noExistList)){
+            if (CollectionUtils.isNotEmpty(noExistList)){
                 this.saveBatch(noExistList);
             }
         }
