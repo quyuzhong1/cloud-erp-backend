@@ -218,7 +218,7 @@ public class BasicReplenishmentDataService {
                                 .filter(v -> defaultLogisticsByPlatformIds.contains(v.getMainId()))
                                 .collect(Collectors.toList());
                         CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
-                        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
+                        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(dto, defaultStockUp, defaultStockingRatio, defaultLogistics, logisticsDetails));
                         cfgRuleStrategy.setStockUpResult(stockUpResult);
                         cfgRuleStrategy.setInventoryResult(inventoryResult);
                         cfgRuleStrategy.setSuggestAmountResult(suggestResult);
@@ -288,7 +288,7 @@ public class BasicReplenishmentDataService {
         List<String> defaultLogisticsIds = defaultLogistics.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
         List<CfgRuleLogisticsDetailEntity> defaultLogisticsDetailList = cfgRuleLogisticsDetailService.listByMainIdList(defaultLogisticsIds);
         CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
-        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(basicDTO, detail.getSkuType(), defaultStockUp, defaultStockingRatio, defaultLogistics, defaultLogisticsDetailList));
+        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(resultDTO, defaultStockUp, defaultStockingRatio, defaultLogistics, defaultLogisticsDetailList));
         cfgRuleStrategy.setStockUpResult(stockUpResult);
         //获取库存配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
