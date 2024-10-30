@@ -97,5 +97,5 @@ public enum InventoryStatusEnum  implements EnumMessage {
     /**
      * 不受关账限制
      */
-    public final static List<InventoryStatusEnum>  WITHOUT_LIMIT_CLOSE_ACCOUNT_STATUS = new ArrayList<>(Arrays.asList(InventoryStatusEnum.IN_TRANSIT,InventoryStatusEnum.WAIT_QC));
+    public final static List<String>  WITHOUT_LIMIT_CLOSE_ACCOUNT_STATUS = new ArrayList<>(Arrays.asList(InventoryStatusEnum.IN_TRANSIT.getCode(),InventoryStatusEnum.WAIT_QC.getCode()));
 }
