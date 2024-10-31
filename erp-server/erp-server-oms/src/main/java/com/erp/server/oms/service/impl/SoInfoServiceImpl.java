@@ -1132,6 +1132,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         String customerId = dto.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {
+            String oldCustomerId = soInfo.getCustomerId();
+            if(StringUtils.isNotBlank(oldCustomerId) && !customerId.equals(oldCustomerId)) {
+                //判断是否已下推发货通知单，是则客户不允许修改
+                String soId = soInfo.getId();
+                Map<String, Long> pushDownMap = soDeliveryNoticeFeign.getPushDownDeliveryNoticeCnt(Lists.newArrayList(soId));
+                if (CollUtil.isNotEmpty(pushDownMap)
+                        && pushDownMap.containsKey(soId)
+                        && pushDownMap.get(soId) > 0) {
+                    throw new ServiceException("已下推发货通知单冻结库存，客户不允许修改，请删除发货通知单后修改");
+                }
+            }
             customerInfoService.quoteCustomer(Arrays.asList(customerId));
         }
         String code = soInfo.getCode();
