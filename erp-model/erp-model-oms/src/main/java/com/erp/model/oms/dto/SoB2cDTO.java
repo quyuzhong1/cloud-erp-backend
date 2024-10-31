@@ -583,6 +583,16 @@ public class SoB2cDTO implements Serializable {
          * 标签
          */
         private Boolean tag;
+
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
     }
 
     @Data
@@ -790,6 +800,16 @@ public class SoB2cDTO implements Serializable {
          * 申报信息
          */
         private List<SoB2cDeclareProductDTO.ViewDTO> declareProductList;
+
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
     }
 
     /**
