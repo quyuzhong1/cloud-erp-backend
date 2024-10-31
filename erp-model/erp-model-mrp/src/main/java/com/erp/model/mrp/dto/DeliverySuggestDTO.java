@@ -235,6 +235,15 @@ public class DeliverySuggestDTO implements Serializable {
         private BigDecimal sysLogisticsCost;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
          * 父级id
          */
         private String parentId;

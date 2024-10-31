@@ -223,6 +223,16 @@ public class PurchaseSuggestDTO implements Serializable {
          * 采购成本（系统）
          */
         private BigDecimal sysPurchaseCost;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
         /**
          * 备注
          */

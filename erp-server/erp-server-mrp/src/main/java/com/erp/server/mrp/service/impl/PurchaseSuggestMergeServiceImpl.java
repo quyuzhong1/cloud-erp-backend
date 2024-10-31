@@ -4,6 +4,7 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -58,6 +59,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -252,6 +254,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void generatePurchaseSuggestMerge () {
         //查询配置
         CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
@@ -264,12 +267,24 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             return;
         }
         Map<String, List<PurchaseSuggestEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getPlatformType().concat(obj.getPlatform()).concat(obj.getSkuId())));
+        List<PurchaseSuggestMergeDTO.AddDTO> addList = new ArrayList<>();
         for (Map.Entry<String, List<PurchaseSuggestEntity>> entry : map.entrySet()) {
             List<PurchaseSuggestEntity> value = entry.getValue();
-            for (PurchaseSuggestEntity entity : value) {
-
-            }
+            PurchaseSuggestMergeDTO.AddDTO addDTO = new PurchaseSuggestMergeDTO.AddDTO();
+            BeanMapperUtils.copy(value.get(0),addDTO);
+            //建议采购量
+            Integer suggestPurchaseQty = value.stream().map(PurchaseSuggestEntity::getSuggestPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setSuggestPurchaseQty(suggestPurchaseQty);
+            //采购成本
+            BigDecimal purchaseCost = value.stream().map(PurchaseSuggestEntity::getPurchaseCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+            addDTO.setPurchaseCost(purchaseCost);
+            //来源
+            addDTO.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
+            List<String> sourceIdList = value.stream().map(PurchaseSuggestEntity::getId).distinct().collect(Collectors.toList());
+            addDTO.setSourceIdJson(JSONUtil.parseArray(sourceIdList));
+            addList.add(addDTO);
         }
+        addList.stream().forEach(obj -> this.add(obj));
     }
 
     @Override

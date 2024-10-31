@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -446,8 +447,8 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         /**
         * 来源idJsonArray
         */
-        @NotBlank(message = "来源idJsonArray不能为空")
-        private String sourceIdJson;
+        @NotNull(message = "来源idJsonArray不能为空")
+        private JSONArray sourceIdJson;
 
         /**
         * 来源类型

@@ -49,6 +49,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
@@ -57,6 +58,7 @@ import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.DeliveryPlanFeign;
 import com.erp.server.mrp.listener.DeliverySuggestImportExcelListener;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
@@ -107,6 +109,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Autowired
     private SysDictFeign sysDictFeign;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -663,6 +668,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         List<String> platformList = list.stream().map(DeliverySuggestDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
         List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
+        //币种信息
+        List<String> currencyIdList = list.stream().map(DeliverySuggestDTO.ListDTO::getCurrency).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
         Map<String, List<DeliverySuggestDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getPlatform().concat(obj.getShopId())));
         for (Map.Entry<String, List<DeliverySuggestDTO.ListDTO>> entry : map.entrySet()) {
             List<DeliverySuggestDTO.ListDTO> value = entry.getValue();
@@ -693,6 +702,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
                 //状态名称
                 listDTO.setStatusName(SuggestStatusEnum.getName(listDTO.getStatus()));
+                //币别
+                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+                listDTO.setCurrencySymbol(currencySymbol);
+
                 //sku
                 ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
                 listDTO.setSkuNo(productDetailEntity.getSkuNo());
