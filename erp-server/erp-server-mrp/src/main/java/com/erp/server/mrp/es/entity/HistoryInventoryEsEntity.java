@@ -23,7 +23,7 @@ public class HistoryInventoryEsEntity extends BaseEsEntity {
     /**
      * 日期
      */
-    @Field(type = FieldType.Keyword, format = DateFormat.basic_date)
+    @Field(type = FieldType.Date, format = DateFormat.basic_date,pattern = "yyyy-MM-dd")
     private LocalDate date;
     /**
      * 原始库存

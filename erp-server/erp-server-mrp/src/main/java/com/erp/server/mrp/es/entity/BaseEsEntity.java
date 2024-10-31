@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
@@ -37,7 +38,7 @@ public class BaseEsEntity implements Serializable {
     /**
      * 创建时间
      */
-    @Field(type = FieldType.Keyword)
+    @Field(type = FieldType.Date, format = DateFormat.basic_date_time,pattern = "yyyy-MM-dd HH:mm:ss")
     @CreatedDate
     private LocalDateTime createTime;
 
@@ -56,7 +57,7 @@ public class BaseEsEntity implements Serializable {
     /**
      * 更新时间
      */
-    @Field(type = FieldType.Keyword)
+    @Field(type = FieldType.Date, format = DateFormat.basic_date_time,pattern = "yyyy-MM-dd HH:mm:ss")
     @LastModifiedDate
     private LocalDateTime updateTime;
 
