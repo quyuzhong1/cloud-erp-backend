@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -53,6 +54,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static cn.hutool.json.XMLTokener.entity;
 
 /**
  * <p>
@@ -687,6 +690,66 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail() {
         return baseMapper.listAllVirtualSoB2cDetail();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO changeDeliverySku(String targetId, SoB2cEntity entity, SoB2cDetailEntity detail, SkuVO skuVO) {
+        //建议售价CNY
+        BigDecimal retailPrice = Objects.nonNull(skuVO.getRetailPrice()) ? skuVO.getRetailPrice() : BigDecimal.ZERO;
+        //含税成本CNY
+        BigDecimal actualTaxCost = Objects.nonNull(skuVO.getActualTaxCost()) ? skuVO.getActualTaxCost() : BigDecimal.ZERO;
+        //SKU对照表信息
+        SkuMappingDTO.ListSkuParamDTO paramDTO = SkuMappingDTO.ListSkuParamDTO.builder().skuNo(skuVO.getSkuNo()).warehouseId(detail.getWarehouseId())
+                .dictPlatform(StrUtil.isNotBlank(entity.getDictPlatform()) ? entity.getDictPlatform() : "").build();
+        List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(Collections.singletonList(paramDTO));
+        //库存SKU
+        SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = skuMappingList.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(),targetId) && StrUtil.equals(obj.getWarehouseId(),detail.getWarehouseId())).findFirst().orElse(null);
+        String warehouseSkuNo = Objects.nonNull(warehouseListSkuDTO) ? warehouseListSkuDTO.getWarehouseSkuNo() : "";
+        //原始skuId
+        Boolean isChangeSku = Boolean.TRUE;
+        String initSkuId = StrUtil.isBlank(detail.getInitSkuId()) ? detail.getSkuId() : detail.getInitSkuId();
+        if (Objects.equals(initSkuId, targetId)){
+            initSkuId = StrUtil.EMPTY;
+            isChangeSku = Boolean.FALSE;
+        }
+        //检查是否更新标识
+        isChangeSku = checkHasOtherChangeSku(isChangeSku, entity.getId(),detail.getId());
+        //销售订单打标
+        soB2cService.updateIsChangeSku(Collections.singletonList(entity.getId()),isChangeSku);
+        //将SKU填充到订单明细的SKU列、同时更新产品名称、库存SKU、建议售价CNY、含税成本CNY
+        this.lambdaUpdate().eq(SoB2cDetailEntity::getId, detail.getId())
+                .set(SoB2cDetailEntity::getSkuId,skuVO.getSkuId())
+                .set(SoB2cDetailEntity::getSkuNo,skuVO.getSkuNo())
+                .set(SoB2cDetailEntity::getWarehouseSkuNo,warehouseSkuNo)
+                .set(SoB2cDetailEntity::getAdvicePrice,skuVO.getRetailPrice())
+                .set(SoB2cDetailEntity::getTaxCost,skuVO.getActualTaxCost())
+                .set(SoB2cDetailEntity::getInitSkuId, initSkuId)
+                .update();
+        //记录更新日志
+        String msg = StrUtil.format("更换发货SKU销售订单【{}】中SKU由【{}】改为【{}】,库存SKU由【{}】改为【{}】,建议售价由【{}】改为【{}】,含税成本由【{}】改为【{}】",
+        entity.getCode(),detail.getSkuNo(), skuVO.getSkuNo(),detail.getWarehouseSkuNo(),warehouseSkuNo,detail.getAdvicePrice(),retailPrice,detail.getTaxCost(),actualTaxCost);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "编辑操作");
+        return BatchResultDTO.success(entity.getId(),detail.getSkuNo(),"");
+    }
+
+    /**
+     * 检查是否其他明细包含更改sku
+     * @param isChangeSku
+     * @param id
+     * @param detailId
+     * @return
+     */
+    private Boolean checkHasOtherChangeSku(Boolean isChangeSku, String id, String detailId) {
+        if (!isChangeSku){
+            Integer count = this.lambdaQuery().eq(SoB2cDetailEntity::getMainId, id).ne(SoB2cDetailEntity::getId, detailId)
+                    .ne(SoB2cDetailEntity::getInitSkuId, StrUtil.EMPTY).count();
+            if (Objects.nonNull(count) && count > 0){
+                //还存在其他明细存在变更
+                isChangeSku = Boolean.TRUE;
+            }
+        }
+        return isChangeSku;
     }
 
     @Override

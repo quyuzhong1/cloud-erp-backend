@@ -67,6 +67,8 @@
         sb2c.approve_user_name as approveUserName,
         sb2c.frozen_type as frozenType,
         sb2c.is_change_receiver_address as isChangeReceiverAddress,
+        sb2c.is_change_sku as isChangeSku,
+        sb2c.is_not_outbound as isNotOutbound,
         sb2cl.logistics_channel_name as logisticsChannelName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
@@ -1021,6 +1023,23 @@
                sbd.platform_sku_no as platformSkuNo
         FROM so_b2c sb
         inner join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
+        where sb.is_deleted = false
+        and sb.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="listChangeDeliverySkuView"
+            resultType="com.erp.model.oms.dto.SoB2cDTO$ChangeDeliverySkuViewDTO">
+        SELECT sb.id,
+        sbd.id as detailId,
+        sb.code ,
+        sbd.sku_id as skuId,
+        sbd.sku_no as skuNo,
+        sbd.platform_sku_no as platformSkuNo
+        FROM so_b2c sb
+        left join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
         where sb.is_deleted = false
         and sb.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">

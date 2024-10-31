@@ -298,6 +298,18 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("frozen_type")
     private String frozenType;
 
+    /**
+     * 是否更换发货sku（默认false）
+     */
+    @TableField("is_change_sku")
+    private Boolean isChangeSku;
+
+    /**
+     * 是否标记不出库发货（默认false）
+     */
+    @TableField("is_not_outbound")
+    private Boolean isNotOutbound;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

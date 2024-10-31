@@ -974,4 +974,19 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
 
     List<SoB2cEntity> getByPlatformCode(String platformCode);
+
+    /**
+     * 更换发货sku预览
+     * @param ids
+     * @return
+     */
+    List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids);
+
+    /**
+     * 更新是否更换sku状态
+     *
+     * @param ids
+     * @param isChangeSku
+     */
+    void updateIsChangeSku(List<String> ids, Boolean isChangeSku);
 }

@@ -1380,6 +1380,7 @@ public enum ApiError implements Serializable {
     ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
+    ERROR_92154(92154,"销售订单【{}】只能在待提交和审核不通过状态更换发货SKU"),
     /**
      * TMS 错误
      * 从94000 开始
