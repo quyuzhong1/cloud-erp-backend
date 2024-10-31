@@ -450,6 +450,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                             combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
                         }
+                        combinationPrintDetailView.setIsCombination(Boolean.FALSE);
                         combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo());
                         combinationPrintDetailView.setParentSkuQty(requisitionApplicationDetail.getPickingQty());
                         combinationPrintDetailViewList.add(combinationPrintDetailView);
@@ -461,7 +462,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                             combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
                         }
-                        combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo());
+                        combinationPrintDetailView.setIsCombination(Boolean.TRUE);
+                        combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo() + "【组】");
                         combinationPrintDetailView.setParentSkuQty(requisitionApplicationDetail.getPickingQty());
                         combinationPrintDetailView.setChildSku(bomChildrenSkuDTO.getSkuNo());
                         combinationPrintDetailView.setChildSkuQty(requisitionApplicationDetail.getPickingQty() * bomChildrenSkuDTO.getQuantity());
@@ -489,7 +491,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         parentQty = combinationPrintDetailView.getParentSkuQty();
                         continue;
                     }
-                    if(combinationPrintDetailView.getParentSku().equals(currentParentSku) && parentQty.equals(combinationPrintDetailView.getParentSkuQty())){
+                    if(combinationPrintDetailView.getParentSku().equals(currentParentSku) && parentQty.equals(combinationPrintDetailView.getParentSkuQty()) && combinationPrintDetailView.getIsCombination()){
                         combinationPrintDetailView.setParentSku("");
                         combinationPrintDetailView.setParentSkuQty(null);
                         combinationPrintDetailView.setThirdSku("");

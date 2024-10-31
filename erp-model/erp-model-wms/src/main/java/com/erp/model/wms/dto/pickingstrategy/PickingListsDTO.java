@@ -238,6 +238,10 @@ public class PickingListsDTO {
     public static class CombinationPrintDetailView {
 
         /**
+         * 是否是捆绑商品:true=是，false=否
+         */
+        private Boolean isCombination;
+        /**
          * sku
          */
         private String parentSku;
