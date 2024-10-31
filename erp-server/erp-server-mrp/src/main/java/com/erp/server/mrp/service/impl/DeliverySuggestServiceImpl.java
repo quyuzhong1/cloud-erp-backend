@@ -49,12 +49,14 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.DeliveryPlanFeign;
 import com.erp.server.mrp.listener.DeliverySuggestImportExcelListener;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
@@ -102,6 +104,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Autowired
     private ReplenishmentSuggestionService replenishmentSuggestionService;
+
+    @Autowired
+    private SysDictFeign sysDictFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -641,6 +647,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         List<String> shopIdList = list.stream().map(DeliverySuggestDTO.ListDTO::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
+        //国家
+        List<String> countryCodeList = shopInfoList.stream().map(ShopInfoEntity::getDictCountryCode).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = CollectionUtils.isEmpty(countryCodeList) ? new ArrayList<>() : sysDictFeign.listCountryByIds(countryCodeList);
+
         //产品信息
         List<String> skuIdList = list.stream().map(DeliverySuggestDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
@@ -663,14 +673,16 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             parentListDTO.setId(value.get(0).getShopId());
             parentListDTO.setShopId(value.get(0).getShopId());
             parentListDTO.setShopName(shopInfoEntity.getName());
-            parentListDTO.setCountryName(shopInfoEntity.getCountryName());
             //平台信息
             parentListDTO.setPlatform(value.get(0).getPlatform());
             String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(), value.get(0).getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
             parentListDTO.setPlatformName(platformName);
 
             //国家
-            parentListDTO.setCountryName(shopInfoEntity.getCountryName());
+            DictCountryEntity dictCountry = countryList.stream().filter(obj -> obj.getId().equals(shopInfoEntity.getDictCountryCode())).findFirst().orElse(new DictCountryEntity());
+            parentListDTO.setCountryName(dictCountry.getNameCn());
+            parentListDTO.setCountryImgUrl(dictCountry.getFlagUrl());
+
             resultList.add(parentListDTO);
             for (DeliverySuggestDTO.ListDTO listDTO : value) {
                 //数据类型
@@ -685,6 +697,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
                 listDTO.setSkuNo(productDetailEntity.getSkuNo());
                 listDTO.setProductName(productDetailEntity.getName());
+                listDTO.setImagesUrl(productDetailEntity.getImagesUrl());
                 //以店铺id为父级id用于前端显示
                 listDTO.setParentId(listDTO.getShopId());
                 //补货计划

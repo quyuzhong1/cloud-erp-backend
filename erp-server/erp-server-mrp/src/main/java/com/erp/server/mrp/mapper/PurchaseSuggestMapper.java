@@ -50,4 +50,11 @@ public interface PurchaseSuggestMapper extends BaseMapper<PurchaseSuggestEntity>
      * @return List<ListDTO>
      */
     List<PurchaseSuggestDTO.ListDTO> list(@Param("params") PurchaseSuggestDTO.ListParamDTO params);
+    /**
+     * 查询可生成采购建议合并的数据
+     * @author will
+     * @date 2024/10/31 9:46
+     * @return List<PurchaseSuggestEntity>
+     */
+    List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge();
 }

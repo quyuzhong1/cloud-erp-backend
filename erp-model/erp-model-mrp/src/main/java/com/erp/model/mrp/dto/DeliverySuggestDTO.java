@@ -94,6 +94,10 @@ public class DeliverySuggestDTO implements Serializable {
          * 国家名称
          */
         private String countryName;
+        /**
+         * 国家图片
+         */
+        private String countryImgUrl;
 
         /**
          * 编码
@@ -111,6 +115,10 @@ public class DeliverySuggestDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        /**
+         * sku图片
+         */
+        private String imagesUrl;
 
         /**
          * 创建类型（auto系统，manual人工）

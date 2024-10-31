@@ -28,10 +28,12 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.mrp.dto.CfgRuleOrderStrategyDTO;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.HistoryImportRecordDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.mrp.dto.excel.PurchaseSuggestMergeImportExcelDTO;
+import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
@@ -45,9 +47,7 @@ import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.mrp.listener.PurchaseSuggestMergeImportExcelListener;
 import com.erp.server.mrp.mapper.PurchaseSuggestMergeMapper;
-import com.erp.server.mrp.service.HistoryImportRecordService;
-import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.PurchaseSuggestMergeService;
+import com.erp.server.mrp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -82,6 +82,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Autowired
     private HistoryImportRecordService historyImportRecordService;
+
+    @Autowired
+    private PurchaseSuggestService purchaseSuggestService;
+
+    @Autowired
+    private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -243,6 +249,27 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST_MERGE.getCode(), old.getId(), "更新备注");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public void generatePurchaseSuggestMerge () {
+        //查询配置
+        CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
+        if (ObjectUtil.isEmpty(viewDTO) || !viewDTO.getIsSplit()) {
+            return;
+        }
+        //查询可拆分合并的数据
+        List<PurchaseSuggestEntity> list = purchaseSuggestService.listGeneratePurchaseSuggestMerge();
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        Map<String, List<PurchaseSuggestEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getPlatformType().concat(obj.getPlatform()).concat(obj.getSkuId())));
+        for (Map.Entry<String, List<PurchaseSuggestEntity>> entry : map.entrySet()) {
+            List<PurchaseSuggestEntity> value = entry.getValue();
+            for (PurchaseSuggestEntity entity : value) {
+
+            }
+        }
     }
 
     @Override

@@ -123,5 +123,17 @@
         ps.id desc
     </select>
 
+    <!-- 查询可生成采购建议合并的数据 -->
+    <select id="listGeneratePurchaseSuggestMerge" resultType="com.erp.model.mrp.entity.PurchaseSuggestEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from purchase_suggest ps
+        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
+        <where>
+            ps.is_deleted = false and ps.status = 'draft'
+            and ps not in (select jsonb_array_elements(psm.source_id_json) from purchase_suggest_merge psm where psm.is_deleted = false )
+        </where>
+    </select>
+
 
 </mapper>

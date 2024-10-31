@@ -3,9 +3,7 @@ package com.erp.model.mrp.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 
 /**
@@ -34,11 +32,6 @@ public class CfgRuleOrderStrategyDTO implements Serializable {
         * 主键id
         */
         private String  id;
-
-        /**
-        * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-        */
-        private String platformType;
 
         /**
         * 采购建议策略

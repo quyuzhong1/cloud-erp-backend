@@ -137,4 +137,11 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
      * @param response
      */
     void importPurchaseSuggest(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 查询需要生成采购建议合并的数据
+     * @author will
+     * @date 2024/10/31 9:40
+     * @return List<PurchaseSuggestEntity>
+     */
+    List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge();
 }

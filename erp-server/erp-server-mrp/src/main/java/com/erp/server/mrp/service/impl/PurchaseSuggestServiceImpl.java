@@ -306,6 +306,10 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         exportErrorExcel (response,errorList);
     }
 
+    @Override
+    public List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge() {
+        return baseMapper.listGeneratePurchaseSuggestMerge();
+    }
 
 
     /**
@@ -500,7 +504,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             listDTO.setSkuNo(productDetailEntity.getSkuNo());
             listDTO.setProductName(productDetailEntity.getName());
-            listDTO.setSkuImgUrl(productDetailEntity.getImagesUrl());
+            listDTO.setImagesUrl(productDetailEntity.getImagesUrl());
 
             //数据类型
             listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));

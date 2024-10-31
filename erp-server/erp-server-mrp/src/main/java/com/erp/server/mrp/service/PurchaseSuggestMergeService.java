@@ -103,6 +103,12 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      */
     BatchResultDTO updateRemark(String id, String remark);
     /**
+     * 生成采购建议合并数据
+     * @author will
+     * @date 2024/10/31 9:26
+     */
+    void generatePurchaseSuggestMerge ();
+    /**
      * 导入采购计划合并数据
      * @author will
      * @date 2024/10/24 17:24
