@@ -492,6 +492,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
 
+        // 国家
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String,String> countryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(countryList)){
+            countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
+        }
+
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -507,6 +514,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //平台类型名称
             String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPlatformTypeName(platformTypeName);
+            //国家
+            item.setCountryName(countryMap.get(item.getCountryId()));
         }
 
         return new PagingVO<>(pageData);
