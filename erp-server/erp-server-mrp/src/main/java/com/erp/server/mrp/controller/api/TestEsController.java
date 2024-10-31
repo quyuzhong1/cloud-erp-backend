@@ -1,6 +1,9 @@
 package com.erp.server.mrp.controller.api;
 
 
+import java.time.LocalDate;
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,5 +36,13 @@ public class TestEsController extends BaseController {
 	public ApiResult<?> findByCode(@RequestBody TestEsEntity testEsEntity){
 		PageRequest pageable = PageRequest.of(0, 3);
 		return success(testEsRepository.findByCode(testEsEntity.getCode() , pageable).getContent());
+	}
+	
+	@PostMapping("/findByCodeInAndDateBetween")
+	public ApiResult<?> findByCodeInAndDateBetween(@RequestBody TestEsEntity testEsEntity){
+		PageRequest pageable = PageRequest.of(0, 3);
+		String code = testEsEntity.getCode();
+		LocalDate date = testEsEntity.getDate();
+		return success(testEsRepository.findByCodeInAndDateBetween(Arrays.asList(code),date, date, pageable));
 	}
 }

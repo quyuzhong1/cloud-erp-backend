@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
  
 /**
@@ -33,4 +34,14 @@ public interface TestEsRepository extends ElasticsearchRepository<TestEsEntity, 
 	 * @return
 	 */
 	Page<TestEsEntity> findByCode(String code , Pageable pageable);
+	
+	/**
+	 * 通过code字段In和在date字段Between查询es分页数据
+	 * @param codes
+	 * @param startDate
+	 * @param endDate
+	 * @param pageable
+	 * @return
+	 */
+	Page<TestEsEntity> findByCodeInAndDateBetween(List<String> codes, LocalDate startDate, LocalDate endDate, Pageable pageable);
 }
