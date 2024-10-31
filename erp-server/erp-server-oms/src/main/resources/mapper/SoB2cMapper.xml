@@ -115,7 +115,7 @@
         end
         as shippingCostCurrency,
         sb2c.seller_order_code as sellerOrderCode,
-        sb2c.platform_code AS platformCode,
+        sb2c.platform_code as platformCode,
         sb2c.approve_status as approveStatus,
         sb2c.bill_status as billStatus,
         sb2c.amount as amount,
