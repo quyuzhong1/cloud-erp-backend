@@ -116,12 +116,20 @@ public interface InventoryService {
                                                                                  CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, ReplenishmentInventoryTypeEnum inventoryTypeEnum);
 
     /**
-     * 计算FBA可用库存
+     * 计算海外在途库存
      *
      * @param replenishmentResultDTO 参数
      * @param code                   选中的code值
      * @param cfgRuleStrategyDTO     配置
      */
     int getOverseasInTransit(ReplenishmentResultDTO replenishmentResultDTO, String code, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+
+
+    /**
+     * 计算海外预计发货库存
+     * @param replenishmentResultDTO 建议
+     * @param cfgRuleStrategyDTO     配置
+     */
+    int getOverseasPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO);
 
 }

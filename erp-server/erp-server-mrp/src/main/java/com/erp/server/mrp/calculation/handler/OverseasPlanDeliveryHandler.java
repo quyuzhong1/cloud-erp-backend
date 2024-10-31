@@ -25,8 +25,6 @@ public class OverseasPlanDeliveryHandler extends AbstractSkuCalculationHandler {
     private LocalUsableHandler localUsableHandler;
     @Resource
     private InventoryService inventoryService;
-    @Resource
-    private CfgRuleCommonService cfgRuleCommonService;
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
         return localUsableHandler;
@@ -41,41 +39,7 @@ public class OverseasPlanDeliveryHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
-        List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> estimatedDeliveryDetails = new ArrayList<>();
-        //获取需要计算库存的FBA预计发货配置
-        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
-        //补货计划
-        Set<String> replenishmentPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasReplenishmentPlan());
-        if (!CollectionUtils.isEmpty(replenishmentPlan)) {
-            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> planDelivery = inventoryService.getReplenishmentPlan(replenishmentResultDTO, replenishmentPlan, cfgRuleStrategyDTO.getStockUpResult(),
-                    ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
-            if (!CollectionUtils.isEmpty(planDelivery)) {
-                estimatedDeliveryDetails.addAll(planDelivery);
-            }
-        }
-        //发货计划_补货计划下推
-        Set<String> replenishmentDeliveryPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasDeliveryPlanByReplenishment());
-        if (!CollectionUtils.isEmpty(replenishmentDeliveryPlan)) {
-            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> planDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, replenishmentDeliveryPlan, cfgRuleStrategyDTO.getStockUpResult(),
-                    SourceTypeEnum.REPLENISHMENT_PLAN.getCode(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode());
-            if (!CollectionUtils.isEmpty(planDelivery)) {
-                estimatedDeliveryDetails.addAll(planDelivery);
-            }
-        }
-        //发货计划_手动新增
-        Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasDeliveryPlanByManual());
-        if (!CollectionUtils.isEmpty(codes)) {
-            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> planDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, codes, cfgRuleStrategyDTO.getStockUpResult(),
-                    SourceTypeEnum.DELIVERY_PLAN.getCode(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode());
-            if (!CollectionUtils.isEmpty(planDelivery)) {
-                estimatedDeliveryDetails.addAll(planDelivery);
-            }
-        }
-        replenishmentResultDTO.setOverseasDeliveryDetails(estimatedDeliveryDetails);
-        Integer qty = estimatedDeliveryDetails.stream()
-                .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
-                .reduce(0, Math::addExact);
+        int qty = inventoryService.getOverseasPlanDelivery(replenishmentResultDTO, cfgRuleStrategyDTO);
         replenishmentResultDTO.getReplenishmentDetail().setOverseasPlanDeliveryQty(qty);
     }
 }

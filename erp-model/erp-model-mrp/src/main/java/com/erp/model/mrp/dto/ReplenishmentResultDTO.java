@@ -1022,6 +1022,11 @@ public class ReplenishmentResultDTO {
          */
         private String sourceType;
 
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
 
         public static EstimatedDeliveryDetailEntity buildEstimatedDeliveryDetail(EstimatedDeliveryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedDeliveryDetailEntity entity = new EstimatedDeliveryDetailEntity();
