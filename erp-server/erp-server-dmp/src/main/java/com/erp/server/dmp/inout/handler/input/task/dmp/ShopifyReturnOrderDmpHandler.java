@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
@@ -32,7 +33,7 @@ public class ShopifyReturnOrderDmpHandler extends DmpInputDoNextDmpHandler{
             return Collections.emptyList();
         }
         // 退货/退款信息
-        List<ShopifyRefund> shopifyRefunds = JSON.parseArray(JSON.toJSONString(refundsObj), ShopifyRefund.class);
+        List<ShopifyRefund> shopifyRefunds = JSONUtil.toList(JSONUtil.toJsonStr(refundsObj), ShopifyRefund.class);
         if (CollectionUtils.isEmpty(shopifyRefunds)){
             return Collections.emptyList();
         }

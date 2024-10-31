@@ -1,15 +1,8 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
-import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
 import com.sdk.oms.shopify.api.rest.model.ShopifyTransaction;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,7 +28,7 @@ public class ShopifyRefundOrderDmpHandler extends DmpInputDoNextDmpHandler{
             return Collections.emptyList();
         }
         // 退货/退款信息
-        List<ShopifyRefund> shopifyRefunds = JSON.parseArray(JSON.toJSONString(refundsObj), ShopifyRefund.class);
+        List<ShopifyRefund> shopifyRefunds = JSONUtil.toList(JSONUtil.toJsonStr(refundsObj), ShopifyRefund.class);
         if (CollectionUtils.isEmpty(shopifyRefunds)){
             return Collections.emptyList();
         }
