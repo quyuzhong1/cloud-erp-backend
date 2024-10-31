@@ -191,7 +191,7 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
-        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         where
         ${params.sqlMap.default}
         and sb2c.is_deleted = false
