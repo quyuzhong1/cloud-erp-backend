@@ -326,7 +326,7 @@ public class InventoryServiceImpl implements InventoryService {
             return replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty();
         }
         if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_USABLE_QTY.getCode().equals(code)) {
-            return replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty();
+            return Optional.ofNullable(replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty()).orElse(0);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_USABLE_QTY.getCode().equals(code)) {
             return replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty();
