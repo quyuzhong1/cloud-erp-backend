@@ -95,6 +95,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Autowired
     private SysUserFeign sysUserFeign;
 
+    @Autowired
+    private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
     @Override
     public List<PurchaseSuggestDTO.ListDTO> list(PurchaseSuggestDTO.ListParamDTO params) {
@@ -137,7 +139,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         PurchaseSuggestEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购"));
         PurchaseSuggestEntity purchaseSuggestEntity =  BeanMapperUtils.map(PurchaseSuggestEntity.class, updateDTO);
-
+        //查询配置
+        CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
+        if (viewDTO.getIsSplit()) {
+            throw new ServiceException("已开启集中采购策略，不支持编辑");
+        }
         // 数据处理
         handleData(purchaseSuggestEntity);
         log.info("编辑 开始修改建议采购数据，单号：【{}】", old.getCode());
@@ -154,7 +160,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         PurchaseSuggestEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购"));
         PurchaseSuggestEntity purchaseSuggestEntity =  BeanMapperUtils.map(PurchaseSuggestEntity.class, updateDTO);
-
+        //查询配置
+        CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
+        if (viewDTO.getIsSplit()) {
+            throw new ServiceException("已开启集中采购策略，不支持导入编辑");
+        }
         log.info("编辑 开始修改采购计划数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(purchaseSuggestEntity);
         if(!save) {
@@ -203,6 +213,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
         }
+        //查询配置
+        CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
+        if (viewDTO.getIsSplit()) {
+            throw new ServiceException("已开启集中采购策略，不支持锁定");
+        }
         //更新成待确认状态
         old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
         this.updateById(old);
@@ -220,6 +235,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
+        }
+        //查询配置
+        CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
+        if (viewDTO.getIsSplit()) {
+            throw new ServiceException("已开启集中采购策略，不支持确认");
         }
         //更新成完成状态
         old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
@@ -242,6 +262,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         }
         if (old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98012);
+        }
+        //查询配置
+        CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
+        if (viewDTO.getIsSplit()) {
+            throw new ServiceException("已开启集中采购策略，不支持作废");
         }
         //更新成作废状态
         old.setInvalidStatus(Boolean.TRUE);
@@ -268,6 +293,11 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
+        }
+        //查询配置
+        CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
+        if (viewDTO.getIsSplit()) {
+            throw new ServiceException("已开启集中采购策略，不支持更新备注");
         }
         // 操作日志备注
         String msg = StrUtil.format("更新了采购建议备注，由【{}】更新为【{}】",old.getRemark(),remark);

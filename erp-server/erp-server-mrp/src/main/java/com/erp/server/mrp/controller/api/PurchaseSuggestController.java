@@ -16,6 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
+import com.erp.server.mrp.service.PurchaseSuggestMergeService;
 import com.erp.server.mrp.service.PurchaseSuggestService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -41,6 +42,9 @@ public class PurchaseSuggestController extends BaseController {
 
     @Resource
     private PurchaseSuggestService purchaseSuggestService;
+
+    @Resource
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
 
     /**
      * 分页查询
@@ -79,7 +83,12 @@ public class PurchaseSuggestController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "建议采购新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated PurchaseSuggestDTO.AddDTO dto) {
-        return success(purchaseSuggestService.add(dto));
+        BaseResultDTO.AddDTO add = purchaseSuggestService.add(dto);
+        if(ObjectUtil.isNotEmpty(add.getId())) {
+            //添加采购建议合并数据
+            purchaseSuggestMergeService.generatePurchaseSuggestMerge();
+        }
+        return success(add);
     }
 
     /**
