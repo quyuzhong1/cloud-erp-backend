@@ -74,7 +74,9 @@ public class LogisticsController extends BaseController {
      */
     @PostMapping("/batchUpdateTrackInfo")
     public ApiResult<List<BatchResultDTO>> batchUpdateTrackInfo(@RequestBody List<LogisticsTrackDTO.UpdateTrackDTO> updateDTOS) {
-        if (CollectionUtils.isEmpty(updateDTOS)) return failure("数据不能为空");
+        if (CollectionUtils.isEmpty(updateDTOS)) {
+            return failure("数据不能为空");
+        }
         List<BatchResultDTO> resultDTOS = logisticsBaseService.batchUpdateTrackInfo(updateDTOS, LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
