@@ -148,7 +148,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         DeliverySuggestEntity deliverySuggestEntity =  BeanMapperUtils.map(DeliverySuggestEntity.class, updateDTO);
-
+        deliverySuggestEntity.setSourceId(old.getSourceId());
         // 数据处理
         handleData(deliverySuggestEntity);
         log.info("编辑 开始修改补货计划数据，单号：【{}】", old.getCode());

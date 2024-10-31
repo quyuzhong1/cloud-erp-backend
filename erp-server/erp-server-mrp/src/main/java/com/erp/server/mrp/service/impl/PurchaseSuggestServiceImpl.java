@@ -144,6 +144,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (viewDTO.getIsSplit()) {
             throw new ServiceException("已开启集中采购策略，不支持编辑");
         }
+        purchaseSuggestEntity.setSourceId(old.getSourceId());
         // 数据处理
         handleData(purchaseSuggestEntity);
         log.info("编辑 开始修改建议采购数据，单号：【{}】", old.getCode());
