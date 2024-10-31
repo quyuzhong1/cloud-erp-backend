@@ -247,6 +247,26 @@ public class DeliverySuggestDTO implements Serializable {
          * 父级id
          */
         private String parentId;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
+         * 创建人
+         */
+        private String createTime;
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private String updateTime;
     }
 
 
