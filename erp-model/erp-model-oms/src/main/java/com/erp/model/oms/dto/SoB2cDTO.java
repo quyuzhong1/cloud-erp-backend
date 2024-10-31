@@ -591,6 +591,16 @@ public class SoB2cDTO implements Serializable {
          * 标签
          */
         private Boolean tag;
+
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
     }
 
     @Data
@@ -798,6 +808,16 @@ public class SoB2cDTO implements Serializable {
          * 申报信息
          */
         private List<SoB2cDeclareProductDTO.ViewDTO> declareProductList;
+
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
     }
 
     /**
@@ -1029,6 +1049,11 @@ public class SoB2cDTO implements Serializable {
          */
         private SoB2cOptionTypeEnum operateType;
 
+        /**
+         * 合并--所有子订单的平台订单编号合并，使用逗号隔开
+         * 其余情况--为空
+         */
+        private String mergePlatformCode;
     }
 
 

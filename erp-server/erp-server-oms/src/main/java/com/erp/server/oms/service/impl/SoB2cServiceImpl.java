@@ -2681,6 +2681,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             remark = StrUtil.format("订单【{}】合并新订单,平台订单号【{}】 ", codes, platformCodeListStr);
         }
         addDTO.setRemark(remark);
+        addDTO.setMergePlatformCode(platformCodeListStr);
         addDTO.setDetailList(detailList);
         log.info("新增合并后的B2C销售订单，addDTO = {}", addDTO);
         //新增数据
@@ -2777,7 +2778,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 logisticsChannelName = channelEntity.getName();
             }
         }
-
         List<LogisticsSaleChannelEntity> list = FeignQuery.list(FeignQuery.create(LogisticsSaleChannelEntity.class)
                 .eq(LogisticsSaleChannelEntity::getCode, logisticsChannelId)
         );
@@ -2816,6 +2816,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isNotEmpty(soB2cRefCategoryList)) {
             List<String> categoryIdList = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryId).distinct().collect(Collectors.toList());
             data.setCategoryIdList(categoryIdList);
+        }
+        //发货单--提交发货时间、面单打印时间
+//        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(id)).stream()
+//                .sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime).reversed())//降序
+//                .collect(Collectors.toList());;
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = FeignQuery.create(SoB2cDeliveryEntity.class)
+                .eq(SoB2cDeliveryEntity::getId, id)
+                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
+                .last("order by create_time desc")
+                .list();
+        if(CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
+            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.get(0);
+            data.setFinishPrintTime(soB2cDeliveryEntity.getFinishPrintTime());
+            data.setCreateDeliveryTime(soB2cDeliveryEntity.getCreateTime());
         }
 
         //明细

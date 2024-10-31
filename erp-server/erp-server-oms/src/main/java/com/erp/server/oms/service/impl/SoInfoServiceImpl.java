@@ -675,6 +675,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String,String> countryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(countryList)){
+            countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
+        }
+
         //有效发货通知单
         List<String> sodIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
@@ -744,11 +749,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setTrackNoList(trackNoList);
             item.setTrackNoStr(trackNoList.stream().collect(Collectors.joining(",")));
             //国家
-            if (CollectionUtils.isNotEmpty(countryList)) {
-                String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                item.setCountryName(countryName);
-            }
-
+            item.setCountryName(countryMap.get(item.getCountryId()));
             //实体仓名称
             String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
             item.setWarehouseName(warehouseName);
@@ -1132,6 +1133,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         String customerId = dto.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {
+            String oldCustomerId = soInfo.getCustomerId();
+            if(StringUtils.isNotBlank(oldCustomerId) && !customerId.equals(oldCustomerId)) {
+                //判断是否已下推发货通知单，是则客户不允许修改
+                String soId = soInfo.getId();
+                Map<String, Long> pushDownMap = soDeliveryNoticeFeign.getPushDownDeliveryNoticeCnt(Lists.newArrayList(soId));
+                if (CollUtil.isNotEmpty(pushDownMap)
+                        && pushDownMap.containsKey(soId)
+                        && pushDownMap.get(soId) > 0) {
+                    throw new ServiceException("已下推发货通知单冻结库存，客户不允许修改，请删除发货通知单后修改");
+                }
+            }
             customerInfoService.quoteCustomer(Arrays.asList(customerId));
         }
         String code = soInfo.getCode();
