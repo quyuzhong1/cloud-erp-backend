@@ -60,10 +60,11 @@
         sod.warehouse_location AS warehouseLocation,
         so.packing_status,
         so.logistics_channel_id,
-        so.logistics_channel_name
+        so.logistics_channel_name,
+        sbc.dict_platform
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod
-        ON so.id=sod.main_id AND sod.is_deleted=FALSE
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
+        LEFT JOIN so_b2c sbc ON so.so_id = sbc.id AND sbc.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         and  so.is_deleted=FALSE
@@ -128,14 +129,14 @@
             sod.exchange_rate as exchangeRate,
             sod.so_detail_id as soDetailId,
            sod.source_detail_id AS sourceDetailId,
-           sod.warehouse_location AS warehouseLocation
+           sod.warehouse_location AS warehouseLocation,
+            sbc.dict_platform
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod
-        ON so.id=sod.main_id AND  sod.is_deleted=FALSE
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND  sod.is_deleted=FALSE
+        LEFT JOIN so_b2c sbc ON so.so_id = sbc.id AND sbc.is_deleted = FALSE
         WHERE
             ${params.sqlMap.default}
           and so.is_deleted=FALSE
-
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -316,8 +317,8 @@
             sum(sod.plan_qty) as planTotalQty,
             sum(sod.all_amount_local_currency) as totalTaxAmount
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod
-        ON so.id = sod.main_id AND sod.is_deleted = FALSE
+        INNER JOIN so_outstock_detail sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
+        LEFT JOIN so_b2c sbc ON so.so_id = sbc.id AND sbc.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
            and so.is_deleted = FALSE
