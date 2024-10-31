@@ -48,6 +48,10 @@ public enum AmazonReportRecordTypeEnum {
     GET_LEDGER_DETAIL_VIEW_DATA("GET_LEDGER_DETAIL_VIEW_DATA", "亚马逊物流库存账本详情报告", false, AmazonReportMongoInfoEnum.LEDGER_DETAIL_VIEW_DATA_MONGO_INFO),
 
     GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL","亚马逊物流销售报告",true, AmazonReportMongoInfoEnum.AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL_MONGO_INFO)
+
+    // 亚马逊退货
+
+
     ;
 
     /**
