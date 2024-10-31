@@ -40,6 +40,7 @@
         sod.is_close,
         sod.remark,
         sod.source_detail_id,
+        sod.so_detail_id,
         so.approve_status,
         so.invalid_status,
         so.so_id

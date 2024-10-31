@@ -1,5 +1,7 @@
 package com.sdk.oms.shopify.api.rest;
 
+import cn.hutool.json.JSONNull;
+import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.rholder.retry.*;
@@ -766,7 +768,7 @@ public class ShopifyRestClient {
             log.info("Retrieved {} orders from page {}", shopifyOrderPage.size(), shopifyOrderPage.getNextPageInfo());
             resultOrderList.addAll(shopifyOrderPage);
         }
-        return resultOrderList;
+         return resultOrderList;
     }
 
 
@@ -1531,6 +1533,17 @@ public class ShopifyRestClient {
     public ShopifyFulfillmentServicesRoot getFulfillmentServices() {
         Response response = get(getWebTarget().path(FULFILLMENT_SERVICES.concat(JSON)).queryParam(SCOPE, ALL));
         return response.readEntity(ShopifyFulfillmentServicesRoot.class);
+    }
+
+    /**
+     * @param orderId
+     * @return List<ShopifyTransaction>
+     */
+    public String getOrderRefunds(final String orderId) {
+        final Response response = get(buildOrdersEndpoint().path(orderId).path(REFUNDS.concat(JSON)));
+        return JSONUtil.toJsonStr(response);
+//        final ShopifyTransactionsRoot shopifyTransactionsRootResponse = response.readEntity(ShopifyTransactionsRoot.class);
+//        return shopifyTransactionsRootResponse.getTransactions();
     }
 
 }

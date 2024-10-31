@@ -613,7 +613,6 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
             entity.setCurrency(viewDTO.getCurrency());
             entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
-            entity.setPrice(viewDTO.getTaxPrice());
             entity.setTaxRate(viewDTO.getTaxRate());
             entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
         }

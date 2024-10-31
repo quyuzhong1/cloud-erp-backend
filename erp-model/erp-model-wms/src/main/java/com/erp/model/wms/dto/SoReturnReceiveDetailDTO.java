@@ -49,6 +49,11 @@ public class SoReturnReceiveDetailDTO implements Serializable {
         private String sourceDetailId;
 
         /**
+         * 通知单明细id
+         */
+        private String noticeDetailId;
+
+        /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货
          */

@@ -21,4 +21,13 @@ public interface DmpAmzReportInfoService extends SuperService<DmpAmzReportInfoEn
      */
 
     DmpAmzReportInfoEntity getByReportId(String reportId, String processingStatus);
+
+
+    /**
+     * 查询当前数据结束时间最新报告
+     *
+     * @author Jim
+     * @date: 2024-01-19
+     */
+    DmpAmzReportInfoEntity getOneByNewEndDate(String reportType);
 }

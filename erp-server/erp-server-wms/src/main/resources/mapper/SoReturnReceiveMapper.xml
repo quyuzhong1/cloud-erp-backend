@@ -8,6 +8,7 @@
             srr.source_id AS sourceId,
             srrd.source_detail_id AS sourceDetailId,
             srr.code,
+        srr.type,
             srr.source_code AS sourceCode,
             srr.so_code AS soCode,
             srr.customer_id AS customerId,

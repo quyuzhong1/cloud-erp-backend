@@ -109,6 +109,8 @@ public enum ModuleTypeEnum {
     COST_ALLOCATION("96", "费用分摊"),
     PILOT_APPLICATION("97", "试产量产单"),
     DELIVERY_NOTICE_CHANGE("98", "发货通知变更单"),
+    SO_B2C_RETURN("98", "b2c退货单"),
+    REFUND_ORDER("99", "退款单"),
     ;
 
 

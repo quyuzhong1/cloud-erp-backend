@@ -49,6 +49,8 @@ public class ListingInfoParamDTO {
      */
     private String platform;
 
+    private String authId;
+
     /**
      * 匹配结果吧true 已匹配 false 未匹配
      */
