@@ -23,7 +23,7 @@
        <result column="purchase_cost" property="purchaseCost" />
        <result column="invalid_status" property="invalidStatus" />
        <result column="invalid_remark" property="invalidRemark" />
-       <result column="source_id_json" property="sourceIdJson" />
+       <result column="source_id_json" property="sourceIdJson" jdbcType="OTHER"  typeHandler="com.erp.server.mrp.handler.ObjectJsonArrayHandler" />
        <result column="source_type" property="sourceType" />
        <result column="currency" property="currency" />
        <result column="platform_type" property="platformType" />

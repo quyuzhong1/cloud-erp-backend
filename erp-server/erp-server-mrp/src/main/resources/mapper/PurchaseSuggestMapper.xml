@@ -131,7 +131,12 @@
         left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
         <where>
             ps.is_deleted = false and ps.status = 'draft'
-            and ps not in (select jsonb_array_elements(psm.source_id_json) from purchase_suggest_merge psm where psm.is_deleted = false )
+            AND NOT EXISTS (
+                SELECT 1
+                FROM purchase_suggest_merge psm
+                WHERE psm.is_deleted = FALSE
+                AND ps.id = ANY (SELECT jsonb_array_elements_text(psm.source_id_json)::text)
+            );
         </where>
     </select>
 

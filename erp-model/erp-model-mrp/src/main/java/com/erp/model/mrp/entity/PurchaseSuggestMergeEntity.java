@@ -1,11 +1,13 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -84,8 +86,8 @@ public class PurchaseSuggestMergeEntity extends BaseEntity<PurchaseSuggestMergeE
     /**
     * 来源idJsonArray
     */
-    @TableField("source_id_json")
-    private String sourceIdJson;
+    @TableField(value = "source_id_json", jdbcType = JdbcType.OTHER)
+    private JSONArray sourceIdJson;
     /**
     * 来源类型
     */

@@ -24,6 +24,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.dto.FileExcelDTO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -588,7 +589,12 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("补货建议不能为空");
         }
-        BeanMapperUtils.copy(entity,deliverySuggestEntity);
+        deliverySuggestEntity.setSkuId(entity.getSkuId());
+        deliverySuggestEntity.setCountry(entity.getCountry());
+        deliverySuggestEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+        deliverySuggestEntity.setShopId(entity.getShopId());
+        deliverySuggestEntity.setPlatformType(entity.getPlatformType());
+        deliverySuggestEntity.setPlatform(entity.getPlatform());
     }
 
 
