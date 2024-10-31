@@ -1389,6 +1389,7 @@ public enum ApiError implements Serializable {
     ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
+    ERROR_92154(92154,"销售订单【{}】只能在待提交和审核不通过状态更换发货SKU"),
     ADMIN(92154,"admin"),
     ERROR_92155(92155,"b2b客户销售员变更单" ),
     ERROR_92156(92156,"状态由[%s]变更为[%s]"),

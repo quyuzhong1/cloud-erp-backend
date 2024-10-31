@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.Idempotent;
@@ -13,6 +14,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
@@ -23,6 +25,8 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -64,6 +68,8 @@ public class SoB2cController extends BaseController {
 
     @Resource
     private SoB2cDetailService soB2cDetailService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
     /**
      * 获取状态统计
      *

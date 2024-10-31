@@ -577,6 +577,14 @@ public class SoB2cDTO implements Serializable {
          * 是否地址修改 true 是  false 否
          */
         private Boolean isChangeReceiverAddress;
+        /**
+         * 是否更换sku true 是  false 否
+         */
+        private Boolean isChangeSku;
+        /**
+         * 是否标记不出库发货 true 是  false 否
+         */
+        private Boolean isNotOutbound;
 
         /**
          * 标签
@@ -2801,6 +2809,14 @@ public class SoB2cDTO implements Serializable {
          * 销售出库时间
          */
         private LocalDate soOutStockTime;
+        /**
+         * 订单标签集合
+         */
+        private String labelOrderList;
+        /**
+         * 明细标签集合
+         */
+        private String labelDetailList;
 
         /**
          * 提交发货时间
@@ -3028,5 +3044,54 @@ public class SoB2cDTO implements Serializable {
          */
         private String bomVersion;
     }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ChangeDeliverySkuViewDTO {
 
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String code;
+        /**
+         * 明细ID
+         */
+        @NotBlank(message = "明细ID不能为空")
+        private String detailId;
+
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * spuNo
+         */
+        private String spuNo;
+        /**
+         * spu名称
+         */
+        private String spuName;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 更换skuId
+         */
+        private String changeSkuId;
+        /**
+         * 更换skuNo
+         */
+        private String changeSkuNo;
+    }
 }
