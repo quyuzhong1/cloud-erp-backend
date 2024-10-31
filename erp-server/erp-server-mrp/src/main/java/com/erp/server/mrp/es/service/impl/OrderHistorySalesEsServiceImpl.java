@@ -5,9 +5,19 @@ import com.erp.model.mrp.enums.FbaOrderTypeEnum;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OrderHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.ReactiveElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -17,6 +27,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +35,8 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
 
     @Resource
     private OrderHistorySalesEsRepository orderHistorySalesEsRepository;
+    @Resource
+    private ElasticsearchRestTemplate elasticsearchRestTemplate;
 
 
     @Override
@@ -83,6 +96,22 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
         List<OrderHistorySalesEsEntity> historySales = getOrderHistorySales(suggestionIdList, orderType, startDate, endDate);
         return historySales.stream()
                 .map(v -> ReplenishmentResultDTO.SalesHistoryDTO.buildSalesHistory(v.getReplenishmentId(), v.getDate(), v.getOriginalSalesQty()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrderHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType) {
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("replenishmentId", suggestionIds))
+                .must(QueryBuilders.existsQuery("originalSalesQty"));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withPageable(PageRequest.of(0, 10000))
+                .withSort(SortBuilders.fieldSort("date").order(SortOrder.DESC))
+                .build();
+        return elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class)
+                .stream()
+                .map(SearchHit::getContent)
                 .collect(Collectors.toList());
     }
 }

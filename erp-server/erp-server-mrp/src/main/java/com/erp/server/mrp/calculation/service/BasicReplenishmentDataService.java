@@ -205,7 +205,6 @@ public class BasicReplenishmentDataService {
 
                         //获取仓库配置
                         getCfgRuleCommon(entity, cfgRuleStrategy, dto);
-                        // todo 海外仓备货存在问题
                         //获取备货配置
                         List<CfgRuleStockingRatioEntity> defaultStockingRatio = defaultStockingRatioList.stream()
                                 .filter(v -> v.getStockUpId().equals(defaultStockUp.getId()))

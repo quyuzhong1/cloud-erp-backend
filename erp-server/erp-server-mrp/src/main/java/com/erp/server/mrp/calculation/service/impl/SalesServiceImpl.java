@@ -10,6 +10,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.SnapshotTableEnum.*;
 
@@ -34,14 +35,18 @@ public class SalesServiceImpl implements SalesService {
 
 
     @Override
-    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySob2c(String calcDate, String orderType, List<String> channelIdList, List<String> platforms) {
+    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySob2c(LocalDate calculationDate, Integer cleanDay, List<String> channelIdList, List<String> platforms) {
+        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+        List<String> soIds = salesMapper.listIdByChannel(channelIdList, getTableName(SO_B2C_LOGISTICS, calcDate));
         return salesMapper.listAllOverseasSalesBySob2c(SnapshotTableEnum.getTableName(SO_B2C, calcDate), SnapshotTableEnum.getTableName(SO_B2C_DETAIL, calcDate),
-                LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(361), orderType, channelIdList, platforms);
+                calculationDate.minusDays(cleanDay), calculationDate.minusDays(1), soIds, platforms);
     }
 
     @Override
-    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySoOutStock(String calcDate, String orderType, List<String> channelIdList, List<String> platforms) {
-        return salesMapper.listAllOverseasSalesBySoOutStock(SnapshotTableEnum.getTableName(SO_OUT_STOCK, calcDate), SnapshotTableEnum.getTableName(SO_OUT_STOCK_DETAIL, calcDate), SnapshotTableEnum.getTableName(SO_B2C, calcDate),
-                LocalDate.parse(calcDate, DateTimeFormatter.BASIC_ISO_DATE).minusDays(361), orderType, channelIdList, platforms);
+    public List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySoOutStock(LocalDate calculationDate, Integer cleanDay, List<String> channelIdList, List<String> platforms) {
+        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+        List<String> soIds = salesMapper.listIdByChannel(channelIdList, getTableName(SO_B2C_LOGISTICS, calcDate));
+        return salesMapper.listAllOverseasSalesBySoOutStock(getTableName(SO_OUT_STOCK, calcDate), getTableName(SO_OUT_STOCK_DETAIL, calcDate), getTableName(SO_B2C, calcDate),
+                calculationDate.minusDays(cleanDay), calculationDate.minusDays(1), soIds, platforms);
     }
 }

@@ -145,12 +145,16 @@
             </if>
         </if>
     </select>
-    <select id="getOverseasUsable" resultType="java.lang.Integer">
-        select COALESCE(sum(${code}), 0)
-        from ${tableName}
-        where is_deleted = false
-          and sku_id = #{result.replenishment.skuId}
-          and warehouse_id = #{result.replenishment.fbaWarehouseId}
+    <select id="getOverseasUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+        SELECT COALESCE(sum(${code}), 0) AS qty,
+               opw.warehouse_id AS warehouseId
+        FROM ${tableName} AS oi
+                 LEFT JOIN ${otherTableName} AS opw ON opw.platform_warehouse_code = oi.warehouse_code
+        WHERE oi.is_deleted = FALSE
+          AND opw.disabled = FALSE
+          AND oi.sku_id = #{result.replenishment.skuId}
+          AND oi.warehouse_id = #{result.replenishment.fbaWarehouseId}
+        GROUP BY opw.warehouse_id
     </select>
 
     <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
@@ -516,6 +520,56 @@
                 </foreach>
             </if>
         </if>
+    </select>
+    <select id="getOverseasDelivery"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$OverseasInTransitDetailDTO">
+        SELECT fmd.ID                AS deliveryPlanId,
+               fmd.code              AS deliveryPlanCode,
+               fmd.approve_status    AS status,
+               fmd.approve_time      AS deliveryDate,
+               fmdd.delivery_qty     AS deliveryQty,
+               COALESCE(
+                       (SELECT SUM
+                               (owid.receive_qty)
+                        FROM ${otherTableName} owi
+                                 INNER JOIN ${otherTableDetailName} owid ON owid.is_deleted = FALSE
+                            AND owid.main_id = owi.ID
+                            AND owi.is_deleted = FALSE
+                            AND owi.source_id = fmd.ID
+                            AND owid.sku_id = #{result.replenishment.skuId}),
+                       0
+               )                     AS receiveQty,
+               (fmdd.delivery_qty - COALESCE(
+                       (SELECT SUM
+                               (owid.receive_qty)
+                        FROM ${otherTableName} owi
+                                 INNER JOIN ${otherTableDetailName} owid ON owid.is_deleted = FALSE
+                            AND owid.main_id = owi.ID
+                            AND owi.is_deleted = FALSE
+                            AND owi.source_id = fmd.ID
+                            AND owid.sku_id = #{result.replenishment.skuId}), 0)
+                   )                 AS inTransitQty,
+               fmd.dest_warehouse_id AS warehouseId
+        FROM ${tableName} fmd
+                 INNER JOIN ${tableDetailName} fmdd ON fmdd.is_deleted = FALSE
+            AND fmdd.main_id = fmd.ID
+        WHERE fmd.is_deleted = FALSE
+          AND fmdd.sku_id = #{result.replenishment.skuId}
+          AND fmd.approve_status = 'approve'
+          AND fmd.dest_warehouse_id in
+        <foreach collection="result.overseasWarehouseId" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+          AND (fmdd.delivery_qty - COALESCE(
+                (SELECT SUM
+                        (owid.receive_qty)
+                 FROM ${otherTableName} owi
+                          INNER JOIN ${otherTableDetailName} owid ON owid.is_deleted = FALSE
+                     AND owid.main_id = owi.ID
+                     AND owi.is_deleted = FALSE
+                     AND owi.source_id = fmd.ID
+                     AND owid.sku_id = #{result.replenishment.skuId}), 0)
+            ) > 0
     </select>
 
 </mapper>

@@ -2,12 +2,21 @@ package com.erp.server.mrp.es.service.impl;
 
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.FbaOrderTypeEnum;
+import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OutStockHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
@@ -16,6 +25,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +33,8 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
 
     @Resource
     private OutStockHistorySalesEsRepository outStockHistorySalesEsRepository;
+    @Resource
+    private ElasticsearchRestTemplate elasticsearchRestTemplate;
 
     @Override
     public Page<OutStockHistorySalesEsEntity> findByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate, Pageable pageable) {
@@ -46,6 +58,7 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
 
     /**
      * 查询历史数据
+     *
      * @param replenishmentIds 建议id
      * @param orderType        销量类型
      * @param startDate        开始日期
@@ -80,6 +93,22 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
         List<OutStockHistorySalesEsEntity> historySales = getOutStockHistorySales(suggestionIdList, orderType, startDate, endDate);
         return historySales.stream()
                 .map(v -> ReplenishmentResultDTO.SalesHistoryDTO.buildSalesHistory(v.getReplenishmentId(), v.getDate(), v.getOriginalSalesQty()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OutStockHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType) {
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("replenishmentId", suggestionIds))
+                .must(QueryBuilders.existsQuery("originalSalesQty"));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withPageable(PageRequest.of(0, 10000))
+                .withSort(SortBuilders.fieldSort("date").order(SortOrder.DESC))
+                .build();
+        return elasticsearchRestTemplate.search(searchQuery, OutStockHistorySalesEsEntity.class)
+                .stream()
+                .map(SearchHit::getContent)
                 .collect(Collectors.toList());
     }
 }

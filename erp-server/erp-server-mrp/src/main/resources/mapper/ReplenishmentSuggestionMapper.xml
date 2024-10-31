@@ -158,37 +158,7 @@
             </foreach>
         </where>
     </select>
-    <select id="getSalesByShopIds" resultType="com.erp.model.mrp.dto.LocalInventoryDTO$ShopSalesDTO">
 
-        SELECT
-        rs.shop_id AS shopId,
-        COALESCE (
-        (
-        SELECT
-        si.original_sales_qty
-        FROM
-        sales_info AS si
-        WHERE
-        si.is_deleted = FALSE
-        AND rsd.id = si.replenishment_detail_id
-        AND si.original_sales_qty != 0
-        ORDER BY
-        si.date DESC
-        LIMIT 1
-        ),
-        0
-        ) AS qty
-        FROM
-        replenishment_suggestion AS rs
-        INNER JOIN replenishment_suggestion_detail AS rsd ON rsd.is_deleted = FALSE
-        AND rsd.main_id = rs.id
-        WHERE
-        rs.sku_id = #{skuId}
-        AND rs.shop_id in
-        <foreach collection="shopIds" item="shopId" open="(" close=")" separator=",">
-            #{shopId}
-        </foreach>
-    </select>
     <select id="listAllCalculationData" resultType="com.erp.model.mrp.entity.ReplenishmentSuggestionEntity">
         select rs.id,
                rs.platform_type,
