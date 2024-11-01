@@ -364,12 +364,25 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     addDetailList.add(addDetail);
                 }
             }
+            List<String> initSkuList = originDetailList.stream().map(SoB2cDetailEntity::getInitSkuId).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+            resetIsChangeSkuFlag(initSkuList,soB2cEntity);
             // 操作日志
             String msg = StrUtil.format("用户【{}】操作还原捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "还原捆绑拆分");
         }
         service.batchHandleTransaction(removeDetailIds,addDetailList,revertDetailIds);
         return batchResultDTOList;
+    }
+
+    private void resetIsChangeSkuFlag(List<String> initSkuList, SoB2cEntity soB2cEntity) {
+        if (Objects.nonNull(soB2cEntity.getIsChangeSku()) && soB2cEntity.getIsChangeSku() && CollectionUtils.isEmpty(initSkuList)){
+            //订单存在更换sku标识，还原拆分订单时 还原订单状态
+            soB2cService.updateIsChangeSku(Collections.singletonList(soB2cEntity.getId()), Boolean.FALSE);
+        }
+        if (Objects.nonNull(soB2cEntity.getIsChangeSku()) && !soB2cEntity.getIsChangeSku() && CollectionUtils.isNotEmpty(initSkuList)){
+            //订单不存在更换sku标识，还原拆分订单时 子订单存在更换记录
+            soB2cService.updateIsChangeSku(Collections.singletonList(soB2cEntity.getId()), Boolean.TRUE);
+        }
     }
 
     @Override
