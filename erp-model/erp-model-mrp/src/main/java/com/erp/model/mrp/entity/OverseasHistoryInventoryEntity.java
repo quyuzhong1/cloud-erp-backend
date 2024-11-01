@@ -139,6 +139,12 @@ public class OverseasHistoryInventoryEntity extends BaseEntity<OverseasHistoryIn
     @TableField("bill_date")
     private LocalDate billDate;
 
+    /**
+     * 仓库id
+     */
+    @TableField(exist = false)
+    private String warehouseId;
+
 
     public static final String WAREHOUSE_CODE = "warehouse_code";
 

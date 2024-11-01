@@ -3,10 +3,7 @@ package com.erp.server.mrp.calculation.strategy.platform;
 import com.common.business.enums.OmsPlatformEnum;
 import com.erp.model.mrp.dto.FbaHistoryInventoryGroupDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
-import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
-import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
+import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.OverseasOrderTypeEnum;
 import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
@@ -58,10 +55,13 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
 
 
     @Override
-    protected List<HistoryInventoryEsEntity> getHistoryInventory(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay) {
+    protected List<HistoryInventoryEsEntity> getHistoryInventory(List<ReplenishmentSuggestionEntity> suggestions, LocalDate startDate, LocalDate endDate) {
+        List<OverseasHistoryInventoryEntity>overseasHistoryInventoryList = overseasHistoryInventoryService.listByStartDateAndEndDate(startDate, endDate);
+
+
+
         return null;
     }
-
 
     @Override
     protected List<ReplenishmentResultDTO.SalesInfoAllDTO> getSalesInfoByOrderData(LocalDate calculationDate, Integer cleanDay) {

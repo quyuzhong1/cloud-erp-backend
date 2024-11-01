@@ -38,4 +38,12 @@ public interface OverseasHistoryInventoryService extends SuperService<OverseasHi
      * @param dto 导出参数
      */
     void exportList(OverseasHistoryInventoryDTO.ExportDTO dto);
+
+    /**
+     *
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    List<OverseasHistoryInventoryEntity> listByStartDateAndEndDate(LocalDate startDate, LocalDate endDate);
 }

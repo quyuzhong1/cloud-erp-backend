@@ -44,14 +44,11 @@ public class AmazonCalculationStrategy extends AbstractCalculationStrategy {
     }
 
     @Override
-    protected List<HistoryInventoryEsEntity> getHistoryInventory(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay) {
-        LocalDate startDate = calculationDate.minusDays(cleanDay);
-        LocalDate endDate = calculationDate.minusDays(1);
+    protected List<HistoryInventoryEsEntity> getHistoryInventory(List<ReplenishmentSuggestionEntity> suggestions, LocalDate startDate, LocalDate endDate) {
         List<FbaHistoryInventoryEntity> list = fbaHistoryInventoryService.listByStartDateAndEndDate(startDate, endDate);
         Map<FbaHistoryInventoryGroupDTO, Set<String>> suggestionMap = suggestions.stream()
                 .collect(Collectors.groupingBy(FbaHistoryInventoryGroupDTO::buildFbaHistoryInventoryGroup, Collectors.mapping(ReplenishmentSuggestionEntity::getId, Collectors.toSet())));
-
-        Map<FbaHistoryInventoryGroupDTO, List<FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO>> fbaInventoryMap = getFbaInventoryMap(list);
+        Map<FbaHistoryInventoryGroupDTO, Map<LocalDate, Integer>> fbaInventoryMap = getFbaInventoryMap(list);
         return getCaleHistoryInventory(fbaInventoryMap, suggestionMap);
     }
 
@@ -62,6 +59,7 @@ public class AmazonCalculationStrategy extends AbstractCalculationStrategy {
 
     /**
      * 以sku和仓库id为维度，合并对应建议与fba历史库存
+     *
      * @param fbaInventoryMap fba历史库存
      * @param suggestionMap   建议
      */
@@ -92,6 +90,7 @@ public class AmazonCalculationStrategy extends AbstractCalculationStrategy {
 
     /**
      * 分组合并Fba历史库存
+     *
      * @param list fba历史库存
      */
     private static Map<FbaHistoryInventoryGroupDTO, Map<LocalDate, Integer>> getFbaInventoryMap(List<FbaHistoryInventoryEntity> list) {

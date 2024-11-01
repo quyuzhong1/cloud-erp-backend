@@ -2,6 +2,7 @@ package com.erp.server.mrp.calculation.strategy.platform;
 
 
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
+import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.server.mrp.es.entity.HistoryInventoryEsEntity;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
@@ -39,28 +40,20 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
     public void cleanHistoryInventory(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay) {
         LocalDate startDate = calculationDate.minusDays(cleanDay);
         LocalDate endDate = calculationDate.minusDays(1);
-        List<HistoryInventoryEsEntity> caleHistoryInventory = getHistoryInventory(calculationDate, suggestions, cleanDay);
         List<String> suggestionIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
-        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
-        CompletableFuture.allOf(partition.stream()
-                .map(suggestionList -> CompletableFuture.runAsync(() -> {
-                    List<HistoryInventoryEsEntity> updateList = new ArrayList<>();
-                    List<HistoryInventoryEsEntity> historyInventoryList = new ArrayList<>();
-                    List<String> deleteIds = new ArrayList<>();
-                    int page = 0;
-                    Page<HistoryInventoryEsEntity> historyInventoryEsEntities;
-                    do {
-                        historyInventoryEsEntities = historyInventoryEsService.findByReplenishmentIdInAndDateBetween(suggestionList, startDate, endDate, PageRequest.of(page, 10000));
-                        historyInventoryList.addAll(historyInventoryEsEntities.toList());
-                        page++;
-                    } while (!historyInventoryEsEntities.isLast());
-                    processContent(historyInventoryList, caleHistoryInventory, updateList, deleteIds);
-                    historyInventoryEsService.saveAll(updateList);
-                    historyInventoryEsService.deleteByIdIn(deleteIds);
-                }, threadPoolTaskExecutor)).toArray(CompletableFuture[]::new)).join();
+        //删除原数据
+        historyInventoryEsService.deleteBySuggestionIdsAndDate(suggestionIds, startDate, endDate);
+        List<HistoryInventoryEsEntity> caleHistoryInventory = getHistoryInventory(suggestions, startDate, endDate);
+        historyInventoryEsService.saveAll(caleHistoryInventory);
     }
 
-    protected abstract List<HistoryInventoryEsEntity> getHistoryInventory(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay);
+    /***
+     * 获取需要保存的数据
+     * @param suggestions 建议
+     * @param startDate   开始时间
+     * @param endDate     结束时间
+     */
+    protected abstract List<HistoryInventoryEsEntity> getHistoryInventory(List<ReplenishmentSuggestionEntity> suggestions, LocalDate startDate, LocalDate endDate);
 
 
     /**
