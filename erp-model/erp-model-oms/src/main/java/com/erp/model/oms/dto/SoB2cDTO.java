@@ -134,6 +134,11 @@ public class SoB2cDTO implements Serializable {
          */
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
+        /**
+         * 实际发货仓库
+         */
+        @NotEmpty(message = "实际发货仓库不能为空")
+        private String warehouseId;
 
         /**
          * 平台是否标发
