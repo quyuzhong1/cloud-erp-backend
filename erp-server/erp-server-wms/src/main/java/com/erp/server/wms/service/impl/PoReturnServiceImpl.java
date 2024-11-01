@@ -883,6 +883,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (!PurchaseOrderTypeEnum.ENUM_SUBCONTRACT.getCode().equals(purchaseOrderEntity.getType()) || !SubcontractTypeEnum.ENUM_PARENT.getCode().equals(purchaseOrderEntity.getSubcontractType())){
             return null;
         }
+        //质检退货类型退货单无需自动生成
+        if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
+            return null;
+        }
+
         //查询委外订单记录
         String sourceId = purchaseOrderEntity.getSourceId();
         //全部采购订单记录
@@ -1026,7 +1031,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         returnAddDTO.setPurchaseUserId(orderEntity.getPurchaseUserId());
         returnAddDTO.setReturnUserId(userInfo.getUid());
         returnAddDTO.setSourceId(entity.getId());
-        returnAddDTO.setSourceType(entity.getSourceType());
+        returnAddDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
         returnAddDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
         returnAddDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
         //明细
@@ -1061,8 +1066,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
             PurchaseReturnOrderDetailDTO.AddDTO dto = new PurchaseReturnOrderDetailDTO.AddDTO();
             dto.setCurrency(detail.getCurrency());
-            //质检退货不存仓位
-            dto.setWarehouseLocation(StrUtil.equals(returnAddDTO.getSourceType(),SourceTypeEnum.QC_INFO.getCode()) ? "" : detail.getWarehouseLocation());
+            dto.setWarehouseLocation(detail.getWarehouseLocation());
             dto.setReturnPrice(detail.getTaxPrice());
             dto.setReturnQty(poReturnDetailEntity.getReturnQty() * quantity);
             dto.setCurrencySymbol(detail.getCurrencySymbol());

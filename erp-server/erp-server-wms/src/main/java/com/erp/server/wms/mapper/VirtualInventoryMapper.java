@@ -61,15 +61,6 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @return IPage<ListDTO>
      */
     IPage<VirtualInventoryDiffDTO.ListDTO> diffPaging(Page query,@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
-    /**
-     * 根据sku集合和仓库集合查询
-     * @author will
-     * @date 2024/10/29 14:46
-     * @param skuIdList
-     * @param warehouseIdList
-     * @return List<ListDetailQtyDTO>
-     */
-    List<VirtualInventoryDiffDTO.ListDetailQtyDTO> listAllDiffDetail(@Param("skuIdList")List<String> skuIdList, @Param("warehouseIdList")List<String> warehouseIdList);
 
     /**
      * 库存差异数量

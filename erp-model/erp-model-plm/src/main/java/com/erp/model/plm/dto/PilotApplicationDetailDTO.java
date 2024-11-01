@@ -42,6 +42,8 @@ public class PilotApplicationDetailDTO implements Serializable {
         */
         private String type;
 
+        private String typeName;
+
         private String skuId;
 
         private String skuNo;

@@ -277,31 +277,6 @@
         vi.virtual_warehouse_id
     </select>
 
-    <!-- 根据sku集合和仓库集合查询 -->
-    <select id="listAllDiffDetail" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDetailQtyDTO">
-        select
-            vi.sku_id as skuId,
-            vi.warehouse_id as warehouseId,
-            vi.virtual_warehouse_id as virtualWarehouseId,
-            COALESCE(sum(vi.qty),0) as virtualQty,
-            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as virtualUsableQty,
-            (select COALESCE(sum(qty),0) from virtual_inventory where is_deleted = false and virtual_warehouse_id = vi.virtual_warehouse_id and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as virtualFrozenQty
-        from virtual_inventory vi
-        <where>
-            vi.is_deleted = false
-            and vi.sku_id in
-             <foreach collection="skuIdList" open="(" close=")" separator="," item="item">
-                 #{item}
-             </foreach>
-              and vi.warehouse_id in
-              <foreach collection="warehouseIdList" open="(" close=")" item="item" separator=",">
-                    #{item}
-              </foreach>
-        </where>
-        group by vi.virtual_warehouse_id,vi.sku_id,vi.warehouse_id
-        order by vi.virtual_warehouse_id
-    </select>
-
     <!-- 虚拟库存数据 -->
     <select id="listDiffExportData" resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$ListDiffExportDataDTO">
         select

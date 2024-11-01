@@ -55,14 +55,28 @@
                  LEFT JOIN logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
         where
             lb.id = logistics_bill_detail.main_id
-          and logistics_bill_detail.is_deleted = false
-          and lc.track_query_type = 'transportNo'
+          and logistics_bill_detail.is_deleted = false and logistics_bill_detail.track_status != #{trackStatus}
           <if test="trackNoList != null and trackNoList.size > 0">
               and lb.transport_no in
               <foreach collection="trackNoList" item="item" open="(" separator="," close=")">
                   #{item}
               </foreach>
           </if>
+    </update>
+    <update id="updateRegisticsStatus">
+        update logistics_bill_detail
+        set
+        register_status = #{status},
+        <if test="platformOrderNo != null and platformOrderNo != ''">
+            platform_order_no = #{platformOrderNo},
+        </if>
+        update_time = NOW()
+        from logistics_bill lb
+        LEFT JOIN logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
+        where lb.id = logistics_bill_detail.main_id
+        and logistics_bill_detail.is_deleted = false
+        and logistics_bill_detail.register_status != #{status}
+        and lb.transport_no = #{transportNo}
     </update>
 
     <select id="getTrackPage" resultMap="BaseResultMap">
@@ -130,8 +144,9 @@
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
         LEFT JOIN logistics_channel lc on lb.channel_id = lc.id and lc.is_deleted = false
         where lbd.track_status not in('sign','manualComplete','systemComplete')
-        and lbd.is_deleted = false and lbd.track_no != ''
-        and lbd.track_time  > CURRENT_DATE - INTERVAL '3 month'
+        and lbd.is_deleted = false
+--         and lbd.track_no != ''
+--         and lbd.track_time  > CURRENT_DATE - INTERVAL '3 month'
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
             and lb.order_type in ('B2B','B2C')
         </if>
@@ -147,7 +162,18 @@
         <if test="query.trackEnable != null">
             and lbd.track_enable = #{query.trackEnable}
         </if>
-        order by lbd.update_time limit 50000
+        <if test="query.trackNoList != null and query.trackNoList.size > 0">
+            and lbd.track_no in
+            <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.transportNoList != null and query.transportNoList.size > 0">
+            and lb.transport_no in
+            <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 
     <!-- 根据平台单和物流跟踪单号查询 -->
