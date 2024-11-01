@@ -43,6 +43,8 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.mrp.calculation.handler.SalesEstimateHandler;
 import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
 import com.erp.server.mrp.es.entity.HistoryInventoryEsEntity;
+import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
+import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.service.HistoryInventoryEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
@@ -928,13 +930,29 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<ReplenishmentSuggestionDTO.SalesDTO> listSalesBySkuId(String skuId) {
-        return null;
-    }
+    public List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(List<String> shopIds, String skuId, CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult) {
+        // 根据店铺加sku查询建议id
+        List<ReplenishmentSuggestionEntity> suggestionList = list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
+                .eq(ReplenishmentSuggestionEntity::getSkuId, skuId)
+                .in(ReplenishmentSuggestionEntity::getShopId, shopIds)
+                .select(ReplenishmentSuggestionEntity::getId)
+                .select(ReplenishmentSuggestionEntity::getShopId)
+        );
+        Map<String, String> suggestionMap = suggestionList.stream().collect(Collectors.toMap(ReplenishmentSuggestionEntity::getId, ReplenishmentSuggestionEntity::getShopId, (o1, o2) -> o1));
+        ;
+        if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyResult.getSalesQtyType())) {
+            List<OrderHistorySalesEsEntity> historySalesList = orderHistorySalesEsService.getRecentSalesBySuggestionIds(suggestionMap.keySet(), salesQtyResult.getOrderType());
+            return historySalesList.stream()
+                    .map(v -> new LocalInventoryDTO.ShopSalesDTO(suggestionMap.get(v.getReplenishmentId()), v.getOriginalSalesQty()))
+                    .collect(Collectors.toList());
+        } else {
+            // 以销售出库单出库时间计算销量
+            List<OutStockHistorySalesEsEntity> historySalesList =  outStockHistorySalesEsService.getRecentSalesBySuggestionIds(suggestionMap.keySet(), salesQtyResult.getOrderType());
+            return historySalesList.stream()
+                    .map(v -> new LocalInventoryDTO.ShopSalesDTO(suggestionMap.get(v.getReplenishmentId()), v.getOriginalSalesQty()))
+                    .collect(Collectors.toList());
+        }
 
-    @Override
-    public List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(List<String> shopIds, String skuId) {
-        return baseMapper.getSalesByShopIds(shopIds, skuId);
     }
 
     @Override

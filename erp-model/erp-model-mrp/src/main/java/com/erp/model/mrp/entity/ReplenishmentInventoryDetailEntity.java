@@ -36,7 +36,11 @@ public class ReplenishmentInventoryDetailEntity extends BaseEntity<Replenishment
      */
     @TableField("inventory_type")
     private String inventoryType;
-
+    /**
+     * 平台
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
     /**
      * 实体仓id
      */

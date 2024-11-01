@@ -64,7 +64,7 @@ public interface InventoryMapper {
     /**
      * 查询海外仓可用库存
      */
-    int getOverseasUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName);
+    List<LocalInventoryDTO> getOverseasUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName, @Param("otherTableName") String otherTableName);
 
     /**
      * 查询本地仓可用库存
@@ -84,7 +84,7 @@ public interface InventoryMapper {
     /**
      * 查询采购单
      */
-    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") Set<String> codes, @Param("skuId") String skuId,  @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") Set<String> codes, @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询采购申请关联
@@ -120,7 +120,6 @@ public interface InventoryMapper {
 
     /**
      * 获取虚拟仓库存
-     *
      */
     List<VirtualInventoryEntity> getAllVirtualHistoryInventory(@Param("tableName") String tableName);
 
@@ -128,6 +127,13 @@ public interface InventoryMapper {
      * 查询补货计划
      */
     List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getReplenishmentPlan(@Param("codes") Set<String> replenishmentPlan,
-                                                                                 @Param("result") ReplenishmentResultDTO replenishmentResultDTO,@Param("tableName") String tableName,
+                                                                                 @Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName,
                                                                                  @Param("otherTableName") String otherTableName, @Param("otherTableDetailName") String otherTableDetailName);
+
+    /**
+     * 查询发货计划
+     */
+    List<ReplenishmentResultDTO.OverseasInTransitDetailDTO> getOverseasDelivery(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName,
+                                                                                @Param("tableDetailName") String tableDetailName, @Param("otherTableName") String otherTableName,
+                                                                                @Param("otherTableDetailName") String otherTableDetailName);
 }

@@ -3,6 +3,7 @@ package com.erp.server.mrp.calculation.strategy;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleSettingEnum;
 import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
@@ -57,7 +58,7 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
             strategyResultDTO.setLocalWarehouseList(localWarehouse);
         }
         //开启了海外仓
-        if (Boolean.TRUE.equals(cfgRuleWarehouse.getIsEnableOverseas())) {
+        if (Boolean.TRUE.equals(cfgRuleWarehouse.getIsEnableOverseas()) || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(strategyDTO.getPlatform())) {
             List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> overseasWarehouse = cfgRuleWarehouseDetailList.stream()
                     .filter(v -> CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(v.getWarehouseType()))
                     .filter(v -> (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && v.getChannelIdJson().contains(strategyDTO.getPlatform()))

@@ -1,5 +1,6 @@
 package com.erp.server.mrp.es.service;
 
+import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface OrderHistorySalesEsService {
 
@@ -52,4 +54,7 @@ public interface OrderHistorySalesEsService {
      * @param endDate          结束日期
      */
     List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, String orderType, LocalDate startDate, LocalDate endDate);
+
+
+    List<OrderHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType);
 }

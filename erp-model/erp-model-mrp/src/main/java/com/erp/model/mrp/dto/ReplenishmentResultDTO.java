@@ -3,6 +3,7 @@ package com.erp.model.mrp.dto;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.mrp.entity.*;
@@ -42,13 +43,25 @@ public class ReplenishmentResultDTO {
      */
     private List<EstimatedDeliveryDetailDTO> fbaDeliveryDetails;
     /**
+     * 海外可用库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> overseasUsableDetail;
+    /**
      * 海外仓在途明细
      */
     private List<OverseasInTransitDetailDTO> overseasInTransitDetails;
     /**
+     * 海外在途库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> overseasInTransitDetail;
+    /**
      * 海外仓到货明细
      */
     private List<EstimatedDeliveryDetailDTO> overseasDeliveryDetails;
+    /**
+     * 海外仓到货库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> overseasDeliveryDetail;
     /**
      * 本地可用库存明细
      */
@@ -1009,6 +1022,11 @@ public class ReplenishmentResultDTO {
          */
         private String sourceType;
 
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
 
         public static EstimatedDeliveryDetailEntity buildEstimatedDeliveryDetail(EstimatedDeliveryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedDeliveryDetailEntity entity = new EstimatedDeliveryDetailEntity();
@@ -1249,6 +1267,10 @@ public class ReplenishmentResultDTO {
          * 关联店铺类型，platform按平台，shop按店铺
          */
         private String channelType;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
 
         /**
          * 店铺id的json
@@ -1283,12 +1305,14 @@ public class ReplenishmentResultDTO {
             entity.setInventoryAllocateType(dto.getInventoryAllocateType());
             entity.setTotalQty(dto.getTotalQty());
             entity.setCalcVersion(calcVersion);
+            entity.setDictPlatform(dto.getDictPlatform());
             return entity;
         }
 
         public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, Integer totalQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
             ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
             dto.setInventoryType(inventoryType);
+            dto.setDictPlatform(result.getDictPlatform());
             dto.setWarehouseId(result.getWarehouseId());
             dto.setVirtualWarehouseId(result.getVirtualWarehouseId());
             dto.setWarehouseType(result.getWarehouseType());

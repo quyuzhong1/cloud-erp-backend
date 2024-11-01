@@ -24,7 +24,7 @@ public interface SalesService {
      * @param channelIdList 海外仓渠道
      * @param platforms 平台
      */
-    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySob2c(String calcDate, String orderType, List<String> channelIdList, List<String> platforms);
+    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySob2c(LocalDate calculationDate, Integer cleanDay, List<String> channelIdList, List<String> platforms);
 
     /**
      * 获取海外仓销量数据
@@ -33,5 +33,5 @@ public interface SalesService {
      * @param channelIdList 海外仓渠道
      * @param platforms 平台
      */
-    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySoOutStock(String calcDate, String orderType, List<String> channelIdList, List<String> platforms);
+    List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySoOutStock(LocalDate calculationDate, Integer cleanDay, List<String> channelIdList, List<String> platforms);
 }

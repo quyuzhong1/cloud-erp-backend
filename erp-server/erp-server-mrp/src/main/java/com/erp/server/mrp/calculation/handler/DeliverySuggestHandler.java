@@ -87,7 +87,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         //建议发货量
                         LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
                         int suggestDeliveryQty = getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now);
-                        int inventory = inventoryService.getInventory(replenishmentResultDTO, calcDate, deliveryVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
+                        int inventory = inventoryService.getInventory(replenishmentResultDTO, calcDate, deliveryVolumeInventory, cfgRuleStrategyDTO.getSalesQtyResult(), cfgRuleStrategyDTO.getWarehouseResult());
                         suggestDTO.setSuggestDeliveryQty(Math.max(0, suggestDeliveryQty - inventory));
                     }
                     if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
@@ -98,7 +98,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setSuggestDeliveryDate(suggestDeliveryDate);
                         //建议发货量
                         LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
-                        int inventory = inventoryService.getInventory(replenishmentResultDTO, calcDate, deliveryVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
+                        int inventory = inventoryService.getInventory(replenishmentResultDTO, calcDate, deliveryVolumeInventory, cfgRuleStrategyDTO.getSalesQtyResult(), cfgRuleStrategyDTO.getWarehouseResult());
                         suggestDTO.setSuggestDeliveryQty(Math.max(0, getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now) - inventory));
                     }
                     return suggestDTO;
