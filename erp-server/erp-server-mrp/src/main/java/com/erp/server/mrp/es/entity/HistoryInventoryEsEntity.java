@@ -40,12 +40,4 @@ public class HistoryInventoryEsEntity extends BaseEsEntity {
         entity.setOriginalInventQty(qty);
         return entity;
     }
-
-
-    public static HistoryInventoryEsEntity updateHistoryInventory(String id, Integer qty) {
-        HistoryInventoryEsEntity entity = new HistoryInventoryEsEntity();
-        entity.setId(id);
-        entity.setOriginalInventQty(qty);
-        return entity;
-    }
 }

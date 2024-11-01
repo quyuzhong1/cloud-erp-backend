@@ -22,6 +22,7 @@ public interface HistoryInventoryEsService {
 
     /**
      * 批量保存
+     *
      * @param historyInventoryList 历史库存
      */
     void saveAll(List<HistoryInventoryEsEntity> historyInventoryList);
@@ -45,19 +46,22 @@ public interface HistoryInventoryEsService {
      */
     Map<LocalDate, Integer> findByReplenishmentIdAndDateBetweenMap(String replenishmentId, LocalDate startDate, LocalDate endDate);
 
-    /**
-     * 删除数据
-     * @param ids ids
-     */
-    void deleteByIdIn(List<String> ids);
-
 
     /**
      * 查询历史库存，根据建议id
      *
      * @param suggestionIds 建议id
-     * @param startDate       开始日期
-     * @param endDate         结束日期
+     * @param startDate     开始日期
+     * @param endDate       结束日期
      */
     List<ReplenishmentResultDTO.InventoryHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIds, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 删除
+     *
+     * @param suggestionIds 建议id
+     * @param startDate     开始日期
+     * @param endDate       结束日期
+     */
+    void deleteBySuggestionIdsAndDate(List<String> suggestionIds, LocalDate startDate, LocalDate endDate);
 }
