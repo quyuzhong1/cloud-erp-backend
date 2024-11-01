@@ -40,12 +40,12 @@ public class ReportDownloadFastDFSAndGenCfgTest {
     @Test
     public void genCfgReportFieldByTitleFromFilePath() {
         // 报告下载的路径
-        String filePath = "group1/M00/52/43/rBBkDGcjV6CAITzDAAADL6vdsZU.T29ETT";
+        String filePath = "group1/M00/52/43/rBBkDGckLvqAYPHPAAARxhnc_M0.T21BZK";
         // 配置开始的ID号
 //        Long id = 1691000000000000000L;
         Long id = null;
         // 配置报告的下载类型
-        String recordType = "GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE";
+        String recordType = "GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA";
 
         String url = "";
         String compressionAlgorithm = "";
@@ -64,12 +64,12 @@ public class ReportDownloadFastDFSAndGenCfgTest {
     @Test
     public void genCfgReportFieldByUrl() {
         // 报告下载的路径
-        String url = "https://tortuga-prod-fe.s3-us-west-2.amazonaws.com/01eefe2a-4bc3-47b6-9ab6-bb4a851ab659.amzn1.tortuga.4.fe.T1C80YM5G5MN3L?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20231221T073308Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIAX3R62LVBHWGWVBWT%2F20231221%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Signature=737b2b2b924fe9366f95421dde0021b7e74c387b87df41cff5a187723159d003";
+        String url = "https://tortuga-prod-na.s3-external-1.amazonaws.com/6d8e6985-ac6e-46ea-9d49-e175cffcb5e6.amzn1.tortuga.4.na.T21BZKD35Q9EIF?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Date=20241101T012015Z&X-Amz-SignedHeaders=host&X-Amz-Expires=300&X-Amz-Credential=AKIA5U6MO6RACOWQRBEF%2F20241101%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Signature=9f211b52776cbca674e55eb38f8cb48bf0ba815b573953038439aa204c6075a4";
         // 配置开始的ID号 (null == 按函数 snow_next_id())
 //        Long id = 1691000000000000000L;
         Long id = null;
         // 配置报告的下载类型
-        String recordType = "GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE";
+        String recordType = "GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA";
         // 来源报告压缩方式=按报告信息提供
         String compressionAlgorithm = "text";
         // url 解析
@@ -95,6 +95,10 @@ public class ReportDownloadFastDFSAndGenCfgTest {
         System.out.println("每个字段驼峰信息开始=====");
         for (String s : columnName) {
             if (s.contains("-")) {
+                String camelStr = StrUtils.underlineToCamel(s, true);
+                hashMap.put(s, camelStr);
+                System.out.println(camelStr);
+            } else if (s.contains(" ")){
                 String camelStr = StrUtils.underlineToCamel(s, true);
                 hashMap.put(s, camelStr);
                 System.out.println(camelStr);
