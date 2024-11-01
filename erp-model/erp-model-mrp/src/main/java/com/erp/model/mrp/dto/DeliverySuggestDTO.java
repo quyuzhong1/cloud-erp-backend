@@ -137,6 +137,14 @@ public class DeliverySuggestDTO implements Serializable {
          * 状态名称
          */
         private String statusName;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 作废备注
+         */
+        private String invalidRemark;
 
         /**
          * 建议发货量（系统建议值）
