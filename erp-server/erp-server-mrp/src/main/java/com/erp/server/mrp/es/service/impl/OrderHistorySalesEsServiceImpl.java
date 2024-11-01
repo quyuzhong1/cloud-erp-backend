@@ -5,9 +5,11 @@ import com.erp.model.mrp.enums.FbaOrderTypeEnum;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OrderHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
+import com.google.common.collect.Lists;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -17,6 +19,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,7 +27,8 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
 
     @Resource
     private OrderHistorySalesEsRepository orderHistorySalesEsRepository;
-
+    @Resource
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     @Override
     public Page<OrderHistorySalesEsEntity> findByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate, Pageable pageable) {
@@ -32,11 +36,14 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
-    public void saveAll(List<OrderHistorySalesEsEntity> historyInventoryList) {
-        if (CollectionUtils.isEmpty(historyInventoryList)) {
+    public void saveAll(List<OrderHistorySalesEsEntity> orderHistorySales) {
+        if (CollectionUtils.isEmpty(orderHistorySales)) {
             return;
         }
-        orderHistorySalesEsRepository.saveAll(historyInventoryList);
+        List<List<OrderHistorySalesEsEntity>> partition = Lists.partition(orderHistorySales, 1000);
+        CompletableFuture.allOf(partition.stream()
+                .map(suggestionList -> CompletableFuture.runAsync(() -> orderHistorySalesEsRepository.saveAll(suggestionList), threadPoolTaskExecutor))
+                .toArray(CompletableFuture[]::new)).join();
     }
 
     @Override
@@ -71,18 +78,19 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
-    public void deleteByIdIn(List<String> deleteIds) {
-        if (CollectionUtils.isEmpty(deleteIds)) {
-            return;
-        }
-        orderHistorySalesEsRepository.deleteByIdIn(deleteIds);
-    }
-
-    @Override
     public List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, String orderType, LocalDate startDate, LocalDate endDate) {
         List<OrderHistorySalesEsEntity> historySales = getOrderHistorySales(suggestionIdList, orderType, startDate, endDate);
         return historySales.stream()
                 .map(v -> ReplenishmentResultDTO.SalesHistoryDTO.buildSalesHistory(v.getReplenishmentId(), v.getDate(), v.getOriginalSalesQty()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteBySuggestionIdsAndDate(List<String> suggestionIds, LocalDate startDate, LocalDate endDate) {
+        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
+        CompletableFuture.allOf(partition.stream()
+                .map(suggestionList -> CompletableFuture.runAsync(() -> orderHistorySalesEsRepository
+                        .deleteByReplenishmentIdInAndAndDateBetween(suggestionList, startDate, endDate), threadPoolTaskExecutor))
+                .toArray(CompletableFuture[]::new)).join();
     }
 }

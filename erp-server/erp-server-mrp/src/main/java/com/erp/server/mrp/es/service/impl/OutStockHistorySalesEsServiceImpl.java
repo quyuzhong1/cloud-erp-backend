@@ -5,9 +5,11 @@ import com.erp.model.mrp.enums.FbaOrderTypeEnum;
 import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OutStockHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
+import com.google.common.collect.Lists;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
@@ -16,6 +18,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,6 +26,8 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
 
     @Resource
     private OutStockHistorySalesEsRepository outStockHistorySalesEsRepository;
+    @Resource
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     @Override
     public Page<OutStockHistorySalesEsEntity> findByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate, Pageable pageable) {
@@ -30,11 +35,14 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
     }
 
     @Override
-    public void saveAll(List<OutStockHistorySalesEsEntity> historyInventoryList) {
-        if (ObjectUtils.isEmpty(historyInventoryList)) {
+    public void saveAll(List<OutStockHistorySalesEsEntity> outStockHistorySales) {
+        if (ObjectUtils.isEmpty(outStockHistorySales)) {
             return;
         }
-        outStockHistorySalesEsRepository.saveAll(historyInventoryList);
+        List<List<OutStockHistorySalesEsEntity>> partition = Lists.partition(outStockHistorySales, 1000);
+        CompletableFuture.allOf(partition.stream()
+                .map(suggestionList -> CompletableFuture.runAsync(() -> outStockHistorySalesEsRepository.saveAll(suggestionList), threadPoolTaskExecutor))
+                .toArray(CompletableFuture[]::new)).join();
     }
 
     @Override
@@ -68,18 +76,19 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
     }
 
     @Override
-    public void deleteByIdIn(List<String> deleteIds) {
-        if (ObjectUtils.isEmpty(deleteIds)) {
-            return;
-        }
-        outStockHistorySalesEsRepository.deleteByIdIn(deleteIds);
-    }
-
-    @Override
     public List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, String orderType, LocalDate startDate, LocalDate endDate) {
         List<OutStockHistorySalesEsEntity> historySales = getOutStockHistorySales(suggestionIdList, orderType, startDate, endDate);
         return historySales.stream()
                 .map(v -> ReplenishmentResultDTO.SalesHistoryDTO.buildSalesHistory(v.getReplenishmentId(), v.getDate(), v.getOriginalSalesQty()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteBySuggestionIdsAndDate(List<String> suggestionIds, LocalDate startDate, LocalDate endDate) {
+        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
+        CompletableFuture.allOf(partition.stream()
+                .map(suggestionList -> CompletableFuture.runAsync(() -> outStockHistorySalesEsRepository
+                        .deleteByReplenishmentIdInAndAndDateBetween(suggestionList, startDate, endDate), threadPoolTaskExecutor))
+                .toArray(CompletableFuture[]::new)).join();
     }
 }

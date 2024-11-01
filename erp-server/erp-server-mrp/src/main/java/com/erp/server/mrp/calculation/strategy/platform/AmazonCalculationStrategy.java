@@ -14,8 +14,6 @@ import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
 import com.erp.server.mrp.service.FbaHistoryInventoryService;
 import com.google.common.collect.Lists;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -131,53 +129,29 @@ public class AmazonCalculationStrategy implements PlatformCalculationStrategy {
         LocalDate endDate = calculationDate.minusDays(1);
         Map<String, String> suggestionMap = suggestions.stream()
                 .collect(Collectors.toMap(k -> k.getSkuId() + "-" + k.getShopId(), ReplenishmentSuggestionEntity::getId, (o1, o2) -> o1));
-        List<List<ReplenishmentResultDTO.SalesInfoAllDTO>> partition = Lists.partition(salesInfoAllList, 1000);
-        CompletableFuture.allOf(partition.stream()
-                .map(salesInfoList -> CompletableFuture.runAsync(() -> {
-                    Map<ReplenishmentResultDTO.SalesInfoAllDTO, String> salesInfoMap = salesInfoList.stream()
-                            .filter(v -> suggestionMap.containsKey(v.getSkuId() + "-" + v.getShopId()))
-                            .collect(Collectors.toMap(k -> k, v -> suggestionMap.get(v.getSkuId() + "-" + v.getShopId())));
-                    List<OrderHistorySalesEsEntity> orderHistorySalesList = new ArrayList<>();
-                    List<OrderHistorySalesEsEntity> updateList = new ArrayList<>();
-                    List<String> deleteIds = new ArrayList<>();
-                    int page = 0;
-                    Page<OrderHistorySalesEsEntity> orderHistorySalesPage;
-                    do {
-                        orderHistorySalesPage = orderHistorySalesEsService.findByReplenishmentIdInAndDateBetween(new ArrayList<>(salesInfoMap.values()), startDate, endDate, PageRequest.of(page, 10000));
-                        orderHistorySalesList.addAll(orderHistorySalesPage.toList());
-                        page++;
-                    } while (!orderHistorySalesPage.isLast());
-                    processOrderContent(orderHistorySalesList, salesInfoMap, updateList, deleteIds);
-                    orderHistorySalesEsService.saveAll(updateList);
-                    orderHistorySalesEsService.deleteByIdIn(deleteIds);
-                }, threadPoolTaskExecutor)).toArray(CompletableFuture[]::new)).join();
+        List<String> suggestionIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
+        //删除原数据
+        orderHistorySalesEsService.deleteBySuggestionIdsAndDate(suggestionIds, startDate, endDate);
+        //保存新数据
+        List<OrderHistorySalesEsEntity> orderHistorySalesEsList = getOrderHistorySales(salesInfoAllList, suggestionMap);
+        orderHistorySalesEsService.saveAll(orderHistorySalesEsList);
     }
 
     /**
-     * 增量更新历史销量
-     *
-     * @param orderHistorySalesList 历史销量
-     * @param salesInfoMap          销量
-     * @param updateList            需要编辑的数据
-     * @param deleteIds             需要删除的数据
+     * 组装历史销量
+     * @param salesInfoAllList  销量数据
+     * @param suggestionMap     建议
      */
-    private void processOrderContent(List<OrderHistorySalesEsEntity> orderHistorySalesList, Map<ReplenishmentResultDTO.SalesInfoAllDTO, String> salesInfoMap, List<OrderHistorySalesEsEntity> updateList, List<String> deleteIds) {
-        List<String> deleteIdList = orderHistorySalesList.stream()
-                .filter(v -> salesInfoMap.entrySet().stream()
-                        .noneMatch(e -> e.getKey().getDate().equals(v.getDate()) && e.getKey().getOrderType().equals(v.getOrderType()) && e.getValue().equals(v.getReplenishmentId())))
-                .map(OrderHistorySalesEsEntity::getId)
-                .collect(Collectors.toList());
-        deleteIds.addAll(deleteIdList);
-        Map<String, OrderHistorySalesEsEntity> orderSalesMap = orderHistorySalesList.stream()
-                .collect(Collectors.toMap(k -> k.getReplenishmentId() + "-" + k.getDate() + "-" + k.getOrderType(), v -> v, (o1, o2) -> o1));
-        for (Map.Entry<ReplenishmentResultDTO.SalesInfoAllDTO, String> entry : salesInfoMap.entrySet()) {
-            OrderHistorySalesEsEntity orderHistorySalesEsEntity = orderSalesMap.get(entry.getValue() + "-" + entry.getKey().getDate() + "-" + entry.getKey().getOrderType());
-            if (ObjectUtils.isEmpty(orderHistorySalesEsEntity)) {
-                updateList.add(OrderHistorySalesEsEntity.createOrderHistorySales(entry.getValue(), entry.getKey().getDate(), entry.getKey().getOriginalSalesQty()));
-            } else if (!Objects.equals(orderHistorySalesEsEntity.getOriginalSalesQty(), entry.getKey().getOriginalSalesQty())) {
-                updateList.add(OrderHistorySalesEsEntity.updateOrderHistorySales(orderHistorySalesEsEntity.getId(), entry.getKey().getOriginalSalesQty()));
+    private List<OrderHistorySalesEsEntity> getOrderHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList, Map<String, String> suggestionMap) {
+        List<OrderHistorySalesEsEntity> result = new ArrayList<>();
+        for (ReplenishmentResultDTO.SalesInfoAllDTO dto : salesInfoAllList) {
+            String suggestId = suggestionMap.get(dto.getSkuId() + "-" + dto.getShopId());
+            if (ObjectUtils.isEmpty(suggestId)) {
+                continue;
             }
+            result.add(OrderHistorySalesEsEntity.createOrderHistorySales(suggestId, dto.getDate(), dto.getOriginalSalesQty()));
         }
+        return result;
     }
 
     @Override
@@ -187,54 +161,29 @@ public class AmazonCalculationStrategy implements PlatformCalculationStrategy {
         Map<String, String> suggestionMap = suggestions.stream()
                 .collect(Collectors.toMap(k -> k.getSkuId() + "-" + k.getShopId(), ReplenishmentSuggestionEntity::getId, (o1, o2) -> o1));
         List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList = salesService.listAllAmzSalesBySoOutStock(calculationDate, cleanDay);
-        List<List<ReplenishmentResultDTO.SalesInfoAllDTO>> partition = Lists.partition(salesInfoAllList, 1000);
-        CompletableFuture.allOf(partition.stream()
-                .map(salesInfoList -> CompletableFuture.runAsync(() -> {
-                    Map<ReplenishmentResultDTO.SalesInfoAllDTO, String> salesInfoMap = salesInfoList.stream()
-                            .filter(v -> suggestionMap.containsKey(v.getSkuId() + "-" + v.getShopId()))
-                            .collect(Collectors.toMap(k -> k, v -> suggestionMap.get(v.getSkuId() + "-" + v.getShopId())));
-                    List<OutStockHistorySalesEsEntity> outStockHistorySalesList = new ArrayList<>();
-                    List<OutStockHistorySalesEsEntity> updateList = new ArrayList<>();
-                    List<String> deleteIds = new ArrayList<>();
-                    int page = 0;
-                    Page<OutStockHistorySalesEsEntity> outStockHistorySalesPage;
-                    do {
-                        outStockHistorySalesPage = outStockHistorySalesEsService.findByReplenishmentIdInAndDateBetween(new ArrayList<>(salesInfoMap.values()), startDate, endDate, PageRequest.of(page, 10000));
-                        outStockHistorySalesList.addAll(outStockHistorySalesPage.toList());
-                        page++;
-                    } while (!outStockHistorySalesPage.isLast());
-                    processOutStockContent(outStockHistorySalesList, salesInfoMap, updateList, deleteIds);
-                    outStockHistorySalesEsService.saveAll(updateList);
-                    outStockHistorySalesEsService.deleteByIdIn(deleteIds);
-                }, threadPoolTaskExecutor)).toArray(CompletableFuture[]::new)).join();
+        List<String> suggestionIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
+        //删除原数据
+        outStockHistorySalesEsService.deleteBySuggestionIdsAndDate(suggestionIds, startDate, endDate);
+        //保存新数据
+        List<OutStockHistorySalesEsEntity> outStockHistorySales = getOutStockHistorySales(salesInfoAllList, suggestionMap);
+        outStockHistorySalesEsService.saveAll(outStockHistorySales);
     }
-
 
     /**
-     * 增量更新历史销量
-     *
-     * @param outStockHistorySalesList 历史销量
-     * @param salesInfoMap             销量
-     * @param updateList               需要编辑的数据
-     * @param deleteIds                需要删除的数据
+     * 组装历史销量
+     * @param salesInfoAllList  销量数据
+     * @param suggestionMap     建议
      */
-    private void processOutStockContent(List<OutStockHistorySalesEsEntity> outStockHistorySalesList, Map<ReplenishmentResultDTO.SalesInfoAllDTO, String> salesInfoMap, List<OutStockHistorySalesEsEntity> updateList, List<String> deleteIds) {
-        List<String> deleteIdList = outStockHistorySalesList.stream()
-                .filter(v -> salesInfoMap.entrySet().stream()
-                        .noneMatch(e -> e.getKey().getDate().equals(v.getDate()) && e.getKey().getOrderType().equals(v.getOrderType()) && e.getValue().equals(v.getReplenishmentId())))
-                .map(OutStockHistorySalesEsEntity::getId)
-                .collect(Collectors.toList());
-        deleteIds.addAll(deleteIdList);
-        Map<String, OutStockHistorySalesEsEntity> orderSalesMap = outStockHistorySalesList.stream()
-                .collect(Collectors.toMap(k -> k.getReplenishmentId() + "-" + k.getDate() + "-" + k.getOrderType(), v -> v, (o1, o2) -> o1));
-        for (Map.Entry<ReplenishmentResultDTO.SalesInfoAllDTO, String> entry : salesInfoMap.entrySet()) {
-            OutStockHistorySalesEsEntity outStockHistorySalesEsEntity = orderSalesMap.get(entry.getValue() + "-" + entry.getKey().getDate() + "-" + entry.getKey().getOrderType());
-            if (ObjectUtils.isEmpty(outStockHistorySalesEsEntity)) {
-                updateList.add(OutStockHistorySalesEsEntity.createOutStockHistorySales(entry.getValue(), entry.getKey().getDate(), entry.getKey().getOriginalSalesQty()));
-            } else if (!Objects.equals(outStockHistorySalesEsEntity.getOriginalSalesQty(), entry.getKey().getOriginalSalesQty())) {
-                updateList.add(OutStockHistorySalesEsEntity.updateHistoryInventory(outStockHistorySalesEsEntity.getId(), entry.getKey().getOriginalSalesQty()));
+    private List<OutStockHistorySalesEsEntity> getOutStockHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList, Map<String, String> suggestionMap) {
+        List<OutStockHistorySalesEsEntity> result = new ArrayList<>();
+        for (ReplenishmentResultDTO.SalesInfoAllDTO dto : salesInfoAllList) {
+            String suggestId = suggestionMap.get(dto.getSkuId() + "-" + dto.getShopId());
+            if (ObjectUtils.isEmpty(suggestId)) {
+                continue;
             }
+            result.add(OutStockHistorySalesEsEntity.createOutStockHistorySales(suggestId, dto.getDate(), dto.getOriginalSalesQty()));
         }
-
+        return result;
     }
+
 }
