@@ -8269,7 +8269,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * 汇总明细标签
      *
      * @param exportDTO
-     * @param childList
      * @param skuVOMap
      * @param bomChildrenList
      * @param inventoryList
