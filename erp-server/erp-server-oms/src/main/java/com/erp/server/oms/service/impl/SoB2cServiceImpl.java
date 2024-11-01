@@ -8042,7 +8042,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //skuId集合
         List<String> skuIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getSkuId).distinct().collect(Collectors.toList());
-
+        Map<String, SkuVO> skuVOMap = new HashMap<>();
+        List<SkuVO> skuList = plmTaskFeign.listSkuLogisticsByIds(skuIdList);
+        if (!CollectionUtils.isEmpty(skuList)) {
+            skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        }
         //仓位信息
         List<String> warehouseIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationFeign.listByWarehouseIds(warehouseIdList);
@@ -8111,6 +8115,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soOutstockEntityList.addAll(FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getSoId,v).select(SoOutstockEntity::getSoId,SoOutstockEntity::getBillDate).list());
         });
         List<String> ids = records.stream().map(SoB2cDTO.ExcelExportDTO::getId).collect(Collectors.toList());
+        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(ids);
+        List<String> detailIds = records.stream().map(SoB2cDTO.ExcelExportDTO::getDetailId).distinct().collect(Collectors.toList());
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByIds(detailIds);
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(ids);
 
         for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
@@ -8137,6 +8144,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             && CharSequenceUtil.equals(obj.getWarehouseId(), exportDTO.getWarehouseId()))
                     .map(WarehouseLocationEntity::getName).findFirst().orElse("");
             exportDTO.setWarehouseLocationName(warehouseLocationName);
+
 
             //是否缺货
             if (isOutStock) {
@@ -8188,9 +8196,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 exportDTO.setFinishPrintTime(collect.get(0).getFinishPrintTime());
                 exportDTO.setCreateDeliveryTime(collect.get(0).getCreateTime());
             }
+            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSourceId(), exportDTO.getId())).findFirst().orElse(null);
             //标签汇总
-            exportDTO.setLabelOrderList(getLabelOrderList(exportDTO));
-            exportDTO.setLabelDetailList(getLabelDetailList(exportDTO));
+            exportDTO.setLabelOrderList(getLabelOrderList(exportDTO,soB2cRefList,childList,soB2cDeliveryEntity));
+            SoB2cDetailEntity soB2cDetail = soB2cDetailEntityList.stream().filter(e -> Objects.equals(exportDTO.getDetailId(), e.getId())).findFirst().orElse(null);
+            SoB2cDetailDTO.ListDTO detailDTO = BeanUtil.copyProperties(soB2cDetail,SoB2cDetailDTO.ListDTO.class);
+            exportDTO.setLabelDetailList(getLabelDetailList(exportDTO,skuVOMap,bomChildrenList,inventoryList,ignoreInventorySkuIds,detailDTO,virtualInventoryList,virtualWarehouseList));
             //销售套装bom
             if (CollectionUtils.isNotEmpty(childList)) {
                 List<Integer> qtyList = new ArrayList<>();
@@ -8254,17 +8265,148 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultList;
     }
 
-    private String getLabelDetailList(SoB2cDTO.ExcelExportDTO exportDTO) {
-        return null;
+    /**
+     * 汇总明细标签
+     *
+     * @param exportDTO
+     * @param childList
+     * @param skuVOMap
+     * @param bomChildrenList
+     * @param inventoryList
+     * @param ignoreInventorySkuIds
+     * @param detailDTO
+     * @param virtualInventoryList
+     * @param virtualWarehouseList
+     * @return
+     */
+    private String getLabelDetailList(SoB2cDTO.ExcelExportDTO exportDTO, Map<String, SkuVO> skuVOMap, List<BomChildrenSkuDTO> bomChildrenList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList, List<String> ignoreInventorySkuIds, SoB2cDetailDTO.ListDTO detailDTO, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, List<VirtualWarehouseEntity> virtualWarehouseList) {
+        StringBuilder labelDetailStr = new StringBuilder();
+        SkuVO skuVO = skuVOMap.get(exportDTO.getSkuId());
+        SkuVO.PropertyDTO skuPropertyDTO = Objects.isNull(skuVO) ? new SkuVO.PropertyDTO() : Objects.isNull(skuVO.getPropertyDTO()) ? new SkuVO.PropertyDTO() : skuVO.getPropertyDTO();
+        List<SoB2cDetailDTO.PropertyDTO> propertyDTOList = soB2cDetailService.handlePropertyDTOList(skuPropertyDTO);
+        if (CollectionUtils.isNotEmpty(propertyDTOList)){
+            String propertyStr = propertyDTOList.stream().map(SoB2cDetailDTO.PropertyDTO::getName).distinct().collect(Collectors.joining(","));
+            labelDetailStr.append(propertyStr).append(",");
+        }
+        //标签处理
+        SoB2cDetailDTO.DetailLabelDTO detailLabelDTO = new SoB2cDetailDTO.DetailLabelDTO();
+        String detailLabel = exportDTO.getLabelJson();
+        if (StringUtils.isNotBlank(detailLabel)) {
+            SoB2cDetailDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(detailLabel, SoB2cDetailDTO.LabelJsonDTO.class);
+            labelDetailStr.append(Objects.equals("U_TAXED",labelJsonDTO.getAlreadyTaxed()) || Objects.equals("I_TAXED",labelJsonDTO.getAlreadyTaxed()) ? "速卖通已税," : "");
+            labelDetailStr.append(Objects.equals("cainiaoInternationalWarehouse",labelJsonDTO.getLogisticsWarehouseType()) ? "菜鸟官方仓," : "");
+            labelDetailStr.append(CollectionUtils.isNotEmpty(labelJsonDTO.getTagList()) && labelJsonDTO.getTagList().contains("AE_PLUS_RU") ? "AE_PLUS," : "");
+            labelDetailStr.append(CollectionUtils.isNotEmpty(labelJsonDTO.getTagList()) && labelJsonDTO.getTagList().contains("HBA_UP_EXPRESS") ? "AE_合单," : "");
+            labelDetailStr.append(CollectionUtils.isNotEmpty(labelJsonDTO.getTagList()) && labelJsonDTO.getTagList().contains("leadTimeTag#10") ? "十日达," : "");
+            labelDetailStr.append(CollectionUtils.isNotEmpty(labelJsonDTO.getTagList()) && labelJsonDTO.getTagList().contains("leadTimeTag#12") ? "12日达," : "");
+            labelDetailStr.append(CollectionUtils.isNotEmpty(labelJsonDTO.getTagList()) && labelJsonDTO.getTagList().contains("leadTimeTag#15") ? "15日达," : "");
+            labelDetailStr.append(Objects.nonNull(labelJsonDTO.getIsRefunded()) && labelJsonDTO.getIsRefunded() ? "退款订单" : "");
+        }
+        //存在仓库则需要判断是否缺货
+        if (StrUtil.isNotBlank(exportDTO.getWarehouseId())) {
+            Integer useableQty = MathUtil.ZERO;
+            Integer freezeQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(inventoryList)) {
+                //可用库存
+                useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                                && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
+                                && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                        .mapToInt(obj -> obj.getInventoryTotal()).sum();
+                //冻结库存
+                freezeQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                                && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
+                                && InventoryStatusEnum.FROZEN.getCode().equals(obj.getInventoryStatus()))
+                        .mapToInt(obj -> obj.getInventoryTotal()).sum();
+            }
+            detailDTO.setUseableQty(useableQty);
+            detailDTO.setFreezeQty(freezeQty);
+            //缺货订单
+            if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(exportDTO.getBillStatus())
+                    || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(exportDTO.getBillStatus()))) {
+                //实体仓缺货
+                Boolean isOutStock = isOutStock(bomChildrenList, inventoryList, detailDTO, ignoreInventorySkuIds);
+                detailLabelDTO.setIsOutStock(isOutStock);
+            }
+        }
+        //存在虚拟仓库则判断是否缺货
+        if (StrUtil.isNotBlank(detailDTO.getVirtualWarehouseId())) {
+            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailDTO.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+            detailDTO.setVirtualWarehouseName(virtualWarehouseName);
+            //虚拟仓缺货处理
+            isVirtualOutStock(bomChildrenList, virtualInventoryList, detailLabelDTO, detailDTO);
+            //缺货订单
+            if ((SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equals(exportDTO.getBillStatus())
+                    || SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(exportDTO.getBillStatus()))) {
+                detailLabelDTO.setIsOutStock(Boolean.FALSE);
+            }
+        }
+        labelDetailStr.append(Objects.nonNull(detailLabelDTO.getIsOutStock()) && detailLabelDTO.getIsOutStock() ? "缺货订单" : "");
+        labelDetailStr.append(Objects.nonNull(detailLabelDTO.getIsVirtualOutStock()) && detailLabelDTO.getIsVirtualOutStock() ? "缺货订单(X缺)" : "");
+        String labelDetail = labelDetailStr.toString();
+        //移除字符串最后一个字符
+        return StrUtil.isNotBlank(labelDetail) ? labelDetail.substring(0,labelDetail.length() - 1) : "";
     }
 
     /**
      * 整合销售订单标签
-     * @param exportDTO
+     *
+     * @param data
+     * @param soB2cRefList
+     * @param childList
+     * @param soB2cDeliveryEntity
      * @return
      */
-    private String getLabelOrderList(SoB2cDTO.ExcelExportDTO exportDTO) {
-        return null;
+    private String getLabelOrderList(SoB2cDTO.ExcelExportDTO data, List<SoB2cRefEntity> soB2cRefList, List<BomChildrenSkuDTO> childList, SoB2cDeliveryEntity soB2cDeliveryEntity) {
+        StringBuilder labelOrderStr = new StringBuilder();
+        //标签处理
+        String label = data.getLabel();
+        //主表标签
+        Boolean isAddFrozenTag = Boolean.FALSE;
+        if (StringUtils.isNotBlank(label)) {
+            SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(label, SoB2cDTO.LabelJsonDTO.class);
+            List<String> statusList = Arrays.asList("RISK_CONTROL","IN_FROZEN","Unfulfillable","IN_CANCEL");
+            if (Objects.equals(data.getBillStatus(),"frozen") && (statusList.contains(labelJsonDTO.getAliexpressStatus()) || statusList.contains(labelJsonDTO.getAmazonStatus()))){
+                labelOrderStr.append("冻结中,");
+                isAddFrozenTag = Boolean.TRUE;
+            }
+            if (Objects.equals("AFN",labelJsonDTO.getFulfillmentChannel())){
+                labelOrderStr.append("FBA,");
+            }
+            List<String> shipNodeTypeList = Arrays.asList("WFSFulfilled","3PLFulfilled");
+            if (shipNodeTypeList.contains(labelJsonDTO.getShipNodeType())){
+                labelOrderStr.append("WFS,");
+            }
+            labelOrderStr.append(Objects.nonNull(labelJsonDTO.getIsRefunded()) && labelJsonDTO.getIsRefunded() ? "退款订单,":"");
+        }
+        labelOrderStr.append(CollectionUtils.isNotEmpty(childList) ?"组合产品," : "");
+        labelOrderStr.append(Objects.nonNull(data.getIsIntercept()) && data.getIsIntercept() ? "拦截订单,":"");
+        labelOrderStr.append(Objects.equals(SourceTypeEnum.SELF_ADD.getCode(),data.getSourceType()) ? "手工订单,":"");
+        if (CollectionUtils.isNotEmpty(soB2cRefList)) {
+            //合并
+            long mergeCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()))
+                    && SoB2cOptionTypeEnum.ENUM_MERGE.getCode().equals(obj.getType())
+                    && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(data.getInvalidStatus())).count();
+            if (mergeCount > 0) {
+                labelOrderStr.append("合并订单,");
+            }
+            //拆分
+            long splitCount = soB2cRefList.stream().filter(obj -> (obj.getTargetId().equals(data.getId()))
+                    && SoB2cOptionTypeEnum.ENUM_SPLIT.getCode().equals(obj.getType())
+                    && InvalidStatusEnum.NOT_VOIDED.getStatus().equals(data.getInvalidStatus())).count();
+            if (splitCount > 0) {
+                labelOrderStr.append("拆分订单,");
+            }
+        }
+        labelOrderStr.append(Objects.nonNull(soB2cDeliveryEntity) && Objects.equals("manual",soB2cDeliveryEntity.getShipmentMark()) ? "手动标发," : "");
+        labelOrderStr.append(Objects.nonNull(data.getInvalidStatus()) && data.getInvalidStatus() ? "订单作废,":"");
+        labelOrderStr.append(Objects.nonNull(data.getIsCancel()) && data.getIsCancel() ? "订单取消,":"");
+        labelOrderStr.append(Objects.nonNull(data.getIsChangeReceiverAddress()) && data.getIsChangeReceiverAddress() ? "修改收货地址,":"");
+        labelOrderStr.append(Objects.nonNull(data.getIsChangeSku()) && data.getIsChangeSku() ? "更换发货SKU,":"");
+        labelOrderStr.append(Objects.nonNull(data.getIsNotOutbound()) && data.getIsNotOutbound() ? "不出库发货,":"");
+        labelOrderStr.append(Objects.nonNull(data.getIsFrozen()) && data.getIsFrozen() && !isAddFrozenTag ? "冻结中,":"");
+        String labelOrder = labelOrderStr.toString();
+        //移除字符串最后一个字符
+        return StrUtil.isNotBlank(labelOrder) ? labelOrder.substring(0,labelOrder.length() - 1) : "";
     }
 
     private void processRepeatData(SoB2cDTO.ExcelExportDTO resultDTO, List<SoB2cDTO.ExcelExportDTO> resultList) {

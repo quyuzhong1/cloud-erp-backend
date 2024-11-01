@@ -2393,11 +2393,43 @@ public class SoB2cDTO implements Serializable {
          * 销售订单id
          */
         private String id;
+        /**
+         * 销售订单明细id
+         */
+        private String detailId;
 
         /**
          * 单据编码
          */
         private String code;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 是否冻结
+         */
+        private Boolean isFrozen;
+        /**
+         * 是否取消（false未取消，true已取消）
+         */
+        private Boolean isCancel;
+        /**
+         * 是否地址修改 true 是  false 否
+         */
+        private Boolean isChangeReceiverAddress;
+        /**
+         * 是否更换sku true 是  false 否
+         */
+        private Boolean isChangeSku;
+        /**
+         * 是否标记不出库发货 true 是  false 否
+         */
+        private Boolean isNotOutbound;
 
         /**
          * 销售平台
@@ -2535,6 +2567,10 @@ public class SoB2cDTO implements Serializable {
          * 规格属性
          */
         private String variantProperty;
+        /**
+         * 属性对象
+         */
+        private List<SoB2cDetailDTO.PropertyDTO> propertyDTOList;
 
         /**
          * 含税成本
@@ -2809,6 +2845,27 @@ public class SoB2cDTO implements Serializable {
          * 销售出库时间
          */
         private LocalDate soOutStockTime;
+        /**
+         * 标签
+         */
+        private String label;
+        /**
+         * 明细标签
+         */
+        private String labelJson;
+        /**
+         * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
+         */
+        private Boolean isIntercept;
+        /**
+         * 1、拆分生成的子订单 split
+         * 2、合并生成的新订单 merge
+         */
+        private String refType;
+        /**
+         * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
+         */
+        private String shipNodeType;
         /**
          * 订单标签集合
          */
