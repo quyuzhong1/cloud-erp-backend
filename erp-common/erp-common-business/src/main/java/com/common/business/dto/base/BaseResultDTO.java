@@ -1,6 +1,8 @@
 package com.common.business.dto.base;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -56,5 +58,31 @@ public class BaseResultDTO implements Serializable {
             this.id = id;
             this.code = code;
         }
+    }
+
+    /**
+     * 操作结果展示
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ContentDTO {
+        /**
+         * 数据id
+         */
+        private String id;
+        /**
+         * 操作单号
+         */
+        private String code;
+        /**
+         * 操作提示
+         */
+        private String msg;
+        /**
+         * 操作结果
+         */
+        private String content;
     }
 }

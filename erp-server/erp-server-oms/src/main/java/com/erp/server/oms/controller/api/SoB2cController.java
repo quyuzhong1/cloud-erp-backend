@@ -1443,5 +1443,53 @@ public class SoB2cController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
+    /**
+     * 按SKU拆分
+     *
+     * @param splitSkuDTO
+     * @return ApiResult<List < BaseResultDTO.ContentDTO>>
+     * @author zdy
+     * @date: 2024/11/1 9:20
+     */
+    @PostMapping("/splitBySku")
+    public ApiResult<List<BaseResultDTO.ContentDTO>> splitBySku(@RequestBody @Validated SoB2cDTO.SplitSkuDTO splitSkuDTO) {
+        String skuNo = splitSkuDTO.getSkuNo();
+        List<SoB2cDTO.SplitSkuDetailDTO> detailList = splitSkuDTO.getDetailList();
+        //根据主键id进行汇总
+        List<String> ids = detailList.stream().map(SoB2cDTO.SplitSkuDetailDTO::getId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
+        List<BaseResultDTO.ContentDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BaseResultDTO.ContentDTO result;
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.equals(id, e.getId())).findFirst().orElse(null);
+            if (Objects.isNull(soB2cEntity)){
+                resultDTOS.add(BaseResultDTO.ContentDTO.builder().id(id).code(id).msg("销售订单记录不存在").build());
+                continue;
+            }
+            List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailEntityList)){
+                resultDTOS.add(BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("销售订单明细记录不存在").build());
+                continue;
+            }
+            if (detailEntityList.size() <= 1){
+                resultDTOS.add(BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("只有订单明细行数量大于1的订单允许操作按SKU拆分").build());
+                continue;
+            }
+            List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS = detailList.stream().filter(e -> Objects.equals(id, e.getId())).collect(Collectors.toList());
+            try {
+                //构建拆分数据
+                SoB2cDTO.SplitSaveDTO dto = soB2cSplitService.buildSplitBySku(soB2cEntity,detailEntityList,splitSkuDetailDTOS,skuNo);
+                //拆分sku
+                SoB2cDTO.SplitSaveResultDTO resultDTO = soB2cSplitService.splitSave(dto);
+                String content = StrUtil.format("拆分后订单编号：【{}】",String.join(",", resultDTO.getSoCodeList()));
+                result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("订单拆分成功").content(content).build();
+            } catch (Exception e) {
+                log.error("B2C销售订单取消拆分失败", e);
+                result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg(e.getMessage()).build();
+            }
+            resultDTOS.add(result);
+        }
+        return success(resultDTOS);
+    }
 }

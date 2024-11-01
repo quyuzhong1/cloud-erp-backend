@@ -2922,6 +2922,10 @@ public class SoB2cDTO implements Serializable {
          */
         private List<String> soB2cIds;
         /**
+         * 编码
+         */
+        private List<String> soCodeList;
+        /**
          * TikTok拆单入参
          */
         private OrderSplitPramDTO tikTokPramDTO;
@@ -3147,5 +3151,51 @@ public class SoB2cDTO implements Serializable {
          * 更换skuNo
          */
         private String changeSkuNo;
+    }
+
+    /**
+     * 拆分保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSkuDTO {
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "拆分SKU不能为空")
+        private String skuNo;
+        /**
+         * 拆分明细
+         */
+        @Valid
+        @NotEmpty(message = "拆分明细不能为空")
+        private List<SplitSkuDetailDTO> detailList;
+    }
+    /**
+     * 拆分保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSkuDetailDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
     }
 }
