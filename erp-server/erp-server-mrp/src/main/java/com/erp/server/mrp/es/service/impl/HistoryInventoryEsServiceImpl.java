@@ -40,7 +40,10 @@ public class HistoryInventoryEsServiceImpl implements HistoryInventoryEsService 
         if (CollectionUtils.isEmpty(historyInventoryList)) {
             return;
         }
-        historyInventoryEsRepository.saveAll(historyInventoryList);
+        List<List<HistoryInventoryEsEntity>> partition = Lists.partition(historyInventoryList, 1000);
+        CompletableFuture.allOf(partition.stream()
+                .map(suggestionList -> CompletableFuture.runAsync(() -> historyInventoryEsRepository.saveAll(suggestionList), threadPoolTaskExecutor))
+                .toArray(CompletableFuture[]::new)).join();
     }
 
     @Override
@@ -53,14 +56,6 @@ public class HistoryInventoryEsServiceImpl implements HistoryInventoryEsService 
         List<HistoryInventoryEsEntity> historyInventoryEsEntities = findByReplenishmentIdAndDateBetween(replenishmentId, startDate, endDate);
         return historyInventoryEsEntities.stream()
                 .collect(Collectors.toMap(HistoryInventoryEsEntity::getDate, HistoryInventoryEsEntity::getOriginalInventQty, Integer::sum));
-    }
-
-    @Override
-    public void deleteByIdIn(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return;
-        }
-        historyInventoryEsRepository.deleteByIdIn(ids);
     }
 
 
@@ -97,5 +92,14 @@ public class HistoryInventoryEsServiceImpl implements HistoryInventoryEsService 
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
 
+    }
+
+    @Override
+    public void deleteBySuggestionIdsAndDate(List<String> suggestionIds, LocalDate startDate, LocalDate endDate) {
+        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
+        CompletableFuture.allOf(partition.stream()
+                .map(suggestionList -> CompletableFuture.runAsync(() -> historyInventoryEsRepository
+                        .deleteByReplenishmentIdInAndAndDateBetween(suggestionList, startDate, endDate), threadPoolTaskExecutor))
+                .toArray(CompletableFuture[]::new)).join();
     }
 }

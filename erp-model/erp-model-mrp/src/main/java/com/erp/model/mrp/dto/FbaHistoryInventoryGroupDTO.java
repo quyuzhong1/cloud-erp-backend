@@ -1,11 +1,10 @@
 package com.erp.model.mrp.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
-import lombok.*;
-
-import java.time.LocalDate;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -19,7 +18,6 @@ public class FbaHistoryInventoryGroupDTO {
     /**
      * 仓库id
      */
-    @TableField("warehouse_id")
     private String warehouseId;
 
     public static FbaHistoryInventoryGroupDTO buildFbaHistoryInventoryGroup(FbaHistoryInventoryEntity entity) {
@@ -36,29 +34,5 @@ public class FbaHistoryInventoryGroupDTO {
         dto.setWarehouseId(entity.getFbaWarehouseId());
         return dto;
     }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class FbaInventoryResultDTO {
-
-        /**
-         * 单据日期
-         */
-        private LocalDate billDate;
-
-        /**
-         * 数量
-         */
-        private Integer qty;
-        public static FbaInventoryResultDTO buildFbaInventoryResult(FbaHistoryInventoryEntity entity) {
-            FbaInventoryResultDTO dto = new FbaInventoryResultDTO();
-            dto.setBillDate(entity.getBillDate());
-            dto.setQty(entity.getFulfillableQty());
-            return dto;
-        }
-    }
-
 
 }

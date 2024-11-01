@@ -31,9 +31,13 @@ public interface HistoryInventoryEsRepository extends ElasticsearchRepository<Hi
      */
     List<HistoryInventoryEsEntity> findByReplenishmentIdAndDateBetween(String replenishmentId, LocalDate startDate, LocalDate endDate);
 
+
     /**
-     * 删除数据
-     * @param ids ids
+     * 根据开始结束时间，建议id删除数据
+     *
+     * @param replenishmentIds 建议
+     * @param startDate        开始时间
+     * @param endDate          结束时间
      */
-    void deleteByIdIn(List<String> ids);
+    void deleteByReplenishmentIdInAndAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate);
 }

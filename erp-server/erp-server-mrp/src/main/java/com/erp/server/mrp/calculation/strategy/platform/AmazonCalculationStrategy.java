@@ -65,23 +65,24 @@ public class AmazonCalculationStrategy extends AbstractCalculationStrategy {
      * @param fbaInventoryMap fba历史库存
      * @param suggestionMap   建议
      */
-    private List<HistoryInventoryEsEntity> getCaleHistoryInventory(Map<FbaHistoryInventoryGroupDTO, List<FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO>> fbaInventoryMap, Map<FbaHistoryInventoryGroupDTO, Set<String>> suggestionMap) {
-        List<List<Map.Entry<FbaHistoryInventoryGroupDTO, List<FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO>>>> inventoryPartition = Lists.partition(new ArrayList<>(fbaInventoryMap.entrySet()), 1000);
+    private List<HistoryInventoryEsEntity> getCaleHistoryInventory(Map<FbaHistoryInventoryGroupDTO, Map<LocalDate, Integer>> fbaInventoryMap,
+                                                                   Map<FbaHistoryInventoryGroupDTO, Set<String>> suggestionMap) {
+        List<List<Map.Entry<FbaHistoryInventoryGroupDTO, Map<LocalDate, Integer>>>> inventoryPartition = Lists.partition(new ArrayList<>(fbaInventoryMap.entrySet()), 1000);
         return inventoryPartition.stream()
                 .map(inventoryMap -> CompletableFuture.supplyAsync(() -> {
                     List<HistoryInventoryEsEntity> inventoryList = new ArrayList<>();
-                    for (Map.Entry<FbaHistoryInventoryGroupDTO, List<FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO>> entry : inventoryMap) {
+                    for (Map.Entry<FbaHistoryInventoryGroupDTO, Map<LocalDate, Integer>> entry : inventoryMap) {
                         Set<String> suggestionIds = suggestionMap.get(entry.getKey());
                         if (CollectionUtils.isEmpty(suggestionIds)) {
                             continue;
                         }
                         for (String id : suggestionIds) {
-                            for (FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO dto : entry.getValue()) {
-                                inventoryList.add(HistoryInventoryEsEntity.createHistoryInventory(id, dto.getBillDate(), dto.getQty()));
+                            for (Map.Entry<LocalDate, Integer> map : entry.getValue().entrySet()) {
+                                inventoryList.add(HistoryInventoryEsEntity.createHistoryInventory(id, map.getKey(), map.getValue()));
                             }
                         }
                     }
-                    return  inventoryList;
+                    return inventoryList;
                 }, threadPoolTaskExecutor)).collect(Collectors.toList()).stream()
                 .map(CompletableFuture::join)
                 .flatMap(List::stream)
@@ -93,23 +94,27 @@ public class AmazonCalculationStrategy extends AbstractCalculationStrategy {
      * 分组合并Fba历史库存
      * @param list fba历史库存
      */
-    private static Map<FbaHistoryInventoryGroupDTO, List<FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO>> getFbaInventoryMap(List<FbaHistoryInventoryEntity> list) {
-        return list.stream()
-                //分组
-                .collect(Collectors.groupingBy(FbaHistoryInventoryGroupDTO::buildFbaHistoryInventoryGroup,
-                        //映射结果
-                        Collectors.mapping(FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO::buildFbaInventoryResult,
-                                //合并相同billDate 的qty
-                                Collectors.collectingAndThen(Collectors.toList(), e -> e.stream()
-                                        .collect(Collectors.toMap(
-                                                FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO::getBillDate,
-                                                FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO::getQty,
-                                                Integer::sum
-                                        ))
-                                        .entrySet().stream()
-                                        .map(entry -> new FbaHistoryInventoryGroupDTO.FbaInventoryResultDTO(entry.getKey(), entry.getValue()))
-                                        .collect(Collectors.toList())))
-                ));
+    private static Map<FbaHistoryInventoryGroupDTO, Map<LocalDate, Integer>> getFbaInventoryMap(List<FbaHistoryInventoryEntity> list) {
+
+        Map<FbaHistoryInventoryGroupDTO, Map<LocalDate, Integer>> result = new HashMap<>();
+        for (FbaHistoryInventoryEntity entity : list) {
+            FbaHistoryInventoryGroupDTO group = FbaHistoryInventoryGroupDTO.buildFbaHistoryInventoryGroup(entity);
+            Map<LocalDate, Integer> inventoryResultMap = result.get(group);
+            if (CollectionUtils.isEmpty(inventoryResultMap)) {
+                Map<LocalDate, Integer> data = new HashMap<>();
+                data.put(entity.getBillDate(), entity.getFulfillableQty());
+                result.put(group, data);
+            } else {
+                Integer qty = inventoryResultMap.get(entity.getBillDate());
+                if (ObjectUtils.isEmpty(qty)) {
+                    inventoryResultMap.put(entity.getBillDate(), entity.getFulfillableQty());
+                } else {
+                    inventoryResultMap.put(entity.getBillDate(), entity.getFulfillableQty() + qty);
+                }
+                result.put(group, inventoryResultMap);
+            }
+        }
+        return result;
     }
 
     @Override
