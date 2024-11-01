@@ -35,4 +35,18 @@ public class LocalInventoryDTO {
          */
         private Integer qty;
     }
+
+
+    @Getter
+    @Setter
+    public static class OverseasInventoryDTO {
+        /**
+         * 仓库编码
+         */
+        private String warehouseCode;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
 }

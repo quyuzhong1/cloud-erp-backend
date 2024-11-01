@@ -84,5 +84,30 @@
         </if>
         oi.create_time DESC
     </select>
+    <select id="listByStartDateAndEndDate"
+            resultType="com.erp.model.mrp.entity.OverseasHistoryInventoryEntity">
+        SELECT
+            id,
+            warehouse_code,
+            dict_platform,
+            sku_no,
+            sku_id,
+            deliver_onway_qty as deliverOnwayQty,
+            pending_qty as pendingQty,
+            sellable_qty as sellableQty,
+            unsellable_qty as unsellableQty,
+            reserved_qty as reservedQty,
+            onway_qty as onwayQty,
+            lack_qty as lackQty,
+            frozen_qty as frozenQty,
+            shipped_qty as shippedQty,
+            bill_date
+        FROM overseas_history_inventory
+        where bill_date between #{startDate} AND #{endDate}
+        AND warehouse_code IN
+        <foreach item="code" collection="warehouseCode" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+    </select>
 
 </mapper>

@@ -157,4 +157,16 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
     public void exportList(OverseasHistoryInventoryDTO.ExportDTO dto) {
         downloadTaskFeign.saveDownloadTask("海外仓每日库存", FileTaskEventEnum.EXPORT_MRP_OVERSEAS_INVENTORY.getCode(),dto);
     }
+
+    @Override
+    public List<OverseasHistoryInventoryEntity> listByStartDateAndEndDate(LocalDate startDate, LocalDate endDate) {
+        List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = overseasProviderFeign.listAllMatch();
+        Map<String, String> warehouseCodeMap = listWithWarehouseDTOS.stream()
+                .collect(Collectors.toMap(OverseasProviderDTO.ListWithWarehouseDTO::getPlatformWarehouseCode, OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId));
+        List<OverseasHistoryInventoryEntity> list = baseMapper.listByStartDateAndEndDate(startDate, endDate, warehouseCodeMap.keySet());
+        for (OverseasHistoryInventoryEntity entity : list) {
+            entity.setWarehouseId(warehouseCodeMap.get(entity.getWarehouseCode()));
+        }
+        return list;
+    }
 }

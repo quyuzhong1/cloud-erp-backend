@@ -157,16 +157,18 @@
             </if>
         </if>
     </select>
-    <select id="getOverseasUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
-        SELECT COALESCE(sum(${code}), 0) AS qty,
-               opw.warehouse_id AS warehouseId
-        FROM ${tableName} AS oi
-                 LEFT JOIN ${otherTableName} AS opw ON opw.platform_warehouse_code = oi.warehouse_code
-        WHERE oi.is_deleted = FALSE
-          AND opw.disabled = FALSE
-          AND oi.sku_id = #{result.replenishment.skuId}
-          AND oi.warehouse_id = #{result.replenishment.fbaWarehouseId}
-        GROUP BY opw.warehouse_id
+    <select id="getOverseasUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO$OverseasInventoryDTO">
+        SELECT
+               warehouse_code,
+               COALESCE(sum(${code}), 0) AS qty
+        FROM ${tableName}
+        WHERE is_deleted = FALSE
+          AND sku_id = #{result.replenishment.skuId}
+         AND warehouse_code in
+        <foreach collection="warehouseCode" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        GROUP BY warehouse_code
     </select>
 
     <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">

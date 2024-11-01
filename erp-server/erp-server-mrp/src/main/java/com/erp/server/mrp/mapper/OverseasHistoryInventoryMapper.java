@@ -6,6 +6,11 @@ import com.erp.model.mrp.dto.OverseasHistoryInventoryDTO;
 import com.erp.model.mrp.entity.OverseasHistoryInventoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -23,5 +28,10 @@ public interface OverseasHistoryInventoryMapper extends BaseMapper<OverseasHisto
      * @param query 分页
      * @param params 参数
      */
-    IPage<OverseasHistoryInventoryDTO.ListDTO> paging(Page<OverseasHistoryInventoryDTO.ListDTO> query, OverseasHistoryInventoryDTO.PagingParamDTO params);
+    IPage<OverseasHistoryInventoryDTO.ListDTO> paging(@Param("page") Page<OverseasHistoryInventoryDTO.ListDTO> query,@Param("params") OverseasHistoryInventoryDTO.PagingParamDTO params);
+
+    /**
+     * 根据开始结束查询
+     */
+    List<OverseasHistoryInventoryEntity> listByStartDateAndEndDate(@Param("startDate")LocalDate startDate,@Param("endDate") LocalDate endDate,@Param("warehouseCode") Set<String> warehouseCode);
 }

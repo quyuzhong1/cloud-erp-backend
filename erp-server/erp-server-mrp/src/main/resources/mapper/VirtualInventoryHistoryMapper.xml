@@ -21,5 +21,56 @@
         <result column="qty" property="qty" />
         <result column="bill_date" property="billDate" />
     </resultMap>
+    <select id="listVirtualWarehouseIdListAndSkuIdList"
+            resultType="com.erp.model.mrp.dto.VirtualInventoryHistoryDTO$ListInventoryDTO">
+        select
+        vi.id,
+        vi.warehouse_id,
+        vi.sku_id,
+        vi.dict_inventory_status,
+        COALESCE(vi.qty,0) as virtualQty,
+        vi.virtual_warehouse_id,
+        (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
+        (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
+        from virtual_inventory vi
+        <where>
+            vi.is_deleted = false
+            and vi.sku_id in
+            <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            and vi.virtual_warehouse_id in
+            <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+    <select id="paging" resultType="com.erp.model.mrp.dto.VirtualInventoryHistoryDTO$ListDTO">
+        select
+        string_agg(vi.id, ',') as indexId,
+        vi.sku_id as skuId,
+        vi.warehouse_id as warehouseId,
+        vi.virtual_warehouse_id as virtualWarehouseId
+        from virtual_inventory vi
+        left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and vi.is_deleted = false
+            <if test="params.hideZeroInventory">
+                and  vi.qty != 0
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vi.sku_id
+    </select>
 
 </mapper>

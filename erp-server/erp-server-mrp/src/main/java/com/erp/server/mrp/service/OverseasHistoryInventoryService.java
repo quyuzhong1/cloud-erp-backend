@@ -40,10 +40,9 @@ public interface OverseasHistoryInventoryService extends SuperService<OverseasHi
     void exportList(OverseasHistoryInventoryDTO.ExportDTO dto);
 
     /**
-     *
-     * @param startDate
-     * @param endDate
-     * @return
+     * 根据开始结束时间查询
+     * @param startDate 开始时间
+     * @param endDate   结束时间
      */
     List<OverseasHistoryInventoryEntity> listByStartDateAndEndDate(LocalDate startDate, LocalDate endDate);
 }

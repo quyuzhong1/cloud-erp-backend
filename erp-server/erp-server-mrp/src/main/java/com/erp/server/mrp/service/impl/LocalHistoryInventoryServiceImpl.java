@@ -1,7 +1,10 @@
 package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.LocalHistoryInventoryDTO;
 import com.erp.model.mrp.entity.LocalHistoryInventoryEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.server.mrp.mapper.LocalHistoryInventoryMapper;
@@ -44,5 +47,15 @@ public class LocalHistoryInventoryServiceImpl extends SuperServiceImpl<LocalHist
                     return inventory;
                 }).collect(Collectors.toList());
         saveOrUpdateBatch(entities);
+    }
+
+    @Override
+    public PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> paging(PagingDTO<LocalHistoryInventoryDTO.SearchParamDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public void exportExcel(LocalHistoryInventoryDTO.ExportSearchParamDTO dto) {
+
     }
 }

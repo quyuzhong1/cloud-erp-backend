@@ -13,12 +13,15 @@ import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.*;
@@ -53,6 +56,8 @@ public class InventoryServiceImpl implements InventoryService {
     private VirtualInventoryHistoryService virtualInventoryHistoryService;
     @Resource
     private CfgRuleCommonService cfgRuleCommonService;
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Override
     public int getFbaUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes) {
@@ -153,10 +158,17 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public int getOverseasUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+
+        List<OverseasProviderWarehouseDTO.ViewDTO> list = wmsOverseasWarehouseFeign.listByWarehouseIdList(replenishmentResultDTO.getOverseasWarehouseId());
+        Map<String, String> codeMap = list.stream().collect(Collectors.toMap(OverseasProviderWarehouseDTO.ViewDTO::getPlatformWarehouseCode,
+                OverseasProviderWarehouseDTO.ViewDTO::getWarehouseId, (o1, o2) -> o1));
         String code = String.join("+", codes);
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> overseasUsableDetail = new ArrayList<>();
-        List<LocalInventoryDTO> invetoryList = inventoryMapper.getOverseasUsable(replenishmentResultDTO, code, getTableName(OVERSEAS_INVENTORY, calcDate), getTableName(OVERSEAS_PROVIDER_WAREHOUSE, calcDate));
+        List<LocalInventoryDTO.OverseasInventoryDTO> invetoryOverseasList = inventoryMapper.getOverseasUsable(replenishmentResultDTO, code, getTableName(OVERSEAS_INVENTORY, calcDate), codeMap.keySet());
+        List<LocalInventoryDTO> invetoryList = invetoryOverseasList.stream()
+                .map(v -> new LocalInventoryDTO(codeMap.get(v.getWarehouseCode()), v.getQty()))
+                .collect(Collectors.toList());
         int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO, invetoryList, overseasUsableDetail,ReplenishmentInventoryTypeEnum.OVERSEAS_USABLE);
         replenishmentResultDTO.setOverseasUsableDetail(overseasUsableDetail);
         return qty;

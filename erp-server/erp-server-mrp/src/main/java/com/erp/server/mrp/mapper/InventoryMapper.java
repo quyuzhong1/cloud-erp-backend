@@ -64,7 +64,7 @@ public interface InventoryMapper {
     /**
      * 查询海外仓可用库存
      */
-    List<LocalInventoryDTO> getOverseasUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName, @Param("otherTableName") String otherTableName);
+    List<LocalInventoryDTO.OverseasInventoryDTO> getOverseasUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName, @Param("warehouseCode") Set<String> warehouseCode);
 
     /**
      * 查询本地仓可用库存
