@@ -306,7 +306,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<InventoryDetailVO> inventoryDetail(InventoryTotalDTO params) {
+    public PagingVO<InventoryDetailVO> inventoryDetail(PagingDTO<InventoryTotalDTO> params) {
         return replenishmentInventoryDetailService.inventoryDetail(params);
     }
 
@@ -973,6 +973,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .collect(Collectors.toList());
             estimatedDeliveryDetailService.saveBatch(fbaDeliveryDetails);
         }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasUsableDetail())) {
+            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+        }
 
         if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetails())) {
             List<OverseasInTransitDetailEntity> overseasInTransitDetails = replenishmentResult.getOverseasInTransitDetails().stream()
@@ -981,11 +984,19 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             overseasInTransitDetailService.saveBatch(overseasInTransitDetails);
         }
 
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetail())) {
+            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+        }
+
         if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetails())) {
             List<EstimatedDeliveryDetailEntity> overseasDeliveryDetails = replenishmentResult.getOverseasDeliveryDetails().stream()
                     .map(v -> ReplenishmentResultDTO.EstimatedDeliveryDetailDTO.buildEstimatedDeliveryDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
                     .collect(Collectors.toList());
             estimatedDeliveryDetailService.saveBatch(overseasDeliveryDetails);
+        }
+
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetail())) {
+            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasDeliveryDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
         }
 
         if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalUsableDetail())) {
@@ -1176,12 +1187,144 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     private EstimationResultDTO handlerLocalEstimate(ReplenishmentSuggestionDetailEntity detail, Map<LocalDate, BigDecimal> salesEstimateMap,
                                                      Integer days, InventoryEstimationDTO dto) {
-        return null;
+        EstimationResultDTO resultDTO = new EstimationResultDTO();
+        List<LocalDate> date = new ArrayList<>();
+        List<BigDecimal> inventoryQty = new ArrayList<>();
+        List<BigDecimal> calcInventoryQty = new ArrayList<>();
+        List<LocalDate> planArrivalDate = new ArrayList<>();
+        List<LocalDate> outOfStockDate = new ArrayList<>();
+        List<LocalDate> calcOutOfStockDate = new ArrayList<>();
+        Set<LocalDate> calcPlanArrivalDate = new HashSet<>();
+        LocalDate now = LocalDate.now();
+        // 获取本地在途
+        List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(detail.getId());
+        Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getQty, Integer::sum));
+        // 获取本地采购
+        List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
+        Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+        // 获取首日结余库存
+        BigDecimal balanceInventory = new BigDecimal(detail.getLocalUsableQty());
+        BigDecimal calcBalanceInventory = new BigDecimal(detail.getLocalUsableQty());
+        for (int i = 0; i < days; i++) {
+            LocalDate currentDate = now.plusDays(i);
+            date.add(currentDate);
+            BigDecimal temp = balanceInventory;
+            BigDecimal salesEstimate = Optional.ofNullable(salesEstimateMap.get(currentDate)).orElse(BigDecimal.ZERO);
+            //到货数量
+            int planArrivalQty = Optional.ofNullable(localInTransitDetailMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(localEstimatedPurchaseMap.get(currentDate)).orElse(0);
+            if (0 != planArrivalQty) {
+                planArrivalDate.add(currentDate);
+            }
+            //库存等于结余库存-预计销量+到货数量
+            balanceInventory = balanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty));
+            inventoryQty.add(balanceInventory);
+            if (temp.compareTo(BigDecimal.ZERO) > 0 && balanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
+                outOfStockDate.add(currentDate);
+            }
+            if (Boolean.TRUE.equals(dto.getIsSimulated())) {
+                if (0 != planArrivalQty) {
+                    calcPlanArrivalDate.add(currentDate);
+                }
+                BigDecimal calcTemp = calcBalanceInventory;
+                //计算试算的建议库存
+                BigDecimal suggestInventory = getSuggestInventory(currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
+                if (suggestInventory.compareTo(BigDecimal.ZERO) > 0) {
+                    calcPlanArrivalDate.add(currentDate);
+                }
+                calcBalanceInventory = calcBalanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty)).add(suggestInventory);
+                calcInventoryQty.add(calcBalanceInventory);
+                if (calcTemp.compareTo(BigDecimal.ZERO) > 0 && calcBalanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
+                    calcOutOfStockDate.add(currentDate);
+                }
+            }
+        }
+        resultDTO.setDate(date);
+        resultDTO.setInventoryQty(inventoryQty);
+        resultDTO.setPlanArrivalDate(planArrivalDate);
+        resultDTO.setOutOfStockDate(outOfStockDate);
+        resultDTO.setCalcInventoryQty(calcInventoryQty);
+        resultDTO.setCalcOutOfStockDate(calcOutOfStockDate);
+        resultDTO.setCalcPlanArrivalDate(new ArrayList<>(calcPlanArrivalDate));
+        return resultDTO;
     }
 
     private EstimationResultDTO handlerOverseasEstimate(ReplenishmentSuggestionDetailEntity detail, Map<LocalDate, BigDecimal> salesEstimateMap,
                                                         Integer days, InventoryEstimationDTO dto) {
-        return null;
+        EstimationResultDTO resultDTO = new EstimationResultDTO();
+        List<LocalDate> date = new ArrayList<>();
+        List<BigDecimal> inventoryQty = new ArrayList<>();
+        List<BigDecimal> calcInventoryQty = new ArrayList<>();
+        List<LocalDate> planArrivalDate = new ArrayList<>();
+        List<LocalDate> outOfStockDate = new ArrayList<>();
+        List<LocalDate> calcOutOfStockDate = new ArrayList<>();
+        Set<LocalDate> calcPlanArrivalDate = new HashSet<>();
+        LocalDate now = LocalDate.now();
+        // 获取海外仓在途
+        List<OverseasInTransitDetailEntity> overseasInTransitDetails = overseasInTransitDetailService.getByReplenishmentId(detail.getId());
+        Map<LocalDate, Integer> overseasInTransitDetailMap = overseasInTransitDetails.stream()
+                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getInTransitQty, Integer::sum));
+        // 获取海外仓预计发货
+        List<EstimatedDeliveryDetailEntity> overseasEstimatedDelivery = estimatedDeliveryDetailService.getByReplenishmentIdAndType(detail.getId(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
+        Map<LocalDate, Integer> overseasEstimatedDeliveryMap = overseasEstimatedDelivery.stream()
+                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getQty, Integer::sum));
+        // 获取本地在途
+        List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(detail.getId());
+        Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getQty, Integer::sum));
+        // 获取本地采购
+        List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
+        Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+        // 获取首日结余库存
+        BigDecimal balanceInventory = new BigDecimal(detail.getOverseasUsableQty());
+        BigDecimal calcBalanceInventory = new BigDecimal(detail.getOverseasUsableQty());
+        for (int i = 0; i < days; i++) {
+            LocalDate currentDate = now.plusDays(i);
+            date.add(currentDate);
+            BigDecimal temp = balanceInventory;
+            BigDecimal salesEstimate = Optional.ofNullable(salesEstimateMap.get(currentDate)).orElse(BigDecimal.ZERO);
+            //到货数量
+            int planArrivalQty = Optional.ofNullable(overseasInTransitDetailMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(overseasEstimatedDeliveryMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(localInTransitDetailMap.get(currentDate)).orElse(0) +
+                    Optional.ofNullable(localEstimatedPurchaseMap.get(currentDate)).orElse(0);
+            if (0 != planArrivalQty) {
+                planArrivalDate.add(currentDate);
+            }
+            //库存等于结余库存-预计销量+到货数量
+            balanceInventory = balanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty));
+            inventoryQty.add(balanceInventory);
+            if (temp.compareTo(BigDecimal.ZERO) > 0 && balanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
+                outOfStockDate.add(currentDate);
+            }
+            if (Boolean.TRUE.equals(dto.getIsSimulated())) {
+                if (0 != planArrivalQty) {
+                    calcPlanArrivalDate.add(currentDate);
+                }
+                BigDecimal calcTemp = calcBalanceInventory;
+                //计算试算的建议库存
+                BigDecimal suggestInventory = getSuggestInventory(currentDate, dto.getDeliverySuggest(), dto.getPurchaseSuggest());
+                if (suggestInventory.compareTo(BigDecimal.ZERO) > 0) {
+                    calcPlanArrivalDate.add(currentDate);
+                }
+                calcBalanceInventory = calcBalanceInventory.subtract(salesEstimate).add(new BigDecimal(planArrivalQty)).add(suggestInventory);
+                calcInventoryQty.add(calcBalanceInventory);
+                if (calcTemp.compareTo(BigDecimal.ZERO) > 0 && calcBalanceInventory.compareTo(BigDecimal.ZERO) <= 0) {
+                    calcOutOfStockDate.add(currentDate);
+                }
+            }
+        }
+        resultDTO.setDate(date);
+        resultDTO.setInventoryQty(inventoryQty);
+        resultDTO.setPlanArrivalDate(planArrivalDate);
+        resultDTO.setOutOfStockDate(outOfStockDate);
+        resultDTO.setCalcInventoryQty(calcInventoryQty);
+        resultDTO.setCalcOutOfStockDate(calcOutOfStockDate);
+        resultDTO.setCalcPlanArrivalDate(new ArrayList<>(calcPlanArrivalDate));
+        return resultDTO;
     }
 
     private EstimationResultDTO handlerFbaEstimate(ReplenishmentSuggestionDetailEntity detail, Map<LocalDate, BigDecimal> salesEstimateMap,

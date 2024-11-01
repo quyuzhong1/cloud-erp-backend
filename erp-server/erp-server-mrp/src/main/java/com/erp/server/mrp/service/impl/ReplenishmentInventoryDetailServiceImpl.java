@@ -3,7 +3,10 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.mrp.dto.InventoryTotalDTO;
@@ -52,18 +55,18 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public List<InventoryDetailVO> inventoryDetail(InventoryTotalDTO params) {
-        List<ReplenishmentInventoryDetailEntity> inventoryDetail = list(Wrappers.<ReplenishmentInventoryDetailEntity>lambdaQuery()
-                .eq(ReplenishmentInventoryDetailEntity::getReplenishmentDetailId, params.getDetailId())
-                .eq(ReplenishmentInventoryDetailEntity::getInventoryType, params.getType())
+    public PagingVO<InventoryDetailVO> inventoryDetail(PagingDTO<InventoryTotalDTO> params) {
+        Page<ReplenishmentInventoryDetailEntity> inventoryDetail = page(new Page<>(params.getCurrPage(), params.getPageSize()),Wrappers.<ReplenishmentInventoryDetailEntity>lambdaQuery()
+                .eq(ReplenishmentInventoryDetailEntity::getReplenishmentDetailId, params.getParams().getDetailId())
+                .eq(ReplenishmentInventoryDetailEntity::getInventoryType, params.getParams().getType())
         );
-        if (CollectionUtils.isEmpty(inventoryDetail)) {
-            return Collections.emptyList();
+        if (CollectionUtils.isEmpty(inventoryDetail.getRecords())) {
+            return new PagingVO<>();
         }
-        List<String> ids = inventoryDetail.stream().map(ReplenishmentInventoryDetailEntity::getId).collect(Collectors.toList());
-        List<String> warehouseIdList = inventoryDetail.stream().map(ReplenishmentInventoryDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> ids = inventoryDetail.getRecords().stream().map(ReplenishmentInventoryDetailEntity::getId).collect(Collectors.toList());
+        List<String> warehouseIdList = inventoryDetail.getRecords().stream().map(ReplenishmentInventoryDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
         //虚拟仓信息
-        List<String> virtualWarehouseIdList = inventoryDetail.stream().map(ReplenishmentInventoryDetailEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<String> virtualWarehouseIdList = inventoryDetail.getRecords().stream().map(ReplenishmentInventoryDetailEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntities = new ArrayList<>();
         List<VirtualWarehouseEntity> virtualWarehouseEntities = new ArrayList<>();
         if (!CollectionUtils.isEmpty(warehouseIdList)) {
@@ -74,8 +77,8 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
         }
         List<ShopInventoryDetailEntity> shopInventoryDetailList = shopInventoryDetailService.list(Wrappers.<ShopInventoryDetailEntity>lambdaQuery()
                 .in(ShopInventoryDetailEntity::getMainId, ids));
-        ArrayList<InventoryDetailVO> detailVOS = new ArrayList<>();
-        for (ReplenishmentInventoryDetailEntity entity : inventoryDetail) {
+        List<InventoryDetailVO> detailVOS = new ArrayList<>();
+        for (ReplenishmentInventoryDetailEntity entity : inventoryDetail.getRecords()) {
             InventoryDetailVO detailVO = InventoryDetailVO.buildInventoryDetailVO(entity);
             WarehouseEntity warehouse = warehouseEntities.stream()
                     .filter(e -> e.getId().equals(entity.getWarehouseId()))
@@ -112,7 +115,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
             }
             detailVOS.add(detailVO);
         }
-        return detailVOS;
+        return new PagingVO<>(detailVOS, (int) inventoryDetail.getTotal(), params.getPageSize(), params.getCurrPage());
     }
 
     @Override

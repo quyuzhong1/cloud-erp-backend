@@ -130,8 +130,8 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @param params 明细id
      */
     @PostMapping("/inventoryDetail")
-    public ApiResult<List<InventoryDetailVO>> inventoryDetail(@RequestBody @Validated InventoryTotalDTO params) {
-        List<InventoryDetailVO> inventoryDetail = replenishmentSuggestionService.inventoryDetail(params);
+    public ApiResult<PagingVO<InventoryDetailVO>> inventoryDetail(@RequestBody @Validated PagingDTO<InventoryTotalDTO> params) {
+        PagingVO<InventoryDetailVO> inventoryDetail = replenishmentSuggestionService.inventoryDetail(params);
         return success(inventoryDetail);
     }
 

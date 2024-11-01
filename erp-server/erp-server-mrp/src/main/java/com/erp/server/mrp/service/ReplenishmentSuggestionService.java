@@ -63,7 +63,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      *
      * @param params 明细id
      */
-    List<InventoryDetailVO> inventoryDetail(InventoryTotalDTO params);
+    PagingVO<InventoryDetailVO> inventoryDetail(PagingDTO<InventoryTotalDTO> params);
     /**
      * 销量分析
      * @param dto 参数

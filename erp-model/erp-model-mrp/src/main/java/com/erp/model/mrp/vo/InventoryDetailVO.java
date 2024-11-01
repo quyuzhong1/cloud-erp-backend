@@ -45,6 +45,11 @@ public class InventoryDetailVO {
     private String warehouseType;
 
     /**
+     * 平台
+     */
+    private String dictPlatform;
+
+    /**
      * 关联店铺类型，platform按平台，shop按店铺
      */
     private String channelType;
@@ -96,6 +101,7 @@ public class InventoryDetailVO {
         InventoryDetailVO detailVO = new InventoryDetailVO();
         detailVO.setInventoryType(entity.getInventoryType());
         detailVO.setInventoryAllocateType(entity.getInventoryAllocateType());
+        detailVO.setDictPlatform(entity.getDictPlatform());
         detailVO.setChannelType(entity.getChannelType());
         detailVO.setChannelIdJson(entity.getChannelIdJson());
         detailVO.setTotalQty(entity.getTotalQty());

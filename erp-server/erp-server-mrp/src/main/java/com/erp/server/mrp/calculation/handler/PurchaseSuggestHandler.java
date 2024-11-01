@@ -71,7 +71,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> deliverySuggests = dates.parallelStream()
                 .map(localDate -> {
                     String code = docNoGenHelper.generateCode(CODE_P);
-                    ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO.getReplenishmentDetail().getDetailId(), ExecutionTypeEnum.AUTO.getCode());
+                    ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO, ExecutionTypeEnum.AUTO.getCode());
                     if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                             || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
                         //建议采购日期（本地发FBA） = 断货日期 -（审批时长 + 采购交期 + 供应商发货时效 + 质检天数 + 采购频率 + 本地发FBA时效 + FBA入库时间 + 本地仓发货频率 + FBA安全天数）

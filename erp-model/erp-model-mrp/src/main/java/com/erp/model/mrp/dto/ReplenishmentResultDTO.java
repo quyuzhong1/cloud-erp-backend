@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.enums.CurrencyEnum;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRuleSuggestedAmountNodeEnum;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
@@ -812,9 +813,11 @@ public class ReplenishmentResultDTO {
          */
         private String code;
         /**
-         * 创建类型（auto系统，manual人工）
+         * 数据类型（auto系统，manual人工）
          */
-        private String createType;
+        @TableField("data_type")
+        private String dataType;
+
         /**
          * 建议发货量
          */
@@ -847,23 +850,53 @@ public class ReplenishmentResultDTO {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 国家
+         */
+        private String country;
+        /**
+         * skuid
+         */
+        private String skuId;
 
 
-        public static DeliverySuggestDTO buildDeliverySuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, String detailId, String createType) {
+        public static DeliverySuggestDTO buildDeliverySuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType) {
             DeliverySuggestDTO dto = new DeliverySuggestDTO();
             dto.setCode(code);
-            dto.setCreateType(createType);
+            dto.setDataType(createType);
             dto.setLogisticsDays(logisticsResult.getLogisticsDays());
             dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
-            dto.setSourceId(detailId);
+            dto.setSourceId(replenishmentResultDTO.getReplenishment().getId());
             dto.setSourceType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            dto.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            dto.setPlatformType(replenishmentResultDTO.getReplenishment().getPlatformType());
+            dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
+            dto.setPlatform(replenishmentResultDTO.getReplenishment().getPlatform());
+            dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
+            dto.setCountry(replenishmentResultDTO.getReplenishment().getCountry());
             return dto;
         }
 
         public static DeliverySuggestEntity buildDeliverySuggest(DeliverySuggestDTO dto) {
             DeliverySuggestEntity entity = new DeliverySuggestEntity();
             entity.setCode(dto.getCode());
-            entity.setDataType(dto.getCreateType());
+            entity.setDataType(dto.getDataType());
             entity.setSuggestDeliveryQty(dto.getSuggestDeliveryQty());
             entity.setSuggestDeliveryDate(dto.getSuggestDeliveryDate());
             entity.setLogisticsMethod(dto.getLogisticsMethod());
@@ -872,6 +905,12 @@ public class ReplenishmentResultDTO {
             entity.setLogisticsCost(dto.getLogisticsCost());
             entity.setSourceId(dto.getSourceId());
             entity.setSourceType(dto.getSourceType());
+            entity.setCurrency(dto.getCurrency());
+            entity.setPlatformType(dto.getPlatformType());
+            entity.setPlatform(dto.getPlatform());
+            entity.setShopId(dto.getShopId());
+            entity.setCountry(dto.getCountry());
+            entity.setSkuId(dto.getSkuId());
             return entity;
         }
     }
@@ -884,9 +923,10 @@ public class ReplenishmentResultDTO {
          */
         private String code;
         /**
-         * 创建类型（auto系统，manual人工）
+         * 数据类型（auto系统，manual人工）
          */
-        private String createType;
+        @TableField("data_type")
+        private String dataType;
         /**
          * 建议采购量
          */
@@ -923,22 +963,47 @@ public class ReplenishmentResultDTO {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * skuid
+         */
+        private String skuId;
 
-        public static PurchaseSuggestDTO buildPurchaseSuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, String detailId, String createType) {
+        public static PurchaseSuggestDTO buildPurchaseSuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType) {
             PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
             dto.setCode(code);
-            dto.setCreateType(createType);
+            dto.setDataType(createType);
             dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
             dto.setLogisticsDays(logisticsResult.getLogisticsDays());
-            dto.setSourceId(detailId);
+            dto.setSourceId(replenishmentResultDTO.getReplenishment().getId());
             dto.setSourceType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            dto.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            dto.setPlatformType(replenishmentResultDTO.getReplenishment().getPlatformType());
+            dto.setPlatform(replenishmentResultDTO.getReplenishment().getPlatform());
+            dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
+            dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
             return dto;
         }
 
         public static PurchaseSuggestEntity buildPurchaseSuggest(PurchaseSuggestDTO dto) {
             PurchaseSuggestEntity entity = new PurchaseSuggestEntity();
             entity.setCode(dto.getCode());
-            entity.setDataType(dto.getCreateType());
+            entity.setDataType(dto.getDataType());
             entity.setSuggestPurchaseQty(dto.getSuggestPurchaseQty());
             entity.setSuggestPurchaseDate(dto.getSuggestPurchaseDate());
             entity.setLogisticsMethod(dto.getLogisticsMethod());
@@ -948,6 +1013,11 @@ public class ReplenishmentResultDTO {
             entity.setPurchaseCost(dto.getPurchaseCost());
             entity.setSourceId(dto.getSourceId());
             entity.setSourceType(dto.getSourceType());
+            entity.setPlatformType(dto.getPlatformType());
+            entity.setCurrency(dto.getCurrency());
+            entity.setPlatform(dto.getPlatform());
+            entity.setShopId(dto.getShopId());
+            entity.setSkuId(dto.getSkuId());
             return entity;
         }
     }
