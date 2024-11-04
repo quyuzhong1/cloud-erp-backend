@@ -93,6 +93,9 @@
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
+            <if test="params.platformType != null and params.platformType != ''">
+               and ds.platform_type =  ${params.platformType}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -115,6 +118,12 @@
         <where>
             ${params.sqlMap.default}
             and ds.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            <if test="params.platformType != null and params.platformType != ''">
+                and ds.platform_type =  ${params.platformType}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
