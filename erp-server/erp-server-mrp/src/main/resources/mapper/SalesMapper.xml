@@ -60,7 +60,13 @@
         SELECT so.bill_date        AS date,
         SUM(sod.actual_qty) AS originalSalesQty,
         sb.shop_id          AS shopId,
-        sod.sku_id          AS skuId
+        sod.sku_id          AS skuId,
+        CASE WHEN sb.id in
+        <foreach collection="soIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        THEN 'overseasWarehouse'
+        ELSE 'localWarehouse' END AS orderType
         FROM ${tableName} AS so
         INNER JOIN ${tableDetailName} AS sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
         INNER JOIN ${soB2cName} AS sb ON sb.is_deleted = FALSE AND sb.id = so.so_id
