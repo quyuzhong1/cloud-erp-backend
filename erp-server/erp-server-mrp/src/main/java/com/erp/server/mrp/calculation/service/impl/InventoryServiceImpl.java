@@ -414,15 +414,15 @@ public class InventoryServiceImpl implements InventoryService {
             fbaHistoryInventoryService.saveTodayInventory(inventoryEntities, calculationDate);
         }
         List<OverseasInventoryEntity> overseasHistoryInventory = inventoryMapper.getAllOverseasHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calcDate));
-        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+        if (!CollectionUtils.isEmpty(overseasHistoryInventory)) {
             overseasHistoryInventoryService.saveTodayInventory(overseasHistoryInventory, calculationDate);
         }
         List<InventoryEntity> localHistoryInventory = inventoryMapper.getAllLocalHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.INVENTORY, calcDate));
-        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+        if (!CollectionUtils.isEmpty(localHistoryInventory)) {
             localHistoryInventoryService.saveTodayInventory(localHistoryInventory, calculationDate);
         }
         List<VirtualInventoryEntity> virtualInventory = inventoryMapper.getAllVirtualHistoryInventory(SnapshotTableEnum.getTableName(SnapshotTableEnum.VIRTUAL_INVENTORY, calcDate));
-        if (!CollectionUtils.isEmpty(inventoryEntities)) {
+        if (!CollectionUtils.isEmpty(virtualInventory)) {
             virtualInventoryHistoryService.saveTodayInventory(virtualInventory, calculationDate);
         }
     }

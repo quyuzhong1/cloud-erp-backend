@@ -77,55 +77,48 @@ public class OverseasHistoryInventoryEntity extends BaseEntity<OverseasHistoryIn
      * 发货在途数量
      */
     @TableField("deliver_onway_qty")
-    private Long deliverOnwayQty;
-
+    private Integer deliverOnwayQty;
     /**
      * 待上架数量
      */
     @TableField("pending_qty")
-    private Long pendingQty;
-
+    private Integer pendingQty;
     /**
      * 可售数量
      */
     @TableField("sellable_qty")
-    private Long sellableQty;
-
+    private Integer sellableQty;
     /**
      * 不可售数量
      */
     @TableField("unsellable_qty")
-    private Long unsellableQty;
-
+    private Integer unsellableQty;
     /**
      * 待出库数量
      */
     @TableField("reserved_qty")
-    private Long reservedQty;
-
+    private Integer reservedQty;
     /**
      * 尾程在途
      */
     @TableField("onway_qty")
-    private Long onwayQty;
-
+    private Integer onwayQty;
     /**
      * 缺货数量
      */
     @TableField("lack_qty")
-    private Long lackQty;
-
+    private Integer lackQty;
     /**
      * 冻结数量
      */
     @TableField("frozen_qty")
-    private Long frozenQty;
-
+    private Integer frozenQty;
     /**
      * 历史出库数量
      */
     @TableField("shipped_qty")
-    private Long shippedQty;
+    private Integer shippedQty;
+
 
     /**
      * 平台下载更新时间
