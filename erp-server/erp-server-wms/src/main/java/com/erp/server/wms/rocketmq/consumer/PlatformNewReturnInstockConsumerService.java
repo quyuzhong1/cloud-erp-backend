@@ -13,6 +13,7 @@ import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.entity.*;
@@ -166,7 +167,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		ListingInfoParamDTO listingInfoParamDTO = new ListingInfoParamDTO();
 		listingInfoParamDTO.setPlatformSkuNoList(platformSkuNoList);
 		listingInfoParamDTO.setAuthId(dto.getAuthId());
-		listingInfoParamDTO.setMatchResult(true);
+		listingInfoParamDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
 		List<SkuMappingDTO.MappingSkuViewDTO> mappingSkuViewDTOList = skuMappingFeign.listByPlatformSkuNoAndPlatform(listingInfoParamDTO);
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
 		for (PlatformReturnInstockDTO.Detail detail : details) {
