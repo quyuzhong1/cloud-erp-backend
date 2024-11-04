@@ -62,6 +62,8 @@ public class BomDTO implements Serializable {
     public static class BomSku{
 
 
+        private String type;
+
         private String parentSkuId;
 
         private String parentSkuNo;

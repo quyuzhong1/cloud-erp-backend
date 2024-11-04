@@ -334,4 +334,9 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         }
         return skuBomVersionList;
     }
+
+    @Override
+    public List<BomDTO.BomSku> listAllBom(List<String> childSkuIdList) {
+        return baseMapper.listAllBomByChildSkuIdList(childSkuIdList);
+    }
 }
