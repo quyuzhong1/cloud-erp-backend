@@ -418,7 +418,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         lambdaUpdate()
                 .set(WaveListEntity::getStatus, WaveStatusEnum.FINISH.getCode())
                 .ne(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode())
-                .in(WaveListEntity::getId, ids);
+                .in(WaveListEntity::getId, ids)
+                .update();
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         for (String id : ids) {
             operateLogService.addModuleOperateLog("手动标记波次状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), id, "手动完成", loginUser.getUid(), loginUser.getUserName());
