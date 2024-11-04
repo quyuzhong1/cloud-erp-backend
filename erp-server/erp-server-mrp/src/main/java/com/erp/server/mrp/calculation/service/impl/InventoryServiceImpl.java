@@ -588,13 +588,13 @@ public class InventoryServiceImpl implements InventoryService {
                                    CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult,
                                    CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult) {
         if (CfgRuleSuggestedAmountNodeEnum.FBA_USABLE_QTY.getCode().equals(code)) {
-            return replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty();
+            return Optional.ofNullable(replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty()).orElse(0);
         }
         if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_USABLE_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getReplenishmentDetail().getOverseasUsableQty()).orElse(0);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_USABLE_QTY.getCode().equals(code)) {
-            return replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty();
+            return Optional.ofNullable(replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty()).orElse(0);
         }
         if (CfgRuleSuggestedAmountNodeEnum.FBA_IN_TRANSIT_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getFbaInTransitDetails()).orElse(new ArrayList<>())
@@ -624,7 +624,7 @@ public class InventoryServiceImpl implements InventoryService {
             invetoryList = Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(new ArrayList<>())
                     .stream()
                     .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
-                    .map(v -> new LocalInventoryDTO("", v.getQty()))
+                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
                     .collect(Collectors.toList());
             warehouseList = warehouseResult.getOverseasWarehouseList();
         }
