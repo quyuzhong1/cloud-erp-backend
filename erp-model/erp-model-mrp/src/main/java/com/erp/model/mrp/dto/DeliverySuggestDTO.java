@@ -383,21 +383,22 @@ public class DeliverySuggestDTO implements Serializable {
         /**
          * 计划发货量（计划修正值）
          */
-        private String planDeliveryQty;
+        private Integer planDeliveryQty;
 
         /**
          * 实际发货量（运营确认值）
          */
-        private String actualDeliveryQty;
+        private Integer actualDeliveryQty;
 
         /**
          * 发货备货量
          */
-        private String deliveryStockUpQty;
+        private Integer deliveryStockUpQty;
 
         /**
          * 物流方式,LogisticsMethodEnum枚举
          */
+        @Size(max = 32,message = "物流方式,LogisticsMethodEnum枚举最大长度不能超过32位")
         private String logisticsMethod;
 
         /**
@@ -411,8 +412,14 @@ public class DeliverySuggestDTO implements Serializable {
         private LocalDate suggestDeliveryDate;
 
         /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
          * 备注
          */
+        @Size(max = 100,message = "备注最大长度不能超过100位")
         private String remark;
     }
 

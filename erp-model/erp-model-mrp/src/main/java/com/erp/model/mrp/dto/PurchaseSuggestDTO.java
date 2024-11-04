@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -382,6 +383,15 @@ public class PurchaseSuggestDTO implements Serializable {
          * 建议采购日期
          */
         private LocalDate suggestPurchaseDate;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimateInstockDate;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
 
         /**
          * 备注

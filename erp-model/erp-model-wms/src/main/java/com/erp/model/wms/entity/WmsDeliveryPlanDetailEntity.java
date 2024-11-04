@@ -1,14 +1,17 @@
 package com.erp.model.wms.entity;
 
-import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -84,8 +87,14 @@ public class WmsDeliveryPlanDetailEntity extends BaseEntity<WmsDeliveryPlanDetai
     /**
      * 来源id
      */
-    @TableField("source_json")
-    private JSONObject sourceJson;
+    @TableField(value = "source_json", jdbcType = JdbcType.OTHER)
+    private JSONArray sourceJson;
+
+    /**
+     * 来源json
+     */
+    @TableField(exist = false)
+    private List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonList;
 
     /**
      * 主表编码,辅助字段

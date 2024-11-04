@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -144,6 +146,8 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
             //设置产品编号
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             detailEntity.setSkuNo(skuVO.getSkuNo());
+            //来源信息
+            detailEntity.setSourceJson(CollectionUtils.isEmpty(detailEntity.getSourceJsonList()) ? new JSONArray() : JSONUtil.parseArray(detailEntity.getSourceJsonList()));
 
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {

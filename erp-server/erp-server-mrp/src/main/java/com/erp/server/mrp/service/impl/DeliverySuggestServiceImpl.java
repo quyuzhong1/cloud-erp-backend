@@ -150,6 +150,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public Boolean update(DeliverySuggestDTO.UpdateDTO updateDTO) {
         DeliverySuggestEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+        }
         DeliverySuggestEntity deliverySuggestEntity =  BeanMapperUtils.map(DeliverySuggestEntity.class, updateDTO);
         deliverySuggestEntity.setSourceId(old.getSourceId());
         // 数据处理
@@ -167,8 +170,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public Boolean importUpdate(DeliverySuggestDTO.ImportUpdateDTO updateDTO) {
         DeliverySuggestEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+        }
         DeliverySuggestEntity deliverySuggestEntity =  BeanMapperUtils.map(DeliverySuggestEntity.class, updateDTO);
-
         log.info("编辑 开始修改补货计划数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(deliverySuggestEntity);
         if(!save) {
@@ -222,7 +227,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public BatchResultDTO locking(String id) {
         DeliverySuggestEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
-        if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode())) {
+        if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
         }
         //更新成待确认状态
@@ -240,7 +245,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public BatchResultDTO confirm(String id) {
         DeliverySuggestEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
-        if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+        if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
         //更新成完成状态
@@ -419,7 +424,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         //草稿和待确认支持更新备注
-        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
         }
         // 操作日志备注
@@ -563,7 +568,19 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             updateDTO.setActualDeliveryQty(Integer.valueOf(excelDTO.getActualDeliveryQty()));
             updateDTO.setDeliveryStockUpQty(Integer.valueOf(excelDTO.getDeliveryStockUpQty()));
             updateDTO.setRemark(excelDTO.getRemark());
-            this.importUpdate(updateDTO);
+            try {
+                this.importUpdate(updateDTO);
+            } catch (Exception e) {
+                errorMsgList.add(e.getMessage());
+            }
+            //保存里面的验证
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                //错误数据
+                wrongList.add(excelDTO);
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                continue;
+            }
         }
         successList.removeAll(wrongList);
     }
