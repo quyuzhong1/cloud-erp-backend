@@ -136,6 +136,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //保存系统值
         DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
         BeanMapperUtils.copy(deliverySuggestEntity,dto);
+        dto.setSourceId(deliverySuggestEntity.getSourceId());
+        dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
         deliverySuggestSysService.add(dto);
         return new BaseResultDTO.AddDTO(deliverySuggestEntity.getId(), code);
     }
@@ -608,10 +610,6 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<String> skuIdList = list.stream().map(ReplenishmentSuggestionDTO.DeliverySuggestionDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
-
-
         //所有店铺
         List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
 
@@ -635,9 +633,6 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), deliverySuggestionDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
             deliverySuggestionDTO.setShopName(shopName);
 
-            //产品名称
-            String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), deliverySuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
-            deliverySuggestionDTO.setProductName(productName);
             //创建名称
             deliverySuggestionDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(deliverySuggestionDTO.getCreateType()));
         }
@@ -661,10 +656,6 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //国家
         List<String> countryCodeList = shopInfoList.stream().map(ShopInfoEntity::getDictCountryCode).distinct().collect(Collectors.toList());
         List<DictCountryEntity> countryList = CollectionUtils.isEmpty(countryCodeList) ? new ArrayList<>() : sysDictFeign.listCountryByIds(countryCodeList);
-
-        //产品信息
-        List<String> skuIdList = list.stream().map(DeliverySuggestDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
         //补货计划
         List<String> idList = list.stream().map(DeliverySuggestDTO.ListDTO::getId).distinct().collect(Collectors.toList());
@@ -713,11 +704,6 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                         flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
                 listDTO.setCurrencySymbol(currencySymbol);
 
-                //sku
-                ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                listDTO.setSkuNo(productDetailEntity.getSkuNo());
-                listDTO.setProductName(productDetailEntity.getName());
-                listDTO.setImagesUrl(productDetailEntity.getImagesUrl());
                 //以店铺id为父级id用于前端显示
                 listDTO.setParentId(listDTO.getShopId());
                 //补货计划
@@ -734,6 +720,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                     //已发数量
                     Integer qty = BeanUtil.copyToList(JSONUtil.parseArray(wmsDeliveryPlanDetailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), listDTO.getId())).map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getPlanDeliveryQty).findFirst().orElse(MathUtil.ZERO);
                     listDTO.setHasDeliveryPlanQty(qty);
+                    listDTO.setIsPush(Boolean.TRUE);
+                    listDTO.setIsPushName("已下推");
+                } else {
+                    listDTO.setIsPush(Boolean.FALSE);
+                    listDTO.setIsPushName("未下推");
                 }
             }
             resultList.addAll(value);

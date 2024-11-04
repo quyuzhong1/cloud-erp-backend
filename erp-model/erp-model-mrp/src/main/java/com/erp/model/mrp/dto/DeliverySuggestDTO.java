@@ -168,6 +168,10 @@ public class DeliverySuggestDTO implements Serializable {
         /**
          * 是否下推
          */
+        private Boolean isPush;
+        /**
+         * 是否下推
+         */
         private String isPushName;
         /**
          * 发货计划id
