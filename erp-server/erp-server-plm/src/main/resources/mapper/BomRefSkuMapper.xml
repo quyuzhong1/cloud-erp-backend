@@ -158,19 +158,21 @@
             pbsl.parent_sku_id ,
             pbsl.parent_sku_no ,
             pbi.serial_number,
+            pbi.type,
             pbsl.sku_id as skuId,
             pbsl.sku_no as skuNo,
             pbsl.quantity as qty
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
         inner join product_bom_sku pbsl on pbs.bom_id = pbsl.bom_id and pbsl.is_deleted = false
-        <where>
+        where
             pbi.is_deleted = false and pbi.state != 6
+        <if test="childSkuIdList != null and childSkuIdList.size > 0">
             and pbs.sku_id in
             <foreach collection="childSkuIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
-        </where>
+        </if>
     </select>
 
 

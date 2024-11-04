@@ -251,6 +251,18 @@ public class SoReturnInstockDTO {
          * 退货物流单号
          */
         private String returnLogisticCode;
+        /**
+         *仓库id
+         */
+        private String warehouseId;
+        /**
+         *仓库名称
+         */
+        private String warehouseName;
+        /**
+         *仓位
+         */
+        private String warehouseLocation;
     }
 
     /**
