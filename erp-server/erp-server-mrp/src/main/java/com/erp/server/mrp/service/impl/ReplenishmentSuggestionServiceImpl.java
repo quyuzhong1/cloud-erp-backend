@@ -935,11 +935,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<ReplenishmentSuggestionEntity> suggestionList = list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
                 .eq(ReplenishmentSuggestionEntity::getSkuId, skuId)
                 .in(ReplenishmentSuggestionEntity::getShopId, shopIds)
-                .select(ReplenishmentSuggestionEntity::getId)
-                .select(ReplenishmentSuggestionEntity::getShopId)
         );
         Map<String, String> suggestionMap = suggestionList.stream().collect(Collectors.toMap(ReplenishmentSuggestionEntity::getId, ReplenishmentSuggestionEntity::getShopId, (o1, o2) -> o1));
-        ;
+
         if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyResult.getSalesQtyType())) {
             List<OrderHistorySalesEsEntity> historySalesList = orderHistorySalesEsService.getRecentSalesBySuggestionIds(suggestionMap.keySet(), salesQtyResult.getOrderType());
             return historySalesList.stream()

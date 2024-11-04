@@ -107,7 +107,7 @@
         INNER JOIN ${tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
         AND wdpd.main_id = wdp.id
         WHERE
-        wdp.is_deleted = FALSE  and wdp.invalid_status = false
+        wdp.is_deleted = FALSE  and wdp.invalid_status = 'false'
         AND wdp."type" = #{type}
         <choose>
             <when test="type == 'fba'">
@@ -124,10 +124,10 @@
         #{result.replenishment.skuId}
         <choose>
             <when test="sourceType == 'replenishment_plan'">
-                source_type = 'replenishment_plan'
+              AND  wdp.source_type = 'replenishment_plan'
             </when>
             <otherwise>
-                source_type is null
+                AND wdp.source_type is null
             </otherwise>
         </choose>
         <if test="codes != null and !codes.isEmpty()">
