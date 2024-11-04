@@ -64,6 +64,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.rtfparserkit.rtf.Command.list;
 
@@ -1196,6 +1197,13 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         List<String> applyUserIdList = list.stream().map(TransferApplicationEntity::getApplyUserId).collect(Collectors.toList());
         List<SysDepartmentUserNumberDTO> deptList = sysUserFeign.listDeptUserByUserIdList(applyUserIdList);
+        List<String> warehouseIds = list.stream()
+                .flatMap(entity -> Stream.of(entity.getInWarehouseId(), entity.getOutWarehouseId())) // 合并两个字段
+                .distinct() // 去重
+                .collect(Collectors.toList()); // 收集到 List 中
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(warehouseIds);
+        Map<String, String> warehouseChargeIdMap = warehouseEntityList.stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getChargeId));
 
         list.forEach(obj -> {
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
@@ -1212,6 +1220,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     map.put("deptId",deptIdList.get(0));
                 }
             }
+            map.put("inWarehouseChargeId", warehouseChargeIdMap.get(obj.getInWarehouseId()));
+            map.put("outWarehouseChargeId", warehouseChargeIdMap.get(obj.getOutWarehouseId()));
             startDTO.setVariablesMap(map);
             resultList.add(startDTO);
         });

@@ -25,4 +25,6 @@ public class AntuConstants {
     public static final String GET_SHIPPING_METHOD = "getShippingMethod";
 
     public static final String GET_ORDER_LIST = "getOrderList";
+
+    public static final String GET_SPECIAL_ORDERS_LIST = "getSpecialOrdersList";
 }

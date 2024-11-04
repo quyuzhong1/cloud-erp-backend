@@ -121,6 +121,7 @@
             ra.requisition_warehouse_id AS requisitionWarehouseId,
             ra.requisition_warehouse_name AS requisitionWarehouseName,
             ra.type,
+            ra.channel_id as channelId,
             rad.from_virtual_warehouse_id as fromVirtualWarehouseId,
         rad.from_virtual_warehouse_name as fromVirtualWarehouseName,
             ra.status AS status,

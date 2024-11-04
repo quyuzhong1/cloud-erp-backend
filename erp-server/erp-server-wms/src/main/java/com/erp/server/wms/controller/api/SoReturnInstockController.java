@@ -13,6 +13,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -389,5 +391,14 @@ public class SoReturnInstockController extends BaseController {
     public ApiResult generateMachineInfo(@RequestBody @Validated  ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list) {
         Boolean flag = soReturnInstockService.generateMachineInfo(list);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * b2c退货入库远程搜索
+     */
+    @PostMapping("/b2cPagingSelect")
+    public ApiResult<PagingVO<SoReturnInstockDTO.SearchDTO>> b2cPagingSelect(@RequestBody @Valid PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO) {
+        PagingVO<SoReturnInstockDTO.SearchDTO> list = soReturnInstockService.pagingSelect(searchDTO);
+        return success(list);
     }
 }

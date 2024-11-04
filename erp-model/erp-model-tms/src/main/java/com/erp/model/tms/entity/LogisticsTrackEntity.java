@@ -50,13 +50,23 @@ public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
     */
     @TableField("content")
     private String content;
+    /**
+     * 地址
+     */
+    @TableField("address")
+    private String address;
 
     /**
      * 运输类型
      */
     @TableField("transport_type")
     private String transportType;
-
+    /**
+     * trackNo+content+trackTime的md5
+     * DigestUtil.md5Hex
+     */
+    @TableField("md5")
+    private String md5;
 
     public static final String TRACK_NO = "track_no";
 

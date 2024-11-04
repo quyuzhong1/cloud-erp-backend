@@ -1,6 +1,7 @@
 package com.sdk.wms.goodcang.service;
 
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
@@ -84,9 +85,9 @@ public class GoodCangServiceTest {
     @Test
     public void getOutboundTest() {
         GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-//                .modifyDateFrom(LocalDateTime.of(2020,12,20, 0, 0, 0))
-//                .modifyDateTo(LocalDateTime.of(2023,12,20, 0, 0, 0))
-                .orderCode("G1149-240515-0008")
+                .modifyDateFrom(LocalDateTime.of(2018,11,20, 0, 0, 0))
+                .modifyDateTo(LocalDateTime.of(2018,12,20, 0, 0, 0))
+//                .orderCode("G1149-240515-0008")
                 .page(1)
                 .pageSize(20)
                 .build();
@@ -209,6 +210,19 @@ public class GoodCangServiceTest {
         GoodCangResponse<String> response = goodCangService.cancelOutboundBill("G1149-231116-005",null);
         System.out.println(response);
         System.out.println(response.getData());
+    }
+
+    @Test
+    public void getReturnInstockTest() {
+        GoodCangGetReturnInstockReq goodCangGetReturnInstockReq = GoodCangGetReturnInstockReq
+                .builder()
+                .currentPage(1)
+                .pageSize(5)
+//                .asroStatus(5)
+                .build();
+        GoodCangResponse<List<GoodCangReturnInstockResp>> response = goodCangService.getReturnInstock(goodCangGetReturnInstockReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
 
 }

@@ -16,6 +16,7 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.AmazonTokenUpdateDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -117,7 +118,6 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public AmazonShopInfoDTO cacheAndFindShopAuth(String shopId) {
         if (StringUtils.isBlank(shopId)){
             throw new ServiceException("获取店铺授权异常:数据异常：店铺ID为空");
@@ -167,8 +167,7 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "shopInfo.id", waitTime = 90)
+    @DataIdempotent(keyIdName = "shopInfo.platformShopCode", waitTime = 90)
     public AmazonTokenDTO requestAmzAndAuth(ShopInfoEntity shopInfo, CfgAppClientEntity cfgAppClient) {
         // 查询已授权信息
         //根据店铺id 获取到授权信息
@@ -188,33 +187,13 @@ public class CfgAppClientServiceImpl extends SuperServiceImpl<CfgAppClientMapper
                 cfgAppClient.getClientId(),
                 cfgAppClient.getClientSecret(),
                 shopAuth.getRefreshToken());
-        // 亚马逊关联的店铺列表
-        List<ShopInfoEntity> entityList = shopInfoFeign.getRelatedShopById(shopInfo);
-        if (CollectionUtils.isEmpty(entityList)){
-            // 更新当前店铺shopAuth
-            shopAuth.setAccessToken(tokenDTO.getAccessToken());
-            shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
-            shopInfoFeign.updateShopAuthById(shopAuth);
-            return tokenDTO;
-        }
-        List<String> shopIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<ShopAuthEntity> authList = shopInfoFeign.listShopAuthByShopIds(shopIds);
-        if (CollectionUtils.isEmpty(authList)){
-            // 更新当前店铺shopAuth
-            shopAuth.setAccessToken(tokenDTO.getAccessToken());
-            shopAuth.setRefreshToken(tokenDTO.getRefreshToken());
-            shopInfoFeign.updateShopAuthById(shopAuth);
-            return tokenDTO;
-        }
-        // 批量更新
-        authList.add(shopAuth);
-        authList.forEach(e->{
-            e.setAccessToken(tokenDTO.getAccessToken());
-            e.setRefreshToken(tokenDTO.getRefreshToken());
-        });
-        shopInfoFeign.batchUpdateShopAuthById(authList);
+
+        AmazonTokenUpdateDTO updateDTO = new AmazonTokenUpdateDTO(shopInfo, shopAuth, tokenDTO.getAccessToken(), tokenDTO.getRefreshToken());
+        // 更新
+        shopInfoFeign.checkAndSaveAllAmazonToken(updateDTO);
         return tokenDTO;
     }
+
 
     /**
      * 亚马逊 Entity 转换DTO

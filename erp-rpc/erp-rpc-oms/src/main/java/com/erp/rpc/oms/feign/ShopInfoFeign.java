@@ -3,6 +3,7 @@ package com.erp.rpc.oms.feign;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.AmazonTokenUpdateDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -138,4 +139,10 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/pagingSelect")
     PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto);
+
+    /**
+     * 检查和更新亚马逊同账号店铺授权
+     */
+    @PostMapping("feign/shop/checkAndSaveAllAmazonToken")
+    Boolean checkAndSaveAllAmazonToken(@RequestBody @Validated AmazonTokenUpdateDTO updateDTO);
 }

@@ -83,4 +83,12 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      * 更新3个月前物流单状态为系统完结
      */
     void updateBeforeThreeMonthTrackNo(LogisticsBillDetailQueryDTO query);
+
+    /**
+     * 对接track123 webhook
+     * @param dto
+     */
+    void webhookByTrack123(LogisticsTrackDTO.TrackWebHookDTO dto);
+
+    void saveIncrementTrackData(String trackNo, List<LogisticsTrackEntity> newList);
 }

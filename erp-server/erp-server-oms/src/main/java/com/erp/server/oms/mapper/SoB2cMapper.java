@@ -203,4 +203,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     void updateBatchApproveById(@Param("updateList") List<SoB2cEntity> updateList);
 
     IPage<SoB2cForeignDTO.OrderDeliveryResp> getForeignOrderDeliveryInfo(Page query, @Param("params") SoB2cForeignDTO.OrderDeliveryReq orderDeliveryReq);
+
+    List<SoB2cDTO.GenerateSoB2cReturnViewDTO> generateSoB2cReturnView(@Param("ids")List<String> ids);
 }
