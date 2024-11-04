@@ -176,6 +176,7 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
     	
         resultEntity.setLogisticsCompanyCode(entity.getLogisticsCompanyCode());
         resultEntity.setLogisticsCompanyName(entity.getLogisticsCompanyName());
+        resultEntity.setTradeLabel(entity.getTradeLabel());
         
         return resultEntity;
     }
