@@ -1034,6 +1034,8 @@ public class SkuMappingDTO implements Serializable {
     public static class MappingSkuViewDTO {
 
         private String id;
+
+        private String authId;
        /**
         * 产品skuId
         */

@@ -39,5 +39,5 @@ public interface SoReturnInstockDetailMapper extends BaseMapper<SoReturnInstockD
     List<SoReturnInstockDetailEntity> listDetailBySourceDetailIds(@Param("ids") List<String> sourceDetailIds);
 
 
-
+    List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(@Param("returnIds") List<String> returnIds);
 }

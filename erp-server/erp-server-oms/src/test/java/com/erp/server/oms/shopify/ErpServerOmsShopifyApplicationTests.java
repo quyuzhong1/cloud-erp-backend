@@ -12,7 +12,9 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClient;
 import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
+import com.sdk.oms.shopify.api.graphql.model.ShopifyOrderResponse;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
 import com.sdk.oms.shopify.api.rest.model.*;
@@ -103,8 +105,8 @@ public class ErpServerOmsShopifyApplicationTests {
 
         //1、通过检索订单列表，按指定条件获取订单ID，订单付款状态：部分付款，已付款，部分退款，已退款，已作废；订单创建时间：当天\
 //        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-11-27T00:00:00+08:00");
-        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-05-01T00:00:00-04:00");
-        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-08-16T00:00:00-04:00");
+        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2024-10-15T00:00:00+08:00");
+        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-10-17T14:05:00+08:00");
 
 
         List<ShopifyOrder> shopifyOrders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
@@ -350,4 +352,31 @@ public class ErpServerOmsShopifyApplicationTests {
             }
         }
     }
+
+    @Test
+    public void shopifyGraphQLReturnTest() {
+
+        ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient("luna-shop-test.myshopify.com", "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");
+        // 退款
+        String orderReturn = shopifyGraphQLClient.getOrderReturn("5530425884864");
+        // 退货
+//        String orderReturn = shopifyGraphQLClient.getOrderReturn("5533574234304");
+        System.out.println("订单退货信息结果");
+        System.out.println(orderReturn);
+    }
+
+    @Test
+    public void shopifyReturnTest() {
+        ShopifyRestClient shopifyRestClient = shopifyRestClientService.getShopifyRestClient("luna-shop-test.myshopify.com", "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");
+        // 退款
+//        String orderReturn = shopifyRestClient.getOrderRefunds("5530425884864");
+        // 退货
+//        String orderReturn = shopifyRestClient.getOrderRefunds("5533574234304");
+        String orderReturn = shopifyRestClient.getOrderRefunds("5630271684800");
+        System.out.println("订单退货信息结果");
+        System.out.println(orderReturn);
+    }
+
+
+
 }

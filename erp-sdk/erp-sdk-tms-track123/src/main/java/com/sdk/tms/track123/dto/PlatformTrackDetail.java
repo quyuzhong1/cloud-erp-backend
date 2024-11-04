@@ -35,4 +35,12 @@ public class PlatformTrackDetail implements Serializable {
      * 内容
      */
     private String content;
+    /**
+     * 地址
+     */
+    private String address;
+    /**
+     * 加密 运单号+内容+时间
+     */
+    private String md5;
 }

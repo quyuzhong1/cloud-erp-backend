@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -28,4 +29,7 @@ public interface SoReturnNoticeFeign {
      **/
     @PostMapping("/feign/soReturnNotice/listDetailBySourceDetailIds")
     List<SoReturnNoticeDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> sourceDetailIds);
+
+    @PostMapping("/feign/soReturnNotice/generateSoB2cReturnNotice")
+    void generateSoB2cReturnNotice(@RequestBody List<SoB2cReturnDTO.GenerateSoReturnNoticeView> list);
 }
