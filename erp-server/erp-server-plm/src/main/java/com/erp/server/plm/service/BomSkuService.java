@@ -159,4 +159,6 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
     List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(List<String> skuNos);
+
+    List<BomDTO.BomSku> listAllBom(List<String> childSkuIdList);
 }
