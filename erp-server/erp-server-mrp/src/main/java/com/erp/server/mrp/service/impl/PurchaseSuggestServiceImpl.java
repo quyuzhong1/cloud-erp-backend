@@ -127,6 +127,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         //保存系统值
         PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
         BeanMapperUtils.copy(purchaseSuggestEntity,dto);
+        dto.setSourceId(purchaseSuggestEntity.getId());
+        dto.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
         purchaseSuggestSysService.add(dto);
         return new BaseResultDTO.AddDTO(purchaseSuggestEntity.getId(), code);
     }
@@ -533,9 +535,6 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        //产品信息
-        List<String> skuIdList = list.stream().map(PurchaseSuggestDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
         //平台信息
         List<String> platformList = list.stream().map(PurchaseSuggestDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
@@ -546,11 +545,6 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
         for (PurchaseSuggestDTO.ListDTO listDTO : list) {
-            //产品信息
-            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            listDTO.setSkuNo(productDetailEntity.getSkuNo());
-            listDTO.setProductName(productDetailEntity.getName());
-            listDTO.setImagesUrl(productDetailEntity.getImagesUrl());
 
             //币别
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().

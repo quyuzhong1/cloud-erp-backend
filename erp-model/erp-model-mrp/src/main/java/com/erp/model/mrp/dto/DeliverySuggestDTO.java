@@ -625,11 +625,11 @@ public class DeliverySuggestDTO implements Serializable {
     @NoArgsConstructor
     public static class DeliverySuggestInfoDTO {
         /**
-         * 编码
+         * 来源id
          */
         private String sourceId;
         /**
-         * 编码
+         * 来源编码
          */
         private String sourceCode;
         /**

@@ -29,10 +29,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.mrp.dto.CfgRuleOrderStrategyDTO;
-import com.erp.model.mrp.dto.DeliverySuggestDTO;
-import com.erp.model.mrp.dto.HistoryImportRecordDTO;
-import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
+import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.PurchaseSuggestMergeImportExcelDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
@@ -42,7 +39,6 @@ import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -91,6 +87,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Autowired
     private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
+    @Autowired
+    private PurchaseSuggestSysService purchaseSuggestSysService;
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -109,7 +109,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if(!save) {
             throw new ServiceException("建议采购(合并后)保存失败");
         }
-
+        //保存系统值
+        PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
+        BeanMapperUtils.copy(purchaseSuggestMergeEntity,dto);
+        dto.setSourceId(purchaseSuggestMergeEntity.getId());
+        dto.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode());
+        purchaseSuggestSysService.add(dto);
         return new BaseResultDTO.AddDTO(purchaseSuggestMergeEntity.getId(), code);
     }
 
@@ -450,10 +455,6 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
-        //产品信息
-        List<String> skuIdList = list.stream().map(PurchaseSuggestMergeDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
-
         //平台信息
         List<String> platformList = list.stream().map(PurchaseSuggestMergeDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
         List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
@@ -463,12 +464,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         for (Map.Entry<String, List<PurchaseSuggestMergeDTO.ListDTO>> entry : map.entrySet()) {
             List<PurchaseSuggestMergeDTO.ListDTO> value = entry.getValue();
             PurchaseSuggestMergeDTO.ListDTO parentDTO = new PurchaseSuggestMergeDTO.ListDTO();
-            //产品信息
-            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getSkuId())).findFirst().orElse(new ProductDetailEntity());
             parentDTO.setId(value.get(0).getSkuId());
-            parentDTO.setSkuId(value.get(0).getSkuId());
-            parentDTO.setSkuNo(productDetailEntity.getSkuNo());
-            parentDTO.setProductName(productDetailEntity.getName());
 
             //系统建议值
             Integer suggestPurchaseQty = value.stream().map(PurchaseSuggestMergeDTO.ListDTO::getSuggestPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -484,10 +480,6 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             for (PurchaseSuggestMergeDTO.ListDTO listDTO : value) {
                 //父级id
                 listDTO.setParentId(listDTO.getSkuId());
-                //SKU
-                listDTO.setSkuNo(productDetailEntity.getSkuNo());
-                listDTO.setProductName(productDetailEntity.getName());
-                listDTO.setSkuImgUrl(productDetailEntity.getImagesUrl());
                 //数据类型
                 listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
                 //平台类型
