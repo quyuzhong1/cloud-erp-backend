@@ -1060,6 +1060,11 @@ public class SoOutstockDTO implements Serializable {
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.UpdateDTO> detailList;
 
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
+
     }
 
     @Data

@@ -292,6 +292,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
 
+    /**
+     * 订单标签
+     */
+    @TableField("trade_label")
+    private String tradeLabel;
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 
