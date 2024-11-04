@@ -676,4 +676,25 @@ public class ReplenishmentSuggestionController extends BaseController {
         SalesAnalysisVO salesAnalysis = replenishmentSuggestionService.mockSalesAnalysis(dto);
         return success(salesAnalysis);
     }
+
+    /**
+     * 判断需要补货的数据
+     * @param platformType 平台
+     */
+    @GetMapping("/isReplenishment")
+    public ApiResult<String> isReplenishment(String platformType) {
+        List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType);
+        basicReplenishmentDataService.isReplenishment(suggestions,platformType,LocalDate.now());
+        return success();
+    }
+
+    /**
+     * 判断需要补货的数据
+     * @param platformType 平台
+     */
+    @GetMapping("/calculationDetail")
+    public ApiResult<String> calculationDetail(String platformType) {
+        basicReplenishmentDataService.calculationDetail(platformType, LocalDate.now());
+        return success();
+    }
 }
