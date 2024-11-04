@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import org.apache.commons.lang3.StringUtils;
@@ -331,7 +332,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     public void handleSkuMapping() {
         //查询未匹配的SKU
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setMatchResult(false);
+        paramDTO.setMatchResult(ListingMatchResultEnum.FALSE.getCode());
         paramDTO.setIsExpire(false);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> noMatchList = skuMappingService.findListDto(paramDTO);
@@ -412,7 +413,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                             if(Objects.nonNull(skuVO)){
                                 ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
                                 listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
-                                listingInfoEntity.setMatchResult(true);
+                                listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                                listingInfoEntity.setRemark("");
                                 updateListingList.add(listingInfoEntity);
                                 SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
                                 skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
@@ -434,7 +436,8 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                         if(skuVOMap.containsKey(handlePlatformSkuNo)){
                             ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
                             listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
-                            listingInfoEntity.setMatchResult(true);
+                            listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                            listingInfoEntity.setRemark("");
                             updateListingList.add(listingInfoEntity);
 
                             SkuVO skuVO = skuVOMap.get(handlePlatformSkuNo);

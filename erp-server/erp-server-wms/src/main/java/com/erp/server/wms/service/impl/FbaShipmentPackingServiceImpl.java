@@ -13,6 +13,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentEntity;
@@ -91,7 +92,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         paramDTO.setPlatformSkuNoList(mskuList);
         paramDTO.setShopIdList(Collections.singletonList(fbaShipmentEntity.getShopId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-        paramDTO.setMatchResult(true);
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);

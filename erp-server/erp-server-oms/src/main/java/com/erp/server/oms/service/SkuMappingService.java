@@ -283,4 +283,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
                                      List<String> shopIdList,
                                      LocalDateTime platformOrderCreateTime,
                                      Boolean isExpire);
+
+    void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
 }
