@@ -1029,20 +1029,24 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     public SoB2cDTO.SplitSaveDTO buildSplitBySku(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS, String skuNo) {
         SoB2cDTO.SplitSaveDTO splitSaveDTO = new SoB2cDTO.SplitSaveDTO();
         splitSaveDTO.setId(soB2cEntity.getId());
-        splitSaveDTO.setGroupList(buildSplitGroupListBySku(skuNo,detailEntityList));
+        splitSaveDTO.setGroupList(buildSplitGroupListBySku(skuNo,detailEntityList,splitSkuDetailDTOS));
         return splitSaveDTO;
     }
 
     /**
      * 构建拆分分组
+     *
      * @param skuNo
      * @param detailEntityList
+     * @param splitSkuDetailDTOS
      * @return
      */
-    private List<SoB2cDTO.GroupSplitSaveDTO> buildSplitGroupListBySku(String skuNo, List<SoB2cDetailEntity> detailEntityList) {
+    private List<SoB2cDTO.GroupSplitSaveDTO> buildSplitGroupListBySku(String skuNo, List<SoB2cDetailEntity> detailEntityList, List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS) {
         List<SoB2cDTO.GroupSplitSaveDTO> groupSplitSaveDTOS = new ArrayList<>();
-        List<SoB2cDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).collect(Collectors.toList());
-        List<SoB2cDetailEntity> detailEntityList2 = detailEntityList.stream().filter(e -> !Objects.equals(e.getSkuNo(), skuNo)).collect(Collectors.toList());
+        List<String> detailIds = splitSkuDetailDTOS.stream().map(SoB2cDTO.SplitSkuDetailDTO::getDetailId).distinct().collect(Collectors.toList());
+        List<SoB2cDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo) && CollectionUtils.isNotEmpty(detailIds) && detailIds.contains(e.getId())).collect(Collectors.toList());
+        List<String> splitIds = detailEntityList1.stream().map(SoB2cDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<SoB2cDetailEntity> detailEntityList2 = detailEntityList.stream().filter(e -> !splitIds.contains(e.getId()) ).collect(Collectors.toList());
         groupSplitSaveDTOS.add(buildGroupSplitSaveDTO(detailEntityList1));
         groupSplitSaveDTOS.add(buildGroupSplitSaveDTO(detailEntityList2));
         return groupSplitSaveDTOS;
