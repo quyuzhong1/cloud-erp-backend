@@ -158,8 +158,9 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         if(CollUtil.isEmpty(rules)) {
             ServiceException.runError("交易规则不能为空");
         }
-
-        ValidatorUtil.validateEntity(rules, ValidGroup.Update.class);
+        for (TransactionRuleDTO rule : rules) {
+            ValidatorUtil.validateEntity(rule);
+        }
     }
 
     /**
@@ -170,8 +171,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         if(CollUtil.isEmpty(inOutParam)) {
             ServiceException.runError("入库出库参数不能为空");
         }
-        ValidatorUtil.validateEntity(inOutParam, ValidGroup.Update.class);
-        // ...
+        for (InOutStockDTO inOutStockDTO : inOutParam) {
+            ValidatorUtil.validateEntity(inOutStockDTO, ValidGroup.Update.class);
+            // ...
+        }
     }
 
     /**
@@ -182,8 +185,10 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         if(CollUtil.isEmpty(transferParam)) {
             ServiceException.runError("调拨参数不能为空");
         }
-        ValidatorUtil.validateEntity(transferParam, ValidGroup.Update.class);
-        // ...
+        for (TransferDTO transferDTO : transferParam) {
+            ValidatorUtil.validateEntity(transferDTO);
+            // ...
+        }
     }
 
     /**

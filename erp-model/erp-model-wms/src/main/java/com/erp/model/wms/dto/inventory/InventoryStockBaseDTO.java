@@ -20,12 +20,14 @@ public class InventoryStockBaseDTO implements Serializable {
      * sku id
      */
     @NotEmpty(message = "sku id不能为空")
+    @NotEmpty(message = "sku id不能为空", groups = {ValidGroup.Update.class})
     private String skuId;
 
     /**
      * sku编码
      */
     @NotEmpty(message = "sku编码不能为空")
+    @NotEmpty(message = "sku编码不能为空", groups = {ValidGroup.Update.class})
     private String skuNo;
 
     /**
