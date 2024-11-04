@@ -1280,7 +1280,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(StrUtil.format("装箱任务【{}】没有SKU【{}】装箱任务不能进行装箱", packingTaskEntity.getCode(), String.join(",", skuNoList)));
         }
         //校验累计装箱数量不可大于发货数量
-        checkPackQtyByPickQty(packingTaskEntity, addDTO.getDetailList(), Boolean.FALSE);
+        checkPackQtyByPickQty(packingTaskEntity, addDTO.getDetailList(), Boolean.TRUE);
         String specId;
         WmsCartonEntity wmsCartonEntity = null;
         //不存在则新增
