@@ -702,11 +702,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         BigDecimal actualTaxCost = Objects.nonNull(skuVO.getActualTaxCost()) ? skuVO.getActualTaxCost() : BigDecimal.ZERO;
         //SKU对照表信息
         SkuMappingDTO.ListSkuParamDTO paramDTO = SkuMappingDTO.ListSkuParamDTO.builder().skuNo(skuVO.getSkuNo()).warehouseId(detail.getWarehouseId())
-                .dictPlatform(StrUtil.isNotBlank(entity.getDictPlatform()) ? entity.getDictPlatform() : "").build();
+                .dictPlatform(StrUtil.isNotBlank(entity.getDictPlatform()) ? entity.getDictPlatform() : StrUtil.EMPTY).build();
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(Collections.singletonList(paramDTO));
         //库存SKU
         SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = skuMappingList.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(),targetId) && StrUtil.equals(obj.getWarehouseId(),detail.getWarehouseId())).findFirst().orElse(null);
-        String warehouseSkuNo = Objects.nonNull(warehouseListSkuDTO) ? warehouseListSkuDTO.getWarehouseSkuNo() : "";
+        String warehouseSkuNo = Objects.nonNull(warehouseListSkuDTO) ? StrUtil.isNotBlank(warehouseListSkuDTO.getWarehouseSkuNo()) ? warehouseListSkuDTO.getWarehouseSkuNo(): StrUtil.EMPTY : StrUtil.EMPTY;
         //原始skuId
         Boolean isChangeSku = Boolean.TRUE;
         String initSkuId = StrUtil.isBlank(detail.getInitSkuId()) ? detail.getSkuId() : detail.getInitSkuId();
