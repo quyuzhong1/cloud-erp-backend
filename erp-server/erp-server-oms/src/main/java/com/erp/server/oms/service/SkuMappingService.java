@@ -267,4 +267,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto);
 
     PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto);
+
+    void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
 }

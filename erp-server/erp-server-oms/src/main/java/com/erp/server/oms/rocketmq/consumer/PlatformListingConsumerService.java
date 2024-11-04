@@ -149,6 +149,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
 
             // 转换
+            if(dto.getMatchResult() != null){
+                dto.setMatchResultStr(String.valueOf(dto.getMatchResult()));
+            }
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
 
             if (null == oldEntity) {
