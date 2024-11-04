@@ -66,6 +66,7 @@ public class FbaHistoryInventoryServiceImpl extends SuperServiceImpl<FbaHistoryI
     @Override
     public List<FbaHistoryInventoryEntity> listByStartDateAndEndDate(LocalDate startDate, LocalDate endDate) {
         return list(Wrappers.<FbaHistoryInventoryEntity>lambdaQuery()
+                .ne(FbaHistoryInventoryEntity::getSkuNo, "")
                 .between(FbaHistoryInventoryEntity::getBillDate, startDate , endDate));
     }
 
