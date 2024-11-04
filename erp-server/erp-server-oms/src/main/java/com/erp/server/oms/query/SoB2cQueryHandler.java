@@ -259,28 +259,18 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         List<String> payStatusList = new ArrayList<>(1);
         //单据状态
         List<String> billStatusList = new ArrayList<>(1);
-
-        if(value.equals("all")){
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-        }
         // 待付款
         if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
-        //待处理
+        //待提审  显示订单审核状态为待提交、审核不通过，订单状态非冻结的订单，订单非作废
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(value)) {
-            return "sb2c.bill_status != 'frozen' and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))";
+            return "sb2c.approve_status in ('waitSubmit','reject')";
         }
         //审核中
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-        }
-        //待配货
-        if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-            billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //配货中
