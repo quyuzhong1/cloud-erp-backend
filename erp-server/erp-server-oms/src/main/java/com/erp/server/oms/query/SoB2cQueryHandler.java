@@ -40,11 +40,8 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         if("sb2cd.warehouse_id".equals(field)){
         	return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
         }
-        if("sbd.create_time".equals(field)){
-            return " sbd.create_time " + compareCodeSplicingValueSql +" ";
-        }
-        if("sbd.finish_print_time".equals(field)){
-            return " sbd.finish_print_time " + compareCodeSplicingValueSql +" ";
+        if("sb2cd.virtual_warehouse_id".equals(field)){
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.virtual_warehouse_id "+ compareCodeSplicingValueSql +" ) ";
         }
         //标签类型
         if("lable".equals(field)){
