@@ -13,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.vo.*;
 import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
 import com.erp.server.mrp.calculation.service.DataArchivingService;
@@ -695,6 +696,41 @@ public class ReplenishmentSuggestionController extends BaseController {
     @GetMapping("/calculationDetail")
     public ApiResult<String> calculationDetail(String platformType) {
         basicReplenishmentDataService.calculationDetail(platformType, LocalDate.now());
+        return success();
+    }
+
+
+    /**
+     * 清洗历史库存
+     * @param platformType 平台
+     */
+    @GetMapping("/cleanHistoryInventory")
+    public ApiResult<String> cleanHistoryInventory(@RequestParam String platformType, @RequestParam Integer cleanDay) {
+        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
+        basicReplenishmentDataService.cleanHistoryInventory(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        return success();
+    }
+
+    /**
+     * 销售订单历史
+     * @param platformType 平台
+     */
+    @GetMapping("/cleanHistorySalesByOrder")
+    public ApiResult<String> cleanHistorySalesByOrder(@RequestParam String platformType, @RequestParam Integer cleanDay) {
+        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
+        basicReplenishmentDataService.cleanHistorySalesByOrder(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        return success();
+    }
+
+
+    /**
+     * 销售订单历史
+     * @param platformType 平台
+     */
+    @GetMapping("/cleanHistorySalesByOutStock")
+    public ApiResult<String> cleanHistorySalesByOutStock(@RequestParam String platformType, @RequestParam Integer cleanDay) {
+        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
+        basicReplenishmentDataService.cleanHistorySalesByOutStock(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
         return success();
     }
 }
