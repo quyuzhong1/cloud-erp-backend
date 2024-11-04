@@ -136,7 +136,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //保存系统值
         DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
         BeanMapperUtils.copy(deliverySuggestEntity,dto);
-        dto.setSourceId(deliverySuggestEntity.getSourceId());
+        dto.setSourceId(deliverySuggestEntity.getId());
         dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
         deliverySuggestSysService.add(dto);
         return new BaseResultDTO.AddDTO(deliverySuggestEntity.getId(), code);

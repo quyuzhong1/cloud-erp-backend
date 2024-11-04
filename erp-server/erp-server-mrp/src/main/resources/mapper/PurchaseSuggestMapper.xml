@@ -77,7 +77,7 @@
         from purchase_suggest ps
         inner join replenishment_suggestion rs on ps.source_id = rs.id and rs.is_deleted = false
         left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
-        left join product_detail pd on ds.sku_id = pd.id and pd.is_deleted = false
+        left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and ps.is_deleted = false
@@ -98,7 +98,7 @@
             ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
         from purchase_suggest ps
         left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
-        left join product_detail pd on ds.sku_id = pd.id and pd.is_deleted = false
+        left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
         <where>
             ps.is_deleted = false and ps.source_id = #{params.sourceId}
         </where>
