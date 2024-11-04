@@ -1,15 +1,23 @@
 package com.erp.server.mrp.calculation.strategy.platform;
 
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.FbaHistoryInventoryGroupDTO;
 import com.erp.model.mrp.dto.OverseasHistoryInventoryGroupDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
 import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.server.mrp.calculation.service.SalesService;
 import com.erp.server.mrp.es.entity.HistoryInventoryEsEntity;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
+import com.erp.server.mrp.service.CfgRuleWarehouseDetailService;
+import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.OverseasHistoryInventoryService;
 import com.google.common.collect.Lists;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -36,7 +44,12 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
     @Resource
     private LogisticsAuthFeign logisticsAuthFeign;
-
+    @Resource
+    private CfgRuleWarehouseService cfgRuleWarehouseService;
+    @Resource
+    private CfgRuleWarehouseDetailService cfgRuleWarehouseDetailService;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     @Override
     public CfgRulePlatformTypeEnum getPlatform() {
@@ -47,10 +60,41 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
     @Override
     protected List<HistoryInventoryEsEntity> getHistoryInventory(List<ReplenishmentSuggestionEntity> suggestions, LocalDate startDate, LocalDate endDate) {
         List<OverseasHistoryInventoryEntity> list = overseasHistoryInventoryService.listByStartDateAndEndDate(startDate, endDate);
-        Map<OverseasHistoryInventoryGroupDTO, Set<String>> suggestionMap = suggestions.stream()
-                .collect(Collectors.groupingBy(OverseasHistoryInventoryGroupDTO::buildOverseasHistoryInventoryGroup, Collectors.mapping(ReplenishmentSuggestionEntity::getId, Collectors.toSet())));
+        //获取所有店铺
+        ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
+        if (!allShopResult.isSuccess()) {
+            throw new ServiceException(allShopResult.getMsg());
+        }
+        Map<String, List<String>> shopIdByPlatform = allShopResult.getData().stream()
+                .collect(Collectors.groupingBy(ShopInfoEntity::getDictPlatform, Collectors.mapping(ShopInfoEntity::getId, Collectors.toList())));
+        CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getByPlatformType(CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+
+        List<CfgRuleWarehouseDetailEntity> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listByMainIdList(Collections.singletonList(cfgRuleWarehouse.getId()));
+        Map<String, List<ReplenishmentSuggestionEntity>> suggestionMap = suggestions.stream().collect(Collectors.groupingBy(ReplenishmentSuggestionEntity::getShopId));
+        Map<OverseasHistoryInventoryGroupDTO, Set<String>> suggestionIdsMap = new HashMap<>();
+        for (CfgRuleWarehouseDetailEntity detail : cfgRuleWarehouseDetailList) {
+            if (CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(detail.getWarehouseType())) {
+                continue;
+            }
+            List<String> shopIds;
+            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detail.getChannelType())) {
+                shopIds = shopIdByPlatform.get(detail.getDictPlatform());
+            } else {
+                shopIds = detail.getChannelIdJson().toList(String.class);
+            }
+            for (String shopId : shopIds) {
+                List<ReplenishmentSuggestionEntity> entities = Optional.ofNullable(suggestionMap.get(shopId)).orElse(new ArrayList<>());
+                for (ReplenishmentSuggestionEntity entity : entities) {
+                    OverseasHistoryInventoryGroupDTO inventoryGroupDTO = OverseasHistoryInventoryGroupDTO.buildOverseasHistoryInventoryGroup(entity.getSkuId(), detail.getWarehouseId());
+                    Set<String> ids = Optional.ofNullable(suggestionIdsMap.get(inventoryGroupDTO))
+                            .orElse(new HashSet<>());
+                    ids.add(entity.getId());
+                    suggestionIdsMap.put(inventoryGroupDTO, ids);
+                }
+            }
+        }
         Map<OverseasHistoryInventoryGroupDTO, Map<LocalDate, Integer>> fbaInventoryMap = getOverseasInventoryMap(list);
-        return getCaleHistoryInventory(fbaInventoryMap, suggestionMap);
+        return getCaleHistoryInventory(fbaInventoryMap, suggestionIdsMap);
     }
 
     /**

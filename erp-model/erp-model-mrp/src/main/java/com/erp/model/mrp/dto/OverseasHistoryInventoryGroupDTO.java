@@ -28,10 +28,10 @@ public class OverseasHistoryInventoryGroupDTO {
     }
 
 
-    public static OverseasHistoryInventoryGroupDTO buildOverseasHistoryInventoryGroup(ReplenishmentSuggestionEntity entity) {
+    public static OverseasHistoryInventoryGroupDTO buildOverseasHistoryInventoryGroup(String skuId, String warehouseId) {
         OverseasHistoryInventoryGroupDTO dto = new OverseasHistoryInventoryGroupDTO();
-        dto.setSkuId(entity.getSkuId());
-        dto.setWarehouseId(entity.getFbaWarehouseId());
+        dto.setSkuId(skuId);
+        dto.setWarehouseId(warehouseId);
         return dto;
     }
 
