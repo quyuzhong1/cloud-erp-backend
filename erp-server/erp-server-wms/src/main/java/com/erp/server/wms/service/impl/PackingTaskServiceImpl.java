@@ -1080,6 +1080,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtil.isEmpty(taskEntityList)){
             throw new ServiceException(ApiError.ERROR_92141);
         }
+        String cartonId = searchDTO.getCartonId();
         WmsCartonDTO.WmsCartonView view = new WmsCartonDTO.WmsCartonView();
         //装箱任务
         PackingTaskEntity packingTaskEntity = taskEntityList.get(0);
@@ -1137,6 +1138,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 Integer packQty1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(e.getFnSku(), groupSkuDTO.getFnSku()))
                         .map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
                 cartonDetailDTO.setPackedQty(packQty1);
+                //当前箱已装数量
+                Integer packQty = detailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId())
+                                && Objects.equals(e.getFnSku(), groupSkuDTO.getFnSku()) && Objects.equals(cartonId, e.getMainId()) )
+                        .map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
+                cartonDetailDTO.setPackQty(packQty);
                 //未装数量
                 cartonDetailDTO.setWaitPackQty(deliveryQty1 - packQty1);
                 //单个sku重量
