@@ -105,14 +105,14 @@ public class WaveListController extends BaseController {
      * 手动标记波次状态为完成
      * @author jack
      * @date 2024/9/29
-     * @param ids
+     * @param idsDTO
      * @return List<WaveListEntity>
      */
     @PostMapping("/updateWaveStatus")
-    public ApiResult<?> updateWaveStatus(@RequestBody List<String> ids){
-        if(CollectionUtil.isEmpty(ids)){
+    public ApiResult<?> updateWaveStatus(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        if(CollectionUtil.isEmpty(idsDTO.getIds())){
             return failure();
         }
-        return waveListService.updateWaveStatus(ids);
+        return waveListService.updateWaveStatus(idsDTO.getIds());
     }
 }
