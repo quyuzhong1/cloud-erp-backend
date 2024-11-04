@@ -88,7 +88,7 @@
             pl.source_id,
             pd.sku_id,
             pd.sku_no,
-            '' as fnSku,
+            pd.platform_sku_no as fnSku,
             SUM(pd.qty) as qty,
             SUM(pd.picked_qty) as pickedQty
         FROM picking_lists pl
@@ -100,7 +100,8 @@
             </foreach>
         GROUP BY pl.source_id,
                  pd.sku_id,
-                 pd.sku_no
+                 pd.sku_no,
+                 pd.platform_sku_no
     </select>
     <select id="listRequitDetailBySourceIds"
             resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$DetailPickDTO">

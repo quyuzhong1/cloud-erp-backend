@@ -1139,6 +1139,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                             soDeliveryNotice.getWarehouseName(),
                             detailEntity.getSkuId(),
                             detailEntity.getSkuNo(),
+                            detailEntity.getPlatformSkuNo(),
                             detailEntity.getDeliveryQty() - detailEntity.getPickingQty(),
                             detailEntity.getId(),soDetailEntity.getBomVersion()
                     );
