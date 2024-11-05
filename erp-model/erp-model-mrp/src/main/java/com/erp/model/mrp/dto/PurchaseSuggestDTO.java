@@ -1,6 +1,5 @@
 package com.erp.model.mrp.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -254,6 +253,14 @@ public class PurchaseSuggestDTO implements Serializable {
          * 更新时间
          */
         private String updateTime;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**

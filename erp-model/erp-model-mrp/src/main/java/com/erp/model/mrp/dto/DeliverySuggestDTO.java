@@ -279,6 +279,14 @@ public class DeliverySuggestDTO implements Serializable {
          * 更新时间
          */
         private String updateTime;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
 
