@@ -154,6 +154,7 @@ public class CfgRulePickingDTO {
          * sku编码
          */
         private String skuNo;
+        private String platformSkuNo;
         /**
          * 数量
          */

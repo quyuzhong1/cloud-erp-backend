@@ -176,6 +176,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setMainId(entity.getId());
                 detail.setSkuId(resultDTO.getSkuId());
                 detail.setSkuNo(resultDTO.getSkuNo());
+                detail.setPlatformSkuNo(resultDTO.getPlatformSkuNo());
                 detail.setQty(resultDTO.getQuantity());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setWarehouseLocation(resultDTO.getWarehouseLocation());

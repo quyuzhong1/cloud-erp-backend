@@ -712,7 +712,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         BigDecimal actualVolumeWeight = Objects.nonNull(actualListDTO.getVolumeWeight()) ? actualListDTO.getVolumeWeight():BigDecimal.ZERO;
         BigDecimal actualBillingWeight = Objects.nonNull(actualListDTO.getBillingWeight()) ? actualListDTO.getBillingWeight():BigDecimal.ZERO;
 
-        BigDecimal estimatedTotalLogisticsCost = Objects.nonNull(estimatedListDTO.getTotalLogisticsCost()) ? actualListDTO.getTotalLogisticsCost():BigDecimal.ZERO;
+        BigDecimal estimatedTotalLogisticsCost = Objects.nonNull(estimatedListDTO.getTotalLogisticsCost()) ? estimatedListDTO.getTotalLogisticsCost():BigDecimal.ZERO;
         BigDecimal estimatedShippingCost = Objects.nonNull(estimatedListDTO.getShippingCost()) ? estimatedListDTO.getShippingCost():BigDecimal.ZERO;
         BigDecimal estimatedDeclareCost = Objects.nonNull(estimatedListDTO.getDeclareCost()) ? estimatedListDTO.getDeclareCost():BigDecimal.ZERO;
         BigDecimal estimatedOtherCost = Objects.nonNull(estimatedListDTO.getOtherCost()) ? estimatedListDTO.getOtherCost():BigDecimal.ZERO;
@@ -2033,5 +2033,48 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 数据填充处理
         fillExportInfo(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void initTotalLogisticsCost(List<String> codeList) {
+        if (CollectionUtils.isEmpty(codeList)){
+            List<TmsFirstMileReconciliationEntity> list = tmsFirstMileReconciliationService.list();
+            codeList = list.stream().map(TmsFirstMileReconciliationEntity::getCode).distinct().collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(codeList)){
+            return;
+        }
+        List<TmsFirstMileReconciliationEntity> list = tmsFirstMileReconciliationService.listbyCodes(codeList);
+        if (CollectionUtils.isEmpty(list)){
+            return;
+        }
+        List<String> ids = list.stream().map(TmsFirstMileReconciliationEntity::getId).distinct().collect(Collectors.toList());
+        List<TmsFirstMileReconciliationDetailEntity> detailEntityList = listByMainIds(ids);
+        List<TmsFirstMileReconciliationDetailEntity> updateList = new ArrayList<>();
+        for (TmsFirstMileReconciliationEntity entity : list){
+            //获取明细记录
+            List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getMainId(), entity.getId())).collect(Collectors.toList());
+            Map<String, List<TmsFirstMileReconciliationDetailEntity>> map = detailEntityList1.stream().collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getTransportNo));
+            for (List<TmsFirstMileReconciliationDetailEntity> detailEntityList2 : map.values()){
+                //存在三种类型明细
+                TmsFirstMileReconciliationDetailEntity diff = detailEntityList2.stream().filter(e -> Objects.equals(e.getType(), DetailReconciliationTypeEnum.DIFF.getCode())).findFirst().orElse(null);
+                TmsFirstMileReconciliationDetailEntity estimated = detailEntityList2.stream().filter(e -> Objects.equals(e.getType(), DetailReconciliationTypeEnum.ESTIMATED.getCode())).findFirst().orElse(null);
+                TmsFirstMileReconciliationDetailEntity actual = detailEntityList2.stream().filter(e -> Objects.equals(e.getType(), DetailReconciliationTypeEnum.ACTUAL.getCode())).findFirst().orElse(null);
+                if (Objects.isNull(diff)){
+                    continue;
+                }
+                BigDecimal estimatedCost = Objects.nonNull(estimated) && Objects.nonNull(estimated.getTotalLogisticsCost()) ? estimated.getTotalLogisticsCost() : BigDecimal.ZERO;
+                BigDecimal actualCost = Objects.nonNull(actual) && Objects.nonNull(actual.getTotalLogisticsCost()) ? actual.getTotalLogisticsCost() : BigDecimal.ZERO;
+                diff.setTotalLogisticsCost(MathUtil.subtract(actualCost,estimatedCost));
+                updateList.add(diff);
+            }
+        }
+        if (CollectionUtils.isEmpty(updateList)){
+            return;
+        }
+        updateList.forEach(e ->{
+            this.lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getId, e.getId()).set(TmsFirstMileReconciliationDetailEntity::getTotalLogisticsCost, e.getTotalLogisticsCost()).update();
+        });
     }
 }

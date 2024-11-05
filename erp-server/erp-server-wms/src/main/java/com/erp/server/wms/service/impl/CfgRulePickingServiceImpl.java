@@ -198,6 +198,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
                 inventoryResultDTO.setSkuId(detail.getSkuId());
                 inventoryResultDTO.setSkuNo(detail.getSkuNo());
+                inventoryResultDTO.setPlatformSkuNo(detail.getPlatformSkuNo());
                 WarehouseLocationEntity entity = locationList.stream().filter(location -> location.getCode().equals(inventory.getWarehouseLocation()))
                         .findFirst().orElse(new WarehouseLocationEntity());
                 inventoryResultDTO.setWarehouseId(inventory.getWarehouseId());
