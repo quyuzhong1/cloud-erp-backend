@@ -75,12 +75,13 @@ public class HistoryImportRecordDTO implements Serializable {
         private String businessId;
 
         /**
-         * 类型,枚举HistoryImportRecordTypeEnum,cfgRuleReplenishment补货规则,salesEstimateManual运营月销预估
+         * 类型,枚举HistoryImportRecordTypeEnum,cfgRuleReplenishment补货规则,salesEstimateManual运营月销预估，
+         * deliverySuggestionConfirm发货备货确认表,purchaseSuggestionConfirm采购备货确认表,purchaseSuggestionConfirmMerge采购备货（合并）确认表
          */
         private String type;
 
         /**
-         * 模块类型，取sourceType,replenishmentSuggestion补货建议
+         * 模块类型，取sourceType,replenishmentSuggestion补货建议,deliverySuggestion发货建议,purchaseSuggestion采购建议
          */
         private String module;
 
