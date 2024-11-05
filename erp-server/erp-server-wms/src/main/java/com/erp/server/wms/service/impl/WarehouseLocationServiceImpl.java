@@ -1005,4 +1005,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(String warehouseId) {
         return warehouseLocationMapper.listArea2LocationMapping(warehouseId);
     }
+
+
+    public WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo){
+        if(StringUtils.isBlank(warehouseId)||StringUtils.isBlank(skuNo)){
+            return null;
+        }
+        return warehouseLocationMapper.getOneWareInventoryQty(warehouseId,skuNo);
+    }
 }

@@ -1974,23 +1974,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 //移动数量
                 Integer qty = entry.getValue();
                 //取货仓位--根据skuid和仓库id获取
-                List<InventoryEntity> inventoryList = inventoryService.lambdaQuery()
-                        .eq(InventoryEntity::getWarehouseId, warehouseId)
-                        .eq(InventoryEntity::getSkuNo, skuNo)
-                        .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
-                        .gt(InventoryEntity::getQty, 0)
-                        .last("order by qty")
-                        .list();
-                if(CollectionUtils.isNotEmpty(inventoryList)){
-                    InventoryEntity inventoryEntity = inventoryList.get(0);
-                    outWarehouseLocation = inventoryEntity.getWarehouseLocation();
-                    WarehouseLocationEntity entity = warehouseLocationService.getOne(Wrappers.<WarehouseLocationEntity>lambdaQuery()
-                            .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
-                            .eq(WarehouseLocationEntity::getCode, outWarehouseLocation)
-                    );
-                    if(null != entity){
-                        outWarehouseLocationName = entity.getName();
-                    }
+                WarehouseLocationDTO.WareInventoryQtyDTO oneWareInventoryQty = warehouseLocationService.getOneWareInventoryQty(warehouseId, skuNo);
+                if(null != oneWareInventoryQty){
+                    outWarehouseLocationName = oneWareInventoryQty.getWarehouseLocationName();
                 }
                 //上架仓位
                 SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuNo().equals(skuNo)).findFirst().orElse(null);

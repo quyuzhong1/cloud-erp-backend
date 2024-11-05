@@ -655,4 +655,41 @@ public class WarehouseLocationDTO implements Serializable {
          */
         private String warehouseId;
     }
+
+    @Data
+    public static class WareInventoryQtyDTO{
+        /**
+         *
+         */
+        private String id;
+        /**
+         * 库区id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 库存数量
+         */
+        private String qty;
+
+        /**
+         *
+         */
+        private String skuId;
+
+        /**
+         *
+         */
+        private String skuNo;
+    }
 }
