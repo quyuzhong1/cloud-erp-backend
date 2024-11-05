@@ -94,7 +94,7 @@
                 ${params.permissionSql}
             </if>
             <if test="params.platformType != null and params.platformType != ''">
-               and ds.platform_type =  ${params.platformType}
+               and ds.platform_type = #{params.platformType}
             </if>
         </where>
         ORDER BY
@@ -122,7 +122,7 @@
                 ${params.permissionSql}
             </if>
             <if test="params.platformType != null and params.platformType != ''">
-                and ds.platform_type =  ${params.platformType}
+                and ds.platform_type =  #{params.platformType}
             </if>
         </where>
         ORDER BY
