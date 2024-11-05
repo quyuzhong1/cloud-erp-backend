@@ -2566,9 +2566,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public List<RequisitionApplicationDTO.PrintFnskuDetailDTO> printFnskuPreview(BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> detailIds = dto.getIds();
+        if(CollectionUtils.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
         //查询要货申请列表
-        List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList = this.baseMapper.listPrintPreviewByIds(ids);
+        List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList = this.baseMapper.listPrintPreviewByIds(detailIds);
         if(CollectionUtils.isEmpty(detailList)){
             return Collections.emptyList();
         }
