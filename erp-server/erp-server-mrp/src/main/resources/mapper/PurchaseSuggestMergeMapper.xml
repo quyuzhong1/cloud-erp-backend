@@ -81,7 +81,7 @@
             <include refid="Base_Column_List"/>
         from  purchase_suggest_merge psm
         left join purchase_suggest_sys pss on psm.id = pss.source_id and pss.is_deleted = false
-        left join product_detail pd on psm.sku_id = pd.sku_id and pd.is_deleted = false
+        left join product_detail pd on psm.sku_id = pd.id and pd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and psm.is_deleted = false
