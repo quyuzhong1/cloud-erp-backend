@@ -796,7 +796,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     private void buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
         //根据id汇总统计装箱总数量
-        Map<String, Integer> boxQtyMap = listPackingDetailDTOS.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailDTO::getPackQty)));
+        Map<String, Integer> boxQtyMap = listPackingDetailDTOS.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailDTO::getPackQty)));
         List<String> taskIds = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskId).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> taskEntityList = baseMapper.selectBatchIds(taskIds);
         Map<String, PackingTaskEntity> taskMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
@@ -849,7 +849,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if(StringUtils.isNotBlank(firstMileDeliveryDetailEntity.getPlatformSkuNo())){
                 pagingViewDTO.setPlatformSku(firstMileDeliveryDetailEntity.getPlatformSkuNo()+"*"+pagingViewDTO.getPackQty());
             }
-            if(distinctMap.containsKey(pagingViewDTO.getId())){
+            if(distinctMap.containsKey(pagingViewDTO.getTaskId())){
                 //同一个箱子以下字段不重复显示
                 pagingViewDTO.setDeliveryCode("");
                 pagingViewDTO.setBusinessCode("");
@@ -869,7 +869,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 pagingViewDTO.setPackingStatusName("");
                 pagingViewDTO.setMeasureSourceName("");
             }else {
-                distinctMap.put(pagingViewDTO.getId(),1);
+                distinctMap.put(pagingViewDTO.getTaskId(),1);
             }
         });
     }

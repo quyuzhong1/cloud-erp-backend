@@ -190,10 +190,10 @@
         ORDER BY wc.box_no
     </select>
     <select id="listPackingDetailBySkuId" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
-        SELECT
-
+        SELECT DISTINCT
             wc.id,
             wc.packing_task_id as taskId,
+            pt.source_code,
             wc.box_no,
             concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
             wcs.package_weight,
