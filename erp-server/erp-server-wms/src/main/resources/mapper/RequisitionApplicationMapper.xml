@@ -394,5 +394,6 @@
                 #{id}
             </foreach>
         </if>
+        order by ra.ID,rad.create_time desc
     </select>
 </mapper>
