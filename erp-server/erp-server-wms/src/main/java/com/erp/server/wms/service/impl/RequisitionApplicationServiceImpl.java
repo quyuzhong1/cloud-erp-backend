@@ -1976,6 +1976,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 //取货仓位--根据skuid和仓库id获取
                 WarehouseLocationDTO.WareInventoryQtyDTO oneWareInventoryQty = warehouseLocationService.getOneWareInventoryQty(warehouseId, skuNo);
                 if(null != oneWareInventoryQty){
+                    outWarehouseLocation = oneWareInventoryQty.getWarehouseLocationCode();
                     outWarehouseLocationName = oneWareInventoryQty.getWarehouseLocationName();
                 }
                 //上架仓位
