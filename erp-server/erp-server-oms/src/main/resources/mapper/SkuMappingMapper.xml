@@ -377,6 +377,13 @@
             AND sm.is_expire = #{params.isExpire}
         </if>
 
+        <!--sku mapping id-->
+        <if test="params.skuMappingIds !=null and params.skuMappingIds.size>0">
+            AND sm.id IN
+            <foreach collection="params.skuMappingIds" item="skuMappingId" open="(" separator="," close=")">
+                #{skuMappingId}
+            </foreach>
+        </if>
         <!--平台sku no 列表-->
         <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
             AND li.platform_sku_no IN
