@@ -204,7 +204,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
         //退货单
-        SoReturnEntity soReturnEntity = Objects.nonNull(entity.getSourceId())?soReturnFeign.getSoReturnById(entity.getSourceId()):null;
+        SoReturnEntity soReturnEntity = StringUtils.isNotBlank(entity.getSourceId())?soReturnFeign.getSoReturnById(entity.getSourceId()):null;
 
 
 
