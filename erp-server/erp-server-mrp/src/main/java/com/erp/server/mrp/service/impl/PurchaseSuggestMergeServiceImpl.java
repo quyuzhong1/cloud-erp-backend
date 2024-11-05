@@ -478,21 +478,24 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             resultList.add(parentDTO);
 
             for (PurchaseSuggestMergeDTO.ListDTO listDTO : value) {
+                PurchaseSuggestMergeDTO.ListDTO childDTO = new PurchaseSuggestMergeDTO.ListDTO();
+                BeanMapperUtils.copy(listDTO,childDTO);
                 //父级id
-                listDTO.setParentId(listDTO.getSkuId());
+                childDTO.setParentId(listDTO.getSkuId());
                 //数据类型
-                listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
+                childDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
                 //平台类型
-                listDTO.setPlatformTypeName(CfgRulePlatformTypeEnum.getName(listDTO.getPlatformType()));
+                childDTO.setPlatformTypeName(CfgRulePlatformTypeEnum.getName(listDTO.getPlatformType()));
                 //平台名称
                 String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),listDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
-                listDTO.setPlatformName(platformName);
+                childDTO.setPlatformName(platformName);
                 //状态
-                listDTO.setStatusName(SuggestStatusEnum.getName(listDTO.getStatus()));
+                childDTO.setStatusName(SuggestStatusEnum.getName(listDTO.getStatus()));
                 //物流方式
-                listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
+                childDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
                 //物流方式（系统）
-                listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
+                childDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
+                resultList.add(childDTO);
             }
         }
         return  resultList;
