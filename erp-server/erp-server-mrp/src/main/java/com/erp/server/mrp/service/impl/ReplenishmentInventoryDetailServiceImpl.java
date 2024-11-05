@@ -81,16 +81,25 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                     .filter(e -> e.getId().equals(detailVO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             detailVO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-            ShopInfoEntity shopInfo = allShopInfo.stream()
-                    .filter(e -> e.getId().equals(detailVO.getShopId()))
-                    .findFirst().orElse(new ShopInfoEntity());
-            detailVO.setShopName(shopInfo.getName());
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
-                detailVO.setChannelName(Collections.singletonList("全部店铺"));
-            } else {
-                List<String> shopNames = allShopInfo.stream().filter(v -> detailVO.getChannelIdJson().contains(v.getId()))
-                        .distinct().map(ShopInfoEntity::getName).collect(Collectors.toList());
+                List<String> shopNames = allShopInfo.stream()
+                        .filter(v -> detailVO.getDictPlatform().equals(v.getDictPlatform()))
+                        .distinct()
+                        .map(ShopInfoEntity::getName)
+                        .collect(Collectors.toList());
                 detailVO.setChannelName(shopNames);
+                detailVO.setShopName("全部店铺");
+            } else {
+                List<String> shopNames = allShopInfo.stream()
+                        .filter(v -> detailVO.getChannelIdJson().contains(v.getId()))
+                        .distinct()
+                        .map(ShopInfoEntity::getName)
+                        .collect(Collectors.toList());
+                detailVO.setChannelName(shopNames);
+                ShopInfoEntity shopInfo = allShopInfo.stream()
+                        .filter(e -> e.getId().equals(detailVO.getShopId()))
+                        .findFirst().orElse(new ShopInfoEntity());
+                detailVO.setShopName(shopInfo.getName());
             }
         }
         return new PagingVO<>(page);
