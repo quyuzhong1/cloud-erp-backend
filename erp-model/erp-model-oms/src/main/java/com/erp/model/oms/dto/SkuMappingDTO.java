@@ -341,6 +341,11 @@ public class SkuMappingDTO implements Serializable {
         private String id;
 
         /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
          * 备注
          */
         private String remark;
