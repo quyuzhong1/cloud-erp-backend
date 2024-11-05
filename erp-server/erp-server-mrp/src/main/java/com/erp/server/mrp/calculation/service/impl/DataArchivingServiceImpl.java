@@ -48,10 +48,10 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                 cleanDay = ObjectUtils.isEmpty(cleanDay) ? 361 : cleanDay;
                 List<CfgDataArchivingEntity> effectiveData = cfgDataArchivingService.getEffectiveData();
                 log.warn("开始处理归档数据,时间{}", System.currentTimeMillis());
-                for (CfgDataArchivingEntity config : effectiveData) {
-                    // 执行归档逻辑
-                    cfgDataArchivingService.archiveData(config);
-                }
+//                for (CfgDataArchivingEntity config : effectiveData) {
+//                    // 执行归档逻辑
+//                    cfgDataArchivingService.archiveData(config);
+//                }
                 List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
                 log.warn("完成处理归档数据,时间{}", System.currentTimeMillis());
                 log.warn("开始增量更新建议基础数据,时间{}", System.currentTimeMillis());
@@ -76,11 +76,11 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                     log.warn("开始清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     replenishmentDataService.cleanHistorySalesByOutStock(calculationDate, suggestionList, platformType, cleanDay);
                     log.warn("开始清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
-                    List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType.getCode());
-                    //计算数据是否需要进行补货
-                    replenishmentDataService.isReplenishment(suggestions,platformType.getCode(), calculationDate);
-                    //计算明细数据
-                    replenishmentDataService.calculationDetail(platformType.getCode(), calculationDate);
+//                    List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType.getCode());
+//                    //计算数据是否需要进行补货
+//                    replenishmentDataService.isReplenishment(suggestions,platformType.getCode(), calculationDate);
+//                    //计算明细数据
+//                    replenishmentDataService.calculationDetail(platformType.getCode(), calculationDate);
                 }
             } catch (Exception e) {
                 log.error("处理MRP归档失败", e);
