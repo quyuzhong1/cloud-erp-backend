@@ -75,11 +75,7 @@ public class LogisticsTrackController extends BaseController {
      */
     @PostMapping("/webhookByTrack123")
     public ApiResult webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
-        StopWatch stopWatch = new StopWatch("接收track123物流轨迹同步数据" + dto.getData().getTrackNo());
-        stopWatch.start();
         logisticsTrackService.webhookByTrack123(dto);
-        stopWatch.stop();
-        log.warn(stopWatch.prettyPrint());
         return success();
     }
 }

@@ -242,7 +242,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     public void webhookByTrack123(LogisticsTrackDTO.TrackWebHookDTO dto) {
         if (Objects.isNull(dto.getData()) || StrUtil.isBlank(dto.getData().getTrackNo()) || Objects.isNull(dto.getData().getLocalLogisticsInfo())
                 || CollectionUtils.isEmpty(dto.getData().getLocalLogisticsInfo().getTrackingDetails())){
-            log.error("webhook接收到数据异常：{}", dto);
+            log.info("webhook接收到数据格式无数据记录：{}", dto);
             return;
         }
         String trackNo = dto.getData().getTrackNo();

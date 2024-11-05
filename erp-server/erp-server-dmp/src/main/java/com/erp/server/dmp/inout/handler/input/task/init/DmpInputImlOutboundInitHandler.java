@@ -50,7 +50,7 @@ public class DmpInputImlOutboundInitHandler extends DmpInputInitHandler{
                 .modifyDateFrom(dmpInputTaskEntity.getStartTime())
                 .modifyDateTo(dmpInputTaskEntity.getEndTime())
                 .pageSize(100)
-                .orderStatus(ImlEnums.OrderStatusEnum.INITIAL_RECEIVING.getCode())
+//                .orderStatus(ImlEnums.OrderStatusEnum.INITIAL_RECEIVING.getCode())
                 .build();
         Integer page = 1;
         int currTotal = 0;

@@ -74,6 +74,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -489,6 +490,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         return baseMapper.getAliExpressHandoverList(dateTime);
     }
 
+    @Async
+    public void syncAliExpressInfo(PackageForecastEntity packageForecastEntity){
+        queryAliExpressInfo(packageForecastEntity);
+    }
+
     @Override
     public void queryAliExpressInfo(PackageForecastEntity packageForecastEntity) {
 
@@ -587,7 +593,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 addBigPackage(logisticsPlatform, entity, addressEntity);
                 //针对待揽收状态  异步拉取速卖通的数据
                 CompletableFuture.runAsync(() -> {
-                    this.queryAliExpressInfo(entity);
+                    this.syncAliExpressInfo(entity);
                 }, packAsyncExecutor);
                 this.updateById(entity);
                 return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
