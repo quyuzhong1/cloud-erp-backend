@@ -859,9 +859,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 continue;//跳过第一个仓库 从第二个开始
             }
             if (0 == i || firstWarehouseSame){
-                addTransferOrder(entity.getWarehouseId(),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo);
+                addTransferOrder(Boolean.TRUE,entity.getWarehouseId(),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo);
             }else {
-                addTransferOrder(transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo);
+                addTransferOrder(Boolean.FALSE,transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo);
             }
         }
     }
@@ -877,7 +877,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @param noInventorySkuIds
      * @param batchNo
      */
-    private void addTransferOrder(String fromWarehouseId, String toWarehouseId, SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> detailEntityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, String batchNo) {
+    private void addTransferOrder(Boolean isFirst,String fromWarehouseId, String toWarehouseId, SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> detailEntityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, String batchNo) {
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(fromWarehouseId, toWarehouseId));
         WarehouseEntity toWarehouse = warehouseEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(toWarehouseId)).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(toWarehouse)) {
@@ -899,12 +899,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         transferDto.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         transferDto.setBatchNo(batchNo);
-        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, detailEntityList, fromWarehouseId,toWarehouseId, warehouseStagingList, noInventorySkuIds);
+        List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, detailEntityList, fromWarehouseId,toWarehouseId, warehouseStagingList, noInventorySkuIds, isFirst);
         transferDto.setDetailList(detailList);
         transferInfoService.addAndApprove(transferDto);
     }
 
-    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, String fromWarehouseId, String toWarehouseId, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds) {
+    private static List<TransferInfoDetailDTO.AddDTO> getAddDTOS(SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, String fromWarehouseId, String toWarehouseId, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, Boolean isFirst) {
             // 获取仓库暂存区默认配置
         CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                 .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
@@ -920,7 +920,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }else {
                 transferInfoDetail.setQty(view.getPickingQty());
             }
-            transferInfoDetail.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
+            if (isFirst){
+                transferInfoDetail.setOutWarehouseLocation(pickingStaging.getWarehouseLocation());
+            }else {
+                transferInfoDetail.setOutWarehouseLocation("");
+            }
             transferInfoDetail.setOutWarehouseId(fromWarehouseId);
             transferInfoDetail.setInWarehouseId(toWarehouseId);
             transferInfoDetail.setSourceDetailId(view.getId());

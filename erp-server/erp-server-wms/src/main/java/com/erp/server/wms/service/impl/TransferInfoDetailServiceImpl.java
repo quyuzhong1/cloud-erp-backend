@@ -278,7 +278,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
                                 && (ObjectUtils.isNotEmpty(obj.getDisabled()) && !obj.getDisabled()))
                         .count();
                 if (count == 0) {
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_REF_LOCATION,detail.getInWarehouseName(),detail.getInWarehouseLocation());
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_REF_LOCATION,detail.getOutWarehouseName(),detail.getOutWarehouseLocation());
                 }
             }
 
