@@ -338,7 +338,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         PagingVO<InventoryReportDTO.ListDailyInventoryDTO> pageData = this.dailyInventoryPaging(dto);
         List<ListDailyInventoryDTO> dataList = (List<ListDailyInventoryDTO>) pageData.getList();
         // 填充
-        handleDailyInventory(dataList);
+//        handleDailyInventory(dataList);
         return new PagingVO<>(dataList, pageData.getTotalCount(),dto.getPageSize(), dto.getCurrPage());
     }
 

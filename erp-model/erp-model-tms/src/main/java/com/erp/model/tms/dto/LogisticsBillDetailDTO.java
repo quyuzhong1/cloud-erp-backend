@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -114,6 +115,13 @@ public class LogisticsBillDetailDTO implements Serializable {
 
 
     }
-
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BillDetailDTO {
+        private String trackNo;
+        private String platformOrderNo;
+    }
 
 }

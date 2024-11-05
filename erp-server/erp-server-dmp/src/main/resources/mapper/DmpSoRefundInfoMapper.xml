@@ -38,6 +38,7 @@
        <result column="next_level_id" property="nextLevelId" />
        <result column="unique_encrypt" property="uniqueEncrypt" />
        <result column="data_encrypt" property="dataEncrypt" />
+       <result column="source_id" property="sourceId" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -51,7 +52,8 @@
         update_user_id,
         version,
         is_deleted,
-        platform_create_time, platform_update_time, refund_time, source_platform, source_system, third_code, platform_code, reason, remark, status, platform_original_status, shop_id, shop_name, country, buyer_user_id, buyer_name, currency_code, currency_rate, amount, shipping_cost, delivery_time, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt
+        platform_create_time, platform_update_time, refund_time, source_platform, source_system, third_code, platform_code, reason, remark, status, platform_original_status, shop_id, shop_name, country, buyer_user_id, buyer_name, currency_code, currency_rate, amount, shipping_cost, delivery_time, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt,
+        source_id
     </sql>
 
 

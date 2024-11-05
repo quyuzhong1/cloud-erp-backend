@@ -52,6 +52,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds);
 
     /**
+     * 销售订单ids获取销售出库单主表信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 15:42
+     * @param soIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
+     **/
+    SoOutstockEntity getBySoId(String soId);
+
+    /**
      * 添加销售出库单a
      * @author yl
      * @date 2023-05-19 9:50

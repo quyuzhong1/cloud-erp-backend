@@ -58,7 +58,7 @@ public class AntuOutboundInitHandler extends DmpInputInitHandler {
 				.modifyDateFrom(dmpInputTaskEntity.getStartTime())
 				.modifyDateTo(dmpInputTaskEntity.getEndTime())
 				.pageSize(100)
-				.orderStatus(AntuEnums.OrderStatusEnum.INITIAL_RECEIVING.getCode())
+//				.orderStatus(AntuEnums.OrderStatusEnum.INITIAL_RECEIVING.getCode())
 				.build();
 		Integer page = 1;
 		int currTotal = 0;

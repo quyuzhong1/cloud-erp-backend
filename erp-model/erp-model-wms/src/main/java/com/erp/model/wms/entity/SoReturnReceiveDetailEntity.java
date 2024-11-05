@@ -77,6 +77,9 @@ public class SoReturnReceiveDetailEntity extends BaseEntity<SoReturnReceiveDetai
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    @TableField("notice_detail_id")
+    private String noticeDetailId;
+
     @TableField(exist = false)
     private String approveStatus;
 

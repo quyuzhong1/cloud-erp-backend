@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -32,14 +33,27 @@ public class RefundOrderController extends BaseController {
     private RefundOrderService refundOrderService;
 
     /**
-     * 售后订单分页
+     * 退款订单分页
      *
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<RefundOrderDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<RefundOrderDTO.PagingParamDTO> dto) {
         PagingVO<RefundOrderDTO.PagingViewDTO> pagingVO = refundOrderService.paging(dto);
         return success(pagingVO);
     }
 
+
+    /**
+     * 退款订单导出
+     *
+     * @return
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery
+    public ApiResult export(@RequestBody @Validated RefundOrderDTO.PagingParamDTO dto) {
+        refundOrderService.exportExcel(dto);
+        return success();
+    }
 }

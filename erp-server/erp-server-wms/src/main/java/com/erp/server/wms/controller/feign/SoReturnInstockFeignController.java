@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
@@ -50,5 +51,20 @@ public class SoReturnInstockFeignController {
     @PostMapping("/listDetailBySoReturnDetailIds")
     List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(@RequestBody List<String> detailIds) {
         return soReturnInstockDetailService.listDetailBySoReturnDetailIds(detailIds);
+    }
+
+    /**
+     * 获取退货入库单 明细
+     *
+     * @return
+     */
+    @PostMapping("/getSoReturnInstockByReturnIds")
+    List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(@RequestBody List<String> returnIds) {
+        return soReturnInstockDetailService.getSoReturnInstockByReturnIds(returnIds);
+    }
+
+    @PostMapping("/clearSoReturnAndUpdate")
+    void clearSoReturnAndUpdate(@RequestBody SoReturnInstockDetailDTO.ClearSoReturnAndUpdateDTO dto) {
+        soReturnInstockDetailService.clearSoReturnAndUpdate(dto);
     }
 }

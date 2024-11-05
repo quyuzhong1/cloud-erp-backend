@@ -200,7 +200,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             LocalDate closeDate = closedDateMap.get(transactionDTO.getOrgId());
 
             // 存在关账时间并非在途库存
-            if(null != closeDate && !InventoryStatusEnum.IN_TRANSIT.getCode().equals(transactionDTO.getInventoryStatus())){
+            if(null != closeDate && !InventoryStatusEnum.WITHOUT_LIMIT_CLOSE_ACCOUNT_STATUS.contains(transactionDTO.getInventoryStatus())){
                 if (!billDate.isAfter(closeDate)) {
                     errList.append(StrUtil.format("库存组织:[{}]交易时间:[{}]已关账目，sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}] 不允许交易\n"
                             , transactionDTO.getOrgName()

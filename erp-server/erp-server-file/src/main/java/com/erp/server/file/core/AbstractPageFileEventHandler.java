@@ -47,7 +47,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 分页大小，可重写
      */
     protected int getPageSize() {
-        return 1000;
+        return 5000;
     }
     /**
      * 分批获取数据

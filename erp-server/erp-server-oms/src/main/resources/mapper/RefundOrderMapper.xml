@@ -28,77 +28,37 @@
     </resultMap>
     <select id="paging" resultType="com.erp.model.oms.dto.RefundOrderDTO$PagingViewDTO">
         SELECT
-            id,
-            create_user_name,
-            create_time,
-            update_user_name,
-            update_time,
-            code,
-            dict_platform,
-            shop_id,
-            shop_name,
-            platform_order_no,
-            platform_refund_no,
-            refund_amount,
-            currency,
-            currency_symbol,
-            reason,
-            refund_cny_amount,
-            status,
-            refund_time
+            ro.id,
+            rod.id as detailId,
+            ro.code,
+            ro.dict_platform as dictPlatform,
+            ro.shop_id as shopId,
+            ro.shop_name as shopName,
+            ro.platform_order_no as platformOrderNo,
+            ro.platform_refund_no as platformRefundNo,
+            ro.so_code as soCode,
+            ro.so_id as soId,
+            ro.status,
+            ro.refund_amount as refundAmount,
+            concat(ro.refund_amount , ro.currency) as completeRefundAmount,
+            ro.currency,
+            ro.reason,
+            ro.refund_time as refundTime,
+            ro.platform_create_time as platformCreateTime,
+            rod.platform_sku_no as platformSkuNo,
+            rod.sku_id as skuId,
+            rod.sku_no as skuNo,
+            rod.sale_qty as saleQty,
+            rod.refund_qty as refundQty
         FROM refund_order ro
-        WHERE ro.is_deleted =FALSE
+        LEFT join refund_order_detail rod on ro.id = rod.main_id and rod.is_deleted = false
+        WHERE  ${params.sqlMap.default}
+          and ro.is_deleted =FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        <!--code-->
-        <if test="params.code!=null and params.code!=''">
-           AND code ILIKE concat('%',#{params.code}::text,'%')
-        </if>
-        <!--平台单号-->
-        <if test="params.platformOrderNo!=null and params.platformOrderNo!=''">
-            AND platform_order_no ILIKE concat('%',#{params.platformOrderNo}::text,'%')
-        </if>
-        <!--平台退款单号-->
-        <if test="params.platformRefundNo!=null and params.platformRefundNo!=''">
-            AND platform_refund_no ILIKE concat('%',#{params.platformRefundNo}::text,'%')
-        </if>
-        <!--原因-->
-        <if test="params.reason!=null and params.reason!=''">
-            AND reason ILIKE concat('%',#{params.reason}::text,'%')
-        </if>
-        <!--平台-->
-        <if test="params.dictPlatformList!=null and params.dictPlatformList.size>0 ">
-            AND dict_platform IN
-            <foreach collection="params.dictPlatformList" item="dictPlatform" open="(" separator="," close=")">
-                #{dictPlatform}
-            </foreach>
-        </if>
-
-        <!--店铺-->
-        <if test="params.shopIdList!=null and params.shopIdList.size>0 ">
-            AND shop_id IN
-            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
-                #{shopId}
-            </foreach>
-        </if>
-        <!--状态-->
-        <if test="params.statusList!=null and params.statusList.size>0 ">
-            AND status IN
-            <foreach collection="params.statusList" item="status" open="(" separator="," close=")">
-                #{status}
-            </foreach>
-        </if>
-        <!--创建时间-->
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND create_time  &gt;= #{params.createTimeList[0]}::TIMESTAMP
-            AND create_time  &lt;= #{params.createTimeList[1]}::TIMESTAMP
-        </if>
-        <if test="params.refundTimeList !=null and params.refundTimeList.size>0">
-            AND refund_time &gt;= #{params.refundTimeList[0]}::TIMESTAMP
-            AND refund_time &lt;= #{params.refundTimeList[1]}::TIMESTAMP
-        </if>
+        order by ro.create_time desc
     </select>
 
 </mapper>

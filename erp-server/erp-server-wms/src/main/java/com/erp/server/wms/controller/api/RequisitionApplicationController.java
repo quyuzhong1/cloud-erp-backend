@@ -13,17 +13,23 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
+import com.erp.server.wms.service.FbaInventoryService;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -51,6 +57,8 @@ public class RequisitionApplicationController extends BaseController {
     private PackingTaskService packingTaskService;
     @Resource
     private PickingListsService pickingListsService;
+    @Resource
+    private FbaInventoryService fbaInventoryService;
 
     /**
     * 新增
@@ -62,6 +70,11 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "要货申请单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated RequisitionApplicationDTO.AddDTO dto) {
+        // 检查和刷新fnSku
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType())){
+            fbaInventoryService.checkAndUpdateFnsku(dto);
+        }
+
         return success(requisitionApplicationService.add(dto));
     }
 
@@ -80,6 +93,10 @@ public class RequisitionApplicationController extends BaseController {
         serviceClass = RequisitionApplicationService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated RequisitionApplicationDTO.UpdateDTO dto) {
+        // 检查和刷新fnSku
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType())){
+            fbaInventoryService.checkAndUpdateFnsku(dto);
+        }
         requisitionApplicationService.update(dto);
         return success();
     }

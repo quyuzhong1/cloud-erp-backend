@@ -143,5 +143,37 @@ public class TransferInfoDetailDTO implements Serializable {
          */
         private String inWarehouseLocationName;
     }
+    @Data
+    @NoArgsConstructor
+    public static class ApproveDTO extends AddDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
+        /**
+         * 主数据ID
+         */
+        private String mainId;
+
+        /**
+         * 入库仓库名称
+         */
+        private String inWarehouseName;
+
+        /**
+         * 入库仓管员ID
+         */
+        private String inWarehouseChargeId;
+
+        /**
+         * 出库仓库名称
+         */
+        private String outWarehouseName;
+
+        /**
+         * 出库仓管员ID
+         */
+        private String outWarehouseChargeId;
+    }
 }
