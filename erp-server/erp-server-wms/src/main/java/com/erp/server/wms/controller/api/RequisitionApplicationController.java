@@ -535,9 +535,9 @@ public class RequisitionApplicationController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载货件装箱信息模板数据")
-    @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
-        requisitionApplicationService.downloadPackingTemplate(response);
+    @PostMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(@RequestBody @Validated List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailDTOS, HttpServletResponse response) {
+        requisitionApplicationService.downloadPackingTemplate(response,detailDTOS);
         return success();
     }
     /**
