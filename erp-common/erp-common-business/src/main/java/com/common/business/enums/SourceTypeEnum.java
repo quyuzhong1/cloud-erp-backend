@@ -213,6 +213,9 @@ public enum SourceTypeEnum {
 
     //mrp
     REPLENISHMENT_PLAN("replenishment_plan", "补货计划计划","replenishment_plan"),
+
+    //速帝云
+    SDY_DELIVERY_ORDER("sdyDeliveryOrder", "速帝云配货单","so_outstock"),
     ;
 
     /**

@@ -7,6 +7,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -33,18 +34,25 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -255,6 +263,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private AbstractWdtService abstractWdtService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private FeignQuery feignQuery;
+
+    @Resource
+    private WmsPushMsgService wmsPushMsgService;
 
 
     @Override
@@ -784,27 +798,39 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     /**
      * 同步速递云数据
      * @param entity
-     * @param operateApprove
+     * @param operateEnum
      */
-    private void syncToShudiyun(SoOutstockEntity entity, SyncOperateEnum operateApprove) {
+    private void syncToShudiyun(SoOutstockEntity entity, SyncOperateEnum operateEnum) {
 
-
-        //目前只推送B2C订单
-        if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
-
-
+        if(SyncOperateEnum.OPERATE_APPROVE.equals(operateEnum)){
+            //目前只推送B2C订单
+            if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+                this.shudiyunFieldHandler(entity, operateEnum);
+            }
         }
-
-
     }
 
 
-    private void shudiyunFieldHandler(SoOutstockEntity entity) {
-        ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
+    private void shudiyunFieldHandler(SoOutstockEntity entity, SyncOperateEnum operateEnum) {
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
 
         SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(Arrays.asList(soB2cEntity.getId()));
+
+        List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
+
+        //父类产品
+        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                .in(ProductDetailEntity::getId, parentSkuId)
+                .list();
+
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
+            ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
+
             shudiyunB2cOrderDTO.setTransaction_unique_key(soB2cEntity.getId()+soB2cDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(soB2cEntity.getPlatformCode());
             shudiyunB2cOrderDTO.setBiz_time(soB2cEntity.getPayTime());
@@ -822,29 +848,112 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
             Integer totalQty = soB2cDetailEntityList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
-            // todo 取消商品数量 （合计）：暂无数据需要新增(必填字段)
+            // todo 取消商品数量（合计）：暂无数据需要新增(必填字段)
             shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(0);
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
             shudiyunB2cOrderDTO.setSales_company_code(soB2cEntity.getOrgId());
-            // todo 收款组织 （合计）：暂无数据需要新增(必填字段)
+            // todo 收款组织：暂无数据需要新增(必填字段)
             shudiyunB2cOrderDTO.setReceiving_company_code("");
-            // todo 财务组织名称 （合计）：暂无数据需要新增(必填字段)
+            // todo 财务组织名称：暂无数据需要新增(必填字段)
             shudiyunB2cOrderDTO.setOrganization_name("");
-            // todo 财务组织编码 （合计）：暂无数据需要新增(必填字段)
+            // todo 财务组织编码：暂无数据需要新增(必填字段)
             shudiyunB2cOrderDTO.setOrganization_code("");
-            shudiyunB2cOrderDTO.setPlatform_id(soB2cEntity.getPlatformCode());
-            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(soB2cEntity.getPlatformCode()));
-            // todo 子平台编码 （合计）：暂无数据需要新增(必填字段)
+            shudiyunB2cOrderDTO.setPlatform_id(soB2cEntity.getDictPlatform());
+            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(soB2cEntity.getDictPlatform()));
+            // todo 子平台编码：暂无数据需要新增(必填字段)
             shudiyunB2cOrderDTO.setSubplatform_no("");
-            // todo 子平台名称 （合计）：暂无数据需要新增(必填字段)
+            // todo 子平台名称：暂无数据需要新增(必填字段)
             shudiyunB2cOrderDTO.setSubplatform_name("");
             shudiyunB2cOrderDTO.setShop_no(soB2cEntity.getShopId());
             shudiyunB2cOrderDTO.setShop_name(soB2cEntity.getShopName());
+            shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getPlatformCode());
+            shudiyunB2cOrderDTO.setRoot_node_create_time(soB2cEntity.getPayTime());
+            shudiyunB2cOrderDTO.setRoot_node_modify_time(soB2cEntity.getUpdateTime());
+            shudiyunB2cOrderDTO.setGoods_no(soB2cDetailEntity.getSkuNo());
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+            shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
+            shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
+            shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+            shudiyunB2cOrderDTO.setIs_gift(0);
 
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
+            shudiyunB2cOrderDTO.setIs_comb(0);
 
+            if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
+                if (BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
+                    shudiyunB2cOrderDTO.setIs_comb(1);
+                    shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+                    ProductDetailEntity productDetailEntity = parentSkuList.stream().filter(req -> req.getId().equals(bomChildrenSkuDTO.getParentSkuId())).findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(productDetailEntity)) {
+                        shudiyunB2cOrderDTO.setSuite_name(productDetailEntity.getName());
+                    }
+                }
+            }
+
+            // todo 是否虚拟商品：暂无数据需要新增(必填字段)
+            shudiyunB2cOrderDTO.setIs_virtual(null);
+            // todo 服务类商品：暂无数据需要新增(必填字段)
+            shudiyunB2cOrderDTO.setIs_service("");
+
+            shudiyunB2cOrderDTO.setRemark(soB2cEntity.getRemark());
+            // todo 商品状态：暂无数据需要新增(必填字段)
+            shudiyunB2cOrderDTO.setGoods_status("10.10");
+            shudiyunB2cOrderDTO.setGoods_transaction_quantity(soB2cDetailEntity.getQty());
+            shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
+            // todo 商品成交单价（待定）：
+            shudiyunB2cOrderDTO.setPrice(soB2cDetailEntity.getPrice());
+            shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getPrice().multiply(MathUtil.valueOf(soB2cDetailEntity.getQty())));
+            // todo 商品运费分摊（待定）：
+            shudiyunB2cOrderDTO.setFreight(BigDecimal.ZERO);
+            shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
+
+            // todo 无法推送订单拿到发货时间（待定）
+            shudiyunB2cOrderDTO.setDelivery_time(null);
+            // todo 客户订单交易币种
+            shudiyunB2cOrderDTO.setTransaction_currency("");
+            // todo 客户订单交易币别编码
+            shudiyunB2cOrderDTO.setTransaction_currency_code("");
+            BigDecimal shippingFee = soB2cDetailEntity.getAmount().divide(soB2cEntity.getAmount(), 8, BigDecimal.ROUND_HALF_UP).multiply(soB2cEntity.getShippingFee());
+            shudiyunB2cOrderDTO.setPost_amount(shippingFee);
+            shudiyunB2cOrderDTO.setMsku_code(skuVO.getSpuNo());
+            shudiyunB2cOrderDTO.setMsku_name(skuVO.getSpuName());
+            shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
+            shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
+
+            // todo 店铺结算币种代码：暂无数据需要新增(必填字段)
+            shudiyunB2cOrderDTO.setSettlement_currency_code("");
+            shudiyunB2cOrderDTO.setSource_system("SDC");
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
+
+            shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
 
         }
 
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SUDIYUN.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_DELIVERY_ORDER.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getSourceCode());
+        wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
+        wmsPushMsgService.save(wmsPushMsgEntity);
+
+
+
+        // 保存中台推送记录，推送数据
+        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+        dmpSyncTaskDTO.setSourceId(entity.getId());
+        dmpSyncTaskDTO.setSourceCode(entity.getSourceCode());
+        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_SUDUYUN_ERP_TOPIC);
+        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.SDY_GENERAL_PUSH_TAG.getName());
+        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(shudiyunB2cOrderDTOList));
+        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.SUDIYUN.getDesc());
+        dmpSyncTaskDTO.setSyncOperate(operateEnum.getCode());
+        dmpSyncTaskDTO.setStatus(SyncStatusEnum.IN_SYNC.getCode());
+
+        dmpMqFeign.saveTaskList(Collections.singletonList(dmpSyncTaskDTO));
     }
 
     /**
