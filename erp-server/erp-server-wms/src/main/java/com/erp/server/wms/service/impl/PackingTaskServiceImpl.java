@@ -531,13 +531,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //已装箱数
             Integer packedQty = packingQtyDTOS.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(taskDetailEntity.getSkuId()) && Objects.equals(e.getFnSku(),taskDetailEntity.getFnSku())).map(WmsCartonSpecDTO.PackingQtyDTO::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
             //即将装箱数
-            Integer packQty = detailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(taskDetailEntity.getSkuId())).map(WmsCartonDetailDTO.AddDTO::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer packQty = detailList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(taskDetailEntity.getSkuId()) && Objects.equals(e.getFnSku(),taskDetailEntity.getFnSku())).map(WmsCartonDetailDTO.AddDTO::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
             //是否增量
             if (Objects.nonNull(isAddCarton) && isAddCarton){
                 packQty += packedQty;
             }
             if (packQty> deliveryQty){
-                throw new ServiceException(StrUtil.format(ApiError.ERROR_92252.msg,taskDetailEntity.getSkuNo(), packQty, deliveryQty));
+                throw new ServiceException(StrUtil.format(ApiError.ERROR_92252.msg,taskDetailEntity.getSkuNo(),taskDetailEntity.getFnSku(), packQty, deliveryQty));
             }
         });
     }
