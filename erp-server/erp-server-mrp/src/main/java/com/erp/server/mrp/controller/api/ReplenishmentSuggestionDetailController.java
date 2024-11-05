@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 补货建议详细 前端控制器
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/replenishmentSuggestionDetail")
 public class ReplenishmentSuggestionDetailController extends BaseController {
 
+    @Resource
     private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
 
     /**
