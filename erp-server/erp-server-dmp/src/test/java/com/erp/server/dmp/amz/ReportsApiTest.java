@@ -375,11 +375,12 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE");
-        List<String> reportTypes = Arrays.asList("GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA");
-//        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
+        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
+//        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
@@ -387,10 +388,10 @@ public class ReportsApiTest {
         List<String> processingStatuses = Arrays.asList(Report.ProcessingStatusEnum.DONE.getValue());
 //        List<String> processingStatuses = null;
 //        List<String> marketplaceIds = Arrays.asList("A1VC38T7YXB528");
-        ;
-        Integer pageSize = 20;
-        String createdSince = null;
-        String createdUntil = null;
+
+        Integer pageSize = 50;
+        String createdSince = "2024-10-18T00:00Z";
+        String createdUntil = "2024-10-25T00:00Z";;
         String nextToken = null;
 //        String shopId = "1734464159535337474";
 //        String shopId = "1734478618723094529";
@@ -398,7 +399,7 @@ public class ReportsApiTest {
 //        String shopId = "1738050804738166786";
 //        String shopId = "1739563826220634113";
 //        String shopId = "1736695621504471042";
-        String shopId = "1799018226391191553";
+        String shopId = "1735515751097307138";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -434,11 +435,11 @@ public class ReportsApiTest {
 //        String reportDocumentId = "amzn1.spdoc.1.4.fe.39848124-e707-4b55-8b93-5fb7060f5c21.T3U2NV4DQ1QPED.2651";
 //        String reportDocumentId = "amzn1.spdoc.1.4.fe.39fb9ac6-4e86-497c-8a01-0c70e2099c84.T2M4IOECDJE0M0.2650";
 //        String reportDocumentId = "amzn1.spdoc.1.4.fe.7f7d9dae-019a-4785-825d-2d6f5bd0a2cd.T29ETTNR9WI8F9.401";
-        String reportDocumentId = "amzn1.spdoc.1.4.na.50288161-7732-4368-b671-2e5782c97268.T21BZKD35Q9EIF.2602";
+        String reportDocumentId = "amzn1.spdoc.1.4.eu.f1939342-e914-40bf-bf7f-563e268c0344.T35QYWQGCEZSAF.2650";
 //        String shopId = "1739494918432231426";
 //        String shopId = "1736695621504471042";
 //        String shopId = "1735553314990329858";
-        String shopId = "1799018226391191553";
+        String shopId = "1735512797405515781";
 
 
         // 获取店铺授权信息
@@ -454,7 +455,8 @@ public class ReportsApiTest {
         System.out.println(url);
 //        String recordType= AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType();
 //        String recordType= "GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA";
-        String recordType= "GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA";
+        String recordType= "GET_FBA_MYI_ALL_INVENTORY_DATA";
+//        String recordType= "GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
 //        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();
