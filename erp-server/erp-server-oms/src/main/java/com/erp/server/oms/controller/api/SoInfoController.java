@@ -462,6 +462,24 @@ public class SoInfoController extends BaseController {
     }
 
     /**
+     * 查询销售订单合同PDF数据
+     * @author will
+     * @date 2024/11/5 9:34
+     * @param id
+     * @return ApiResult<ExportPdfDTO>
+     */
+    @GetMapping("/listSoContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:exportSoContractPdf",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id")
+    public ApiResult<SoInfoDTO.ExportPdfDTO> listSoContractPdf(@RequestParam("id") String id) {
+        SoInfoDTO.ExportPdfDTO result = soInfoService.listSoContractPdf(id);
+        return success(result);
+    }
+
+    /**
      * 导出销售订单合同PDF
      *
      * @return
