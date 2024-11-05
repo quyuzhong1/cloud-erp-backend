@@ -191,6 +191,7 @@
     </select>
     <select id="listPackingDetailBySkuId" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
+
             wc.id,
             wc.packing_task_id as taskId,
             wc.box_no,
@@ -210,7 +211,7 @@
             wcd.sku_no,
         wcd.pack_qty,
         wcd.fn_sku,
-            concat(wcd.sku_no,'*',wcd.pack_qty) AS sku,
+        wcd.sku_no AS sku,
         fsp.box_no  as outCode
         FROM wms_carton_detail wcd
         INNER JOIN wms_carton wc ON wc.id = wcd.main_id AND wc.is_deleted = FALSE

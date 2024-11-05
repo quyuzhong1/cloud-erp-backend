@@ -2377,6 +2377,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setFbaBoxNo(fbaBoxNo);
             }
             if(distinctMap.containsKey(pagingViewDTO.getId())){
+                //同一个箱子以下字段不重复显示
                 pagingViewDTO.setDeliveryCode("");
                 pagingViewDTO.setBusinessCode("");
                 pagingViewDTO.setTaskCode("");
@@ -2385,6 +2386,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setFbaBoxNo("");
                 pagingViewDTO.setBoxNo("");
                 pagingViewDTO.setPackingTotalStatusName("");
+                pagingViewDTO.setTotalQty(null);
+                pagingViewDTO.setLength(null);
+                pagingViewDTO.setWidth(null);
+                pagingViewDTO.setHeight(null);
+                pagingViewDTO.setPackageWeightStr("");
+                pagingViewDTO.setWeightingStatusName("");
+                pagingViewDTO.setPackingUserName("");
+                pagingViewDTO.setPackingStatusName("");
+                pagingViewDTO.setMeasureSourceName("");
             }else {
                 distinctMap.put(pagingViewDTO.getId(),1);
             }
