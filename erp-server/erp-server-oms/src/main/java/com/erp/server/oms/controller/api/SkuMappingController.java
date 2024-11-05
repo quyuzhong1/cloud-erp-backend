@@ -17,7 +17,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.scm.dto.OperateLogDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -254,9 +253,10 @@ public class SkuMappingController extends BaseController {
     /**
      * 执行自动匹配规则
      */
-    @GetMapping("/autoMatch")
-    public ApiResult<?> autoMatch() {
-        skuMappingRuleService.handleSkuMapping();
+    @PostMapping("/autoMatch")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "执行自动匹配规则")
+    public ApiResult<?> autoMatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        skuMappingRuleService.handleSkuMapping(dto.getIds());
         return success();
     }
 

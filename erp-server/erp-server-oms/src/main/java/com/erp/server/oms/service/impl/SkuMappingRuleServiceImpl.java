@@ -5,7 +5,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.plm.dto.BomDTO;
@@ -45,7 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -329,10 +327,14 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void handleSkuMapping() {
+    public void handleSkuMapping(List<String> skuMappingIds) {
         //查询未匹配的SKU
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setMatchResult(ListingMatchResultEnum.FALSE.getCode());
+        if(CollectionUtils.isEmpty(skuMappingIds)){
+            paramDTO.setMatchResult(ListingMatchResultEnum.FALSE.getCode());
+        }else{
+            paramDTO.setSkuMappingIds(skuMappingIds);
+        }
         paramDTO.setIsExpire(false);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> noMatchList = skuMappingService.findListDto(paramDTO);
@@ -367,9 +369,6 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         List<ListingInfoEntity> updateListingList = new ArrayList<>();
         for(ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO : noMatchList){
             String platformSkuNo = listingInfoWithSkuMappingDTO.getPlatformSkuNo();
-            if("2784*1+2681*1".equals(platformSkuNo)){
-                System.out.println(1);
-            }
             ruleLoop : for(SkuMappingRuleEntity skuMappingRuleEntity : skuMappingRuleEntityList){
                 String handlePlatformSkuNo = platformSkuNo;
                 //先执行扩展规则

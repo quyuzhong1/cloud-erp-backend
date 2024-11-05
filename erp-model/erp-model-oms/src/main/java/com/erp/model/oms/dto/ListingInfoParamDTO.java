@@ -23,6 +23,10 @@ import java.util.List;
 public class ListingInfoParamDTO {
 
     /**
+     * skuMapping 表id
+     */
+    private List<String> skuMappingIds;
+    /**
      * 平台sku no 列表
      */
     private List<String> platformSkuNoList;
