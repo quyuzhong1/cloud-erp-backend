@@ -234,9 +234,11 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
     /**
      * 下载货件装箱信息模板数据
+     *
      * @param response
+     * @param detailDTOS
      */
-    void downloadPackingTemplate(HttpServletResponse response);
+    void downloadPackingTemplate(HttpServletResponse response, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailDTOS);
 
     /**
      * 批量导入

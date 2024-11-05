@@ -99,19 +99,13 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
             shipmentEntity = fbaShipmentService.getByCode(RequisitionApplicationDetailExcelDTO.getFbaShipmentCode());
         }
         if (Objects.isNull(shipmentEntity)){
-            errorMsgList.add("FBI货件表记录不存在");
+            errorMsgList.add("FBA货件表记录不存在");
         }
         if (Objects.nonNull(shipmentEntity) && Objects.nonNull(requisitionApplication) && !Objects.equals(shipmentEntity.getShopId(), requisitionApplication.getChannelId())){
             errorMsgList.add("货件与要货申请的店铺不一致");
         }
-        //货件号和箱号必须同时存在，且货件每个货件号下的货件箱号必须从1开始且连续
-//        RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO shipmentViewDetailDTO = fbaBindShipmentViewDTOS.get(0);
-//        if (Objects.nonNull(shipmentViewDetailDTO) && Objects.equals(shipmentViewDetailDTO.getBoxNo(), RequisitionApplicationDetailExcelDTO.getBoxNo())
-//                && StrUtil.isNotBlank(shipmentViewDetailDTO.getFbaBoxNo()) && Objects.equals("1",shipmentViewDetailDTO.getFbaBoxNo())){
-//            errorMsgList.add("货件箱号必须从1开始且连续");
-//        }
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             RequisitionApplicationDetailExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(RequisitionApplicationDetailExcelDTO);
             return;
@@ -120,10 +114,11 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
         FbaShipmentEntity finalShipmentEntity = shipmentEntity;
         fbaBindShipmentViewDTOS.forEach(e -> {
             //数据已存在就不能覆盖
-            if (RequisitionApplicationDetailExcelDTO.getBoxNo().equals(e.getBoxNo()) && StrUtil.isBlank(e.getFbaBoxNo()) && StrUtil.isBlank(e.getFbaShipmentCode())){
+            if (RequisitionApplicationDetailExcelDTO.getBoxNo().equals(e.getBoxNo()) && StrUtil.isBlank(e.getDeliveryCode())){
                 e.setFbaBoxNo(RequisitionApplicationDetailExcelDTO.getFbaBoxNo());
                 e.setFbaShipmentCode(finalShipmentEntity.getCode());
                 e.setFbaShipmentId(finalShipmentEntity.getId());
+                successList.add(e);
             }
         });
     }
