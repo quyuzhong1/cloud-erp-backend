@@ -22,6 +22,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -1150,6 +1151,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         addDTO.setDetails(detailList);
         pickingListsService.add(addDTO);
         soDeliveryNoticeDetailService.updateBatchById(updateDetails);
+        Map<String, Integer> qtyMap = updateDetails.stream().collect(Collectors.toMap(BaseEntity::getId, SoDeliveryNoticeDetailEntity::getPickingQty));
+        packingTaskService.updateDetailQty(qtyMap);
     }
 
     @Override
@@ -1209,6 +1212,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         // 增加当次拣货数量和
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);
+        Map<String, Integer> qtyMap = detailEntities.stream().collect(Collectors.toMap(v->v.getId(),v->v.getPickingQty()));
+        packingTaskService.updateDetailQty(qtyMap);
     }
 
     @Override
