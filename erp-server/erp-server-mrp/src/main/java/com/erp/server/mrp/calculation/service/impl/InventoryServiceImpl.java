@@ -486,7 +486,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> overseasInTransitDetail = new ArrayList<>();
         List<LocalInventoryDTO> invetoryList = getOverseasInTransitInventory(replenishmentResultDTO, cfgRuleStrategyDTO.getStockUpResult());
         int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO, invetoryList, overseasInTransitDetail,ReplenishmentInventoryTypeEnum.OVERSEAS_IN_TRANSIT);
-        replenishmentResultDTO.setOverseasUsableDetail(overseasInTransitDetail);
+        replenishmentResultDTO.setOverseasInTransitDetail(overseasInTransitDetail);
         return qty;
     }
 
