@@ -169,7 +169,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<LocalInventoryDTO> invetoryList = invetoryOverseasList.stream()
                 .map(v -> new LocalInventoryDTO(codeMap.get(v.getWarehouseCode()), v.getQty()))
                 .collect(Collectors.toList());
-        int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO, invetoryList, overseasUsableDetail,ReplenishmentInventoryTypeEnum.OVERSEAS_USABLE);
+        int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO, invetoryList, overseasUsableDetail, ReplenishmentInventoryTypeEnum.OVERSEAS_USABLE);
         replenishmentResultDTO.setOverseasUsableDetail(overseasUsableDetail);
         return qty;
     }
@@ -179,7 +179,7 @@ public class InventoryServiceImpl implements InventoryService {
      *
      * @param replenishmentResultDTO 建议
      * @param cfgRuleStrategyDTO     策略配置
-     * @param inventoryList           仓库库存
+     * @param inventoryList          仓库库存
      * @param inventoryDetail        库存详情
      */
     private int getAllocateQty(ReplenishmentResultDTO replenishmentResultDTO,
@@ -220,7 +220,7 @@ public class InventoryServiceImpl implements InventoryService {
                 .collect(Collectors.toMap(LocalInventoryDTO.ShopSalesDTO::getShopId, LocalInventoryDTO.ShopSalesDTO::getQty, Integer::sum));
         int qty = 0;
         for (LocalInventoryDTO dto : inventoryList) {
-            BigDecimal  platformQtyCount = BigDecimal.ZERO;
+            BigDecimal platformQtyCount = BigDecimal.ZERO;
             List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> overseasWarehouseList = cfgRuleStrategyDTO.getWarehouseResult().getOverseasWarehouseList();
             for (int i = 0; i < overseasWarehouseList.size(); i++) {
                 CfgRuleWarehouseDTO.StrategyDetailResultDTO result = overseasWarehouseList.get(i);
@@ -247,7 +247,7 @@ public class InventoryServiceImpl implements InventoryService {
                         .map(v -> new ReplenishmentResultDTO.ShopInventoryDetailDTO(v, new BigDecimal(Optional.ofNullable(shopSaleQty.get(v)).orElse(0))))
                         .collect(Collectors.toList());
                 //根据库存分配配置
-                qty = getInventoryQty(replenishmentResultDTO, qty, inventoryDetail, platformQty, platformSaleQty, result, shopSaleQtyList, inventoryType);
+                qty = getInventoryQty(replenishmentResultDTO, qty, inventoryDetail, dto.getQty(), platformQty, platformSaleQty, result, shopSaleQtyList, inventoryType);
             }
         }
         return qty;
@@ -255,17 +255,19 @@ public class InventoryServiceImpl implements InventoryService {
 
     /**
      * 分摊店铺库存
+     *
      * @param replenishmentResultDTO 建议
      * @param qty                    库存数量
      * @param inventoryDetail        库存详情
      * @param platformQty            平台对应库存
      * @param platformSaleQty        平台对应销量
      * @param result                 策略
-     * @param shopSaleQtyList            店铺销量
+     * @param shopSaleQtyList        店铺销量
      * @param inventoryType          库存类型
      */
     private int getInventoryQty(ReplenishmentResultDTO replenishmentResultDTO, int qty,
                                 List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail,
+                                Integer totalQty,
                                 BigDecimal platformQty, Integer platformSaleQty,
                                 CfgRuleWarehouseDTO.StrategyDetailResultDTO result,
                                 List<ReplenishmentResultDTO.ShopInventoryDetailDTO> shopSaleQtyList,
@@ -273,7 +275,7 @@ public class InventoryServiceImpl implements InventoryService {
         if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(result.getInventoryAllocateType())) {
             qty += platformQty.intValue();
             inventoryDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
-                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, platformQty.intValue(), Collections.emptyList()));
+                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, totalQty, platformQty.intValue(), Collections.emptyList()));
         } else {
             // 计算每个店铺的占比
             List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
@@ -284,7 +286,7 @@ public class InventoryServiceImpl implements InventoryService {
                     BigDecimal otherSales = detailDTOS.stream().map(ReplenishmentResultDTO.ShopInventoryDetailDTO::getQty)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                     shopQty = platformQty.subtract(otherSales);
-                }else {
+                } else {
                     shopQty = platformQty
                             .multiply(shopSaleQtyList.get(i).getQty())
                             .divide(new BigDecimal(0 == platformSaleQty ? 1 : platformSaleQty), 2, RoundingMode.HALF_UP)
@@ -296,7 +298,7 @@ public class InventoryServiceImpl implements InventoryService {
                 }
             }
             inventoryDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
-                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, platformQty.intValue(), detailDTOS));
+                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, totalQty, platformQty.intValue(), detailDTOS));
         }
         return qty;
     }
@@ -358,6 +360,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     /**
      * 获取本地在途库存
+     *
      * @param replenishmentResultDTO 建议
      * @param codes                  单据状态
      * @param stockUpResult          备货配置
@@ -485,7 +488,7 @@ public class InventoryServiceImpl implements InventoryService {
 
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> overseasInTransitDetail = new ArrayList<>();
         List<LocalInventoryDTO> invetoryList = getOverseasInTransitInventory(replenishmentResultDTO, cfgRuleStrategyDTO.getStockUpResult());
-        int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO, invetoryList, overseasInTransitDetail,ReplenishmentInventoryTypeEnum.OVERSEAS_IN_TRANSIT);
+        int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO, invetoryList, overseasInTransitDetail, ReplenishmentInventoryTypeEnum.OVERSEAS_IN_TRANSIT);
         replenishmentResultDTO.setOverseasInTransitDetail(overseasInTransitDetail);
         return qty;
     }
@@ -494,7 +497,7 @@ public class InventoryServiceImpl implements InventoryService {
     public int getOverseasPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> overseasPlanDeliveryDetail = new ArrayList<>();
         List<LocalInventoryDTO> invetoryList = getOverseasPlanDeliveryInventory(replenishmentResultDTO, cfgRuleStrategyDTO);
-        int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO, invetoryList, overseasPlanDeliveryDetail,ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
+        int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO, invetoryList, overseasPlanDeliveryDetail, ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
         replenishmentResultDTO.setOverseasDeliveryDetail(overseasPlanDeliveryDetail);
         return qty;
     }
@@ -548,6 +551,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     /**
      * 获取海外仓在途逻辑
+     *
      * @param replenishmentResultDTO 建议
      * @param stockUpResult          备货配置
      */
@@ -816,7 +820,7 @@ public class InventoryServiceImpl implements InventoryService {
         if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(result.getInventoryAllocateType())) {
             qty += dto.getQty();
             inventoryDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
-                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, dto.getQty(), Collections.emptyList()));
+                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, dto.getQty(), dto.getQty(), Collections.emptyList()));
         } else {
             List<String> shopIds;
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(result.getChannelType())) {
@@ -837,7 +841,7 @@ public class InventoryServiceImpl implements InventoryService {
                     BigDecimal otherSales = detailDTOS.stream().map(ReplenishmentResultDTO.ShopInventoryDetailDTO::getQty)
                             .reduce(BigDecimal.ZERO, BigDecimal::add);
                     shopQty = new BigDecimal(dto.getQty()).subtract(otherSales);
-                }else {
+                } else {
                     shopQty = new BigDecimal(dto.getQty())
                             .multiply(new BigDecimal(shopSales.get(i).getQty()))
                             .divide(new BigDecimal(0 == total ? 1 : total), 2, RoundingMode.HALF_UP)
@@ -849,7 +853,7 @@ public class InventoryServiceImpl implements InventoryService {
                 }
             }
             inventoryDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO
-                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, dto.getQty(), detailDTOS));
+                    .buildReplenishmentInventoryDetailDTO(inventoryType.getCode(), result, dto.getQty(), dto.getQty(), detailDTOS));
         }
         return qty;
     }

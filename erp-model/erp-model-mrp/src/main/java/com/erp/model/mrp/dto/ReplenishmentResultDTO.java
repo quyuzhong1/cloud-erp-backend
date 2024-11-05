@@ -1358,6 +1358,12 @@ public class ReplenishmentResultDTO {
         private Integer totalQty;
 
         /**
+         * 平台数量
+         */
+        @TableField("platform_qty")
+        private Integer platformQty;
+
+        /**
          * 店铺明细
          */
         private List<ShopInventoryDetailDTO> shopInventoryDetails;
@@ -1374,12 +1380,13 @@ public class ReplenishmentResultDTO {
             entity.setChannelIdJson(dto.getChannelIdJson());
             entity.setInventoryAllocateType(dto.getInventoryAllocateType());
             entity.setTotalQty(dto.getTotalQty());
+            entity.setPlatformQty(dto.getPlatformQty());
             entity.setCalcVersion(calcVersion);
             entity.setDictPlatform(dto.getDictPlatform());
             return entity;
         }
 
-        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, Integer totalQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
+        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, Integer totalQty,Integer platformQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
             ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
             dto.setInventoryType(inventoryType);
             dto.setDictPlatform(result.getDictPlatform());
@@ -1390,6 +1397,7 @@ public class ReplenishmentResultDTO {
             dto.setChannelIdJson(result.getChannelIdJson());
             dto.setInventoryAllocateType(result.getInventoryAllocateType());
             dto.setTotalQty(totalQty);
+            dto.setPlatformQty(platformQty);
             dto.setShopInventoryDetails(shopInventoryDetails);
             return dto;
         }

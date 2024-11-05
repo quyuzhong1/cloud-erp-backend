@@ -35,6 +35,7 @@
             rid.channel_id_json,
             rid.inventory_allocate_type,
             rid.total_qty,
+            rid.platform_qty,
             sid.shop_id,
             sid.qty
         FROM

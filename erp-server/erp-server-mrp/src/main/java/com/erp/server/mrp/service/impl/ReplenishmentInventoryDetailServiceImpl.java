@@ -27,8 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -89,6 +89,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                         .collect(Collectors.toList());
                 detailVO.setChannelName(shopNames);
                 detailVO.setShopName("全部店铺");
+                detailVO.setQty(new BigDecimal(detailVO.getPlatformQty()));
             } else {
                 List<String> shopNames = allShopInfo.stream()
                         .filter(v -> detailVO.getChannelIdJson().contains(v.getId()))

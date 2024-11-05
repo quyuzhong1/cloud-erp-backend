@@ -75,6 +75,10 @@ public class InventoryDetailVO {
      */
     private Integer totalQty;
     /**
+     * 平台数量
+     */
+    private Integer platformQty;
+    /**
      * 店铺id
      */
     private String shopId;
@@ -86,19 +90,4 @@ public class InventoryDetailVO {
      * 数量
      */
     private BigDecimal qty;
-    
-    
-    public static InventoryDetailVO buildInventoryDetailVO(ReplenishmentInventoryDetailEntity entity) {
-        InventoryDetailVO detailVO = new InventoryDetailVO();
-        detailVO.setInventoryType(entity.getInventoryType());
-        detailVO.setInventoryAllocateType(entity.getInventoryAllocateType());
-        detailVO.setDictPlatform(entity.getDictPlatform());
-        detailVO.setChannelType(entity.getChannelType());
-        detailVO.setChannelIdJson(entity.getChannelIdJson());
-        detailVO.setTotalQty(entity.getTotalQty());
-        detailVO.setWarehouseId(entity.getWarehouseId());
-        detailVO.setWarehouseType(entity.getWarehouseType());
-        detailVO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
-        return detailVO;
-    }
 }
