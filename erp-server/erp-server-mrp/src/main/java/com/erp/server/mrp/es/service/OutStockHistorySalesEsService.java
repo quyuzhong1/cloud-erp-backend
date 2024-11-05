@@ -61,4 +61,10 @@ public interface OutStockHistorySalesEsService {
      * @param orderType 订单类型
      */
     List<OutStockHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType);
+
+    /**
+     * 订单类型
+     * @param orderType 订单类型
+     */
+    Map<String, Integer> listByType(String orderType);
 }

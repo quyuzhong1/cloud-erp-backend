@@ -60,4 +60,10 @@ public interface OrderHistorySalesEsService {
      * @param endDate          结束日期
      */
     void deleteBySuggestionIdsAndDate(List<String> suggestionIds, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 获取最近有销量数据
+     * @param orderType 订单类型
+     */
+    Map<String, Integer> listByType(String orderType);
 }

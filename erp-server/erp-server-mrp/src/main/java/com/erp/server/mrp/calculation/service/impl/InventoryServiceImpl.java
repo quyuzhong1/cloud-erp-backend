@@ -220,25 +220,34 @@ public class InventoryServiceImpl implements InventoryService {
                 .collect(Collectors.toMap(LocalInventoryDTO.ShopSalesDTO::getShopId, LocalInventoryDTO.ShopSalesDTO::getQty, Integer::sum));
         int qty = 0;
         for (LocalInventoryDTO dto : inventoryList) {
-            for (CfgRuleWarehouseDTO.StrategyDetailResultDTO result : cfgRuleStrategyDTO.getWarehouseResult().getOverseasWarehouseList()) {
-                if (!result.getVirtualWarehouseId().equals(dto.getWarehouseId()) || (VitualWarehouseChannelTypeEnum.SHOP.getCode().equals(result.getChannelType())
-                        && !result.getChannelIdJson().contains(replenishmentResultDTO.getReplenishment().getShopId()))) {
+            BigDecimal  platformQtyCount = BigDecimal.ZERO;
+            List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> overseasWarehouseList = cfgRuleStrategyDTO.getWarehouseResult().getOverseasWarehouseList();
+            for (int i = 0; i < overseasWarehouseList.size(); i++) {
+                CfgRuleWarehouseDTO.StrategyDetailResultDTO result = overseasWarehouseList.get(i);
+                if (!result.getWarehouseId().equals(dto.getWarehouseId())) {
                     continue;
                 }
                 Integer platformSaleQty = platformShop.get(result.getDictPlatform())
                         .stream()
-                        .map(shopSaleQty::get)
+                        .map(v -> Optional.ofNullable(shopSaleQty.get(v)).orElse(0))
                         .reduce(0, Math::addExact);
+                BigDecimal platformQty;
                 //分摊多平台数据
-                BigDecimal platformQty = new BigDecimal(dto.getQty())
-                        .multiply(new BigDecimal(platformSaleQty))
-                        .divide(new BigDecimal(0 == totalSaleQty ? 1 : totalSaleQty), 2, RoundingMode.HALF_UP)
-                        .setScale(0, RoundingMode.FLOOR);
-                Map<String, Integer> shopSaleQtyMap = platformShop.get(result.getDictPlatform())
+                if (i == overseasWarehouseList.size() - 1) {
+                    platformQty = new BigDecimal(dto.getQty()).subtract(platformQtyCount);
+                } else {
+                    platformQty = new BigDecimal(dto.getQty())
+                            .multiply(new BigDecimal(platformSaleQty))
+                            .divide(new BigDecimal(0 == totalSaleQty ? 1 : totalSaleQty), 2, RoundingMode.HALF_UP)
+                            .setScale(0, RoundingMode.FLOOR);
+                    platformQtyCount = platformQtyCount.add(platformQty);
+                }
+                List<ReplenishmentResultDTO.ShopInventoryDetailDTO> shopSaleQtyList = platformShop.get(result.getDictPlatform())
                         .stream()
-                        .collect(Collectors.toMap(k->k, shopSaleQty::get, Integer::sum));
+                        .map(v -> new ReplenishmentResultDTO.ShopInventoryDetailDTO(v, new BigDecimal(Optional.ofNullable(shopSaleQty.get(v)).orElse(0))))
+                        .collect(Collectors.toList());
                 //根据库存分配配置
-                qty = getInventoryQty(replenishmentResultDTO, qty, inventoryDetail, platformQty, platformSaleQty, result, shopSaleQtyMap, inventoryType);
+                qty = getInventoryQty(replenishmentResultDTO, qty, inventoryDetail, platformQty, platformSaleQty, result, shopSaleQtyList, inventoryType);
             }
         }
         return qty;
@@ -252,14 +261,14 @@ public class InventoryServiceImpl implements InventoryService {
      * @param platformQty            平台对应库存
      * @param platformSaleQty        平台对应销量
      * @param result                 策略
-     * @param shopSaleQty            店铺销量
+     * @param shopSaleQtyList            店铺销量
      * @param inventoryType          库存类型
      */
     private int getInventoryQty(ReplenishmentResultDTO replenishmentResultDTO, int qty,
                                 List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail,
                                 BigDecimal platformQty, Integer platformSaleQty,
-                                CfgRuleWarehouseDTO.StrategyDetailResultDTO result, 
-                                Map<String, Integer> shopSaleQty, 
+                                CfgRuleWarehouseDTO.StrategyDetailResultDTO result,
+                                List<ReplenishmentResultDTO.ShopInventoryDetailDTO> shopSaleQtyList,
                                 ReplenishmentInventoryTypeEnum inventoryType) {
         if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(result.getInventoryAllocateType())) {
             qty += platformQty.intValue();
@@ -268,13 +277,21 @@ public class InventoryServiceImpl implements InventoryService {
         } else {
             // 计算每个店铺的占比
             List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
-            for (Map.Entry<String, Integer> entry : shopSaleQty.entrySet()) {
-                BigDecimal shopQty = platformQty
-                        .multiply(new BigDecimal(entry.getValue()))
-                        .divide(new BigDecimal(0 == platformSaleQty ? 1 : platformSaleQty), 2, RoundingMode.HALF_UP)
-                        .setScale(0, RoundingMode.FLOOR);
-                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(entry.getKey(), shopQty));
-                if (entry.getKey().equals(replenishmentResultDTO.getReplenishment().getShopId())) {
+
+            BigDecimal shopQty;
+            for (int i = 0; i < shopSaleQtyList.size(); i++) {
+                if (i == shopSaleQtyList.size() - 1) {
+                    BigDecimal otherSales = detailDTOS.stream().map(ReplenishmentResultDTO.ShopInventoryDetailDTO::getQty)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    shopQty = platformQty.subtract(otherSales);
+                }else {
+                    shopQty = platformQty
+                            .multiply(shopSaleQtyList.get(i).getQty())
+                            .divide(new BigDecimal(0 == platformSaleQty ? 1 : platformSaleQty), 2, RoundingMode.HALF_UP)
+                            .setScale(0, RoundingMode.FLOOR);
+                }
+                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSaleQtyList.get(i).getShopId(), shopQty));
+                if (shopSaleQtyList.get(i).getShopId().equals(replenishmentResultDTO.getReplenishment().getShopId())) {
                     qty += shopQty.intValue();
                 }
             }
@@ -814,13 +831,20 @@ public class InventoryServiceImpl implements InventoryService {
                     .reduce(0, Math::addExact);
             // 计算每个店铺的占比
             List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
-            for (LocalInventoryDTO.ShopSalesDTO shopSale : shopSales) {
-                BigDecimal shopQty = new BigDecimal(dto.getQty())
-                        .multiply(new BigDecimal(shopSale.getQty()))
-                        .divide(new BigDecimal(0 == total ? 1 : total), 2, RoundingMode.HALF_UP)
-                        .setScale(0, RoundingMode.FLOOR);
-                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSale.getShopId(), shopQty));
-                if (shopSale.getShopId().equals(replenishmentResultDTO.getReplenishment().getShopId())) {
+            BigDecimal shopQty;
+            for (int i = 0; i < shopSales.size(); i++) {
+                if (i == shopSales.size() - 1) {
+                    BigDecimal otherSales = detailDTOS.stream().map(ReplenishmentResultDTO.ShopInventoryDetailDTO::getQty)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    shopQty = new BigDecimal(dto.getQty()).subtract(otherSales);
+                }else {
+                    shopQty = new BigDecimal(dto.getQty())
+                            .multiply(new BigDecimal(shopSales.get(i).getQty()))
+                            .divide(new BigDecimal(0 == total ? 1 : total), 2, RoundingMode.HALF_UP)
+                            .setScale(0, RoundingMode.FLOOR);
+                }
+                detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSales.get(i).getShopId(), shopQty));
+                if (shopSales.get(i).getShopId().equals(replenishmentResultDTO.getReplenishment().getShopId())) {
                     qty += shopQty.intValue();
                 }
             }

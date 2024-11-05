@@ -75,26 +75,17 @@ public class InventoryDetailVO {
      */
     private Integer totalQty;
     /**
-     * 店铺库存明细
+     * 店铺id
      */
-    private List<ShopInventoryDetailVO> shopInventoryDetails;
-
-    @Getter
-    @Setter
-    public static class ShopInventoryDetailVO {
-        /**
-         * 店铺id
-         */
-        private String shopId;
-        /**
-         * 店铺名字
-         */
-        private String shopName;
-        /**
-         * 数量
-         */
-        private BigDecimal qty;
-    }
+    private String shopId;
+    /**
+     * 店铺名字
+     */
+    private String shopName;
+    /**
+     * 数量
+     */
+    private BigDecimal qty;
     
     
     public static InventoryDetailVO buildInventoryDetailVO(ReplenishmentInventoryDetailEntity entity) {

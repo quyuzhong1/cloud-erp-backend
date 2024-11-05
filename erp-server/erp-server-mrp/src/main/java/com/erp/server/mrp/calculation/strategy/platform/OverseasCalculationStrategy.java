@@ -70,28 +70,26 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
         CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getByPlatformType(CfgRulePlatformTypeEnum.OVERSEAS.getCode());
 
         List<CfgRuleWarehouseDetailEntity> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listByMainIdList(Collections.singletonList(cfgRuleWarehouse.getId()));
-        Map<String, List<ReplenishmentSuggestionEntity>> suggestionMap = suggestions.stream().collect(Collectors.groupingBy(ReplenishmentSuggestionEntity::getShopId));
+        // 分组后的建议映射
+        Map<String, List<ReplenishmentSuggestionEntity>> suggestionMap = suggestions.stream()
+                .collect(Collectors.groupingBy(ReplenishmentSuggestionEntity::getShopId));
         Map<OverseasHistoryInventoryGroupDTO, Set<String>> suggestionIdsMap = new HashMap<>();
         for (CfgRuleWarehouseDetailEntity detail : cfgRuleWarehouseDetailList) {
             if (CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(detail.getWarehouseType())) {
                 continue;
             }
-            List<String> shopIds;
-            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detail.getChannelType())) {
-                shopIds = shopIdByPlatform.get(detail.getDictPlatform());
-            } else {
-                shopIds = detail.getChannelIdJson().toList(String.class);
-            }
-            for (String shopId : shopIds) {
-                List<ReplenishmentSuggestionEntity> entities = Optional.ofNullable(suggestionMap.get(shopId)).orElse(new ArrayList<>());
-                for (ReplenishmentSuggestionEntity entity : entities) {
-                    OverseasHistoryInventoryGroupDTO inventoryGroupDTO = OverseasHistoryInventoryGroupDTO.buildOverseasHistoryInventoryGroup(entity.getSkuId(), detail.getWarehouseId());
-                    Set<String> ids = Optional.ofNullable(suggestionIdsMap.get(inventoryGroupDTO))
-                            .orElse(new HashSet<>());
-                    ids.add(entity.getId());
-                    suggestionIdsMap.put(inventoryGroupDTO, ids);
-                }
-            }
+            List<String> shopIds = VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detail.getChannelType())
+                    ? shopIdByPlatform.getOrDefault(detail.getDictPlatform(), Collections.emptyList())
+                    : detail.getChannelIdJson().toList(String.class);
+            shopIds.stream()
+                    .map(suggestionMap::get)
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .forEach(entity -> {
+                        OverseasHistoryInventoryGroupDTO inventoryGroupDTO = OverseasHistoryInventoryGroupDTO.buildOverseasHistoryInventoryGroup(
+                                entity.getSkuId(), detail.getWarehouseId());
+                        suggestionIdsMap.computeIfAbsent(inventoryGroupDTO, k -> new HashSet<>()).add(entity.getId());
+                    });
         }
         Map<OverseasHistoryInventoryGroupDTO, Map<LocalDate, Integer>> fbaInventoryMap = getOverseasInventoryMap(list);
         return getCaleHistoryInventory(fbaInventoryMap, suggestionIdsMap);

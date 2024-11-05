@@ -1072,8 +1072,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         LocalDate caleStartDate = calculationDate.minusDays(361);
         LocalDate caleEndDate = calculationDate.minusDays(1);
+        //获取历史数据
         List<ReplenishmentResultDTO.SalesHistoryDTO> listedSalesHistory = listSalesHistory(suggestionIds, salesQtyType, orderType, caleStartDate, caleEndDate);
         List<ReplenishmentResultDTO.InventoryHistoryDTO> historyInventoryList = historyInventoryEsService.listByReplenishmentIdsAndDate(suggestionIds, caleStartDate, caleEndDate);
+//        Map<String, Map<String, Integer>> salesHistoryMap = getSalesHistoryMap(salesQtyType, orderType, entities);
+
         return entities.parallelStream()
                 .map(v -> {
                     ReplenishmentResultDTO resultDTO = new ReplenishmentResultDTO();
@@ -1101,6 +1104,24 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     return resultDTO;
                 }).filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取sku对应店铺的销量
+     * @param salesQtyType 销量类型
+     * @param orderType    订单类型
+     */
+    private Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, String orderType) {
+        Map<String, Integer> salesMap;
+        if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
+            salesMap = orderHistorySalesEsService.listByType(orderType);
+        } else {
+            // 以销售出库单出库时间计算销量
+            salesMap = outStockHistorySalesEsService.listByType(orderType);
+        }
+
+
+        return null;
     }
 
     /**

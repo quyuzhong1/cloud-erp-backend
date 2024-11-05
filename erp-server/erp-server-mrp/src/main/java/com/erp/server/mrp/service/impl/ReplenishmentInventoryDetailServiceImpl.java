@@ -13,7 +13,6 @@ import com.erp.model.mrp.dto.InventoryTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.model.mrp.entity.ShopInventoryDetailEntity;
-import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import com.erp.model.mrp.vo.InventoryDetailVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -56,17 +55,15 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
 
     @Override
     public PagingVO<InventoryDetailVO> inventoryDetail(PagingDTO<InventoryTotalDTO> params) {
-        Page<ReplenishmentInventoryDetailEntity> inventoryDetail = page(new Page<>(params.getCurrPage(), params.getPageSize()),Wrappers.<ReplenishmentInventoryDetailEntity>lambdaQuery()
-                .eq(ReplenishmentInventoryDetailEntity::getReplenishmentDetailId, params.getParams().getDetailId())
-                .eq(ReplenishmentInventoryDetailEntity::getInventoryType, params.getParams().getType())
-        );
-        if (CollectionUtils.isEmpty(inventoryDetail.getRecords())) {
+        Page<InventoryDetailVO> page = baseMapper.inventoryDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
             return new PagingVO<>();
         }
-        List<String> ids = inventoryDetail.getRecords().stream().map(ReplenishmentInventoryDetailEntity::getId).collect(Collectors.toList());
-        List<String> warehouseIdList = inventoryDetail.getRecords().stream().map(ReplenishmentInventoryDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        ApiResult<List<ShopInfoEntity>> allShopInfoResult = shopInfoFeign.list();
+        List<ShopInfoEntity> allShopInfo = allShopInfoResult.getData();
+        List<String> warehouseIdList = page.getRecords().stream().map(InventoryDetailVO::getWarehouseId).distinct().collect(Collectors.toList());
         //虚拟仓信息
-        List<String> virtualWarehouseIdList = inventoryDetail.getRecords().stream().map(ReplenishmentInventoryDetailEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<String> virtualWarehouseIdList = page.getRecords().stream().map(InventoryDetailVO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntities = new ArrayList<>();
         List<VirtualWarehouseEntity> virtualWarehouseEntities = new ArrayList<>();
         if (!CollectionUtils.isEmpty(warehouseIdList)) {
@@ -75,37 +72,19 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
         if (!CollectionUtils.isEmpty(virtualWarehouseIdList)) {
             virtualWarehouseEntities = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
         }
-        List<ShopInventoryDetailEntity> shopInventoryDetailList = shopInventoryDetailService.list(Wrappers.<ShopInventoryDetailEntity>lambdaQuery()
-                .in(ShopInventoryDetailEntity::getMainId, ids));
-        List<InventoryDetailVO> detailVOS = new ArrayList<>();
-        for (ReplenishmentInventoryDetailEntity entity : inventoryDetail.getRecords()) {
-            InventoryDetailVO detailVO = InventoryDetailVO.buildInventoryDetailVO(entity);
+        for (InventoryDetailVO detailVO : page.getRecords()) {
             WarehouseEntity warehouse = warehouseEntities.stream()
-                    .filter(e -> e.getId().equals(entity.getWarehouseId()))
+                    .filter(e -> e.getId().equals(detailVO.getWarehouseId()))
                     .findFirst().orElse(new WarehouseEntity());
             detailVO.setWarehouseName(warehouse.getName());
             VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntities.stream()
-                    .filter(e -> e.getId().equals(entity.getVirtualWarehouseId()))
+                    .filter(e -> e.getId().equals(detailVO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             detailVO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-            ApiResult<List<ShopInfoEntity>> allShopInfoResult = shopInfoFeign.list();
-            List<ShopInfoEntity> allShopInfo = allShopInfoResult.getData();
-            if (CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode().equals(detailVO.getInventoryAllocateType())) {
-                List<ShopInventoryDetailEntity> detailEntities = shopInventoryDetailList.stream()
-                        .filter(v -> v.getMainId().equals(entity.getId()))
-                        .collect(Collectors.toList());
-                List<InventoryDetailVO.ShopInventoryDetailVO> vos = new ArrayList<>();
-                for (ShopInventoryDetailEntity detail : detailEntities) {
-                    InventoryDetailVO.ShopInventoryDetailVO vo = new InventoryDetailVO.ShopInventoryDetailVO();
-                    vo.setQty(detail.getQty());
-                    vo.setShopId(detail.getShopId());
-                    String shopName = allShopInfo.stream().filter(v -> vo.getShopId().equals(v.getId()))
-                            .map(ShopInfoEntity::getName).findFirst().orElse("");
-                    vo.setShopName(shopName);
-                    vos.add(vo);
-                }
-                detailVO.setShopInventoryDetails(vos);
-            }
+            ShopInfoEntity shopInfo = allShopInfo.stream()
+                    .filter(e -> e.getId().equals(detailVO.getShopId()))
+                    .findFirst().orElse(new ShopInfoEntity());
+            detailVO.setShopName(shopInfo.getName());
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
                 detailVO.setChannelName(Collections.singletonList("全部店铺"));
             } else {
@@ -113,9 +92,8 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                         .distinct().map(ShopInfoEntity::getName).collect(Collectors.toList());
                 detailVO.setChannelName(shopNames);
             }
-            detailVOS.add(detailVO);
         }
-        return new PagingVO<>(detailVOS, (int) inventoryDetail.getTotal(), params.getPageSize(), params.getCurrPage());
+        return new PagingVO<>(page);
     }
 
     @Override
