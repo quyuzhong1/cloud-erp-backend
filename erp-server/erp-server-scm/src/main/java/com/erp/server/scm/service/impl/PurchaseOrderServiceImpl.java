@@ -13,11 +13,14 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.JasperHelperUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -48,7 +51,8 @@ import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.DeliveryOrderEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.dto.FileTemplateDTO;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -56,7 +60,6 @@ import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
-import com.erp.model.wms.dto.inventory.InventoryClosedRecordDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -67,6 +70,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
 import com.erp.rpc.srm.feign.SrmDeliveryOrderFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
@@ -83,6 +87,7 @@ import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +101,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -104,7 +110,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER;
 
@@ -210,6 +215,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     private SubcontractOrderDetailService subcontractOrderDetailService;
     @Resource
     private PurchasePriceService purchasePriceService;
+
+    @Resource
+    private FileTemplateFeign fileTemplateFeign;
+
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
         PurchaseOrderDTO.SearchParamDTO params = pagingDTO.getParams();
@@ -672,7 +681,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public PurchaseOrderDTO.ExportPdfDTO exportPurchaseContractPdf(String id) {
+    public PurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id) {
         PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = new PurchaseOrderDTO.ExportPdfDTO();
 
         PurchaseOrderEntity purchaseOrderEntity = this.getById(id);
@@ -3055,6 +3064,35 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             doOpHandlePurchaseOrder(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public void exportPurchaseContractPdf(String id, HttpServletResponse response) {
+        PurchaseOrderDTO.ExportPdfDTO result = listPurchaseContractPdf(id);
+        if (ObjectUtil.isEmpty(result)) {
+            throw new ServiceException("未发现采购合同订单数据");
+        }
+        List<String> base64List = new ArrayList<>();
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.PO_CONTRACT_PDF);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
+        if (inputStream == null) {
+            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+            return;
+        }
+        Map<String, Object> map = BeanUtil.beanToMap(result);
+        JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
+        map.put("detail", detail);
+        //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
+
+       byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
+        String base = Base64.getEncoder().encodeToString(bytes);
+        base64List.add("data:application/pdf;base64," + base);
+        PdfUtil.exportBase64ForPdf(response,base64List);
     }
 
     @Override

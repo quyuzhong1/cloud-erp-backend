@@ -12,4 +12,10 @@ public class FileTemplateConstant {
      */
     public static final String SO_CONTRACT_PDF = "销售合同";
 
+
+    /**
+     * 采购订单
+     */
+    public static final String PO_CONTRACT_PDF = "采购合同";
+
 }
