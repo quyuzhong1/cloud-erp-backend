@@ -123,6 +123,17 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 .one();
     }
 
+
+    @Override
+    public OverseasProviderWarehouseEntity getByWarehouseIdWithNotDisabled(String warehouseId) {
+        return lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
+                .eq(OverseasProviderWarehouseEntity::getDisabled, false)
+                .orderByAsc(OverseasProviderWarehouseEntity::getId)
+                .last("LIMIT 1")
+                .one();
+    }
+
     @Override
     public List<OverseasProviderWarehouseEntity> listByWarehouseIds(List<String> warehouseIds) {
         if (CollectionUtils.isEmpty(warehouseIds)) {
