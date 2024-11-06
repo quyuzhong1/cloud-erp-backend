@@ -408,6 +408,7 @@ public class PurchaseSuggestDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 100,message = "备注最大长度不能超过100位")
         private String remark;
     }
 

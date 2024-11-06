@@ -391,13 +391,66 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO {
 
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 建议采购量
+         */
+        private Integer suggestPurchaseQty;
+
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
+
+        /**
+         * 物流方式
+         */
+        @Size(max = 64,message = "物流方式最大长度不能超过64位")
+        private String logisticsMethod;
+
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimateInstockDate;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 采购成本
+         */
+        @Digits(integer = 12, fraction = 4, message = "采购成本整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal purchaseCost;
+
+        /**
+         * 计划采购量（计划修正值）
+         */
+        private Integer planPurchaseQty;
+
+        /**
+         * 采购备货量
+         */
+        private Integer purchaseStockUpQty;
+
+        /**
+         * 备注
+         */
+        @Size(max = 100,message = "备注最大长度不能超过100位")
+        private String remark;
 
     }
 
