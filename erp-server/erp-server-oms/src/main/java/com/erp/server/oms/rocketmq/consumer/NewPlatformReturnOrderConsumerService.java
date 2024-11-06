@@ -140,6 +140,8 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			matched.setSoReturnDetailId(soB2cReturnDetailEntity.getId());
 			updateDetailList.add(matched);
 			matchedMain.setSoReturnId(soB2cReturnEntity.getId());
+			matchedMain.setSoReturnCode(soB2cReturnEntity.getCode());
+			matchedMain.setPlatformCode(Objects.nonNull(soB2cEntity) ? soB2cEntity.getPlatformCode() : "");
 			updateList.add(matchedMain);
 		}
 		if(CollectionUtils.isNotEmpty(updateList) && CollectionUtils.isNotEmpty(updateDetailList)){

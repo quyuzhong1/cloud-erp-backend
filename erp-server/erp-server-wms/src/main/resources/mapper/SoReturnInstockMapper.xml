@@ -12,6 +12,7 @@
         sri.so_return_id as soReturnId,
         sri.code,
         sri.source_code AS sourceCode,
+        sri.platform_code AS platformCode,
         sri.so_code AS soCode,
         sri.type,
         sri.customer_id AS customerId,

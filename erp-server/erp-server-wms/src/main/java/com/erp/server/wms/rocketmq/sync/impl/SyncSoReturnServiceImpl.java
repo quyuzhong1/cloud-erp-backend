@@ -327,6 +327,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, StringUtil.join(skuList, ","));
         }
         inStockEntity.setId(IdWorker.getIdStr());
+        //平台订单号
+        inStockEntity.setPlatformCode(dto.getSourceId());
         for (SoReturnInstockDetailEntity detailEntity : detailList) {
             detailEntity.setReturnTypeDict(ReturnTypeEnum.DEDUCTION.getCode());
             //获取仓库信息
