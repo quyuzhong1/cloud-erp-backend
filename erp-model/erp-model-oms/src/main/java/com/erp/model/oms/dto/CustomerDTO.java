@@ -780,6 +780,10 @@ public class CustomerDTO implements Serializable {
          * name
          */
         private String name;
+        /**
+         * 简称
+         */
+        private String shortName;
 
         private ApproveStatusEnum approveStatus;
 
