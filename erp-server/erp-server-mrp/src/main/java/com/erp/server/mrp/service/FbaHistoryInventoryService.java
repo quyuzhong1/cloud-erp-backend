@@ -48,4 +48,10 @@ public interface FbaHistoryInventoryService extends SuperService<FbaHistoryInven
      * @param dto 入参
      */
     void exportList(FbaHistoryInventoryDTO.ExportDTO dto);
+
+    /**
+     * 导出
+     * @param dto 导出
+     */
+    PagingVO<FbaHistoryInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaHistoryInventoryDTO.ExportDTO> dto);
 }

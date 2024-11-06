@@ -1,14 +1,19 @@
 package com.erp.server.mrp.controller.feign;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
+import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.DeliverySuggestService;
+import com.erp.server.mrp.service.FbaHistoryInventoryService;
 import com.erp.server.mrp.service.PurchaseSuggestService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +36,9 @@ public class ExportMrpFeignController {
 
     @Resource
     private DeliverySuggestService deliverySuggestService;
+
+    @Resource
+    private FbaHistoryInventoryService fbaHistoryInventoryService;
     /**
      * 历史销量导出数据查询
      * @author will
@@ -106,5 +114,12 @@ public class ExportMrpFeignController {
     @WebAdvanceQuery
     public PagingVO<DeliverySuggestDTO.ListDTO> pagingDeliverySuggestion(@RequestBody PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
         return deliverySuggestService.paging(dto);
+    }
+
+
+    @PostMapping("/fbaInventory")
+    @WebAdvanceQuery
+    public PagingVO<FbaHistoryInventoryDTO.ListDTO> exportFbaInventory(@RequestBody PagingDTO<FbaHistoryInventoryDTO.ExportDTO> dto) {
+        return fbaHistoryInventoryService.exportFbaInventory(dto);
     }
 }

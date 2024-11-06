@@ -87,6 +87,16 @@ public class FbaHistoryInventoryServiceImpl extends SuperServiceImpl<FbaHistoryI
         downloadTaskFeign.saveDownloadTask("FBA每日库存", FileTaskEventEnum.EXPORT_MRP_FBA_INVENTORY.getCode(),dto);
     }
 
+    @Override
+    public PagingVO<FbaHistoryInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaHistoryInventoryDTO.ExportDTO> dto) {
+        Page<FbaHistoryInventoryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        if (!CollUtil.isEmpty(page.getRecords())) {
+            // 数据处理
+            fillList(page.getRecords());
+        }
+        return new PagingVO<>(page);
+    }
+
 
     private void fillList(List<FbaHistoryInventoryDTO.ListDTO> records) {
         List<String> skuNoList = records.stream().map(FbaHistoryInventoryDTO.ListDTO::getSkuNo).distinct().collect(Collectors.toList());

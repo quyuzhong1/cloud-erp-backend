@@ -22,4 +22,9 @@ public interface FbaHistoryInventoryMapper extends BaseMapper<FbaHistoryInventor
      * 分页查询
      */
     IPage<FbaHistoryInventoryDTO.ListDTO> paging(Page<FbaHistoryInventoryDTO> query, FbaHistoryInventoryDTO.PagingParamDTO params);
+
+    /**
+     * 分页查询
+     */
+    Page<FbaHistoryInventoryDTO.ListDTO> listExport(Page<FbaHistoryInventoryDTO.ListDTO> page, FbaHistoryInventoryDTO.ExportDTO params);
 }

@@ -77,11 +77,6 @@
             OR oi.shipped_qty > 0)
         </if>
         ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
         oi.create_time DESC
     </select>
     <select id="listByStartDateAndEndDate"
