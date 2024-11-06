@@ -468,7 +468,7 @@
         fmd.ID AS firstMileId,
         wc.ID,
         wc.packing_task_id AS taskId,
-        ( SELECT fsp.box_no FROM fba_shipment_packing fsp WHERE fsp.carton_id = wc.ID AND fsp.is_deleted = FALSE LIMIT 1 ) AS fbaBoxNo,
+        fbl.box_no as fbaBoxNo ,
         wc.box_no,
         concat (
         wcs.box_length,
@@ -509,6 +509,7 @@
                 inner join wms_carton wc on wc.packing_task_id = pt.id and wc.is_deleted =false
                 INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
                 INNER JOIN wms_carton_detail wcd ON wc.id = wcd.main_id and wcd.is_deleted = FALSE and wcd.sku_id = fmdd.sku_id
+        left join ( SELECT fsp.carton_id,fsp.box_no FROM fba_shipment_packing fsp WHERE fsp.is_deleted = FALSE ) AS fbl on fbl.carton_id = wc.ID
         where ${params.sqlMap.default} and fmd.is_deleted = false
           AND wcd.pack_qty > 0
         <if test="ids != null and ids.size > 0">
