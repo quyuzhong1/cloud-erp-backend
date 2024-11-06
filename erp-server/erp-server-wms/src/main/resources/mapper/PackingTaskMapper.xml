@@ -203,7 +203,7 @@
             wc.packing_user_name,
             wcs.measure_source,
             wc.error_msg,
-        pt.source_id ,
+            pt.source_id ,
             wcs.box_length as length,
             wcs.box_width as width,
             wcs.box_height as height,
