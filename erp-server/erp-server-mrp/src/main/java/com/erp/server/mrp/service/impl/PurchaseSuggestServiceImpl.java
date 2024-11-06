@@ -246,7 +246,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             throw new ServiceException("已开启集中采购策略，不支持确认");
         }
         //更新成完成状态
-        old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
+        old.setStatus(SuggestStatusEnum.FINISH.getCode());
         this.updateById(old);
 
         // 操作日志

@@ -211,7 +211,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
         //更新成完成状态
-        old.setStatus(SuggestStatusEnum.WAIT_CONFIRM.getCode());
+        old.setStatus(SuggestStatusEnum.FINISH.getCode());
         this.updateById(old);
 
         // 操作日志
