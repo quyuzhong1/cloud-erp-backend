@@ -295,6 +295,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                     .findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(purchaseSuggestMergeEntity)) {
                 addOrUpdateDTO.setId(purchaseSuggestMergeEntity.getId());
+            } else {
+                addOrUpdateDTO.setId(null);
             }
             //建议采购量
             Integer suggestPurchaseQty = value.stream().map(PurchaseSuggestEntity::getSuggestPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -302,6 +304,14 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             //采购成本
             BigDecimal purchaseCost = value.stream().map(PurchaseSuggestEntity::getPurchaseCost).reduce(BigDecimal.ZERO, BigDecimal::add);
             addOrUpdateDTO.setPurchaseCost(purchaseCost);
+
+            //计划采购
+            Integer planPurchaseQty = value.stream().map(PurchaseSuggestEntity::getPlanPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            addOrUpdateDTO.setPlanPurchaseQty(planPurchaseQty);
+
+            //采购备货
+            Integer purchaseStockUpQty = value.stream().map(PurchaseSuggestEntity::getPurchaseStockUpQty).reduce(MathUtil.ZERO, Integer::sum);
+            addOrUpdateDTO.setPurchaseStockUpQty(purchaseStockUpQty);
             //来源
             addOrUpdateDTO.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
             List<String> sourceIdList = value.stream().map(PurchaseSuggestEntity::getId).distinct().collect(Collectors.toList());
