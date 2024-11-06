@@ -187,4 +187,14 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
         return success(true);
     }
 
+    /**
+     * 重置总物流单费用
+     * @param codeList
+     * @return
+     */
+    @PostMapping("/initTotalLogisticsCost")
+    public ApiResult initTotalLogisticsCost(@RequestBody List<String> codeList){
+        tmsFirstMileReconciliationDetailService.initTotalLogisticsCost(codeList);
+        return ApiResult.success();
+    }
 }

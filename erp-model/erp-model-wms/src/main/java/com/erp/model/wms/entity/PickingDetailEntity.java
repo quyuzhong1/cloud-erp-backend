@@ -34,6 +34,11 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
      */
     @TableField("sku_no")
     private String skuNo;
+    /**
+     * platformSkuNo
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
 
     /**
      * 数量
