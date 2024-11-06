@@ -27,6 +27,7 @@ import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
@@ -204,6 +205,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         }
         for (WarehouseLocationReplenishDTO.AddDTO dto : addList) {
             if(toWarehouseLocationMap.containsKey(dto.getSkuId())){
+                //推荐仓位（小货区）
                 dto.setToWarehouseLocation(toWarehouseLocationMap.get(dto.getSkuId()));
             }
             resultDTOList.add(this.add(dto));
@@ -276,9 +278,16 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             String toWarehouseLocation = null;
             if(StringUtils.isNotBlank(dto.getToWarehouseLocation())){
                 toWarehouseLocation = dto.getToWarehouseLocation();
-                String finalToWarehouseLocation1 = toWarehouseLocation.split(",")[0];
-                inventoryEntity = pickInventoryList.stream().
-                        filter(r -> finalToWarehouseLocation1.equals(r.getWarehouseLocation())).findFirst().orElse(null);
+                if(toWarehouseLocation.contains(",")){
+                    toWarehouseLocation = toWarehouseLocation.split(",")[0];
+                }
+                inventoryEntity = inventoryService.lambdaQuery()
+                        .eq(InventoryEntity::getWarehouseId, dto.getWarehouseId())
+                        .eq(InventoryEntity::getSkuId, dto.getSkuId())
+                        .eq(InventoryEntity::getWarehouseLocation, toWarehouseLocation)
+                        .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
+                        .last("order by qty desc limit 1")
+                        .one();
                 if(null == inventoryEntity){
                     inventoryEntity = this.findLastInventory(dto, pickLocationCodeList, pickInventoryList);
                     toWarehouseLocation = inventoryEntity.getWarehouseLocation();
