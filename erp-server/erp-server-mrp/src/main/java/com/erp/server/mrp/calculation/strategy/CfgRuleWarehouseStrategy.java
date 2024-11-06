@@ -42,8 +42,13 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
             List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> localWarehouse = cfgRuleWarehouseDetailList.stream()
                     .filter(v -> CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(v.getWarehouseType()))
                     .filter(v -> !ObjectUtils.isEmpty(v.getVirtualWarehouseId()))
-                    .filter(v -> (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && v.getChannelIdJson().contains(strategyDTO.getPlatform()))
-                            || v.getChannelIdJson().contains(strategyDTO.getShopId()))
+                    .filter(v -> {
+                        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(strategyDTO.getPlatformType())) {
+                            return (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && v.getChannelIdJson().contains(strategyDTO.getPlatform()))
+                                    || v.getChannelIdJson().contains(strategyDTO.getShopId());
+                        }
+                        return true;
+                    })
                     .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::buildStrategyDetailResultDTO)
                     .collect(Collectors.toList());
             strategyResultDTO.setLocalWarehouseList(localWarehouse);
@@ -51,8 +56,13 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
             List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> localWarehouse = cfgRuleWarehouseDetailList.stream()
                     .filter(v -> CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(v.getWarehouseType()))
                     .filter(v -> ObjectUtils.isEmpty(v.getVirtualWarehouseId()))
-                    .filter(v -> (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && v.getChannelIdJson().contains(strategyDTO.getPlatform()))
-                            || v.getChannelIdJson().contains(strategyDTO.getShopId()))
+                    .filter(v -> {
+                        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(strategyDTO.getPlatformType())) {
+                            return (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && v.getChannelIdJson().contains(strategyDTO.getPlatform()))
+                                    || v.getChannelIdJson().contains(strategyDTO.getShopId());
+                        }
+                        return true;
+                    })
                     .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::buildStrategyDetailResultDTO)
                     .collect(Collectors.toList());
             strategyResultDTO.setLocalWarehouseList(localWarehouse);
@@ -61,8 +71,6 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
         if (Boolean.TRUE.equals(cfgRuleWarehouse.getIsEnableOverseas()) || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(strategyDTO.getPlatform())) {
             List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> overseasWarehouse = cfgRuleWarehouseDetailList.stream()
                     .filter(v -> CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(v.getWarehouseType()))
-                    .filter(v -> (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && v.getChannelIdJson().contains(strategyDTO.getPlatform()))
-                            || v.getChannelIdJson().contains(strategyDTO.getShopId()))
                     .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::buildStrategyDetailResultDTO)
                     .collect(Collectors.toList());
             strategyResultDTO.setOverseasWarehouseList(overseasWarehouse);
