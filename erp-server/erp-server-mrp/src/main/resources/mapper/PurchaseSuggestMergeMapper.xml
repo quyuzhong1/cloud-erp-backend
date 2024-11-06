@@ -79,6 +79,7 @@
     <select id="paging" resultType="com.erp.model.mrp.dto.PurchaseSuggestMergeDTO$ListDTO">
         select
             <include refid="Base_Column_List"/>
+        ,pd.sku_no as skuNo,pd.name as productName,pd.images_url as imagesUrl
         from  purchase_suggest_merge psm
         left join purchase_suggest_sys pss on psm.id = pss.source_id and pss.is_deleted = false
         left join product_detail pd on psm.sku_id = pd.id and pd.is_deleted = false

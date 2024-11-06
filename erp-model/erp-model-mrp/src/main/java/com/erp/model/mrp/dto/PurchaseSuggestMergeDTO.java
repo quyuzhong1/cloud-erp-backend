@@ -106,7 +106,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         /**
          * sku图片
          */
-        private String skuImgUrl;
+        private String imagesUrl;
 
         /**
          * 创建类型（auto系统，manual人工）
