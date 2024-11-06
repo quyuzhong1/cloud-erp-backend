@@ -2422,6 +2422,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<TransferInfoEntity> entities = transferInfoService.listBySourceId(notCancelBySoId.getId());
                 generateB2cDTO.setSourceId(notCancelBySoId.getId());
                 generateB2cDTO.setSourceCode(notCancelBySoId.getCode());
+                if(notCancelBySoId.getDeliveryTime() == null){
+                   throw new ServiceException("发货单发货时间不能为空");
+                }
+                //重试时需要按照发货单发货时间扣减
+                generateB2cDTO.setBillDate(notCancelBySoId.getDeliveryTime().toLocalDate());
                 List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(notCancelBySoId.getId()));
                 List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(notCancelBySoId.getId()));
                 List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
