@@ -88,7 +88,7 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
             errorMsgList.add("ERP箱号不存在");
         }
         RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO shipmentViewDetailDTO2 = fbaBindShipmentViewDTOS.stream().filter(e -> Objects.equals(RequisitionApplicationDetailExcelDTO.getBoxNo(), e.getBoxNo()) && StrUtil.isNotBlank(e.getDeliveryCode())).findFirst().orElse(null);
-        if (Objects.isNull(shipmentViewDetailDTO2)){
+        if (Objects.nonNull(shipmentViewDetailDTO2)){
             errorMsgList.add("ERP箱号已关联");
         }
         //校验店铺是否一致
