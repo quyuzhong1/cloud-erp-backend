@@ -266,6 +266,7 @@
         sd.main_id AS soId,
         sd.sku_id,
         sd.sku_no,
+        sd.platform_sku_no,
         sd.is_close,
         sd.qty AS salesQty,
         sd.remark

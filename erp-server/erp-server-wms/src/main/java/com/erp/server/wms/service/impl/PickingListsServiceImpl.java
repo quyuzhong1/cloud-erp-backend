@@ -141,18 +141,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
         Map<String, String> warehouseMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getWarehouseId, PickingDetailDTO.AddDTO::getWarehouseName, (o1, o2) -> o1));
-        // 拣货明细转换为规则执行数据明细
-        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
-                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
-        CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
-        executionData.setBillType(dto.getBillType());
-        executionData.setCustomerId(dto.getCustomerId());
-        executionData.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
-        executionData.setSourceCode(dto.getSourceCode());
-        executionData.setCountryCode(dto.getCountryCode());
-        executionData.setDetails(details);
-        // 执行拣货规则
-        List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+        // 拣货规则
+        List<LocationInventoryResultDTO> results = dto.getRuleOrderMatchResult();
         // 根据仓库分组，生成不同的拣货单
         Map<String, List<LocationInventoryResultDTO>> warehouseResultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
         for (Map.Entry<String, List<LocationInventoryResultDTO>> result : warehouseResultMap.entrySet()) {
@@ -186,6 +176,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setMainId(entity.getId());
                 detail.setSkuId(resultDTO.getSkuId());
                 detail.setSkuNo(resultDTO.getSkuNo());
+                detail.setPlatformSkuNo(resultDTO.getPlatformSkuNo());
                 detail.setQty(resultDTO.getQuantity());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setWarehouseLocation(resultDTO.getWarehouseLocation());
@@ -209,7 +200,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     /**
      * 处理组合sku
      */
-    private void generatePicking(PickingListsDTO.AddDTO dto) {
+    @Override
+    public void generatePicking(PickingListsDTO.AddDTO dto) {
         List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合

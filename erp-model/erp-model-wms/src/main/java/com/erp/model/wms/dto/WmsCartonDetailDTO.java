@@ -98,7 +98,7 @@ public class WmsCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+        private String id;
     }
 
     @Data
@@ -318,6 +318,10 @@ public class WmsCartonDetailDTO implements Serializable {
          * fnsku
          */
         private String fnSku;
+        /**
+         * 装箱总数量
+         */
+        private Integer totalQty = 0;
     }
 
     /**

@@ -555,4 +555,14 @@ public class FirstMileDeliveryController extends BaseController {
     public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestBody @Validated BaseIdDTO dto) {
         return success(firstMileDeliveryService.listPacking(dto.getId()));
     }
+
+    /**
+     * 下载箱号对照表excel
+     */
+    @PostMapping("/exportBox")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出箱号对照表Excel")
+    public ApiResult exportBox(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        firstMileDeliveryService.exportBox(dto);
+        return success();
+    }
 }

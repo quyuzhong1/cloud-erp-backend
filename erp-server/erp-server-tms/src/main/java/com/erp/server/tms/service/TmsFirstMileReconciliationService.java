@@ -185,4 +185,11 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
      * @return
      */
     List<TmsFirstMileLogisticDTO.ReconciliationDTO> listReconciliationAndCostByBillIds(List<String> ids);
+
+    /**
+     * 根据编号进行查询对账单
+     * @param codeList
+     * @return
+     */
+    List<TmsFirstMileReconciliationEntity> listbyCodes(List<String> codeList);
 }

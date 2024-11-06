@@ -127,6 +127,10 @@ public class CfgRulePickingDTO {
          */
         private String sourceCode;
         /**
+         * 波次类型
+         */
+        private String waveType;
+        /**
          * sku明细数据
          */
         private List<CfgExecutionDataDetailDTO> details;
@@ -150,6 +154,7 @@ public class CfgRulePickingDTO {
          * sku编码
          */
         private String skuNo;
+        private String platformSkuNo;
         /**
          * 数量
          */
