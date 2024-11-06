@@ -641,6 +641,10 @@ public class WmsCartonSpecDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class NoPackingViewDTO {
+        private String taskId;
+        private String taskCode;
+        private String sourceId;
+        private String sourceCode;
         /**
          * skuId
          */

@@ -252,4 +252,26 @@ public class PackingTaskController extends BaseController {
         packingTaskService.updatePackingStatusByTaskId(taskId);
         return success();
     }
+    /**
+     * 未装箱明细
+     * @param id 任务id
+     * @return
+     */
+    @GetMapping("/notPackingDetailView")
+    public ApiResult<WmsCartonSpecDTO.NoPackingView> notPackingDetailView(@RequestParam("id") String id){
+        return success(packingTaskService.notPackingDetailView(id));
+    }
+
+    /**
+     * 导出未装箱明细Excel
+     * @author zdy
+     * @date 2024-11-06
+     * @param dto
+     */
+    @PostMapping("/exportPackingDetail")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出未装箱明细Excel")
+    public ApiResult exportNotPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        packingTaskService.exportNotPackingDetail(dto);
+        return success();
+    }
 }

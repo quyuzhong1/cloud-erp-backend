@@ -289,4 +289,17 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(String outBoxNo);
+
+    /**
+     * 导出未装箱明细
+     * @param dto
+     */
+    void exportNotPackingDetail(PackingTaskDTO.ExportDTO dto);
+
+    /**
+     * 查询未装箱明细
+     * @param dto
+     * @return
+     */
+    PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 }
