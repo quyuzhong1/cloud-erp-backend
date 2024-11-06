@@ -21,7 +21,7 @@ public interface PurchaseSuggestSysService extends SuperService<PurchaseSuggestS
     * @param dto
     * @return
     */
-    Boolean add(PurchaseSuggestSysDTO.AddDTO dto);
+    Boolean addOrUpdate(PurchaseSuggestSysDTO.AddDTO dto);
 
 
 }

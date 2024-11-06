@@ -33,17 +33,16 @@ public class PurchaseSuggestSysServiceImpl extends SuperServiceImpl<PurchaseSugg
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean add(PurchaseSuggestSysDTO.AddDTO updateDTO) {
+    public Boolean addOrUpdate(PurchaseSuggestSysDTO.AddDTO updateDTO) {
 
+        PurchaseSuggestSysEntity purchaseSuggestSysEntity =  BeanMapperUtils.map(PurchaseSuggestSysEntity.class, updateDTO);
         //采购建议数据
         PurchaseSuggestSysEntity old = getBySource(updateDTO.getSourceId(), updateDTO.getSourceType());
         if (ObjectUtil.isNotEmpty(old)) {
-            return Boolean.TRUE;
+            purchaseSuggestSysEntity.setId(old.getId());
         }
-        PurchaseSuggestSysEntity purchaseSuggestSysEntity =  BeanMapperUtils.map(PurchaseSuggestSysEntity.class, updateDTO);
         // 数据处理
         handleData(purchaseSuggestSysEntity);
-
         boolean save = super.saveOrUpdate(purchaseSuggestSysEntity);
         if(!save) {
             throw new ServiceException("建议采购变更保存失败");

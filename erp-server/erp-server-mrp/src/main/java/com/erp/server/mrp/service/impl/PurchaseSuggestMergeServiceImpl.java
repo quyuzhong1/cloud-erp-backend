@@ -90,22 +90,26 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Autowired
     private PurchaseSuggestSysService purchaseSuggestSysService;
 
+    @Autowired
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(PurchaseSuggestMergeDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO addOrUpdate(PurchaseSuggestMergeDTO.AddOrUpdateDTO addOrUpdateDTO) {
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity = new PurchaseSuggestMergeEntity();
-        BeanMapperUtils.copy(addDTO, purchaseSuggestMergeEntity);
+        BeanMapperUtils.copy(addOrUpdateDTO, purchaseSuggestMergeEntity);
 
         // 数据处理
         handleData(purchaseSuggestMergeEntity);
 
-        log.info("开始新增建议采购(合并后)");
-        // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PP);
-        purchaseSuggestMergeEntity.setCode(code);
-        boolean save = super.save(purchaseSuggestMergeEntity);
+        log.info("开始新增或更新建议采购(合并后)");
+        if (StrUtil.isBlank(purchaseSuggestMergeEntity.getId())) {
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PP);
+            purchaseSuggestMergeEntity.setCode(code);
+        }
+        boolean save = super.saveOrUpdate(purchaseSuggestMergeEntity);
         if(!save) {
             throw new ServiceException("建议采购(合并后)保存失败");
         }
@@ -114,8 +118,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         BeanMapperUtils.copy(purchaseSuggestMergeEntity,dto);
         dto.setSourceId(purchaseSuggestMergeEntity.getId());
         dto.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode());
-        purchaseSuggestSysService.add(dto);
-        return new BaseResultDTO.AddDTO(purchaseSuggestMergeEntity.getId(), code);
+        purchaseSuggestSysService.addOrUpdate(dto);
+        return new BaseResultDTO.AddDTO(purchaseSuggestMergeEntity.getId(), purchaseSuggestMergeEntity.getCode());
     }
 
     /**
@@ -271,25 +275,40 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<String> platformTypeList = list.stream().map(PurchaseSuggestEntity::getPlatformType).distinct().collect(Collectors.toList());
+        List<String> platformList = list.stream().map(PurchaseSuggestEntity::getPlatform).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(PurchaseSuggestEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<PurchaseSuggestMergeEntity> purchaseSuggestMergeList = purchaseSuggestMergeService.listByPlatformListAndSkuIdList(platformTypeList, platformList, skuIdList);
+
         Map<String, List<PurchaseSuggestEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getPlatformType().concat(obj.getPlatform()).concat(obj.getSkuId())));
-        List<PurchaseSuggestMergeDTO.AddDTO> addList = new ArrayList<>();
+        List<PurchaseSuggestMergeDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         for (Map.Entry<String, List<PurchaseSuggestEntity>> entry : map.entrySet()) {
             List<PurchaseSuggestEntity> value = entry.getValue();
-            PurchaseSuggestMergeDTO.AddDTO addDTO = new PurchaseSuggestMergeDTO.AddDTO();
-            BeanMapperUtils.copy(value.get(0),addDTO);
+            PurchaseSuggestMergeDTO.AddOrUpdateDTO addOrUpdateDTO = new PurchaseSuggestMergeDTO.AddOrUpdateDTO();
+            BeanMapperUtils.copy(value.get(0), addOrUpdateDTO);
+
+            PurchaseSuggestMergeEntity purchaseSuggestMergeEntity = purchaseSuggestMergeList.stream()
+                    .filter(obj -> StrUtil.equals(obj.getPlatformType(), addOrUpdateDTO.getPlatformType())
+                            && StrUtil.equals(obj.getPlatform(), addOrUpdateDTO.getPlatform())
+                            && StrUtil.equals(obj.getSkuId(), addOrUpdateDTO.getSkuId())
+                            && StrUtil.equals(obj.getStatus(),SuggestStatusEnum.DRAFT.getCode()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(purchaseSuggestMergeEntity)) {
+                addOrUpdateDTO.setId(purchaseSuggestMergeEntity.getId());
+            }
             //建议采购量
             Integer suggestPurchaseQty = value.stream().map(PurchaseSuggestEntity::getSuggestPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
-            addDTO.setSuggestPurchaseQty(suggestPurchaseQty);
+            addOrUpdateDTO.setSuggestPurchaseQty(suggestPurchaseQty);
             //采购成本
             BigDecimal purchaseCost = value.stream().map(PurchaseSuggestEntity::getPurchaseCost).reduce(BigDecimal.ZERO, BigDecimal::add);
-            addDTO.setPurchaseCost(purchaseCost);
+            addOrUpdateDTO.setPurchaseCost(purchaseCost);
             //来源
-            addDTO.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
+            addOrUpdateDTO.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
             List<String> sourceIdList = value.stream().map(PurchaseSuggestEntity::getId).distinct().collect(Collectors.toList());
-            addDTO.setSourceIdJson(JSONUtil.parseArray(sourceIdList));
-            addList.add(addDTO);
+            addOrUpdateDTO.setSourceIdJson(JSONUtil.parseArray(sourceIdList));
+            addList.add(addOrUpdateDTO);
         }
-        addList.stream().forEach(obj -> this.add(obj));
+        addList.stream().forEach(obj -> this.addOrUpdate(obj));
     }
 
     @Override
@@ -322,6 +341,16 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         upLoadSuccessExcel (originalFilename,successList);
         //导出错误数据
         exportErrorExcel (response,errorList);
+    }
+
+    @Override
+    public List<PurchaseSuggestMergeEntity> listByPlatformListAndSkuIdList(List<String> platformTypeList, List<String> platformList, List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(platformTypeList) || CollectionUtils.isEmpty(platformList) || CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        return  lambdaQuery().in(PurchaseSuggestMergeEntity::getPlatformType,platformTypeList)
+                .in(PurchaseSuggestMergeEntity::getPlatform,platformList)
+                .in(PurchaseSuggestMergeEntity::getSkuId,skuIdList).list();
     }
 
     /**

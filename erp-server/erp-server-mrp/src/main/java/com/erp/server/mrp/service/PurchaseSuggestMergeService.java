@@ -8,6 +8,7 @@ import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -26,7 +27,7 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(PurchaseSuggestMergeDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(PurchaseSuggestMergeDTO.AddOrUpdateDTO dto);
 
     /**
     * 修改
@@ -116,4 +117,14 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @param response
      */
     void importPurchaseSuggestMerge(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 根据平台和sku查询
+     * @author will
+     * @date 2024/11/6 10:34
+     * @param platformTypeList
+     * @param platformList
+     * @param skuIdList
+     * @return List<PurchaseSuggestMergeEntity>
+     */
+    List<PurchaseSuggestMergeEntity> listByPlatformListAndSkuIdList(List<String> platformTypeList, List<String> platformList, List<String> skuIdList);
 }

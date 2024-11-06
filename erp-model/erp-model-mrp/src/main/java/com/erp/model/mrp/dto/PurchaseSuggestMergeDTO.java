@@ -379,9 +379,11 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
+    public static class AddOrUpdateDTO extends CommonDTO {
+        /**
+         * 主键id
+         */
+        private String id;
     }
 
     /**

@@ -129,7 +129,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         BeanMapperUtils.copy(purchaseSuggestEntity,dto);
         dto.setSourceId(purchaseSuggestEntity.getId());
         dto.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
-        purchaseSuggestSysService.add(dto);
+        purchaseSuggestSysService.addOrUpdate(dto);
         return new BaseResultDTO.AddDTO(purchaseSuggestEntity.getId(), code);
     }
 
