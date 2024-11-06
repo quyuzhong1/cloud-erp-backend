@@ -155,7 +155,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			if(isMatch){
 				soReturnInstockEntity.setSoReturnId(soB2cReturnEntity.getId());
 				soReturnInstockEntity.setSoReturnCode(soB2cReturnEntity.getCode());
-				soReturnInstockEntity.setPlatformCode(Objects.nonNull(soB2cEntity) ? soB2cEntity.getPlatformCode() : "");
+				soReturnInstockEntity.setPlatformOrderCode(Objects.nonNull(soB2cEntity) ? soB2cEntity.getPlatformCode() : "");
 				return;
 			}
 		}

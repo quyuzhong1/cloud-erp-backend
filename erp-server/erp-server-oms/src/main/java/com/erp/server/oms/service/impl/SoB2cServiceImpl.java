@@ -187,6 +187,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
 
+    @Lazy
     @Resource
     private SoB2cReturnService soB2cReturnService;
     @Lazy
