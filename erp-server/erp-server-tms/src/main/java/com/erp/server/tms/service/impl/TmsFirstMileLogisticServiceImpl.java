@@ -581,13 +581,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             pagingVO.setCompleteEstimatedFee(pagingVO.getCurrencySymbol()+(Objects.isNull(pagingVO.getEstimatedFee())?"":pagingVO.getEstimatedFee()));
             pagingVO.setCompleteActualFee(pagingVO.getCurrencySymbol()+(Objects.isNull(pagingVO.getActualFee())?"":pagingVO.getActualFee()));
             //处理实际时效和预警
-//            if(pagingVO.getActualHour() != null){
-//                int days = pagingVO.getActualHour() / 24; // 计算天数部分
-//                int remainingHours = pagingVO.getActualHour() % 24; // 计算剩余小时数部分
-//                String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
-//                pagingVO.setActualDesc(actualDesc);
-                pagingVO.setActualDesc(getActualDesc(pagingVO.getLogisticsStatus(),pagingVO.getOrderTime(),pagingVO.getSignTime(),pagingVO.getShipTime()));
-//            }
+            pagingVO.setActualDesc(getActualDesc(pagingVO.getLogisticsStatus(),pagingVO.getOrderTime(),pagingVO.getSignTime(),pagingVO.getShipTime()));
             if(StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTime()) && !logisticsChannelEntity.getEffectiveTime().equals("0")
                     && StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTimeUnit())){
                 //判断是否是数字，不是数字的话不计算预警，直接返回中文
@@ -684,15 +678,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         dto.setEstimatedTimeUnit(logisticsDTO.getEstimatedTimeUnit());
         dto.setEstimatedTimeDesc(logisticsDTO.getEstimatedTimeDesc());
         dto.setLogisticsChannelName(logisticsDTO.getLogisticsChannelName());
-
         //处理实际时效
-        if(Objects.nonNull(dto.getActualHour())){
-            int days = dto.getActualHour() / 24; // 计算天数部分
-            int remainingHours = dto.getActualHour() % 24; // 计算剩余小时数部分
-            String actualDesc = (days !=0 ? days+ "天":"") + remainingHours + "小时";
-            dto.setActualDesc(actualDesc);
-        }
-
+        dto.setActualDesc(getActualDesc(dto.getLogisticsStatus(),dto.getOrderTime(),dto.getSignTime(),dto.getShipTime()));
         //设置物流商信息
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(dto.getLogisticsSupplierId());
         if(Objects.nonNull(logisticsSupplierEntity)){
