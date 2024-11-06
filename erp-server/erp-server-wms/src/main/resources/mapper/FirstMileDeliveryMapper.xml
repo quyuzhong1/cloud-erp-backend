@@ -514,4 +514,22 @@
         </if>
         ORDER BY fmd.code,wc.box_no
     </select>
+    <select id="getDeliveryCodeByBusinessCodes" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
+        SELECT * FROM (
+        SELECT
+        DISTINCT
+        fd.id,
+        fd.code,
+        concat(fdd.fba_shipment_code,owi.code) AS businessCode
+        FROM first_mile_delivery fd
+        LEFT JOIN first_mile_delivery_detail fdd ON fdd.main_id = fd.id AND fdd.is_deleted = FALSE
+        LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fd.id AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
+        where fd.is_deleted = FALSE ) AS A
+        <if test="businessCodes != null and businessCodes.size > 0">
+            WHERE  A.businessCode in
+            <foreach collection="businessCodes" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

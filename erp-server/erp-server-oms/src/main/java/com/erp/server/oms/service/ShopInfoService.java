@@ -354,4 +354,9 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     List<String> listShopInfoByPlatform(String platform);
     void saveCustom(ShopInfoEntity shopInfoEntity);
+
+    /**
+     * 检查和更新亚马逊同账号店铺授权
+     */
+    Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO);
 }

@@ -2,8 +2,9 @@ package com.erp.server.tms.controller.api;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
+
+import org.springframework.util.StopWatch;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -68,5 +69,13 @@ public class LogisticsTrackController extends BaseController {
     }
 
 
-
+    /**
+     * 接收track123物流轨迹同步数据
+     * @return
+     */
+    @PostMapping("/webhookByTrack123")
+    public ApiResult webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
+        logisticsTrackService.webhookByTrack123(dto);
+        return success();
+    }
 }

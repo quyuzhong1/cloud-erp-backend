@@ -79,6 +79,7 @@ public enum SourceTypeEnum {
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
+    SO_B2C_RETURN("soB2cReturn", "B2c销售退货订单","so_return"),
     SO_INFO("soInfo", "B2B销售订单","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
@@ -204,6 +205,7 @@ public enum SourceTypeEnum {
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
     PILOT_APPLICATION("pilotApplication", "试产量产单", "pilot_application"),
     FIRST_MILE_ESTIMATED("first_mile_estimated", "头程暂估账单", "first_mile_estimated_bill"),
+    THIRD_WAREHOUSE_RETURN_INSTOCK("third_warehouse_return_instock", "三方仓退货入库单","dmp_pull_task"),
 
 
 

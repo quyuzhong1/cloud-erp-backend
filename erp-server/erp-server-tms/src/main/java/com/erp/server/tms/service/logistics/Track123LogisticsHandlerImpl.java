@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -63,6 +64,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     private LogisticsOperateService logisticsOperateService;
     private final static String HAS_BEEN_IMPORTED = "The order number has been imported";
+    private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     /**
      * 轨迹查询
      *
@@ -96,22 +98,13 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                                 logisticsTrackEntity.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
                                 LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                 logisticsTrackEntity.setTrackTime(eventTime);
+                                logisticsTrackEntity.setAddress(trackingDetail.getAddress());
                                 logisticsTrackEntity.setContent(trackingDetail.getEventDetail());
                                 logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
+                                logisticsTrackEntity.setMd5(getDataMd5(logisticsTrackEntity));
                                 logisticsTrackEntities.add(logisticsTrackEntity);
                             });
                         }
-//                        else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())){
-//                            LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-//                            logisticsTrackEntity.setTrackNo(trackDetail.getTrackNo());
-//                            logisticsTrackEntity.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
-//                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-//                            logisticsTrackEntity.setTrackTime(eventTime);
-//                            logisticsTrackEntity.setContent("暂无信息");
-//                            logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
-//                            logisticsTrackEntities.add(logisticsTrackEntity);
-//                        }
-
                     });
                 }
                 //查询失败的单号
@@ -143,6 +136,16 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsTrackVO), JSONUtil.toJsonStr(e));
             return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
+    }
+
+    /**
+     * 获取唯一值
+     * @param trackingDetail
+     * @return
+     */
+    private String getDataMd5(LogisticsTrackEntity trackingDetail) {
+        String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
+        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + trackingDetail.getContent() + trackTime);
     }
 
     @Override

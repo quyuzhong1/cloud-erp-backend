@@ -830,4 +830,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<String> getBrandByQuerySql(String compareCodeSplicingValueSql);
 
+
+    /**
+     * 打印EAN
+     * @param printEanDTO 打印参数
+     * @param response    响应
+     */
+    void printEan(PrintEanDTO printEanDTO, HttpServletResponse response);
 }

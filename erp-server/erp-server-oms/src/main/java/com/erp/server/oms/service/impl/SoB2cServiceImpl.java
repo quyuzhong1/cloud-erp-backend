@@ -184,6 +184,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private SoB2cLogisticsService soB2cLogisticsService;
 
+    @Resource
+    private SoB2cReturnService soB2cReturnService;
     @Lazy
     @Autowired
     private SoB2cReceiverService soB2cReceiverService;
@@ -253,6 +255,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
+    @Resource
+    private ThirdWarehouseDeliveryFeign thirdWarehouseDeliveryFeign;
 
     @Autowired
     private ThirdWarehouseFeign thirdWarehouseFeign;
@@ -354,6 +358,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Autowired
     @Qualifier("soB2cTabExecutorPool")
     private ExecutorService soB2cTabExecutorPool;
+    @Autowired
+    private CustomerInfoService customerInfoService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -1806,15 +1812,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_AND_CODE_NOT_NULL, soCode);
             }
         }
-        //物流映射列表
-        List<LogisticsMappingEntity> mappingList = logisticsMappingFeign.listDbByChannelId(logisticsChannelId);
-        if(CollectionUtils.isEmpty(mappingList)){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
-        }
-        List<LogisticsMappingEntity> collect = mappingList.stream().filter(v -> null != v.getSalesPlatform() && v.getSalesPlatform().equalsIgnoreCase(entity.getDictPlatform())).collect(Collectors.toList());
-        if(CollectionUtils.isEmpty(collect)){
-            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
-        }
         //库存验证
         checkInventory(entity, list, deliveryWarehouseIdList,warehouseManageType);
         /**
@@ -2042,6 +2039,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         Integer quantity = bomSku.getQuantity();
                         deliverySku.setQty(quantity);
                         deliverySku.setSourceSkuId(skuId);
+                        deliverySku.setSourceSkuNo(skuNo);
                         deliverySku.setPlatformSkuNo(platformSkuNo);
                         deliverySku.setWarehouseId(detailEntity.getWarehouseId());
                         deliverySku.setDetailId(detailEntity.getId());
@@ -2053,6 +2051,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     deliverySku.setSkuId(skuId);
                     deliverySku.setQty(1);
                     deliverySku.setSourceSkuId(skuId);
+                    deliverySku.setSourceSkuNo(skuNo);
                     deliverySku.setSkuNo(skuNo);
                     deliverySku.setPlatformSkuNo(platformSkuNo);
                     deliverySku.setWarehouseId(detailEntity.getWarehouseId());
@@ -2066,6 +2065,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 deliverySku.setQty(1);
                 deliverySku.setSkuNo(skuNo);
                 deliverySku.setSourceSkuId(detailEntity.getSkuId());
+                deliverySku.setSourceSkuNo(detailEntity.getSkuNo());
                 deliverySku.setWarehouseId(detailEntity.getWarehouseId());
                 deliverySku.setDetailId(detailEntity.getId());
                 resultList.add(deliverySku);
@@ -2154,6 +2154,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ThirdWarehouseCreateOutboundReq.Item outboundReqItem = new ThirdWarehouseCreateOutboundReq.Item();
             outboundReqItem.setQuantity(baseQty);
             outboundReqItem.setProductSku(platformSku);
+            outboundReqItem.setSkuId(deliverySkuDTO.getSkuId());
+            outboundReqItem.setSkuNo(deliverySkuDTO.getSkuNo());
+            outboundReqItem.setSourceSkuId(deliverySkuDTO.getSourceSkuId());
+            outboundReqItem.setSourceSkuNo(deliverySkuDTO.getSourceSkuNo());
             itemList.add(outboundReqItem);
         }
         String platformWarehouseCode = overseasProviderWarehouse.getPlatformWarehouseCode();
@@ -2187,7 +2191,42 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cService.removeSignError(entity.getId(),SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             String msg = StrUtil.format("创建海外仓出库单成功，单号【{}】",shippingOrderNo);
             operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "创建海外仓出库单");
+            soB2cService.addThirdWarehouseDelivery(createOutboundReq,shippingOrderNo,warehouseId,entity);
         }
+    }
+
+    /**
+     * 新增三方仓发货单
+     * @param createOutboundReq
+     * @param shippingOrderNo
+     * @param warehouseId
+     * @param entity
+     */
+    @Async
+    public void addThirdWarehouseDelivery(ThirdWarehouseCreateOutboundReq createOutboundReq, String shippingOrderNo, String warehouseId, SoB2cEntity entity) {
+        ThirdWarehouseDeliveryEntity thirdWarehouseDeliveryEntity = new ThirdWarehouseDeliveryEntity();
+        thirdWarehouseDeliveryEntity.setSoCode(entity.getCode());
+        thirdWarehouseDeliveryEntity.setSoId(entity.getId());
+        thirdWarehouseDeliveryEntity.setCode(shippingOrderNo);
+        thirdWarehouseDeliveryEntity.setDictPlatform(entity.getDictPlatform());
+        thirdWarehouseDeliveryEntity.setPlatformCode(entity.getPlatformCode());
+        thirdWarehouseDeliveryEntity.setThirdWarehousePlatform(createOutboundReq.getThirdWarehouseProvideCode());
+        thirdWarehouseDeliveryEntity.setShippingMethod(createOutboundReq.getShippingMethod());
+        List<ThirdWarehouseDeliveryDetailEntity> detailEntityList = new ArrayList<>();
+        for (ThirdWarehouseCreateOutboundReq.Item item : createOutboundReq.getItems()) {
+            ThirdWarehouseDeliveryDetailEntity thirdWarehouseDeliveryDetailEntity = new ThirdWarehouseDeliveryDetailEntity();
+            thirdWarehouseDeliveryDetailEntity.setSkuId(item.getSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSkuNo(item.getSkuNo());
+            thirdWarehouseDeliveryDetailEntity.setDeliveryQty(item.getQuantity());
+            thirdWarehouseDeliveryDetailEntity.setWarehouseId(warehouseId);
+            thirdWarehouseDeliveryDetailEntity.setPlatformSkuNo(item.getProductSku());
+            thirdWarehouseDeliveryDetailEntity.setPlatformWarehouseCode(createOutboundReq.getWarehouseCode());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuId(item.getSourceSkuId());
+            thirdWarehouseDeliveryDetailEntity.setSourceSkuNo(item.getSourceSkuNo());
+            detailEntityList.add(thirdWarehouseDeliveryDetailEntity);
+        }
+        thirdWarehouseDeliveryEntity.setDetailEntityList(detailEntityList);
+        thirdWarehouseDeliveryFeign.add(thirdWarehouseDeliveryEntity);
     }
 
     private Map<String, Object> getRuleOrderHandleMap(SoB2cEntity entity, String logisticsChannelId,SoB2cReceiverEntity receiverEntity) {
@@ -5583,6 +5622,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(shopInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        CustomerInfoEntity customerInfo = customerInfoService.getById(shopInfoEntity.getCustomerId());
         SoOutstockDTO.GenerateB2cDTO dto = new SoOutstockDTO.GenerateB2cDTO();
         dto.setOrderType(OrderTypeEnum.B2C.getCode());
         dto.setSoId(entity.getId());
@@ -5597,14 +5637,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String chargeId = shopInfoEntity.getChargeId();
         dto.setCustomerId(shopInfoEntity.getCustomerId());
         dto.setCustomerName(shopInfoEntity.getName());
-        dto.setSellerId(chargeId);
-        dto.setSellerName(shopInfoEntity.getChargeName());
+        if(Objects.nonNull(customerInfo)){
+            dto.setSellerId(customerInfo.getSellerId());
+            dto.setSellerName(customerInfo.getSellerName());
+        }else{
+            dto.setSellerId(chargeId);
+            dto.setSellerName(shopInfoEntity.getChargeName());
+        }
         if (Objects.nonNull(soB2cReceiver)) {
             dto.setCountry(soB2cReceiver.getCountry());
         }
         SysDepartmentUserNumberDTO deptUser = null;
-        if (!StringUtil.isEmpty(chargeId)) {
-            deptUser = sysUserFeign.getDeptByUserId(chargeId);
+        if (!StringUtil.isEmpty(dto.getSellerId())) {
+            deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
         }
         if (Objects.nonNull(deptUser)) {
             dto.setSalesDeptId(deptUser.getDepartmentId());
@@ -7059,6 +7104,47 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail() {
         return null;
+    }
+
+    @Override
+    public List<SoB2cDTO.GenerateSoB2cReturnViewDTO> generateSoB2cReturnView(List<String> ids) {
+        List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list = baseMapper.generateSoB2cReturnView(ids);
+        if(CollectionUtils.isEmpty(list)){
+            return new ArrayList<>();
+        }
+        if(list.stream().anyMatch(v->!v.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()))){
+            throw new ServiceException("只有已发货可以下推");
+        }
+        List<String> skuIds = list.stream().map(SoB2cDTO.GenerateSoB2cReturnViewDTO::getSkuId).filter(jodd.util.StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> soIds = list.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = soB2cReturnService.listDetailBySoIds(soIds);
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockFeign.listDetailBySoIds(soIds);
+        for (SoB2cDTO.GenerateSoB2cReturnViewDTO generateSoB2cReturnViewDTO : list) {
+            SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(generateSoB2cReturnViewDTO.getSkuId())).findFirst().orElse(new SkuVO());
+            generateSoB2cReturnViewDTO.setProductName(skuVO.getSkuName());
+            List<SoOutstockDetailEntity> currentSoOutstockDetailEntityList = soOutstockDetailEntityList.stream().filter(v->v.getSoDetailId().equals(generateSoB2cReturnViewDTO.getDetailId()) &&v.getSkuId().equals(generateSoB2cReturnViewDTO.getSkuId()) ).collect(Collectors.toList());
+            generateSoB2cReturnViewDTO.setOutQty(currentSoOutstockDetailEntityList.stream().map(v->v.getActualQty()).reduce(MathUtil.ZERO, Integer::sum));
+            List<SoB2cReturnDetailEntity> currentSoB2cReturnDetailEntityList = soB2cReturnDetailEntityList.stream().filter(v->v.getSoId().equals(generateSoB2cReturnViewDTO.getId()) && v.getSkuId().equals(generateSoB2cReturnViewDTO.getSkuId())).collect(Collectors.toList());
+            generateSoB2cReturnViewDTO.setAlreadyReturnQty(currentSoB2cReturnDetailEntityList.stream().map(v->v.getReturnQty()).reduce(MathUtil.ZERO, Integer::sum));
+
+        }
+
+        return list;
+    }
+
+    @Override
+    public Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list) {
+
+        return soB2cReturnService.generateSoB2cReturnBySo(list);
+    }
+
+    @Override
+    public List<SoB2cEntity> getByPlatformCode(String platformCode) {
+        if(StringUtils.isBlank(platformCode)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().eq(SoB2cEntity::getPlatformCode,platformCode).list();
     }
 
     @Override

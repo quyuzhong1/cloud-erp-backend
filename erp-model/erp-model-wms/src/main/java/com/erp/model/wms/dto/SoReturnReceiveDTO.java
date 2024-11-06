@@ -102,6 +102,8 @@ public class SoReturnReceiveDTO {
          * id
          */
         private String id;
+
+        private String type;
         /**
          * 明细表id
          */
@@ -281,6 +283,10 @@ public class SoReturnReceiveDTO {
          */
         private String sellerId;
 
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
         /**
          * 销售部门id
          */

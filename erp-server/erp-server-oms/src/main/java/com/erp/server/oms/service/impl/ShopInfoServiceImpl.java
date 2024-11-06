@@ -15,6 +15,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -35,6 +36,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.server.oms.convert.ShopInfoConverter;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
@@ -576,6 +578,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
             if (ObjectUtil.isEmpty(customerInfoEntity)) {
                 throw new ServiceException(ApiError.ERROR_92011);
+            }
+            ShopInfoEntity other = this.lambdaQuery().eq(ShopInfoEntity::getCustomerId,customerId).ne(StringUtils.isNotBlank(shopInfo.getId()),ShopInfoEntity::getId,shopInfo.getId()).last("limit 1").one();
+            if(Objects.nonNull(other)){
+                throw new ServiceException("【{}】已绑定店铺【{}】",customerInfoEntity.getName(),other.getName());
             }
             shopInfo.setCustomerId(customerInfoEntity.getId());
             shopInfo.setCustomerCode(customerInfoEntity.getCode());
@@ -1615,5 +1621,40 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 }
             }
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO) {
+        ShopInfoEntity shopInfo = updateDTO.getShopInfo();
+        ShopAuthEntity shopAuth = updateDTO.getShopAuth();
+        String accessToken = updateDTO.getAccessToken();
+        String refreshToken = updateDTO.getRefreshToken();
+        // 亚马逊关联的店铺列表
+        List<ShopInfoEntity> entityList = getRelatedShopById(shopInfo.getPlatformShopCode());
+        if (org.springframework.util.CollectionUtils.isEmpty(entityList)){
+            // 更新当前店铺shopAuth
+            shopAuth.setAccessToken(accessToken);
+            shopAuth.setRefreshToken(refreshToken);
+            shopAuthService.updateShopAuthById(shopAuth);
+            return true;
+        }
+        List<String> shopIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<ShopAuthEntity> authList = shopAuthService.listShopAuthByShopIds(shopIds);
+        if (org.springframework.util.CollectionUtils.isEmpty(authList)){
+            // 更新当前店铺shopAuth
+            shopAuth.setAccessToken(accessToken);
+            shopAuth.setRefreshToken(refreshToken);
+            shopAuthService.updateShopAuthById(shopAuth);
+            return true;
+        }
+        // 批量更新
+        authList.add(shopAuth);
+        authList.forEach(e->{
+            e.setAccessToken(accessToken);
+            e.setRefreshToken(refreshToken);
+        });
+        shopAuthService.batchUpdateShopAuthById(authList);
+        return true;
     }
 }

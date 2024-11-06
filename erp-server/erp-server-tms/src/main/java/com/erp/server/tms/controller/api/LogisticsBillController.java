@@ -121,10 +121,10 @@ public class LogisticsBillController extends BaseController {
         if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(transportNo)){
             return failure("运单号和跟踪号不能同时为空");
         }
-        if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(logisticsChannelId)){
+        if (StringUtils.isBlank(trackNo) && StringUtils.isNotBlank(transportNo)){
             trackNo = transportNo;
         }
-        if (StringUtils.isNotBlank(logisticsChannelId)){
+        if (StringUtils.isNotBlank(logisticsChannelId) && StringUtils.isNotBlank(transportNo)){
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsChannelId);
             if (Objects.isNull(channelEntity) || StringUtils.isBlank(channelEntity.getTrackQueryType())
                     || !TrackQueryTypeEnum.TRACK_NO.getCode().equals(channelEntity.getTrackQueryType())){

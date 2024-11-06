@@ -24,7 +24,6 @@ import java.util.Map;
  * @since 2024-07-02
  */
 public interface PackingTaskService extends SuperService<PackingTaskEntity> {
-
     /**
     * 新增
     * @author zdy

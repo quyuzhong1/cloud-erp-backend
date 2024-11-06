@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -100,4 +102,19 @@ public interface FbaInventoryService extends SuperService<FbaInventoryEntity> {
      * 导出
      */
     PagingVO<FbaInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaInventoryDTO.ExportDTO> dto);
+
+    /**
+     * 检查和刷新FNSKU
+     */
+    List<ListingInfoWithSkuMappingDTO> checkAndSaveFnskuToListing(List<String> platformSkuNoList, String channelId);
+
+    /**
+     * 检查和更新添加的FNSKU
+     */
+    void checkAndUpdateFnsku(RequisitionApplicationDTO.AddDTO dto);
+
+    /**
+     * 检查和更新添加的FNSKU
+     */
+    void checkAndUpdateFnsku(RequisitionApplicationDTO.UpdateDTO dto);
 }

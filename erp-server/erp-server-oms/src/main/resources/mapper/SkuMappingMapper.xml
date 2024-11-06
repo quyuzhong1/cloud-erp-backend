@@ -535,6 +535,7 @@
     <select id="listByPlatformSkuNoAndPlatform" resultType="com.erp.model.oms.dto.SkuMappingDTO$MappingSkuViewDTO">
         SELECT li.id AS listingId,
         sm.id,
+        li.auth_id as authId,
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no AS platformSkuNo,
@@ -563,6 +564,9 @@
         <if test="params.platform != null and params.platform != ''">
             AND li.platform = #{params.platform}
             AND sm.dict_platform = #{params.platform}
+        </if>
+        <if test="params.authId != null and params.authId != ''">
+            AND li.auth_id = #{params.authId}
         </if>
         <!--匹配结果吧true 已匹配 false 未匹配-->
         <if test="params.matchResult != null and params.matchResult != ''">

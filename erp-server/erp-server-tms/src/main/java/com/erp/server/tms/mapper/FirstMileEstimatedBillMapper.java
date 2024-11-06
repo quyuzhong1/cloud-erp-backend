@@ -33,5 +33,5 @@ public interface FirstMileEstimatedBillMapper extends BaseMapper<FirstMileEstima
 
     int countByParam(@Param("estimatedStatus") String estimatedStatus, @Param("actualStatus") String actualStatus);
 
-    List<FirstMileEstimatedBillDTO.LogisticsInfoDTO> listLogisticsInfo();
+    List<FirstMileEstimatedBillDTO.LogisticsInfoDTO> listLogisticsInfo(@Param("outstockIdList") List<String> outstockIdList);
 }

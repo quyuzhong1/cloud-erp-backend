@@ -156,4 +156,6 @@ public interface BusinessNoConstant {
     String JSRQ = "JSRQ";
     String FHJY = "FHJY";
     String CGJY = "CGJY";
+    String THD = "THD";
+    String TKD = "TKD";
 }
