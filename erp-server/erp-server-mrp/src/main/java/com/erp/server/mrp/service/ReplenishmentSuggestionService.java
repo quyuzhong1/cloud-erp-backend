@@ -350,4 +350,11 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param platformType 平台类型
      */
     List<ReplenishmentSuggestionEntity> listByPlatform(String platformType);
+
+    /**
+     * 获取店铺最近销量
+     * @param salesQtyType 销量类型
+     * @param orderType   订单类型
+     */
+    Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, String orderType);
 }

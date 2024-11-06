@@ -1075,7 +1075,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         //获取历史数据
         List<ReplenishmentResultDTO.SalesHistoryDTO> listedSalesHistory = listSalesHistory(suggestionIds, salesQtyType, orderType, caleStartDate, caleEndDate);
         List<ReplenishmentResultDTO.InventoryHistoryDTO> historyInventoryList = historyInventoryEsService.listByReplenishmentIdsAndDate(suggestionIds, caleStartDate, caleEndDate);
-        Map<String, Map<String, Integer>> shopSalesHistoryMap = getSalesHistoryMap(salesQtyType, orderType, entities);
+        Map<String, Map<String, Integer>> shopSalesHistoryMap = getSalesHistoryMap(salesQtyType, orderType);
         return entities.parallelStream()
                 .map(v -> {
                     ReplenishmentResultDTO resultDTO = new ReplenishmentResultDTO();
@@ -1111,7 +1111,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
      * @param salesQtyType 销量类型
      * @param orderType    订单类型
      */
-    private Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, String orderType, List<ReplenishmentSuggestionEntity> entities) {
+    @Override
+    public Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, String orderType) {
         Map<String, Integer> salesMap;
         if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
             salesMap = orderHistorySalesEsService.listByType(orderType);

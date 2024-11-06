@@ -270,6 +270,8 @@ public class BasicReplenishmentDataService {
         CfgRuleSalesQtyEntity defaultSalesQty = cfgRuleSalesQtyService.getDefaultByPlatformAndSkuType(suggestion.getPlatformType(), detail.getSkuType());
         Map<LocalDate, Integer> salesHistoryMap = replenishmentSuggestionService.listSalesHistoryMap(id, defaultSalesQty.getSalesQtyType(), defaultSalesQty.getOrderType(), startDate, endDate);
         resultDTO.setHistorySalesList(salesHistoryMap);
+        Map<String, Map<String, Integer>> skuSalesHistoryMap = replenishmentSuggestionService.getSalesHistoryMap(defaultSalesQty.getSalesQtyType(), defaultSalesQty.getOrderType());
+        resultDTO.setShopSalesMap(skuSalesHistoryMap.get(suggestion.getSkuId()));
         Map<LocalDate, Integer> historyInventoryMap = historyInventoryEsService.findByReplenishmentIdAndDateBetweenMap(id, startDate, endDate);
         resultDTO.setHistoryInventoryList(historyInventoryMap);
         List<CfgRuleSalesFormulaEntity> defaultFormula = cfgRuleSalesFormulaService.listBySalesQtyIdList(Collections.singletonList(defaultSalesQty.getId()));

@@ -101,7 +101,8 @@
         CASE WHEN wdp.approve_status = 'approve' THEN wdp.approve_time
         ELSE wdp.create_time END AS estimateSalesDate,
         wdp.id AS sourceId,
-        wdp.code AS sourceCode
+        wdp.code AS sourceCode,
+        wdp.to_warehouse_id AS warehouseId
         FROM
         ${tableName} AS wdp
         INNER JOIN ${tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
@@ -127,7 +128,7 @@
               AND  wdp.source_type = 'replenishment_plan'
             </when>
             <otherwise>
-                AND wdp.source_type is null
+                AND wdp.source_type = ''
             </otherwise>
         </choose>
         <if test="codes != null and !codes.isEmpty()">

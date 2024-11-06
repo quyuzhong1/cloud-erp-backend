@@ -13,6 +13,7 @@ import com.erp.model.mrp.dto.InventoryTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.model.mrp.entity.ShopInventoryDetailEntity;
+import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import com.erp.model.mrp.vo.InventoryDetailVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -81,7 +82,8 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                     .filter(e -> e.getId().equals(detailVO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             detailVO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
+            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())
+                    && CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(detailVO.getInventoryAllocateType())) {
                 List<String> shopNames = allShopInfo.stream()
                         .filter(v -> detailVO.getDictPlatform().equals(v.getDictPlatform()))
                         .distinct()
