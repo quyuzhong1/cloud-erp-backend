@@ -294,6 +294,10 @@ public class PickingDetailDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+        /**
          * 数量
          */
         private Integer qty;

@@ -22,6 +22,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -163,6 +164,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private TransferInfoDetailService transferInfoDetailService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -1100,7 +1103,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public void generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking) {
+    public List<WarehouseLocationMoveDTO.GenPickToSkuMove> generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking) {
         SoDeliveryNoticeEntity soDeliveryNotice = getById(picking.getId());
         if (ObjectUtil.isEmpty(soDeliveryNotice)) {
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
@@ -1139,6 +1142,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                             soDeliveryNotice.getWarehouseName(),
                             detailEntity.getSkuId(),
                             detailEntity.getSkuNo(),
+                            detailEntity.getPlatformSkuNo(),
                             detailEntity.getDeliveryQty() - detailEntity.getPickingQty(),
                             detailEntity.getId(),soDetailEntity.getBomVersion()
                     );
@@ -1147,8 +1151,17 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     return detail;
                 }).collect(Collectors.toList());
         addDTO.setDetails(detailList);
+
+        // 执行拣货规则
+        List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = requisitionApplicationService.genPickToSkuMove(soDeliveryNotice.getWarehouseId(), soDeliveryNotice.getWarehouseName(), addDTO);
+        if(CollectionUtils.isNotEmpty(moves)){
+            return moves;
+        }
         pickingListsService.add(addDTO);
         soDeliveryNoticeDetailService.updateBatchById(updateDetails);
+        Map<String, Integer> qtyMap = updateDetails.stream().collect(Collectors.toMap(BaseEntity::getId, SoDeliveryNoticeDetailEntity::getPickingQty));
+        packingTaskService.updateDetailQty(qtyMap);
+        return Collections.emptyList();
     }
 
     @Override
@@ -1208,6 +1221,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         // 增加当次拣货数量和
         soDeliveryNoticeDetailService.updateBatchById(detailEntities);
+        Map<String, Integer> qtyMap = detailEntities.stream().collect(Collectors.toMap(v->v.getId(),v->v.getPickingQty()));
+        packingTaskService.updateDetailQty(qtyMap);
     }
 
     @Override

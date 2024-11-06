@@ -465,36 +465,44 @@
             resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
         SELECT
             distinct
-            fmd.id as firstMileId,
-            wc.id,
-            wc.packing_task_id as taskId,
-            (select fsp.box_no from fba_shipment_packing fsp where fsp.carton_id = wc.id and fsp.is_deleted = false limit 1 ) as fbaBoxNo,
-            wc.box_no,
-            concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
-            wcs.package_weight,
-            wcs.weight_unit,
-            wc.weighting_status,
-            wc.packing_status,
-            wc.packing_user_name,
-            wcs.measure_source,
-            wc.error_msg,
-            pt.source_id ,
-            wcs.box_length as length,
-            wcs.box_width as width,
-            wcs.box_height as height,
-            wcd.sku_id,
-            wcd.sku_no,
-            wcd.pack_qty,
-            concat(wcd.sku_no,'*',wcd.pack_qty) AS sku,
-            fmd.code as deliveryCode,
-            case when fmd.demand_type = 'demandPlatformWarehouse' then
-                     (SELECT fba_shipment_code from first_mile_delivery_detail fmdd where fmdd.main_id = fmd.id and fmdd.is_deleted = false limit 1 )
-                 else
-                     (SELECT code from overseas_warehouse_inbound owi where owi.source_id = fmd.id and owi.is_deleted = false limit 1)
-                end as businessCode,
-        fmdd.platform_sku_no||'*'||wcd.pack_qty as platformSku,
-        fmdd.fn_sku||'*'||wcd.pack_qty as fnSku
-            from
+        fmd.ID AS firstMileId,
+        wc.ID,
+        wc.packing_task_id AS taskId,
+        ( SELECT fsp.box_no FROM fba_shipment_packing fsp WHERE fsp.carton_id = wc.ID AND fsp.is_deleted = FALSE LIMIT 1 ) AS fbaBoxNo,
+        wc.box_no,
+        concat (
+        wcs.box_length,
+        wcs.size_unit,
+        '*',
+        wcs.box_width,
+        wcs.size_unit,
+        '*',
+        wcs.box_height,
+        wcs.size_unit
+        ) AS boxSize,
+        wcs.package_weight,
+        wcs.weight_unit,
+        wc.weighting_status,
+        wc.packing_status,
+        wc.packing_user_name,
+        wcs.measure_source,
+        wc.error_msg,
+        pt.source_id,
+        CEIL(wcs.box_length) AS LENGTH,
+        CEIL(wcs.box_width) AS width,
+        CEIL(wcs.box_height) AS height,
+        wcd.sku_id,
+        wcd.sku_no,
+        wcd.pack_qty,
+        wcd.sku_no AS sku,
+        fmd.code AS deliveryCode,
+        CASE
+        WHEN fmd.demand_type = 'demandPlatformWarehouse' THEN
+        ( SELECT fba_shipment_code FROM first_mile_delivery_detail fmdd WHERE fmdd.main_id = fmd.ID AND fmdd.is_deleted = FALSE LIMIT 1 ) ELSE ( SELECT code FROM overseas_warehouse_inbound owi WHERE owi.source_id = fmd.ID AND owi.is_deleted = FALSE LIMIT 1 )
+        END AS businessCode,
+        fmdd.platform_sku_no AS platformSku,
+        fmdd.fn_sku AS fnSku
+        from
             first_mile_delivery fmd
         inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
         inner join packing_task pt on (pt.source_id = fmd.id or pt.source_id = fmd.source_id) and pt.is_deleted = false
@@ -512,7 +520,10 @@
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
-        ORDER BY fmd.code,wc.box_no
+        ORDER BY
+        fmd.code,
+        fbaBoxNo,
+        wc.box_no
     </select>
     <select id="getDeliveryCodeByBusinessCodes" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$BusinessDTO">
         SELECT * FROM (

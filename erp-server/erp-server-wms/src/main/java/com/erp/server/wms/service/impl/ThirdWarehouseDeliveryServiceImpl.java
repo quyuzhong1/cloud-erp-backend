@@ -56,7 +56,9 @@ public class ThirdWarehouseDeliveryServiceImpl extends SuperServiceImpl<ThirdWar
         if(!save) {
             throw new ServiceException("三方仓发货单保存失败");
         }
-
+        entity.getDetailEntityList().forEach(v->{
+            v.setMainId(entity.getId());
+        });
         detailService.saveBatch(entity.getDetailEntityList());
         return entity.getId();
     }

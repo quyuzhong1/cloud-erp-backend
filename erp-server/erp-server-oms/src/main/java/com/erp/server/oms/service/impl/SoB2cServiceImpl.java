@@ -2251,7 +2251,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cService.removeSignError(entity.getId(),SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             String msg = StrUtil.format("创建海外仓出库单成功，单号【{}】",shippingOrderNo);
             operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "创建海外仓出库单");
-            this.addThirdWarehouseDelivery(createOutboundReq,shippingOrderNo,warehouseId,entity);
+            soB2cService.addThirdWarehouseDelivery(createOutboundReq,shippingOrderNo,warehouseId,entity);
         }
     }
 

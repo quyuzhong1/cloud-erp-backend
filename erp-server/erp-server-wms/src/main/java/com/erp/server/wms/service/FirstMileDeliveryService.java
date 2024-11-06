@@ -349,4 +349,6 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(List<String> businessCodes);
+
+    void exportBox(PackingTaskDTO.ExportDTO dto);
 }
