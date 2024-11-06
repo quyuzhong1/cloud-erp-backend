@@ -140,6 +140,11 @@ public class PurchaseSuggestDTO implements Serializable {
         private String statusName;
 
         /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
+        /**
          * 建议采购量
          */
         private Integer suggestPurchaseQty;
