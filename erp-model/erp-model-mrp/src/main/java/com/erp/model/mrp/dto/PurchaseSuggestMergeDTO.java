@@ -1,12 +1,10 @@
 package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.ibatis.type.JdbcType;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
