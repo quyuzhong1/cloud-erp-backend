@@ -216,6 +216,11 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
      */
     @TableField("return_logistic_code")
     private String returnLogisticCode;
+    /**
+     * 平台订单编码
+     */
+    @TableField("platform_code")
+    private String platformCode;
 
     @TableField(exist = false)
     private List<SoReturnInstockDetailEntity> detailEntityList;
