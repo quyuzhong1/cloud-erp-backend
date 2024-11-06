@@ -2,7 +2,6 @@ package com.erp.server.mrp.es.service.impl;
 
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.FbaOrderTypeEnum;
-import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OutStockHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
@@ -19,7 +18,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
@@ -103,18 +101,20 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
         List<List<String>> partition = Lists.partition(suggestionIds, 1000);
         CompletableFuture.allOf(partition.stream()
                 .map(suggestionList -> CompletableFuture.runAsync(() -> outStockHistorySalesEsRepository
-                        .deleteByReplenishmentIdInAndAndDateBetween(suggestionList, startDate, endDate), threadPoolTaskExecutor))
+                        .deleteByReplenishmentIdInAndDateBetween(suggestionList, startDate, endDate), threadPoolTaskExecutor))
                 .toArray(CompletableFuture[]::new)).join();
     }
 
     @Override
     public List<OutStockHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType) {
-
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.existsQuery("originalSalesQty"))
+                .must(QueryBuilders.termsQuery("replenishmentId", suggestionIds));
+        if (!ObjectUtils.isEmpty(orderType) && !FbaOrderTypeEnum.ALL.getCode().equals(orderType)) {
+            queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
+        }
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
-                .withQuery(QueryBuilders.boolQuery()
-                        .must(QueryBuilders.termsQuery("replenishmentId", suggestionIds))
-                        .must(QueryBuilders.existsQuery("originalSalesQty"))
-                )
+                .withQuery(queryBuilder)
                 .addAggregation(AggregationBuilders.terms("byReplenishmentId")
                         .field("replenishmentId")
                         .size(suggestionIds.size())
@@ -138,29 +138,42 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
     @Override
     public Map<String, Integer> listByType(String orderType) {
         Map<String, Integer> result = new HashMap<>();
-        int page = 0;
         int pageSize = 10000;
-        while (true) {
+        for (int page = 0; ; page++) {
             BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
-                    .must(QueryBuilders.termsQuery("orderType", orderType))
                     .must(QueryBuilders.existsQuery("originalSalesQty"));
+            if (!ObjectUtils.isEmpty(orderType) && !FbaOrderTypeEnum.ALL.getCode().equals(orderType)) {
+                queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
+            }
+            // 构建查询条件
             NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
                     .withQuery(queryBuilder)
+                    .addAggregation(AggregationBuilders.terms("byReplenishmentId")
+                            .field("replenishmentId")
+                            .size(pageSize)
+                            .subAggregation(AggregationBuilders.topHits("latest_sales")
+                                    .sort(SortBuilders.fieldSort("date").order(SortOrder.DESC))
+                                    .size(1)
+                            )
+                    )
                     .withPageable(PageRequest.of(page, pageSize))
-                    .withSort(SortBuilders.fieldSort("date").order(SortOrder.DESC))
                     .build();
-            List<OutStockHistorySalesEsEntity> entities = elasticsearchRestTemplate.search(searchQuery, OutStockHistorySalesEsEntity.class)
-                    .stream()
-                    .map(SearchHit::getContent)
-                    .collect(Collectors.toList());
-            // 将结果映射到 result Map 中
-            result.putAll(entities.stream()
-                    .collect(Collectors.toMap(OutStockHistorySalesEsEntity::getId, OutStockHistorySalesEsEntity::getOriginalSalesQty, (o1, o2) -> o1)));
-            // 判断是否还有更多数据，如果没有则退出循环
-            if (entities.size() < pageSize) {
-                break;
+            // 执行查询
+            Aggregations aggregations = elasticsearchRestTemplate.search(searchQuery, OutStockHistorySalesEsEntity.class)
+                    .getAggregations();
+            // 获取 replenishmentId 的聚合结果
+            Terms byReplenishmentId = aggregations.get("byReplenishmentId");
+            for (Terms.Bucket bucket : byReplenishmentId.getBuckets()) {
+                TopHits topSales = bucket.getAggregations().get("latest_sales");
+                org.elasticsearch.search.SearchHit searchHit = topSales.getHits().getAt(0);
+                OutStockHistorySalesEsEntity entity = elasticsearchRestTemplate.getElasticsearchConverter().read(OutStockHistorySalesEsEntity.class, DocumentAdapters.from(searchHit));
+                result.put(entity.getReplenishmentId(), entity.getOriginalSalesQty());
             }
-            page++;
+
+            // 判断是否还有更多数据
+            if (byReplenishmentId.getBuckets().size() < pageSize) {
+                break; // 如果当前页的桶数少于 pageSize，说明没有更多数据
+            }
         }
         return result;
     }

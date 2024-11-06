@@ -170,6 +170,11 @@ public class ReplenishmentResultDTO {
      */
     private Map<String, List<String>> shopIdByPlatform;
 
+    /**
+     * 店铺最近历史销量
+     */
+    private Map<String, Integer> shopSalesMap;
+
     @Getter
     @Setter
     public static class BasicDTO {

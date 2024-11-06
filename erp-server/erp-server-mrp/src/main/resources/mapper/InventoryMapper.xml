@@ -568,6 +568,7 @@
                  INNER JOIN ${tableDetailName} fmdd ON fmdd.is_deleted = FALSE
             AND fmdd.main_id = fmd.ID
         WHERE fmd.is_deleted = FALSE
+          AND fmd.demand_type = 'demandOverseasWarehouse'
           AND fmdd.sku_id = #{result.replenishment.skuId}
           AND fmd.approve_status = 'approve'
           AND fmd.dest_warehouse_id in

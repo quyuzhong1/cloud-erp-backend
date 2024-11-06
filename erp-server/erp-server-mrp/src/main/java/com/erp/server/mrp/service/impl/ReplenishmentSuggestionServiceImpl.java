@@ -1075,8 +1075,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         //获取历史数据
         List<ReplenishmentResultDTO.SalesHistoryDTO> listedSalesHistory = listSalesHistory(suggestionIds, salesQtyType, orderType, caleStartDate, caleEndDate);
         List<ReplenishmentResultDTO.InventoryHistoryDTO> historyInventoryList = historyInventoryEsService.listByReplenishmentIdsAndDate(suggestionIds, caleStartDate, caleEndDate);
-//        Map<String, Map<String, Integer>> salesHistoryMap = getSalesHistoryMap(salesQtyType, orderType, entities);
-
+        Map<String, Map<String, Integer>> shopSalesHistoryMap = getSalesHistoryMap(salesQtyType, orderType, entities);
         return entities.parallelStream()
                 .map(v -> {
                     ReplenishmentResultDTO resultDTO = new ReplenishmentResultDTO();
@@ -1101,6 +1100,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     resultDTO.setHistoryInventoryList(historyInventory);
                     resultDTO.setSalesPrice(detail.getSalesPrice());
                     resultDTO.setPurchasePrice(detail.getPurchasePrice());
+                    resultDTO.setShopSalesMap(shopSalesHistoryMap.get(v.getSkuId()));
                     return resultDTO;
                 }).filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -1119,9 +1119,36 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             // 以销售出库单出库时间计算销量
             salesMap = outStockHistorySalesEsService.listByType(orderType);
         }
+        if (org.springframework.util.CollectionUtils.isEmpty(salesMap)) {
+            return Collections.emptyMap();
+        }
+        //根据建议id查询建议明细
+        List<ReplenishmentSuggestionEntity> suggestion = listReplenishmentSuggestion(new ArrayList<>(salesMap.keySet()));
+        return suggestion.stream()
+                .collect(Collectors.groupingBy(
+                        ReplenishmentSuggestionEntity::getSkuId,
+                        Collectors.toMap(
+                                ReplenishmentSuggestionEntity::getShopId,
+                                entity -> salesMap.getOrDefault(entity.getId(), 0)
+                        )
+                ));
+    }
 
-
-        return null;
+    /**
+     * 异步获取主表数据
+     * @param suggestionIds 建议id
+     */
+    private List<ReplenishmentSuggestionEntity> listReplenishmentSuggestion(List<String> suggestionIds) {
+        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
+        return partition.stream()
+                .map(suggestionIdList -> CompletableFuture.supplyAsync(
+                        () -> listByIds(suggestionIdList),
+                        threadPoolTaskExecutor))
+                .collect(Collectors.toList())
+                .stream()
+                .map(CompletableFuture::join)  // 等待每个 CompletableFuture 完成
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 
     /**
