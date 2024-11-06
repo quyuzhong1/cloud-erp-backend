@@ -31,10 +31,6 @@ public class PlatformReturnInstockDTO extends UniqueDto {
      */
     private String platformOrderNo;
     /**
-     * 平台订单号
-     */
-    private String platformOrderCode;
-    /**
      * 订单参考号
      */
     private String orderReferenceNo;
