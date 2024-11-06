@@ -1674,7 +1674,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         this.lambdaUpdate().eq(SoDeliveryNoticeEntity::getId, entity.getId()).set(SoDeliveryNoticeEntity::getTransferWarehouseIds, transferWarehouseIdList).update();
         String msg = "【{}】更新了中转仓配置由【{}】改为【{}】";
-        operateLogService.addModuleOperateLog(String.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "批量修改中转仓配置");
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "批量修改中转仓配置");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
     }
 }

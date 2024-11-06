@@ -1793,7 +1793,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         this.lambdaUpdate().eq(TransferInfoEntity::getId, entity.getId()).set(TransferInfoEntity::getBillDate, billDate).update();
         String msg = "【{}】更新了调拨日期由【{}】改为【{}】";
-        operateLogService.addModuleOperateLog(String.format(msg, UserContext.getLoginUser().getUserName(),entity.getBillDate(),billDate), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "批量修改调拨日期");
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getBillDate(),billDate), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "批量修改调拨日期");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改调拨日期成功");
     }
 

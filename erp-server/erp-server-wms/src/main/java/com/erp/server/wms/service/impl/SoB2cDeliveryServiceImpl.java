@@ -1227,7 +1227,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         this.lambdaUpdate().eq(SoB2cDeliveryEntity::getId, entity.getId()).set(SoB2cDeliveryEntity::getTransferWarehouseIds, transferWarehouseIdList).update();
         String msg = "【{}】更新了中转仓配置由【{}】改为【{}】";
-        operateLogService.addModuleOperateLog(String.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "批量修改中转仓配置");
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "批量修改中转仓配置");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
     }
 

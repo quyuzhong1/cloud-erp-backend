@@ -2037,7 +2037,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         this.lambdaUpdate().eq(FirstMileDeliveryEntity::getId, entity.getId()).set(FirstMileDeliveryEntity::getTransferWarehouseIds, transferWarehouseIdList).update();
         String msg = "【{}】更新了中转仓配置由【{}】改为【{}】";
-        operateLogService.addModuleOperateLog(String.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "批量修改中转仓配置");
+        operateLogService.addModuleOperateLog(StrUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), entity.getId(), "批量修改中转仓配置");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
     }
 
