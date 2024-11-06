@@ -43,5 +43,5 @@ public interface CfgRulePackingActionService extends SuperService<CfgRulePacking
      */
     List<CfgRulePackingActionEntity> listByRuleIds(List<String> cfgRuleIds);
 
-    List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds);
+    List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds,String determiningCondition);
 }
