@@ -40,5 +40,5 @@ public interface OutStockHistorySalesEsRepository extends ElasticsearchRepositor
      * @param startDate        开始时间
      * @param endDate          结束时间
      */
-    void deleteByReplenishmentIdInAndAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate);
+    void deleteByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate);
 }

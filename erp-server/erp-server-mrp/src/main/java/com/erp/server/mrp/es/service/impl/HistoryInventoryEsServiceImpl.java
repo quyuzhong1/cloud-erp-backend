@@ -99,7 +99,7 @@ public class HistoryInventoryEsServiceImpl implements HistoryInventoryEsService 
         List<List<String>> partition = Lists.partition(suggestionIds, 1000);
         CompletableFuture.allOf(partition.stream()
                 .map(suggestionList -> CompletableFuture.runAsync(() -> historyInventoryEsRepository
-                        .deleteByReplenishmentIdInAndAndDateBetween(suggestionList, startDate, endDate), threadPoolTaskExecutor))
+                        .deleteByReplenishmentIdInAndDateBetween(suggestionList, startDate, endDate), threadPoolTaskExecutor))
                 .toArray(CompletableFuture[]::new)).join();
     }
 }

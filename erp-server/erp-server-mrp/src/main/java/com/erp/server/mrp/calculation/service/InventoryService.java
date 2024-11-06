@@ -99,10 +99,9 @@ public interface InventoryService {
      * @param replenishmentResultDTO  建议
      * @param endDate                 结束时间
      * @param deliveryVolumeInventory 库存建议配置
-     * @param salesQtyResult          销量配置
      * @param warehouseResult         仓库配置
      */
-    int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory, CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult);
+    int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult);
 
     /**
      * 补货计划
