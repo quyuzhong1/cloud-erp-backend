@@ -274,48 +274,50 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             WarehouseLocationReplenishEntity replenishItem = new WarehouseLocationReplenishEntity();
             BeanMapper.copy(entity, replenishItem);
             //按照SKU找产品管理中配置的“推荐仓位（小货区）”取仓位，有多个时取第一个生成仓位补货单
-            InventoryEntity inventoryEntity = null;
-            String toWarehouseLocation = null;
+            Boolean isExist = Boolean.FALSE;
             if(StringUtils.isNotBlank(dto.getToWarehouseLocation())){
-                toWarehouseLocation = dto.getToWarehouseLocation();
-                if(toWarehouseLocation.contains(",")){
-                    toWarehouseLocation = toWarehouseLocation.split(",")[0];
-                }
-                inventoryEntity = inventoryService.lambdaQuery()
-                        .eq(InventoryEntity::getWarehouseId, dto.getWarehouseId())
-                        .eq(InventoryEntity::getSkuId, dto.getSkuId())
-                        .eq(InventoryEntity::getWarehouseLocation, toWarehouseLocation)
-                        .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
-                        .last("order by qty desc limit 1")
+                String[] split = dto.getToWarehouseLocation().split(",");
+                WarehouseLocationEntity location = warehouseLocationService.lambdaQuery()
+                        .eq(WarehouseLocationEntity::getWarehouseId, dto.getWarehouseId())
+                        .eq(WarehouseLocationEntity::getCode, split[0])
+                        .eq(WarehouseLocationEntity::getDisabled, Boolean.FALSE)
+                        .last("limit 1")
                         .one();
-                if(null == inventoryEntity){
-                    inventoryEntity = this.findLastInventory(dto, pickLocationCodeList, pickInventoryList);
-                    toWarehouseLocation = inventoryEntity.getWarehouseLocation();
+                if(Objects.nonNull(location)){
+                    WarehouseLocationEntity area = warehouseLocationService.lambdaQuery()
+                            .eq(WarehouseLocationEntity::getId, location.getParentId())
+                            .eq(WarehouseLocationEntity::getDisabled, Boolean.FALSE)
+                            .last("limit 1")
+                            .one();
+                    replenishItem.setToWarehouseLocation(location.getCode());
+                    replenishItem.setToWarehouseArea(area.getCode());
+                    isExist = Boolean.TRUE;
                 }
-            }else{
+            }
+
+            InventoryEntity inventoryEntity = null;
+            if(!isExist){
                 /*
                     1. 生成仓位补货时，如果缺货的SKU在拣货区有多个仓位，需要加一个筛选条件，查询SKU在多个拣货区仓位的库存流水，找出来出入库流水时间最新的一个仓位生成一条仓位补货数据
                     2. 如果都不存在流水，或单据日期一致，则默认按id升序排序，取第一个
                     备注：仓位流水查询通过“出入库流水”查询
                 */
                 inventoryEntity = this.findLastInventory(dto, pickLocationCodeList, pickInventoryList);
-                toWarehouseLocation = inventoryEntity.getWarehouseLocation();
+                String toWarehouseLocation = inventoryEntity.getWarehouseLocation();
+                replenishItem.setToWarehouseLocation(toWarehouseLocation);
+                //推荐补货库区
+                WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(toWarehouseLocation)).findFirst().orElse(new WarehouseLocationEntity());
+                WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findFirst().orElse(new WarehouseLocationEntity());
+                replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
             }
-            replenishItem.setToWarehouseLocation(toWarehouseLocation);
-
-            //推荐补货库区
-            String finalToWarehouseLocation = toWarehouseLocation;
-            WarehouseLocationEntity locationEntity = pickLocationList.stream().filter(item -> item.getCode().equals(finalToWarehouseLocation)).findFirst().orElse(new WarehouseLocationEntity());
-            WarehouseLocationEntity pickAreaEntity = pickAreaList.stream().filter(item -> item.getId().equals(locationEntity.getParentId())).findFirst().orElse(new WarehouseLocationEntity());
-            replenishItem.setToWarehouseArea(pickAreaEntity.getCode());
 
             Integer suggestQty = 0;
             WarehouseLocationSafetyInventoryEntity safetyInventoryEntity = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()
                     .eq("sku_id", dto.getSkuId())
                     .eq("warehouse_id", dto.getWarehouseId())
-                    .eq("warehouse_location", toWarehouseLocation)
+                    .eq("warehouse_location", replenishItem.getToWarehouseLocation())
             );
-            if (safetyInventoryEntity != null) {
+            if (safetyInventoryEntity != null && inventoryEntity != null) {
                 //有最大补货量时：等于最大补货量+缺货数量-仓位可用库存
                 if (safetyInventoryEntity.getMaxQty() != 0) {
                     suggestQty = safetyInventoryEntity.getMaxQty() + dto.getQty() - inventoryEntity.getQty();

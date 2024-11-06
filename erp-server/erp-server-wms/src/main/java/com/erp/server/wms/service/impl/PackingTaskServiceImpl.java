@@ -812,7 +812,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         listPackingDetailDTOS.forEach(pagingViewDTO -> {
             PackingTaskEntity packingTaskEntity = taskMap.get(pagingViewDTO.getTaskId());
             PackingTaskDTO.StatusDTO statusDTO = statusDTOMap.get(pagingViewDTO.getTaskId());
-            Integer totalQty = boxQtyMap.get(pagingViewDTO.getId());
+            Integer totalQty = boxQtyMap.get(pagingViewDTO.getTaskId());
             pagingViewDTO.setTotalQty(totalQty);
             pagingViewDTO.setTaskCode(packingTaskEntity.getCode());
             pagingViewDTO.setSourceCode(packingTaskEntity.getSourceCode());
