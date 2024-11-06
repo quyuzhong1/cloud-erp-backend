@@ -16,6 +16,7 @@ import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -282,7 +283,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                     Pair<String, String> pair = new Pair<>(addSkuMapping.getListingId(),content);
                     updateLogPairList.add(pair);
                 }
-                listingInfoEntity.setMatchResult(true);
+                listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
                 updateListingInfoList.add(listingInfoEntity);
                 return;
             }
@@ -313,7 +314,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setType(RuleTypeEnum.PLATFORM.getCode());
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
             addListingInfoEntity.setPlatformSkuName(platformProductName);
-            addListingInfoEntity.setMatchResult(Boolean.TRUE);
+            addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             addListingInfoEntity.setPlatform(dictPlatform);
             addListingInfoEntityList.add(addListingInfoEntity);
         }

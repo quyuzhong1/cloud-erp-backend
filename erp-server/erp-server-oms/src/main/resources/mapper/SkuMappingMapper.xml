@@ -48,6 +48,7 @@
     <select id="paging" resultType="com.erp.model.oms.dto.SkuMappingDTO$PagingViewDTO">
         SELECT
         sm.id,
+        li.remark,
         sm.shop_id,
         li.id AS listingId,
         si.name AS shopName,
@@ -68,78 +69,17 @@
         sm.update_user_name,
         sm.effective_time,
         sm.expire_time,
-        sm.update_time
+        sm.update_time,
+        ci.seller_name
         FROM sku_mapping sm
         LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
         LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
-        WHERE sm.is_deleted=FALSE AND sm.is_expire = FALSE
-        <if test="matchResult!=null">
-            AND li.match_result=#{matchResult}
-        </if>
-        <if test="params.matchResult!=null">
-            AND li.match_result=#{params.matchResult}
-        </if>
-        <if test="params.shopIdList !=null and params.shopIdList.size>0">
-            AND sm.shop_id IN
-            <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
-                #{shopId}
-            </foreach>
-        </if>
+        LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+         and   sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
-        </if>
-        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
-            AND li.platform_spu_no IN
-            <foreach collection="params.platformSpuNoList" item="platformSpuNoItem" open="(" separator="," close=")">
-                #{platformSpuNoItem}
-            </foreach>
-        </if>
-
-        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
-            AND li.platform_sku_no IN
-            <foreach collection="params.platformSkuNoList" item="platformSkuNoItem" open="(" separator="," close=")">
-                #{platformSkuNoItem}
-            </foreach>
-        </if>
-
-        <if test="params.platformFnSkuList !=null and params.platformFnSkuList.size>0">
-            AND li.platform_fn_sku IN
-            <foreach collection="params.platformFnSkuList" item="fnSkuItem" open="(" separator="," close=")">
-                #{fnSkuItem}
-            </foreach>
-        </if>
-
-        <if test="params.platformList !=null and params.platformList.size>0">
-            AND sm.dict_platform IN
-            <foreach collection="params.platformList" item="platform" open="(" separator="," close=")">
-                #{platform}
-            </foreach>
-        </if>
-        <if test="params.skuNoList !=null and params.skuNoList.size>0">
-            AND sm.product_sku_no IN
-            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                #{skuNo}
-            </foreach>
-        </if>
-        <if test="params.updateUserIdList !=null and params.updateUserIdList.size>0">
-            AND sm.update_user_id IN
-            <foreach collection="params.updateUserIdList" item="updateUserId" open="(" separator="," close=")">
-                #{updateUserId}
-            </foreach>
-        </if>
-        <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
-            AND sm.update_time >= #{params.updateTimeList[0]} and (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > sm.update_time
-        </if>
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND sm.create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > sm.create_time
         </if>
         ORDER BY sm.create_time DESC
     </select>
@@ -148,6 +88,7 @@
         SELECT
         sm.id,
         sm.shop_id,
+        li.remark,
         li.id AS listingId,
         si.name AS shopName,
         sm.dict_platform,
@@ -167,81 +108,22 @@
         li.platform_fn_sku,
         li.platform_update_time,
         sm.create_user_name,
-        sm.create_time
+        sm.create_time,
+        sm.expire_time,
+        sm.effective_time,
+        ci.seller_name
         FROM sku_mapping sm
         LEFT JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
-        WHERE sm.is_deleted=FALSE
-        AND sm.is_expire = FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0 ">
-                AND sm.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <if test="matchResult!=null">
-                    AND li.match_result=#{matchResult}
-                </if>
-                <if test="params.type !=null and params.type!=''">
-                    AND sm.type =#{params.type}
-                </if>
-                <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
-                    AND li.platform_spu_no IN
-                    <foreach collection="params.platformSpuNoList" item="platformSpuNoItem" open="(" separator="," close=")">
-                        #{platformSpuNoItem}
-                    </foreach>
-                </if>
-
-                <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
-                    AND li.platform_sku_no IN
-                    <foreach collection="params.platformSkuNoList" item="platformSkuNoItem" open="(" separator="," close=")">
-                        #{platformSkuNoItem}
-                    </foreach>
-                </if>
-
-                <if test="params.fnSkuList !=null and params.fnSkuList.size>0">
-                    AND li.platform_fn_sku IN
-                    <foreach collection="params.fnSkuList" item="fnSkuItem" open="(" separator="," close=")">
-                        #{fnSkuItem}
-                    </foreach>
-                </if>
-
-                <if test="params.shopIdList !=null and params.shopIdList.size>0">
-                    AND sm.shop_id IN
-                    <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
-                        #{shopId}
-                    </foreach>
-                </if>
-                <if test="params.skuNoList !=null and params.skuNoList.size>0">
-                    AND sm.product_sku_no IN
-                    <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                        #{skuNo}
-                    </foreach>
-                </if>
-                <if test="params.platformList !=null and params.platformList.size>0">
-                    AND sm.dict_platform IN
-                    <foreach collection="params.platformList" item="platform" open="(" separator="," close=")">
-                        #{platform}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-                    AND sm.create_user_id IN
-                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                        #{createUserId}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
-                    INTERVAL '1
-                    DAY' ) > sm.create_time
-                </if>
-
-            </otherwise>
-        </choose>
+        LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        and sm.is_deleted=FALSE
+        <if test="params.type !=null and params.type!=''">
+            AND sm.type =#{params.type}
+        </if>
         ORDER BY sm.create_time DESC
     </select>
     <!--统计-->
@@ -298,6 +180,7 @@
         SELECT
         sm.id,
         li.id AS listingId,
+        li.remark,
         sm.product_sku_id,
         sm.product_sku_no,
         li.platform_sku_no AS warehouseSkuNo,
@@ -320,100 +203,14 @@
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
-        WHERE sm.is_deleted=FALSE
+        WHERE
+        ${params.sqlMap.default}
+          and  sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
-        <if test="params.shortName !=null and params.shortName!=''">
-            AND op.short_name  ILIKE concat('%',#{params.shortName}::text,'%')
-        </if>
-        <if test="matchResult!=null">
-            AND li.match_result=#{matchResult}
-        </if>
-        <if test="params.matchResult!=null">
-            AND li.match_result=#{params.matchResult}
-        </if>
-        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
-            AND sm.warehouse_id IN
-            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
-                #{warehouseId}
-            </foreach>
-        </if>
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-
-        <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
-            AND li.platform_spu_no IN
-            <foreach collection="params.platformSpuNoList" item="platformSpuNoItem" open="(" separator="," close=")">
-                #{platformSpuNoItem}
-            </foreach>
-        </if>
-
-        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
-            AND li.platform_sku_no IN
-            <foreach collection="params.platformSkuNoList" item="platformSkuNoItem" open="(" separator="," close=")">
-                #{platformSkuNoItem}
-            </foreach>
-        </if>
-
-        <if test="params.fnSkuList !=null and params.fnSkuList.size>0">
-            AND li.platform_fn_sku IN
-            <foreach collection="params.fnSkuList" item="fnSkuItem" open="(" separator="," close=")">
-                #{fnSkuItem}
-            </foreach>
-        </if>
-
-        <if test="params.dictPlatformList !=null and params.dictPlatformList.size>0">
-            AND sm.dict_platform IN
-            <foreach collection="params.dictPlatformList" item="platform" open="(" separator="," close=")">
-                #{platform}
-            </foreach>
-        </if>
-
-        <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
-            AND li.platform_sku_name ILIKE concat('%',#{params.warehouseProductName}::text,'%')
-        </if>
-        <if test="params.productName !=null and params.productName!=''">
-            AND sm.product_name ILIKE concat('%',#{params.productName}::text,'%')
-        </if>
-        <if test="params.warehouseSkuNoList !=null and params.warehouseSkuNoList.size>0">
-            AND li.platform_sku_no IN
-            <foreach collection="params.warehouseSkuNoList" item="warehouseSkuNo" open="(" separator="," close=")">
-                #{warehouseSkuNo}
-            </foreach>
-        </if>
-        <if test="params.productSkuNoList !=null and params.productSkuNoList.size>0">
-            AND sm.product_sku_no IN
-            <foreach collection="params.productSkuNoList" item="productSkuNo" open="(" separator="," close=")">
-                #{productSkuNo}
-            </foreach>
-        </if>
-        <if test="params.skuIdList !=null and params.skuIdList.size>0">
-            AND sm.product_sku_id IN
-            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
-                #{skuId}
-            </foreach>
-        </if>
-        <if test="params.updateUserIdList !=null and params.updateUserIdList.size>0">
-            AND sm.update_user_id IN
-            <foreach collection="params.updateUserIdList" item="updateUserId" open="(" separator="," close=")">
-                #{updateUserId}
-            </foreach>
-        </if>
-        <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
-            AND sm.update_time >= #{params.updateTimeList[0]} and (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > sm.update_time
-        </if>
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND sm.create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <if test="params.createTimeList !=null and params.createTimeList.size>0">
-            AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-            DAY' ) > sm.create_time
-        </if>
-        ORDER BY sm.create_time DESC
+        ORDER BY li.platform_sku_no,sm.create_time DESC
 
     </select>
 
@@ -422,6 +219,7 @@
         SELECT
         sm.id,
         li.id AS listingId,
+        li.remark,
         op.short_name as shortName,
         sm.product_sku_id,
         sm.product_sku_no,
@@ -434,81 +232,21 @@
         sm.create_time,
         sm.platform_name,
         sm.has_mapping_all,
-        op.short_name
+        op.short_name,
+        sm.effective_time,
+        sm.expire_time
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
-        WHERE sm.is_deleted=FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND sm.is_deleted=FALSE
         AND sm.is_expire = FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0 ">
-                AND sm.id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <if test="matchResult!=null">
-                    AND li.match_result=#{matchResult}
-                </if>
-                <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
-                    AND sm.warehouse_id IN
-                    <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
-                        #{warehouseId}
-                    </foreach>
-                </if>
-                <if test="params.type !=null and params.type!=''">
-                    AND sm.type =#{params.type}
-                </if>
-                <if test="params.warehouseProductName !=null and params.warehouseProductName!=''">
-                    AND li.platform_sku_name ILIKE concat('%',#{params.warehouseProductName}::text,'%')
-                </if>
-                <if test="params.shortName !=null and params.shortName!=''">
-                    AND op.short_name  ILIKE concat('%',#{params.shortName}::text,'%')
-                </if>
-                <if test="params.productName !=null and params.productName!=''">
-                    AND sm.product_name ILIKE concat('%',#{params.productName}::text,'%')
-                </if>
-                <if test="params.warehouseSkuNoList !=null and params.warehouseSkuNoList.size>0">
-                    AND li.platform_sku_no IN
-                    <foreach collection="params.warehouseSkuNoList" item="warehouseSkuNo" open="(" separator="," close=")">
-                        #{warehouseSkuNo}
-                    </foreach>
-                </if>
-                <if test="params.productSkuNoList !=null and params.productSkuNoList.size>0">
-                    AND sm.product_sku_no IN
-                    <foreach collection="params.productSkuNoList" item="productSkuNo" open="(" separator="," close=")">
-                        #{productSkuNo}
-                    </foreach>
-                </if>
-                <if test="params.platformSpuNoList !=null and params.platformSpuNoList.size>0">
-                    AND li.platform_spu_no IN
-                    <foreach collection="params.platformSpuNoList" item="platformSpuNoItem" open="(" separator="," close=")">
-                        #{platformSpuNoItem}
-                    </foreach>
-                </if>
-
-                <if test="params.skuIdList !=null and params.skuIdList.size>0">
-                    AND sm.product_sku_id IN
-                    <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
-                        #{skuId}
-                    </foreach>
-                </if>
-                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-                    AND sm.create_user_id IN
-                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                        #{createUserId}
-                    </foreach>
-                </if>
-                <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND sm.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > sm.create_time
-                </if>
-            </otherwise>
-        </choose>
-
-        ORDER BY sm.create_time DESC
+        <if test="params.type !=null and params.type!=''">
+            AND sm.type =#{params.type}
+        </if>
+        ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
     <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
         SELECT li.id AS listingId,
@@ -645,6 +383,13 @@
             AND sm.is_expire = #{params.isExpire}
         </if>
 
+        <!--sku mapping id-->
+        <if test="params.skuMappingIds !=null and params.skuMappingIds.size>0">
+            AND sm.id IN
+            <foreach collection="params.skuMappingIds" item="skuMappingId" open="(" separator="," close=")">
+                #{skuMappingId}
+            </foreach>
+        </if>
         <!--平台sku no 列表-->
         <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
             AND li.platform_sku_no IN

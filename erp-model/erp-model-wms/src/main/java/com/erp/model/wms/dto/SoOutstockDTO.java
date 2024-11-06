@@ -391,6 +391,10 @@ public class SoOutstockDTO implements Serializable {
          * 销售平台
          */
         private String dictPlatform;
+        /**
+         * 销售平台名称
+         */
+        private String dictPlatformName;
     }
 
     /**·
@@ -1055,6 +1059,11 @@ public class SoOutstockDTO implements Serializable {
         @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.UpdateDTO> detailList;
+
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
 
     }
 

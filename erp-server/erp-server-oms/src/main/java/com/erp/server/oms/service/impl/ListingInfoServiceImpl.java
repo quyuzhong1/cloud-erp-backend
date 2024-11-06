@@ -25,6 +25,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
@@ -232,7 +233,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
 
         return lambdaUpdate()
-                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .set(ListingInfoEntity::getMatchResult, ListingMatchResultEnum.TRUE.getCode())
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
                 .update();
     }
@@ -288,7 +289,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             }
         }
         lambdaUpdate()
-                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .set(ListingInfoEntity::getMatchResult, ListingMatchResultEnum.TRUE.getCode())
                 .in(ListingInfoEntity::getId, listingIds)
                 .update();
         service.batchOperation(updateList,addList);
@@ -326,20 +327,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public ListingInfoEntity getByPlatformSkuNoAndSpu(String platformSkuNo, String platformSpuNo, String typeCode) {
-        return this.lambdaQuery().
-                eq(ListingInfoEntity::getPlatformSkuNo,platformSkuNo).
-                eq(ListingInfoEntity::getPlatformSpuNo,platformSpuNo).
-                eq(ListingInfoEntity::getType,typeCode).
-                last("LIMIT 1").one();
-    }
-
-    @Override
-    public void updateMatchResult(String listingId, Boolean matchResult) {
-        this.lambdaUpdate().set(ListingInfoEntity::getMatchResult,matchResult).
-                eq(ListingInfoEntity::getId,listingId).update(new ListingInfoEntity());
-    }
 
     @Override
     public PagingVO<ListingInfoDTO.PageDTO> paging(PagingDTO<ListingInfoDTO.PagingParamDTO> dto) {
@@ -424,7 +411,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
 
         return lambdaUpdate()
-                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .set(ListingInfoEntity::getMatchResult, ListingMatchResultEnum.TRUE.getCode())
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
                 .update();
     }
