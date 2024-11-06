@@ -72,7 +72,7 @@
             packing_task_detail ptd
                 LEFT JOIN product_purchase pp ON ptd.sku_id = pp.sku_id AND pp.is_deleted = FALSE
         where ptd.is_deleted = FALSE
-          AND (COALESCE(ptd.sku_no, '') || ' ' || COALESCE(ptd.fn_sku, '') || ' ' || COALESCE(pp.ean, '')) ILIKE CONCAT('%', #{searchKey}::text,'%')
+        AND (ptd.sku_no = #{searchKey}  OR ptd.fn_sku = #{searchKey}  OR pp.ean = #{searchKey})
         <if test="taskId != null and taskId != ''">
             AND ptd.main_id = #{taskId}
         </if>
