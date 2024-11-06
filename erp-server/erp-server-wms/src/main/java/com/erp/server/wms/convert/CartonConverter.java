@@ -2,6 +2,7 @@ package com.erp.server.wms.convert;
 
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
@@ -111,4 +112,9 @@ public interface CartonConverter {
             @Mapping(target = "mainId", ignore = true)
     })
     WmsCartonSpecEntity convertDtoToCartonSpec(WmsCartonSpecDTO.SpecSaveDTO dto);
+
+    @Mapping(target = "productName", ignore = true)
+    @Mapping(target = "detailId", source = "id")
+    WmsCartonDetailDTO.BoxDetailDTO convertCartonDetailToBoxDTO(WmsCartonDetailEntity detailEntity);
+    List<WmsCartonDetailDTO.BoxDetailDTO> convertCartonDetailToBoxDTO(List<WmsCartonDetailEntity> detailEntityList);
 }
