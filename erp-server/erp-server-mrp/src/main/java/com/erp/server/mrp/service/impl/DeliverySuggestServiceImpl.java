@@ -267,10 +267,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public BatchResultDTO invalid(String id,String remark) {
         DeliverySuggestEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
-        //草稿和待确认支持作废
-        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
+        Boolean isPush = isPushDeliveryPlan(id);
+        if (isPush) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
         }
+
         if (old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
@@ -284,6 +285,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), old.getId(), "作废");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
+
 
     @Override
     public Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
@@ -311,6 +313,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (CollectionUtils.isEmpty(deliverySuggestList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        String codes = deliverySuggestList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH,codes);
+        }
+
         DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDTO();
         //店铺id集合
         List<String> shopIdList = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().collect(Collectors.toList());
@@ -753,5 +760,25 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             resultList.addAll(value);
         }
         return resultList;
+    }
+
+    /**
+     * 是否下推发货计划
+     * @author will
+     * @date 2024/11/6 18:15
+     * @return Boolean
+     */
+    private Boolean isPushDeliveryPlan(String id) {
+        //补货计划
+        List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(Collections.singletonList(id));
+        //补货计划
+        WmsDeliveryPlanDetailEntity entity = deliveryPlanDetailList.stream().filter(obj -> {
+            long count = BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(),id)).count();
+            if (count > 0) {
+                return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        }).findFirst().orElse(null);
+        return ObjectUtil.isNotEmpty(entity) ? Boolean.TRUE : Boolean.FALSE;
     }
 }
