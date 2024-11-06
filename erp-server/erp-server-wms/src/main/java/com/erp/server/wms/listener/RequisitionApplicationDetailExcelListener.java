@@ -83,6 +83,14 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
         if (CollectionUtils.isNotEmpty(fbaShipmentPackingEntities)){
             errorMsgList.add(StrUtil.format("{}已绑定下推发货单，无法重复下推",RequisitionApplicationDetailExcelDTO.getFbaShipmentCode()));
         }
+        RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO shipmentViewDetailDTO = fbaBindShipmentViewDTOS.stream().filter(e -> Objects.equals(RequisitionApplicationDetailExcelDTO.getBoxNo(), e.getBoxNo())).findFirst().orElse(null);
+        if (Objects.isNull(shipmentViewDetailDTO)){
+            errorMsgList.add("ERP箱号不存在");
+        }
+        RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO shipmentViewDetailDTO2 = fbaBindShipmentViewDTOS.stream().filter(e -> Objects.equals(RequisitionApplicationDetailExcelDTO.getBoxNo(), e.getBoxNo()) && StrUtil.isNotBlank(e.getDeliveryCode())).findFirst().orElse(null);
+        if (Objects.isNull(shipmentViewDetailDTO2)){
+            errorMsgList.add("ERP箱号已关联");
+        }
         //校验店铺是否一致
         String id = fbaBindShipmentViewDTOS.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getId).filter(StrUtil::isNotBlank).findFirst().orElse(null);
         RequisitionApplicationEntity requisitionApplication = null;
