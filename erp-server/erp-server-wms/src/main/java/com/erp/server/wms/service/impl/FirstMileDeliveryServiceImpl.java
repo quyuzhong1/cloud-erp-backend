@@ -2372,10 +2372,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 pagingViewDTO.setPackageWeight(BigDecimal.ZERO);
                 pagingViewDTO.setPackageWeightStr("0");
             }
-            if(StringUtils.isNotBlank(pagingViewDTO.getFbaBoxNo())){
-                String fbaBoxNo = StrUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(pagingViewDTO.getBusinessCode()), "U", StrUtils.leftPadding(pagingViewDTO.getFbaBoxNo(),6,"0"));
-                pagingViewDTO.setFbaBoxNo(fbaBoxNo);
-            }
             if(distinctMap.containsKey(pagingViewDTO.getId())){
                 //同一个箱子以下字段不重复显示
                 pagingViewDTO.setDeliveryCode("");
