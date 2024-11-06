@@ -521,6 +521,7 @@
             ${permissionSql}
         </if>
         ORDER BY
+        fmd.code,
         fbaBoxNo,
         wc.box_no
     </select>
