@@ -218,7 +218,6 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PdaPagingViewDTO">
         SELECT
-        DISTINCT
         so.id,
         so.code,
         so.source_type,
@@ -227,7 +226,6 @@
         so.approve_status,
         so.create_time
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
         WHERE so.is_deleted = false
         AND so.invalid_status = false
         AND so.source_type NOT IN ('SAL_OUTSTOCK')
@@ -251,7 +249,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ORDER BY sod.id desc
+        ORDER BY so.id desc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
