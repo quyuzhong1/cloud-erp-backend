@@ -403,6 +403,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         addDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
         addDTO.setPlanDeliveryDate(deliveryPlanDTO.getDeliveryDate());
         addDTO.setToWarehouseId(deliveryPlanDTO.getWarehouseId());
+        addDTO.setExpectLogisticsMethod(deliveryPlanDTO.getLogisticsMethod());
+        addDTO.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
         List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
         for (DeliverySuggestDTO.PushDeliveryPlanDetailDTO detailDTO: deliveryPlanDTO.getDetailList()) {
             WmsDeliveryPlanDetailDTO.AddDTO addDetailDTO = new WmsDeliveryPlanDetailDTO.AddDTO();

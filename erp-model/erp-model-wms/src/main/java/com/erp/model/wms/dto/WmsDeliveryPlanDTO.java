@@ -444,6 +444,11 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 期望物流方式
          */
         private String expectLogisticsMethod;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**

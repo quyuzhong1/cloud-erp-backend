@@ -246,6 +246,11 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 来源idJsonArray
          */
         private JSONArray sourceIdJson;
+
+        /**
+         * 来源id，备货建议id
+         */
+        private String sourceId;
     }
 
 
@@ -370,13 +375,6 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         * 备注
         */
         private String remark;
-
-        /**
-        * 采购建议id集合
-        */
-        private String purchaseSuggestIdJson;
-
-
     }
 
     /**
