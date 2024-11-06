@@ -39,9 +39,11 @@ import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
 import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.listener.PurchaseSuggestMergeImportExcelListener;
 import com.erp.server.mrp.mapper.PurchaseSuggestMergeMapper;
 import com.erp.server.mrp.service.*;
@@ -92,6 +94,11 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Autowired
     private PurchaseSuggestMergeService purchaseSuggestMergeService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -275,12 +282,18 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<String> platformTypeList = list.stream().map(PurchaseSuggestEntity::getPlatformType).distinct().collect(Collectors.toList());
-        List<String> platformList = list.stream().map(PurchaseSuggestEntity::getPlatform).distinct().collect(Collectors.toList());
         List<String> skuIdList = list.stream().map(PurchaseSuggestEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<PurchaseSuggestMergeEntity> purchaseSuggestMergeList = purchaseSuggestMergeService.listByPlatformListAndSkuIdList(platformTypeList, platformList, skuIdList);
 
-        Map<String, List<PurchaseSuggestEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getPlatformType().concat(obj.getPlatform()).concat(obj.getSkuId())));
+        //bom信息
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        List<PurchaseSuggestEntity> splitList =  handleSplitData(list,bomChildrenSkuList);
+
+        List<String> platformTypeList = splitList.stream().map(PurchaseSuggestEntity::getPlatformType).distinct().collect(Collectors.toList());
+        List<String> platformList = splitList.stream().map(PurchaseSuggestEntity::getPlatform).distinct().collect(Collectors.toList());
+        List<String> allSkuIdList = splitList.stream().map(PurchaseSuggestEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<PurchaseSuggestMergeEntity> purchaseSuggestMergeList = purchaseSuggestMergeService.listByPlatformListAndSkuIdList(platformTypeList, platformList, allSkuIdList);
+
+        Map<String, List<PurchaseSuggestEntity>> map = splitList.stream().collect(Collectors.groupingBy(obj -> obj.getPlatformType().concat(obj.getPlatform()).concat(obj.getSkuId())));
         List<PurchaseSuggestMergeDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         for (Map.Entry<String, List<PurchaseSuggestEntity>> entry : map.entrySet()) {
             List<PurchaseSuggestEntity> value = entry.getValue();
@@ -319,6 +332,39 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             addList.add(addOrUpdateDTO);
         }
         addList.stream().forEach(obj -> this.addOrUpdate(obj));
+    }
+    /**
+     * 按bom拆分
+     * @author will
+     * @date 2024/11/6 14:39
+     * @param list
+     * @param bomChildrenSkuList
+     * @return List<PurchaseSuggestEntity>
+     */
+    private List<PurchaseSuggestEntity> handleSplitData (List<PurchaseSuggestEntity> list,List<BomChildrenSkuDTO> bomChildrenSkuList) {
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            return list;
+        }
+        List<PurchaseSuggestEntity> splitList = new ArrayList<>();
+        for (PurchaseSuggestEntity entity : list) {
+            List<BomChildrenSkuDTO> bomSkuList = bomChildrenSkuList.stream()
+                    .filter(obj -> StrUtil.equals(obj.getParentSkuId(), entity.getSkuId()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+                splitList.add(entity);
+                continue;
+            }
+            for (BomChildrenSkuDTO childrenSkuDTO : bomSkuList) {
+                PurchaseSuggestEntity childEntity = new PurchaseSuggestEntity();
+                BeanMapperUtils.copy(entity,childEntity);
+                childEntity.setSkuId(childrenSkuDTO.getSkuId());
+                childEntity.setPurchaseCost(MathUtil.multiply(entity.getPurchaseCost(),childrenSkuDTO.getQuantity()));
+                childEntity.setSuggestPurchaseQty(entity.getSuggestPurchaseQty() * childrenSkuDTO.getQuantity());
+                childEntity.setPurchaseStockUpQty(entity.getPurchaseStockUpQty() * childrenSkuDTO.getQuantity());
+                splitList.add(childEntity);
+            }
+        }
+        return splitList;
     }
 
     @Override
