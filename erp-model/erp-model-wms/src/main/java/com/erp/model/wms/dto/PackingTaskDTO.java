@@ -425,4 +425,14 @@ public class PackingTaskDTO implements Serializable {
          */
         private List<String> cartonIds;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class CartonDetailDTO {
+        /**
+         * 外箱单号(关联单号{发货单}-箱号)
+         */
+        @NotBlank(message = "箱号不能为空")
+        private String outBoxNo;
+    }
 }
