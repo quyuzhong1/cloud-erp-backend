@@ -146,6 +146,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if(!save) {
             throw new ServiceException("建议采购(合并后)保存失败");
         }
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, purchaseSuggestMergeEntity, ModuleTypeEnum.PURCHASE_SUGGEST_MERGE.getCode(), purchaseSuggestMergeEntity.getId(), "", "");
         return Boolean.TRUE;
     }
 
@@ -163,6 +165,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if(!save) {
             throw new ServiceException("建议采购(合并后)保存失败");
         }
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, purchaseSuggestMergeEntity, ModuleTypeEnum.PURCHASE_SUGGEST_MERGE.getCode(), purchaseSuggestMergeEntity.getId(), "", "");
         return Boolean.TRUE;
     }
 
@@ -550,7 +554,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             List<PurchaseSuggestMergeDTO.ListDTO> value = entry.getValue();
             PurchaseSuggestMergeDTO.ListDTO parentDTO = new PurchaseSuggestMergeDTO.ListDTO();
             parentDTO.setId(value.get(0).getSkuId());
-
+            parentDTO.setSkuNo(value.get(0).getSkuNo());
+            parentDTO.setProductName(value.get(0).getProductName());
             //系统建议值
             Integer suggestPurchaseQty = value.stream().map(PurchaseSuggestMergeDTO.ListDTO::getSuggestPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             parentDTO.setSuggestPurchaseQty(suggestPurchaseQty);

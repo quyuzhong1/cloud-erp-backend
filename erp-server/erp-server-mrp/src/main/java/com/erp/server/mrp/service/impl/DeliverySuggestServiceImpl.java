@@ -162,6 +162,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if(!save) {
             throw new ServiceException("补货计划保存失败");
         }
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, deliverySuggestEntity, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), deliverySuggestEntity.getId(), "", "");
         return Boolean.TRUE;
     }
 
@@ -179,6 +181,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if(!save) {
             throw new ServiceException("补货计划保存失败");
         }
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, deliverySuggestEntity, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), deliverySuggestEntity.getId(), "", "");
         return Boolean.TRUE;
     }
 

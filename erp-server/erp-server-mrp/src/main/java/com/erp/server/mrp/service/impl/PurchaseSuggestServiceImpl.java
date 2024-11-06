@@ -155,6 +155,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if(!save) {
             throw new ServiceException("建议采购保存失败");
         }
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, purchaseSuggestEntity, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), purchaseSuggestEntity.getId(), "", "");
         return Boolean.TRUE;
     }
 
@@ -174,6 +176,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if(!save) {
             throw new ServiceException("采购计划保存失败");
         }
+        //操作日志
+        operateLogService.addModuleOperateLogByObj(old, purchaseSuggestEntity, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), purchaseSuggestEntity.getId(), "", "");
         return Boolean.TRUE;
     }
 
