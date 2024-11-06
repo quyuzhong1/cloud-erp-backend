@@ -17,7 +17,6 @@
        <result column="sku_no" property="skuNo" />
        <result column="qty" property="qty" />
        <result column="is_combination" property="isCombination" />
-       <result column="source_type" property="sourceType" />
        <result column="source_json" property="sourceJson" jdbcType="OTHER" typeHandler="com.erp.server.wms.handler.ObjectJsonArrayHandler" />
     </resultMap>
 
@@ -32,7 +31,7 @@
         wdpd.update_user_id,
         wdpd.version,
         wdpd.is_deleted,
-        wdpd.main_id, wdpd.sku_id, wdpd.sku_no, wdpd.qty, wdpd.is_combination
+        wdpd.main_id, wdpd.sku_id, wdpd.sku_no, wdpd.qty, wdpd.is_combination,wdpd.source_json
     </sql>
 
     <!-- 根据来源id集合查询 -->
