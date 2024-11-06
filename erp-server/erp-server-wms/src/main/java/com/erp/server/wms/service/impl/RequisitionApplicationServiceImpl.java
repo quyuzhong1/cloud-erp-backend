@@ -1980,6 +1980,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     skuId = skuVO.getSkuId();
                     productName = skuVO.getSkuName();
                     inWarehouseLocation = skuVO.getWarehouseLocationLarge();
+                    if(StringUtils.isNotBlank(inWarehouseLocation) && inWarehouseLocation.contains(",")){
+                        inWarehouseLocation = inWarehouseLocation.split(",")[0];
+                    }
                 }
                 if(StringUtils.isBlank(inWarehouseLocation) && CollectionUtils.isNotEmpty(cfgRulePickingInventoryDTOList)){
                     //推荐仓位（大货区） 不存在
