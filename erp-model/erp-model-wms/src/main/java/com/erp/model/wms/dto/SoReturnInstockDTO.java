@@ -144,10 +144,6 @@ public class SoReturnInstockDTO {
          * 第三方单据编号
          */
         private String thirdCode;
-        /**
-         * 平台订单编码
-         */
-        private String platformCode;
 
         /**
          * 单据类型
@@ -310,7 +306,7 @@ public class SoReturnInstockDTO {
         /**
          * 平台订单编号
          */
-        private String platformCode;
+        private String platformOrderCode;
         /**
          * 退货客户id
          */

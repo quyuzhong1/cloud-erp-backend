@@ -219,8 +219,8 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     /**
      * 平台订单编码
      */
-    @TableField("platform_code")
-    private String platformCode;
+    @TableField("platform_order_code")
+    private String platformOrderCode;
 
     @TableField(exist = false)
     private List<SoReturnInstockDetailEntity> detailEntityList;

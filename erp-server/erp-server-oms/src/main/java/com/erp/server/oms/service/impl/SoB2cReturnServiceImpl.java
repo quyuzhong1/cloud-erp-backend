@@ -14,7 +14,6 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -44,6 +43,7 @@ import com.common.business.config.DocNoGenHelper;
 import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,6 +99,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     private SoReturnNoticeFeign soReturnNoticeFeign;
     @Resource
     private SoB2cReturnDetailService soB2cReturnDetailService;
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
 
@@ -268,7 +269,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             currentInstockList.forEach(v->{
                 if (CollectionUtils.isNotEmpty(soB2cEntityList)){
                     SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.equals(e.getId(), v.getSoId())).findFirst().orElse(null);
-                    v.setPlatformCode(Objects.nonNull(soB2cEntity) ? soB2cEntity.getPlatformCode() : "");
+                    v.setPlatformOrderCode(Objects.nonNull(soB2cEntity) ? soB2cEntity.getPlatformCode() : "");
                 }
                 v.setSoReturnId(bindReturnInstockViewDTO.getId());
                 v.setSoReturnCode(bindReturnInstockViewDTO.getCode());
