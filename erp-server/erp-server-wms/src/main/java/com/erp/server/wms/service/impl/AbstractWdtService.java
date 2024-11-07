@@ -177,10 +177,10 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         String warehouseId = viewDTO.getWarehouseId();
         String sourceCode = viewDTO.getSourceCode();
         Pair<List<T>, List<T>> pair = handleTransfer(goodsLists, warehouseId);
-        if(pair.getKey().isEmpty()){
-            log.error("查询&同步时没有找到仓位映射, 取消推送: {} {}", midTableId, warehouseId);
-            return;
-        }
+//        if(pair.getKey().isEmpty()){
+//            log.error("查询&同步时没有找到仓位映射, 取消推送: {} {}", midTableId, warehouseId);
+//            return;
+//        }
         boolean removeSuccess = dmpTaskFeign.deletePushTaskBySourceId(midTableId);
         if(! pair.getKey().isEmpty()){
             String codeWithPush = viewDTO.getThirdCode();
@@ -207,12 +207,17 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
      * @author: tanmujin
      */
     private <T extends CommonCreateBillGoodsReq> Pair<List<T>, List<T>> handleTransfer(List<T> goodsLists, String warehouseId) {
-        List<WdtWarehouseLocationMappingEntity> mappingList = locationMappingService.list(new LambdaQueryWrapper<WdtWarehouseLocationMappingEntity>().eq(WdtWarehouseLocationMappingEntity::getSysWarehouseId, warehouseId));
+        List<String> noNeedPushPositionNo = Arrays.asList("B2B-JHZC" , "TC-JHZC");
+    	List<WdtWarehouseLocationMappingEntity> mappingList = locationMappingService.list(new LambdaQueryWrapper<WdtWarehouseLocationMappingEntity>().eq(WdtWarehouseLocationMappingEntity::getSysWarehouseId, warehouseId));
         Map<String, String> wdtLocationMap = mappingList.stream().collect(Collectors.toMap(item -> item.getSysWarehouseId() + "#" + item.getSysWarehouseLocation(), item1 -> item1.getThirdWarehouseLocation()));
         List<T> needPushList = new ArrayList<>();
         List<T> noNeedPushList = new ArrayList<>();
         for (T goods : goodsLists) {
-            String key = warehouseId + "#" + goods.getPositionNo();
+            String positionNo = goods.getPositionNo();
+            if(noNeedPushPositionNo.contains(positionNo)) {
+            	continue;
+            }
+			String key = warehouseId + "#" + positionNo;
             if(wdtLocationMap.containsKey(key)){
                 goods.setPositionNo(wdtLocationMap.get(key));
                 needPushList.add(goods);
@@ -301,12 +306,12 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
 
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_OTHER_OUTSTOCK.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-        	DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_OTHER_OUTSTOCK.getCode())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .eq(CfgSettingEntity::getValue, "1")
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
             dmpSyncTaskDTO.setSourceId(sourceId);
             dmpSyncTaskDTO.setSourceCode(sourceCode);
             dmpSyncTaskDTO.setSourceType(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
@@ -321,21 +326,27 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
 
             return dmpMqFeign.saveTaskList(Collections.singletonList(dmpSyncTaskDTO));
         }
-        
-        if(SyncStatusEnum.NO_NEED_SYNC != syncStatusEnum) {
-        	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
-            wmsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_OTHER_OUTSTOCK.getCode());
-            wmsPushMsgEntity.setSourceId(sourceId);
-            wmsPushMsgEntity.setSourceCode(sourceCode);
-            wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
-            wmsPushMsgEntity.setThirdCode(outerCode);
-            wmsPushMsgService.save(wmsPushMsgEntity);
+
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_OTHER_OUTSTOCK.getCode());
+        wmsPushMsgEntity.setSourceId(sourceId);
+        wmsPushMsgEntity.setSourceCode(sourceCode);
+        wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
+        wmsPushMsgEntity.setThirdCode(outerCode);
+        if (SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
+            List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
+            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).distinct().collect(Collectors.joining(","));
+            wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
+            Map<String, String> pushData = new HashMap<>();
+            pushData.put("remark", String.format("【%s】没有设置旺店通仓位映射", positionNos));
+
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(pushData));
         }
-        
+        wmsPushMsgService.save(wmsPushMsgEntity);
         return new ArrayList<>();
-        
+
     }
 
     private List<DmpPushTaskEntity> generateStockInTask(List<T> combinationList, SyncOperateEnum operateEnum, String outerCode, String thirdWarehouseCode, String sourceCode, String sourceId, SyncStatusEnum syncStatusEnum) {
@@ -372,19 +383,24 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             dmpSyncTaskDTO.setStatus(syncStatusEnum.getCode());
             return dmpMqFeign.saveTaskList(Collections.singletonList(dmpSyncTaskDTO));
         }
-        
-        if(SyncStatusEnum.NO_NEED_SYNC != syncStatusEnum) {
-        	WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
-            wmsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_OTHER_INSTOCK.getCode());
-            wmsPushMsgEntity.setSourceId(sourceId);
-            wmsPushMsgEntity.setSourceCode(sourceCode);
-            wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
-            wmsPushMsgEntity.setThirdCode(outerCode);
-            wmsPushMsgService.save(wmsPushMsgEntity);
+
+        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.WDT_OTHER_INSTOCK.getCode());
+        wmsPushMsgEntity.setSourceId(sourceId);
+        wmsPushMsgEntity.setSourceCode(sourceCode);
+        wmsPushMsgEntity.setSyncOperate(operateEnum.getCode());
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(request));
+        wmsPushMsgEntity.setThirdCode(outerCode);
+        if(SyncStatusEnum.NO_NEED_SYNC == syncStatusEnum) {
+            List<CommonCreateBillGoodsReq> goodsList = (List<CommonCreateBillGoodsReq>) combinationList;
+            String positionNos = goodsList.stream().filter(v -> StringUtils.isNotBlank(v.getPositionNo())).map(CommonCreateBillGoodsReq::getPositionNo).distinct().collect(Collectors.joining(","));
+            wmsPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
+            Map<String, String> pushData = new HashMap<>();
+            pushData.put("remark", String.format("【%s】没有设置旺店通仓位映射",positionNos));
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(pushData));
         }
-        
+        wmsPushMsgService.save(wmsPushMsgEntity);
         return new ArrayList<>();
     }
 }

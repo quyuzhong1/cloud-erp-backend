@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.sdk.tms.track123.dto.PlatformTrackDetail;
@@ -91,4 +92,21 @@ public interface TrackDataConverter {
         }
         return LogisticTrackStatusEnum.NOT_FIND.getCode();
     }
+
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "updateUserName", ignore = true)
+    @Mapping(target = "updateUserId", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "transportType", ignore = true)
+    @Mapping(target = "trackTime", source = "eventTime")
+    @Mapping(target = "trackNo", ignore = true)
+    @Mapping(target = "status", source = "transitSubStatus",qualifiedByName = "convertTrackStatus")
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createUserName", ignore = true)
+    @Mapping(target = "createUserId", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "content", source = "eventDetail")
+    LogisticsTrackEntity convertWebHookToEntity(LogisticsTrackDTO.TrackingDetail trackingDetail);
+    List<LogisticsTrackEntity> convertWebHookToEntity(List<LogisticsTrackDTO.TrackingDetail> trackingDetails);
 }

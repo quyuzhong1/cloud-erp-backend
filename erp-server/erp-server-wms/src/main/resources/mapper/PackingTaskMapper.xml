@@ -190,9 +190,10 @@
         ORDER BY wc.box_no
     </select>
     <select id="listPackingDetailBySkuId" resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailDTO">
-        SELECT
+        SELECT DISTINCT
             wc.id,
             wc.packing_task_id as taskId,
+            pt.source_code,
             wc.box_no,
             concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
             wcs.package_weight,
@@ -202,14 +203,15 @@
             wc.packing_user_name,
             wcs.measure_source,
             wc.error_msg,
-        pt.source_id ,
+            pt.source_id ,
             wcs.box_length as length,
             wcs.box_width as width,
             wcs.box_height as height,
             wcd.sku_id,
             wcd.sku_no,
         wcd.pack_qty,
-            concat(wcd.sku_no,'*',wcd.pack_qty) AS sku,
+        wcd.fn_sku,
+        wcd.sku_no AS sku,
         fsp.box_no  as outCode
         FROM wms_carton_detail wcd
         INNER JOIN wms_carton wc ON wc.id = wcd.main_id AND wc.is_deleted = FALSE

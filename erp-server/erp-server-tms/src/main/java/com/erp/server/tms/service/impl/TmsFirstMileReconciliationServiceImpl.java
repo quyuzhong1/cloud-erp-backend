@@ -750,4 +750,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         }
         return baseMapper.listReconciliationAndCostByBillIds(ids);
     }
+
+    @Override
+    public List<TmsFirstMileReconciliationEntity> listbyCodes(List<String> codeList) {
+        if (CollectionUtils.isEmpty(codeList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(TmsFirstMileReconciliationEntity::getCode,codeList).list();
+    }
 }

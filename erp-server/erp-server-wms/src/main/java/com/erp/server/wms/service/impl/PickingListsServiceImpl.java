@@ -177,6 +177,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setMainId(entity.getId());
                 detail.setSkuId(resultDTO.getSkuId());
                 detail.setSkuNo(resultDTO.getSkuNo());
+                detail.setPlatformSkuNo(resultDTO.getPlatformSkuNo());
                 detail.setQty(resultDTO.getQuantity());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setWarehouseLocation(resultDTO.getWarehouseLocation());
@@ -200,7 +201,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     /**
      * 处理组合sku
      */
-    private void generatePicking(PickingListsDTO.AddDTO dto) {
+    @Override
+    public void generatePicking(PickingListsDTO.AddDTO dto) {
         List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
@@ -560,6 +562,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
             // 反写要货申请的拣货数量
             requisitionApplicationService.writeBackData(sourceDetailIds, Boolean.TRUE);
+
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             soDeliveryNoticeService.writeBackData(sourceDetailIds);
         }

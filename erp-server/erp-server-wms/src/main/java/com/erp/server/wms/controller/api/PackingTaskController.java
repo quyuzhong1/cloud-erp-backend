@@ -140,7 +140,7 @@ public class PackingTaskController extends BaseController {
     public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
         dto.setOperation("装箱操作");
         dto.setContent("新增装箱");
-        Boolean flag = packingTaskService.packingSave(dto, Boolean.TRUE);
+        Boolean flag = packingTaskService.packingSave(dto, Boolean.FALSE);
         if(flag){
             PackingTaskEntity packingTaskEntity = packingTaskService.getById(dto.getTaskId());
             //装箱完成

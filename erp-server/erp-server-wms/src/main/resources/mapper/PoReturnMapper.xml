@@ -377,7 +377,7 @@
         pid.currency_symbol,
         pi.approve_time,
         po.purchase_org_id,
-        ROW_NUMBER ( ) OVER ( PARTITION BY pi.supplier_id, pid.sku_id, po.purchase_org_id ORDER BY pi.approve_time DESC ) AS row_num
+        ROW_NUMBER ( ) OVER ( PARTITION BY pi.supplier_id, pid.sku_id, po.purchase_org_id ORDER BY pi.approve_time DESC,pi.id DESC ) AS row_num
         FROM
         po_instock pi
         LEFT JOIN po_instock_detail pid ON pi.ID = pid.main_id
@@ -385,7 +385,7 @@
         FALSE INNER JOIN purchase_order po ON pi.purchase_order_id = po.ID
         AND po."type" != 'CGDD06-SYS'
         <where>
-            1=1
+            1=1 and pid.tax_price != 0
             <if test="params.skuIdList != null and params.skuIdList.size > 0">
                 and pid.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">

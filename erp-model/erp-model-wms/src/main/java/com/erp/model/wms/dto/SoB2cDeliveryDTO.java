@@ -191,6 +191,8 @@ public class SoB2cDeliveryDTO implements Serializable {
 
         private String sourceSkuId;
 
+        private String sourceSkuNo;
+
         private String warehouseId;
 
         @Override

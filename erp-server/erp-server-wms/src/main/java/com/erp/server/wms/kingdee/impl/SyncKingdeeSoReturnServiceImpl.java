@@ -165,7 +165,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
           dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
           dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
           dmpSyncTaskDTO.setSyncOperate(operate);
-          dmpSyncTaskDTO.setParentId(entity.getSoId());
+          if(!"B2C".equals(entity.getType())) {
+        	  dmpSyncTaskDTO.setParentId(entity.getSoId());
+          }
           return dmpMqFeign.saveTask(dmpSyncTaskDTO);
         }
 
@@ -176,7 +178,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        wmsPushMsgEntity.setParentId(entity.getSoId());
+        if(!"B2C".equals(entity.getType())) {
+        	wmsPushMsgEntity.setParentId(entity.getSoId());
+        }
 
         wmsPushMsgService.save(wmsPushMsgEntity);
 
@@ -204,7 +208,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
         //退货单
-        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+        SoReturnEntity soReturnEntity = StringUtils.isNotBlank(entity.getSourceId())?soReturnFeign.getSoReturnById(entity.getSourceId()):null;
 
 
 

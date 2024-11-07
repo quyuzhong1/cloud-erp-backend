@@ -1,12 +1,15 @@
 package com.erp.server.dmp.service;
+import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.DmpOutputTaskDTO;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 
 import java.util.List;
 
@@ -119,4 +122,12 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @param list
      */
     List<DmpOutputTaskRecordEntity> erpQuerySync(DmpCfgOutputEntity dmpCfgOutputEntity , List<DmpOutputTaskRecordEntity> list);
+    /**
+     * 获取推送任务数据
+     * @author will
+     * @date 2024/10/22 9:07
+     * @param oneDTO
+     * @return SyncInfoDTO
+     */
+    DmpPushTaskDTO.SyncInfoDTO getErrorData(DmpSyncTaskDTO.OneDTO oneDTO);
 }

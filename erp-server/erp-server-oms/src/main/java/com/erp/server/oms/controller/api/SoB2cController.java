@@ -33,6 +33,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/soB2c")
+@Validated
 public class SoB2cController extends BaseController {
 
     @Autowired
@@ -1352,5 +1354,22 @@ public class SoB2cController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 下推销售退货单View
+     * @return
+     */
+    @PostMapping("/generateSoB2cReturnView")
+    public ApiResult<List<SoB2cDTO.GenerateSoB2cReturnViewDTO>> generateSoB2cReturnView(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        return success(soB2cService.generateSoB2cReturnView(idDTO.getIds()));
+    }
+    /**
+     * 下推销售退货单
+     * @return
+     */
+    @PostMapping("/generateSoB2cReturn")
+    public ApiResult<Boolean> generateSoB2cReturn(@RequestBody @Valid List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list) {
+        return success(soB2cService.generateSoB2cReturn(list));
     }
 }

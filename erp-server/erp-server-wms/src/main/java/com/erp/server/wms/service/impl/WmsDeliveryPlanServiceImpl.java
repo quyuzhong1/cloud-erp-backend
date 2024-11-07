@@ -115,6 +115,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
+    @Resource
+    private FbaInventoryService fbaInventoryService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -655,6 +658,11 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 detailAddList.add(detailAddDto);
             }
             addDTO.setDetailList(detailAddList);
+
+            // 检查和刷新fnSku
+            if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(addDTO.getType())){
+                fbaInventoryService.checkAndUpdateFnsku(addDTO);
+            }
 
             BaseResultDTO.AddDTO add = requisitionApplicationService.add(addDTO);
             if (isSubmit) {

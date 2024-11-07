@@ -18,6 +18,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 
 import com.common.business.dto.AdvanceQueryDTO;
 
@@ -212,7 +213,7 @@ public class PilotApplicationDTO implements Serializable {
         private String approveUserName;
 
         /**
-        * 审核时间
+        * 最新审核时间
         */
         private LocalDateTime approveTime;
 
@@ -501,6 +502,11 @@ public class PilotApplicationDTO implements Serializable {
          * 计划交期
          */
         private LocalDate planDeliveryDate;
+        /**
+         * 备注
+         */
+        @Size(max = 255,message = "备注不能大于255字符")
+        private String remark;
     }
 
     /**
@@ -722,5 +728,9 @@ public class PilotApplicationDTO implements Serializable {
          * 操作人
          */
         private String userName;
+        /**
+         * 审批状态
+         */
+        private ApproveStatusEnum approveStatus;
     }
 }

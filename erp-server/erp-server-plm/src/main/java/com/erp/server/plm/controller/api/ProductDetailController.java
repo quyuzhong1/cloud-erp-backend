@@ -1279,4 +1279,14 @@ public class ProductDetailController extends BaseController {
         productDetailService.initProductCustom(skuIds);
         return success();
     }
+
+    /**
+     * 打印EAN
+     * @param printEanDTO 打印参数
+     * @param response    响应
+     */
+    @PostMapping("/printEan")
+    public void printEan(@RequestBody PrintEanDTO printEanDTO, HttpServletResponse response) {
+        productDetailService.printEan(printEanDTO, response);
+    }
 }

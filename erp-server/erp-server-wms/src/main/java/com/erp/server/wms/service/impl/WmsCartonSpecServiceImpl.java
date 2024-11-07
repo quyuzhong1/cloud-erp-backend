@@ -369,7 +369,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
             List<WmsCartonEntity> notExistList = lastCartionList.stream().filter(e -> !newCartonIds.contains(e.getId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(notExistList)){
                 List<String> boxNoList = notExistList.stream().filter(e -> Objects.nonNull(e.getBoxNo())).map(e -> String.valueOf(e.getBoxNo())).distinct().collect(Collectors.toList());
-                throw new ServiceException(StrUtil.format("已下推的箱号【】不允许再修改", String.join(",",boxNoList)));
+                throw new ServiceException(StrUtil.format("已下推的箱号【{}】前箱号【{}】不允许再修改", maxWmsCartonEntity.getBoxNo(),String.join(",",boxNoList)));
             }
             List<WmsCartonSpecEntity> cartonSpecEntityList = this.listByMainIds(Collections.singletonList(taskId));
             //比较明细
@@ -388,7 +388,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 }
                 List<WmsCartonDetailEntity> cartonDetailEntityList = oldDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(cartonId)).collect(Collectors.toList());
                 //对比数据
-                compareSpec(specEntity, addDTO);
+//                compareSpec(specEntity, addDTO);
                 compareCarton(wmsCartonEntity,addDTO);
                 compareCartonDetail(cartonDetailEntityList, addDTO.getDetailList());
             }

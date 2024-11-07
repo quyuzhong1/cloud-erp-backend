@@ -72,4 +72,12 @@ public interface VirtualWarehouseRelationService extends SuperService<VirtualWar
      * @return List<VirtualWarehouseRelationEntity>
      */
     List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList,List<String> virtualWarehouseIdList);
+    /**
+     * 是否存在虚拟仓
+     * @author will
+     * @date 2024/10/25 11:55
+     * @param paramList
+     * @return List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO>
+     */
+    List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO> isExistVirtualWarehouse(List<VirtualWarehouseRelationDTO.IsExistVirtualDTO> paramList);
 }

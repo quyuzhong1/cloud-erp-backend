@@ -1460,7 +1460,7 @@ public class QcInfoDTO implements Serializable {
         private BigDecimal boxHeight;
 
         /**
-         * 整单数量
+         * 整箱数量
          */
         private Integer boxQty;
 

@@ -222,7 +222,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @author yl
      * @date 2023-05-18 14:12
      */
-    SoInfoDTO.ExportPdfDTO exportSoContractPdf(String id);
+    SoInfoDTO.ExportPdfDTO listSoContractPdf(String id);
+    /**
+     * 导出销售合同pdf
+     * @author will
+     * @date 2024/11/4 16:28
+     * @param id
+     * @param response
+     */
+    void exportSoContractPdf(String id,HttpServletResponse response);
 
     /**
      * @param ids

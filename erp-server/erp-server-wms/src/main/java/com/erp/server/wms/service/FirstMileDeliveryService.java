@@ -353,4 +353,10 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     BatchResultDTO updateTransferWarehouse(FirstMileDeliveryEntity entity, List<String> changeIds);
+    /**业务单号查询发货单号
+     *
+     * @param businessCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(List<String> businessCodes);
 }

@@ -918,6 +918,10 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private String productName;
         /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
          * 要货数量
          */
         private Integer requisitionQty;
@@ -1455,6 +1459,34 @@ public class RequisitionApplicationDTO implements Serializable {
         private Boolean isFlag;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExcelImportDTO {
+        /**
+         * 导入文件
+         */
+        @NotNull(message = "导入文件不能为空")
+        private MultipartFile excelFile;
+        /**
+         * 明细
+         */
+        @Valid
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
+
     /**
      * 打印fnsku的详情
      */
@@ -1516,33 +1548,5 @@ public class RequisitionApplicationDTO implements Serializable {
          * 拣货数量
          */
         private Integer pickingQty = 0;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class ExcelImportDTO {
-        /**
-         * 导入文件
-         */
-        @NotNull(message = "导入文件不能为空")
-        private MultipartFile excelFile;
-        /**
-         * 明细
-         */
-        @Valid
-        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
-    }
-    @Data
-    @NoArgsConstructor
-    public static class ImportDTO {
-        /**
-         * 成功返回数据
-         */
-        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> successList;
-
-        /**
-         * 错误url
-         */
-        private String errorUrl;
     }
 }

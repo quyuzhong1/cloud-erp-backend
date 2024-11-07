@@ -1789,6 +1789,11 @@ public class SoInfoDTO implements Serializable {
         private String syncKingdeeId;
 
         /**
+         * 客户关联的销售员
+         */
+        private String customerSellerId;
+
+        /**
          * 纳税登记号
          */
         private String taxRegisterCode;
@@ -2024,6 +2029,10 @@ public class SoInfoDTO implements Serializable {
          * sku编号
          */
         private String skuNo;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
 
         /**
          * 产品名称

@@ -1839,6 +1839,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private void startProcess(List<TransferInfoEntity> list) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+        List<String> mainIdList = list.stream()
+                .map(TransferInfoEntity::getId)
+                .collect(Collectors.toList());
+        Map<String, List<TransferInfoDetailDTO.ApproveDTO>> approveDTOS = transferInfoDetailService.listApproveByMainIds(mainIdList, Boolean.TRUE);
         list.forEach(obj -> {
             ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
             startDTO.setBusinessId(obj.getId());
@@ -1846,7 +1850,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_INFO.getCode());
             startDTO.setBusinessName(obj.getCode());
             startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            Map<String, Object> approveMap = BeanUtil.beanToMap(obj);
+            approveMap.put("detailList", approveDTOS.get(obj.getId()));
+            startDTO.setVariablesMap(approveMap);
             resultList.add(startDTO);
         });
         ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);

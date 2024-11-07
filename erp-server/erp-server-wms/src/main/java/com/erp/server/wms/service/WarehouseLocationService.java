@@ -9,6 +9,7 @@ import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -330,5 +331,8 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * 导出库位
      */
     PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto);
+
     WarehouseLocationEntity getWarehouseLocation(String warehouseId, String warehouseLocation, WarehouseLocationTypeEnum type);
+
+    WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo);
 }

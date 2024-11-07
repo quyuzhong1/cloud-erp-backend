@@ -593,6 +593,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String skuNo;
         /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+        /**
          * skuId
          */
         private String skuId;

@@ -440,6 +440,7 @@ public class PickingListsDTO {
     public static class DetailPickDTO{
         private String skuId;
         private String skuNo;
+        private String fnSku;
         /**
          * 数量
          */

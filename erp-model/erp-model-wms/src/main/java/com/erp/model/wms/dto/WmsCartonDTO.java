@@ -134,6 +134,10 @@ public class WmsCartonDTO {
          * 产品信息(输入SKU/FNSKU/EAN码)
          */
         private String searchKey;
+        /**
+         * 箱子ID
+         */
+        private String cartonId;
     }
     /**
      * 装箱详情

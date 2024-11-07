@@ -88,6 +88,7 @@
             pl.source_id,
             pd.sku_id,
             pd.sku_no,
+            pd.platform_sku_no as fnSku,
             SUM(pd.qty) as qty,
             SUM(pd.picked_qty) as pickedQty
         FROM picking_lists pl
@@ -99,7 +100,8 @@
             </foreach>
         GROUP BY pl.source_id,
                  pd.sku_id,
-                 pd.sku_no
+                 pd.sku_no,
+                 pd.platform_sku_no
     </select>
     <select id="listRequitDetailBySourceIds"
             resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$DetailPickDTO">
@@ -107,6 +109,7 @@
             fmd.id as sourceId,
             rad.sku_id,
             rad.sku_no,
+            rad.platform_fn_sku as fnSku,
             SUM(rad.picking_qty) as qty
         FROM first_mile_delivery fmd
         LEFT JOIN requisition_application_detail rad ON fmd.source_id = rad.main_id  AND rad.is_deleted = FALSE
@@ -117,7 +120,8 @@
             </foreach>
         GROUP BY fmd.id,
         rad.sku_id,
-        rad.sku_no
+        rad.sku_no,
+        rad.platform_fn_sku
     </select>
 
 </mapper>

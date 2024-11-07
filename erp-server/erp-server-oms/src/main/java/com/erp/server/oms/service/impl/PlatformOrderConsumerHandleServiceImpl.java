@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -25,6 +26,8 @@ import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.oms.rocketmq.consumer.NewPlatformRefundOrderConsumerService;
+import com.erp.server.oms.rocketmq.consumer.NewPlatformReturnOrderConsumerService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -84,6 +87,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private OperateLogService operateLogService;
     @Resource
     private SkuMappingService skuMappingService;
+    @Resource
+    private NewPlatformReturnOrderConsumerService newPlatformReturnOrderConsumerService;
+    @Resource
+    private NewPlatformRefundOrderConsumerService newPlatformRefundOrderConsumerService;
     @Lazy
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
@@ -173,6 +180,19 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             soB2cService.syncOrderToDmp(mainEntity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
 
+        // 退货单处理
+        if (CollectionUtils.isNotEmpty(dto.getReturnDTOList())){
+            dto.getReturnDTOList().forEach(e->{
+                newPlatformReturnOrderConsumerService.handle(JSON.toJSONString(e));
+            });
+        }
+
+        // 退款单处理
+        if (CollectionUtils.isNotEmpty(dto.getRefundDTOList())){
+            dto.getRefundDTOList().forEach(e->{
+                newPlatformRefundOrderConsumerService.handle(JSON.toJSONString(e));
+            });
+        }
     }
 
 
@@ -234,6 +254,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.convertPlatformSpuList();
         }

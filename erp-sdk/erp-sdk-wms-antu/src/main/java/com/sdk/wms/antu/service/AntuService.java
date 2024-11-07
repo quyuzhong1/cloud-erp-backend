@@ -8,6 +8,7 @@ import com.sdk.wms.antu.dto.response.*;
 import com.sdk.wms.antu.utils.AntuUtils;
 import io.seata.common.util.StringUtils;
 import jodd.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 /**
  * @author liuruipeng
  */
+@Slf4j
 @Component
 @Validated
 public class AntuService {
@@ -169,6 +171,15 @@ public class AntuService {
         paramsMap.put("receiving_code",receivingCode);
         String response = AntuUtils.callService(AntuConstants.METHOD_CANCEL_INBOUND,paramsMap);
         return JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+    }
+
+    /**
+     * 获取退货单
+     */
+    public AntuResponse<List<AntuReturnResp>> getReturnInstock(@Valid AntuGetReturnReq antuGetReturnReq){
+        String response = AntuUtils.callService(AntuConstants.GET_SPECIAL_ORDERS_LIST,antuGetReturnReq);
+        log.debug("安兔退货入库单:{}", response);
+        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuReturnResp>>>() {}.getType());
     }
 
 }

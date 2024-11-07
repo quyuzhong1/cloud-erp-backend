@@ -25,8 +25,10 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelExportFillCellMergeStrategy;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -50,6 +52,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
 import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
@@ -375,7 +378,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean handleSave(List<RequisitionApplicationDTO.HandleListDTO> list) {
-        RequisitionApplicationEntity requisitionApplication = getById(list.get(0).getSourceId());
+        List<String> raIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(raIds);
+
         //根据调出调入仓id查询仓库信息
         List<String> warehouseIds = list.stream().map(req -> req.getFromWarehouseId()).collect(Collectors.toList());
         List<String> toWarehouseIds = list.stream().map(req -> req.getToWarehouseId()).collect(Collectors.toList());
@@ -394,8 +399,24 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
+        //查询虚拟仓
+        List<VirtualWarehouseRelationDTO.IsExistVirtualDTO> paramList = list.stream().map(obj -> new VirtualWarehouseRelationDTO.IsExistVirtualDTO(requisitionApplicationEntities.stream().filter(e -> StrUtil.equals(obj.getSourceId(), e.getId())).map(RequisitionApplicationEntity::getChannelId).findFirst().orElse(""), obj.getFromWarehouseId())).collect(Collectors.toList());
+        List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO> existVirtualWarehouseList = virtualWarehouseRelationService.isExistVirtualWarehouse(paramList);
+
         List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
         for (RequisitionApplicationDTO.HandleListDTO handleListDTO : list) {
+            //渠道id
+            String channelId = requisitionApplicationEntities.stream().filter(obj -> StrUtil.equals(obj.getId(), handleListDTO.getSourceId()))
+                    .map(RequisitionApplicationEntity::getChannelId).findFirst().orElse("");
+
+            //是否存在虚拟仓
+            VirtualWarehouseRelationDTO.IsExistVirtualResultDTO isExistVirtualResultDTO = existVirtualWarehouseList.stream()
+                    .filter(obj -> StrUtil.equals(obj.getWarehouseId(), handleListDTO.getFromWarehouseId()) && (StrUtil.equals(obj.getRelationId(),channelId)))
+                    .findFirst().orElse(null);
+            if (isExistVirtualResultDTO.getIsExistVirtual() && StrUtil.isBlank(handleListDTO.getFromVirtualWarehouseId())) {
+                throw new ServiceException("实体仓有关联虚拟仓，需要编辑保存虚拟仓后处理");
+            }
+
             Integer approveQty = handleListDTO.getApproveQty();
 
             //虚拟仓数量
@@ -437,14 +458,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
 
         //修改处理信息
-        List<String> raIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         Boolean flag = updateHandleDate(raIds, RequisitionApplicationStatusEnum.HANDLE_ING.getStatus());
 
         //保存处理选择的调出,调入,批准数量等信息
         updateHandleDetailDate(list, warehouseList);
 
         //新增日志
-        List<RequisitionApplicationEntity> requisitionApplicationEntities = this.listByIds(raIds);
+
         for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
             String msg = StrUtil.format("用户【{}】处理了一个单号为【{}】的【{}】单", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请");
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION.getCode(), entity.getId(), "处理保存");
@@ -1203,9 +1223,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                         .reduce(0, Math::addExact);
                 detailEntity.setPickingQty(qty);
             }
-            if (detailEntity.getApproveQty() < detailEntity.getPickingQty()) {
-                throw new ServiceException(ApiError.ERROR_99133, detailEntity.getSkuNo());
-            }
         }
         requisitionApplicationDetailService.updateBatchById(detailEntities);
         Map<String, Integer> qtyMap = detailEntities.stream().collect(Collectors.toMap(v->v.getId(),v->v.getPickingQty()));
@@ -1293,13 +1310,18 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (CollectionUtils.isEmpty(detailList)) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
         }
+        detailList = detailList.stream().filter(obj -> Arrays.asList("1849287474372714497","1849287474376908802","1849287474376908803","1849287474385297410","1849287474385297411","1849287474385297412").contains(obj.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailList)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        }
+        handleApplication(entity,detailList);
         //处理申请单
         if (isFlag) {
-            handleApplication(entity,detailList);
             handleTransferInfo(id,detailList);
+        } else {
+            //处理发货单生成直接调拨单库存
+            handleFirstMileTransferInfo(entity,detailList);
         }
-        //处理发货单生成直接调拨单库存
-        handleFirstMileTransferInfo(entity,detailList);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
@@ -1605,11 +1627,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             outInStockDTO.setQty(detailEntity.getPickingQty());
             allocationParamList.add(outInStockDTO);
         }
-        //添加可用
+       /* //添加可用
         VirtualInventoryStockDTO.StockParamDTO usableDTO = new VirtualInventoryStockDTO.StockParamDTO();
         usableDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode());
         usableDTO.setParamList(allocationParamList);
-        virtualInventoryTransCoreService.approve(usableDTO);
+        virtualInventoryTransCoreService.approve(usableDTO);*/
 
         //转冻结
         VirtualInventoryStockDTO.StockParamDTO frozenDTO = new VirtualInventoryStockDTO.StockParamDTO();
@@ -1657,7 +1679,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 }
                 RequisitionApplicationDetailEntity applicationDetailEntity = detailList.stream().filter(obj -> StrUtil.equals(obj.getId(), firstMileDeliveryDetailEntity.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(applicationDetailEntity)) {
-                    throw new ServiceException("未找到要货申请明细");
+                    continue;
                 }
                 VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
                 outInStockDTO.setBillDate(LocalDate.now());
@@ -1903,6 +1925,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             detail.setWarehouseName(detailEntity.getToWarehouseName());
             detail.setSkuId(detailEntity.getSkuId());
             detail.setSkuNo(detailEntity.getSkuNo());
+            detail.setPlatformSkuNo(detailEntity.getPlatformFnSku());
             detail.setQty(detailEntity.getApproveQty() - detailEntity.getPickingQty());
             detail.setSourceDetailId(detailEntity.getId());
             detail.setBomVersion(detailEntity.getBomVersion());
@@ -1975,23 +1998,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 //移动数量
                 Integer qty = entry.getValue();
                 //取货仓位--根据skuid和仓库id获取
-                List<InventoryEntity> inventoryList = inventoryService.lambdaQuery()
-                        .eq(InventoryEntity::getWarehouseId, warehouseId)
-                        .eq(InventoryEntity::getSkuNo, skuNo)
-                        .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode())
-                        .gt(InventoryEntity::getQty, 0)
-                        .last("order by qty")
-                        .list();
-                if(CollectionUtils.isNotEmpty(inventoryList)){
-                    InventoryEntity inventoryEntity = inventoryList.get(0);
-                    outWarehouseLocation = inventoryEntity.getWarehouseLocation();
-                    WarehouseLocationEntity entity = warehouseLocationService.getOne(Wrappers.<WarehouseLocationEntity>lambdaQuery()
-                            .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
-                            .eq(WarehouseLocationEntity::getCode, outWarehouseLocation)
-                    );
-                    if(null != entity){
-                        outWarehouseLocationName = entity.getName();
-                    }
+                WarehouseLocationDTO.WareInventoryQtyDTO oneWareInventoryQty = warehouseLocationService.getOneWareInventoryQty(warehouseId, skuNo);
+                if(null != oneWareInventoryQty){
+                    outWarehouseLocation = oneWareInventoryQty.getWarehouseLocationCode();
+                    outWarehouseLocationName = oneWareInventoryQty.getWarehouseLocationName();
                 }
                 //上架仓位
                 SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -1999,6 +2009,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     skuId = skuVO.getSkuId();
                     productName = skuVO.getSkuName();
                     inWarehouseLocation = skuVO.getWarehouseLocationLarge();
+                    if(StringUtils.isNotBlank(inWarehouseLocation) && inWarehouseLocation.contains(",")){
+                        inWarehouseLocation = inWarehouseLocation.split(",")[0];
+                    }
                 }
                 if(StringUtils.isBlank(inWarehouseLocation) && CollectionUtils.isNotEmpty(cfgRulePickingInventoryDTOList)){
                     //推荐仓位（大货区） 不存在
@@ -2508,12 +2521,63 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return lambdaQuery().in(RequisitionApplicationEntity::getCode,codes).list();
     }
 
+    @Override
+    public void downloadPackingTemplate(HttpServletResponse response, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailDTOS) {
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/requisitionApplicationCartonTemplate.xlsx";
+        String name = "下载货件装箱信息模板导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(detailDTOS, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    @Override
+    public RequisitionApplicationDTO.ImportDTO importFile(MultipartFile excelFile, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS, HttpServletResponse response) {
+        RequisitionApplicationDetailExcelListener excelListenerUtil = new RequisitionApplicationDetailExcelListener(fbaBindShipmentViewDTOS);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), RequisitionApplicationDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> excelDateList = excelListenerUtil.getSuccessList();
+//        if (CollectionUtils.isEmpty(excelDateList)) {
+//            throw new ServiceException(ApiError.ERROR_95123);
+//        } else if (excelDateList.size() > 5000) {
+//            throw new ServiceException(ApiError.ERROR_95123);
+//        }
+        List<RequisitionApplicationDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
+        RequisitionApplicationDTO.ImportDTO importDTO = new RequisitionApplicationDTO.ImportDTO();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "要货申请导入装箱错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, RequisitionApplicationDetailExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importDTO.setSuccessList(excelDateList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
+    }
+
 
     @Override
     public List<RequisitionApplicationDTO.PrintFnskuDetailDTO> printFnskuPreview(BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> detailIds = dto.getIds();
+        if(CollectionUtils.isEmpty(detailIds)){
+            return Collections.emptyList();
+        }
         //查询要货申请列表
-        List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList = this.baseMapper.listPrintPreviewByIds(ids);
+        List<RequisitionApplicationDTO.PrintFnskuDetailDTO> detailList = this.baseMapper.listPrintPreviewByIds(detailIds);
         if(CollectionUtils.isEmpty(detailList)){
             return Collections.emptyList();
         }
@@ -2561,61 +2625,5 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             result = map.values().stream().collect(Collectors.toList());
         }
         return result;
-    }
-
-    @Override
-    public void downloadPackingTemplate(HttpServletResponse response) {
-        String path = "excel/requisitionApplicationCartonTemplate.xlsx";
-        String excelName = "template.xlsx";
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
-            OutputStream output = response.getOutputStream();
-            response.reset();
-            // 设置文件头
-            response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
-            response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
-        } catch (Exception e) {
-            log.error("requisition downloadTemplate  出错了 e==", e);
-            throw new ServiceException(ApiError.ERROR_95131);
-        }
-    }
-
-    @Override
-    public RequisitionApplicationDTO.ImportDTO importFile(MultipartFile excelFile, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS, HttpServletResponse response) {
-        RequisitionApplicationDetailExcelListener excelListenerUtil = new RequisitionApplicationDetailExcelListener(fbaBindShipmentViewDTOS);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), RequisitionApplicationDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-        } catch (IOException e) {
-            log.error("导入错误！", e);
-            throw new ServiceException(ApiError.ERROR_95124);
-        } catch (ExcelCommonException e) {
-            log.error("导入格式错误！", e);
-            throw new ServiceException(ApiError.ERROR_1016);
-        }
-        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
-        List<RequisitionApplicationDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
-        RequisitionApplicationDTO.ImportDTO importDTO = new RequisitionApplicationDTO.ImportDTO();
-        String url = "";
-        if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "要货申请导入装箱错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, RequisitionApplicationDetailExcelDTO.class);
-            if (!file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
-            }
-        }
-        importDTO.setSuccessList(excelDateList);
-        importDTO.setErrorUrl(url);
-        return importDTO;
     }
 }

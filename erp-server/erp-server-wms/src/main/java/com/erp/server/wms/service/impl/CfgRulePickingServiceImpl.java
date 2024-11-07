@@ -63,9 +63,10 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     private WarehouseLocationService warehouseLocationService;
     @Resource
     private InventoryService inventoryService;
-
     @Resource
     private CfgConditionService cfgConditionService;
+    @Resource
+    private PickingListsService pickingListsService;
 
     @Override
     public PagingVO<CfgRulePickingDTO.PagingView> paging(PagingDTO<CfgRulePickingDTO.PagingParam> dto) {
@@ -196,6 +197,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
                 LocationInventoryResultDTO inventoryResultDTO = new LocationInventoryResultDTO();
                 inventoryResultDTO.setSkuId(detail.getSkuId());
                 inventoryResultDTO.setSkuNo(detail.getSkuNo());
+                inventoryResultDTO.setPlatformSkuNo(detail.getPlatformSkuNo());
                 WarehouseLocationEntity entity = locationList.stream().filter(location -> location.getCode().equals(inventory.getWarehouseLocation()))
                         .findFirst().orElse(new WarehouseLocationEntity());
                 inventoryResultDTO.setWarehouseId(inventory.getWarehouseId());
@@ -234,8 +236,9 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
      */
     @Override
     public CfgRulePickingDTO.CfgExecutionDataDTO getRuleExecutionData(PickingListsDTO.AddDTO dto){
+        pickingListsService.generatePicking(dto);
         List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
-                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
+                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(),v.getPlatformSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
         executionData.setBillType(dto.getBillType());
         executionData.setCustomerId(dto.getCustomerId());

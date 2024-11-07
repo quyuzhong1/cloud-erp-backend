@@ -168,4 +168,38 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
             ${params.permissionSql}
         </if>
     </select>
+
+    <!-- -->
+    <select id="getErrorData" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$SyncInfoDTO">
+        SELECT
+            t.id,
+            l."name" AS sourcePlatformName,
+            i.name AS targetPlatformName,
+            k.name AS sourceTypeName,
+            t.source_code AS sourceCode,
+            t.status AS status,
+            t.create_time,
+            t.update_time AS lastSyncTime,
+            t.response_data AS returnMsg,
+            t.is_need_sync AS isNeedSync
+        FROM dmp_output_task_record t
+                 LEFT JOIN dmp_output_task g ON t.main_id = g.id
+                 LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+                 LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+                 LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+                 LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+                 LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+                 LEFT JOIN dmp_push_msg m ON t.data_id = m.id
+        WHERE  t.is_deleted = false and t.status in('cosumererror','mqerror','error')
+        <if test="params.sourceId != null and params.sourceId != ''">
+            and m.source_id = #{params.sourceId}
+        </if>
+        <if test="params.sourcePlatformName != null and params.sourcePlatformName != ''">
+            and l."name" = #{params.sourcePlatformName}
+        </if>
+        <if test="params.targetPlatformName != null and params.targetPlatformName != ''">
+            and i.name = #{params.targetPlatformName}
+        </if>
+        order by t.id asc limit 1
+    </select>
 </mapper>

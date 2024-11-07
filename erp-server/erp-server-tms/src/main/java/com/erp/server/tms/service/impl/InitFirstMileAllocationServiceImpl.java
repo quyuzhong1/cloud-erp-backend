@@ -98,6 +98,9 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         // 数据处理
         handleData(initFirstMileAllocationEntity);
         log.info("开始新增期初头程分摊");
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QCFT);
+        initFirstMileAllocationEntity.setCode(code);
         boolean save = super.save(initFirstMileAllocationEntity);
         if (!save) {
             throw new ServiceException("期初头程分摊保存失败");
@@ -472,11 +475,6 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
      * 新增修改处理数据
      */
     private void handleData(InitFirstMileAllocationEntity initFirstMileAllocationEntity) {
-        // 生成单号
-        if (StrUtil.isBlank(initFirstMileAllocationEntity.getCode())) {
-            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QCFT);
-            initFirstMileAllocationEntity.setCode(code);
-        }
         if (StrUtil.isBlank(initFirstMileAllocationEntity.getStatus())) {
             initFirstMileAllocationEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
         }

@@ -33,6 +33,8 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -138,6 +140,15 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     @Override
     public List<TransferInfoDetailEntity> listSourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listSourceDetailIds(sourceDetailIds);
+    }
+
+
+    @Override
+    public Map<String, List<TransferInfoDetailDTO.ApproveDTO>> listApproveByMainIds(List<String> mainIds, Boolean isApprove) {
+        List<TransferInfoDetailDTO.ApproveDTO> approveDTOS = baseMapper.listApproveByMainIds(mainIds, isApprove);
+        return approveDTOS.stream()
+                .collect(Collectors.groupingBy(TransferInfoDetailDTO.ApproveDTO::getMainId));
+
     }
 
     /**

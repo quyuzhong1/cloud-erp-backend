@@ -1,6 +1,9 @@
 package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,8 +12,24 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class SoReturnInstockDetailDTO {
+
+    /**
+     * 添加
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ClearSoReturnAndUpdateDTO {
+
+        private List<String> clearSoReturnDetailIds;
+
+        private List<SoReturnInstockEntity> updateMainList;
+
+        private List<SoReturnInstockDetailEntity> updateList;
+    }
     /**
      * 添加
      */

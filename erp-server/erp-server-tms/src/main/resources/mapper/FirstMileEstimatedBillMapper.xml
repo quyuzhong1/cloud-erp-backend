@@ -202,5 +202,11 @@
                  inner join first_mile_estimated_bill eb on lb.id = eb.logistics_bill_id and eb.is_deleted = false
                  inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id and lbc.is_deleted = false
         where lb.is_deleted = false
+        <if test="outstockIdList != null and outstockIdList.size > 0">
+            and lb.outstock_id in
+            <foreach collection="outstockIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

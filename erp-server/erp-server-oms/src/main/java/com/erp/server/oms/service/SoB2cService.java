@@ -973,4 +973,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
+
+    List<SoB2cDTO.GenerateSoB2cReturnViewDTO> generateSoB2cReturnView(List<String> ids);
+
+    Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
+
+    List<SoB2cEntity> getByPlatformCode(String platformCode);
 }

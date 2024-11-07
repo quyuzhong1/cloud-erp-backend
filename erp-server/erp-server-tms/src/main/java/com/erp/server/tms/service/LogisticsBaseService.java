@@ -46,7 +46,7 @@ public interface LogisticsBaseService {
      * @param records
      * @return
      */
-    List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType);
+    void processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType);
 
     List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos,String transportType);
 

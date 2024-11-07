@@ -144,4 +144,18 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @param trackTime
      */
     void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime signTime, LocalDateTime trackTime);
+
+    /**
+     * 更新注册状态
+     * @param detailIds
+     * @param status
+     */
+    void updateRegisterStatus(List<String> detailIds, int status);
+
+    /**
+     * 更新注册状态 携带参数
+     * @param sucessList
+     * @param status
+     */
+    void updateRegisterStatusByParams(List<LogisticsBillDetailDTO.BillDetailDTO> sucessList, int status);
 }

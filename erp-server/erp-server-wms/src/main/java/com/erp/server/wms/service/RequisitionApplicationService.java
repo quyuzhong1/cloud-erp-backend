@@ -9,6 +9,7 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -246,9 +247,16 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
 
     /**
      * 下载货件装箱信息模板数据
-     * @param response
+     * @param requisitionApplication
      */
-    void downloadPackingTemplate(HttpServletResponse response);
+    void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
+    /**
+     * 下载货件装箱信息模板数据
+     *
+     * @param response
+     * @param detailDTOS
+     */
+    void downloadPackingTemplate(HttpServletResponse response, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailDTOS);
 
     /**
      * 批量导入
