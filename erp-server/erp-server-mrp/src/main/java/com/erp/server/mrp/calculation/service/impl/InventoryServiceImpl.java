@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.SnapshotTableEnum.*;
-import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
@@ -198,26 +197,19 @@ public class InventoryServiceImpl implements InventoryService {
                     replenishmentResultDTO.getShopIdByPlatform(), dto.getWarehouseId());
             Map<String, Integer> platformShopSalesMap = getPlatformShopSalesMap(replenishmentResultDTO, platformShop);
             int totalSaleQty = platformShopSalesMap.values().stream().reduce(0, Math::addExact);
-            List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouses = warehouseList
-                    .stream()
-                    .filter(v -> {
-                        if (CfgRuleWarehouseTypeEnum.VIRTUAL.equals(warehouseType)) {
-                            return v.getVirtualWarehouseId().equals(dto.getWarehouseId());
-                        } else {
-                            return v.getWarehouseId().equals(dto.getWarehouseId());
-                        }
-                    })
-                    .collect(Collectors.toList());
+            List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouses = filterWarehouseList(warehouseList, warehouseType, dto.getWarehouseId());
             BigDecimal platformQtyCount = BigDecimal.ZERO;
             int i = 0;
             for (CfgRuleWarehouseDTO.StrategyDetailResultDTO result : warehouses) {
                 int platformSaleQty = calculatePlatformSaleQty(result, platformShop, platformShopSalesMap);
-                BigDecimal platformQty = calculateInventoryDistribution(dto.getQty(), platformSaleQty, totalSaleQty, platformQtyCount, i == warehouseList.size() - 1);
+                BigDecimal platformQty = calculateInventoryDistribution(dto.getQty(), platformSaleQty, totalSaleQty, platformQtyCount, i == warehouses.size() - 1);
 
                 List<ReplenishmentResultDTO.ShopInventoryDetailDTO> shopSaleQtyList = createShopSaleQtyList(platformShop, result.getDictPlatform(), platformShopSalesMap);
                 List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
                 if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(result.getInventoryAllocateType())) {
-                    qty += platformQty.intValue();
+                    if (result.getDictPlatform().equals(replenishmentResultDTO.getReplenishment().getPlatform())) {
+                        qty += platformQty.intValue();
+                    }
                 } else {
                     qty += calculateInventoryQty(replenishmentResultDTO, platformQty, platformSaleQty, shopSaleQtyList, detailDTOS);
                 }
@@ -228,6 +220,22 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
         return qty;
+    }
+
+    /**
+     * 过滤仓库方法
+     * @param warehouseList 仓库列表
+     * @param warehouseType 仓库类型
+     * @param warehouseId   仓库id
+     */
+    private List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> filterWarehouseList(List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList,
+                                                                                  CfgRuleWarehouseTypeEnum warehouseType,
+                                                                                  String warehouseId) {
+        return warehouseList.stream()
+                .filter(v -> CfgRuleWarehouseTypeEnum.VIRTUAL.equals(warehouseType) ?
+                        v.getVirtualWarehouseId().equals(warehouseId) :
+                        v.getWarehouseId().equals(warehouseId))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -677,12 +685,14 @@ public class InventoryServiceImpl implements InventoryService {
                         .collect(Collectors.toList());
                 for (CfgRuleWarehouseDTO.StrategyDetailResultDTO result : newWarehouseList) {
                     int platformSaleQty = calculatePlatformSaleQty(result, platformShop, platformShopSalesMap);
-                    BigDecimal platformQty = calculateInventoryDistribution(dto.getQty(), platformSaleQty, totalSaleQty, platformQtyCount, i == warehouseList.size() - 1);
+                    BigDecimal platformQty = calculateInventoryDistribution(dto.getQty(), platformSaleQty, totalSaleQty, platformQtyCount, i == newWarehouseList.size() - 1);
 
                     List<ReplenishmentResultDTO.ShopInventoryDetailDTO> shopSaleQtyList = createShopSaleQtyList(platformShop, result.getDictPlatform(), platformShopSalesMap);
                     List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
                     if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(result.getInventoryAllocateType())) {
-                        inventory += platformQty.intValue();
+                        if (result.getDictPlatform().equals(replenishmentResultDTO.getReplenishment().getPlatform())) {
+                            inventory += platformQty.intValue();
+                        }
                     } else {
                         inventory += calculateInventoryQty(replenishmentResultDTO, platformQty, platformSaleQty, shopSaleQtyList, detailDTOS);
                     }
