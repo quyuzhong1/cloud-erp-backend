@@ -2497,5 +2497,4 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return Boolean.TRUE;
     }
 
-
 }

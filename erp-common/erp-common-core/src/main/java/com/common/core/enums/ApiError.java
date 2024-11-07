@@ -1325,6 +1325,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL(92114,"原物流订单取消失败，请联系物流商取消原物流订单后重新获取"),
     ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
+    ERROR_SO_B2C_DELIVERY_FETCH(92114,"订单拉取失败，请手动重试刷新订单后操作"),
     ERROR_SO_B2C_NOT_EXIST_WAREHOUSE(92114,"B2C销售订单发货仓库不存在"),
     ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),

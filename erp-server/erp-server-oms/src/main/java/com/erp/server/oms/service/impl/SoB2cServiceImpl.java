@@ -935,6 +935,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到B2C销售订单表数据");
         }
+        SoB2cErrorEntity error = soB2cErrorService.getByMainIdAndType(id, SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode());
+        if(null != error){
+            throw new ServiceException("订单拉取失败，请手动重试刷新订单后操作");
+        }
         validateSubmit(entity);
 
         //物流信息
@@ -8929,4 +8933,42 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return ignoreInventorySkuIds;
     }
+
+    /**
+     * 拉取订单失败
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void fetchOrderFail(SoB2cEntity soB2cEntity){
+        //生成异常信息
+        String soB2cId = soB2cEntity.getId();
+        String type = SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode();
+        String paramJson = JSONUtil.toJsonStr(soB2cEntity);
+        log.error("订单拉取失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, ApiError.ERROR_SO_B2C_DELIVERY_FETCH.msg);
+        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+        addError.setType(type);
+        addError.setMainId(soB2cId);
+        addError.setMessage(ApiError.ERROR_SO_B2C_DELIVERY_FETCH.msg);
+        addError.setParamJson(paramJson);
+        soB2cErrorService.add(addError);
+        //审核不通过
+        //检查是否存在流程
+        ApproveOneDTO dto = new ApproveOneDTO(soB2cEntity.getId(), ApproveTypeEnum.REJECT.getStatus(), "", Boolean.FALSE);
+        this.approve(dto, null, "");
+    }
+
+    /**
+     * 拉取订单成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void fetchOrderSuccess(SoB2cEntity soB2cEntity){
+        //清除异常信息
+        soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode());
+        //审核通过
+        //检查是否存在流程
+        ApproveOneDTO dto = new ApproveOneDTO(soB2cEntity.getId(), ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE);
+        this.approve(dto, null, "");
+    }
+
 }

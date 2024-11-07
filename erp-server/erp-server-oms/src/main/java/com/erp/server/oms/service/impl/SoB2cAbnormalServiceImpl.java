@@ -95,6 +95,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 BatchResultDTO batchResultDTO = outFreeze ? BatchResultDTO.success(id, soB2cEntity.getCode(), "虚拟仓库存扣减") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "虚拟仓库存扣减");
                 resultDTOList.add(batchResultDTO);
                 break;
+            case ORDER_FETCH_FAIL:
+
+                break;
             default:
                 break;
         }
