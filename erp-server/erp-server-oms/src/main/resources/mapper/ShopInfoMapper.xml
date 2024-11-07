@@ -153,4 +153,19 @@
         si.disabled asc
         ) shop
     </select>
+    <select id="pageAuthShop" resultType="com.erp.model.oms.dto.SkuMappingDTO$SyncPlatformProductView">
+        select si.id as shopId ,
+               si.name as shopName,
+               si.auth_status as authStatus
+        from shop_info si
+        where
+            ${params.sqlMap.default}
+        and  si.is_deleted = false and si.disabled = false
+        <if test="shopIds != null and shopIds.size > 0">
+            and si.id in
+            <foreach collection="shopIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>
