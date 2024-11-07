@@ -472,7 +472,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 .platformCode(soB2cEntity.getPlatformCode())
                 .shopId(soB2cEntity.getShopId())
                 .build();
-        ApiResult<CancelResponseVO> cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+        String sourceSystem = soB2cLogisticsEntity.getSourceSystem();
+        ApiResult cancelResult = ApiResult.success();
+        if (SoB2cLogisticSourceSystemEnum.THIRD.getCode().equals(sourceSystem)){
+            cancelResult = logisticsBillFeign.cancelBill(cancelBillDTO);
+        }
         //取消失败
         if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),cancelResult.getMsg());
