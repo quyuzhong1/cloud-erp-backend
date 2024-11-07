@@ -57,8 +57,7 @@
             td.instock_forecast_remark AS instockForecastRemark,
             td.total_qty AS totalQty,
             td.create_user_name AS createUserName,
-            td.create_time AS createTime,
-            sb.platform_code as platformOrderCode
+            td.create_time AS createTime
         FROM transfer_declare td
         LEFT JOIN transfer_declare_detail tdd ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
         LEFT JOIN so_b2c sb on sb.id = tdd.so_id and sb.is_deleted = false

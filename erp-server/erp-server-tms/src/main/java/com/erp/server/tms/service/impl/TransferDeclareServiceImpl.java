@@ -857,6 +857,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 PackageForecastDetailEntity packageForecastDetailEntity = packageForecastDetailEntityList.stream().filter(v -> v.getSoId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(new PackageForecastDetailEntity());
                 PackageForecastEntity packageForecastEntity = packageForecastEntityList.stream().filter(v -> v.getId().equals(packageForecastDetailEntity.getMainId())).findFirst().orElse(new PackageForecastEntity());
                 transferDeclareDetailEntity.setPackageForecastCode(packageForecastEntity.getCode());
+                transferDeclareDetailEntity.setPlatformOrderCode(Objects.nonNull(detailSoB2cEntity) ? detailSoB2cEntity.getPlatformCode() : "");
             });
             listDTO.setDetailEntityList(detailEntityList);
         }
