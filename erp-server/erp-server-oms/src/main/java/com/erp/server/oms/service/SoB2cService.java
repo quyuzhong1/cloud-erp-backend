@@ -989,4 +989,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param isChangeSku
      */
     void updateIsChangeSku(List<String> ids, Boolean isChangeSku);
+
+
+    void fetchOrderFail(SoB2cEntity soB2cEntity);
+
+    void fetchOrderSuccess(SoB2cEntity soB2cEntity);
 }
