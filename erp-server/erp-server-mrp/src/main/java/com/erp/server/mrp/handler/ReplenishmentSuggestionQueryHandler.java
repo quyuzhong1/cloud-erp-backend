@@ -36,7 +36,7 @@ public class ReplenishmentSuggestionQueryHandler extends AbstractQueryHandler {
             super.buildSplicingSQLDTO("rs.sku_id", QueryConditionEnum.IN_LIST,skuIds, QueryDataTypeEnum.STRING);
         }
         if("label".equals(field)) {
-            return "EXISTS (select 1 from replenishment_ref_label where ref_id = rsd.id AND is_deleted = false AND label_id " + compareCodeSplicingValueSql + ")";
+            return "EXISTS (select 1 from replenishment_ref_label where ref_id = rs.id AND is_deleted = false AND label_id " + compareCodeSplicingValueSql + ")";
         }
         if("markType".equals(field)) {
             return "EXISTS ( SELECT 1 FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id AND is_deleted = false AND mark_type " + compareCodeSplicingValueSql + ")";
