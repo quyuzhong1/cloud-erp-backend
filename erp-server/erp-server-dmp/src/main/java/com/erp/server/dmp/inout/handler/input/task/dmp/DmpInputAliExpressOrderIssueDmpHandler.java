@@ -1,16 +1,22 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.entity.BaseEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.server.dmp.service.DmpSoInfoService;
 
 import cn.hutool.core.collection.CollUtil;
 
@@ -21,28 +27,44 @@ import cn.hutool.core.collection.CollUtil;
  */
 @Service
 @Scope("prototype")
-public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputAliExpressOrderDoChildDmpHandler{
+public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmpHandler{
+	@Autowired
+	private DmpSoInfoService dmpSoInfoService;
 	
 	@Override
-	protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
-		DmpCfgInputConvertEntity mainConvertId = this.getMainConvertId();
-		String parentStorageName = mainConvertId.getStorageName();
-		ServiceImpl parentServiceImpl = this.getServiceImpl(parentStorageName);
-		QueryWrapper<?> wrapper = new QueryWrapper<>();
-		wrapper.eq(INPUT_TASK_ID, inputTaskId);
-		List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
-		Map<String, String> billNoIdMap = new HashMap<>();
-		if(CollUtil.isNotEmpty(listMaps)) {
-			for(Map<String, Object> listMap : listMaps) {
-				billNoIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.ID).toString());
+	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
+		if(!dmpInputDataDmpRelationMaps.isEmpty()) {
+			Collection<List<TreeMap<String, Object>>> values = dmpInputDataDmpRelationMaps.values();
+			if(CollUtil.isNotEmpty(values)) {
+				List<String> orders = new ArrayList<>();
+				for(List<TreeMap<String, Object>> v : values) {
+					orders.addAll(v.stream().map(a -> a.get("parent_order_id").toString()).collect(Collectors.toList()));
+				}
+				Map<String, String> orderIdMaps = new HashMap<>();
+				if(CollUtil.isNotEmpty(orders)) {
+					List<DmpSoInfoEntity> list = dmpSoInfoService.lambdaQuery()
+						.in(DmpSoInfoEntity::getThirdCode, orders)
+						.eq(DmpSoInfoEntity::getSourcePlatform, DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode())
+						.eq(DmpSoInfoEntity::getNextLevelId, nextLevelId)
+						.list();
+					if(CollUtil.isEmpty(list)) {
+						throw new ServiceException("所有退货订单未查询到订单数据");
+					}
+					orderIdMaps = list.stream().collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, DmpSoInfoEntity::getId));
+				}
+				for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
+					List<TreeMap<String, Object>> value = dmpInputDataDmpRelationMap.getValue();
+					for(TreeMap<String, Object> v : value) {
+						String parent_order_id = v.get("parent_order_id").toString();
+						String sourceId = orderIdMaps.get(parent_order_id);
+						if(StringUtils.isBlank(sourceId)) {
+							throw new ServiceException("退货订单"+ parent_order_id +"未查询到订单数据");
+						}
+						v.put("sourceId", sourceId);
+					}
+				}
 			}
 		}
-		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-			String billNo = dmpInputMongoChildEntity.get("parent_order_id").toString();
-			String dmpId = billNoIdMap.get(billNo);
-			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
-			dmpInputMongoChildEntity.put("shopId", nextLevelId);
-			dmpInputMongoChildEntity.put("sourceId", dmpId);
-		}
 	}
+	
 }

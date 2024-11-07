@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import java.net.SocketTimeoutException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,16 +56,18 @@ public class DmpInputAliExpressIssueInitHandler extends DmpInputInitHandler{
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		List<Map<String, Object>> findMongoData = null;
-		String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
+		String parentStorageName = "aliexpress_order_data";
 		if(StringUtils.isNotBlank(parentStorageName)) {
 			List<ParamData> paramDataList = new ArrayList<>();
-			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME, DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME, PannoEnum.GTE, dmpInputTaskEntity.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
+			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME, DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME, PannoEnum.LTE, dmpInputTaskEntity.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
 			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
 		}
 		if(CollUtil.isEmpty(findMongoData)) {
 			return new ArrayList<>();
 		}
-		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
+		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(nextLevelId);
 		
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 		

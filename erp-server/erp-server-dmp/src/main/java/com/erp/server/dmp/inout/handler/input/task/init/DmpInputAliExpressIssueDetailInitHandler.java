@@ -2,10 +2,8 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
@@ -64,33 +62,6 @@ public class DmpInputAliExpressIssueDetailInitHandler extends DmpInputInitHandle
 		}
 		String nextLevelId = findMongoData.get(0).get("nextLevelId").toString();
 		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(nextLevelId);
-		
-		List<ParamData> paramDataList = new ArrayList<>();
-		List<Long> orderIdList = new ArrayList<>();
-		for(Map<String, Object> f : findMongoData) {
-			Object product_list_obj = f.get("product_list");
-			if(product_list_obj != null) {
-				List<Map<String, Object>> product_list = (List<Map<String, Object>>) product_list_obj;
-				for(Map<String, Object> p : product_list) {
-					Object child_id = p.get("child_id");
-					Object issue_status_obj = p.get("issue_status");
-					if(issue_status_obj != null) {
-						String issue_status = issue_status_obj.toString();
-						if("IN_ISSUE".equals(issue_status) || "END_ISSUE".equals(issue_status)) {
-							if(child_id != null) {
-								orderIdList.add(Long.valueOf(child_id.toString()));
-							}
-						}
-					}
-				}
-			}
-		}
-		paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
-		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-		findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_issue_data");
-		if(CollUtil.isEmpty(findMongoData)) {
-			return new ArrayList<>();
-		}
 		
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 		
