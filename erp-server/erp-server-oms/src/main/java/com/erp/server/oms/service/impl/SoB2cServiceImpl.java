@@ -969,7 +969,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
         //检查是否存在流程
         ApproveOneDTO dto = new ApproveOneDTO(entity.getId(),ApproveTypeEnum.PASS.getStatus(),"", Boolean.FALSE);
-        if (!checkProcess(entity,dto)){
+        if (!checkProcess(entity,dto) && isProcess){
             this.approve(dto,null, "");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
