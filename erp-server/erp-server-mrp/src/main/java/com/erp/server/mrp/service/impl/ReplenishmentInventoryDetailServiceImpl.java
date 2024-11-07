@@ -82,15 +82,25 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                     .filter(e -> e.getId().equals(detailVO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             detailVO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())
-                    && CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(detailVO.getInventoryAllocateType())) {
-                List<String> shopNames = allShopInfo.stream()
-                        .filter(v -> detailVO.getDictPlatform().equals(v.getDictPlatform()))
-                        .distinct()
-                        .map(ShopInfoEntity::getName)
-                        .collect(Collectors.toList());
-                detailVO.setChannelName(shopNames);
-                detailVO.setShopName("全部店铺");
+            if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(detailVO.getInventoryAllocateType())) {
+                if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
+                    List<String> shopNames = allShopInfo.stream()
+                            .filter(v -> detailVO.getDictPlatform().equals(v.getDictPlatform()))
+                            .distinct()
+                            .map(ShopInfoEntity::getName)
+                            .collect(Collectors.toList());
+                    detailVO.setChannelName(shopNames);
+                    detailVO.setShopName("全部店铺");
+
+                } else {
+                    List<String> shopNames = allShopInfo.stream()
+                            .filter(v -> detailVO.getChannelIdJson().contains(v.getId()))
+                            .distinct()
+                            .map(ShopInfoEntity::getName)
+                            .collect(Collectors.toList());
+                    detailVO.setChannelName(shopNames);
+                    detailVO.setShopName("指定店铺");
+                }
                 detailVO.setQty(new BigDecimal(detailVO.getPlatformQty()));
             } else {
                 List<String> shopNames = allShopInfo.stream()
