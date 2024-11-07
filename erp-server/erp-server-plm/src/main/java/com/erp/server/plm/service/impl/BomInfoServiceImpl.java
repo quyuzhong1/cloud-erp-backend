@@ -67,6 +67,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -723,7 +724,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                dmpMqFeign.sendTask(pushTaskList);
+                if (CollectionUtils.isNotEmpty(pushTaskList)) {
+                    dmpMqFeign.sendTask(pushTaskList);
+                }
             }
         });
         return flag;
