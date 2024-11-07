@@ -317,6 +317,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("is_manual_delivery")
     private Boolean isManualDelivery;
 
+    /**
+     * 总优惠金额
+     */
+    @TableField("total_discount")
+    private BigDecimal totalDiscount;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

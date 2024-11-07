@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @ToString
-@NoArgsConstructor
-@Builder
 public class ShudiyunB2cOrderDTO {
     /**
      * 主表业务唯一键_id
