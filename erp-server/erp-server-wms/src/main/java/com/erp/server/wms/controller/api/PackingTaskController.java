@@ -268,7 +268,7 @@ public class PackingTaskController extends BaseController {
      * @date 2024-11-06
      * @param dto
      */
-    @PostMapping("/exportPackingDetail")
+    @PostMapping("/exportNotPackingDetail")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出未装箱明细Excel")
     public ApiResult exportNotPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
         packingTaskService.exportNotPackingDetail(dto);
