@@ -5824,15 +5824,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> transferWarehouseIdList = null;
         // 平台仓/海外仓出库单不中转
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equalsIgnoreCase(sourceType)){
-            // B2C订单根据中转规则判断是否中转
-            CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
-            ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
-            ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
-            String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
-            ruleDTO.setFromWarehouse(deliveryWarehouseId);
-            CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);
-            isTransit = resultDTO.getIsTransit();
-            transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();
+            List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(entity.getId()));
+            if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
+                transferWarehouseIdList = StrUtil.split(soB2cDeliveryEntities.get(0).getTransferWarehouseIds(), ",");
+            }else {
+                // B2C订单根据中转规则判断是否中转
+                CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
+                ruleDTO.setType(StockOutTransferTypeEnum.B2C.getCode());
+                ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
+                String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
+                ruleDTO.setFromWarehouse(deliveryWarehouseId);
+                CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);
+                isTransit = resultDTO.getIsTransit();
+                transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();
+            }
         }
         if (isTransit) {
             String batchNo = IdUtil.getSnowflake().nextIdStr();
