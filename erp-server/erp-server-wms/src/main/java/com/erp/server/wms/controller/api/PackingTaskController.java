@@ -24,6 +24,7 @@ import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
@@ -144,7 +145,8 @@ public class PackingTaskController extends BaseController {
         if(flag){
             PackingTaskEntity packingTaskEntity = packingTaskService.getById(dto.getTaskId());
             //装箱完成
-            if(packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())){
+            if(packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
+                    && packingTaskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())){
                 //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
                 RequisitionApplicationEntity entity = requisitionApplicationService.getById(dto.getSourceId());
                 if(null != entity){

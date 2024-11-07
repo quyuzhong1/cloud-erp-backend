@@ -23,6 +23,7 @@ import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.model.wms.enums.PickingSourceTypeEnum;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
@@ -185,7 +186,8 @@ public class PdaPackingTaskController extends BaseController {
         //装箱完成
         if (null!= packingTaskEntity
                 && packingTaskEntity.getSourceType().equals(PickingSourceTypeEnum.THIRD.getCode())
-                && packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())) {
+                && packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
+                && packingTaskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())) {
             //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
             RequisitionApplicationEntity entity = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
             if(null != entity){
