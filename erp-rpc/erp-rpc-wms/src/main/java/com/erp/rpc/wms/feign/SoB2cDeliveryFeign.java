@@ -134,4 +134,13 @@ public interface SoB2cDeliveryFeign {
      */
     @PostMapping("feign/soB2cDelivery/afreshOutFreezeVirtualInventory")
     Boolean afreshOutFreezeVirtualInventory(@RequestBody String soId);
+    /**
+     * 根据销售订单手动标发
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param id 销售订单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/soB2cDelivery/falseDeliveryBySoId")
+    BatchResultDTO falseDeliveryBySoId(@RequestBody String id);
 }
