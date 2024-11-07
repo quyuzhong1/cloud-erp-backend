@@ -297,25 +297,7 @@ public class SkuMappingController extends BaseController {
         return success();
     }
 
-    /**
-     * 同步平台商品view
-     * @return
-     */
-    @PostMapping("/syncPlatformProductView")
-    @WebAdvanceQuery
-    public ApiResult<PagingVO<SkuMappingDTO.SyncPlatformProductView>> syncPlatformProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
-        return success(skuMappingService.syncPlatformProductView(advanceQueryDTO));
-    }
 
-    /**
-     * 同步平台商品view
-     * @return
-     */
-    @PostMapping("/syncWarehouseProductView")
-    @WebAdvanceQuery
-    public ApiResult<PagingVO<SkuMappingDTO.SyncWarehouseProductView>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
-        return success(skuMappingService.syncWarehouseProductView(advanceQueryDTO));
-    }
     /**
      * 根据customerId和skuno 关联查询平台sku
      * @author jack

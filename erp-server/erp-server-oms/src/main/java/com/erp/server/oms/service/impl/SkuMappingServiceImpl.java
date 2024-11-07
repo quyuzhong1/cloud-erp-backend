@@ -1379,22 +1379,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         listingInfoService.updateBatchById(listingInfoEntityList);
     }
 
-    @Override
-    public PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-            return new PagingVO<>();
-        }
-        List<ShopSysUserAuthDTO.ViewShopDTO> detailList = shopSysUserAuthList.get(0).getDetailList();
-        List<String> shopIds = detailList.stream().map(v->v.getShopId()).collect(Collectors.toList());
-        return shopInfoService.pageAuthShop(advanceQueryDTO,shopIds);
-    }
 
-    @Override
-    public PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
-        return wmsOverseasWarehouseFeign.pageWarehouseProduct(advanceQueryDTO);
-    }
 
     @Override
     public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
