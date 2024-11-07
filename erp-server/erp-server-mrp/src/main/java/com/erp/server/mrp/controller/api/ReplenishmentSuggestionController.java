@@ -552,7 +552,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/updateRemark")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑备注")
-    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.BlankRemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
