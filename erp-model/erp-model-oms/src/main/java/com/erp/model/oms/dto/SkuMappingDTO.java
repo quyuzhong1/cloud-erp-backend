@@ -431,7 +431,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 匹配结果
          */
-        private Boolean matchResult;
+        private String matchResult;
 
         /**
          * 匹配结果
@@ -552,7 +552,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 匹配结果
          */
-        private Boolean matchResult;
+        private String matchResult;
 
         /**
          * 匹配结果

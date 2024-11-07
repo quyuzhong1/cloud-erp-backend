@@ -869,12 +869,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<String> skuIdList = list.stream().map(SkuMappingDTO.WarehousePagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (SkuMappingDTO.WarehousePagingViewDTO item : list) {
-            boolean matchResult = item.getMatchResult() != null && item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
-            item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
+            item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             item.setHasMappingAllStr(item.getHasMappingAll() ? "是" : "否");
         }
 
@@ -945,12 +944,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
         for (SkuMappingDTO.PagingViewDTO item : list) {
-            Boolean matchResult = item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
-            item.setMatchResultStr(Boolean.TRUE.equals(matchResult) ? "已匹配" : "未匹配");
+            item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(item.getProductSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
