@@ -57,7 +57,6 @@ public class DmpInputAliExpressIssueDetailInitHandler extends DmpInputInitHandle
 		if(StringUtils.isNotBlank(parentStorageName)) {
 			List<ParamData> paramDataList = new ArrayList<>();
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-			paramDataList.add(new ParamData("issue_status", "issue_status", PannoEnum.IN, Arrays.asList("IN_ISSUE" , "END_ISSUE")));
 			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
 		}
 		if(CollUtil.isEmpty(findMongoData)) {
@@ -74,8 +73,14 @@ public class DmpInputAliExpressIssueDetailInitHandler extends DmpInputInitHandle
 				List<Map<String, Object>> product_list = (List<Map<String, Object>>) product_list_obj;
 				for(Map<String, Object> p : product_list) {
 					Object child_id = p.get("child_id");
-					if(child_id != null) {
-						orderIdList.add(Long.valueOf(child_id.toString()));
+					Object issue_status_obj = p.get("issue_status");
+					if(issue_status_obj != null) {
+						String issue_status = issue_status_obj.toString();
+						if("IN_ISSUE".equals(issue_status) || "END_ISSUE".equals(issue_status)) {
+							if(child_id != null) {
+								orderIdList.add(Long.valueOf(child_id.toString()));
+							}
+						}
 					}
 				}
 			}

@@ -59,7 +59,6 @@ public class DmpInputAliExpressIssueInitHandler extends DmpInputInitHandler{
 		if(StringUtils.isNotBlank(parentStorageName)) {
 			List<ParamData> paramDataList = new ArrayList<>();
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
-			paramDataList.add(new ParamData("issue_status", "issue_status", PannoEnum.IN, Arrays.asList("IN_ISSUE" , "END_ISSUE")));
 			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
 		}
 		if(CollUtil.isEmpty(findMongoData)) {
@@ -83,26 +82,35 @@ public class DmpInputAliExpressIssueInitHandler extends DmpInputInitHandler{
         String apiType = dmpCfgApiEntity.getApiType();
 		request.setApiName(apiType);
 		
-		List<String> orderList = new ArrayList<>();
+		Map<String, String> orderIssueStatusMaps = new HashMap<>();
 		for(Map<String, Object> f : findMongoData) {
 			Object product_list_obj = f.get("product_list");
 			if(product_list_obj != null) {
 				List<Map<String, Object>> product_list = (List<Map<String, Object>>) product_list_obj;
 				for(Map<String, Object> p : product_list) {
 					Object child_id = p.get("child_id");
-					if(child_id != null) {
-						orderList.add(child_id.toString());
+					Object issue_status_obj = p.get("issue_status");
+					if(issue_status_obj != null) {
+						String issue_status = issue_status_obj.toString();
+						if("IN_ISSUE".equals(issue_status) || "END_ISSUE".equals(issue_status)) {
+							if(child_id != null) {
+								orderIssueStatusMaps.put(child_id.toString(), issue_status);
+							}
+						}
 					}
 				}
 			}
 		}
 		
 		JSONArray result = new JSONArray();
-		for(String order : orderList) {
+		for(Map.Entry<String, String> orderIssueStatusMap : orderIssueStatusMaps.entrySet()) {
 			Map<String, Object> paramMap = new HashMap<>();
 			paramMap.put("current_page", 1);
 			paramMap.put("page_size", 50);
-			paramMap.put("order_no", order);
+			paramMap.put("order_no", orderIssueStatusMap.getKey());
+			if("END_ISSUE".equals(orderIssueStatusMap.getValue())) {
+				paramMap.put("issue_status", "finish");
+			}
 	        request.addApiParameter("query_dto", JSON.toJSONString(paramMap));
 	        
 	        JSONObject data = null;
