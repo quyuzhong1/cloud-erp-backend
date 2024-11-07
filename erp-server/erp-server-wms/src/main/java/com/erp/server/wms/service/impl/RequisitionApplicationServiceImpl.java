@@ -472,6 +472,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return flag;
     }
 
+    @Override
     public void sendRequisitionMsg(Map<String,String> map, CfgSettingEnum type){
         LoginUser loginUser = UserContext.getNonLoginUser();
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(type.getCode());

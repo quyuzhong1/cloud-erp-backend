@@ -244,12 +244,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return List<RequisitionApplicationDTO.PrintFnskuPreviewDTO>
      **/
     List<RequisitionApplicationDTO.PrintFnskuDetailDTO> printFnskuPreview(BaseIdsDTO.IdsDTO dto);
-
-    /**
-     * 下载货件装箱信息模板数据
-     * @param requisitionApplication
-     */
-    void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
     /**
      * 下载货件装箱信息模板数据
      *
