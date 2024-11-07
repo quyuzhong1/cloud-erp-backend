@@ -27,7 +27,10 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.entity.*;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
@@ -213,9 +216,16 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
         }
         //采购员编码
         if (StringUtils.isNotBlank(purchaseOrderEntity.getPurchaseUserId())) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(purchaseOrderEntity.getPurchaseUserId());
-            if (ObjectUtils.isNotEmpty(findUserDTO)) {
-                resultMap.put("purchaseUserCode", findUserDTO.getCode());
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(purchaseOrderEntity.getPurchaseOrgId());
+            findBusinessOperator.setUserId(purchaseOrderEntity.getPurchaseUserId());
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.CGY.getCode());
+            //获取员工业务信息
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //采购员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("purchaseUserCode", kingSellerInfo.getUserPostCode());
+                resultMap.put("purchaseUserName", kingSellerInfo.getUserName());
             }
         }
 
