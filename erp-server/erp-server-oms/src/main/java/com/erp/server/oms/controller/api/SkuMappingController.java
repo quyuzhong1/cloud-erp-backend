@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -291,5 +292,25 @@ public class SkuMappingController extends BaseController {
     public ApiResult<Boolean> updateNotMatch(@RequestBody @Validated SkuMappingDTO.UpdateNotMatchDTO dto){
         skuMappingService.updateNotMatch(dto);
         return success();
+    }
+
+    /**
+     * 同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncPlatformProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncPlatformProductView>> syncPlatformProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncPlatformProductView(advanceQueryDTO));
+    }
+
+    /**
+     * 同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncWarehouseProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncWarehouseProductView>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncWarehouseProductView(advanceQueryDTO));
     }
 }
