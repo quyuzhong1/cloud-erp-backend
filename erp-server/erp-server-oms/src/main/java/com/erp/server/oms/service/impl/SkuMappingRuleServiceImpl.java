@@ -201,7 +201,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 throw new ServiceException("规则详情不能为空");
             }
             SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO = ruleDTO.getRuleContentList().get(0);
-            if(StringUtils.isBlank(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isBlank(ruleConditionsDTO.getChildQtySplitSymbol())){
+            if(StringUtils.isEmpty(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isEmpty(ruleConditionsDTO.getChildQtySplitSymbol())){
                 throw new ServiceException("拆分符号不能为空");
             }
             List<String> splitList = Arrays.asList(result.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
@@ -253,7 +253,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 throw new ServiceException("规则详情不能为空");
             }
             SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO = ruleDTO.getRuleContentList().get(0);
-            if (StringUtils.isBlank(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isBlank(ruleConditionsDTO.getChildQtySplitSymbol())) {
+            if (StringUtils.isEmpty(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isEmpty(ruleConditionsDTO.getChildQtySplitSymbol())) {
                 throw new ServiceException("拆分符号不能为空");
             }
         }
