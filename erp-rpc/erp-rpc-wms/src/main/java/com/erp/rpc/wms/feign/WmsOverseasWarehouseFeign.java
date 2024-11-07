@@ -1,8 +1,10 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -44,4 +46,6 @@ public interface WmsOverseasWarehouseFeign {
     @PostMapping("/feign/overseasWarehouse/pagingSelect")
     PagingVO<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(@RequestBody @Validated PagingDTO<OverseasProviderWarehouseDTO.SelectDTO> dto);
 
+    @PostMapping("/feign/overseasWarehouse/pageWarehouseProduct")
+    PagingVO<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(@RequestBody @Validated PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
 }

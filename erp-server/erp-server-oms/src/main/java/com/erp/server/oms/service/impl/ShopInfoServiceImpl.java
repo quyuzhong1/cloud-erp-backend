@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -1673,5 +1674,21 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         });
         shopAuthService.batchUpdateShopAuthById(authList);
         return true;
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds) {
+        Page query = new Page(advanceQueryDTO.getCurrPage(), advanceQueryDTO.getPageSize());
+        IPage pageData = baseMapper.pageAuthShop(query, advanceQueryDTO.getParams(),shopIds);
+        List<SkuMappingDTO.SyncPlatformProductView> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        list.forEach(v->{
+            String authStatus = v.getAuthStatus();
+            String authStatusName = AuthStatusEnum.getName(authStatus);
+            v.setAuthStatusName(authStatusName);
+        });
+        return new PagingVO<>(pageData);
     }
 }

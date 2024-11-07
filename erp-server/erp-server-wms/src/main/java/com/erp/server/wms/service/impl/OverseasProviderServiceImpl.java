@@ -7,10 +7,12 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -20,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
@@ -270,6 +273,21 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             return null;
         }
         return this.getById(overseasProviderWarehouseEntity.getMainId());
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        Page query = new Page(advanceQueryDTO.getCurrPage(), advanceQueryDTO.getPageSize());
+        IPage<SkuMappingDTO.SyncWarehouseProductView> pageData = baseMapper.pageWarehouseProduct(query, advanceQueryDTO.getParams());
+        List<SkuMappingDTO.SyncWarehouseProductView> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        list.forEach(v->{
+            v.setWarehouseProvideName(PlatformDictEnum.getNameByCode(v.getWarehouseProvideCode()));
+            v.setAuthStatusName(AuthStatusEnum.getName(v.getAuthStatus()));
+        });
+        return new PagingVO<>(pageData);
     }
 
     @Override
