@@ -2,7 +2,6 @@ package com.erp.server.scm.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
@@ -11,7 +10,6 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SubcontractTypeEnum;
@@ -29,11 +27,16 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.entity.*;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
+import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
@@ -83,6 +86,10 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     
     @Resource
     private ScmPushMsgService scmPushMsgService;
+
+    @Resource
+    private KingdeeFeign kingdeeFeign;
+
 
     /**
      * 组装数据发送到金蝶
@@ -215,18 +222,27 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
 
         //获取用户部门id
         if (StringUtils.isNotBlank(entity.getPurchaseDeptId())) {
-            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(entity.getPurchaseDeptId());
-            //采购部门
-            if (ObjectUtil.isNotEmpty(departmentDTO)) {
-                resultMap.put("purchaseDeptCode", departmentDTO.getCode());
+            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+            dto.setDeptId(entity.getPurchaseDeptId());
+            dto.setOrgId(entity.getPurchaseOrgId());
+            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+            if (ObjectUtils.isNotEmpty(deptKingdee)) {
+                resultMap.put("purchaseDeptCode", deptKingdee.getKingdeeDeptCode());
             }
         }
 
         //采购员编码
         if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
-            if (ObjectUtils.isNotEmpty(findUserDTO)) {
-                resultMap.put("purchaseUserCode", findUserDTO.getCode());
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(entity.getPurchaseOrgId());
+            findBusinessOperator.setUserId(entity.getPurchaseUserId());
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.CGY.getCode());
+            //获取员工业务信息
+            KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            //采购员
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("purchaseUserCode", kingSellerInfo.getUserPostCode());
+                resultMap.put("purchaseUserName", kingSellerInfo.getUserName());
             }
         }
         //供应商联系人
