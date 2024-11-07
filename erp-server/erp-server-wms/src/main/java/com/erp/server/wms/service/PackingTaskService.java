@@ -294,7 +294,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * 导出未装箱明细
      * @param dto
      */
-    void exportNotPackingDetail(PackingTaskDTO.ExportDTO dto);
+    void exportUnPackingDetail(PackingTaskDTO.ExportDTO dto);
 
     /**
      * 查询未装箱明细

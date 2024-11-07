@@ -2430,7 +2430,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public void exportNotPackingDetail(PackingTaskDTO.ExportDTO dto) {
+    public void exportUnPackingDetail(PackingTaskDTO.ExportDTO dto) {
         downloadTaskFeign.saveDownloadTask("未装箱明细导出", EXPORT_WMS_UN_PACKING_TASK_DETAIL.getCode(), dto);
     }
 
