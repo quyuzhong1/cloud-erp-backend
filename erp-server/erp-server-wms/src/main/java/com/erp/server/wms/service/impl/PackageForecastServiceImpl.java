@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -21,7 +22,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -74,6 +74,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,6 +86,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKAGE_FORECAST;
@@ -139,7 +142,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     private SoB2cDeliveryService soB2cDeliveryService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource(name ="packAsyncExecutor")
+    private ThreadPoolTaskExecutor packAsyncExecutor;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -486,6 +490,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         return baseMapper.getAliExpressHandoverList(dateTime);
     }
 
+    @Async
+    public void syncAliExpressInfo(PackageForecastEntity packageForecastEntity){
+        queryAliExpressInfo(packageForecastEntity);
+    }
+
     @Override
     public void queryAliExpressInfo(PackageForecastEntity packageForecastEntity) {
 
@@ -582,6 +591,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //如果这里是速卖通的话就 对接平台
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
                 addBigPackage(logisticsPlatform, entity, addressEntity);
+                //针对待揽收状态  异步拉取速卖通的数据
+                CompletableFuture.runAsync(() -> {
+                    this.syncAliExpressInfo(entity);
+                }, packAsyncExecutor);
                 this.updateById(entity);
                 return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
             }else{

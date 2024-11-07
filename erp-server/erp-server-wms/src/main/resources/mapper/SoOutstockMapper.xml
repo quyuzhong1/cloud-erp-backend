@@ -61,10 +61,10 @@
         so.packing_status,
         so.logistics_channel_id,
         so.logistics_channel_name,
-        sbc.dict_platform
+        ci.platform_type as dict_platform
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
-        LEFT JOIN so_b2c sbc ON so.so_id = sbc.id AND sbc.is_deleted = FALSE
+        LEFT JOIN customer_info ci ON so.customer_id = ci.id AND ci.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         and  so.is_deleted=FALSE
@@ -78,7 +78,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-            so.create_time DESC
+            sod.id DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
@@ -147,7 +147,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-            so.create_time DESC
+            sod.id DESC
     </select>
 
 
@@ -219,7 +219,6 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PdaPagingViewDTO">
         SELECT
-        DISTINCT
         so.id,
         so.code,
         so.source_type,
@@ -228,7 +227,6 @@
         so.approve_status,
         so.create_time
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
         WHERE so.is_deleted = false
         AND so.invalid_status = false
         AND so.source_type NOT IN ('SAL_OUTSTOCK')
@@ -252,7 +250,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ORDER BY so.create_time desc
+        ORDER BY so.id desc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">

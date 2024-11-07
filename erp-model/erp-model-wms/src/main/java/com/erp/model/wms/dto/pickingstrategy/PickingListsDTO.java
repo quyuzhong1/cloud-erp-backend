@@ -359,6 +359,12 @@ public class PickingListsDTO {
          * 来源单据号
          */
         private String sourceCode;
+
+        /**
+         * 生成拣货单--拣货规则
+         * 其余情况为空
+         */
+        private List<LocationInventoryResultDTO> ruleOrderMatchResult;
         /**
          * 明细
          */
@@ -430,6 +436,7 @@ public class PickingListsDTO {
     public static class DetailPickDTO{
         private String skuId;
         private String skuNo;
+        private String fnSku;
         /**
          * 数量
          */

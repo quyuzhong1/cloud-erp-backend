@@ -2,8 +2,10 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.server.wms.query.SoB2cDeliveryInterceptQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -83,6 +85,7 @@ public class SoB2cDeliveryInterceptController extends BaseController {
             menuCode = "wms:soB2cDeliveryIntercept:paging",
             tableAlias = "sbdi"
     )
+    @WebAdvanceQuery(handler = SoB2cDeliveryInterceptQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDeliveryInterceptDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryInterceptDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryInterceptService.paging(dto));
     }

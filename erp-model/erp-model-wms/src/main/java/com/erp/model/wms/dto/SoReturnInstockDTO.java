@@ -304,6 +304,10 @@ public class SoReturnInstockDTO {
          */
         private String sourceCode;
         /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
+        /**
          * 退货客户id
          */
         private String customerId;

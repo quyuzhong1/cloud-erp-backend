@@ -9,14 +9,15 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.*;
@@ -42,6 +43,7 @@ import com.common.business.config.DocNoGenHelper;
 import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -97,6 +99,9 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     private SoReturnNoticeFeign soReturnNoticeFeign;
     @Resource
     private SoB2cReturnDetailService soB2cReturnDetailService;
+    @Lazy
+    @Resource
+    private SoB2cService soB2cService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -251,7 +256,8 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         List<SoReturnInstockEntity> soReturnInstockEntityList = FeignQuery.create(SoReturnInstockEntity.class).in(SoReturnInstockEntity::getCode,allInstockCodes).list();
         List<String> instockIds = soReturnInstockEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = FeignQuery.create(SoReturnInstockDetailEntity.class).in(SoReturnInstockDetailEntity::getMainId,instockIds).list();
-
+        List<String> soIds = soReturnInstockEntityList.stream().filter(e -> Objects.nonNull(e) && OrderTypeEnum.B2C.getCode().equals(e.getType())).map(SoReturnInstockEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = CollectionUtils.isNotEmpty(soIds) ? soB2cService.listByIds(soIds) : null;
         List<SoReturnInstockDetailEntity> updateList = new ArrayList<>();
         List<SoReturnInstockEntity> updateMainList = new ArrayList<>();
         for (SoB2cReturnDTO.BindReturnInstockViewDTO bindReturnInstockViewDTO : list) {
@@ -261,6 +267,10 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
                 continue;
             }
             currentInstockList.forEach(v->{
+                if (CollectionUtils.isNotEmpty(soB2cEntityList)){
+                    SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.equals(e.getId(), v.getSoId())).findFirst().orElse(null);
+                    v.setPlatformOrderCode(Objects.nonNull(soB2cEntity) ? soB2cEntity.getPlatformCode() : "");
+                }
                 v.setSoReturnId(bindReturnInstockViewDTO.getId());
                 v.setSoReturnCode(bindReturnInstockViewDTO.getCode());
             });

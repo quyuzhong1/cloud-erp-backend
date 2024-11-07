@@ -198,4 +198,9 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
     PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto);
 
+    /**
+     * 重置总物流单费用
+     * @param codeList
+     */
+    void initTotalLogisticsCost(List<String> codeList);
 }

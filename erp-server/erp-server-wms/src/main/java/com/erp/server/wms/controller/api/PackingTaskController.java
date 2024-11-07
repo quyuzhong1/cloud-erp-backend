@@ -136,7 +136,7 @@ public class PackingTaskController extends BaseController {
     public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
         dto.setOperation("装箱操作");
         dto.setContent("新增装箱");
-        Boolean flag = packingTaskService.packingSave(dto, Boolean.TRUE);
+        Boolean flag = packingTaskService.packingSave(dto, Boolean.FALSE);
         return flag ? success() : failure();
     }
 
@@ -250,6 +250,28 @@ public class PackingTaskController extends BaseController {
     @GetMapping("/updatePackingStatusByTaskId")
     public ApiResult updatePackingStatusByTaskId(@RequestParam("taskId") String taskId){
         packingTaskService.updatePackingStatusByTaskId(taskId);
+        return success();
+    }
+    /**
+     * 未装箱明细
+     * @param id 任务id
+     * @return
+     */
+    @GetMapping("/notPackingDetailView")
+    public ApiResult<WmsCartonSpecDTO.NoPackingView> notPackingDetailView(@RequestParam("id") String id){
+        return success(packingTaskService.notPackingDetailView(id));
+    }
+
+    /**
+     * 导出未装箱明细Excel
+     * @author zdy
+     * @date 2024-11-06
+     * @param dto
+     */
+    @PostMapping("/exportNotPackingDetail")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出未装箱明细Excel")
+    public ApiResult exportNotPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        packingTaskService.exportNotPackingDetail(dto);
         return success();
     }
 }
