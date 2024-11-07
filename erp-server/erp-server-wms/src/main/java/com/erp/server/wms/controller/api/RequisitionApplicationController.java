@@ -214,17 +214,6 @@ public class RequisitionApplicationController extends BaseController {
             keyIdName = "ids")
     public ApiResult<List<RequisitionApplicationDTO.HandleListDTO>> handleList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<RequisitionApplicationDTO.HandleListDTO> handleListDTOS = requisitionApplicationService.handleList(dto.getIds());
-        //发送飞书通知 要货申请处理中 CfgSettingEnum.FS_REQUISITION_HANDLEING_NOTICE
-        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listByIds(dto.getIds());
-        if(CollectionUtils.isNotEmpty(requisitionApplicationEntities)){
-            for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
-                Map<String, String> map = new HashMap<>();
-                map.put("code", entity.getCode());
-                map.put("createUserId", entity.getCreateUserId());
-                map.put("createUserName", entity.getCreateUserName());
-                requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_HANDLEING_NOTICE);
-            }
-        }
         return success(handleListDTOS);
     }
 
@@ -240,6 +229,18 @@ public class RequisitionApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "处理保存:ids={ids}")
     public ApiResult handleSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.HandleListDTO> dto) {
         Boolean flag = requisitionApplicationService.handleSave(dto.getList());
+        List<String> raIds = dto.getList().stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        //发送飞书通知 要货申请处理中 CfgSettingEnum.FS_REQUISITION_HANDLEING_NOTICE
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listByIds(raIds);
+        if(CollectionUtils.isNotEmpty(requisitionApplicationEntities)){
+            for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
+                Map<String, String> map = new HashMap<>();
+                map.put("code", entity.getCode());
+                map.put("createUserId", entity.getCreateUserId());
+                map.put("createUserName", entity.getCreateUserName());
+                requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_HANDLEING_NOTICE);
+            }
+        }
         return flag ? success() : failure();
     }
 
