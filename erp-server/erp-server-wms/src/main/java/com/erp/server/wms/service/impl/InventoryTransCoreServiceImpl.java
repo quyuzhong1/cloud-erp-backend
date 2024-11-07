@@ -320,7 +320,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
             }
             // 处理目的仓仓位，如果为null 设置为空
             if (ObjectUtil.isNull(flow.getTargetWarehouseLocation())){
-                flow.setTargetWarehouseLocation(flow.getWarehouseLocation());
+                flow.setTargetWarehouseLocation("");
             }
             for(TransactionRuleDTO rule : rules) {
                 InventoryTransactionDTO transactionDTO = new InventoryTransactionDTO();
