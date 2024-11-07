@@ -44,6 +44,15 @@ public class WaveListPdaController {
     }
 
     /**
+     * tabList
+     */
+    @GetMapping("/tabList")
+    public ApiResult<List<WaveListDTO.TabDTO>> tabList() {
+        List<WaveListDTO.TabDTO> list = waveListPdaService.tabList();
+        return ApiResult.success(list);
+    }
+
+    /**
      * 单据详情
      * @param id 波次ID
      */
