@@ -300,7 +300,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
         already.setCount(alreadyCount);
         already.setTabFlag(ListingMatchResultEnum.TRUE.getCode());
-        already.setTabFlagName(ListingMatchResultEnum.TRUE.getCode());
+        already.setTabFlagName(ListingMatchResultEnum.TRUE.getName());
         resultList.add(already);
 
         //无需匹配
