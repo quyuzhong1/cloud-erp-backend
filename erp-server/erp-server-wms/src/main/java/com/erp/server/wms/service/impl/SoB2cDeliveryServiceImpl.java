@@ -1211,6 +1211,30 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    public BatchResultDTO falseDeliveryBySoId(String id) {
+        //查询是否冻结
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(id);
+        if (soB2cEntity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+        }
+        //修改订单状态待发货
+        soB2cFeign.updateSoB2cStatus(Collections.singletonList(id), StrUtil.EMPTY, Boolean.TRUE);
+        if (soB2cFeign.checkPlatformShipOrder(id)) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "手动标发";
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
+                    id,
+                    businessDesc, true);
+        } else {
+            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+        }
+        return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "手动标发");
+    }
+
+    @Override
     public BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds) {
         //无需校验单据状态，关联的调拨单必须非审核通过、或者无关联的调拨单
         List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getId());

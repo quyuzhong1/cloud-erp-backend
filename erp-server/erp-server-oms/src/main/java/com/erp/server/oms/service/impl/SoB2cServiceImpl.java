@@ -3457,6 +3457,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             }else if(manualMap.containsKey(data.getId())){
                 data.setTag(Boolean.TRUE);
+            }else {
+                data.setTag(data.getIsManualDelivery());
             }
 
             Boolean isCombination = Boolean.FALSE;
@@ -4409,12 +4411,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public BatchResultDTO falseDelivery(String id) {
         SoB2cEntity entity = this.getById(id);
+        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+        boolean hasLogisticsNO = hasLogisticsNO(entity, logisticsEntity);
         if (!(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus())
-                && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()))) {
+                && ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) && !hasLogisticsNO) {
             throw new ServiceException(ApiError.APPROVE_IS_FALSE_DELIVERY);
         }
         List<SoB2cDeliveryEntity> deliveryEntityList = soB2cDeliveryFeign.listBySourceId(Arrays.asList(id));
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
+
         String code = logisticsEntity.getCode();
         if (StringUtils.isBlank(code)) {
             throw new ServiceException(ApiError.LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY);
@@ -4431,19 +4435,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         String msg =  CharSequenceUtil.format("操作单据【{}】手动标发", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), id, "手动标发");
-
+        List<String> deliveryIds = deliveryEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
         //调用第三方平台SDK发货(独立事务)
         try {
             if (this.checkPlatformShipOrder(id)) {
-                //调用第三方平台SDK发货
-                List<String> deliveryIds = deliveryEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
-                soB2cDeliveryFeign.falseDeliveryBatch(deliveryIds);
+                if (hasLogisticsNO){
+                    soB2cDeliveryFeign.falseDeliveryBySoId(entity.getId());
+                }else {
+                    soB2cDeliveryFeign.falseDeliveryBatch(deliveryIds);
+                }
             }
             // 前端显示的异常类型
             String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
             //修改状态为手动标发
-            List<String> ids = deliveryEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-            soB2cDeliveryFeign.updateShipmentMark(ids, ShipmentMarkTypeEnum.MANUAL.getCode());
+            soB2cDeliveryFeign.updateShipmentMark(deliveryIds, ShipmentMarkTypeEnum.MANUAL.getCode());
             SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
             deleteDTO.setType(type);
             deleteDTO.setMainId(entity.getSourceId());
@@ -4454,7 +4459,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动标发");
     }
 
-
+    /**
+     * B2C销售订单允许只要渠道配置成功、物流单号获取成功后，如果是配货中状态，允许提交手动标发
+     * @param entity
+     * @param logisticsEntity
+     * @return
+     */
+    private boolean hasLogisticsNO(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+        if (Objects.nonNull(logisticsEntity) && StrUtil.isNotBlank(logisticsEntity.getLogisticsChannelId())
+                && StrUtil.isNotBlank(logisticsEntity.getTrackNo()) && SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
 
 
     /**
@@ -6119,13 +6136,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public Boolean updateSoB2cStatus(List<String> ids, String status) {
+    public Boolean updateSoB2cStatus(List<String> ids, String status, Boolean isManualDelivery) {
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.FALSE;
         }
         Boolean updateResult = lambdaUpdate().in(SoB2cEntity::getId, ids)
-                .set(SoB2cEntity::getBillStatus, status)
+                .set(StrUtil.isNotBlank(status), SoB2cEntity::getBillStatus, status)
+                .set(Objects.nonNull(isManualDelivery), SoB2cEntity::getIsManualDelivery, isManualDelivery)
                 .update();
+        if (StrUtil.isBlank(status)){
+            return updateResult;
+        }
         String statusName = SoB2cBillStatusEnum.getName(status);
         String msg = "销售订单状态变更为:" + statusName;
         for (String id : ids) {

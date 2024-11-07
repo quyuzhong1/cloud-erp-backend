@@ -590,7 +590,10 @@ public class SoB2cDTO implements Serializable {
          * 是否标记不出库发货 true 是  false 否
          */
         private Boolean isNotOutbound;
-
+        /**
+         * 是否标记手动发货true 是  false 否(以label为准)
+         */
+        private Boolean isManualDelivery;
         /**
          * 标签
          */

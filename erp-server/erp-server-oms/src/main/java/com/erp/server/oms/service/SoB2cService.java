@@ -437,13 +437,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 修改b2c销售单状态
-     * @Author Luo_WG
-     * @Date 2023/12/27 20:19
+     *
      * @param soB2cIds
      * @param status
+     * @param isManualDelivery
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:19
      **/
-    Boolean updateSoB2cStatus(List<String> soB2cIds, String status);
+    Boolean updateSoB2cStatus(List<String> soB2cIds, String status, Boolean isManualDelivery);
 
     /**
      * 修改b2c销售单状态发货时间

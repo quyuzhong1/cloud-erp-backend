@@ -19,6 +19,7 @@ import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -117,10 +118,24 @@ public class SoB2cDeliveryFeignController extends BaseController {
      **/
     @PostMapping("/falseDeliveryBatch")
     public Boolean falseDeliveryBatch(@RequestBody List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Boolean.FALSE;
+        }
         Boolean flag = soB2cDeliveryService.falseDeliveryBatch(ids);
         return flag;
     }
 
+    /**
+     * 根据销售订单手动标发
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param id 销售订单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/falseDeliveryBySoId")
+    public BatchResultDTO falseDeliveryBySoId(@RequestBody String id){
+        return soB2cDeliveryService.falseDeliveryBySoId(id);
+    }
     /**
      * 平台标记发货
      **/
