@@ -2843,6 +2843,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(entity)){
                 throw new ServiceException(StrUtil.format("销售订单【{}】未找到",id));
             }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.stream().filter(e -> Objects.isNull(e) && Objects.equals(id, e.getMainId())).findFirst().orElse(null);
+            if (Objects.isNull(soB2cLogisticsEntity) || StrUtil.isBlank(soB2cLogisticsEntity.getCode())){
+                continue;
+            }
             try {
                 BatchResultDTO resultDTO = soB2cLogisticsService.cancelLogistic(id, soB2cEntityList, soB2cLogisticsEntityList, true);
                 if (!resultDTO.getSuccess()){
