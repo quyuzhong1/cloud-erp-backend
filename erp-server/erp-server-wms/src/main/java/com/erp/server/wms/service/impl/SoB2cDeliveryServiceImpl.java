@@ -380,9 +380,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String msg = StrUtil.format("用户【{}】手动发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
 
-        //扣减冻结库存
-        outFreezeVirtualInventory(entity);
-
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
 
 
