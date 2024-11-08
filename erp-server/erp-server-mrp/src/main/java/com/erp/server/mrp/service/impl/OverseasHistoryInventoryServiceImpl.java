@@ -147,7 +147,7 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
             return false;
         }
         String warehouseId = warehouseDTO.getWarehouseId();
-
+        data.setName(warehouseDTO.getWarehouseName());
         return mappingDTO.getDictPlatform().equalsIgnoreCase(data.getDictPlatform())
                 && mappingDTO.getPlatformSkuNo().equalsIgnoreCase(data.getPlatformSku())
                 && mappingDTO.getWarehouseId().equalsIgnoreCase(warehouseId);

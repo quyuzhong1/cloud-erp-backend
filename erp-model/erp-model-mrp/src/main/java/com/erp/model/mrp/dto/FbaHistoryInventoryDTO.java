@@ -1,6 +1,7 @@
 package com.erp.model.mrp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -112,7 +113,7 @@ public class FbaHistoryInventoryDTO {
 
     @Getter
     @Setter
-    public static class PagingParamDTO {
+    public static class PagingParamDTO extends SortDTO {
 
         /**
          * 页面高级查询

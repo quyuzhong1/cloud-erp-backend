@@ -59,7 +59,7 @@
         and is_deleted = false
         <!--是否显示0库存-->
         <if test="params.isShowZeroInventory">
-            AND NOT EXISTS (SELECT id FROM fba_inventory f WHERE f.id = fi.id AND fi.fbm_fulfillable_qty = 0
+            AND NOT EXISTS (SELECT id FROM fba_history_inventory f WHERE f.id = fi.id AND fi.fbm_fulfillable_qty = 0
             AND fi.inbound_working_qty = 0
             AND fi.inbound_shipped_qty = 0
             AND fi.inbound_receiving_qty = 0
@@ -145,7 +145,7 @@
 
                 <!--是否显示0库存-->
                 <if test="params.isShowZeroInventory">
-                    AND NOT EXISTS (SELECT id FROM fba_inventory f WHERE f.id = fi.id AND fi.fbm_fulfillable_qty = 0
+                    AND NOT EXISTS (SELECT id FROM fba_history_inventory f WHERE f.id = fi.id AND fi.fbm_fulfillable_qty = 0
                     AND fi.inbound_working_qty = 0
                     AND fi.inbound_shipped_qty = 0
                     AND fi.inbound_receiving_qty = 0

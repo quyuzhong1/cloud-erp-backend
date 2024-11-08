@@ -60,7 +60,8 @@
             oi.lack_qty as lackQty,
             oi.frozen_qty as frozenQty,
             oi.shipped_qty as shippedQty,
-            oi.download_time as downloadTime
+            oi.download_time as downloadTime,
+            oi.bill_date
         FROM overseas_history_inventory as oi
         where ${params.sqlMap.default}
         and is_deleted = false
