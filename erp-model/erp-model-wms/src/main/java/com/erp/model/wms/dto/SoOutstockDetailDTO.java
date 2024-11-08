@@ -441,7 +441,7 @@ public class SoOutstockDetailDTO implements Serializable {
         /**
          * 匹配结果吧true 已匹配 false 未匹配
          */
-        private Boolean matchResult;
+        private String matchResult;
     }
 
     @Data
