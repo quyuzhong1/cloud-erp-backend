@@ -18,6 +18,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -476,7 +477,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             //获取用户信息
             List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
             List<String> orgIdList = page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
+            orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getShippingOrganization).collect(Collectors.toList()));
+            orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getFinancialOrganization).collect(Collectors.toList()));
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+            
+            List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.getByIds(com.erp.model.oms.entity.DictBasicEntity.class, 
+            		page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getChannelAffiliation).collect(Collectors.toList()));
 
             List<String> warehouseIds = page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
             List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByWarehouseIds(warehouseIds);
@@ -524,6 +530,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                         map(DictBasicEntity::getName).findFirst().orElse("");
                 excelDTO.setGeographyLocationName(geographyLocationName);
 
+                
+                excelDTO.setChannelAffiliationName(channelAffiliationList.stream().filter(o -> item.getChannelAffiliation().equals(o.getId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
+                excelDTO.setShippingOrganizationName(orgList.stream().filter(o -> item.getShippingOrganization().equals(o.getId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
+                excelDTO.setFinancialOrganizationName(orgList.stream().filter(o -> item.getFinancialOrganization().equals(o.getId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
+                
                 resultList.add(excelDTO);
             }
         }
