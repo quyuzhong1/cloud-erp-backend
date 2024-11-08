@@ -12,11 +12,11 @@ import java.util.List;
 
 /**
  * <p>
- * 库存表 服务类
+ * 本地仓库存 服务类
  * </p>
  *
- * @author liaohui
- * @since 2024-09-23
+ * @author Lambda
+ * @since 2024-11-08
  */
 public interface LocalHistoryInventoryService extends SuperService<LocalHistoryInventoryEntity> {
 
@@ -37,5 +37,5 @@ public interface LocalHistoryInventoryService extends SuperService<LocalHistoryI
      * 导出
      * @param dto 参数
      */
-    void exportExcel(LocalHistoryInventoryDTO.ExportSearchParamDTO dto);
+    void exportExcel(LocalHistoryInventoryDTO.ExportDTO dto);
 }
