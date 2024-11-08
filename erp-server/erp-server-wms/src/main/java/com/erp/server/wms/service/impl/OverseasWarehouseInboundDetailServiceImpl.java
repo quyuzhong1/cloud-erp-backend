@@ -326,7 +326,11 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 //审核
                 TransferInfoEntity entity = transferInfoService.getById(transferOutId);
                 if (Objects.nonNull(entity)){
-                    transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+                    try {
+                        transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+                    }catch (Exception e){
+                        throw new ServiceException(e.getMessage());
+                    }
                 }
             } else {
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
