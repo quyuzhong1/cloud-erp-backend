@@ -168,7 +168,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private DownloadTaskFeign downloadTaskFeign;
     @Autowired
     private FbaShipmentPackingService fbaShipmentPackingService;
-
+    @Resource
+    private FbaShipmentService fbaShipmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -2422,7 +2423,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(ApiError.ERROR_92146);
         }
         WmsCartonSpecEntity specEntity = wmsCartonSpecService.getById(wmsCartonEntity.getSpecId());
-        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(Collections.singletonList(packingTaskEntity.getSourceId()));
         List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(wmsCartonEntity.getId()));
 
         //装箱总数量
@@ -2444,7 +2444,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 .outBoxNo(outBoxNo)
                 .taskId(packingTaskEntity.getId())
                 .taskCode(packingTaskEntity.getCode())
-                .deliveryNo(getDeliveryNo(firstMileDeliveryEntityList))
+                .deliveryNo(getDeliveryNo(wmsCartonEntity,packingTaskEntity))
                 .sizeUnit(specEntity.getSizeUnit())
                 .size(getSize(specEntity))
                 .packageWeight(packageWeight)
@@ -2457,14 +2457,39 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     /**
      * 发货单
-     * @param firstMileDeliveryEntityList
+     *
+     * @param wmsCartonEntity
+     * @param packingTaskEntity
      * @return
      */
-    private String getDeliveryNo(List<FirstMileDeliveryEntity> firstMileDeliveryEntityList) {
-        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
-            return "";
+    private String getDeliveryNo(WmsCartonEntity wmsCartonEntity, PackingTaskEntity packingTaskEntity) {
+        if (Objects.isNull(wmsCartonEntity)){
+            return StrUtil.EMPTY;
         }
-        return firstMileDeliveryEntityList.get(0).getCode();
+        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByCartonIds(Collections.singletonList(wmsCartonEntity.getId()));
+        List<String> fbaShipmentIds = fbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getMainId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(fbaShipmentIds)){
+            return StrUtil.EMPTY;
+        }
+        List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(fbaShipmentIds);
+        if (CollectionUtils.isEmpty(fbaShipmentEntities)){
+            return StrUtil.EMPTY;
+        }
+        List<String> shipmentCodes = fbaShipmentEntities.stream().map(FbaShipmentEntity::getCode).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByFbaShipmentCodes(shipmentCodes);
+        if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntities)){
+            return StrUtil.EMPTY;
+        }
+        List<String> deliveryIds = firstMileDeliveryDetailEntities.stream().map(FirstMileDeliveryDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listByIds(deliveryIds);
+        if (CollectionUtils.isEmpty(firstMileDeliveryEntities)){
+            return StrUtil.EMPTY;
+        }
+        List<String> codeList = firstMileDeliveryEntities.stream().filter(e -> Objects.equals(e.getSourceId(),packingTaskEntity.getSourceId())).map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(codeList)){
+            return StrUtil.EMPTY;
+        }
+        return String.join(",", codeList);
     }
 
     private static String getSize(WmsCartonSpecEntity specEntity) {

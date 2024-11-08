@@ -216,4 +216,12 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         List<String> cartonIds = wmsCartonEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
         return this.lambdaQuery().in(FbaShipmentPackingEntity::getCartonId,cartonIds).list();
     }
+
+    @Override
+    public List<FbaShipmentPackingEntity> listByCartonIds(List<String> cartonIds) {
+        if (CollectionUtil.isEmpty(cartonIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(FbaShipmentPackingEntity::getCartonId,cartonIds).list();
+    }
 }

@@ -77,4 +77,11 @@ public interface FirstMileDeliveryDetailService extends SuperService<FirstMileDe
     List<FirstMileDeliveryDetailEntity> listDetailByMainId(String id);
 
     List<FirstMileDeliveryDetailEntity> listApprovedByFbaShipmentCodes(List<String> fbaShipmentCodeList);
+
+    /**
+     * 根据货件查询明细记录
+     * @param shipmentCodes
+     * @return
+     */
+    List<FirstMileDeliveryDetailEntity> listByFbaShipmentCodes(List<String> shipmentCodes);
 }
