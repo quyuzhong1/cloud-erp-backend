@@ -587,5 +587,9 @@ public class SoReturnDTO {
          * 客户id
          */
         private String cutomerId;
+        /**
+         * 退货销售单id
+         */
+        private String id;
     }
 }
