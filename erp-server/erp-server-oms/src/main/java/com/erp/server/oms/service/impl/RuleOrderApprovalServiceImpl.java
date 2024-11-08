@@ -67,9 +67,14 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     public String add(RuleOrderApprovalDTO.AddDTO addDTO) {
         RuleOrderApprovalEntity ruleOrderApprovalEntity = new RuleOrderApprovalEntity();
         List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        List<String> fieldList = conditionList.stream().map(RuleConditionDTO.AddDTO::getField).distinct().collect(Collectors.toList());
+        List<CfgConditionEntity> cfgConditionEntities = cfgConditionService.listByFields(fieldList);
         //去除空格
         conditionList.forEach(v->{
-            if(StringUtils.isNotBlank(v.getValue())){
+            CfgConditionEntity cfgConditionEntity = cfgConditionEntities.stream().filter(e -> Objects.nonNull(e) && e.getConditionField().equals(v.getField()) && e.getRemark().contains(CfgConditionRuleEnum.REMOVE_SPACE.getCode())).findFirst().orElse(null);
+            if (Objects.nonNull(cfgConditionEntity)){
+                v.setValue(removeSpace(v.getValue()));
+            }else if(StringUtils.isNotBlank(v.getValue())){
                 v.setValue(v.getValue().replaceAll(" ",""));
             }
         });
