@@ -675,26 +675,13 @@ public class SpElServerImpl implements SpElServer {
                 RuleCompareEnum contentsEnum = RuleCompareEnum.getByCode(compare);
                 if (Objects.nonNull(contentsEnum)) {
                     switch (contentsEnum) {
-//                        case CONTAINS:
-////                            String addField = getAddField(field, addFieldList);
-////                            content = getContentList(field,addField,compare,conversionValue,spElDTO, obj);
-//                            String addField = getAddField(field, addFieldList);
-//                            content = getContent(addField,compare,conversionValue,isStr);
-//                            content = convertToContainsExpression(content);
-//                            break;
-//                        case NOT_CONTAINS:
-//                            String addField1 = getAddField(field, addFieldList);
-//                            content = getContentList(field, addField1,compare,conversionValue,spElDTO, obj);
-//                            break;
                         case CONTAINS:
                             String addField = getAddField(field, addFieldList);
-                            content = new StringBuilder("['").append(addField).append("'] ").append(compare).append(" '").append(value).append("'").toString();
-                            content = convertToContainsExpression(content);
+                            content = getContentList(field,addField,compare,conversionValue,spElDTO, obj);
                             break;
                         case NOT_CONTAINS:
                             String addField1 = getAddField(field, addFieldList);
-                            content = new StringBuilder("['").append(addField1).append("'] ").append(compare).append(" '").append(value).append("'").toString();
-                            content = convertToNotContainsExpression(content);
+                            content = getContentList(field, addField1,compare,conversionValue,spElDTO, obj);
                             break;
                         case IN_LIST:
                             String addField2 = getAddField(field, addFieldList);
