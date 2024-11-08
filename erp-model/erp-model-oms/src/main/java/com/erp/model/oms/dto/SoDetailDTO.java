@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -828,6 +829,29 @@ public class SoDetailDTO implements Serializable {
     }
 
     /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListAddDetailNoBomViewDTO {
+
+        /**
+         * 成功返回数据
+         */
+        private List<AddDetailView> nobomList;
+
+        /**
+         * 成功返回数据
+         */
+        private List<AddDetailView> bomList;
+
+        /**
+         * 存在套装BOM
+         */
+        private Boolean existBom = false;
+    }
+
+    /**
      * 添加详情按钮-列表查询
      */
     @Data
@@ -954,6 +978,22 @@ public class SoDetailDTO implements Serializable {
          * 退货原因名称
          */
         private String returnReasonDictName;
+        /**
+         * 退货客户id
+         */
+        private String customerId;
+        /**
+         * listing_id
+         */
+        private String listingId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 平台sku名称
+         */
+        private String platformSkuName;
     }
 
 

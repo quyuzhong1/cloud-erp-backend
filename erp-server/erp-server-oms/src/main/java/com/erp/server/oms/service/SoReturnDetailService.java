@@ -117,4 +117,13 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * @param dto, id
      **/
     Boolean updateByCutomer(SoReturnDTO.Update dto);
+    /**
+     * 快粘贴查询, 需要区分是否拆分套装BOM
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author jack
+     * @Date 2024-11-08
+     **/
+
+    SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto);
 }
