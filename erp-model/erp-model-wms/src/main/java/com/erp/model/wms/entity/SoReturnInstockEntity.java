@@ -211,6 +211,17 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     @TableField("created")
     private LocalDateTime created;
 
+    /**
+     * 退货物流单号
+     */
+    @TableField("return_logistic_code")
+    private String returnLogisticCode;
+    /**
+     * 平台订单编码
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode;
+
     @TableField(exist = false)
     private List<SoReturnInstockDetailEntity> detailEntityList;
 

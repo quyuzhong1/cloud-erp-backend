@@ -226,6 +226,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsBillEntity.setPlatformCode(soB2cEntity.getPlatformCode());
             }
         }
+        //订单是否已存在
 
     }
 
@@ -430,7 +431,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         //平台
         String logisticsPlatform = auth.getLogisticsPlatform();
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
-        authMap.put("token", dto.getToken());
+        if (StrUtil.isNotBlank(dto.getToken())){
+            authMap.put("token", dto.getToken());
+        }
         //来源
         String sourceType = dto.getSourceType();
         //订单类型
@@ -486,6 +489,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 oaid(dto.getOaid()).
                 deliveryNo(dto.getOrderCode()).
                 platformCode(dto.getPlatformCode()).
+                packageNumber(dto.getPackageNumber()).
                 country(country).
                 voecTaxNo(dto.getVoecTaxNo()).
                 iossCode(getIossCodeByCountry(country,logisticsChannel.getIsIossPrepay(),dto.getIossTaxNo())).
@@ -503,7 +507,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         ApiResult<LogisticsOrderResponseVO> orderResult = service.createOrder(logisticsOrderVO);
         //表示成功
         if (orderResult.isSuccess()) {
-            return handleBill(orderResult.getData(), dto);
+            return LogisticsBillDTO.GenerateBillResultDTO.builder()
+                    .trackNo(orderResult.getData().getTrackNo())
+                    .transportNo(orderResult.getData().getTransportNo())
+                    .build();
         } else {
             LogisticsOrderResponseVO responseVO = orderResult.getData();
             StringBuilder sb = new StringBuilder(orderResult.getMsg());
@@ -558,32 +565,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         resultMap.put("detailList", Arrays.asList(detailMap));
         return  resultMap;
-    }
-
-//    @Transactional(rollbackFor = Exception.class)
-    public LogisticsBillDTO.GenerateBillResultDTO handleBill(LogisticsOrderResponseVO responseVO, LogisticsBillDTO.GenerateBillDTO dto) {
-        LogisticsBillDTO.GenerateBillResultDTO resultDTO = new LogisticsBillDTO.GenerateBillResultDTO();
-        List<String> trackNoList = new ArrayList<>(2);
-
-        String transportNo = responseVO.getTransportNo();
-        //跟踪单号
-        String trackNo = responseVO.getTrackNo();
-//        if (StringUtils.isNotBlank(trackNo) && !"null".equals(trackNo)) {
-//            trackNoList.add(trackNo);
-//        }
-//        Boolean more = responseVO.getMore();
-//        if (Objects.nonNull(more) && more) {
-//            List<LogisticsOrderResponseVO> responseList = responseVO.getLogisticsOrderResponseVOS();
-//            for (LogisticsOrderResponseVO item : responseList) {
-//                LogisticsBillDetailDTO.AddDTO detailDTO = new LogisticsBillDetailDTO.AddDTO();
-//                detailDTO.setTrackNo(item.getTrackNo());
-//                trackNoList.add(item.getTrackNo());
-//            }
-//        }
-        resultDTO.setTransportNo(transportNo);
-        resultDTO.setTrackNo(trackNo);
-        return resultDTO;
-
     }
 
     @Override
@@ -968,16 +949,50 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 ShippingCalculationDTO.ViewDTO viewDTO = shippingCalculationService.calculationFinalShippingCost(shippingTemplateEntity, shippingTemplateRule, logisticsChannelEntity, weight,
                         length, width, height);
 
-                List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listCostAttributionAndCategory(DictCostAttributionEnum.SELF_DELIVER.getCode(), DictCostCategoryEnum.SHIPPING_COST.getCode());
-                if (CollectionUtils.isEmpty(tmsCfgCostList)) {
-                    throw new ServiceException("未找到自发货物流费用配置");
-                }
+                List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listCostAttributionAndCategory(DictCostAttributionEnum.SELF_DELIVER.getCode(), null);
+                List<TmsCostDetailDTO.AddDTO>  costDetailList = new ArrayList<>();
+                //预估运费
                 TmsCostDetailDTO.AddDTO costDetailAddDTO = new TmsCostDetailDTO.AddDTO();
-                costDetailAddDTO.setCfgCostId(tmsCfgCostList.get(0).getId());
-                costDetailAddDTO.setCostValue(viewDTO.getTotalShippingCost());
-                costDetailAddDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
-                costDetailAddDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-                addDTO.setCostDetailList(Arrays.asList(costDetailAddDTO));
+                if (CollectionUtils.isNotEmpty(tmsCfgCostList)){
+                    TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> StrUtil.isNotBlank(e.getDictCostCategory()) && e.getDictCostCategory().equals(DictCostCategoryEnum.SHIPPING_COST.getCode())).findFirst().orElse(null);
+                    if (Objects.nonNull(tmsCfgCostEntity)){
+                        costDetailAddDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                        //取值优化为费用类型【运费+挂号费+操作费用】【若有折扣则按照折扣计算】
+                        BigDecimal shippingCost = viewDTO.getShippingCost().add(viewDTO.getRegistrationCost()).add(viewDTO.getOperatingCost()).subtract(viewDTO.getDiscountCost());
+                        costDetailAddDTO.setCostValue(shippingCost);
+                        costDetailAddDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                        costDetailAddDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+                        costDetailList.add(costDetailAddDTO);
+                    }
+                }
+                //预估报关费用
+                TmsCostDetailDTO.AddDTO costDetailAddDTO1 = new TmsCostDetailDTO.AddDTO();
+                if (CollectionUtils.isNotEmpty(tmsCfgCostList)){
+                    TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> StrUtil.isNotBlank(e.getDictCostCategory()) && e.getDictCostCategory().equals(DictCostCategoryEnum.DECLARE_COST.getCode())).findFirst().orElse(null);
+                    if (Objects.nonNull(tmsCfgCostEntity)){
+                        costDetailAddDTO1.setCfgCostId(tmsCfgCostEntity.getId());
+                        //目前无计算规则取值显示为0
+                        costDetailAddDTO1.setCostValue(BigDecimal.ZERO);
+                        costDetailAddDTO1.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                        costDetailAddDTO1.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+                        costDetailList.add(costDetailAddDTO1);
+                    }
+                }
+                //预估其他费用
+                TmsCostDetailDTO.AddDTO costDetailAddDTO2 = new TmsCostDetailDTO.AddDTO();
+                if (CollectionUtils.isNotEmpty(tmsCfgCostList)){
+                    TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(e -> StrUtil.isNotBlank(e.getDictCostCategory()) && e.getDictCostCategory().equals(DictCostCategoryEnum.OTHER_COST.getCode())).findFirst().orElse(null);
+                    if (Objects.nonNull(tmsCfgCostEntity)){
+                        costDetailAddDTO2.setCfgCostId(tmsCfgCostEntity.getId());
+                        //按照计算模板计算类型【超尺寸附加费+签名费+燃油附加费+保险费】【若有折扣则按照折扣计算】
+                        BigDecimal otherCost = viewDTO.getOversizeSurchargeCost().add(viewDTO.getSignatureCost()).add(viewDTO.getFuelSurchargeCost()).add(viewDTO.getPremiumCost()).subtract(viewDTO.getDiscountCost());
+                        costDetailAddDTO2.setCostValue(otherCost);
+                        costDetailAddDTO2.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                        costDetailAddDTO2.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+                        costDetailList.add(costDetailAddDTO2);
+                    }
+                }
+                addDTO.setCostDetailList(costDetailList);
             }
         }
         addDTO.setCurrency(ObjectUtil.isNotEmpty(shippingTemplateEntity) ? shippingTemplateEntity.getCurrency() : CurrencyEnum.CNY.getCurrencyCode());
@@ -1053,6 +1068,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         Page<LogisticsBillDTO.PagingVO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         fillPagingDb(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByTrackNo(List<String> trackNoList) {
+        if (CollectionUtils.isEmpty(trackNoList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listLogisticsBillVoByTrackNo(trackNoList);
     }
 
     @Override
@@ -1146,6 +1169,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
         List<String> soIds = list.stream().map(req -> req.getB2cSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
         List<String> errorList = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
             try {
@@ -1183,10 +1207,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 getLabelVO.setTransportNo(dto.getTransportNo());
 
                 //物流跟踪号
-                List<LogisticsBillDTO.BaseDTO> baseDTOList = this.listLogisticsBillByTransportNos(Arrays.asList(dto.getTransportNo()));
-                if (CollectionUtils.isNotEmpty(baseDTOList)) {
-                    getLabelVO.setTrackNo(baseDTOList.get(0).getTrackNo());
+                SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+                if (Objects.isNull(soB2cLogisticsEntity)){
+                    throw new ServiceException("销售订单【{}】物流信息为空不能进行面单打印", soB2cEntity.getCode());
                 }
+                getLabelVO.setTransportNo(soB2cLogisticsEntity.getCode());
+                getLabelVO.setTrackNo(soB2cLogisticsEntity.getTrackNo());
 
                 //授权信息
                 getLabelVO.setAuthMap(authMap);
@@ -1260,7 +1286,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 waybillDTOList.add(waybillDTO);
             }catch (Exception e){
                 String msg = StrUtil.format("{}获取物流面单异常->{}",dto.getDeliveryNo(),e.getMessage());
-                log.error(msg);
+                log.error(msg,e);
                 errorList.add(msg);
             }
         }

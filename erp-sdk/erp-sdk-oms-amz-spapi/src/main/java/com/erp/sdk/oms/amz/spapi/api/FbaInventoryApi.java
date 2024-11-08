@@ -21,10 +21,12 @@ import com.erp.sdk.oms.amz.spapi.model.fbainventory.GetInventorySummariesResult;
 import com.erp.sdk.oms.amz.spapi.model.fbainventory.InventorySummary;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tools.ant.taskdefs.Sleep;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -32,6 +34,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 
 
+@Slf4j
 @Getter
 public class FbaInventoryApi {
     private ApiClient apiClient;
@@ -242,6 +245,11 @@ public class FbaInventoryApi {
         }
         currentNextToken = data.getPagination().getNextToken();
         while (StringUtils.isNotBlank(currentNextToken) ) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                log.warn("睡眠异常:{}", e.getMessage());
+            }
             withHttpInfo = getInventorySummariesWithHttpInfo(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus, currentNextToken);
             GetInventorySummariesResponse curData = withHttpInfo.getData();
             GetInventorySummariesResult curResult = curData.getPayload();

@@ -298,6 +298,32 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("frozen_type")
     private String frozenType;
 
+    /**
+     * 合并--所有子订单的平台订单编号合并，使用逗号隔开
+     * 其余情况--为空
+     */
+    @TableField("merge_platform_code")
+    private String mergePlatformCode;
+
+    /**
+     * 是否更换发货sku（默认false）
+     */
+    @TableField("is_change_sku")
+    private Boolean isChangeSku;
+
+    /**
+     * 是否标记不出库发货（默认false）
+     */
+    @TableField("is_not_outbound")
+    private Boolean isNotOutbound;
+
+    /**
+     * 是否手动发货标记（默认false）
+     * 标记销售订单手动标发 发货单不存在时以销售订单手动标发标记为准，发货单存在时以发货单手动标发标记为准
+     */
+    @TableField("is_manual_delivery")
+    private Boolean isManualDelivery;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -397,7 +423,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
         }
         // 虾皮
         if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
-            return true;
+            return false;
         }
         //沃尔玛
         if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(this.dictPlatform)) {

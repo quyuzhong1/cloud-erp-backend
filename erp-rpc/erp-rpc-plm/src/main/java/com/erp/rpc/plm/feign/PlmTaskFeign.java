@@ -2,6 +2,7 @@ package com.erp.rpc.plm.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -69,24 +70,6 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/updateBusinessSyncKingdeeStatus")
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
-
-    /**
-     * 根据skuId集合获取到sku信息,推荐按需使用
-     * listSkuProductByIds  基础信息+产品信息
-     * listSkuCostByIds     基础信息+成本信息
-     * listSkuPackByIds     基础信息+产品信息+包装信息
-     * listSkuSaleByIds     基础信息+产品信息+销售信息
-     * listSkuLogisticsByIds基础信息+产品信息+物流信息
-     * listSkuCategoryByIds 基础信息+产品信息+分类信息
-     * listSkuPurchaseByIds 基础信息+产品信息+采购信息
-     * @param skuIds
-     * @return
-     * @author yl
-     * @date 2023-03-21 12:19
-     */
-    @Deprecated
-    @PostMapping("feign/product/getSkuInfoByIds")
-    List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
     /**
      * 根据skuid集合获取到sku 信息
      *
@@ -535,11 +518,21 @@ public interface PlmTaskFeign {
     /**
      * 根据skuid 集合获取到sku信息 （走redis缓存审核sku时刷新缓存）
      *
+     * 根据skuId集合获取到sku信息,推荐按需使用
+     * listSkuProductByIds  基础信息+产品信息
+     * listSkuCostByIds     基础信息+成本信息
+     * listSkuPackByIds     基础信息+产品信息+包装信息
+     * listSkuSaleByIds     基础信息+产品信息+销售信息
+     * listSkuLogisticsByIds基础信息+产品信息+物流信息
+     * listSkuCategoryByIds 基础信息+产品信息+分类信息
+     * listSkuPurchaseByIds 基础信息+产品信息+采购信息
+     *
      * @param skuIds
      * @return java.util.List<com.erp.model.plm.vo.SkuVO>
      * @author zdy
      * @date 2024-04-25 12:06
      */
+    @Deprecated
     @PostMapping("feign/product/listSkuAllAttributeByIds")
     List<SkuVO> listSkuAllAttributeByIds(@RequestBody List<String> skuIds);
 
@@ -621,6 +614,31 @@ public interface PlmTaskFeign {
 
     @PostMapping("feign/product/dimensionalWeightMeasure")
     String dimensionalWeightMeasure(@RequestBody DimensionalWeightDTO dto);
+
+    /**
+     * 试产量产  审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/pilotApprovalPass")
+    void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
+
+    /**
+     * 试产量产  审核 不通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/pilotApprovalNoPass")
+    void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
+
+    /**
+     * 查询bom (可以查询全部)
+     * @return
+     */
+    @PostMapping("feign/bom/listAllBom")
+    List<BomDTO.BomSku> listAllBom(@RequestBody List<String> childSkuIdList);
 
     /**
      * 获取已审核且已上市sku

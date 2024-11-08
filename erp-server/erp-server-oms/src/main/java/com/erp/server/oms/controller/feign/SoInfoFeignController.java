@@ -7,16 +7,14 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -188,5 +186,16 @@ public class SoInfoFeignController extends BaseController {
     @PostMapping("/updateFrozenQty")
     public void updateFrozenQty(@RequestBody @Validated List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList){
          soDetailService.updateFrozenQty(soParamList);
+    }
+
+    /**
+     * 查询所有虚拟仓B2B销售订单数据
+     * @author will
+     * @date 2024/9/26 16:57
+     * @return List<ViewDTO>
+     */
+    @GetMapping("/listAllVirtualSoDetail")
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail(){
+       return soDetailService.listAllVirtualSoDetail();
     }
 }

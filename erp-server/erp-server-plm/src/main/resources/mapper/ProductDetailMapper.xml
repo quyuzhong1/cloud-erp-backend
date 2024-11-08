@@ -90,6 +90,8 @@
         pd.version,
         pc.actual_tax_cost,
         pc.target_tax_cost,
+        pc.actual_no_tax_cost,
+        pc.target_no_tax_cost,
         pd.warehouse_location,
         pd.warehouse_location_large,
         pi.iterate_ref_sku_id,
@@ -769,7 +771,8 @@
         pl.declare_element as declareElement,
         ppk.box_qty as boxQty,
         ppk.gross_weight as grossWeight,
-        ppk.net_weight
+        ppk.net_weight,
+        pd.warehouse_location_large
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
@@ -2148,63 +2151,67 @@
         </if>
     </select>
     <select id="pagingSelect" resultType="com.erp.model.plm.vo.SkuVO">
-        select  pd.id AS skuId,
-        pi.id AS productId,
-        pi.spu_no,
-        pi.name AS spuName,
-        pd.sku_no,
-        pd.images_url AS skuImagesUrl,
-        pd.name AS skuName,
-        pd.variant_property,
-        pp.box_qty as unitQty,
-        pl.declare_chinese_name as declareName,
-        pl.declare_model as declareModel,
-        pd.unit_name
+        select  skuId,productId,spu_no,spuName,sku_no,status,skuImagesUrl,skuName,variant_property,unitQty,declareName,declareModel,unit_name
         from
-        (
-        SELECT
-        pd.id AS skuId,
-        pi.id AS productId,
-        pi.spu_no,
-        pi.name AS spuName,
-        pd.sku_no,
-        pd.images_url AS skuImagesUrl,
-        pd.name AS skuName,
-        pd.variant_property,
-        pp.box_qty as unitQty,
-        pl.declare_chinese_name as declareName,
-        pl.declare_model as declareModel,
-        pd.unit_name
+        (   SELECT
+            pd.id AS skuId,
+            pi.id AS productId,
+            pi.spu_no,
+            pi.name AS spuName,
+            pd.sku_no,
+            pd.status,
+            pd.images_url AS skuImagesUrl,
+            pd.name AS skuName,
+            pd.variant_property,
+            pp.box_qty as unitQty,
+            pl.declare_chinese_name as declareName,
+            pl.declare_model as declareModel,
+            pd.unit_name
         FROM product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
         WHERE pd.is_deleted = FALSE
-        AND pd.status=2
-        <if test="searchKeyword != null and searchKeyword!=''">
-            AND
-            (
-            pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%')
-            OR
-            pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
-            )
-            ORDER BY CASE
-            WHEN pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
-            WHEN pd.name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
-            ELSE 2
-            END,
-            LENGTH(pd.sku_no), LENGTH(pd.name),
-            pd.sku_no, pd.name;
+        <if test="params.statusList != null and params.statusList.size > 0">
+            AND pd.status in
+            <foreach collection="params.statusList" item="status" open="(" close=")" separator=",">
+                #{status}
+            </foreach>
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword!=''">
+            AND pd.sku_no ILIKE concat('%',#{params.searchKeyword}::text,'%')
         </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            case when pd.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
-            when pd.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
-            when pd.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
-            end , pd.name,
+            case when pd.sku_no ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when pd.sku_no ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when pd.sku_no ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end,
         </if>
         pd.sku_no asc
         ) pds
+    </select>
+    <select id="listProductChargeInfoByIds" resultType="com.erp.model.plm.vo.SkuVO$ProductChargeInfoDTO">
+        SELECT
+        string_agg(pi.ID,',') AS productId,
+        string_agg(pi.spu_no,',') AS spuNo,
+        string_agg(pi.NAME,',') AS spuName,
+        string_agg(pd.ID,',') AS skuId,
+        string_agg(pd.sku_no,',') AS skuNo,
+        string_agg(pd.NAME,',') AS skuName,
+        string_agg(pi.charge_id,',') AS chargeId,
+        string_agg(pi.charge_name,',') AS chargeName,
+        string_agg(pi.project_charge_id,',') AS projectChargeId
+        FROM  product_detail pd
+        LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        WHERE
+        pd.is_deleted = FALSE
+        <if test="skuIds != null and skuIds.size>0">
+            AND pd.id IN
+            <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
     </select>
     <select id="listApproveAndListingSku" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT pd.id AS skuId,

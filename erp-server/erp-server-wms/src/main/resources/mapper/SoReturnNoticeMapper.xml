@@ -5,7 +5,9 @@
         SELECT
             srn.id,
             srnd.id as detailId,
+            srn.so_id as soId,
             srn.source_id AS sourceId,
+            srn.type,
             srnd.source_detail_id AS sourceDetailId,
             srn.code,
             srn.source_code AS sourceCode,
@@ -25,7 +27,8 @@
             srn.create_user_name AS createUserName,
             srnd.return_type_dict AS returnTypeDict,
             srnd.return_reason_dict AS returnReasonDict,
-            srn.create_time AS createTime
+            srn.create_time AS createTime,
+            srn.return_logistic_code as returnLogisticCode
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE
@@ -84,7 +87,8 @@
         srn.create_user_name AS createUserName,
         srnd.return_type_dict AS returnTypeDict,
         srnd.return_reason_dict AS returnReasonDict,
-        srn.create_time AS createTime
+        srn.create_time AS createTime,
+        srn.return_logistic_code as returnLogisticCode
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE
@@ -106,6 +110,7 @@
         SELECT
             srnd.id,
             srnd.main_id,
+            srn.type,
             srn.source_id,
             srn.warehouse_id,
             srn.inventory_org_id,
@@ -121,7 +126,8 @@
             srnd.return_type_dict,
             srnd.return_reason_dict,
             srnd.remark,
-            srn.approve_status
+            srn.approve_status,
+            srn.return_logistic_code
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE

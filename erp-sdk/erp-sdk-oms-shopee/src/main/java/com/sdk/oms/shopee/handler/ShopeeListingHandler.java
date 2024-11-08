@@ -23,6 +23,7 @@ import com.sdk.oms.shopee.dto.global.request.GlobalProductRequest;
 import com.sdk.oms.shopee.dto.global.response.GlobalItemInfo;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
 import com.sdk.oms.shopee.dto.product.response.ItemInfo;
+import com.sdk.oms.shopee.dto.product.response.ShopeeProductInfo;
 import com.sdk.oms.shopee.service.ShopeeGlobalProductService;
 import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.common.util.CollectionUtils;
@@ -39,7 +40,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * 亚马逊产品处理器
+ * 虾皮产品处理器
  *
  * @Author Cloud
  * @Date 2023/8/31 15:48
@@ -85,7 +86,7 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         if (Objects.isNull(cfgAppClient)) {
             return Collections.emptyList();
         }
-        List<ItemInfo> itemInfos = new ArrayList<>();
+        List<ShopeeProductInfo> itemInfos = new ArrayList<>();
 
         ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
         if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && Objects.nonNull(shopeeShopById.getData().getType())
@@ -100,7 +101,7 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
                     .timeFrom(null)
                     .timeTo(null)
                     .build();
-            List<ItemInfo> list = new ArrayList<>();
+            List<ShopeeProductInfo> list = new ArrayList<>();
             try {
                 shopeeProductService.getAllProduct(productRequest, list);
             } catch (Exception e) {

@@ -6,7 +6,9 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -492,6 +494,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
 
+        // 国家
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String,String> countryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(countryList)){
+            countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
+        }
+
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -507,6 +516,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //平台类型名称
             String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setPlatformTypeName(platformTypeName);
+            //国家
+            item.setCountryName(countryMap.get(item.getCountryId()));
         }
 
         return new PagingVO<>(pageData);
@@ -1004,6 +1015,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         queryWrapper.select(CustomerInfoEntity::getId,
                 CustomerInfoEntity::getCode,
                 CustomerInfoEntity::getName,
+                CustomerInfoEntity::getShortName,
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
         if (StringUtils.isNotBlank(permissionSql)) {
@@ -1983,5 +1995,31 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             }
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<CustomerDTO.InfoDTO> listSimpleName(CustomerDTO.PageSelectDTO dto) {
+        LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(CustomerInfoEntity::getId,
+                CustomerInfoEntity::getCode,
+                CustomerInfoEntity::getName,
+                CustomerInfoEntity::getShortName,
+                CustomerInfoEntity::getApproveStatus,
+                CustomerInfoEntity::getDisabled);
+        queryWrapper.last(" ORDER BY create_time DESC");
+        if(Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getName())){
+            queryWrapper.like(CustomerInfoEntity::getName, dto.getName()).or().like(CustomerInfoEntity::getShortName, dto.getName());
+        }
+        List<CustomerInfoEntity> list = this.list(queryWrapper);
+        List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+        List<ApproveStatusEnum> statusList = new ArrayList<>(1);
+        statusList.add(ApproveStatusEnum.APPROVE);
+        for (CustomerDTO.InfoDTO item : resultList) {
+            if (!statusList.contains(item.getApproveStatus())) {
+                item.setDisabled(true);
+            }
+        }
+        resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
+        return resultList;
     }
 }

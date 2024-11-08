@@ -5,9 +5,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.plm.dto.BomDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
+import org.apache.commons.lang3.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -72,7 +74,6 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     public BaseResultDTO.AddDTO add(SkuMappingRuleDTO.AddDTO addDTO) {
         SkuMappingRuleEntity skuMappingRuleEntity = new SkuMappingRuleEntity();
         BeanMapperUtils.copy(addDTO, skuMappingRuleEntity);
-//        handleSamePriority(skuMappingRuleEntity);
         // 数据处理
         handleData(addDTO,skuMappingRuleEntity);
 
@@ -194,24 +195,45 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         if(Objects.isNull(skuMappingRuleEnum)){
             throw new ServiceException("获取规则异常,");
         }
-        List<String> regexList = skuMappingRuleEnum.getRegexMethod().apply(ruleTestDTO.getRuleDTO());
-        //匹配规则为空，返回原结果
-        if(CollectionUtils.isEmpty(regexList)){
-            list.add(result);
-        }
-        // 记录循环次数
-        int count = 1;
-        for(String regex : regexList){
-            result = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleTestDTO.getRuleType(),regex,result);
-            // 判断是否需要添加结果到列表
-            if (!skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_PREFIXES_AND_SUFFIXES) || count % 2 == 0) {
+        if(SkuMappingRuleEnum.MATCH_COMBINE.equals(skuMappingRuleEnum)){
+            SkuMappingRuleDTO.RuleDTO ruleDTO = ruleTestDTO.getRuleDTO();
+            if(CollectionUtils.isEmpty(ruleDTO.getRuleContentList())){
+                throw new ServiceException("规则详情不能为空");
+            }
+            SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO = ruleDTO.getRuleContentList().get(0);
+            if(StringUtils.isEmpty(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isEmpty(ruleConditionsDTO.getChildQtySplitSymbol())){
+                throw new ServiceException("拆分符号不能为空");
+            }
+            List<String> splitList = Arrays.asList(result.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
+            String desc = "";
+            for (String childrenSku : splitList) {
+                SkuMappingRuleDTO.SplitSkuDTO splitSkuDTO = this.splitByLastSymbol(childrenSku,ruleConditionsDTO.getChildQtySplitSymbol());
+                if(StringUtils.isEmpty(desc)){
+                    desc = splitSkuDTO.desc();
+                }else {
+                    desc = desc+";"+splitSkuDTO.desc();
+                }
+            }
+            list.add(desc);
+        }else{
+            List<String> regexList = skuMappingRuleEnum.getRegexMethod().apply(ruleTestDTO.getRuleDTO());
+            //匹配规则为空，返回原结果
+            if(CollectionUtils.isEmpty(regexList)){
                 list.add(result);
             }
-            count++;
+            // 记录循环次数
+            int count = 1;
+            for(String regex : regexList){
+                result = skuMappingRuleEnum.getHandleRegexMethod().apply(ruleTestDTO.getRuleType(),regex,result);
+                // 判断是否需要添加结果到列表
+                if (!skuMappingRuleEnum.equals(SkuMappingRuleEnum.IGNORE_PREFIXES_AND_SUFFIXES) || count % 2 == 0) {
+                    list.add(result);
+                }
+                count++;
+            }
         }
         return list;
     }
-
 
     /**
     * 新增修改处理数据
@@ -225,9 +247,18 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         if(Objects.isNull(skuMappingRuleEnum)){
             throw new ServiceException("获取规则异常,"+skuMappingRuleEntity.getRuleType());
         }
+        if(SkuMappingRuleEnum.MATCH_COMBINE.equals(skuMappingRuleEnum)) {
+            SkuMappingRuleDTO.RuleDTO ruleDTO = commonDTO.getRuleDTO();
+            if (CollectionUtils.isEmpty(ruleDTO.getRuleContentList())) {
+                throw new ServiceException("规则详情不能为空");
+            }
+            SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO = ruleDTO.getRuleContentList().get(0);
+            if (StringUtils.isEmpty(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isEmpty(ruleConditionsDTO.getChildQtySplitSymbol())) {
+                throw new ServiceException("拆分符号不能为空");
+            }
+        }
         List<String> regexList = skuMappingRuleEnum.getRegexMethod().apply(commonDTO.getRuleDTO());
-        String regex
-                = regexList.toString().substring(1, regexList.toString().length() - 1);
+        String regex = regexList.toString().substring(1, regexList.toString().length() - 1);
         skuMappingRuleEntity.setRuleRegex(regex);
 
         //处理扩展规则
@@ -296,10 +327,14 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void handleSkuMapping() {
+    public void handleSkuMapping(List<String> skuMappingIds) {
         //查询未匹配的SKU
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setMatchResult(false);
+        if(CollectionUtils.isEmpty(skuMappingIds)){
+            paramDTO.setMatchResult(ListingMatchResultEnum.FALSE.getCode());
+        }else{
+            paramDTO.setSkuMappingIds(skuMappingIds);
+        }
         paramDTO.setIsExpire(false);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> noMatchList = skuMappingService.findListDto(paramDTO);
@@ -311,6 +346,17 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         if(CollectionUtils.isEmpty(skuVOList)){
             return;
         }
+        //查询销售套装信息
+        List<BomDTO.BomSku> bomSkus = plmTaskFeign.listAllBom(new ArrayList<>());
+        bomSkus = bomSkus.stream().filter(v->v.getType().equals(BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        Map<String,String> bomSkuMap = bomSkus.stream().collect(Collectors.groupingBy(
+                BomDTO.BomSku::getParentSkuId,
+                        Collectors.mapping(
+                                bomSku -> bomSku.getSkuNo() +"*" + bomSku.getQty(),
+                                Collectors.joining("丨")
+                        )
+                ));
+
         Map<String,SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuNo,skuVO -> skuVO));
         List<SkuMappingRuleEntity> skuMappingRuleEntityList = this.listOrderByPriorityAndUpdateTime();
         //过滤掉已禁用
@@ -339,31 +385,71 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                         handlePlatformSkuNo = skuMappingExtendRuleEnum.getHandleRegexMethod().apply(extendRegex,handlePlatformSkuNo);
                     }
                 }
+
                 //获取枚举
                 SkuMappingRuleEnum skuMappingRuleEnum = EnumMessage.getByCode(SkuMappingRuleEnum.class, skuMappingRuleEntity.getRuleType());
                 if(Objects.isNull(skuMappingRuleEnum)){
                     throw new ServiceException("获取规则异常,");
                 }
-                String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();
-                String[] ruleRegexList = ruleRegexArrStr.split(", ");
-                for(String ruleRegex : ruleRegexList){
-                    handlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(skuMappingRuleEntity.getRuleType(),ruleRegex,handlePlatformSkuNo);
-                    if(skuVOMap.containsKey(handlePlatformSkuNo)){
-                        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
-                        listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
-                        listingInfoEntity.setMatchResult(true);
-                        updateListingList.add(listingInfoEntity);
+                if(SkuMappingRuleEnum.MATCH_COMBINE.equals(skuMappingRuleEnum)){
+                    JSONObject jsonObject = new JSONObject(skuMappingRuleEntity.getRuleContent());
+                    SkuMappingRuleDTO.RuleDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<SkuMappingRuleDTO.RuleDTO>() {}.getType());
+                    SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO = ruleDTO.getRuleContentList().get(0);
+                    List<String> splitList = Arrays.asList(handlePlatformSkuNo.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
+                    StringBuilder matchStr = new StringBuilder();
+                    for (String childrenSku : splitList) {
+                        SkuMappingRuleDTO.SplitSkuDTO splitSkuDTO = this.splitByLastSymbol(childrenSku,ruleConditionsDTO.getChildQtySplitSymbol());
+                        matchStr.append(splitSkuDTO.matchStr());
+                    }
+                    // 去掉最后一个字符
+                    if (matchStr.length() > 0) {
+                        matchStr.deleteCharAt(matchStr.length() - 1);
+                    }
+                    //匹配销售套装bom
+                    for (Map.Entry<String, String> entry : bomSkuMap.entrySet()) {
+                        if (compareSplitStrings(entry.getValue(),matchStr.toString())) {
+                            SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(entry.getKey())).findFirst().orElse(null);
+                            if(Objects.nonNull(skuVO)){
+                                ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                                listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
+                                listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                                listingInfoEntity.setRemark("");
+                                updateListingList.add(listingInfoEntity);
+                                SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+                                skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
+                                skuMappingEntity.setRuleId(skuMappingRuleEntity.getId());
+                                skuMappingEntity.setProductSkuId(skuVO.getSkuId());
+                                skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
+                                skuMappingEntity.setProductName(skuVO.getSkuName());
+                                skuMappingEntity.setListingId(listingInfoEntity.getId());
+                                updateSkuMappingList.add(skuMappingEntity);
+                                break ruleLoop;
+                            }
+                        }
+                    }
+                }else{
+                    String ruleRegexArrStr = skuMappingRuleEntity.getRuleRegex();
+                    String[] ruleRegexList = ruleRegexArrStr.split(", ");
+                    for(String ruleRegex : ruleRegexList){
+                        handlePlatformSkuNo = skuMappingRuleEnum.getHandleRegexMethod().apply(skuMappingRuleEntity.getRuleType(),ruleRegex,handlePlatformSkuNo);
+                        if(skuVOMap.containsKey(handlePlatformSkuNo)){
+                            ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+                            listingInfoEntity.setId(listingInfoWithSkuMappingDTO.getListingId());
+                            listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                            listingInfoEntity.setRemark("");
+                            updateListingList.add(listingInfoEntity);
 
-                        SkuVO skuVO = skuVOMap.get(handlePlatformSkuNo);
-                        SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
-                        skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
-                        skuMappingEntity.setRuleId(skuMappingRuleEntity.getId());
-                        skuMappingEntity.setProductSkuId(skuVO.getSkuId());
-                        skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
-                        skuMappingEntity.setProductName(skuVO.getSkuName());
-                        skuMappingEntity.setListingId(listingInfoEntity.getId());
-                        updateSkuMappingList.add(skuMappingEntity);
-                        break ruleLoop;
+                            SkuVO skuVO = skuVOMap.get(handlePlatformSkuNo);
+                            SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+                            skuMappingEntity.setId(listingInfoWithSkuMappingDTO.getTableId());
+                            skuMappingEntity.setRuleId(skuMappingRuleEntity.getId());
+                            skuMappingEntity.setProductSkuId(skuVO.getSkuId());
+                            skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
+                            skuMappingEntity.setProductName(skuVO.getSkuName());
+                            skuMappingEntity.setListingId(listingInfoEntity.getId());
+                            updateSkuMappingList.add(skuMappingEntity);
+                            break ruleLoop;
+                        }
                     }
                 }
             }
@@ -396,10 +482,44 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         return new PagingVO(pageData);
     }
 
-    public SkuMappingRuleEntity getByRuleType(String ruleType) {
-        LambdaQueryWrapper<SkuMappingRuleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SkuMappingRuleEntity::getRuleType, ruleType);
-        queryWrapper.last("LIMIT 1");
-        return this.getOne(queryWrapper);
+    /**
+     * 根据字符拆分字符串，并确保第二部分是数字。
+     *
+     * @param input 输入字符串
+     * @return 拆分后的字符串数组，如果不符合条件则第二个元素为1。
+     */
+    public  SkuMappingRuleDTO.SplitSkuDTO splitByLastSymbol(String input,String symbol) {
+        // 查找最后一个星号的位置
+        int lastAsteriskIndex = input.lastIndexOf(symbol);
+
+        if (lastAsteriskIndex != -1) {
+            String firstPart = input.substring(0, lastAsteriskIndex);
+            String secondPart = input.substring(lastAsteriskIndex + 1);
+
+            // 检查第二部分是否为数字
+            if (StringUtils.isNumeric(secondPart)) {
+                return new SkuMappingRuleDTO.SplitSkuDTO(firstPart, Integer.valueOf(secondPart));
+            }
+        }
+
+        // 不符合拆分条件的情况
+        return  new SkuMappingRuleDTO.SplitSkuDTO(input, 1);
+    }
+    public boolean compareSplitStrings(String a, String b) {
+        // 分割字符串 a
+        String[] partsA = a.split("丨", 2);
+        // 分割字符串 b
+        String[] partsB = b.split("丨", 2);
+
+        // 检查分割后的部分是否相等，顺序可以不一致
+        if (partsA.length == 2 && partsB.length == 2) {
+            Set<String> setA = new HashSet<>(Arrays.asList(partsA));
+            Set<String> setB = new HashSet<>(Arrays.asList(partsB));
+
+            return setA.equals(setB);
+        }
+
+        // 如果任何一个字符串没有被正确分割成两部分，返回 false
+        return false;
     }
 }

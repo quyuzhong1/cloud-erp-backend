@@ -20,12 +20,10 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -64,7 +62,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -375,8 +372,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> instockForecast(BaseDTO.QtyDTO qtyDTO) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         TransferDeclareEntity transferDeclareEntity = this.getById(qtyDTO.getId());
@@ -462,11 +457,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 transferDeclareEntity.setInstockForecastDate(LocalDate.now());
                 //上传成功
                 baseMapper.updateById(transferDeclareEntity);
-                //删除订单异常记录
-                SoB2cErrorDTO.BatchDeleteDTO deleteDTO = new SoB2cErrorDTO.BatchDeleteDTO();
-                deleteDTO.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-                deleteDTO.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-                soB2cFeign.deleteErrorByMainIds(deleteDTO);
 
                 //入库预报成功添加报关对账明细
                 addDeclareReconciliation(transferDeclareDetailEntities);
@@ -478,13 +468,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 transferDeclareEntity.setInstockForecastRemark(result.getMsg());
                 transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
                 baseMapper.updateById(transferDeclareEntity);
-                //记录订单预报异常
-                SoB2cErrorDTO.BatchAdd batchAdd = new SoB2cErrorDTO.BatchAdd();
-                batchAdd.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-                batchAdd.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-                batchAdd.setMessage(msg);
-                batchAdd.setParamJson(JSONObject.toJSONString(qtyDTO));
-                soB2cFeign.batchAddSoB2cError(batchAdd);
 
                 resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), msg));
             }
@@ -498,13 +481,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             transferDeclareEntity.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_FAILURE.getCode());
             baseMapper.updateById(transferDeclareEntity);
 
-            //记录订单预报异常
-            SoB2cErrorDTO.BatchAdd batchAdd = new SoB2cErrorDTO.BatchAdd();
-            batchAdd.setMainIds(transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList()));
-            batchAdd.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-            batchAdd.setMessage(e.getMessage());
-            batchAdd.setParamJson(JSONObject.toJSONString(qtyDTO));
-            soB2cFeign.batchAddSoB2cError(batchAdd);
+
             resultDTOList.add(BatchResultDTO.fail(transferDeclareEntity.getId(), transferDeclareEntity.getCode(), e.getMessage()));
         }
 
@@ -880,6 +857,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 PackageForecastDetailEntity packageForecastDetailEntity = packageForecastDetailEntityList.stream().filter(v -> v.getSoId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(new PackageForecastDetailEntity());
                 PackageForecastEntity packageForecastEntity = packageForecastEntityList.stream().filter(v -> v.getId().equals(packageForecastDetailEntity.getMainId())).findFirst().orElse(new PackageForecastEntity());
                 transferDeclareDetailEntity.setPackageForecastCode(packageForecastEntity.getCode());
+                transferDeclareDetailEntity.setPlatformOrderCode(Objects.nonNull(detailSoB2cEntity) ? detailSoB2cEntity.getPlatformCode() : "");
             });
             listDTO.setDetailEntityList(detailEntityList);
         }

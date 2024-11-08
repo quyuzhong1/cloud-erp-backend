@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -140,5 +142,13 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
         }
         queryWrapper.orderByDesc(SysPostEntity::getUpdateTime);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    public List<SysPostEntity> listByRequisitionSetting() {
+        List<String> list = new ArrayList<>();
+        list.add("创建人");
+        list.add("处理人");
+        return this.lambdaQuery().in(SysPostEntity::getPostName,list).list();
     }
 }

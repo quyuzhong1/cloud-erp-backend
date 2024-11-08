@@ -30,6 +30,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,7 +58,7 @@ public class AntuOutboundInitHandler extends DmpInputInitHandler {
 				.modifyDateFrom(dmpInputTaskEntity.getStartTime())
 				.modifyDateTo(dmpInputTaskEntity.getEndTime())
 				.pageSize(100)
-				.orderStatus(AntuEnums.OrderStatusEnum.INITIAL_RECEIVING.getCode())
+//				.orderStatus(AntuEnums.OrderStatusEnum.INITIAL_RECEIVING.getCode())
 				.build();
 		Integer page = 1;
 		int currTotal = 0;
@@ -66,6 +67,10 @@ public class AntuOutboundInitHandler extends DmpInputInitHandler {
 		if(CollUtil.isEmpty(overseasProviderEntityList)) {
 			return Collections.emptyList();
 		}
+		if (overseasProviderEntityList.get(0).getEnableDate().compareTo(LocalDate.now()) > 0) {
+			return Collections.emptyList();
+		}
+
 		ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
 		while(true) {
 			antuGetOutboundReq.setPage(page);

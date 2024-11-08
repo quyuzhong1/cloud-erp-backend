@@ -227,6 +227,11 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         return baseMapper.listByTaskIdsAndPermission(packedDetailDTO);
     }
 
+    @Override
+    public List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId) {
+        return baseMapper.listByPackingTaskId(packingTaskId);
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -239,7 +244,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         //装箱人员填充
         wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
         wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
-        if (Objects.isNull(wmsCartonEntity.getId())){
+        if (Objects.isNull(wmsCartonEntity.getId()) && Objects.isNull(wmsCartonEntity.getBoxNo())){
             Integer boxNo = baseMapper.getBoxNoByTaskId(addDTO.getTaskId());
             if (Objects.isNull(boxNo)){
                 wmsCartonEntity.setBoxNo(MathUtil.ONE);

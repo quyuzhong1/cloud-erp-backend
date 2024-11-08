@@ -279,4 +279,28 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
         return viewList;
     }
+
+    @Override
+    public List<WaveListDTO.TabDTO> tabList() {
+        List<WaveListDTO.TabDTO> list = waveListService.tabList();
+        Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
+
+        List<WaveListDTO.TabDTO> resultList = new ArrayList<>();
+        WaveListDTO.TabDTO tab_wait = map.get(WaveStatusEnum.AWAIT_PICK.getCode());
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.AWAIT_PICK.getCode(), tab_wait != null ? tab_wait.getCount() : 0));
+
+        WaveListDTO.TabDTO tab_ing = map.get(WaveStatusEnum.PICK_ING.getCode());
+        WaveListDTO.TabDTO tab_hang = map.get(WaveStatusEnum.HANG_UP.getCode());
+        int ing = tab_ing != null ? tab_ing.getCount() : 0;
+        int hang = tab_hang != null ? tab_hang.getCount() : 0;
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.PICK_ING.getCode(), ing + hang));
+
+        WaveListDTO.TabDTO tab_finish = map.get(WaveStatusEnum.FINISH.getCode());
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.FINISH.getCode(), tab_finish != null ? tab_finish.getCount() : 0));
+
+        for (WaveListDTO.TabDTO dto : resultList) {
+            dto.setTabFlagName(WaveStatusEnum.getNameByCode(dto.getTabFlag()));
+        }
+        return resultList;
+    }
 }

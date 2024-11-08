@@ -1,8 +1,11 @@
 package com.common.business.dto.base;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.utils.StringUtil;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -27,6 +30,11 @@ public class PagingDTO<T> extends PermissionsDTO {
     private Integer pageSize = 10;
 
     /**
+     * 每页最后的id
+     */
+    private String lastId;
+
+    /**
      * 查询参数
      */
     @NotNull(message = "参数不能为空")
@@ -45,4 +53,14 @@ public class PagingDTO<T> extends PermissionsDTO {
 
 
 
+    public Integer getPage() {
+        if (StringUtils.isNotBlank(lastId)) {
+            return 1;
+        }
+        return currPage;
+    }
+
+    public Page<T> page() {
+        return new Page<>(getPage(), getPageSize());
+    }
 }

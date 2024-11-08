@@ -42,7 +42,7 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      * @param mainId
      * @return java.util.List<com.erp.model.wms.dto.FirstMileCartonDTO.PackingQtyDTO>
      **/
-    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId, Integer boxSpecNo);
+    List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId);
 
     /**
      * 批量汇总装箱信息
@@ -101,4 +101,12 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      * @param cartonSpecEntity
      */
     void updateSizeDataEmpty(WmsCartonSpecEntity cartonSpecEntity);
+
+    /**
+     * 先校验 是否存在
+     *
+     * @param dto
+     * @param isDeleteCarton
+     */
+    void checkAndRemoveCartonInfo(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isDeleteCarton);
 }

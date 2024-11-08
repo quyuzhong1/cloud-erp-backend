@@ -102,6 +102,8 @@ public class SoReturnReceiveDTO {
          * id
          */
         private String id;
+
+        private String type;
         /**
          * 明细表id
          */
@@ -215,6 +217,11 @@ public class SoReturnReceiveDTO {
          * 仓库Id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**
@@ -277,6 +284,10 @@ public class SoReturnReceiveDTO {
         private String sellerId;
 
         /**
+         * 销售员名称
+         */
+        private String sellerName;
+        /**
          * 销售部门id
          */
         private String salesDeptId;
@@ -298,6 +309,10 @@ public class SoReturnReceiveDTO {
         @NotBlank(message = "单据类型不能为空")
         private String type;
 
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -367,6 +382,10 @@ public class SoReturnReceiveDTO {
          */
         private String type;
 
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -499,6 +518,11 @@ public class SoReturnReceiveDTO {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -648,6 +672,11 @@ public class SoReturnReceiveDTO {
          * 入库日期
          */
         private LocalDate instockDate;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 
     /**

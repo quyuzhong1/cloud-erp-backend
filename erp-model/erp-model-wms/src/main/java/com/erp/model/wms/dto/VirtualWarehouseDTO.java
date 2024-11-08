@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -62,7 +63,26 @@ public class VirtualWarehouseDTO implements Serializable {
         private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
+    @Data
+    @NoArgsConstructor
+    public static class SearchDTO{
 
+        /**
+         * 关联id（如店铺id）,无关联id时传空字符
+         */
+        private String relationId;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 实体仓Id
+         */
+        @NotBlank(message = "实体仓不能为空")
+        private String warehouseId;
+    }
     /**
      * 详情
      */

@@ -9,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -244,7 +245,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * 生成拣货单
      * @param picking 参数
      */
-    void generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking);
+    List<WarehouseLocationMoveDTO.GenPickToSkuMove> generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking);
 
     /**
      * 生成拣货单的弹窗
@@ -277,4 +278,5 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     BatchResultDTO handleErrorData(String id);
 
     PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
+
 }

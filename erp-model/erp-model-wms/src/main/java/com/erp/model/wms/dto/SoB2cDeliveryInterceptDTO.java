@@ -3,17 +3,17 @@ package com.erp.model.wms.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.HandleResultEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import javax.validation.constraints.NotNull;
+import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -288,65 +288,14 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 单据状态
+         * 页面高级查询
          */
-        private String tabFlag;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
         /**
-         * 单据编号
+         * sqlMap 默认key default
          */
-        private String code;
-        /**
-         * 销售单号
-         */
-        private String soCode;
-        /**
-         * 发货单号
-         */
-        private String soDeliveryCode;
-        /**
-         * 销售出库单号
-         */
-        private String soOutstockCode;
-        /**
-         * sku编号
-         */
-        private List<String> skuNoList;
-        /**
-         * 物流渠道名称
-         */
-        private List<String> logisticsChannelIdList;
-        /**
-         * 运单号
-         */
-        private String transportNo;
-        /**
-         * 取消状态：wms/common/enumDropDown?type=CancelStatus
-         * 描述：success:取消成功, failure:取消失败
-         */
-        private String cancelStatus;
-        /**
-         * 拦截状态：wms/common/enumDropDown?type=InterceptStatus
-         * 描述：success:拦截成功, failure:拦截失败
-         */
-        private String interceptStatus;
-        /**
-         * 处理状态：wms/common/enumDropDown?type=SoB2cDeliveryInterceptStatus
-         * 描述：waitHandle:待处理 handle:已处理 cancel:已取消
-         */
-        private String handleStatus;
-        /**
-         * 处理结果：wms/common/enumDropDown?type=HandleResult
-         * 描述：success:拦截成功, failure:拦截失败
-         */
-        private String handleResult;
-        /**
-         * 创建人
-         */
-        private List<String> createUserIdList;
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -471,6 +420,127 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 处理时间
          */
         private LocalDateTime handleTime;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
+    }
+
+    /**
+     * 拦截处理仓库DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptInventoryDTO {
+
+        /**
+         * 拦截单号
+         */
+        private String interceptCode;
+
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
+         * 拣货明细id
+         */
+        private String pickDetailId;
+
+        /**
+         * 拦截单明细Id
+         */
+        private String interceptDetailId;
+        /**
+         * 拦截单Id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 拣货仓位
+         */
+        private String pickWarehouseLocation;
+
+        /**
+         * 返还仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 拣货仓位名称
+         */
+        private String pickWarehouseLocationName;
+
+        /**
+         * 返还仓位名称
+         */
+        private String warehouseLocationName;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
+    /**
+     * 拦截结果确认DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptSuccessDTO {
+        //拦截单id
+        private List<String> ids;
+
+        //明细处理弹窗
+        private List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList = new ArrayList<>();
+
+        /**
+         * 备注
+         */
+        private String resultRemark;
+    }
+
+    /**
+     * 拦截结果确认DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InterceptFailureDTO {
+        //拦截单id
+        private List<String> ids;
+        /**
+         * 是否自动出库
+         */
+        private Boolean isAutoOut;
+        /**
+         * 备注
+         */
+        private String resultRemark;
+
     }
 
     /**

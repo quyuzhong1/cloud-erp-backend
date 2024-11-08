@@ -25,10 +25,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -95,15 +92,16 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         List<WmsCartonDetailEntity> detailEntityList = BeanMapper.copyList(addDTO.getDetailList(), WmsCartonDetailEntity.class);
         // 数据处理
         handleData(detailEntityList, wmsCartonEntity.getId());
-
-        log.info("开始新增发货单箱子信息单");
-        boolean save = super.saveOrUpdateBatch(detailEntityList);
-        if(!save) {
-            throw new ServiceException("发货单箱子信息单保存失败");
+        if(CollectionUtils.isNotEmpty(detailEntityList)){
+            log.info("开始新增发货单箱子信息单");
+            boolean save = super.saveOrUpdateBatch(detailEntityList);
+            if(!save) {
+                throw new ServiceException("发货单箱子信息单保存失败");
+            }
+            String msg = "【"+addDTO.getContent() + "】新增装箱明细【"+wmsCartonEntity.getBoxNo()+"】【%s】";
+            List<Pair<String, String>> addPairList = detailEntityList.stream().map(obj -> new Pair<>(wmsCartonEntity.getPackingTaskId(), obj.getSkuNo() + "*"+ obj.getPackQty())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), addPairList, addDTO.getOperation());
         }
-        String msg = "【"+addDTO.getContent() + "】新增装箱明细【"+wmsCartonEntity.getBoxNo()+"】【%s】";
-        List<Pair<String, String>> addPairList = detailEntityList.stream().map(obj -> new Pair<>(wmsCartonEntity.getPackingTaskId(), obj.getSkuNo() + "*"+ obj.getPackQty())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), addPairList, addDTO.getOperation());
     }
 
     @Override
@@ -118,10 +116,16 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     * 新增修改处理数据
     */
     private void handleData(List<WmsCartonDetailEntity> detailEntityList, String mainId) {
+        //查询原装箱信息
+        List<WmsCartonDetailEntity> detailEntityList1 = listByMainIds(Collections.singletonList(mainId));
         for (WmsCartonDetailEntity wmsCartonDetailEntity : detailEntityList) {
             wmsCartonDetailEntity.setMainId(mainId);
             if (StringUtils.isBlank(wmsCartonDetailEntity.getWeightUnit())){
                 wmsCartonDetailEntity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
+            }
+            if (CollectionUtils.isNotEmpty(detailEntityList1)){
+                WmsCartonDetailEntity wmsCartonDetailEntity1 = detailEntityList1.stream().filter(e -> Objects.equals(e.getSkuNo(), wmsCartonDetailEntity.getSkuNo()) && Objects.equals(e.getFnSku(), wmsCartonDetailEntity.getFnSku())).findFirst().orElse(null);
+                wmsCartonDetailEntity.setId(Objects.nonNull(wmsCartonDetailEntity1) ? wmsCartonDetailEntity1.getId() : null);
             }
         }
     }

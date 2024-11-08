@@ -51,7 +51,8 @@
             oi.create_user_name as createUserName,
             oi.create_time as createTime,
             oi.third_code as thirdCode,
-            oi.remark
+            oi.remark,
+            oi.return_logistic_code as returnLogisticCode
         from other_instock oi
         inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>
@@ -126,7 +127,8 @@
             oi.create_user_name as createUserName,
             oi.create_time as createTime,
         oi.third_code as thirdCode,
-        oi.remark
+        oi.remark,
+        oi.return_logistic_code as returnLogisticCode
         from other_instock oi
         inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>

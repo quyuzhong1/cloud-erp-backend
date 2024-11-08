@@ -78,5 +78,20 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      **/
     List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(@Param("ids") List<String> ids);
 
-    IPage<RequisitionApplicationDTO.PickingViewDTO> pagingPicking(@Param("page") Page<RequisitionApplicationDTO.PickingViewDTO> page,@Param("id") String id,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
+    IPage<RequisitionApplicationDTO.PickingViewDTO> pagingPicking(@Param("page") Page<RequisitionApplicationDTO.PickingViewDTO> page,@Param("param") RequisitionApplicationDTO.GetPickingViewDTO param,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
+
+    List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(@Param("ids") List<String> cartonIds);
+
+    List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailView(@Param("params") RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto);
+
+    List<RequisitionApplicationDTO.DeliverRecordView> listFbaDeliverRecord(String id);
+
+    List<RequisitionApplicationDTO.DeliverRecordView> listWarehouseDeliverRecord(@Param("params") String id);
+
+    /**
+     * 根据要货申请id集合 查询fnsku msku 平台sku等信息
+     * @Author jack
+     * @Date 2024/10/16
+     **/
+    List<RequisitionApplicationDTO.PrintFnskuDetailDTO> listPrintPreviewByIds(@Param("ids")List<String> ids);
 }

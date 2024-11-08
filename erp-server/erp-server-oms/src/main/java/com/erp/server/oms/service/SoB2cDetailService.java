@@ -1,6 +1,8 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -10,6 +12,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 import org.apache.commons.math3.util.Pair;
 
@@ -191,4 +194,22 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
     void updateSignShippedByDetailId(List<String> detailIdList);
 
     List<SoB2cDetailDTO.PropertyDTO> handlePropertyDTOList(SkuVO.PropertyDTO skuPropertyDTO);
+    /**
+     * 查询所有虚拟仓B2C销售订单数据
+     * @author will
+     * @date 2024/9/26 17:11
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
+
+    /**
+     * 更换发货SKU
+     *
+     * @param targetId
+     * @param entity
+     * @param detail
+     * @param skuVO
+     * @return
+     */
+    BatchResultDTO changeDeliverySku(String targetId, SoB2cEntity entity, SoB2cDetailEntity detail, SkuVO skuVO);
 }

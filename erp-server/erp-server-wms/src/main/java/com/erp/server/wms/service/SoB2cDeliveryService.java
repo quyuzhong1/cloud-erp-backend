@@ -278,7 +278,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
 
     List<BatchResultDTO> logisticsIntercept(List<String> ids);
 
-    List<BatchResultDTO> interceptResultConfirm(SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto);
 
     /**
      * 查询不是取消发货的发货单
@@ -418,7 +417,7 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO handleErrorData(String id);
+    BatchResultDTO handleErrorData(String id,Boolean isAddQty);
     /**
      * 重试发货虚拟仓库存扣减
      * @author will
@@ -434,4 +433,17 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto);
+
+    /**
+     * 回滚虚拟库存
+     * @param deliveryEntityList
+     */
+    void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList);
+
+    /**
+     * 根据销售订单手动标发
+     * @param id
+     * @return
+     */
+    BatchResultDTO falseDeliveryBySoId(String id);
 }

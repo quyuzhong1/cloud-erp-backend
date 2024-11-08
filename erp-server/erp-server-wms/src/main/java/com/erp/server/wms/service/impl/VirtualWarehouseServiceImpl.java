@@ -649,4 +649,17 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     public List<VirtualWarehouseDTO.SelectDTO> warehouseSelectList(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto) {
         return baseMapper.warehouseSelectList(dto);
     }
+
+    @Override
+    public List<VirtualWarehouseDTO.SelectDTO> listByParam(VirtualWarehouseDTO.SearchDTO searchDTO) {
+        if(StringUtils.isBlank(searchDTO.getDictPlatform()) && StringUtils.isNotBlank(searchDTO.getRelationId())){
+            ShopInfoEntity shopInfoEntity = FeignQuery.getById(ShopInfoEntity.class,searchDTO.getRelationId());
+            if(Objects.nonNull(shopInfoEntity)){
+                searchDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
+            }else{
+                throw new ServiceException("通过关联id查询平台为空");
+            }
+        }
+        return baseMapper.listByParam(searchDTO);
+    }
 }

@@ -102,4 +102,11 @@ public class PickingListsController extends BaseController {
         pickingListsService.export(dto);
         return success(true);
     }
+
+
+    @PostMapping("/initDelivery")
+    public void initDelivery(@RequestBody List<String> codes) {
+        pickingListsService.initDelivery(codes);
+    }
+
 }

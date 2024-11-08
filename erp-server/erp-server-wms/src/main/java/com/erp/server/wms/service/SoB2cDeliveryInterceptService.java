@@ -1,17 +1,12 @@
 package com.erp.server.wms.service;
-import cn.hutool.core.util.ObjectUtil;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.enums.HandleResultEnum;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -110,4 +105,12 @@ public interface SoB2cDeliveryInterceptService extends SuperService<SoB2cDeliver
     Boolean updateHandleStatus(List<String> sourceIds, String status);
 
     List<SoB2cDeliveryInterceptEntity> listByStatus(String code);
+
+    BatchResultDTO handleSuccess(SoB2cDeliveryEntity dto, String id, List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptInventoryDTOList, String remark);
+
+    List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO> interceptSuccessView(List<String> ids);
+
+    BatchResultDTO interceptSuccess(SoB2cDeliveryInterceptDTO.InterceptSuccessDTO dto, String id);
+
+    BatchResultDTO interceptFailure(String id, Boolean isAutoOut, String remark);
 }

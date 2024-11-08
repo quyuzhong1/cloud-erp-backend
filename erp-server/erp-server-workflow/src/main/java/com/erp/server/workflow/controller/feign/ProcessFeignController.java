@@ -1,5 +1,6 @@
 package com.erp.server.workflow.controller.feign;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -268,6 +269,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/start")
     public ApiResult<ProcessManagementDTO.StartResultDTO> start(@RequestBody ProcessManagementDTO.StartDTO dto) {
+        log.info("#####ProcessFeignController :::::start>>>>> 流程启动入参 dto={}", JSONUtil.toJsonStr(dto));
         ProcessManagementDTO.StartResultDTO startResultDTO = processManagementService.startProcess(dto);
         return success(startResultDTO);
     }
@@ -280,6 +282,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/batchStart")
     public ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto) {
+        log.info("#####ProcessFeignController :::::batchStartProcess>>>>> 流程批量启动入参 dto={}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementDTO.StartResultDTO> result = processManagementService.batchStartProcess(dto);
         return success(result);
     }
@@ -289,6 +292,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult<ProcessManagementDTO.ApproveResultDTO> approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
+        log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
         return success(processManagementService.approveProcess(dto,Boolean.TRUE));
     }
 
@@ -335,6 +339,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/batchApprove")
     public ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> batchApproveProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveDTO> dto) {
+        log.info("#####ProcessFeignController :::::batchApproveProcess>>>>> 流程批量审核入参 dto={}", JSONUtil.toJsonStr(dto));
         List<ProcessManagementDTO.ApproveResultDTO> resultDTO = processManagementService.batchApproveProcess(dto);
         return success(resultDTO);
     }
@@ -383,6 +388,14 @@ public class ProcessFeignController extends BaseController {
     @PostMapping("/getProcessBusiness")
     public ProcessBusinessEntity getProcessBusiness(@RequestBody String businessKey) {
         return processBusinessService.getProcessBusiness(businessKey,"", Boolean.FALSE);
+    }
+
+    /**
+     * 根据BusinessKey,taskStatus,curApproveId获取流程信息
+     */
+    @PostMapping("/listProcessByBusinessKey")
+    public List<ProcessTaskManagementEntity> listProcessByBusinessKey(@RequestBody ProcessManagementDTO.TaskKeyInfoDTO dto) {
+        return processManagementTaskService.listProcessByBusinessKey(dto);
     }
 
 }

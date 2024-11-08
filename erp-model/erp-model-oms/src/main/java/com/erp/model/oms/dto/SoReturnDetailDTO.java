@@ -40,6 +40,15 @@ public class SoReturnDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
     }
 
     /**
@@ -80,13 +89,18 @@ public class SoReturnDetailDTO {
          */
         private String remark;
         /**
-         * sku
-         */
-        private String skuNo;
-        /**
          * 销售单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
     }
 
     /**

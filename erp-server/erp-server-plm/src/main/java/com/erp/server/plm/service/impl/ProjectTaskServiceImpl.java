@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
@@ -13,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -3884,7 +3886,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-20 14:06
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approvalPass(TaskOperateDTO dto) {
         List<TaskHandleDataDTO> taskDataList = dto.getTaskDataList();
         List<String> taskIds = taskDataList.stream().map(TaskHandleDataDTO::getTaskId).collect(Collectors.toList());
@@ -5144,5 +5147,41 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return resultList;
     }
 
+    @Override
+    public PagingVO<ProjectTaskDTO.SimpleViewDTO> pagingByAdvanceQuery(PagingDTO<ProjectTaskDTO.PagingParamDTO> pagingParamDTO) {
+        //查询sku关联的spu
+        List<ProductDetailEntity> skuEntityList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, pagingParamDTO.getParams().getSkuIdList()).list();
+        List<String> productIds = skuEntityList.stream().map(item -> item.getProductId()).distinct().collect(Collectors.toList());
+        List<ProductInfoEntity> productInfoList = productInfoService.lambdaQuery().in(ProductInfoEntity::getId, productIds).list();
+        List<String> spuNos = productInfoList.stream().map(item -> item.getSpuNo()).distinct().collect(Collectors.toList());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<ProjectTaskDTO.SimpleViewDTO> pageData = this.baseMapper.pagingByAdvanceQuery(query, pagingParamDTO.getParams(), spuNos);
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        for (ProjectTaskDTO.SimpleViewDTO record : pageData.getRecords()) {
+            record.setStatusName(TaskStateEnum.getName(record.getStatus()));
+        }
+        // 数据处理
+        return new PagingVO(pageData);
+    }
 
+    @Override
+    public List<ProjectTaskDTO.SimpleViewDTO> listSimpleViewByIds(List<String> taskIds) {
+        if(taskIds.isEmpty()){
+            return Collections.EMPTY_LIST;
+        }
+        List<ProjectTaskDTO.SimpleViewDTO> list = this.baseMapper.listByTaskIds(taskIds);
+        List<String> spuNos = list.stream().map(item -> item.getSpuNo()).distinct().collect(Collectors.toList());
+        if(!spuNos.isEmpty()){
+            List<ProjectTaskDTO.Spu2SkuMapping> spuList = this.baseMapper.listSkusBySpuNo(spuNos);
+            for (ProjectTaskDTO.SimpleViewDTO dto : list) {
+                Optional<ProjectTaskDTO.Spu2SkuMapping> first = spuList.stream().filter(item -> item.getSpuNo().equals(dto.getSpuNo())).findFirst();
+                if(first.isPresent()){
+                    dto.setSkuNoStr(first.get().getSkuNoStr());
+                }
+            }
+        }
+        return list;
+    }
 }

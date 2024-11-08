@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -101,6 +102,26 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
     @TableField("kingdee_detail_id")
     private String KingdeeDetailId;
 
+    /**
+     * 含税单价
+     */
+    @TableField("tax_price")
+    private BigDecimal taxPrice;
+    /**
+     * 税率
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
+    /**
+     * 币种
+     */
+    @TableField("currency")
+    private String currency;
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
     /**
      * 是否是自动入库
      */

@@ -26,6 +26,7 @@ import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
@@ -296,7 +297,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(warehouse.getOrgId());
 
         List<String> skuList = detailList.stream().map(SoReturnInstockDetailEntity::getSkuNo).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuList);
+//        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuList);
+        List<ProductDetailEntity> skuEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getSkuNo, skuList).list();
 
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         inStockEntity.setCode(code);
@@ -320,18 +322,24 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             inStockEntity.setSellerName(customerInfo.getSellerName());
         }
         //金蝶sku和plm对应不上跳过
-        if (CollectionUtils.isEmpty(skuNoList)) {
-            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, StringUtil.join(skuNoList, ","));
+        if (CollectionUtils.isEmpty(skuEntityList)) {
+            throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, StringUtil.join(skuList, ","));
         }
         inStockEntity.setId(IdWorker.getIdStr());
+        //平台订单号
+        inStockEntity.setPlatformOrderCode(dto.getSourceId());
         for (SoReturnInstockDetailEntity detailEntity : detailList) {
             detailEntity.setReturnTypeDict(ReturnTypeEnum.DEDUCTION.getCode());
             //获取仓库信息
             detailEntity.setWarehouseId(warehouse.getId());
             detailEntity.setWarehouseName(warehouse.getName());
-            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst().orElse(new SkuVO());
+            Optional<ProductDetailEntity> skuVoOptional = skuEntityList.stream().filter(req -> req.getSkuNo().equals(detailEntity.getSkuNo())).findFirst();
+            if (!skuVoOptional.isPresent()) {
+                throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, detailEntity.getSkuNo());
+            }
+            ProductDetailEntity skuVO =skuVoOptional.get();
             detailEntity.setMainId(inStockEntity.getId());
-            detailEntity.setSkuId(skuVO.getSkuId());
+            detailEntity.setSkuId(skuVO.getId());
             if(Objects.nonNull(detailEntity.getAmount())){
                 detailEntity.setPrice(detailEntity.getAmount().divide(new BigDecimal(detailEntity.getRealQty()),4, RoundingMode.HALF_UP));
             }

@@ -1,5 +1,7 @@
 package com.common.business.utils;
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.pdf.PdfCopy;
@@ -8,9 +10,12 @@ import com.lowagie.text.pdf.PdfReader;
 import lombok.Cleanup;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -139,4 +144,50 @@ public class PdfUtil {
         String var11 = encoder.encodeBuffer(bytes).trim();
         return var11;
     }
+
+    /**
+     * pdf提取文本，根据行分割成数组
+     * @param inputStream
+     * @return
+     * @throws Exception
+     */
+    public static String[] extractTextFromPDF(InputStream inputStream) throws Exception{
+        try (PDDocument document = PDDocument.load(inputStream)) {
+            PDFTextStripper pdfStripper = new PDFTextStripper();
+            String text = pdfStripper.getText(document);
+            return text.split("\n");
+        }
+    }
+
+    /**
+     * 导出base64
+     * @author will
+     * @date 2024/11/4 16:25
+     * @param response
+     * @param base64List
+     */
+    public static void exportBase64ForPdf(HttpServletResponse response,List<String>base64List ){
+        try {
+            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+
+            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+            response.setContentType("application/pdf");
+            // 设置 PDF 的显示方式和文件名
+            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\"");
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (OutputStream out = response.getOutputStream()) {
+                // 将 Base64 编码的字符串解码为字节数组
+                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                // 将字节数组写入到响应输出流中
+                out.write(pdfBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(ApiError.ERROR_PDF_MERGE);
+        }
+    }
+
 }

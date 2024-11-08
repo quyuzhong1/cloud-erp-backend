@@ -221,6 +221,10 @@ public class PoInstockDTO implements Serializable {
          * 地址：/scm/dict/list 字典类型：purchaseOrderType
          */
         private String purchaseType;
+        /**
+         * 采购订单类型名称
+         */
+        private String purchaseTypeName;
 
         /**
          * 仓位
@@ -231,6 +235,22 @@ public class PoInstockDTO implements Serializable {
          * 仓位名称
          */
         private String warehouseLocationName;
+        /**
+         * 采购订单-来源单id
+         */
+        private String sourceId;
+        /**
+         * 采购订单-来源单类型
+         */
+        private String sourceType;
+        /**
+         * 退货方式
+         */
+        private String returnMode;
+        /**
+         * 退货方式名称
+         */
+        private String returnModeName;
 
     }
 

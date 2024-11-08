@@ -93,23 +93,15 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
 
     private void getTrackData(LogisticsBillDetailQueryDTO query, List<ResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
-        if (list.size() > MathUtil.NUMBER_100){
-            //列表数据较多情况下，进行分割集合
-            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
-            //物流商数据处理
-            partition.forEach(e -> {
-                ResponseData responseData = this.processTrackData(e, cfgAppClient);
-                if (Objects.nonNull(responseData)){
-                    responseDataList.add(responseData);
-                }
-            });
-        }else {
-            //物流商数据处理
-            ResponseData responseData = this.processTrackData(list, cfgAppClient);
+        //列表数据较多情况下，进行分割集合
+        List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+        //物流商数据处理
+        partition.forEach(e -> {
+            ResponseData responseData = this.processTrackData(e, cfgAppClient);
             if (Objects.nonNull(responseData)){
                 responseDataList.add(responseData);
             }
-        }
+        });
         log.info("========同步物流轨迹数据完成==========");
     }
 
@@ -120,13 +112,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
             List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
             //根据配置进行组装注册数据
             records.forEach(updateTrackDTO -> {
-                if (TrackQueryTypeEnum.TRACK_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTrackNo())){
-                    logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
-                            .trackNo(updateTrackDTO.getTrackNo())
-                            .phoneSuffix(updateTrackDTO.getTelNumber())
-                            .build());
-
-                }else {
+                if (TrackQueryTypeEnum.TRANSPORT_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTransportNo())){
                     String transportNo = updateTrackDTO.getTransportNo();
                     if (StrUtil.isNotBlank(transportNo)){
                         logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
@@ -134,6 +120,11 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                                 .phoneSuffix(updateTrackDTO.getTelNumber())
                                 .build());
                     }
+                }else {
+                    logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
+                            .trackNo(updateTrackDTO.getTrackNo())
+                            .phoneSuffix(updateTrackDTO.getTelNumber())
+                            .build());
                 }
             });
             if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
@@ -183,18 +174,19 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                             }
                             acceptedToSaveDto.setDetails(details);
                             resultList.add(acceptedToSaveDto);
-                        } else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())) {
-                            List<PlatformTrackDetail> details = new ArrayList<>();
-                            PlatformTrackDetail detail = new PlatformTrackDetail();
-                            detail.setTrackNo(trackDetail.getTrackNo());
-                            detail.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
-                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                            detail.setTrackTime(eventTime);
-                            detail.setContent("暂无信息");
-                            details.add(detail);
-                            acceptedToSaveDto.setDetails(details);
-                            resultList.add(acceptedToSaveDto);
                         }
+//                        else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())) {
+//                            List<PlatformTrackDetail> details = new ArrayList<>();
+//                            PlatformTrackDetail detail = new PlatformTrackDetail();
+//                            detail.setTrackNo(trackDetail.getTrackNo());
+//                            detail.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
+//                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                            detail.setTrackTime(eventTime);
+//                            detail.setContent("暂无信息");
+//                            details.add(detail);
+//                            acceptedToSaveDto.setDetails(details);
+//                            resultList.add(acceptedToSaveDto);
+//                        }
                     }
                 }
             }

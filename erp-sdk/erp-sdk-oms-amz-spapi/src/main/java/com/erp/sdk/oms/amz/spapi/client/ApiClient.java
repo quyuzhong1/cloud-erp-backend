@@ -13,6 +13,7 @@
 
 package com.erp.sdk.oms.amz.spapi.client;
 
+import cn.hutool.json.JSONUtil;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSSigV4Signer;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationSigner;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
@@ -874,6 +875,7 @@ public class ApiClient {
                 return deserialize(response, returnType);
             }
         } else {
+            log.error("[Amazon SP-APi ApiClient] 响应解析前异常：{}", JSONUtil.toJsonStr(response));
             String respBody = null;
             if (response.body() != null) {
                 try {

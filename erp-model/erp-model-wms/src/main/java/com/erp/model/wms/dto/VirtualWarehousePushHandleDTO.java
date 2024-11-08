@@ -47,6 +47,7 @@ public class VirtualWarehousePushHandleDTO implements Serializable {
 
         /**
         * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
+         * CostAllocationEnum
         */
         private String allocationType;
 
@@ -108,6 +109,7 @@ public class VirtualWarehousePushHandleDTO implements Serializable {
 
         /**
         * 类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货
+         * CostAllocationEnum
         */
         @NotBlank(message = "类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货不能为空")
         @Size(max = 10,message = "类型：allocation新增分货，transfer虚拟仓调拨，cancel取消分货最大长度不能超过10位")

@@ -37,6 +37,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO.PcAddDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.excel.MoveInfoExcelDTO;
 import com.erp.model.wms.dto.inventory.*;
@@ -1213,4 +1214,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         pushWdtDTO.setDetailDTOList(detailDTOList);
         return pushWdtDTO;
     }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+	@Override
+	public void wdtAutoAdd(PcAddDTO pcAddDTO) {
+    	String moveId = this.pcAdd(pcAddDTO);
+    	this.submit(moveId);
+    	ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+		approveOneDTO.setId(moveId);
+		approveOneDTO.setType("pass");
+		approveOneDTO.setComment("旺店通同步销售出库单库存不足自动仓位移动");
+    	this.pcApprove(approveOneDTO);
+	}
 }

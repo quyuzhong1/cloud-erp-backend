@@ -140,12 +140,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<OtherInstockDetailEntity> detailList, String mainId, Boolean isUpdate) {
-        //去除服务、费用SKU
-        List<OtherInstockDetailEntity> newList = removeNoInventorySku(detailList);
-        if (CollectionUtils.isEmpty(newList)) {
-            throw new ServiceException(ApiError.ERROR_NO_INVENTORY_SKU_NOT_EXIST);
-        }
+    private void doOpHandleDetails (List<OtherInstockDetailEntity> newList, String mainId, Boolean isUpdate) {
 
         //需要新增的数据
         List<OtherInstockDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
@@ -222,19 +217,4 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
         }
     }
-
-    /**
-     * 移除包含服务和费用的sku明细
-     * @author will
-     * @date 2024/7/26 22:52
-     * @param newList
-     * @return List<OtherInstockDetailEntity>
-     */
-    private List<OtherInstockDetailEntity> removeNoInventorySku (List<OtherInstockDetailEntity> newList) {
-        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> skuIdList = CollectionUtils.isEmpty(noInventorySkuList)
-                ? new ArrayList<>() : noInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-       return newList.stream().filter(obj -> !skuIdList.contains(obj.getSkuId())).collect(Collectors.toList());
-    }
-
 }

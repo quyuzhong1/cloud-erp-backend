@@ -10,12 +10,14 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.constant.EnumMessage;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.FieldValidUtil;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.service.*;
 import lombok.Getter;
@@ -41,6 +43,8 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
     private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
 
     private final WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign = SpringUtil.getBean(WmsFirstMileDeliveryFeign.class);
+
+    private final SupplierFeign supplierFeign = SpringUtil.getBean(SupplierFeign.class);
 
     @Getter
     private List<FmLogisticsBillExcelDTO> dataList = new ArrayList<>();
@@ -84,12 +88,16 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(mainIdList);
         List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByName(supplierNameList);
+        List<String> supplierIds = logisticsSupplierEntityList.stream().map(v->v.getSupplierId()).collect(Collectors.toList());
+        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOList = supplierFeign.listDefaultBySupplierIdList(supplierIds);
+
         List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByName(channelNameList);
         List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
         List<String> outIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(outIds);
         List<LogisticsBillEntity> updateList = new ArrayList<>();
         List<LogisticsBillDetailEntity> updateDetailList = new ArrayList<>();
+        List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
         List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
         for (FmLogisticsBillExcelDTO excelDTO : dataList) {
             //校验数据
@@ -132,6 +140,11 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 if(Objects.isNull(logisticsSupplierEntity)){
                     errorMsgList.add("供应商不存在");
                 }else{
+                    SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOList.stream().filter(v->v.getSupplierId().equals(logisticsSupplierEntity.getSupplierId())).findFirst().orElse(null);
+                    if(Objects.nonNull(supplierDefaultDTO)){
+                        logisticsBillCostEntity.setCurrency(supplierDefaultDTO.getSupplierEntity().getPayCurrency());
+                        updateCostList.add(logisticsBillCostEntity);
+                    }
                     entity.setLogisticsSupplierId(logisticsSupplierEntity.getId());
                 }
             }
@@ -173,15 +186,12 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                     errorMsgList.add(StrUtil.format("关联单据{}尚未审核通过无法提交",firstMileDeliveryEntity.getCode()));
                 }
 
-                if(StringUtils.isBlank(entity.getCounterNo()) && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
-                    errorMsgList.add("尚未填写柜号，请填写后更新");
-                }
             }
 
             if (!errorMsgList.isEmpty()) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
-                return;
+                continue;
             }
 
             if(StringUtils.isNotBlank(excelDTO.getShippingMethodName())){
@@ -237,6 +247,6 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
             }
             updateList.add(entity);
         }
-        tmsFirstMileLogisticService.updateImport(updateList,updateDetailList,addTrackList);
+        tmsFirstMileLogisticService.updateImport(updateList,updateDetailList,addTrackList, updateCostList);
     }
 }

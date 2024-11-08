@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -396,7 +397,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public PagingVO<WarehouseLocationDTO.LocationListDTO> pagingSelect(PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
-        WarehouseLocationDTO.SelectDTO params = searchDTO.getParams();
+        
+        WarehouseLocationDTO.SelectDTO params = JSON.parseObject(JSON.toJSONString(searchDTO.getParams()), WarehouseLocationDTO.SelectDTO.class);
         IPage<WarehouseLocationDTO.LocationListDTO> pagResult;
         if (StringUtils.isNotBlank(params.getSkuNo())){
             pagResult = baseMapper.pagingSelectBySku(query, params);
@@ -418,8 +420,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void addArea(WarehouseAreaDTO.Add dto) {
-        existCode(dto.getCode(), null, WarehouseLocationTypeEnum.AREA.getCode());
-        existName(dto.getName(), null, WarehouseLocationTypeEnum.AREA.getCode());
+        existCode(dto.getCode(), null, WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
+        existName(dto.getName(), null, WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
         WarehouseLocationEntity entity = dto.getWarehouseAreaInfo();
         save(entity);
     }
@@ -428,8 +430,8 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void updateArea(WarehouseAreaDTO.Update dto) {
-        existCode(dto.getCode(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode());
-        existName(dto.getName(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode());
+        existCode(dto.getCode(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
+        existName(dto.getName(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
         WarehouseLocationEntity entity;
         entity = dto.getWarehouseAreaInfo();
         entity.setId(dto.getId());
@@ -829,20 +831,22 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         generateLog(user, one, newEntity);
     }
 
-    private void existCode(String code, String id, String type) {
+    private void existCode(String code, String id, String type, String warehouseId) {
         int count = count(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getCode, code)
                 .eq(WarehouseLocationEntity::getType, type)
+                .eq(WarehouseLocationEntity::getWarehouseId,warehouseId)
                 .ne(StringUtils.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "编码", code);
         }
     }
 
-    private void existName(String name, String id , String type) {
+    private void existName(String name, String id , String type, String warehouseId) {
         int count = count(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getName, name)
                 .eq(WarehouseLocationEntity::getType, type)
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
                 .ne(StringUtils.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "名称", name);
@@ -1000,5 +1004,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(String warehouseId) {
         return warehouseLocationMapper.listArea2LocationMapping(warehouseId);
+    }
+
+
+    public WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo){
+        if(StringUtils.isBlank(warehouseId)||StringUtils.isBlank(skuNo)){
+            return null;
+        }
+        return warehouseLocationMapper.getOneWareInventoryQty(warehouseId,skuNo);
     }
 }

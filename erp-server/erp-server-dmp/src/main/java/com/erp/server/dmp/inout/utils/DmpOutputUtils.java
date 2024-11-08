@@ -33,11 +33,11 @@ public class DmpOutputUtils{
 		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordService.getById(id);
 			errorCount = dmpOutputTaskRecordEntity.getErrorCount();
+			code = dmpOutputTaskRecordEntity.getSourceCode();
 			if(!responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试")) {
 				errorCount = errorCount + 1;
 				if(errorCount >= 3 && errorCount%3 == 0) {
 					status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
-					code = dmpOutputTaskRecordEntity.getSourceCode();
 				}
 			}
 		}
@@ -60,6 +60,9 @@ public class DmpOutputUtils{
 	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
 	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
+	        if(StringUtils.isBlank(message)) {
+	        	message = responseData;
+	        }
 	        DmpHandlerUtils.sendFeiShuMsg("输出任务记录id=【" + id + "】，单据编号=【" + code + "】处理失败：" + message);
 		}
 		return update;

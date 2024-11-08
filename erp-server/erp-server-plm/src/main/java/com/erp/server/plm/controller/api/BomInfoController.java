@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -18,6 +19,7 @@ import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import com.erp.server.plm.query.BomInfoHandler;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
@@ -71,6 +73,7 @@ public class BomInfoController extends BaseController {
             menuCode = "plm:bom:paging",
             tableAlias = "b"
     )
+    @WebAdvanceQuery(handler = BomInfoHandler.class)
     public ApiResult<PagingVO<List<BomPagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
         PagingVO<List<BomPagingVO>> pagingVO = bomInfoService.paging(dto);
         return success(pagingVO);

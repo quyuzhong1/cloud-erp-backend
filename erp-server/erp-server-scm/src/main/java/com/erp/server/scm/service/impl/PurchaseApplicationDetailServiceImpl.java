@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -199,4 +200,18 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
     }
 
+    @Override
+    public List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds,List<String> sourceDetailIds) {
+        return baseMapper.listSkuAndQty(sourceIds, sourceDetailIds);
+    }
+
+    @Override
+    public Boolean existBySkuIds(List<String> skuIds) {
+        Boolean isNew = Boolean.TRUE ;
+        Integer count = baseMapper.existBySkuIds(skuIds);
+        if(count > 0){
+            isNew = Boolean.FALSE ;
+        }
+        return isNew;
+    }
 }

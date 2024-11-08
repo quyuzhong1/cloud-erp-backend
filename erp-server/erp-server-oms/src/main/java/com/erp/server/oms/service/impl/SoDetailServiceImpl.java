@@ -47,14 +47,21 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.*;
+import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.rpc.wms.feign.VirtualInventoryFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.listener.SoDetailExcelListener;
 import com.erp.server.oms.mapper.SoDetailMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -494,7 +501,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 16:00
      */
     @Override
-    public void updateSoDetail(String mainId, Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList) {
+    public void updateSoDetail(String mainId, Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity oldEntity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -507,8 +514,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<String> deleteIdList = getDeleteIds(pairList, dbList);
         List<SoDetailEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
 
+        SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
         //校验更新的明细和删除的明细是否冻结库存下推了发货通知
-        checkSoDetailQty(dbList,updateList,removeList);
+        checkSoDetailQty(dbList,updateList,removeList,soInfoEntity,oldEntity);
 
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
@@ -525,7 +533,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 //        if (CollUtil.isNotEmpty(supplierIds)) {
 //            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
 //        }
-        SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
+
         for (SoDetailEntity item : saveOrUpdateList) {
             item.setMainId(mainId);
             String skuId = item.getSkuId();
@@ -1589,6 +1597,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO saveLockVirtualInventory(SoInfoDTO.LockVirtualInventorySaveDTO saveDTO) {
         SoDetailEntity soDetailEntity = this.getById(saveDTO.getDetailId());
         if (ObjectUtil.isEmpty(soDetailEntity)) {
@@ -1639,12 +1648,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO batchUnLockVirtualInventory(String detailId) {
-        SoDetailEntity old = this.getById(detailId);
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity oldEntity) {
+        SoDetailEntity old =  this.getById(detailId);
         if (ObjectUtil.isEmpty(old)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
-        SoInfoEntity soInfoEntity = soInfoService.getById(old.getMainId());
+        SoInfoEntity soInfoEntity = ObjectUtil.isEmpty(oldEntity) ? soInfoService.getById(old.getMainId()) : oldEntity;
         if (ObjectUtil.isEmpty(soInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92016);
         }
@@ -1658,16 +1668,47 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         SoDetailEntity soDetailEntity = new SoDetailEntity();
         BeanMapperUtils.copy(old,soDetailEntity);
-        //更新库存锁定数量
-        soDetailEntity.setFrozenQty(MathUtil.ZERO);
-        this.updateById(soDetailEntity);
 
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-
         stockParamDTO.setParamList(unLockVirtualInventory(soInfoEntity,old));
         stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_UNLOCK.getCode());
         virtualInventoryFeign.approveByType(stockParamDTO);
+
+        //更新库存锁定数量
+        soDetailEntity.setFrozenQty(MathUtil.ZERO);
+        this.updateById(soDetailEntity);
         return new BatchResultDTO(soDetailEntity.getId(),StrUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"释放库存成功",Boolean.TRUE);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO batchUnLockVirtualInventory(List<String> detailIdList,SoInfoEntity oldEntity) {
+        List<SoDetailEntity> oldList =  this.listByIds(detailIdList);
+        if (CollectionUtils.isEmpty(oldList)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        SoInfoEntity soInfoEntity = ObjectUtil.isEmpty(oldEntity) ? soInfoService.getById(oldList.get(0).getMainId()) : oldEntity;
+        if (ObjectUtil.isEmpty(soInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        //无虚拟仓库
+        if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
+            return new BatchResultDTO(soInfoEntity.getId(),soInfoEntity.getCode(),"无虚拟仓，不支持释放锁定库存",Boolean.TRUE);
+        }
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        List<VirtualInventoryStockDTO.OutInStockDTO> outInStockList = unLockVirtualInventory(soInfoEntity, oldList);
+        if (CollectionUtils.isEmpty(outInStockList)) {
+            return new BatchResultDTO(soInfoEntity.getId(),soInfoEntity.getCode(),"无需要释放的锁定库存",Boolean.TRUE);
+        }
+        stockParamDTO.setParamList(outInStockList);
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_UNLOCK.getCode());
+        virtualInventoryFeign.approveByType(stockParamDTO);
+
+        //更新库存锁定数量
+        oldList.stream().forEach(obj -> obj.setFrozenQty(MathUtil.ZERO));
+        this.updateBatchById(oldList);
+        return new BatchResultDTO(soInfoEntity.getId(),StrUtil.format("【{}】",soInfoEntity.getCode()),"释放库存成功",Boolean.TRUE);
     }
 
     @Override
@@ -1685,6 +1726,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             soDetailEntity.setFrozenQty(frozenQty);
         }
         this.updateBatchById(soDetailEntityList);
+    }
+
+    @Override
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail() {
+        return baseMapper.listAllVirtualSoDetail();
     }
 
     /**
@@ -1735,6 +1781,37 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     }
 
     /**
+     * 处理库存数据
+     * @author will
+     * @date 2024/7/16 9:41
+     * @param soInfoEntity
+     * @param soDetailEntityList
+     * @return List<OutInStockDTO>
+     */
+    private List<VirtualInventoryStockDTO.OutInStockDTO> unLockVirtualInventory (SoInfoEntity soInfoEntity, List<SoDetailEntity> soDetailEntityList) {
+        List<VirtualInventoryStockDTO.OutInStockDTO> resultList = new ArrayList<>();
+        for (SoDetailEntity soDetailEntity : soDetailEntityList) {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setSkuId(soDetailEntity.getSkuId());
+            outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            //数量未大于0无需扣建库存
+            if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+                continue;
+            }
+            outInStockDTO.setQty(soDetailEntity.getFrozenQty());
+            outInStockDTO.setSourceId(soInfoEntity.getId());
+            outInStockDTO.setSourceCode(soInfoEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_INFO);
+            outInStockDTO.setSourceDetailId(soDetailEntity.getId());
+            resultList.add(outInStockDTO);
+        }
+        return resultList;
+    }
+
+    /**
      * 更新校验
      * @author will
      * @date 2024/7/16 17:48
@@ -1742,7 +1819,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @param updateList
      * @param removeList
      */
-    private void checkSoDetailQty ( List<SoDetailEntity> dbList,List<SoDetailDTO.UpdateDTO> updateList,List<SoDetailEntity> removeList) {
+    private void checkSoDetailQty ( List<SoDetailEntity> dbList,List<SoDetailDTO.UpdateDTO> updateList,List<SoDetailEntity> removeList,SoInfoEntity soInfoEntity,SoInfoEntity oldEntity) {
         if (CollectionUtils.isEmpty(updateList) && CollectionUtils.isEmpty(removeList)) {
             return;
         }
@@ -1754,6 +1831,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //发货通知单
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(updateDetailIdList);
 
+        //释放有变更虚拟仓
+        boolean isChangeVirtual = !StrUtil.equals(soInfoEntity.getVirtualWarehouseId(),oldEntity.getVirtualWarehouseId());
+
         //需要释放库存的明细
         List<String> unLockIdList = new ArrayList<>();
 
@@ -1763,10 +1843,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
-
-            List<String> skuIdList = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
-                    .map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-
             //有效数量
             Integer noticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), updateDTO.getId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1784,7 +1860,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //销售数量不能小于（冻结数量+发货通知单审核数量）
-            if (noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
+            if (StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && noticeApproveQty + soDetailEntity.getFrozenQty() > updateDTO.getQty()) {
                 throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于（冻结数量+发货通知单审核数量）",soDetailEntity.getSkuNo()));
             }
             //仅判断冻结数量
@@ -1793,8 +1869,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     throw new ServiceException(StrUtil.format("SKU【{}】销售数量不能小于冻结数量",soDetailEntity.getSkuNo()));
                 }
             }
-            //有更新sku则需要释放库存
-            if (!StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+            //有更新sku或者变更虚拟仓则需要释放库存
+            if ((!StrUtil.equals(updateDTO.getSkuId(),soDetailEntity.getSkuId()) || isChangeVirtual ) && MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 unLockIdList.add(soDetailEntity.getId());
             }
         }
@@ -1812,12 +1888,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         //释放冻结库存
         if (CollectionUtils.isNotEmpty(unLockIdList)) {
-            unLockIdList.forEach(obj -> batchUnLockVirtualInventory(obj));
-        }
-
-        //释放冻结库存
-        if (CollectionUtils.isNotEmpty(unLockIdList)) {
-            unLockIdList.forEach(obj -> batchUnLockVirtualInventory(obj));
+            batchUnLockVirtualInventory(unLockIdList,oldEntity);
         }
     }
 }

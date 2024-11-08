@@ -871,7 +871,7 @@ public class ProductDetailController extends BaseController {
         return success(skuList);
     }
     /**
-     * 获取已授权店铺
+     * 获取SKU下拉框-分页查询
      *
      * @return ApiResult<List < ShopInfoEntity>>
      * @author hyj
@@ -1278,5 +1278,15 @@ public class ProductDetailController extends BaseController {
     public ApiResult initProductCustom(@RequestBody(required = false) List<String> skuIds) {
         productDetailService.initProductCustom(skuIds);
         return success();
+    }
+
+    /**
+     * 打印EAN
+     * @param printEanDTO 打印参数
+     * @param response    响应
+     */
+    @PostMapping("/printEan")
+    public void printEan(@RequestBody PrintEanDTO printEanDTO, HttpServletResponse response) {
+        productDetailService.printEan(printEanDTO, response);
     }
 }

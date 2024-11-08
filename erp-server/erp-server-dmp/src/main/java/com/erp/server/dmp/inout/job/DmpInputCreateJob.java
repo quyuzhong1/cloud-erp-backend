@@ -1,10 +1,19 @@
 package com.erp.server.dmp.inout.job;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.OperationTypeEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -113,7 +122,72 @@ public class DmpInputCreateJob {
 	 */
 	@XxlJob("doHotfixInputTask")
 	public ReturnT doHotfixInputTask(){
+		// {"cfgInputId":""}
 		dmpInputCreateFactory.doHotfixInputTask(JSON.parseObject(XxlJobHelper.getJobParam() , DmpInputHotfixCreateRequest.class));
+		return ReturnT.SUCCESS;
+	}
+
+
+	/**
+	 * 根据系统和任务类型创建任务
+	 * systemId=系统ID
+	 * taskType=任务类型
+	 */
+	@XxlJob("createInputTaskByParams")
+	public ReturnT<String> createInputTaskByParams(){
+		String jobParam = XxlJobHelper.getJobParam();
+		String systemId = JSONObject.parseObject(jobParam).getString("systemId");
+		String taskTypeStr = JSONObject.parseObject(jobParam).getString("taskTypeList");
+		XxlJobHelper.log("【任务开始】任务参数: jobParam:{}",jobParam);
+		List<String> taskTypeList = Arrays.stream(taskTypeStr.split(",")).collect(Collectors.toList());
+		if (StringUtils.isBlank(systemId) || CollectionUtils.isEmpty(taskTypeList)){
+			XxlJobHelper.log("【任务结束】任务参数缺失:systemId或taskType jobParam:{}",jobParam);
+			return ReturnT.FAIL;
+		}
+
+		String redisKey = "dmp:input:create:system:" + systemId;
+		if(Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS))) {
+			XxlJobHelper.log("【任务结束】任务正在执行中 jobParam:{}",jobParam);
+			return ReturnT.FAIL;
+		}
+
+		try {
+			List<String> taskIdlist = dmpCfgInputService.listBySystemIdAndTaskType(systemId, taskTypeList);
+			if (CollectionUtils.isEmpty(taskIdlist)){
+				XxlJobHelper.log("【任务结束】无可执行的任务");
+				return ReturnT.SUCCESS;
+			}
+			// 正常
+			if (taskTypeList.contains(DmpInputTaskTaskTypeEnum.NORMAL.getCode())){
+				taskIdlist.forEach(id -> {
+					DmpInputCreateRequest dmpRequest = new DmpInputCreateRequest();
+					dmpRequest.setCfgInputId(id);
+					dmpInputCreateFactory.createNormalInputTask(dmpRequest);
+				});
+			}
+			// 补偿
+			if (taskTypeList.contains(DmpInputTaskTaskTypeEnum.COMPENSATE.getCode())){
+				taskIdlist.forEach(id -> {
+					DmpInputCreateRequest dmpRequest = new DmpInputCreateRequest();
+					dmpRequest.setCfgInputId(id);
+					dmpInputCreateFactory.createCompensateInputTask(dmpRequest);
+				});
+			}
+			// 历史
+			if (taskTypeList.contains(DmpInputTaskTaskTypeEnum.HISTORY.getCode())){
+				taskIdlist.forEach(id -> {
+					DmpInputCreateRequest dmpRequest = new DmpInputCreateRequest();
+					dmpRequest.setCfgInputId(id);
+					dmpInputCreateFactory.createHistoryInputTask(dmpRequest);
+				});
+			}
+		} catch (Exception e) {
+			log.error("【任务结束】输入任务生成错误:systemId={}, error={}" , systemId , ExceptionUtil.stacktraceToString(e));
+			XxlJobHelper.log("【任务结束】输入任务生成错误:systemId={},jobParam={}, error={}",jobParam, ExceptionUtil.stacktraceToString(e));
+		} finally {
+			redisTemplate.delete(redisKey);
+		}
+		XxlJobHelper.log("【任务结束】任务执行结束");
 		return ReturnT.SUCCESS;
 	}
 }

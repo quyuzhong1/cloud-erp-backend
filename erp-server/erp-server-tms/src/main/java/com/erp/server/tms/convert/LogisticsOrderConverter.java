@@ -156,7 +156,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "senderInfo.zipCode",source = "senderInfo.zipCode"),
             @Mapping(target = "senderInfo.houseNumber",source = "senderInfo.companyName"),
             @Mapping(target = "senderInfo.address",source = "senderInfo.addressFirst"),
-            @Mapping(target = "senderInfo.taxNumber",source = "senderInfo.taxNumber"),
+//            @Mapping(target = "senderInfo.taxNumber",source = "senderInfo.taxNumber"),
             @Mapping(target = "parcelInfo.hasBattery",source = "parceInfoVO.hasBattery",qualifiedByName = "boolToInteger"),
             @Mapping(target = "parcelInfo.currency",constant = "USD"),
             @Mapping(target = "parcelInfo.totalPrice",source = "parceInfoVO.totalPrice"),

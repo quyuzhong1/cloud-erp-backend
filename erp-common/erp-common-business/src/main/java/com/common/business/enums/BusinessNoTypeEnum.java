@@ -85,11 +85,17 @@ public enum BusinessNoTypeEnum {
     CODE_JHD(64, "JHD","拣货单",BusinessNoConstant.JHD),
     CODE_JHC(65, "JHC","拣货车管理",BusinessNoConstant.JHC),
     CODE_JHBC(66, "JHBC","拣货波次",BusinessNoConstant.JHBC),
+    CODE_QCFT(67, "QCFT","期初头程分摊",BusinessNoConstant.QCFT),
+    CODE_CHCB(68, "CHCB","SKU成本分摊",BusinessNoConstant.CHCB),
+    CODE_SCLC(69, "SCLC","试产量产单",BusinessNoConstant.SCLC),
+    THD(70, "THD","B2C退货单",BusinessNoConstant.THD),
 
     CODE_JSRQ(70, "JSRQ","计算日期",BusinessNoConstant.JSRQ),
     CODE_S(71, "S","发货建议",BusinessNoConstant.S),
     CODE_P(72, "P","采购建议",BusinessNoConstant.P),
     CODE_PP(73, "PP","采购建议",BusinessNoConstant.PP),
+    CODE_TLD(67, "tld","委外发退料单",BusinessNoConstant.TLD),
+    CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TKD),
     ;
 
 

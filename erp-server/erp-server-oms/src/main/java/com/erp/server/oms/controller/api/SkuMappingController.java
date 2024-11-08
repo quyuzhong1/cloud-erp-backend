@@ -2,6 +2,8 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -16,7 +18,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.scm.dto.OperateLogDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +86,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/platformPaging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SkuMappingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
         PagingVO<SkuMappingDTO.PagingViewDTO> pagingVO = skuMappingService.paging(dto);
         return success(pagingVO);
@@ -97,6 +99,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/warehousePaging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SkuMappingDTO.WarehousePagingViewDTO>> queryWarehouseByPage(@RequestBody @Validated PagingDTO<SkuMappingDTO.WarehousePagingParamDTO> dto) {
         PagingVO<SkuMappingDTO.WarehousePagingViewDTO> pagingVO = skuMappingService.warehousePaging(dto);
         return success(pagingVO);
@@ -136,6 +139,7 @@ public class SkuMappingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出sku对照表")
     @PostMapping("/exportPlatformSku")
+    @WebAdvanceQuery
     public ApiResult exportPlatformSku(@RequestBody @Valid SkuMappingDTO.ExportDTO dto) {
         Boolean result = skuMappingService.exportPlatformSku(dto);
         return result ? success() : failure();
@@ -147,6 +151,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/exportWarehouseSku")
+    @WebAdvanceQuery
     public ApiResult exportWarehouseSku(@RequestBody @Valid SkuMappingDTO.ExportWarehouseSkuDTO dto) {
         Boolean result = skuMappingService.exportWarehouseSku(dto);
         return result ? success() : failure();
@@ -249,9 +254,10 @@ public class SkuMappingController extends BaseController {
     /**
      * 执行自动匹配规则
      */
-    @GetMapping("/autoMatch")
-    public ApiResult<?> autoMatch() {
-        skuMappingRuleService.handleSkuMapping();
+    @PostMapping("/autoMatch")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "执行自动匹配规则")
+    public ApiResult<?> autoMatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        skuMappingRuleService.handleSkuMapping(dto.getIds());
         return success();
     }
 
@@ -276,5 +282,35 @@ public class SkuMappingController extends BaseController {
     public ApiResult<List<SkuMappingEntity>> listHistoryByListingId(@RequestBody @Validated BaseIdDTO dto){
         List<SkuMappingEntity> list = skuMappingService.listHistoryByListingId(dto.getId());
         return success(list);
+    }
+    /**
+     * 无需匹配
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateNotMatch")
+    public ApiResult<Boolean> updateNotMatch(@RequestBody @Validated SkuMappingDTO.UpdateNotMatchDTO dto){
+        skuMappingService.updateNotMatch(dto);
+        return success();
+    }
+
+    /**
+     * 同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncPlatformProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncPlatformProductView>> syncPlatformProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncPlatformProductView(advanceQueryDTO));
+    }
+
+    /**
+     * 同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncWarehouseProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncWarehouseProductView>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncWarehouseProductView(advanceQueryDTO));
     }
 }

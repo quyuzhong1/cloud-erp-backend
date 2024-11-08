@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.python.antlr.ast.Str;
 
 import java.time.LocalDateTime;
 
@@ -101,6 +102,11 @@ public class PlatformProductDTO extends UniqueDto {
      * 匹配结果
      */
     private Boolean matchResult;
+
+    /**
+     * 匹配结果
+     */
+    private String matchResultStr;
 
     /**
      * 亚马逊关联的SKU

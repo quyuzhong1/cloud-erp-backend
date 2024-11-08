@@ -1,24 +1,28 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.RequisitionApplicationDetailService;
+import com.erp.server.wms.service.VirtualWarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -27,9 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import javax.annotation.Resource;
+import java.util.*;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -46,6 +49,9 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     private OperateLogService operateLogService;
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -81,7 +87,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             this.removeByIds(deleteIds);
         }
 
-        List<RequisitionApplicationDetailEntity> list = BeanMapper.copyList(updateDTO.getDetailList(), RequisitionApplicationDetailEntity.class);
+        List<RequisitionApplicationDetailEntity> list = RequisitionApplicationConverter.INSTANCE.detailUpdateConvert(updateDTO.getDetailList());
 
         // 数据处理
         handleData(list, mainId, Boolean.TRUE);
@@ -108,12 +114,13 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
-                .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
+                .set(StrUtil.isNotBlank(fromVirtualWarehouseId),RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
                 .eq(RequisitionApplicationDetailEntity::getId, id);
-        if (StringUtils.isNotBlank(fromVirtualWarehouseId)) {
-            eq.set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, fromVirtualWarehouseId)
-                    .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName, fromVirtualWarehouseName);
-        }
+        String virtualWarehouseIdToSet = StringUtils.isNotBlank(fromVirtualWarehouseId) ? fromVirtualWarehouseId : "";
+        String virtualWarehouseNameToSet = StringUtils.isNotBlank(fromVirtualWarehouseName) ? fromVirtualWarehouseName : "";
+        eq.set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, virtualWarehouseIdToSet)
+                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName, virtualWarehouseNameToSet);
+
         return eq.update();
     }
 
@@ -141,6 +148,11 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .update();
     }
 
+    @Override
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail() {
+        return baseMapper.listAllVirtualRequisitionApplicationDetail();
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -149,7 +161,12 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
 
         //需要新增的数据
         List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-
+        List<String> fromVirtualWarehouseIdList = list.stream().map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String,String> virtualWarehouseNameMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(fromVirtualWarehouseIdList)){
+            List<VirtualWarehouseEntity> virtualWarehouseEntities = virtualWarehouseService.listByIds(fromVirtualWarehouseIdList);
+            virtualWarehouseNameMap = virtualWarehouseEntities.stream().collect(Collectors.toMap(BaseEntity::getId, VirtualWarehouseEntity::getName));
+        }
         //获取sku信息
         List<String> skuIdList = list.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
@@ -159,6 +176,11 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             requisitionApplicationDetailEntity.setSkuNo(skuVO.getSkuNo());
+            String virtualWarehouseName = virtualWarehouseNameMap.get(requisitionApplicationDetailEntity.getFromVirtualWarehouseId());
+            requisitionApplicationDetailEntity.setFromVirtualWarehouseName(StringUtils.isNotBlank(virtualWarehouseName)?virtualWarehouseName:"");
+            if(requisitionApplicationDetailEntity.getFromVirtualWarehouseId() == null){
+                requisitionApplicationDetailEntity.setFromVirtualWarehouseId("");
+            }
 
             //校验是否是修改，如果是就新增修改日志
             if (StringUtils.isNotBlank(requisitionApplicationDetailEntity.getId())) {

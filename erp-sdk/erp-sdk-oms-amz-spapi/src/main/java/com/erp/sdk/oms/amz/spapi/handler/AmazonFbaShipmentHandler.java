@@ -22,14 +22,12 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaShipmentStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.*;
-import org.python.netty.util.internal.chmv8.ConcurrentHashMapV8;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -63,7 +61,7 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
         try {
-            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+            FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
             String queryType = AmazonFbaQueryTypeEnum.DATE_RANGE.getCode();
             String marketplaceId = marketPlaceEnum.getMarketplaceId();
             List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();
@@ -115,7 +113,7 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
         AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         try {
             // 查询FBA货件item
-            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+            FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
             InboundShipmentInfo shipmentInfo = dto.getShipmentInfo();
             if (null == shipmentInfo){
                throw new ServiceException("[Amazon SP-APi] 数据异常查询FBA货件主信息结果为空：" + dto.getUniqueId());
@@ -142,7 +140,7 @@ public class AmazonFbaShipmentHandler extends AbstractFbaShipmentHandler<Platfor
         String marketplaceId = marketPlaceEnum.getMarketplaceId();
         try {
             // 查询FBA货件item
-            FbaInboundApi api = FbaInboundApi.initApi(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false);
+            FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
             // 主表信息为空, 请求获取
             GetShipmentsResponse shipments = api.getShipments(queryType, marketplaceId, null, shipmentIdList, null, null, null);
             if (CollectionUtils.isEmpty(shipments.getPayload().getShipmentData())){

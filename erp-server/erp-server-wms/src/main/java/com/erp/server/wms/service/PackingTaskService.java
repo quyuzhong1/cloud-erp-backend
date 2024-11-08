@@ -24,7 +24,6 @@ import java.util.Map;
  * @since 2024-07-02
  */
 public interface PackingTaskService extends SuperService<PackingTaskEntity> {
-
     /**
     * 新增
     * @author zdy
@@ -276,4 +275,31 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
     PagingVO<PackingTaskDTO.PagingViewDTO> exportPackingTask(PagingDTO<PackingTaskDTO.PagingParamDTO> dto);
+
+    /**
+     *  根据任务id更新装箱状态
+     * @param taskId
+     * @return
+     */
+    void updatePackingStatusByTaskId(String taskId);
+
+    /**
+     * 根据外部箱号查询装箱的基础信息和产品明细
+     * @param outBoxNo
+     * @return
+     */
+    WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(String outBoxNo);
+
+    /**
+     * 导出未装箱明细
+     * @param dto
+     */
+    void exportUnPackingDetail(PackingTaskDTO.ExportDTO dto);
+
+    /**
+     * 查询未装箱明细
+     * @param dto
+     * @return
+     */
+    PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 }

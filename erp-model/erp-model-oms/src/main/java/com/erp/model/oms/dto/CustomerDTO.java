@@ -163,6 +163,16 @@ public class CustomerDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
+        /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
     }
 
     @Data
@@ -180,6 +190,10 @@ public class CustomerDTO implements Serializable {
          * 名称
          */
         private String code;
+        /**
+         * 简称
+         */
+        private String shortName;
     }
     /**
      * 远程搜索
@@ -770,6 +784,10 @@ public class CustomerDTO implements Serializable {
          * name
          */
         private String name;
+        /**
+         * 简称
+         */
+        private String shortName;
 
         private ApproveStatusEnum approveStatus;
 

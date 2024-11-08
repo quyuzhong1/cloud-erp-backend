@@ -110,6 +110,13 @@ public enum ModuleTypeEnum {
     DELIVERY_SUGGEST("100", "发货建议"),
     PURCHASE_SUGGEST("101", "采购建议"),
     PURCHASE_SUGGEST_MERGE("102", "采购建议（合并）"),
+    SUBCONTRACT_RETURN("94", "委外退料单"),
+    INIT_FIRST_MILE_ALLOCATION("94", "期初费用分摊"),
+    INVENTORY_SKU_COST("95", "SKU成本"),
+    COST_ALLOCATION("96", "费用分摊"),
+    PILOT_APPLICATION("97", "试产量产单"),
+    SO_B2C_RETURN("98", "b2c退货单"),
+    REFUND_ORDER("99", "退款单"),
     ;
 
 

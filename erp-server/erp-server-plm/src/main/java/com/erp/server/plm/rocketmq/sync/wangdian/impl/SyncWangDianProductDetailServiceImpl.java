@@ -1,16 +1,23 @@
 package com.erp.server.plm.rocketmq.sync.wangdian.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.SaleMethodEnum;
@@ -27,10 +34,7 @@ import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,6 +55,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     private BomSkuService bomSkuService;
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private PlmPushMsgService plmPushMsgService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -72,8 +78,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         ProductPurchaseEntity productPurchase = Optional.ofNullable(productPurchaseService.getBySkuId(entity.getId())).orElse(new ProductPurchaseEntity());
         ProductPackEntity productPack = productPackService.getBySkuId(entity.getId());
         GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
-        dto.setGoodsNo(info.getSpuNo());
-        dto.setGoodsName(info.getName());
+        dto.setGoodsNo(entity.getSkuNo());
+        dto.setGoodsName(entity.getName());
         dto.setGoodsType(getGoodsType(info.getSaleMethod(), info.getProperty()));
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());
@@ -86,18 +92,39 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         specList.setImgUrl(entity.getImagesUrl());
 //        specList.setUnitName(entity.getUnitName());
         dto.setSpecList(Collections.singletonList(specList));
-        //添加推送任务
-        DmpPushTaskFeignDTO taskEntity = new DmpPushTaskFeignDTO();
-        taskEntity.setSourceId(entity.getId());
-        taskEntity.setSourceCode(entity.getSkuNo());
-        taskEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
-        taskEntity.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
-        taskEntity.setMqTag(RocketMqTagEnum.WDT_PRODUCT_DETAIL_TAG.getName());
-        taskEntity.setMqData(JSONUtil.toJsonStr(dto));
-        taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
-        taskEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
-        return dmpMqFeign.saveTask(taskEntity);
+        
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskEntity = new DmpPushTaskFeignDTO();
+            taskEntity.setSourceId(entity.getId());
+            taskEntity.setSourceCode(entity.getSkuNo());
+            taskEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+            taskEntity.setMqTopic(RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC);
+            taskEntity.setMqTag(RocketMqTagEnum.WDT_PRODUCT_DETAIL_TAG.getName());
+            taskEntity.setMqData(JSONUtil.toJsonStr(dto));
+            taskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskEntity.setTargetPlatformName(PlatformEnum.WANGDIAN.getDesc());
+            taskEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+            return dmpMqFeign.saveTask(taskEntity);
+        }
+        
+        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
+        plmPushMsgEntity.setPushData(JSON.toJSONString(dto));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+        
+        return null;
     }
 
     @Override
@@ -144,17 +171,52 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask(ProductDetailEntity entity, String operate, Map<String, Object> resultMap) {
-        //添加推送任务
-        DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
-        taskFeignDTO.setSourceId(entity.getId());
-        taskFeignDTO.setSourceCode(entity.getSkuNo());
-        taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
-        taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-        taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName());
-        taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-        taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-        taskFeignDTO.setSyncOperate(operate);
-        return dmpMqFeign.saveTask(taskFeignDTO);
+    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.PRODUCT_DETAIL.getCode())
+        		.eq(CfgSettingEntity::getType, settingEnum.getType())
+        		.eq(CfgSettingEntity::getValue, "1")
+        		.list();
+        if(CollUtil.isEmpty(list)) {
+        	//添加推送任务
+            DmpPushTaskFeignDTO taskFeignDTO = new DmpPushTaskFeignDTO();
+            taskFeignDTO.setSourceId(entity.getId());
+            taskFeignDTO.setSourceCode(entity.getSkuNo());
+            taskFeignDTO.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+            taskFeignDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            taskFeignDTO.setMqTag(RocketMqTagEnum.KINGDEE_PRODUCT_DETAIL_TAG.getName());
+            taskFeignDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            taskFeignDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            taskFeignDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            taskFeignDTO.setSyncOperate(operate);
+            return dmpMqFeign.saveTask(taskFeignDTO);
+        }
+        
+        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(operate);
+        plmPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+        
+        return null;
+    }
+
+
+    @Override
+    public void addPlmPushMsg(ProductDetailEntity entity) {
+        Map<String, Object> pushData = new HashMap<>();
+        pushData.put("remark",String.format("【%s】删除，同步旺店通失败", entity.getSkuNo()));
+        PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.WDT.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
+        plmPushMsgEntity.setPushData(JSON.toJSONString(pushData));
+        plmPushMsgService.save(plmPushMsgEntity);
     }
 }

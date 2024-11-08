@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -138,7 +139,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-17 16:00
      */
-    void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList);
+    void updateSoDetail(String mainId,Boolean isTax, List<SoDetailDTO.UpdateDTO> detailList, SoInfoEntity old);
 
     /**
      * 根据主表ids 删除数据
@@ -327,7 +328,16 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param detailId
      * @return BatchResultDTO
      */
-    BatchResultDTO batchUnLockVirtualInventory(String detailId);
+    BatchResultDTO batchUnLockVirtualInventory(String detailId,SoInfoEntity oldEntity);
+    /**
+     * 批量释放库存
+     * @author will
+     * @date 2024/7/15 17:32
+     * @param detailIdList
+     * @param oldEntity
+     * @return BatchResultDTO
+     */
+    BatchResultDTO batchUnLockVirtualInventory(List<String> detailIdList,SoInfoEntity oldEntity);
     /**
      * 扣减冻结数量
      * @author will
@@ -335,4 +345,11 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param soParamList
      */
     void updateFrozenQty(List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList);
+    /**
+     * 查询所有虚拟仓B2B销售订单数据
+     * @author will
+     * @date 2024/9/26 16:58
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
 }

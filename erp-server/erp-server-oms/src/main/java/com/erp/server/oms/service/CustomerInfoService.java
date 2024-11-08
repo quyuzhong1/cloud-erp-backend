@@ -377,4 +377,6 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     PagingVO<CustomerDTO.PageSelectDTO> pagingSelect(PagingDTO<CustomerDTO.SelectDTO> dto);
 
     PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto);
+
+    List<CustomerDTO.InfoDTO> listSimpleName(CustomerDTO.PageSelectDTO dto);
 }

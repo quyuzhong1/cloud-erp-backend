@@ -10,4 +10,6 @@ public interface SyncWangDianProductDetailService {
     void syncDataToWangDian(ProductDetailEntity entity);
 
     void syncDataToWangDian(List<ProductDetailEntity> entityList);
+
+    void addPlmPushMsg(ProductDetailEntity entity);
 }

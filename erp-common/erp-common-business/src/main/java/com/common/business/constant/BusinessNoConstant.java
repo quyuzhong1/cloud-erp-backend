@@ -151,4 +151,12 @@ public interface BusinessNoConstant {
     String S = "S";
     String P = "P";
     String PP = "PP";
+    //退料单
+    String TLD = "TLD";
+    String QCFT = "QCFT";
+    String CHCB = "CHCB";
+    //试产量产
+    String SCLC = "SCLC";
+    String THD = "THD";
+    String TKD = "TKD";
 }

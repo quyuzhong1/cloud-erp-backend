@@ -128,7 +128,7 @@
         WHERE
             t.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
-        and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30','32','33','34','35')
+        and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30','32','33','34','35','49','50')
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
             and t.sku_no in
             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -703,20 +703,15 @@
             t.productName,
             t.imagesUrl
         FROM (
-            select
+            select balanceQty,skuId,warehouseId,warehouseName,orgId,pd.sku_no as skuNo ,ps.sale_state as saleState,
+            pd.name as productName,
+            pd.images_url as imagesUrl from (select
             sum(tf.qty) as balanceQty,
             tf.sku_id as skuId,
             tf.warehouse_id as warehouseId,
             max(tf.warehouse_name) as warehouseName,
-            max(tf.org_id) as orgId,
-            max(pd.sku_no) as skuNo ,
-            max(ps.sale_state) as saleState,
-            max(pd.name) as productName,
-            max(pd.images_url) as imagesUrl
+            max(tf.org_id) as orgId
             from transaction_flow tf
-            left join product_detail pd on pd.id = tf.sku_id and pd.is_deleted = false
-            left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false
-            left join product_sale ps on ps.sku_id = pd.id and ps.is_deleted = false
             <where>
                 tf.is_deleted = false and (tf.dict_inventory_status = 'frozen' or tf.dict_inventory_status = 'usable')
                 <if test="params.dateType != null and params.dateType != '' and params.dateType == 'approveDate'">
@@ -724,12 +719,6 @@
                 </if>
                 <if test="params.dateType != null and params.dateType != '' and params.dateType == 'billDate'">
                     and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.bill_date
-                </if>
-                <if test="params.skuNoList != null and params.skuNoList.size != ''">
-                    and pd.sku_no in
-                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                        #{item}
-                    </foreach>
                 </if>
                 <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
                     and tf.warehouse_id in
@@ -749,6 +738,16 @@
             <if test="params.hideZeroInventory">
                 having  sum(tf.qty) != 0
             </if>
+            ) tf left join product_detail pd on pd.id = tf.skuId and pd.is_deleted = false
+            left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false
+            left join product_sale ps on ps.sku_id = pd.id and ps.is_deleted = false
+            where 1 = 1
+            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                    and pd.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
         ) t
         <where>
         <!-- 使用 IN 语句匹配 checkData -->
@@ -794,14 +793,17 @@
     </select>
     <select id="listByOrgId" resultType="java.lang.String">
         SELECT inventory_id from transaction_flow where is_deleted = false
-        <if test=" null != orgId and '' != orgId  ">
+        <if test=" null != orgId and '' != orgId and !fromTable ">
             and org_id =#{orgId}
         </if>
-        <if test=" null != inventoryId and '' != inventoryId  ">
+        <if test=" null != inventoryId and '' != inventoryId and !fromTable ">
             and inventory_id =#{inventoryId}
         </if>
         <if test=" null != startDate">
             and bill_date >= #{startDate}
+        </if>
+        <if test=" null != fromTable and fromTable">
+            and inventory_id in (select inventory_id from inventory_temp)
         </if>
         GROUP BY inventory_id
     </select>

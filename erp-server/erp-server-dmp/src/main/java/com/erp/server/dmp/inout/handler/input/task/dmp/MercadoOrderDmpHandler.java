@@ -1,20 +1,31 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoInfoService;
+import com.erp.server.dmp.service.DmpSoReceiverService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -30,6 +41,12 @@ import java.util.stream.Collectors;
 @Service
 @Scope("prototype")
 public class MercadoOrderDmpHandler extends MercadoDmpHandler {
+    @Resource
+    private DmpSoInfoService dmpSoInfoService;
+    @Resource
+    private DmpSoReceiverService dmpSoReceiverService;
+    @Resource
+    private DmpSoDetailService dmpSoDetailService;
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -50,6 +67,30 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
         List<DmpInputTaskEntity> parentTaskEntityList = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, parentTaskId).list();
         if (CollectionUtil.isEmpty(parentTaskEntityList)) {
             return;
+        }
+
+        Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
+        if (CollUtil.isNotEmpty(keySet)) {
+            List<String> orderIdList = new ArrayList<>();
+            for (List<Map<String, Object>> key : keySet) {
+                orderIdList.addAll(key.stream().map(f -> f.get("fid").toString()).collect(Collectors.toList()));
+            }
+
+            List<DmpSoInfoEntity> soInfoEntityList = dmpSoInfoService.lambdaQuery()
+                    .in(DmpSoInfoEntity::getThirdCode, orderIdList)
+                    .in(DmpSoInfoEntity::getSourceSystem, Arrays.asList(DmpBasicSystemCodeEnum.KINGDEE.getCode(), DmpBasicSystemCodeEnum.MABANG.getCode()))
+                    .select(DmpSoInfoEntity::getId)
+                    .list();
+            if (CollUtil.isNotEmpty(soInfoEntityList)) {
+                List<String> ids = soInfoEntityList.stream().map(DmpSoInfoEntity::getId).collect(Collectors.toList());
+                dmpSoInfoService.removeByIds(ids);
+                dmpSoReceiverService.lambdaUpdate()
+                        .in(DmpSoReceiverEntity::getMainId, ids)
+                        .remove();
+                dmpSoDetailService.lambdaUpdate()
+                        .in(DmpSoDetailEntity::getMainId, ids)
+                        .remove();
+            }
         }
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
@@ -76,8 +117,10 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     dmpDataMap.put("platformUpdateTime", offsetDateTime.toLocalDateTime());
                 }
 
-
                 Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipping");
+
+
+
                 Object shipmentId = shipmentIdMap.get("fid");
                 if (shipmentId != null) {
                     Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
@@ -85,27 +128,35 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         continue;
                     }
                     dmpDataMap.put("logisticsCode", shipmentMap.get("trackingNumber"));
+                    lableMap.put("shipmentId", shipmentId);
+
+                    Object dateCreated = shipmentMap.get("dateCreated");
+                    if (ObjectUtil.isNotEmpty(dateCreated)) {
+                        //发货时间
+                        OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(dateCreated), formatter);
+                        dmpDataMap.put("deliveryTime", offsetDateTime.toLocalDateTime());
+                    }
 
                     //物流状态
                     Map<String, Object> logisticMap = (Map<String, Object>) shipmentMap.get("logistic");
                     String logisticType = "";
-                    if (shipmentId != null) {
-                        String mode = String.valueOf(logisticMap.get("mode"));
-                        String type = String.valueOf(logisticMap.get("type"));
-
-                        if ("me2".equalsIgnoreCase(mode) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(type)) {
-                            //如果是平台仓，状态审核通过
-                            logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
-                        } else if ("me2".equalsIgnoreCase(mode)
-                                && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(type) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(type))
-                        ){
-                            logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
-                        } else if ("me1".equalsIgnoreCase(mode)) {
-                            //自发货
-                            logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
-                        }
+                    String mode = String.valueOf(logisticMap.get("mode"));
+                    String type = String.valueOf(logisticMap.get("type"));
+                    lableMap.put("mode", mode);
+                    if ("me2".equalsIgnoreCase(mode) && MercadoOrderLogisticTypeEnum.FULFILLMENT.getCode().equalsIgnoreCase(type)) {
+                        //如果是平台仓，状态审核通过
+                        logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+                        lableMap.put("isPlatformWarehouseOrder", Boolean.TRUE);
+                    } else if ("me2".equalsIgnoreCase(mode)
+                            && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(type) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(type))
+                    ) {
+                        logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
+                    } else if ("me1".equalsIgnoreCase(mode)) {
+                        //自发货
+                        logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
                     }
-
+                    lableMap.put("logisticType", type);
+                    dmpDataMap.put("logisticType", logisticType);
                     //作废状态
                     Object statusObj = shipmentMap.get("status");
                     if (statusObj != null) {
@@ -140,11 +191,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                                 dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                             }
                         }
-                    }
 
-                    //订单状态
-                    Object orderStatusObj = dmpDataMap.get("status");
-                    if (orderStatusObj != null) {
+                        //订单状态
                         String orderStatus = String.valueOf(statusObj);
                         dmpDataMap.put("platformOriginalStatus", orderStatus);
                         if ("invalid".equalsIgnoreCase(orderStatus)) {
@@ -161,15 +209,22 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         dmpDataMap.put("buyerRemark", feedbackMap.get("purchase"));
 
                     }
+                    Object packId = dmpDataMap.get("platformCode");
+                    if (packId == null) {
+                        dmpDataMap.put("platformCode", dmpDataMap.get("thirdCode"));
+                    }
+
 
                     //支付信息
                     Object paymentsObj = dmpDataMap.get("payments");
                     if (paymentsObj != null) {
+
                         List<Map<String, Object>> feedbackList = (List<Map<String, Object>>) paymentsObj;
                         if (CollectionUtil.isNotEmpty(feedbackList)) {
                             OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(feedbackList.get(0).get("dateCreated")), formatter);
                             // 转换为 LocalDateTime
                             dmpDataMap.put("payTime", offsetDateTime.toLocalDateTime());
+
                             dmpDataMap.put("currencyCode", feedbackList.get(0).get("currencyId"));
                             BigDecimal totalPaidAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("totalPaidAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("payAmount", totalPaidAmount);
@@ -210,6 +265,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
 
 
                     }
+
+                    //扩展字段
                     dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
                 }
             }

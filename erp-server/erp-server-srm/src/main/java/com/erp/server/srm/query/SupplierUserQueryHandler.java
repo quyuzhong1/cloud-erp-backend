@@ -4,7 +4,7 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.vo.SupplierRefUserVO;
-import com.erp.rpc.wms.feign.SupplierUserFeign;
+import com.erp.rpc.scm.feign.SupplierUserFeign;
 import com.erp.server.srm.service.UserService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;

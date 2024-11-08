@@ -21,7 +21,7 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
      * 销售出库单
      */
     @ExcelProperty(value = "*销售出库单")
-    @FieldValid(fieldName = "销售出库单",isNotBlank = true,maxLength = 32)
+    @FieldValid(fieldName = "销售出库单",maxLength = 32)
     private String  outstockCode;
 
     /**

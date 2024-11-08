@@ -35,6 +35,7 @@
        <result column="billing_weight_unit" property="billingWeightUnit" />
        <result column="shipping_cost" property="shippingCost" />
        <result column="declare_cost" property="declareCost" />
+       <result column="other_tax_cost" property="otherTaxCost" />
        <result column="other_cost" property="otherCost" />
        <result column="remark" property="remark" />
        <result column="status" property="status" />
@@ -80,6 +81,7 @@
             billing_weight_unit,
             shipping_cost,
             declare_cost,
+            other_tax_cost,
             other_cost,
             remark,
             status,
@@ -89,7 +91,9 @@
             business_code,
             transport_status,
             logistics_channel_id,
-            transport_no
+            transport_no,
+            reconciliation_count,
+            reconciliation_type
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO$ListDTO">
@@ -162,6 +166,7 @@
         tfmrd.billing_weight_unit,
         tfmrd.shipping_cost,
         tfmrd.declare_cost,
+        tfmrd.other_tax_cost,
         tfmrd.other_cost,
         tfmrd.remark,
         tfmrd.status,
@@ -171,9 +176,12 @@
         tfmrd.relation_code,
         tfmrd.transport_status,
         tfmrd.logistics_channel_id,
-        tfmrd.transport_no
+        tfmrd.transport_no,
+        tfmrd.reconciliation_count,
+        tfmr.reconciliation_month,
+        to_char(tfmr.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr
         from tms_first_mile_reconciliation_detail tfmrd
-        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id
+        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id and tfmr.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and tfmrd.is_deleted = false and tfmrd.main_id in
@@ -229,5 +237,131 @@
             WHEN 'diff' THEN 3
             END
         </where>
+    </select>
+    <select id="listBySourceIds"
+            resultType="com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity">
+        select
+        tfmrd.id,
+        tfmrd.create_user_id,
+        tfmrd.create_user_name,
+        tfmrd.create_time,
+        tfmrd.update_user_id,
+        tfmrd.update_user_name,
+        tfmrd.update_time,
+        tfmrd.version,
+        tfmrd.is_deleted,
+        tfmrd.main_id,
+        tfmrd.source_id,
+        tfmrd.source_type,
+        tfmrd.source_code,
+        tfmrd.relation_code,
+        tfmrd.shop_id,
+        tfmrd.shop_name,
+        tfmrd.from_country,
+        tfmrd.to_country,
+        tfmrd.receive_date,
+        tfmrd.fee_rule,
+        tfmrd.fee_rule_name,
+        tfmrd."type",
+        tfmrd.total_logistics_cost,
+        tfmrd.actual_weight,
+        tfmrd.actual_weight_unit,
+        tfmrd.volume_weight,
+        tfmrd.volume_weight_unit,
+        tfmrd.billing_weight,
+        tfmrd.billing_weight_unit,
+        tfmrd.shipping_cost,
+        tfmrd.declare_cost,
+        tfmrd.other_tax_cost,
+        tfmrd.other_cost,
+        tfmrd.remark,
+        tfmrd.status,
+        tfmrd.confirm_date,
+        tfmrd.confirm_user_id,
+        tfmrd.confirm_user_name,
+        tfmrd.business_code,
+        tfmrd.transport_status,
+        tfmrd.logistics_channel_id,
+        tfmrd.transport_no,
+        tfmrd.reconciliation_count,
+        tfmrd.reconciliation_type,
+        tfmr.reconciliation_month
+        from tms_first_mile_reconciliation_detail tfmrd
+        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id and tfmr.is_deleted = false
+        where tfmrd.is_deleted = false
+          <if test="sourceIds != null and sourceIds.size > 0">
+              and tfmrd.source_id in
+              <foreach collection="sourceIds" open="(" close=")" separator="," item="item">
+                  #{item}
+              </foreach>
+          </if>
+        <if test="type != null and type != ''">
+            and tfmrd."type" = #{type}
+        </if>
+    </select>
+    <select id="listBySourceIdsAndStatus"
+            resultType="com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity">
+        select
+            tfmrd.id,
+            tfmrd.create_user_id,
+            tfmrd.create_user_name,
+            tfmrd.create_time,
+            tfmrd.update_user_id,
+            tfmrd.update_user_name,
+            tfmrd.update_time,
+            tfmrd.version,
+            tfmrd.is_deleted,
+            tfmrd.main_id,
+            tfmrd.source_id,
+            tfmrd.source_type,
+            tfmrd.source_code,
+            tfmrd.relation_code,
+            tfmrd.shop_id,
+            tfmrd.shop_name,
+            tfmrd.from_country,
+            tfmrd.to_country,
+            tfmrd.receive_date,
+            tfmrd.fee_rule,
+            tfmrd.fee_rule_name,
+            tfmrd."type",
+            tfmrd.total_logistics_cost,
+            tfmrd.actual_weight,
+            tfmrd.actual_weight_unit,
+            tfmrd.volume_weight,
+            tfmrd.volume_weight_unit,
+            tfmrd.billing_weight,
+            tfmrd.billing_weight_unit,
+            tfmrd.shipping_cost,
+            tfmrd.declare_cost,
+            tfmrd.other_tax_cost,
+            tfmrd.other_cost,
+            tfmrd.remark,
+            tfmrd.status,
+            tfmrd.confirm_date,
+            tfmrd.confirm_user_id,
+            tfmrd.confirm_user_name,
+            tfmrd.business_code,
+            tfmrd.transport_status,
+            tfmrd.logistics_channel_id,
+            tfmrd.transport_no,
+            tfmrd.reconciliation_count,
+            tfmrd.reconciliation_type,
+            tfmr.reconciliation_month
+        from tms_first_mile_reconciliation_detail tfmrd
+        left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id and tfmr.is_deleted = false
+        where tfmrd.is_deleted = false
+        <if test="sourceIds != null and sourceIds.size > 0">
+            and tfmrd.source_id in
+            <foreach collection="sourceIds" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+        </if>
+        <if test="status != null and status != ''">
+            and tfmr.approve_status = #{status}
+        </if>
+        <if test="type != null and type != ''">
+            and tfmrd."type" = #{type}
+        </if>
+        order by tfmr.reconciliation_month
     </select>
 </mapper>

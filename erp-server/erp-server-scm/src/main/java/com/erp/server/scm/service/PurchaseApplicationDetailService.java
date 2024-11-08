@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 
@@ -65,4 +66,12 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
      */
     PurchaseApplicationDetailEntity getByPurchaseApplicationIdAndSkuId(String purchaseApplicationId, String skuId);
 
+    /**
+     * 统计sku已申请的数量
+     */
+    List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> listSkuAndQty(List<String> sourceIds,List<String> sourceDetailIds);
+    /**
+     * 试产量产是否新品
+     */
+    Boolean existBySkuIds( List<String> skuIds);
 }

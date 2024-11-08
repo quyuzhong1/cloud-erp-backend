@@ -33,6 +33,8 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -140,6 +142,15 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         return baseMapper.listSourceDetailIds(sourceDetailIds);
     }
 
+
+    @Override
+    public Map<String, List<TransferInfoDetailDTO.ApproveDTO>> listApproveByMainIds(List<String> mainIds, Boolean isApprove) {
+        List<TransferInfoDetailDTO.ApproveDTO> approveDTOS = baseMapper.listApproveByMainIds(mainIds, isApprove);
+        return approveDTOS.stream()
+                .collect(Collectors.groupingBy(TransferInfoDetailDTO.ApproveDTO::getMainId));
+
+    }
+
     /**
      * @description: 修改时数量验证
      * @author Will
@@ -197,13 +208,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<TransferInfoDetailEntity> detailList, String mainId, Boolean isUpdate) {
-        //去除服务、费用SKU
-        List<TransferInfoDetailEntity> newList = removeNoInventorySku(detailList);
-        if (CollectionUtils.isEmpty(newList)) {
-            throw new ServiceException(ApiError.ERROR_NO_INVENTORY_SKU_NOT_EXIST);
-        }
-
+    private void doOpHandleDetails (List<TransferInfoDetailEntity> newList, String mainId, Boolean isUpdate) {
         //需要新增的数据
         List<TransferInfoDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -338,19 +343,4 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             }
         }
     }
-
-    /**
-     * 移除包含服务和费用的sku明细
-     * @author will
-     * @date 2024/7/26 22:52
-     * @param newList
-     * @return List<TransferInfoDetailEntity>
-     */
-    private List<TransferInfoDetailEntity> removeNoInventorySku (List<TransferInfoDetailEntity> newList) {
-        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> skuIdList = CollectionUtils.isEmpty(noInventorySkuList)
-                ? new ArrayList<>() : noInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        return newList.stream().filter(obj -> !skuIdList.contains(obj.getSkuId())).collect(Collectors.toList());
-    }
-
 }

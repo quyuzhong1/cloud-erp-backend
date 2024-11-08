@@ -41,8 +41,8 @@ import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
@@ -338,7 +338,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         PagingVO<InventoryReportDTO.ListDailyInventoryDTO> pageData = this.dailyInventoryPaging(dto);
         List<ListDailyInventoryDTO> dataList = (List<ListDailyInventoryDTO>) pageData.getList();
         // 填充
-        handleDailyInventory(dataList);
+//        handleDailyInventory(dataList);
         return new PagingVO<>(dataList, pageData.getTotalCount(),dto.getPageSize(), dto.getCurrPage());
     }
 
@@ -398,8 +398,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId) {
-        return baseMapper.listByOrgId(startDate, orgId, inventoryId);
+    public List<String> listByOrgId(LocalDate startDate, String orgId, String inventoryId, Boolean fromTable) {
+        return baseMapper.listByOrgId(startDate, orgId, inventoryId, fromTable);
     }
 
     /**

@@ -136,7 +136,7 @@ public class PackingTaskController extends BaseController {
     public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
         dto.setOperation("装箱操作");
         dto.setContent("新增装箱");
-        Boolean flag = packingTaskService.packingSave(dto, Boolean.TRUE);
+        Boolean flag = packingTaskService.packingSave(dto, Boolean.FALSE);
         return flag ? success() : failure();
     }
 
@@ -219,7 +219,7 @@ public class PackingTaskController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:packingTask:delete",
+            menuCode = "wms:packingTask:delete",
             serviceClass = PackingTaskService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -243,7 +243,35 @@ public class PackingTaskController extends BaseController {
     }
 
     /**
-     * 修复历史装箱数据
+     * 更新装箱任务状态
+     * @param taskId
+     * @return
      */
+    @GetMapping("/updatePackingStatusByTaskId")
+    public ApiResult updatePackingStatusByTaskId(@RequestParam("taskId") String taskId){
+        packingTaskService.updatePackingStatusByTaskId(taskId);
+        return success();
+    }
+    /**
+     * 未装箱明细
+     * @param id 任务id
+     * @return
+     */
+    @GetMapping("/notPackingDetailView")
+    public ApiResult<WmsCartonSpecDTO.NoPackingView> notPackingDetailView(@RequestParam("id") String id){
+        return success(packingTaskService.notPackingDetailView(id));
+    }
 
+    /**
+     * 导出未装箱明细Excel
+     * @author zdy
+     * @date 2024-11-06
+     * @param dto
+     */
+    @PostMapping("/exportUnPackingDetail")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出未装箱明细Excel")
+    public ApiResult exportUnPackingDetail(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        packingTaskService.exportUnPackingDetail(dto);
+        return success();
+    }
 }

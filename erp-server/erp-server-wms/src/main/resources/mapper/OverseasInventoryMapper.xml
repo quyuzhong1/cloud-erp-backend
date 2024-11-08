@@ -47,7 +47,7 @@
     </sql>
 
     <sql id="conditionSql">
-        oi.is_deleted = false
+        oi.is_deleted = false and op.is_deleted = false and op.auth_status = 'already'
         <if test="params.skuNoList!=null and params.skuNoList.size > 0">
             AND oi.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
@@ -94,7 +94,7 @@
             ${params.permissionSql}
         </if>
 
-        <if test="params.sortList != null and params.sortList.size > 0">
+        <if test="params.sortList != null and params.sortList.size > 0 and params.sortFlag">
             <foreach collection="params.sortList" item="item" separator="," open=" ORDER BY ">
                 ${item.field} ${item.sort}
             </foreach>
@@ -137,6 +137,8 @@
         FROM overseas_inventory as oi
         LEFT JOIN overseas_provider_warehouse as opw
         on opw.platform_warehouse_code = oi.warehouse_code
+        LEFT JOIN overseas_provider as op
+        on op.id = opw.main_id
         <where>
             <include refid="page_where_sql"/>
             <include refid="conditionSql"/>
@@ -155,6 +157,10 @@
         COALESCE(SUM(oi.frozen_qty),0) as frozenQty,
         COALESCE(SUM(oi.shipped_qty),0) as shippedQty
         FROM overseas_inventory as oi
+        LEFT JOIN overseas_provider_warehouse as opw
+        on opw.platform_warehouse_code = oi.warehouse_code
+        LEFT JOIN overseas_provider as op
+        on op.id = opw.main_id
         <where>
             <include refid="conditionSql"/>
         </where>
@@ -192,6 +198,8 @@
         FROM overseas_inventory as oi
         LEFT JOIN overseas_provider_warehouse as opw
         on opw.platform_warehouse_code = oi.warehouse_code
+        LEFT JOIN overseas_provider as op
+        on op.id = opw.main_id
         <where>
             <if test="params.ids!=null and params.ids.size>0 ">
                 AND oi.id IN

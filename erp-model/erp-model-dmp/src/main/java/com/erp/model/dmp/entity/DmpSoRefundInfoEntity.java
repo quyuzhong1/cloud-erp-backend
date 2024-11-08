@@ -154,6 +154,11 @@ public class DmpSoRefundInfoEntity extends BaseEntity<DmpSoRefundInfoEntity> {
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
+    /**
+     * 来源ID:shopify=dmp_so_info主键id
+     */
+    @TableField("source_id")
+    private String sourceId;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

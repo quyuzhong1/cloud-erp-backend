@@ -2,20 +2,17 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.validator.ValidList;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
-import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.query.SoB2cDeliveryInterceptQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -88,6 +85,7 @@ public class SoB2cDeliveryInterceptController extends BaseController {
             menuCode = "wms:soB2cDeliveryIntercept:paging",
             tableAlias = "sbdi"
     )
+    @WebAdvanceQuery(handler = SoB2cDeliveryInterceptQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDeliveryInterceptDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryInterceptDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryInterceptService.paging(dto));
     }
@@ -145,10 +143,6 @@ public class SoB2cDeliveryInterceptController extends BaseController {
 
     /**
      * 拦截结果确认
-     * @Author Luo_WG
-     * @Date 2023/12/14 11:45
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
      **/
     @PostMapping("/interceptResultConfirm")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -176,4 +170,63 @@ public class SoB2cDeliveryInterceptController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 处理拦截成功弹窗
+     **/
+    @PostMapping("/interceptSuccessView")
+    public ApiResult<List<SoB2cDeliveryInterceptDTO.InterceptInventoryDTO>> interceptSuccessView(@RequestBody @Validated BaseIdsDTO.IdsDTO baseIdsDTO) {
+        return success(soB2cDeliveryInterceptService.interceptSuccessView(baseIdsDTO.getIds()));
+    }
+
+    /**
+     * 拦截成功处理
+     **/
+    @PostMapping("/interceptSuccess")
+    public ApiResult<List<BatchResultDTO>> interceptSuccess(@RequestBody @Validated SoB2cDeliveryInterceptDTO.InterceptSuccessDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cDeliveryInterceptService.interceptSuccess(dto, id);
+            }catch (Exception e){
+                log.error("发货拦截单 拦截成功处理失败",e);
+                SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getId(), entity.getId(), "物流拦截单不存在, 拦截结果确认失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 拦截失败处理
+     **/
+    @PostMapping("/interceptFailure")
+    public ApiResult<List<BatchResultDTO>> interceptFailure(@RequestBody @Validated SoB2cDeliveryInterceptDTO.InterceptFailureDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cDeliveryInterceptService.interceptFailure(id,dto.getIsAutoOut(),dto.getResultRemark() );
+            }catch (Exception e){
+                log.error("发货拦截单 拦截失败处理异常",e);
+                SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(entity.getId(), entity.getId(), "物流拦截单不存在, 拦截结果确认失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 }

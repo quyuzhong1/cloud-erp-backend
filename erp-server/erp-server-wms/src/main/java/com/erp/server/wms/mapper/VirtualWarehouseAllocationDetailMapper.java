@@ -1,5 +1,6 @@
 package com.erp.server.wms.mapper;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
+import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -24,4 +25,14 @@ public interface VirtualWarehouseAllocationDetailMapper extends BaseMapper<Virtu
     void batchSync( @Param("code")String code, @Param("ids") List<String> ids);
 
     void updateSyncStatus(@Param("params")VirtualWarehouseAllocationDTO.SyncUpdateDto dto, @Param("ids")List<String> ids);
+    /**
+     * 查询分货信息
+     * @author will
+     * @date 2024/9/29 14:49
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @return List<AllocationDataDTO>
+     */
+    List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(@Param("skuIdList")List<String> skuIdList,@Param("warehouseIdList") List<String> warehouseIdList,@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList);
 }

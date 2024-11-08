@@ -17,7 +17,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.*;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
 

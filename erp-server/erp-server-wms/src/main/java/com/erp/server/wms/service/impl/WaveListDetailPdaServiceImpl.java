@@ -207,9 +207,9 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 for (WaveListDetailDTO.DeliveryInfoDTO delivery : deliveryCollect) {
                     WaveListDetailPdaDTO.BasketDTO basketDTO = new WaveListDetailPdaDTO.BasketDTO();
                     basketDTO.setNo(delivery.getBasketNo());
-                    WaveListDetailDTO.LocationInfoDTO locationInfoDTO = delivery.getLocationInfoList().stream().filter(item -> StringUtils.equals(item.getWarehouseLocation(), location)).findAny().get();
-                    basketDTO.setPickedQty(locationInfoDTO.getPickedQty());
-                    basketDTO.setShouldPickingQty(locationInfoDTO.getShouldPickQty());
+                    List<WaveListDetailDTO.LocationInfoDTO> collect = delivery.getLocationInfoList().stream().filter(item -> StringUtils.equals(item.getWarehouseLocation(), location)).collect(Collectors.toList());
+                    basketDTO.setPickedQty(collect.stream().mapToInt(WaveListDetailDTO.LocationInfoDTO::getPickedQty).sum());
+                    basketDTO.setShouldPickingQty(collect.stream().mapToInt(WaveListDetailDTO.LocationInfoDTO::getShouldPickQty).sum());
                     basketList.add(basketDTO);
                 }
                 card.setBasketList(basketList);

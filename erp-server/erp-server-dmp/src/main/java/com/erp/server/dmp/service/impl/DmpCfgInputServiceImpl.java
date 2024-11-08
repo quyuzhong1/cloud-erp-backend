@@ -1,8 +1,11 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,5 +99,23 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
     */
     private void handleData(DmpCfgInputEntity dmpCfgInputEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<DmpCfgInputDTO.ListDmpCfgInputDTO> listDmpCfgInput(String id) {
+        return baseMapper.listDmpCfgInput(id);
+    }
+
+    @Override
+    public List<String> listBySystemIdAndTaskType(String systemId, List<String> taskTypeList) {
+        return baseMapper.listBySystemIdAndTaskType(systemId, taskTypeList);
+    }
+
+    @Override
+    public List<DmpCfgInputDTO.ListDmpCfgInputDTO> allDmpCfgInput() {
+        List<DmpCfgInputEntity> list = lambdaQuery().select(DmpCfgInputEntity::getId, DmpCfgInputEntity::getName)
+                .list();
+        List<DmpCfgInputDTO.ListDmpCfgInputDTO> resultList = BeanMapperUtils.copyList(DmpCfgInputDTO.ListDmpCfgInputDTO.class, list);
+        return resultList;
     }
 }

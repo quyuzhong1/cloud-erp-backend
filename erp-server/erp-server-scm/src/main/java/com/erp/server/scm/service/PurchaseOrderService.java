@@ -112,7 +112,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param id
      * @return PurchaseOrderDTO.ExportPdfDTO
      */
-    PurchaseOrderDTO.ExportPdfDTO exportPurchaseContractPdf(String id);
+    PurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id);
     /**
      * @description: 导入
      * @author Will
@@ -465,4 +465,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PagingVO<BomExportExcelVO> exportPurchaseOrderContract(PagingDTO<String> dto);
 
     PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
+    /**
+     * 导出采购合同pdf
+     * @author will
+     * @date 2024/11/5 10:33
+     * @param id
+     * @param response
+     */
+    void exportPurchaseContractPdf(String id, HttpServletResponse response);
 }

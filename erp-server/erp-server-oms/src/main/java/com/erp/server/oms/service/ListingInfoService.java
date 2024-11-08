@@ -3,6 +3,8 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SkuMappingEntity;
@@ -68,16 +70,6 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      **/
     List<ListingInfoDTO.BaseDropDownDTO> listByTypeWithFieldName(ListingInfoDTO.BaseDropDownParamDTO dto);
 
-    /**
-     * 查询listing 信息
-     * @author yl
-     * @date 2023-12-08 10:04
-     * @param platformSkuNo
-     * @return 
-     */
-    ListingInfoEntity getByPlatformSkuNoAndSpu(String platformSkuNo, String platformSpuNo, String typeCode);
-
-    void updateMatchResult(String listingId, Boolean matchResult);
 
     PagingVO<ListingInfoDTO.PageDTO> paging(PagingDTO<ListingInfoDTO.PagingParamDTO> dto);
 
@@ -85,4 +77,9 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
 
     void saveBatchImport(List<ListingInfoEntity> addListingInfoEntityList, List<SkuMappingEntity> updateSkuMappingList, List<ListingInfoEntity> updateListingInfoList, List<SkuMappingEntity> addSkuMappingList,List<Pair<String, String>> addLogPairList, List<Pair<String, String>> updateLogPairList);
     void handleAliExpress(SkuMappingEntity lastestSkuMapping, SkuVO skuVO, ListingInfoEntity listingInfoEntity);
+
+    /**
+     * 检查和更新FnSku
+     */
+    List<ListingInfoWithSkuMappingDTO> checkAndUpdateFnsku(ListingInfoParamDTO dto);
 }

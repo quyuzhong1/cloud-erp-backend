@@ -234,14 +234,14 @@
         MAX(inv.id) AS inventoryId,
         MAX(pi.spu_no) AS spuNo,
         MAX(pi.category) AS category,
-        MAX(pd.id) AS skuId,
+        pd.id AS skuId,
         MAX(pd.sku_no) AS skuNo,
         MAX(pd.images_url) AS productImgUrl,
         MAX(pd."name") AS productName,
-        MAX(inv.warehouse_id) AS warehouseId,
+        inv.warehouse_id AS warehouseId,
         MAX(wh."name") AS warehouseName,
-        MAX(COALESCE(wl.code, '')) AS warehouseLocation,
-        MAX(COALESCE(wlt.code, '')) AS warehouseArea,
+        COALESCE(wl.code, '') AS warehouseLocation,
+        COALESCE(wlt.code, '') AS warehouseArea,
         MAX(COALESCE(wlt."name", '')) AS warehouseAreaName,
         SUM(CASE WHEN inv.dict_inventory_status = 'usable' THEN inv.qty ELSE 0 END) AS usableQty,
         SUM(CASE WHEN inv.dict_inventory_status = 'frozen' THEN inv.qty ELSE 0 END) AS frozenQty,
@@ -292,7 +292,7 @@
             AND (pd.name ILIKE concat('%', #{params.skuStr}::text ,'%')
             or  pd.sku_no ILIKE concat('%', #{params.skuStr}::text ,'%'))
         </if>
-        GROUP BY inv.id
+        GROUP BY warehouseId,skuId,warehouseArea,warehouseLocation
         <if test="params.isZeroDisabled != null and params.isZeroDisabled">
          HAVING SUM(CASE WHEN inv.dict_inventory_status = 'usable' THEN inv.qty ELSE 0 END) > 0 OR SUM(CASE WHEN inv.dict_inventory_status = 'frozen' THEN inv.qty ELSE 0 END) > 0
         </if>

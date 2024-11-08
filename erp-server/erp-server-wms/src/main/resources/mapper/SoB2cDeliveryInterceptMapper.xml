@@ -37,77 +37,15 @@
             sbdi.create_user_name,
             sbdi.handle_user_name,
             sbdi.create_time,
-            sbdi.handle_time
+            sbdi.handle_time,
+            sb.platform_code as platformOrderCode
         FROM so_b2c_delivery_intercept_detail sbdid
         LEFT JOIN so_b2c_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdid.is_deleted = FALSE
+        LEFT JOIN so_b2c sb ON sb.id = sbdi.so_id AND sb.is_deleted = FALSE
         WHERE sbdi.is_deleted = FALSE
-        <!--tab状态-->
-        <if test="params.tabFlag != null and params.tabFlag != ''">
-            AND sbdi.handle_status = #{params.tabFlag}
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
+            and ${params.sqlMap.default}
         </if>
-        <!--单号-->
-        <if test="params.code !=null and params.code!=''">
-            AND sbdi.code ILIKE concat('%',#{params.code}::text,'%')
-        </if>
-        <!--销售单号-->
-        <if test="params.soCode !=null and params.soCode!=''">
-            AND sbdi.so_code ILIKE concat('%',#{params.soCode}::text,'%')
-        </if>
-        <!--发货单号-->
-        <if test="params.soDeliveryCode !=null and params.soDeliveryCode!=''">
-            AND sbdi.so_delivery_code ILIKE concat('%',#{params.soDeliveryCode}::text,'%')
-        </if>
-        <!--销售出库单号-->
-        <if test="params.soOutstockCode !=null and params.soOutstockCode!=''">
-            AND sbdi.so_outstock_code ILIKE concat('%',#{params.soOutstockCode}::text,'%')
-        </if>
-        <!--sku编号-->
-        <if test="params.skuNoList != null and params.skuNoList.size > 0">
-            AND sbdid.sku_no in
-            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
-                #{skuNo}
-            </foreach>
-        </if>
-        <!--物流渠道-->
-        <if test="params.logisticsChannelIdList != null and params.logisticsChannelIdList.size > 0">
-            AND sbdi.logistics_channel_id in
-            <foreach collection="params.logisticsChannelIdList" item="logisticsChannelId" open="(" separator="," close=")">
-                #{logisticsChannelId}
-            </foreach>
-        </if>
-        <!--销售出库单号-->
-        <if test="params.transportNo !=null and params.transportNo!=''">
-            AND sbdi.transport_no ILIKE concat('%',#{params.transportNo}::text,'%')
-        </if>
-        <!--取消状态-->
-        <if test="params.cancelStatus !=null and params.cancelStatus!=''">
-            AND sbdi.cancel_status = #{params.cancelStatus}
-        </if>
-        <!--拦截状态-->
-        <if test="params.interceptStatus !=null and params.interceptStatus!=''">
-            AND sbdi.intercept_status = #{params.interceptStatus}
-        </if>
-        <!--处理状态-->
-        <if test="params.handleStatus !=null and params.handleStatus!=''">
-            AND sbdi.handle_status = #{params.handleStatus}
-        </if>
-        <!--处理结果-->
-        <if test="params.handleResult !=null and params.handleResult!=''">
-            AND sbdi.handle_result = #{params.handleResult}
-        </if>
-        <!--创建人-->
-        <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-            AND sbdi.create_user_id in
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <!--创建时间-->
-        <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            AND sbdi.create_time &gt;= #{params.createTimeList[0]}
-            AND sbdi.create_time &lt; (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' )
-        </if>
-        <!--权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -119,5 +57,34 @@
             </foreach>
         </if>
         sbdi.create_time desc
+    </select>
+    <select id="getInterceptInventoryDTOList"
+            resultType="com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO$InterceptInventoryDTO">
+        SELECT sbi.code as interceptCode,
+        sbd.code as deliveryCode,
+        (SELECT sb.code from so_b2c sb where sb.id = sbd.source_id and sb.is_deleted = false ) as soCode,
+        sbi.id,
+        pd.sku_id as skuId,
+        pd.sku_no as skuNo,
+        sbdi.id as interceptDetailId,
+        pd.id as pickDetailId,
+        pd.qty,
+        pl.warehouse_id as warehouseId,
+        (SELECT wh.name from warehouse wh where wh.id = pl.warehouse_id and wh.is_deleted = false ) as warehouseName,
+        pd.warehouse_location as warehouseLocation,
+        pd.warehouse_location as pickWarehouseLocation,
+        (SELECT wl.name from warehouse_location wl where wl.code =  pd.warehouse_location and wl.is_deleted = false limit 1 ) as warehouseLocationName,
+        (SELECT wl.name from warehouse_location wl where wl.code =  pd.warehouse_location and wl.is_deleted = false limit 1 ) as pickwarehouseLocationName
+        from picking_lists pl
+            inner join picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
+            inner join so_b2c_delivery sbd on sbd.id = pl.source_id and sbd.is_deleted = false
+            inner join so_b2c_delivery_detail sbdd on sbdd.id = pd.source_detail_id and sbdd.is_deleted = false
+            inner join so_b2c_delivery_intercept sbi on sbd.source_id = sbi.source_id and sbi.is_deleted = false
+            inner join so_b2c_delivery_intercept_detail sbdi on sbdi.main_id = sbi.id and sbdd.source_detail_id = sbdi.source_detail_id and sbdi.is_deleted = false
+        where pl.is_deleted = false
+          and sbi.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </select>
 </mapper>

@@ -27,24 +27,21 @@
     <!--查询已装箱数量-->
     <select id="listPackingQtyByMainId" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingQtyDTO">
         SELECT
-        wcs.main_id as id,
+        wc.packing_task_id as id,
         wcd.sku_id,
         wcd.sku_no,
-        SUM(wcd.pack_qty) AS packQty,
-        SUM(wcs.box_qty) AS boxQty
-        FROM wms_carton_spec wcs
-        LEFT JOIN wms_carton wc ON wc.spec_id = wcs.id and wcs.is_deleted = FALSE
+        wcd.fn_sku,
+        SUM(wcd.pack_qty) AS packQty
+        FROM wms_carton wc
         LEFT JOIN wms_carton_detail wcd ON wc.id = wcd.main_id AND wcd.is_deleted = FALSE
-        WHERE wcs.is_deleted = FALSE AND wcd.sku_id is not null
+        WHERE wc.is_deleted = FALSE AND wcd.sku_id is not null
         <if test="mainId != null and mainId != ''">
-            AND wcs.main_id = #{mainId}
+            AND wc.packing_task_id = #{mainId}
         </if>
-        <if test="boxSpecNo != null and boxSpecNo != ''">
-            AND wcs.box_spec_no = #{boxSpecNo}
-        </if>
-        GROUP BY wcs.main_id,
+        GROUP BY wc.packing_task_id,
         wcd.sku_id,
-        wcd.sku_no
+        wcd.sku_no,
+        wcd.fn_sku
     </select>
     <select id="listPackingQtyByMainIds" resultType="com.erp.model.wms.dto.WmsCartonSpecDTO$PackingQtyDTO">
         SELECT
@@ -75,6 +72,7 @@
             wcs.main_id as taskId,
             wcd.sku_id,
             wcd.sku_no,
+            wcd.fn_sku,
             SUM(wcd.pack_qty) AS packQty,
             SUM(wcd.gross_weight) AS grossWeight,
             SUM(wcs.box_qty) AS boxQty,
@@ -91,6 +89,7 @@
             wcs.main_id,
             wcd.sku_id,
             wcd.sku_no,
+            wcd.fn_sku,
             wcs.box_spec_no,
             wc.box_no
     </select>

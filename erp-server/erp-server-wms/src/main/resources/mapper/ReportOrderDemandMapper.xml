@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.ReportOrderDemandMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.ReportOrderDemandEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="virtual_warehouse_name" property="virtualWarehouseName" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="total_qty" property="totalQty" />
+       <result column="so_qty" property="soQty" />
+       <result column="b2c_so_qty" property="b2cSoQty" />
+       <result column="first_mile_qty" property="firstMileQty" />
+       <result column="virtual_usable_qty" property="virtualUsableQty" />
+       <result column="is_virtual_scarce" property="isVirtualScarce" />
+       <result column="virtual_scarce_qty" property="virtualScarceQty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        rod.id,
+        rod.create_time,
+        rod.update_time,
+        rod.create_user_name,
+        rod.create_user_id,
+        rod.update_user_name,
+        rod.update_user_id,
+        rod.version,
+        rod.is_deleted,
+        rod.warehouse_id as warehouseId,
+        rod.virtual_warehouse_id  as virtualWarehouseId,
+        rod.virtual_warehouse_name  as virtualWarehouseName,
+        rod.warehouse_name  as warehouseName,
+        rod.sku_id as skuId,
+        rod.sku_no as skuNo,
+        rod.product_name as productName,
+        rod.total_qty as totalQty,
+        rod.so_qty  as soQty,
+        rod.b2c_so_qty  as b2cSoQty,
+        rod.first_mile_qty  as firstMileQty,
+        rod.virtual_usable_qty as virtualUsableQty,
+        rod.is_virtual_scarce as isVirtualScarce,
+        rod.virtual_scarce_qty as virtualScarceQty
+    </sql>
+
+    <!-- 删除 -->
+    <delete id="deleteAll">
+        delete from report_order_demand
+    </delete>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.ReportOrderDemandDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from report_order_demand rod
+        <where>
+            ${params.sqlMap.default}
+            and rod.is_deleted = false
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        rod.id desc
+    </select>
+
+
+</mapper>

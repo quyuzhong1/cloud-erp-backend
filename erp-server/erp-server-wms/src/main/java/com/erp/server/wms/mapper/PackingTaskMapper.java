@@ -70,7 +70,7 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      */
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("params") PackingTaskDTO.PackedDetailDTO params);
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
-    Page<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("params") Page<WmsCartonDetailDTO.ListPackingDetailDTO> page, @Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
+    Page<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("query") Page<PackingTaskDTO.ExportDTO> query,@Param("params") PackingTaskDTO.ExportDTO page, @Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
 
     /**
      * 从历史装箱数据补充装箱任务和装箱详情

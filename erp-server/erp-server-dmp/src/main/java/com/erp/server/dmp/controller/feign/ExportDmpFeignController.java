@@ -3,13 +3,12 @@ package com.erp.server.dmp.controller.feign;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
-import com.erp.server.dmp.service.DmpPullTaskHistoryService;
-import com.erp.server.dmp.service.DmpPullTaskService;
-import com.erp.server.dmp.service.DmpPushTaskHistoryService;
-import com.erp.server.dmp.service.DmpPushTaskService;
+import com.erp.server.dmp.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +28,8 @@ public class ExportDmpFeignController {
     private DmpPullTaskService dmpPullTaskService;
     @Resource
     private DmpPullTaskHistoryService dmpPullTaskHistoryService;
+    @Resource
+    private DmpOutputTaskRecordService dmpOutputTaskRecordService;
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -52,5 +53,12 @@ public class ExportDmpFeignController {
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
     public PagingVO<DmpPushTaskDTO.ListDTO> exportPushTaskHistory(@RequestBody PagingDTO<DmpPushTaskDTO.ParamDTO> dto) {
         return dmpPushTaskHistoryService.exportPushTaskHistory(dto);
+    }
+
+
+    @PostMapping("/exportNewDmpPushTask")
+    @WebAdvanceQuery(handler = DmpOutputTaskRecordQueryHandler.class)
+    public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto) {
+        return dmpOutputTaskRecordService.exportNewDmpPushTask(dto);
     }
 }

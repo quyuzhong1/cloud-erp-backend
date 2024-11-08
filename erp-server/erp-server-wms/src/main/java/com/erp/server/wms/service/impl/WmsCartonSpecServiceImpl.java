@@ -1,12 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -60,6 +58,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     private PackingTaskDetailService packingTaskDetailService;
     @Resource
     private CfgRuleOutService cfgRuleOutService;
+    @Resource
+    private FbaShipmentPackingService fbaShipmentPackingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -71,6 +71,9 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (StrUtil.isNotBlank(addDTO.getSpecId())){
             WmsCartonSpecEntity old = this.getById(addDTO.getSpecId());
             wmsCartonSpecEntity.setId(Objects.isNull(old)? null: old.getId());
+        }else if (StrUtil.isNotBlank(addDTO.getCartonId())){
+            WmsCartonEntity wmsCarton = wmsCartonService.getById(addDTO.getCartonId());
+            wmsCartonSpecEntity.setId(Objects.nonNull(wmsCarton) ? wmsCarton.getSpecId() : null);
         }
         // 数据处理
         handleData(wmsCartonSpecEntity, addDTO.getTaskId());
@@ -98,8 +101,8 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     }
 
     @Override
-    public List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId, Integer boxSpecNo) {
-        return baseMapper.listPackingQtyByMainId(mainId, boxSpecNo);
+    public List<WmsCartonSpecDTO.PackingQtyDTO> listPackingQtyByMainId(String mainId) {
+        return baseMapper.listPackingQtyByMainId(mainId);
     }
 
     @Override
@@ -124,6 +127,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         view.setTaskId(packingTaskEntity.getId());
         //查询装箱详情
         view.setSourceId(packingTaskEntity.getSourceId());
+        view.setSourceType(packingTaskEntity.getSourceType());
         view.setSourceCode(packingTaskEntity.getSourceCode());
         String taskEntityId = packingTaskEntity.getId();
         //查询箱规信息
@@ -140,13 +144,14 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         //查询箱规包含的产品信息
         for (WmsCartonSpecDTO.ViewDTO viewDTO : wmsCartonSpecList) {
             WmsCartonEntity cartonEntity = cartonEntityList.stream().filter(e -> e.getSpecId().equals(viewDTO.getId())).findFirst().orElse(new WmsCartonEntity());
-            List<WmsCartonSpecDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(viewDTO.getBoxSpecNo())).collect(Collectors.toList());
-            List<WmsCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(packDateDTOList, WmsCartonDetailDTO.ViewDTO.class);
+            List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonEntity.getId()));
+//            List<WmsCartonSpecDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(viewDTO.getBoxSpecNo())).collect(Collectors.toList());
+            List<WmsCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(detailEntityList, WmsCartonDetailDTO.ViewDTO.class);
             for (WmsCartonDetailDTO.ViewDTO dto : detailList) {
-                int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+                int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId()) && dto.getFnSku().equals(req.getFnSku())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 dto.setDeliveryQty(deliveryQty);
                 //待装箱数量=发货数量-所有已装箱数量
-                int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(dto.getSkuId())).mapToInt(WmsCartonSpecDTO.PackDateDTO::getPackQty).sum();
+                int packQtySum = packDateDTOS.stream().filter(req -> req.getSkuId().equals(dto.getSkuId()) && dto.getFnSku().equals(req.getFnSku())).mapToInt(WmsCartonSpecDTO.PackDateDTO::getPackQty).sum();
                 dto.setWaitPackQty(deliveryQty - packQtySum);
 
                 //匹配产品信息，设置中文名
@@ -161,6 +166,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
             viewDTO.setBoxNo(cartonEntity.getBoxNo() != 0 ? cartonEntity.getBoxNo() : null);
             viewDTO.setPackingUserId(cartonEntity.getPackingUserId());
             viewDTO.setPackingUserName(cartonEntity.getPackingUserName());
+            viewDTO.setCartonId(cartonEntity.getId());
             //预警提示：超重值：10KG，本次装箱预计已超重1KG！
             WmsCartonSpecDTO.WeightRuleDTO warnMsg = getWarnMsg(packingTaskEntity.getSourceType(), grossWeight);
             viewDTO.setWarnMsg(warnMsg.getWarnMsg());
@@ -313,6 +319,135 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 .set(WmsCartonSpecEntity::getBoxWidth, BigDecimal.ZERO)
                 .set(WmsCartonSpecEntity::getPackageWeight, BigDecimal.ZERO)
                 .update();
+    }
+
+    /**
+     * 删除web端移除数据 并校验fba数据来源
+     * @param dto
+     * @param isAddCarton 增量标识
+     */
+    @Override
+    public void checkAndRemoveCartonInfo(WmsCartonSpecDTO.WmsCartonAdd dto,  Boolean isAddCarton) {
+        String taskId = dto.getTaskId();
+        if (StrUtil.isBlank(taskId)){
+            return;
+        }
+        //已绑定货件不能操作
+        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByPackingTaskId(taskId);
+        //已装箱信息
+        List<WmsCartonEntity> oldCartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(taskId));
+        if (CollectionUtils.isEmpty(oldCartonEntityList)){
+            return;
+        }
+        //已装箱明细
+        List<WmsCartonDetailEntity> oldDetailEntityList = wmsCartonDetailService.listByTaskIds(Collections.singletonList(taskId));
+
+        List<String> newCartonIds = dto.getWmsCartonList().stream().map(WmsCartonSpecDTO.AddDTO::getCartonId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        //需要删除的装箱
+        List<String> needDeleteCartonIds = oldCartonEntityList.stream().map(WmsCartonEntity::getId).filter(id -> CollectionUtils.isNotEmpty(newCartonIds) && !newCartonIds.contains(id)).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(fbaShipmentPackingEntityList)){
+            //存在关联货号，新接口数据为空时
+            if (CollectionUtils.isEmpty(newCartonIds)){
+                throw new ServiceException("所有已下推的箱号不允许删除");
+            }
+            //存在已关联箱号的货件
+            List<String> cartonIds = fbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getCartonId).distinct().collect(Collectors.toList());
+            List<String> deleteFbaCartonIds = cartonIds.stream().filter(needDeleteCartonIds::contains).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(deleteFbaCartonIds)){
+                List<String> boxNoList = oldCartonEntityList.stream().filter(e -> deleteFbaCartonIds.contains(e.getId())).map(e -> String.valueOf(e.getBoxNo())).distinct().collect(Collectors.toList());
+                throw new ServiceException(StrUtil.format("已下推的箱号【{}】不允许再修改", String.join(",",boxNoList)));
+            }
+            List<WmsCartonEntity> cartonEntityList = oldCartonEntityList.stream().filter(e -> cartonIds.contains(e.getId())).collect(Collectors.toList());
+            if (cartonIds.size() != cartonEntityList.size()){
+                throw new ServiceException("已关联货件与存在的装箱数据不一致");
+            }
+            //获取最大装箱箱号信息
+            WmsCartonEntity maxWmsCartonEntity = cartonEntityList.stream().max(Comparator.comparing(WmsCartonEntity::getBoxNo)).get();
+            //最大装箱信息之前的所有装箱信息 不能删除
+            List<WmsCartonEntity> lastCartionList = oldCartonEntityList.stream().filter(e -> e.getBoxNo() <= maxWmsCartonEntity.getBoxNo()).collect(Collectors.toList());
+            //检查是否存在已删除的箱子
+            List<WmsCartonEntity> notExistList = lastCartionList.stream().filter(e -> !newCartonIds.contains(e.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(notExistList)){
+                List<String> boxNoList = notExistList.stream().filter(e -> Objects.nonNull(e.getBoxNo())).map(e -> String.valueOf(e.getBoxNo())).distinct().collect(Collectors.toList());
+                throw new ServiceException(StrUtil.format("已下推的箱号【{}】前箱号【{}】不允许再修改", maxWmsCartonEntity.getBoxNo(),String.join(",",boxNoList)));
+            }
+            List<WmsCartonSpecEntity> cartonSpecEntityList = this.listByMainIds(Collections.singletonList(taskId));
+            //比较明细
+            for (String cartonId : cartonIds) {
+                WmsCartonSpecDTO.AddDTO addDTO = dto.getWmsCartonList().stream().filter(e -> cartonId.equals(e.getCartonId())).findFirst().orElse(null);
+                if (Objects.isNull(addDTO)){
+                    throw new ServiceException("已下推的箱号不允许再修改");
+                }
+                WmsCartonEntity wmsCartonEntity = oldCartonEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(cartonId)).findFirst().orElse(null);
+                if (Objects.isNull(wmsCartonEntity)){
+                    throw new ServiceException("已下推的装箱不允许再删除");
+                }
+                WmsCartonSpecEntity specEntity = cartonSpecEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(wmsCartonEntity.getSpecId()) && e.getId().equals(wmsCartonEntity.getSpecId())).findFirst().orElse(null);
+                if (Objects.isNull(specEntity)){
+                    throw new ServiceException("已下推的箱规不允许再删除");
+                }
+                List<WmsCartonDetailEntity> cartonDetailEntityList = oldDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getMainId().equals(cartonId)).collect(Collectors.toList());
+                //对比数据
+//                compareSpec(specEntity, addDTO);
+                compareCarton(wmsCartonEntity,addDTO);
+                compareCartonDetail(cartonDetailEntityList, addDTO.getDetailList());
+            }
+        }
+        if (Objects.nonNull(isAddCarton) && isAddCarton){
+            //页面新增编辑
+            List<String> specIds = oldCartonEntityList.stream().filter(e -> needDeleteCartonIds.contains(e.getId())).map(WmsCartonEntity::getSpecId).distinct().collect(Collectors.toList());
+            this.removeByIds(specIds);
+            wmsCartonService.deleteByCartonIds(needDeleteCartonIds);
+            wmsCartonDetailService.deleteByCartonIds(needDeleteCartonIds);
+        }
+    }
+
+    private void compareCartonDetail(List<WmsCartonDetailEntity> cartonDetailEntityList, List<WmsCartonDetailDTO.AddDTO> detailList) {
+        if (cartonDetailEntityList.size() != detailList.size()){
+            throw new ServiceException("已下推的装箱明细不允许再修改");
+        }
+        for (WmsCartonDetailEntity wmsCartonDetailEntity : cartonDetailEntityList) {
+            WmsCartonDetailDTO.AddDTO addDTO = detailList.stream().filter(e -> Objects.equals(wmsCartonDetailEntity.getId(), e.getId())).findFirst().orElse(null);
+            if (Objects.isNull(addDTO)){
+                throw new ServiceException(StrUtil.format("已下推的装箱明细SKU【{}】FNSKU【{}】不允许再修改", wmsCartonDetailEntity.getSkuNo(),wmsCartonDetailEntity.getFnSku()));
+            }
+            int hash1 = getCartonDetailHash(wmsCartonDetailEntity.getSkuId(),wmsCartonDetailEntity.getSkuNo(),wmsCartonDetailEntity.getFnSku(),wmsCartonDetailEntity.getPackQty());
+            int hash2 = getCartonDetailHash(addDTO.getSkuId(),addDTO.getSkuNo(),addDTO.getFnSku(),addDTO.getPackQty());
+            if (hash1 != hash2){
+                throw new ServiceException(StrUtil.format("已下推的装箱明细不允许再修改，修改前【{}】修改后【{}】",
+                        wmsCartonDetailEntity.getSkuNo() + "|" + wmsCartonDetailEntity.getFnSku() + "|" + wmsCartonDetailEntity.getPackQty()
+                        ,addDTO.getSkuNo() + "|" + addDTO.getFnSku() + "|" + addDTO.getPackQty()));
+            }
+        }
+
+    }
+
+    private int getCartonDetailHash(String skuId, String skuNo, String fnSku, Integer packQty) {
+        return Objects.hash(skuId,skuNo,fnSku,packQty);
+    }
+
+    private void compareCarton(WmsCartonEntity wmsCartonEntity, WmsCartonSpecDTO.AddDTO addDTO) {
+        if (!Objects.equals(wmsCartonEntity.getBoxNo(), addDTO.getBoxNo())){
+            throw new ServiceException(StrUtil.format("已下推的箱号不允许再修改,箱号修改前【{}】修改后【{}】",wmsCartonEntity.getBoxNo(),addDTO.getBoxNo()));
+        }
+    }
+
+    private void compareSpec(WmsCartonSpecEntity specEntity, WmsCartonSpecDTO.AddDTO addDTO) {
+        int hash1 = getSpecHash(specEntity.getBoxLength(), specEntity.getBoxWidth(), specEntity.getBoxHeight(),specEntity.getPackageWeight());
+        int hash2 = getSpecHash(addDTO.getBoxLength(), addDTO.getBoxWidth(), addDTO.getBoxHeight(),addDTO.getPackageWeight());
+        if (hash1 != hash2){
+            throw new ServiceException(StrUtil.format("已下推的箱号不允许再修改，箱规修改前【{}】修改后【{}】",
+                    String.valueOf(specEntity.getBoxLength()) + "-" + specEntity.getBoxWidth() + "-" + specEntity.getBoxHeight() + "-" + specEntity.getPackageWeight()
+                    ,String.valueOf(addDTO.getBoxLength()) + "-" + addDTO.getBoxWidth() + "-" + addDTO.getBoxHeight() + "-" + addDTO.getPackageWeight()));
+        }
+    }
+
+    private int getSpecHash(BigDecimal boxLength, BigDecimal boxWidth, BigDecimal boxHeight, BigDecimal packageWeight) {
+        boxLength = Objects.nonNull(boxLength) ? boxLength : BigDecimal.ZERO;
+        boxWidth = Objects.nonNull(boxWidth) ? boxWidth : BigDecimal.ZERO;
+        boxHeight = Objects.nonNull(boxHeight) ? boxHeight : BigDecimal.ZERO;
+        packageWeight = Objects.nonNull(packageWeight) ? packageWeight : BigDecimal.ZERO;
+        return Objects.hash(boxLength.stripTrailingZeros().toPlainString(),boxWidth.stripTrailingZeros().toPlainString(),boxHeight.stripTrailingZeros().toPlainString(),packageWeight.stripTrailingZeros().toPlainString());
     }
 
     /**

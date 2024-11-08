@@ -376,6 +376,25 @@ public class SoOutstockDTO implements Serializable {
          * 装箱状态中文
          */
         private String packingStatusName;
+
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+        /**
+         * 销售平台名称
+         */
+        private String dictPlatformName;
     }
 
     /**·
@@ -496,6 +515,7 @@ public class SoOutstockDTO implements Serializable {
          * 出库日期
          */
         private LocalDate billDate;
+
         /**
          * 详情
          */
@@ -907,6 +927,16 @@ public class SoOutstockDTO implements Serializable {
          */
         private String customerOrderNo;
 
+        /**
+         * 物流渠道
+         */
+        private String logisticsChannelId;
+
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
+
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
     }
@@ -1018,8 +1048,6 @@ public class SoOutstockDTO implements Serializable {
         @NotNull(message = "出库日期不能为空")
         private LocalDate billDate;
 
-
-
         /**
          * 客户订单号
          */
@@ -1031,6 +1059,11 @@ public class SoOutstockDTO implements Serializable {
         @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.UpdateDTO> detailList;
+
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
 
     }
 
@@ -1436,6 +1469,7 @@ public class SoOutstockDTO implements Serializable {
          * 销售订单code
          */
         private String soCode;
+        private String dictPlatform;
 
         /**
          * 订单类型
@@ -1461,6 +1495,10 @@ public class SoOutstockDTO implements Serializable {
          * 物流渠道
          */
         private String logisticsChannelId;
+        /**
+         * 物流渠道名称
+         */
+        private String logisticsChannelName;
 
 
         private LocalDate billDate;

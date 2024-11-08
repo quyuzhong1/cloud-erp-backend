@@ -6,16 +6,17 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.TrackDataConverter;
+import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
 import io.seata.common.util.CollectionUtils;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 下载FBA货件消费服务
@@ -51,11 +53,13 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
         try {
-            dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+            dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
             throw new ServiceException("erp-dmp更新dmp_pull_task异常："+ e.getMessage());
         }
@@ -82,25 +86,13 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
     public ApiResult<?> handle(Object ext) {
         PlatformTrackDTO dto = JSONUtil.toBean(ext.toString(), PlatformTrackDTO.class);
         //根据trackNo拉取轨迹数据
-        if (Objects.isNull(dto) || CollectionUtils.isEmpty(dto.getDetails())) return ApiResult.success();
-        List<LogisticsTrackEntity> logisticsTrackEntities = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
-        //先物理删除  再新增
-        if (CollectionUtils.isNotEmpty(logisticsTrackEntities)) {
-            //删除
-            logisticsTrackService.deleteByTrackNo(dto.getTrackNo());
-            //新增
-            logisticsTrackService.saveBatch(logisticsTrackEntities);
-            //TODO 根据记录最新状态修改订单状态
-            //Student latest = Collections.max(studentList,
-            //                                 Comparator.comparing(s -> s.getDate()));
-            LogisticsTrackEntity max = Collections.max(logisticsTrackEntities, Comparator.comparing(LogisticsTrackEntity::getTrackTime));
-            logisticsTrackService.checkTrackStatus(max);
+        if (Objects.isNull(dto) || StrUtil.isBlank(dto.getTrackNo()) ||CollectionUtils.isEmpty(dto.getDetails())) {
+            return ApiResult.success();
         }
-        System.out.println(dto);
+        //处理物流轨迹数据
+        logisticsTrackService.processTrackData(dto);
         return ApiResult.success();
     }
-
-
     /**
      * 根据平台组装表名
      * @param platform

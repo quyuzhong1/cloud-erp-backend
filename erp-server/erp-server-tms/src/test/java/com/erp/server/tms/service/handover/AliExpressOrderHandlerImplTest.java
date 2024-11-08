@@ -56,13 +56,13 @@ public class AliExpressOrderHandlerImplTest {
 
     public AliExpressOrderHandlerImplTest(){
         //test
-        String CLIENT_CODE = "502978";
-        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
-        String token = "50000700312cJ4nYbrzErAqH159364aboXoPdAcJwjMuEzrGXEAudlrVcjGsjo4bIr30";
+//        String CLIENT_CODE = "502978";
+//        String CHECK_WORD = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
+//        String token = "50000700312cJ4nYbrzErAqH159364aboXoPdAcJwjMuEzrGXEAudlrVcjGsjo4bIr30";
         //prod
-//        String CLIENT_CODE = "503630";
-//        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
-//        String token = "50000700423zHPZZqMly9iku4MQdb7h0hqR18ff9902ExugZffT7nzxEiFwFyWHdZKNC";
+        String CLIENT_CODE = "503630";
+        String CHECK_WORD = "PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ";
+        String token = "50000500839eewdp7jko0vtD80GwgipeyTiagAS9MvvfgdtLzm910eedab8AhgxYjWqN";
         authMap.put("clientId",CLIENT_CODE);
         authMap.put("clientSecret",CHECK_WORD);
         authMap.put("token",token);
@@ -202,7 +202,7 @@ public class AliExpressOrderHandlerImplTest {
     @Test
     public void queryOrder() throws com.erp.tms.aliexpress.util.ApiException {
         QueryOrderRequest queryOrderRequest = QueryOrderRequest.builder()
-                .trade_order_id("1106609249515926")
+                .trade_order_id("3040480645907417")
                 .current_page(1)
                 .page_size(20)
                 .build();

@@ -187,6 +187,8 @@ public class SoB2cDeliveryDTO implements Serializable {
 
         private String sourceSkuId;
 
+        private String sourceSkuNo;
+
         private String warehouseId;
 
         @Override
@@ -341,6 +343,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 主表id
          */
         private String id;
+        /**
+         * 发货拦截单id
+         */
+        private String interceptId;
         /**
          * 明细id
          */
@@ -535,6 +541,16 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         @Dict(enumClass = AbnormalCauseEnum.class)
         private String abnormalCause;
+
+        /**
+         * 发货标记
+         */
+        private String shipmentMark;
+
+        /**
+         * 标签
+         */
+        private String tag;
 
     }
 
@@ -1005,4 +1021,24 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private Integer returnQty;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HandleErrorDTO {
+        /**
+         * ids
+         */
+        @NotEmpty(message = "主键ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 是否添加库存
+         */
+        @NotNull(message = "是否添加库存")
+        private Boolean isAddQty;
+    }
+
+
 }

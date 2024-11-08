@@ -27,5 +27,39 @@
         <result column="refund_time" property="refundTime" />
         <result column="refund_cny_amount" property="refundCnyAmount" />
     </resultMap>
+    <select id="paging" resultType="com.erp.model.oms.dto.RefundOrderDTO$PagingViewDTO">
+        SELECT
+            ro.id,
+            rod.id as detailId,
+            ro.code,
+            ro.dict_platform as dictPlatform,
+            ro.shop_id as shopId,
+            ro.shop_name as shopName,
+            ro.platform_order_no as platformOrderNo,
+            ro.platform_refund_no as platformRefundNo,
+            ro.so_code as soCode,
+            ro.so_id as soId,
+            ro.status,
+            ro.refund_amount as refundAmount,
+            concat(ro.refund_amount , ro.currency) as completeRefundAmount,
+            ro.currency,
+            ro.reason,
+            ro.refund_time as refundTime,
+            ro.platform_create_time as platformCreateTime,
+            rod.platform_sku_no as platformSkuNo,
+            rod.sku_id as skuId,
+            rod.sku_no as skuNo,
+            rod.sale_qty as saleQty,
+            rod.refund_qty as refundQty
+        FROM refund_order ro
+        LEFT join refund_order_detail rod on ro.id = rod.main_id and rod.is_deleted = false
+        WHERE  ${params.sqlMap.default}
+          and ro.is_deleted =FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by ro.create_time desc
+    </select>
 
 </mapper>

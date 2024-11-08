@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -90,6 +92,11 @@ public class DmpSoRefundDetailEntity extends BaseEntity<DmpSoRefundDetailEntity>
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
+    /**
+     * 当前明细总税费(币种跟主单一致)
+     */
+    @TableField("tax_amount")
+    private BigDecimal taxAmount;
 
 
     public static final String MAIN_ID = "main_id";

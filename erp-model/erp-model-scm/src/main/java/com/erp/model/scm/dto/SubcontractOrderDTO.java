@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
@@ -577,12 +578,34 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private String bomVersion;
 
-
+        /**
+         * 仓库库位编码
+         */
+        private String warehouseLocation;
+        /**
+         * 仓库库位名称
+         */
+        private String warehouseLocationName;
     }
 
     @Data
     @NoArgsConstructor
     public static class GeneratePoDTO {
+        /**
+         * 来源id
+         */
+//        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+        /**
+         * skuId
+         */
+//        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 是否是组合SKU
+         */
+//        @NotNull(message = "sku是否组合标识不能为空")
+        private Boolean isConstitute;
         /**
          * 来源id
          */
@@ -623,6 +646,15 @@ public class SubcontractOrderDTO implements Serializable {
         @Min(value = 1, message = "采购数量最小值为1")
         @Max(value = 99999999, message = "采购数量最大值为99999999")
         private Integer qty;
+        /**
+         * 含税单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 价税合计
+         */
+        private BigDecimal amount;
 
         /**
          * 是否赠品
@@ -819,4 +851,29 @@ public class SubcontractOrderDTO implements Serializable {
         private List<ViewAddDetailDTO> childList;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PurchasePriceDTO {
+        /**
+         * 批量表单数据
+         */
+        private SubcontractOrderDTO.UpdateDTO dto;
+        /**
+         * 批量校验结果
+         */
+        private List<BatchResultDTO> batchResultDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SubcontractPurchasePriceDTO {
+        /**
+         * 批量表单数据
+         */
+        private List<SubcontractOrderDTO.GeneratePoDTO> list;
+        /**
+         * 批量校验结果
+         */
+        private List<BatchResultDTO> batchResultDTOList;
+    }
 }

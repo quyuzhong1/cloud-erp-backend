@@ -46,6 +46,7 @@
         select
             o.source_type,
             o.receipt_status,
+            d.id as detailId,
             d.main_id,
             d.source_detail_id,
             d.sku_id,

@@ -209,4 +209,28 @@
         </if>
         GROUP BY tt."type"
     </select>
+
+    <!-- 查询所有虚拟仓B2B销售订单数据 -->
+    <select id="listAllVirtualSoDetail" resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO">
+        select
+            si.warehouse_id as warehouseId,
+            si.virtual_warehouse_id as virtualWarehouseId,
+            sd.sku_id as skuId,
+            sd.qty as orderQty,
+            si.approve_status as approveStatus,
+            sd.delivery_status as status,
+            si.invalid_status as invalidStatus,
+            si.id as sourceId,
+            si.code as sourceCode,
+            'soInfo' as sourceType,
+            sd.id as sourceDetailId,
+            si.create_time as date,
+            sd.frozen_qty as frozenQty
+        from so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        <where>
+            si.is_deleted = false and si.virtual_warehouse_id != ''
+        </where>
+        order by si.id desc
+    </select>
 </mapper>

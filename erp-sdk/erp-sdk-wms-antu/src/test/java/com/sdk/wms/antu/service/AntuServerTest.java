@@ -95,7 +95,7 @@ public class AntuServerTest {
     @Test
     public void getShippingMethodTest() {
         AntuResponse<List<AntuLogisticsProductsResp>> response = antuService.getShippingMethod(null);
-        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response));
     }
 
     @Test
@@ -140,18 +140,15 @@ public class AntuServerTest {
     @Test
     public void createInboundBillTest() {
         AntuCreateInboundReq antuGetReceiptReq = AntuCreateInboundReq.builder()
-                .referenceNo("wjtest20231205")
+                .referenceNo("wjtest20231206")
                 .incomeType(0)
-                .receivingType("D")
+                .transitWarehouseCode("SZW")
+                .receivingType("T")
                 .smCode("PAC")
                 .contacter("张三")
                 .contactPhone("123456789")
                 .warehouseCode("BR01")
                 .customerType("Y")
-                .regionIdLevel0(6)
-                .regionIdLevel1(79)
-                .regionIdLevel2(733)
-                .street("广东省东莞市塘厦镇环市南路24号塘联工业~汇胜科创园2栋楼3号")
                 .verify(0)
                 .items(Arrays.asList(AntuCreateInboundReq.Item.builder()
                         .productSku("3PL-1C-TEST")
@@ -182,5 +179,14 @@ public class AntuServerTest {
     public void cancelInboundBillTest() {
         AntuResponse<String> response = antuService.cancelInboundBill("RVA001-240826-0003");
         System.out.println(response);
+    }
+    @Test
+    public void getReturnInstockTest() {
+        AntuGetReturnReq antuGetReturnReq = AntuGetReturnReq.builder()
+                .page(1)
+                .pageSize(100)
+                .build();
+        AntuResponse<List<AntuReturnResp>> response = antuService.getReturnInstock(antuGetReturnReq);
+        System.out.println(JSONUtil.toJsonStr(response));
     }
 }

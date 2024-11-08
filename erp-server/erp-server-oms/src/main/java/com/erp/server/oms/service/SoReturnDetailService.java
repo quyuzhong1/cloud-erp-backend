@@ -102,4 +102,19 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
     List<String> listBySkuNo(SoReturnDTO.PdaSoReturnParam dto);
 
     List<SoReturnDetailEntity> listDetailByReturnType(List<String> returnType);
+    /**
+     * 已客户为维度新增
+     * @Author jack
+     * @Date 2024-11-06
+     * @param dto, id
+     **/
+    Boolean addByCutomer(SoReturnDTO.Add dto, String id);
+
+    /**
+     * 已客户为维度更新
+     * @Author jack
+     * @Date 2024-11-06
+     * @param dto, id
+     **/
+    Boolean updateByCutomer(SoReturnDTO.Update dto);
 }

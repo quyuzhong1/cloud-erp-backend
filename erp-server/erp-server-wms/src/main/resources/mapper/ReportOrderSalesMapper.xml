@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.ReportOrderSalesMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.ReportOrderSalesEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="virtual_warehouse_name" property="virtualWarehouseName" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="today_sales_qty" property="todaySalesQty" />
+       <result column="yesterday_sales_qty" property="yesterdaySalesQty" />
+       <result column="three_days_sales_qty" property="threeDaysSalesQty" />
+       <result column="seven_days_sales_qty" property="sevenDaysSalesQty" />
+       <result column="fourteen_days_sales_qty" property="fourteenDaysSalesQty" />
+       <result column="thirty_days_sales_qty" property="thirtyDaysSalesQty" />
+       <result column="is_virtual_scarce" property="isVirtualScarce" />
+       <result column="is_warn" property="isWarn" />
+       <result column="virtual_scarce_qty" property="virtualScarceQty" />
+       <result column="total_qty" property="totalQty" />
+       <result column="virtual_usable_qty" property="virtualUsableQty" />
+       <result column="virtual_frozen_qty" property="virtualFrozenQty" />
+       <result column="virtual_total_qty" property="virtualTotalQty" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="distribution_qty" property="distributionQty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ros.id,
+        ros.create_time,
+        ros.update_time as updateTime,
+        ros.create_user_name,
+        ros.create_user_id,
+        ros.update_user_name,
+        ros.update_user_id,
+        ros.version,
+        ros.is_deleted,
+        ros.warehouse_id as warehouseId,
+        ros.virtual_warehouse_id as virtualWarehouseId,
+        ros.sku_id as skuId,
+        ros.sku_no as skuNo,
+        ros.product_name as productName,
+        ros.virtual_warehouse_name as virtualWarehouseName,
+        ros.warehouse_name as warehouseName,
+        ros.today_sales_qty as todaySalesQty,
+        ros.yesterday_sales_qty as yesterdaySalesQty,
+        ros.three_days_sales_qty as threeDaysSalesQty,
+        ros.seven_days_sales_qty as sevenDaysSalesQty,
+        ros.fourteen_days_sales_qty as fourteenDaysSalesQty,
+        ros.thirty_days_sales_qty as thirtyDaysSalesQty,
+        ros.is_virtual_scarce as isVirtualScarce,
+        ros.is_warn as isWarn,
+        ros.virtual_scarce_qty as virtualScarceQty,
+        ros.total_qty as totalQty,
+        ros.virtual_usable_qty as virtualUsableQty,
+        ros.virtual_frozen_qty as virtualFrozenQty,
+        ros.virtual_total_qty as virtualTotalQty,
+        ros.delivery_qty as deliveryQty,
+        ros.distribution_qty as distributionQty
+    </sql>
+
+    <!-- 删除数据 -->
+    <delete id="deleteAll">
+        delete from report_order_sales
+    </delete>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.ReportOrderSalesDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from report_order_sales ros
+        <where>
+            ${params.sqlMap.default}
+            and ros.is_deleted = false
+            <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory">
+                <if test="otherParamDTO.maxStatDurationList != null and otherParamDTO.maxStatDurationList.size > 0">
+                    and
+                    <foreach collection="otherParamDTO.maxStatDurationList" item="maxStatDuration" separator="and" open="(" close=")">
+                        <if test="maxStatDuration != null and maxStatDuration == 'today'">
+                            ros.today_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'yesterday'">
+                            ros.yesterday_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'threeDays'">
+                            ros.three_days_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'sevenDays'">
+                            ros.seven_days_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'fourteenDays'">
+                            ros.fourteen_days_sales_qty != 0
+                        </if>
+                        <if test="maxStatDuration != null and maxStatDuration == 'thirtyDays'">
+                            ros.thirty_days_sales_qty != 0
+                        </if>
+                    </foreach>
+                </if>
+            </if>
+            <if test="params.isWarn != null and params.isWarn">
+                <if test="otherParamDTO.compareType != null and otherParamDTO.compareType != ''">
+                    <if test="otherParamDTO.daysTypeList != null and otherParamDTO.daysTypeList.size > 0">
+                    and
+                        <foreach collection="otherParamDTO.daysTypeList" item="daysType" open="(" close=")" separator="or">
+                            <if test="daysType == 'today'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.today_sales_qty
+                            </if>
+                            <if test="daysType == 'yesterday'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.yesterday_sales_qty
+                            </if>
+                            <if test="daysType == 'threeDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.three_days_sales_qty
+                            </if>
+                            <if test="daysType == 'sevenDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.seven_days_sales_qty
+                            </if>
+                            <if test="daysType == 'fourteenDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.fourteen_days_sales_qty
+                            </if>
+                            <if test="daysType == 'thirtyDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.thirty_days_sales_qty
+                            </if>
+                            <if test="daysType == 'sixtyDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.sixty_days_sales_qty
+                            </if>
+                            <if test="daysType == 'ninetyDays'">
+                                ros.virtual_usable_qty ${otherParamDTO.compareType} ros.ninety_days_sales_qty
+                            </if>
+                        </foreach>
+                    </if>
+                </if>
+            </if>
+            <if test="params.isVirtualScarce != null and params.isVirtualScarce">
+                and  ros.is_virtual_scarce = true
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ros.id desc
+    </select>
+
+
+</mapper>

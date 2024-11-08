@@ -5,11 +5,13 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.*;
 import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.RedisUtil;
 import com.common.business.wrapper.FeignQuery;
@@ -17,20 +19,21 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
-import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.wms.feign.WmsAmazonFeign;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkFbaShipmentConverter;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonListingStatusEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
@@ -101,6 +104,10 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
     private RedisUtil redisUtil;
     @Resource
     private CfgTimezoneService cfgTimezoneService;
+    @Resource
+    private WmsWarehouseFeign wmsWarehouseFeign;
+    @Resource
+    private WmsAmazonFeign wmsAmazonFeign;
 
     /**
      * 处理订单详情下载
@@ -117,13 +124,15 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             return;
         }
         for (PlatformAmazonOrderDTO dto : orderEntityList) {
-            singleHandlerOrderDetailDownload(key, platform, category, dto);
+            String handleKey = StrUtil.format("Amazon:orderDetailDownload:{}:{}", dto.getPlatformShopCode(), dto.getOrder().getAmazonOrderId());
+            singleHandlerOrderDetailDownload(key, platform, category, dto, handleKey);
         }
     }
 
 
     @Override
-    public void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto) {
+    @DataIdempotent(keyIdName = "handleKey", waitTime = 60)
+    public void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto, String handleKey) {
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS;
         try {
             // 动态请求配置
@@ -670,6 +679,167 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             return FeignQuery.create(CfgAmzFulfillmentCenterEntity.class)
                     .in(CfgAmzFulfillmentCenterEntity::getCode, centerCodeList)
                     .list();
+        }
+    }
+
+    @Override
+    public List<ReportFulfilledShipmentsMongoDTO> reportFulfillmentFillData(List<ReportFulfilledShipmentsMongoDTO> allList) {
+        // 仓储中心列表
+        List<String> centerCodeList = allList.stream()
+                .map(ReportFulfilledShipmentsMongoDTO::getFulfillmentCenterId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 查询仓库中心配置
+        List<CfgAmzFulfillmentCenterEntity> centerEntityList = feignQueryFulfillmentCenterlist(centerCodeList);
+        Map<String, CfgAmzFulfillmentCenterEntity> centerMap = centerEntityList
+                .stream()
+                .collect(Collectors.toMap(CfgAmzFulfillmentCenterEntity::getCode, Function.identity()));
+
+        // 新增未存在的仓储中心
+        List<String> notExistCenterIds = centerCodeList.stream().filter(e -> !centerMap.containsKey(e)).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(notExistCenterIds)){
+            List<CfgAmzFulfillmentCenterEntity> newCenterList = notExistCenterIds.stream()
+                    .map(CfgAmzFulfillmentCenterEntity::new)
+                    .collect(Collectors.toList());
+            wmsAmazonFeign.addCfgAmzFulfillmentCenterList(newCenterList);
+        }
+
+
+        // 店铺信息
+        List<ShopInfoEntity> shopList =  FeignQuery.create(ShopInfoEntity.class)
+                .eq(ShopInfoEntity::getDictPlatform, PlatformDictEnum.AMAZON.getCode())
+                .ne(ShopInfoEntity::getPlatformShopCode, "")
+                .list();
+
+        // 所有店铺信息Map<亚马逊账号， Map<国家代号, 店铺信息>
+        Map<String, Map<String, ShopInfoEntity>> shopMap = shopList
+                .stream()
+                .collect(Collectors.groupingBy(ShopInfoEntity::getPlatformShopCode,
+                        Collectors.toMap(ShopInfoEntity::getDictCountryCode,
+                                Function.identity(),
+                                // 已授权优先
+                                (existing, replacement) -> AuthStatusEnum.ALREADY.getCode().equalsIgnoreCase(replacement.getAuthStatus()) ? replacement : existing
+                        )));
+
+        // 仓库信息
+        Map<String, WarehouseDTO.ListDTO> warehouseMap = new HashMap<>();
+        List<String> warehouseIds = shopList.stream().map(ShopInfoEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(warehouseIds)) {
+            warehouseMap =  wmsWarehouseFeign.listByIds(warehouseIds)
+                    .stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getId, Function.identity()));
+        }
+
+        // 矫正时区(报告来源的时间可能不带时区)
+        List<CfgTimezoneEntity> timeList = cfgTimezoneService.listAndCache();
+
+        Map<String, WarehouseDTO.ListDTO> finalWarehouseMap = warehouseMap;
+        return allList.stream()
+                .map(e -> parseDateLocaleShopIdWarehouseId(e, timeList, shopMap, centerMap, finalWarehouseMap))
+                .filter(e-> null != e)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 检查设置时区和店铺ID
+     */
+    private static ReportFulfilledShipmentsMongoDTO parseDateLocaleShopIdWarehouseId(ReportFulfilledShipmentsMongoDTO e,
+                                                                                     List<CfgTimezoneEntity> timeList,
+                                                                                     Map<String, Map<String, ShopInfoEntity>> shopMap,
+                                                                                     Map<String, CfgAmzFulfillmentCenterEntity> centerMap,
+                                                                                     Map<String, WarehouseDTO.ListDTO> warehouseMap
+    ) {
+        // 按仓储中心补充仓库
+        // 多渠道订单以仓储中心对应国家作为站点
+        try {
+            CfgAmzFulfillmentCenterEntity centerEntity = centerMap.get(e.getFulfillmentCenterId());
+
+            // Map<国家代号, 店铺>
+            Map<String, ShopInfoEntity> curMap = shopMap.get(e.getPlatformShopCode());
+
+            // 设置仓库中心对应仓库
+            if (null != centerEntity && !curMap.isEmpty()){
+                if (org.apache.commons.lang.StringUtils.isNotBlank(centerEntity.getCountry())){
+                    ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
+                    // 补充仓库信息
+                    fillWarehouseInfo(e, warehouseMap, shopInfo);
+                }
+            }
+            if (e.hasMultiChannel()) {
+                // 多渠道订单
+                parseMultiChannel(e, timeList, curMap, centerEntity);
+            } else {
+                // B2C订单
+                parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
+            }
+        } catch (Exception ex) {
+            log.error("解析亚马逊订单错误：{}", ExceptionUtil.stacktraceToString(ex));
+        }
+        return e;
+    }
+
+    /**
+     * 补充信息(B2C销售订单)
+     */
+    private static void parseB2cOrder(ReportFulfilledShipmentsMongoDTO e, List<CfgTimezoneEntity> timeList, Map<String, ShopInfoEntity> curMap, CfgAmzFulfillmentCenterEntity centerEntity, Map<String, WarehouseDTO.ListDTO> warehouseMap) {
+        // 解析后的时区(按销售渠道)
+        CfgTimezoneEntity timeZoneEntity = timeList.stream()
+                .filter(t -> t.getAndParseCondition().contains(e.getSalesChannel()))
+                .findFirst()
+                .orElse(null);
+        if (null != timeZoneEntity) {
+            // 设置所有本地时区
+            e.checkAndSetAllDateLocale(timeZoneEntity.getTimeZone());
+            if (!curMap.isEmpty() && curMap.containsKey(timeZoneEntity.getCountry())) {
+                ShopInfoEntity shopInfo = curMap.get(timeZoneEntity.getCountry());
+                e.setShopId(shopInfo.getId());
+                // 仓储中心为空按销售渠道对应仓库出库
+                if (null == centerEntity){
+                    // 补充仓库信息
+                    fillWarehouseInfo(e, warehouseMap, shopInfo);
+                } else {
+                    // 仓储中心配置为空
+                    if (org.apache.commons.lang.StringUtils.isBlank(centerEntity.getCountry())){
+                        // 补充仓库信息
+                        fillWarehouseInfo(e, warehouseMap, shopInfo);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 补充信息(多渠道销售订单)
+     */
+    private static void parseMultiChannel(ReportFulfilledShipmentsMongoDTO e, List<CfgTimezoneEntity> timeList, Map<String, ShopInfoEntity> curMap, CfgAmzFulfillmentCenterEntity centerEntity) {
+        // 解析后的时区(按仓储中心)
+        if (null == centerEntity){
+            return;
+        }
+        CfgTimezoneEntity timeZoneEntity = timeList.stream()
+                .filter(t -> t.getCountry().equalsIgnoreCase(centerEntity.getCountry()))
+                .findFirst()
+                .orElse(null);
+        if (null != timeZoneEntity) {
+            // 设置所有本地时区
+            e.checkAndSetAllDateLocale(timeZoneEntity.getTimeZone());
+            if (!curMap.isEmpty()) {
+                ShopInfoEntity shopInfo = curMap.get(timeZoneEntity.getCountry());
+                e.setShopId(shopInfo.getId());
+            }
+        }
+    }
+
+    /**
+     * 填充仓库信息
+     */
+    private static void fillWarehouseInfo(ReportFulfilledShipmentsMongoDTO e, Map<String, WarehouseDTO.ListDTO> warehouseMap, ShopInfoEntity shopInfo) {
+        e.setWarehouseId(shopInfo.getWarehouseId());
+        if (!CollectionUtils.isEmpty(warehouseMap) && warehouseMap.containsKey(shopInfo.getWarehouseId())){
+            WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(shopInfo.getWarehouseId());
+            e.setWarehouseName(warehouseDTO.getName());
+            e.setWarehouseOrgId(warehouseDTO.getOrgId());
+            e.setWarehouseOrgName(warehouseDTO.getOrgName());
         }
     }
 }

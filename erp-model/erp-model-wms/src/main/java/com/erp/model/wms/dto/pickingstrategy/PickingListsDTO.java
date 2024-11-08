@@ -7,6 +7,7 @@ import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -163,6 +164,39 @@ public class PickingListsDTO {
         private LocalDateTime updateTime;
     }
 
+
+    @Getter
+    @Setter
+    public static class CombinationPrintView {
+
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 客户/渠道名
+         */
+        private String channelName;
+        /**
+         * 打印时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime printTime;
+        /**
+         * 打印人
+         */
+        private String printUserName;
+        /**
+         * 经办人
+         */
+        private String handlingUserName;
+        /**
+         * 打印明细
+         */
+        private List<CombinationPrintDetailView> printDetailViews;
+    }
+
+
     @Getter
     @Setter
     public static class PrintView {
@@ -192,6 +226,42 @@ public class PickingListsDTO {
          * 打印明细
          */
         private List<PrintDetailView> printDetailViews;
+
+        /**
+         * 组合品打印明细
+         */
+        private List<CombinationPrintDetailView> combinationPrintDetailView;
+    }
+
+    @Getter
+    @Setter
+    public static class CombinationPrintDetailView {
+
+        /**
+         * 父级sku
+         */
+        private String parentSku;
+
+        /**
+         * 父级sku数量
+         */
+        private Integer parentSkuQty;
+
+        /**
+         * 子级sku
+         */
+        private String childSku;
+
+        /**
+         * 子级sku数量
+         */
+        private Integer childSkuQty;
+
+        /**
+         * 三方sku
+         */
+        private String thirdSku;
+
     }
 
     @Getter
@@ -233,6 +303,10 @@ public class PickingListsDTO {
          * 推荐仓位
          */
         private String warehouseLocation;
+        /**
+         * 明细来源Id
+         */
+        private String sourceDetailId;
 
         public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName) {
             this.skuId = detail.getSkuId();
@@ -243,6 +317,7 @@ public class PickingListsDTO {
             this.warehouseId = entity.getWarehouseId();
             this.warehouseName = entity.getWarehouseName();
             this.warehouseLocation = detail.getWarehouseLocation();
+            this.sourceDetailId = detail.getSourceDetailId();
         }
     }
 
@@ -284,6 +359,12 @@ public class PickingListsDTO {
          * 来源单据号
          */
         private String sourceCode;
+
+        /**
+         * 生成拣货单--拣货规则
+         * 其余情况为空
+         */
+        private List<LocationInventoryResultDTO> ruleOrderMatchResult;
         /**
          * 明细
          */
@@ -355,6 +436,7 @@ public class PickingListsDTO {
     public static class DetailPickDTO{
         private String skuId;
         private String skuNo;
+        private String fnSku;
         /**
          * 数量
          */

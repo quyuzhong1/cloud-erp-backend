@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -92,10 +93,28 @@ public class RefundOrderEntity extends BaseEntity<RefundOrderEntity> {
     private String reason;
 
     /**
+     * 销售订单id
+     */
+    @TableField("so_id")
+    private String soId;
+
+    /**
+     * 销售订单编号
+     */
+    @TableField("so_code")
+    private String soCode;
+
+    /**
      * 退款时间
      */
     @TableField("refund_time")
-    private Date refundTime;
+    private LocalDateTime refundTime;
+
+    /**
+     * 平台创建时间
+     */
+    @TableField("platform_create_time")
+    private LocalDateTime platformCreateTime;
 
     /**
      * 退款金额人名币

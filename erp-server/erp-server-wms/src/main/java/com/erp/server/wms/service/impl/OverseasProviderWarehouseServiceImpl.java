@@ -124,6 +124,17 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 .one();
     }
 
+
+    @Override
+    public OverseasProviderWarehouseEntity getByWarehouseIdWithNotDisabled(String warehouseId) {
+        return lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
+                .eq(OverseasProviderWarehouseEntity::getDisabled, false)
+                .orderByAsc(OverseasProviderWarehouseEntity::getId)
+                .last("LIMIT 1")
+                .one();
+    }
+
     @Override
     public List<OverseasProviderWarehouseEntity> listByWarehouseIds(List<String> warehouseIds) {
         if (CollectionUtils.isEmpty(warehouseIds)) {
@@ -168,11 +179,14 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public OverseasProviderEntity findPlatformByWarehouseId(String warehouseId) {
-        OverseasProviderWarehouseEntity entity = getByWarehouseId(warehouseId);
-        if (null == entity) {
+        List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Arrays.asList(warehouseId));
+        if (CollectionUtils.isEmpty(entityList)) {
             return null;
         }
-        return overseasProviderService.getAlreadyAuthById(entity.getMainId());
+        List<String> mainIds = entityList.stream().map(v->v.getMainId()).distinct().collect(Collectors.toList());
+        List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.listByIds(mainIds);
+        overseasProviderEntityList = overseasProviderEntityList.stream().filter(v->v.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())).collect(Collectors.toList());
+        return CollectionUtils.isEmpty(overseasProviderEntityList)?null:overseasProviderEntityList.get(0);
     }
 
     @Override

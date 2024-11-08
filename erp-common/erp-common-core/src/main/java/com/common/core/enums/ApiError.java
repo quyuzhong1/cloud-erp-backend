@@ -444,6 +444,7 @@ public enum ApiError implements Serializable {
     ERROR_95189(95189, "存在未立项的项目"),
     ERROR_95190(95190, "仅在待审核,审核中可申请撤销"),
     ERROR_95191(95191, "【%s】已催办一次，请在30分钟后再催办"),
+
     ERROR_95192(95192, "已终止项目不能再次终止"),
     ERROR_95193(95193, "已暂停的项目只能进行重新启动"),
     ERROR_95194(95194, "变体名已存在，不可重复添加"),
@@ -529,7 +530,8 @@ public enum ApiError implements Serializable {
     ERROR_95270(95270, "结项日期应当晚于启动日期"),
     ERROR_95271(95271, "SKU为空，不允许进行此操作"),
     ERROR_NO_INVENTORY_SKU_NOT_EXIST(95272, "除服务、费用SKU外,不存在其他SKU信息！"),
-
+    ERROR_95273(95273, "仅支持审核中的单据支持催办提醒"),
+    ERROR_95274(95274, "%s已催办，间隔时间30min内请勿重复操作"),
     /**
      * TMS 错误
      * 从96000 开始
@@ -776,7 +778,7 @@ public enum ApiError implements Serializable {
     ERROR_99017(99017,"质检总量不能超过采购订单SKU数量"),
     ERROR_99018(99018,"只有待质检才能完成质检"),
     ERROR_99019(99019,"存在质检总量超过采购订单SKU数量的质检单"),
-    ERROR_99020(99020,"只有待质检才能免检"),
+    ERROR_99020(99020,"只有暂存或待质检才能免检"),
     ERROR_99021(99021,"只有待质检才能取消"),
     ERROR_99022(99022,"只有待质检,取消,暂存的质检单才能删除"),
     ERROR_99023(99023,"只有免检,已质检的质检单才能撤销质检"),
@@ -890,6 +892,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99140(99140,"已生成拣货单，不能修改发货通知单"),
     ERROR_99141(99141,"拣货单下推的发货单，不能修改仓位移动单"),
+    ERROR_99142(99142,"第三方平台单据不允许修改"),
 
     ERROR_99160(99160,"发货通知单已审核，不能生成拣货单"),
     ERROR_99161(99161,"发货通知单已审核，不能修改或删除拣货单"),
@@ -1012,7 +1015,7 @@ public enum ApiError implements Serializable {
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货，取消发货的数据不允许操作手动标发"),
-    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且配货中的订单允许手动标发"),
+    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且待发货的订单允许手动标发"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】未生成波次，不允许操作"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
@@ -1028,6 +1031,7 @@ public enum ApiError implements Serializable {
     UPLOAD_SUCCESS_NOT_UPLOAD(92126,"上传成功状态不能重复上传"),
     RECEIVE_QTY_ERROR(92131,"收货数量不能大于送货数量"),
     ERROR_SUBCONTRACT_ISSUE_SUPPLIER_DIFF(92124,"委外发料单明细数据对应供应商【{}】必须一致"),
+    ERROR_SUBCONTRACT_RETURN_SUPPLIER_DIFF(92125,"委外退料单明细数据对应供应商【{}】必须一致"),
     ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE(92131,"采购入库单已下推委外发料单【{}】"),
     ERROR_UPLOAD_SUCCES_CAN_INSTOCK_FORCAST(92132,"仅支持【订单预报(批次)】上传成功时且入库预报为【待上传/上传失败】，可操作【入库预报】"),
     ERROR_TRANSFER_DECLARE_NOT_EXIST(92133,"中转报关单记录不存在"),
@@ -1047,18 +1051,22 @@ public enum ApiError implements Serializable {
     ERROR_92144(92144,"发货通知到记录不存在"),
     ERROR_92145(92145,"箱规记录不存在"),
     ERROR_92146(92146,"装箱记录不存在"),
-    ERROR_92147(92147,"SKU【{}】不可超过未装箱数量【{}】"),
+    ERROR_92147(92147,"SKU【{}】FnSKU【{}】不可超过未装箱数量【{}】"),
     ERROR_92148(92148,"SKU【{}】不可超过本箱已装箱数量【{}】"),
     ERROR_92149(92149,"SKU【{}】在关联单中没有记录"),
     ERROR_92150(92150,"SKU【{}】在装箱中没有记录不能移出"),
     ERROR_92251(92251,"关联单号已审核，不支持编辑修改删除"),
-    ERROR_92252(92252,"装箱中SKU【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
+    ERROR_92252(92252,"装箱中SKU【{}】FnSku【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
     ERROR_92253(92253,"装箱中SKU累计装箱数量不可大于拣货数量"),
     ERROR_92254(92254,"本箱已完成称重，不支持调整装箱"),
     ERROR_92255(92255,"调整装箱后，装箱数量不能为0"),
     ERROR_92256(92256,"来源单号不同不能同时打印"),
     ERROR_92257(92257,"来源单号未找到"),
     ERROR_92258(92258,"请选择拣货单"),
+    ERROR_92259(92259,"当前周期【{}】单号【{}】已存在对账单记录"),
+    ERROR_92260(92260,"同一个单【{}】同一个月份【{}】仅可生成一次对账单"),
+    ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
+    ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
 
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
@@ -1145,8 +1153,15 @@ public enum ApiError implements Serializable {
     ERROR_NOT_FOUND_WAREHOUSE_LOCATION(92239, "新增补货单时没有找到有效的仓位"),
 
     ERROR_DETAIL_IS_ZERO(92240, "【{}】的明细条数为0"),
+    ERROR_92241(92241, "已进行费用分摊，不能进行反审核"),
 
-
+    ERROR_SUBCONTRACT_RETURN_NOT_EXIST(92241,"委外退料单不存在"),
+    ERROR_SUBCONTRACT_RETURN_DETAIL_NOT_EXIST(92242,"委外退料单明细不存在"),
+    ERROR_SUBCONTRACT_RETURN_QTY_EXCEED(92243,"委外退料单SKU【{}】退料数量【{}】可退数量【{}】"),
+    ERROR_92244(92244,"存在有效下推单据【委外退料单{}】,不支持反审"),
+    ERROR_92245(92245,"存在有效下推单据【采购订单{}】,不支持反审"),
+    ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
+    ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1302,6 +1317,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL(92114,"原物流订单取消失败，请联系物流商取消原物流订单后重新获取"),
     ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
+    ERROR_SO_B2C_DELIVERY_FETCH(92114,"订单拉取失败，请手动重试刷新订单后操作"),
     ERROR_SO_B2C_NOT_EXIST_WAREHOUSE(92114,"B2C销售订单发货仓库不存在"),
     ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
@@ -1326,6 +1342,8 @@ public enum ApiError implements Serializable {
     PACKAGE_FORECAST_TRANSFER(92130,"销售订单【{}】关联强制组包，请在组包预报页面操作中转报关"),
     ERROR_REFRESH_TOKEN(92131,"店铺【{}】，刷新token失败：{}"),
     ERROR_SHOP_AUTHORIZE_FAIL(92108,"店铺【{}】，授权失败：【{}】"),
+    ERROR_SHOP_SHOPEE_CANCEL_LOGISTICS(92109,"虾皮平台不支持取消物流单，如有需要，请联系实施人员"),
+    ERROR_SHOP_SHOPEE_INTERCEPT_LOGISTICS(92110,"虾皮平台不支持发货拦截，如有需要，请联系实施人员"),
 
     SKU_MAPPING_NOT_ALLOW_HISTORY(92131,"当前映射关系在【{}】已存在过，无法修改"),
     IS_SO_OUT_STOCK_NOT_UPDATE_MAPPING(92132,"已生成销售出库单，不允许修改映射关系"),
@@ -1362,6 +1380,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】不能设置多个渠道"),
     ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
+    ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
+    ERROR_92154(92154,"销售订单【{}】只能在待提交和审核不通过状态更换发货SKU"),
     /**
      * TMS 错误
      * 从94000 开始
@@ -1518,6 +1538,5 @@ public enum ApiError implements Serializable {
 
     public Integer code;
     public String msg;
-
 
 }

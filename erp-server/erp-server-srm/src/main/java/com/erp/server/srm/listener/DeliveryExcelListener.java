@@ -22,7 +22,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.service.DeliveryOrderDetailService;

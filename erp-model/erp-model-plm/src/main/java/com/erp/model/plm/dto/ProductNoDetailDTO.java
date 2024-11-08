@@ -207,6 +207,11 @@ public class ProductNoDetailDTO {
     private String salesChannel;
 
     /**
+     * ean码
+     */
+    private String ean;
+
+    /**
      * 产品分类id集合
      */
     private List<String> categoryIdList;

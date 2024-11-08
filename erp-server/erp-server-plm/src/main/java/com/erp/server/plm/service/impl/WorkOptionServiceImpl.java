@@ -12,10 +12,13 @@ import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.plm.mapper.WorkOptionMapper;
 import com.erp.server.plm.service.*;
 import jodd.util.StringUtil;
+import org.python.antlr.ast.Str;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 工作台服务类
@@ -48,7 +51,6 @@ public class WorkOptionServiceImpl implements WorkOptionService {
         for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
             String userDatePermissionSql = userInfoFeign.getUserDatePermissionSql(myWorkOptionDTO.getTableField(), myWorkOptionDTO.getMenuCode());
 
-
             myWorkOptionDTO.setModuleCode(SourceTypeEnum.getByCode(myWorkOptionDTO.getModuleCode()).getTableName());
             if (myWorkOptionDTO.getModuleCode().equals("project_task")) {
                 PagingDTO<TaskSearchParamDTO> pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
@@ -77,20 +79,30 @@ public class WorkOptionServiceImpl implements WorkOptionService {
             if (myWorkOptionDTO.getModuleCode().equals("product_bom_info")) {
                 Integer status = Integer.valueOf(myWorkOptionDTO.getModuleStatus());
                 PagingDTO<SearchPagingDTO> pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
-                SearchPagingDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), SearchPagingDTO.class);
-                pagingDTO.setParams(params);
+
                 if (StringUtil.isNotBlank(userDatePermissionSql)) {
                     pagingDTO.setPermissionSql(userDatePermissionSql);
                 }
+
+                SearchPagingDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), SearchPagingDTO.class);
+                pagingDTO.setParams(params);
+                Map<String, String> sqlMap = new HashMap<>();
+                sqlMap.put("default", "1=1");
+//                params.setSqlMap(sqlMap);
                 myWorkOptionDTO.setTableNumber(bomInfoService.paging(pagingDTO).getTotalCount());
             }
             if (myWorkOptionDTO.getModuleCode().equals("product_change")) {
                 PagingDTO<SearchPagingDTO> pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
-                SearchPagingDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), SearchPagingDTO.class);
-                pagingDTO.setParams(params);
+
                 if (StringUtil.isNotBlank(userDatePermissionSql)) {
                     pagingDTO.setPermissionSql(userDatePermissionSql);
                 }
+
+                SearchPagingDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), SearchPagingDTO.class);
+                Map<String, String> sqlMap = new HashMap<>();
+                sqlMap.put("default", "1=1");
+//                params.setSqlMap(sqlMap);
+                pagingDTO.setParams(params);
                 PagingVO paging = productChangeService.paging(pagingDTO);
                 myWorkOptionDTO.setTableNumber(paging.getTotalCount());
             }

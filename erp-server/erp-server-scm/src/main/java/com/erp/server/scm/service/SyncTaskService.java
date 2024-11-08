@@ -1,5 +1,7 @@
 package com.erp.server.scm.service;
 
+import java.util.Map;
+
 import com.common.business.dto.DmpSyncMqDTO;
 
 /**
@@ -16,4 +18,6 @@ public interface SyncTaskService {
      * @param syncParamDTO
      */
     void findDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+    
+    Map<String , Map<String, Object>> newFindDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

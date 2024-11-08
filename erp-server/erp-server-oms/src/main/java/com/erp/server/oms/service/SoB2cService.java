@@ -16,6 +16,7 @@ import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -431,13 +432,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 修改b2c销售单状态
-     * @Author Luo_WG
-     * @Date 2023/12/27 20:19
+     *
      * @param soB2cIds
      * @param status
+     * @param isManualDelivery
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:19
      **/
-    Boolean updateSoB2cStatus(List<String> soB2cIds, String status);
+    Boolean updateSoB2cStatus(List<String> soB2cIds, String status, Boolean isManualDelivery);
 
     /**
      * 修改b2c销售单状态发货时间
@@ -800,7 +803,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     List<BatchResultDTO> autoOrderForecast(List<String> soIdList);
 
-    List<BatchResultDTO> cancelOrderForecast(List<String> ids);
+    List<BatchResultDTO> cancelOrderForecast(List<String> ids, Boolean checkPackageStatus);
 
     List<BatchResultDTO> retryOrderForecast(List<String> ids);
     /**
@@ -960,4 +963,37 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto 参数
      */
     PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
+    /**
+     * 查询所有虚拟仓B2C销售订单数据
+     * @author will
+     * @date 2024/9/26 17:11
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
+
+    List<SoB2cDTO.GenerateSoB2cReturnViewDTO> generateSoB2cReturnView(List<String> ids);
+
+    Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
+
+    List<SoB2cEntity> getByPlatformCode(String platformCode);
+
+    /**
+     * 更换发货sku预览
+     * @param ids
+     * @return
+     */
+    List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids);
+
+    /**
+     * 更新是否更换sku状态
+     *
+     * @param ids
+     * @param isChangeSku
+     */
+    void updateIsChangeSku(List<String> ids, Boolean isChangeSku);
+
+
+    void fetchOrderFail(SoB2cEntity soB2cEntity);
+
+    void fetchOrderSuccess(SoB2cEntity soB2cEntity);
 }

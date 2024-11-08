@@ -624,6 +624,15 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * 虚拟仓id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 虚拟仓name
+         */
+        private String fromVirtualWarehouseName;
     }
 
     /**

@@ -106,6 +106,8 @@ public class ExportWmsFeignController {
     @Resource
     private SubcontractIssueService subcontractIssueService;
     @Resource
+    private SubcontractReturnService subcontractReturnService;
+    @Resource
     private TransferApplicationService transferApplicationService;
     @Resource
     private SupplierDeliveryOrderService supplierDeliveryOrderService;
@@ -127,6 +129,20 @@ public class ExportWmsFeignController {
     private TransferInService transferInService;
     @Resource
     private VirtualInventoryService virtualInventoryService;
+
+    @Resource
+    private FbaShipmentPackingService fbaShipmentPackingService;
+
+
+    @Resource
+    private ReportOrderDemandDetailService reportOrderDemandDetailService;
+
+    @Resource
+    private ReportOrderDemandService reportOrderDemandService;
+
+    @Resource
+    private ReportOrderSalesService reportOrderSalesService;
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -247,6 +263,12 @@ public class ExportWmsFeignController {
         return fbaShipmentService.exportFbaShipment(dto);
     }
 
+    @PostMapping("/fbaShipmentPacking")
+    @WebAdvanceQuery
+    public PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        return fbaShipmentPackingService.exportFbaShipmentPacking(dto);
+    }
+
     @PostMapping("/initStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -351,6 +373,26 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetail(dto);
+    }
+    @PostMapping("/unPackingTaskDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:packingTask:unPackingTaskDetail",
+            tableAlias = "pt"
+    )
+    public PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        return packingTaskService.unPackingTaskDetail(dto);
+    }
+
+    @PostMapping("/firstMilePackingTaskDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaDelivery:paging",
+            tableAlias = "fd"
+    )
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        return firstMileDeliveryService.firstMilePackingTaskDetail(dto);
     }
 
     @PostMapping("/packingTask")
@@ -505,6 +547,16 @@ public class ExportWmsFeignController {
     public PagingVO<SubcontractIssueDTO.ListDTO> exportSubcontractIssue(@RequestBody PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto) {
         return subcontractIssueService.exportSubcontractIssue(dto);
     }
+    @PostMapping("/subcontractReturn")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:subcontractReturn:export",
+            tableAlias = "sr"
+    )
+    @WebAdvanceQuery(handler = SubcontractReturnQueryHandler.class)
+    public PagingVO<SubcontractReturnDTO.ListDTO> exportSubcontractReturn(@RequestBody PagingDTO<SubcontractReturnDTO.PagingParamDTO> dto){
+        return subcontractReturnService.paging(dto);
+    }
 
     @PostMapping("/supplierDeliveryOrder")
     @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
@@ -603,5 +655,30 @@ public class ExportWmsFeignController {
     @PostMapping("/inventoryAge")
     public PagingVO<DynamicExcelDTO> exportWmsInventoryAge(@RequestBody PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto){
         return inventoryService.exportWmsInventoryAge(dto);
+    }
+
+    /**
+     * 订单需求明细导出
+     */
+    @PostMapping("/listReportOrderDemandDetail")
+    @WebAdvanceQuery
+    public PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto){
+        return reportOrderDemandDetailService.listReportOrderDemandDetail(dto);
+    }
+    /**
+     * 缺货统计数据导出
+     */
+    @PostMapping("/listReportOrderDemand")
+    @WebAdvanceQuery
+    public PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(@RequestBody PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto){
+        return reportOrderDemandService.listReportOrderDemand(dto);
+    }
+    /**
+     * 销售看板数据导出
+     */
+    @PostMapping("/listReportOrderSales")
+    @WebAdvanceQuery
+    public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto){
+        return reportOrderSalesService.listReportOrderSales(dto);
     }
 }

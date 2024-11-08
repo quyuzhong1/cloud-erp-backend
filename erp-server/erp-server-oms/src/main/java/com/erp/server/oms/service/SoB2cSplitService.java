@@ -4,6 +4,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 
 import java.util.List;
@@ -84,4 +85,15 @@ public interface SoB2cSplitService extends SuperService<SoB2cEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO cancelSplit(String id);
+
+    /**
+     * 组合sku拆分数据
+     *
+     * @param soB2cEntity
+     * @param detailEntityList
+     * @param splitSkuDetailDTOS
+     * @param skuNo
+     * @return
+     */
+    SoB2cDTO.SplitSaveDTO buildSplitBySku(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS, String skuNo);
 }

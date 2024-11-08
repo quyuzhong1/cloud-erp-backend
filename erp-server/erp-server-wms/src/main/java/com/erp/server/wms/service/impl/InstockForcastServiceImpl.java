@@ -213,24 +213,24 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     @Override
     public void poChange(InstockForcastDTO.PoChangeDTO dto) {
         String purchaseOrderId = dto.getPurchaseOrderId();
+        String purchaseChangeOrderId = dto.getPurchaseChangeOrderId();
+        String purchaseChangeOrderCode = dto.getPurchaseChangeOrderCode();
         InstockForcastEntity instockForcastEntity = findByPurchaseOrderId(purchaseOrderId);
         if(Objects.isNull(instockForcastEntity)) {
             log.error("采购订单id：【{}】未找到未删除的入库预报，", purchaseOrderId);
             // 此处报错
             throw new ServiceException("采购订单未下推生成入库预报");
         }
+        List<InOutStockDTO> inList = new ArrayList<>();
+        List<InOutStockDTO> outList = new ArrayList<>();
         // 调用库存组件，更新库存信息，此处注意：不同的SKU规则不一样
         List<InstockForcastPoChangeDetailDTO.AddDTO> members = dto.getMembers();
         for(InstockForcastPoChangeDetailDTO.AddDTO member : members) {
-            InventoryInOutStockRuleDTO inventoryDto = new InventoryInOutStockRuleDTO();
-            inventoryDto.setBusinessType(InventoryBusinessTypeEnum.PURCHASE_ORDER_CHANGE.getCode());
-
-            List<InOutStockDTO> inventorySkus = Lists.newArrayList();
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
             inOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
-            inOutStockDTO.setSourceId(instockForcastEntity.getId());
-            inOutStockDTO.setSourceCode(instockForcastEntity.getCode());
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER_CHANGE);
+            inOutStockDTO.setSourceId(purchaseChangeOrderId);
+            inOutStockDTO.setSourceCode(purchaseChangeOrderCode);
             inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
             // 根据采购明细找入库预报明细
             InstockForcastDetailEntity instockForcastDetailEntity = instockForcastDetailService.find(instockForcastEntity.getId(), member.getPurchaseOrderDetailId());
@@ -238,7 +238,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             // 更新入库预报明细数量
             instockForcastDetailService.updateQtyByPoChange(instockForcastDetailEntity.getId(), member.getQty());
 
-            inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
+            inOutStockDTO.setSourceDetailId(member.getPurchaseOrderChangeDetailId());
             inOutStockDTO.setSkuId(member.getSkuId());
             inOutStockDTO.setSkuNo(member.getSkuNo());
             inOutStockDTO.setQty(member.getQty());
@@ -318,19 +318,26 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
                 changeQty = Math.abs(changeQty);
             }
             inOutStockDTO.setQty(changeQty);
-            inventorySkus.add(inOutStockDTO);
-            inventoryDto.setParamList(inventorySkus);
-
-            List<TransactionRuleDTO> rules = Lists.newArrayList();
-            TransactionRuleDTO transactionRuleDTO = new TransactionRuleDTO();
-            transactionRuleDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);
-            transactionRuleDTO.setInventoryStatus(InventoryStatusEnum.IN_TRANSIT);
-            transactionRuleDTO.setTransactionMode(inventoryModeEnum);
-            rules.add(transactionRuleDTO);
-            inventoryDto.setRules(rules);
-
-            inventoryTransCoreService.approveByRule(inventoryDto);
+            //新增
+            if (InventoryModeEnum.IN_STOCK.equals(inventoryModeEnum)){
+                inList.add(inOutStockDTO);
+            }else if (InventoryModeEnum.OUT_STOCK.equals(inventoryModeEnum)){
+                outList.add(inOutStockDTO);
+            }
         }
+        if (CollectionUtils.isNotEmpty(inList)){
+            InventoryInOutStockDTO inStockDTO = new InventoryInOutStockDTO();
+            inStockDTO.setParamList(inList);
+            inStockDTO.setBusinessType(InventoryBusinessTypeEnum.PURCHASE_ORDER_CHANGE_IN.getCode());
+            inventoryTransCoreService.approveByType(inStockDTO);
+        }
+        if (CollectionUtils.isNotEmpty(outList)){
+            InventoryInOutStockDTO outStockDTO = new InventoryInOutStockDTO();
+            outStockDTO.setParamList(outList);
+            outStockDTO.setBusinessType(InventoryBusinessTypeEnum.PURCHASE_ORDER_CHANGE_OUT.getCode());
+            inventoryTransCoreService.approveByType(outStockDTO);
+        }
+
     }
 
     @Transactional(rollbackFor = Exception.class)

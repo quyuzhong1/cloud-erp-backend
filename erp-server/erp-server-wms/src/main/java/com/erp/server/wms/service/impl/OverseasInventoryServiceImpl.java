@@ -15,6 +15,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -137,6 +139,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
             List<String> codeList = warehouseDTOList.stream().map(OverseasProviderDTO.WarehouseDTO::getPlatformWarehouseCode).distinct().collect(Collectors.toList());
             params.setPlatformWarehouseCodeList(codeList);
         }
+        dto.getParams().setSortFlag(true);
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<OverseasInventoryDTO.ListDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())){
@@ -154,10 +157,13 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = overseasProviderService.listAllMatch();
 
         //获取库存sku信息
+        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = new ArrayList<>();
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setPlatformSkuNoList(plaformSkuNoList);
         paramDTO.setIsExpire(false);
-        List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        if(CollectionUtils.isNotEmpty(plaformSkuNoList)){
+            listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+        }
 
         // 属性赋值
         for(OverseasInventoryDTO.ListDTO data : list) {
@@ -166,8 +172,6 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                     .filter(e -> this.checkMatch(e, data, listWithWarehouseDTOS))
                     .findFirst()
                     .orElse(new ListingInfoWithSkuMappingDTO());
-            data.setSkuId(view.getProductSkuId());
-            data.setSkuNo(view.getProductSkuNo());
             data.setPlatformSkuName(view.getPlatformSkuName());
         }
 
@@ -256,7 +260,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         paramDTO.setPlatform(platform);
         paramDTO.setPlatformSkuNoList(notMappingEntityList.stream().map(OverseasInventoryEntity::getPlatformSku).distinct().collect(Collectors.toList()));
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
-        paramDTO.setMatchResult(true);
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
 
         // 查询ListingInfo和skuMapping的关系

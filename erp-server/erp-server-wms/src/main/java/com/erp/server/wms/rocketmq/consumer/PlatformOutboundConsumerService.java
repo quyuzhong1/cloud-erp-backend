@@ -92,8 +92,8 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
     }
 
     @Override
-    public void updateSyncTaskStatus(String id, SyncStatusEnum code, String msg) {
-        dmpTaskFeign.updateSyncInfo(new DmpSyncMqDTO.ParamDTO(id, code.getCode(), msg));
+    public void updateSyncTaskStatus(DmpSyncMqDTO.ParamDTO paramDTO) {
+        dmpTaskFeign.updateSyncInfo(paramDTO);
     }
 
     @Override
@@ -131,13 +131,9 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         updateStatus.setSoId(mainEntity.getId());
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())){
             updateStatus.setBillStatus(billStatus);
-            updateStatus.setAddOperationLog(false);
+            updateStatus.setAddOperationLog(true);
         }
         updateStatus.setTrackNo(dto.getTrackNo());
-        updateStatus.setFromThirdWarehouseFlag(true);
-        if(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(curBillStatus)){
-            updateStatus.setAddOperationLog(false);
-        }
         soB2cFeign.updateSoB2cStatusByParams(updateStatus);
         if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dto.getOrderStatus())) {
 

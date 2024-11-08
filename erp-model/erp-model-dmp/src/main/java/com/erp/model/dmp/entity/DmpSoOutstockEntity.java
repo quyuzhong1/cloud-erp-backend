@@ -171,14 +171,33 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
      /**
       * 整单折扣
       */
-      @TableField(value = "total_discount_amount")
-      private BigDecimal totalDiscountAmount;
+     @TableField(value = "total_discount_amount")
+     private BigDecimal totalDiscountAmount;
       
       /**
        * 来源id
        */
-       @TableField(value = "source_id")
-       private String sourceId;
+     @TableField(value = "source_id")
+     private String sourceId;
+       
+      /**
+        * 物流公司代码
+       */
+     @TableField(value = "logistics_company_code")
+     private String logisticsCompanyCode;
+     
+     /**
+      * 物流公司名称
+      */
+     @TableField(value = "logistics_company_name")
+     private String logisticsCompanyName;
+     
+     /**
+      * 订单标签
+      */
+     @TableField(value = "trade_label")
+     private String tradeLabel;
+      
     
     /**
      * 唯一字段md5值

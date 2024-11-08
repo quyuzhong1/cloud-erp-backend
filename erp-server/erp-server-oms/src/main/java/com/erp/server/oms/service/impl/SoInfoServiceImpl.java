@@ -15,12 +15,15 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.JasperHelperUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -48,11 +51,9 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -69,6 +70,8 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
@@ -82,6 +85,7 @@ import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -222,6 +226,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private FileTemplateFeign fileTemplateFeign;
+
     /**
      * 添加销售订单
      *
@@ -354,6 +361,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         platformDTO.setRelationId("");
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+            entity.setVirtualWarehouseId("");
           return;
         }
         entity.setVirtualWarehouseId(virtualWarehouseList.get(0).getVirtualWarehouseId());
@@ -667,6 +675,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String,String> countryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(countryList)){
+            countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
+        }
+
         //有效发货通知单
         List<String> sodIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(sodIdList);
@@ -736,11 +749,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setTrackNoList(trackNoList);
             item.setTrackNoStr(trackNoList.stream().collect(Collectors.joining(",")));
             //国家
-            if (CollectionUtils.isNotEmpty(countryList)) {
-                String countryName = countryList.stream().filter(obj -> obj.getId().equals(item.getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                item.setCountryName(countryName);
-            }
-
+            item.setCountryName(countryMap.get(item.getCountryId()));
             //实体仓名称
             String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
             item.setWarehouseName(warehouseName);
@@ -1124,6 +1133,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         String customerId = dto.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {
+            String oldCustomerId = soInfo.getCustomerId();
+            if(StringUtils.isNotBlank(oldCustomerId) && !customerId.equals(oldCustomerId)) {
+                //判断是否已下推发货通知单，是则客户不允许修改
+                String soId = soInfo.getId();
+                Map<String, Long> pushDownMap = soDeliveryNoticeFeign.getPushDownDeliveryNoticeCnt(Lists.newArrayList(soId));
+                if (CollUtil.isNotEmpty(pushDownMap)
+                        && pushDownMap.containsKey(soId)
+                        && pushDownMap.get(soId) > 0) {
+                    throw new ServiceException("已下推发货通知单冻结库存，客户不允许修改，请删除发货通知单后修改");
+                }
+            }
             customerInfoService.quoteCustomer(Arrays.asList(customerId));
         }
         String code = soInfo.getCode();
@@ -1204,7 +1224,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 dto.getDetailList().stream().forEach(detail -> detail.setCurrency(dto.getCurrency()));
             }
             //修改 订单详情
-            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList());
+            soDetailService.updateSoDetail(id, dto.getIsTax(), dto.getDetailList(),old);
             return id;
         }
         return "";
@@ -1602,8 +1622,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public Boolean exportExcel(SoInfoDTO.ExportDTO dto) {
-        String fileName = StrUtil.format("销售订单{}.xlsx", System.currentTimeMillis());
-        downloadTaskFeign.saveDownloadTask(fileName, EXPORT_OMS_SO.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售订单", EXPORT_OMS_SO.getCode(), dto);
         return Boolean.TRUE;
     }
 
@@ -1653,6 +1672,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (customerInfo != null) {
             customerName = customerInfo.getName();
             countryId = customerInfo.getCountryId();
+            customer.setCustomerSellerId(customerInfo.getSellerId());
 //            mailAddress = customerInfo.getMailAddress();
         }
         //客户开票信息
@@ -1718,7 +1738,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @date 2023-05-18 14:12
      */
     @Override
-    public SoInfoDTO.ExportPdfDTO exportSoContractPdf(String id) {
+    public SoInfoDTO.ExportPdfDTO listSoContractPdf(String id) {
         SoInfoDTO.ExportPdfDTO result = new SoInfoDTO.ExportPdfDTO();
         SoInfoDTO.CustomerDTO customer = this.getSoCustomer(id);
 
@@ -1771,6 +1791,37 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String chineseAmount = Convert.digitToChinese(totalTaxAmount);
         result.setChineseAmount(chineseAmount);
         return result;
+    }
+
+    @Override
+    public void exportSoContractPdf(String id,HttpServletResponse response) {
+        //销售合同订单
+        SoInfoDTO.ExportPdfDTO result = listSoContractPdf(id);
+        if (ObjectUtil.isEmpty(result)) {
+            throw new ServiceException("未发现销售合同订单数据");
+        }
+
+        List<String> base64List = new ArrayList<>();
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.SO_CONTRACT_PDF);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
+        if (inputStream == null) {
+            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+            return;
+        }
+        Map<String, Object> map = BeanUtil.beanToMap(result);
+        JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
+        map.put("detail", detail);
+        //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
+
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
+        String base = Base64.getEncoder().encodeToString(bytes);
+        base64List.add("data:application/pdf;base64," + base);
+        PdfUtil.exportBase64ForPdf(response,base64List);
     }
 
     @Override
@@ -3094,11 +3145,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(soDetailList)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
-        for (SoDetailEntity soDetailEntity :soDetailList) {
-            BatchResultDTO resultDTO = soDetailService.batchUnLockVirtualInventory(soDetailEntity.getId());
-            if (!resultDTO.getSuccess()) {
-                throw new ServiceException(StrUtil.format("销售订单【{}】SKU【{}】库存释放失败",soInfoEntity.getCode(),soDetailEntity.getSkuNo()));
-            }
+        List<String> detailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        BatchResultDTO resultDTO = soDetailService.batchUnLockVirtualInventory(detailIdList, null);
+        if (!resultDTO.getSuccess()) {
+            throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
     }

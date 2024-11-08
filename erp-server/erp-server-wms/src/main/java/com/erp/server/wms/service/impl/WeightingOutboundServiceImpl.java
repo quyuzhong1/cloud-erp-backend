@@ -142,6 +142,14 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                 throw new ServiceException("非法称重单位");
             }
 
+            //转成g
+            BigDecimal weightByG = dto.getWeight();
+            if(UnitEnum.WeightUnitEnum.KG.getCode().equals(dto.getWeightUnit())){
+                weightByG = dto.getWeight().multiply(BigDecimal.valueOf(1000));
+            }
+            if(weightByG.compareTo(new BigDecimal("1000000")) >= 0){
+                throw new ServiceException("超过1000KG，重量异常请核对");
+            }
             entity.setWeight(dto.getWeight());
             entity.setWeightUnit(dto.getWeightUnit());
             entity.setWeighingTime(LocalDateTime.now());
@@ -157,11 +165,6 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
 
-            //转成g
-            BigDecimal weightByG = dto.getWeight();
-            if(UnitEnum.WeightUnitEnum.KG.getCode().equals(dto.getWeightUnit())){
-                weightByG = dto.getWeight().multiply(BigDecimal.valueOf(1000));
-            }
             for (SoB2cLogisticsEntity v : soB2cLogisticsEntities) {
                 v.setWeight(weightByG);
             }

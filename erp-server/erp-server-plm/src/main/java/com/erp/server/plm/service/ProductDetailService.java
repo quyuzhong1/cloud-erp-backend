@@ -807,6 +807,23 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<ProductDetailEntity> changeSkuBySpu(ChangeSkuToSpuDTO changeSkuToSpuDTO);
 
     /**
+     * 根据skuid 集合获取到sku信息（产品信息+项目经理+产品经理）
+     *
+     * @param skuIds
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO.ProductChargeInfoDTO>
+     * @author jack
+     * @date 2024-09-20
+     */
+    List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(List<String> skuIds);
+
+    /**
+     * 打印EAN
+     * @param printEanDTO 打印参数
+     * @param response    响应
+     */
+    void printEan(PrintEanDTO printEanDTO, HttpServletResponse response);
+
+    /**
      * 获取已审核，已上市数据
      */
     List<SkuVO> listApproveAndListingSku();

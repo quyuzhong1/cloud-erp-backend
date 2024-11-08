@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author zdy
@@ -50,4 +51,12 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      * 物流运输类型（LogisticsTransportTypeEnum）
      */
     private String transportType;
+    /**
+     * 跟踪号
+     */
+    private List<String> trackNoList;
+    /**
+     * 运单号
+     */
+    private List<String> transportNoList;
 }

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
@@ -83,11 +84,11 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
     }
 
     @Override
-    public List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds) {
+    public List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(List<CfgRulePickingEntity> rules, List<String> warehouseIds, List<String> skuIds,String determiningCondition) {
         if (CollectionUtils.isEmpty(rules)) {
             return Collections.emptyList();
         }
         List<String> ruleIds = rules.parallelStream().map(CfgRulePickingEntity::getId).collect(Collectors.toList());
-        return baseMapper.listLocationByRule(ruleIds, warehouseIds, skuIds);
+        return baseMapper.listLocationByRule(ruleIds, warehouseIds, skuIds,determiningCondition);
     }
 }

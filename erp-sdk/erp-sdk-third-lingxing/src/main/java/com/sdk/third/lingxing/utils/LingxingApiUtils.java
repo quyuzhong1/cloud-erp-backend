@@ -250,6 +250,11 @@ public class LingxingApiUtils {
         List<Object> resultList = firstResult.getData();
         int count = firstResult.getTotal() / 1000;
         for (int offset = 1; offset < count; offset++) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                log.error("拉取领星货件签收明细数据睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+            }
             FbaReceiveReqDTO currentReceivedDTO = new FbaReceiveReqDTO(sid, receivedDate, offset);
             Result<List<Object>> currentResult = getReceivedInventory(currentReceivedDTO);
             if (!CollectionUtils.isEmpty(currentResult.getData())) {

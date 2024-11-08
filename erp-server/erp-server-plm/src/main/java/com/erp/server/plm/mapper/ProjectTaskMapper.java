@@ -239,5 +239,23 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return List<ProjectTaskEntity>
      */
     List<ProjectTaskEntity> listByChargeId(@Param("chargeId")String chargeId);
+
+    /**
+     * 任务高级查询
+     */
+    IPage<ProjectTaskDTO.SimpleViewDTO> pagingByAdvanceQuery(Page query, @Param("params") ProjectTaskDTO.PagingParamDTO params, @Param("spuNos") List<String> spuNos);
+
+    /**
+     * 根据任务Id查询
+     */
+    List<ProjectTaskDTO.SimpleViewDTO> listByTaskIds(@Param("taskIds") List<String> taskIds);
+
+    /**
+     * @param spuNos spuNo集合
+     * @return spuNo, skuNoStr
+     * @date: 2024-09-02
+     * @author: tanmujin
+     */
+    List<ProjectTaskDTO.Spu2SkuMapping> listSkusBySpuNo(@Param("spuNos") List<String> spuNos);
 }
 

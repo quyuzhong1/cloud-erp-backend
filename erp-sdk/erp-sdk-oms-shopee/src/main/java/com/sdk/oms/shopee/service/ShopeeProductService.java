@@ -1,13 +1,14 @@
 package com.sdk.oms.shopee.service;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
-import com.sdk.oms.shopee.dto.product.response.Item;
-import com.sdk.oms.shopee.dto.product.response.ItemInfo;
+import com.sdk.oms.shopee.dto.product.response.*;
 import com.sdk.oms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -45,8 +46,11 @@ public class ShopeeProductService {
                 .tmpPartnerKey(tmp_partner_key)
                 .timeTo(null)
                 .timeFrom(null)
+                .itemId(1883822L)
                 .build();
-        List<ItemInfo> productList = new ArrayList<>(0);
+//        List<ModelInfo> modelList = shopeeProductService.getModelList(productRequest);
+//        System.out.println(modelList);
+        List<ShopeeProductInfo> productList = new ArrayList<>(0);
         shopeeProductService.getAllProduct(productRequest, productList);
 //        JSONObject response = productList.getResponse();
 //        JSONArray list = (JSONArray) response.get("item");
@@ -65,50 +69,67 @@ public class ShopeeProductService {
 
     }
 
-    public void getAllProduct(ProductRequest productRequest, List<ItemInfo> itemInfos) {
+    public void getAllProduct(ProductRequest productRequest, List<ShopeeProductInfo> shopeeProductInfos) {
         log.info("获取产品订单：{}", productRequest);
         ShopeeResponse productList = this.getProductList(productRequest);
         if (Objects.isNull(productList) || Objects.isNull(productList.getResponse())) {
+            log.error("获取产品订单接口返回异常：{}", productList);
             return;
         }
         JSONObject response = productList.getResponse();
-
-        String error = response.getString("error");
+        String error = response.getStr("error");
         if (StringUtils.isNotEmpty(error)) {
-            return;
-        }
-        JSONArray jsonArray = (JSONArray) response.get("item");
-        if (Objects.isNull(jsonArray)){
+            log.error("获取产品订单接口异常：{}", error);
             return;
         }
         //目录列表
-        List<Item> items = JSONObject.parseArray(jsonArray.toJSONString(), Item.class);
+        List<Item> items = JSONUtil.toList(response.getJSONArray("item"), Item.class);
         //获取item明细
-        List<Long> itemIds = items.stream().map(Item::getItemId).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(itemIds)) {
-            productRequest.setItemIdList(StringUtils.join(itemIds, ","));
-            ShopeeResponse productItemBaseInfo = this.getProductItemBaseInfo(productRequest);
-            JSONObject responseBaseInfo = productItemBaseInfo.getResponse();
-            if (Objects.nonNull(responseBaseInfo)) {
-                //循环填充
-                JSONArray listBase = responseBaseInfo.getJSONArray("item_list");
-                List<ItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), ItemInfo.class);
-                if (CollectionUtils.isNotEmpty(list)) {
-                    itemInfos.addAll(list);
-                }
+        List<Long> itemIds = items.stream().map(Item::getItemId).filter(Objects::nonNull).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(itemIds)) {
+            return;
+        }
+        productRequest.setItemIdList(StringUtils.join(itemIds, ","));
+        //获取产品基础信息
+        ShopeeResponse productItemBaseInfo = this.getProductItemBaseInfo(productRequest);
+        JSONObject responseBaseInfo = productItemBaseInfo.getResponse();
+        if (Objects.isNull(responseBaseInfo)) {
+            log.error("获取产品基础信息接口返回异常：{}", productItemBaseInfo);
+            return;
+        }
+        //循环填充
+        List<ItemInfo> itemInfos = JSONUtil.toList(responseBaseInfo.getJSONArray("item_list"), ItemInfo.class);
+        if (CollectionUtils.isEmpty(itemInfos)) {
+            return;
+        }
+        //获取产品model列表
+        for (Long itemId : itemIds){
+            productRequest.setItemId(itemId);
+            //获取订单明细sku列表--erp以这个维度为准
+            List<ModelInfo> modelList = getModelList(productRequest);
+            //匹配对应的
+            if (CollectionUtils.isEmpty(modelList)){
+                continue;
+            }
+            //匹配
+            ItemInfo itemInfo = itemInfos.stream().filter(e -> Objects.nonNull(e.getItemId()) && e.getItemId().compareTo(itemId) == 0).findFirst().orElse(null);
+            if (Objects.isNull(itemInfo)){
+                continue;
+            }
+            for (ModelInfo modelInfo : modelList){
+                ShopeeProductInfo shopeeProductInfo = new ShopeeProductInfo();
+                shopeeProductInfo.setModelInfo(modelInfo);
+                shopeeProductInfo.setItemInfo(itemInfo);
+                shopeeProductInfos.add(shopeeProductInfo);
             }
         }
         //是否还有数据
-        boolean hasNextPage = response.getBoolean("has_next_page");
+        boolean hasNextPage = response.getBool("has_next_page");
         if (hasNextPage) {
-            Integer next_offset = response.getInteger("next_offset");
+            Integer next_offset = response.getInt("next_offset");
             productRequest.setOffset(next_offset);
-            getAllProduct(productRequest, itemInfos);
+            getAllProduct(productRequest, shopeeProductInfos);
         }
-//        System.out.println(responseBaseInfo);
-//        ShopeeResponse productItemExtraInfo = this.getProductItemExtraInfo(host, token, shopId, partner_id, tmp_partner_key, StringUtils.join(itemIds, ","));
-//        JSONObject responseExtraInfo = productItemExtraInfo.getResponse();
-//        System.out.println(responseExtraInfo);
     }
 
     public ShopeeResponse getProductList(ProductRequest productRequest) {
@@ -123,12 +144,6 @@ public class ShopeeProductService {
         paramMap.put("access_token", productRequest.getToken());
         paramMap.put("offset", productRequest.getOffset());
         paramMap.put("page_size", pageSize);
-//        if (Objects.nonNull(productRequest.getTimeFrom())) {
-//            paramMap.put("update_time_from", productRequest.getTimeFrom());
-//        }
-//        if (Objects.nonNull(productRequest.getTimeTo())) {
-//            paramMap.put("update_time_to", productRequest.getTimeTo());
-//        }
         List<String> status = new ArrayList<>();
         status.add("NORMAL");
         status.add("DELETED");
@@ -165,4 +180,33 @@ public class ShopeeProductService {
         return ShopeeApiUtils.sendGet(host + path, paramMap);
     }
 
+    /**
+     * 获取产品model
+     * @param productRequest
+     * @return
+     */
+    public List<ModelInfo> getModelList(ProductRequest productRequest) {
+        HashMap<String, Object> paramMap = new HashMap<>();
+        String path = "/api/v2/product/get_model_list";
+        paramMap.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
+        paramMap.put("sign", ShopeeApiUtils.getOrderSign(path, productRequest.getToken(), productRequest.getPartnerId(),
+                productRequest.getTmpPartnerKey(), productRequest.getShopId()));
+        paramMap.put("shop_id", productRequest.getShopId());
+        paramMap.put("partner_id", productRequest.getPartnerId());
+        paramMap.put("access_token", productRequest.getToken());
+        paramMap.put("item_id", productRequest.getItemId());
+        ShopeeResponse shopeeResponse = ShopeeApiUtils.sendGet(productRequest.getHost() + path, paramMap);
+        if (Objects.isNull(shopeeResponse) || Objects.isNull(shopeeResponse.getResponse())) {
+            return null;
+        }
+        JSONObject response = shopeeResponse.getResponse();
+        String error = response.getStr("error");
+        if (StrUtil.isNotEmpty(error)) {
+            log.error("获取产品明细参数异常：{}", error);
+            return null;
+        }
+        //打印列表
+        JSONArray modelList = response.getJSONArray("model");
+        return JSONUtil.toList(modelList, ModelInfo.class);
+    }
 }

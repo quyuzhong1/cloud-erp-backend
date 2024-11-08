@@ -23,7 +23,7 @@ public class OrderItemDetail implements Serializable {
      * Name of the item in local language.
      */
     @Alias( "item_name")
-    private String name;
+    private String itemName;
 
     /**
      * A item SKU (stock keeping unit) is an identifier defined by a seller,
@@ -47,7 +47,7 @@ public class OrderItemDetail implements Serializable {
      * TThis value indicates whether buyer buy the order item in wholesale price.
      */
     @Alias( "is_wholesale")
-    private boolean wholesale;
+    private boolean isWholesale;
     @Alias( "weight")
     private float weight;
     @Alias( "add_on_deal")

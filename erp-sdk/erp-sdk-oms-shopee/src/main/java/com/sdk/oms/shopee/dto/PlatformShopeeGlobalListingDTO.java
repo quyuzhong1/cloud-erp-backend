@@ -96,11 +96,11 @@ public class PlatformShopeeGlobalListingDTO extends CleanBaseDTO {
         if (CollectionUtils.isEmpty(attributes)) return "";
         StringBuffer stringBuffer = new StringBuffer();
         attributes.forEach(attribute -> {
-            stringBuffer.append(attribute.getAttributeName()).append(":");
+            stringBuffer.append(attribute.getOriginalAttributeName()).append(":");
             List<AttributeValue> attributeValueList = attribute.getAttributeValueList();
             if (CollectionUtils.isNotEmpty(attributeValueList)) {
                 attributeValueList.forEach(attributeValue -> {
-                    stringBuffer.append(attributeValue.getValueName());
+                    stringBuffer.append(attributeValue.getOriginalValueName());
                 });
                 stringBuffer.append(";");
             }

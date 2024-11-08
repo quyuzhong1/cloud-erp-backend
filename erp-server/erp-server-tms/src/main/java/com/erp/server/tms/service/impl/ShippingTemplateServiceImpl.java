@@ -492,7 +492,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isError = Boolean.TRUE;
                     excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                    break;
+                    continue;
                 }
                 ShippingTemplateRuleDTO.AddDTO ruleAddDTO = new ShippingTemplateRuleDTO.AddDTO();
                 //起始国

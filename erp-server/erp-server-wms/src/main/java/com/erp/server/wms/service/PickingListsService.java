@@ -101,4 +101,11 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @param dto dto
      **/
     PagingVO<PickingListsDTO.ExportInfoDTO> exportPickingLists(PagingDTO<PickingListsDTO.ExportDTO> dto);
+
+    void initDelivery(List<String> codes);
+    /**
+     * 处理组合sku
+     */
+    void generatePicking(PickingListsDTO.AddDTO dto);
+
 }

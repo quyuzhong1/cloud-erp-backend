@@ -424,6 +424,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         @Size(max = 30, message = "出库code最大长度不能超过30位")
         private String outstockCode;
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
 
         /**
          * 渠道id
@@ -576,6 +580,14 @@ public class LogisticsBillDTO implements Serializable {
     @NoArgsConstructor
     public static class LogisticsBillVo {
         /**
+         * 物流单id
+         */
+        private String id;
+        /**
+         * 物流单明细id
+         */
+        private String detailId;
+        /**
          * 店铺id
          */
         private String shopId;
@@ -595,6 +607,14 @@ public class LogisticsBillDTO implements Serializable {
          * 来源单号
          */
         private String sourceCode;
+        /**
+         * 出库单id
+         */
+        private String outstockId;
+        /**
+         * 出库单编码
+         */
+        private String outstockCode;
         /**
          * 运输单号
          */
@@ -676,6 +696,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String platformCode;
         /**
+         * 包裹号【虾皮下单使用】
+         */
+        private String packageNumber;
+        /**
          * 销售平台
          */
         private String salesPlatform;
@@ -716,6 +740,7 @@ public class LogisticsBillDTO implements Serializable {
     }
 
     @Data
+    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class GenerateBillResultDTO{
@@ -984,12 +1009,13 @@ public class LogisticsBillDTO implements Serializable {
          * 运输状态
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticTrackStatus
          */
+        @NotNull(message = "运输状态不能为空")
         private String trackStatus;
 
         /**
          * 状态时间
          */
-        @NotNull(message = "状态时间不能为空")
+
         private LocalDateTime trackTime;
 
         /**

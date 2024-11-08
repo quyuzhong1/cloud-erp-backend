@@ -379,24 +379,6 @@ public class SoB2cDeliveryController extends BaseController {
     }
 
     /**
-     * 拦截结果确认
-     * @Author Luo_WG
-     * @Date 2023/12/14 11:45
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.common.business.dto.base.BatchResultDTO>>
-     **/
-    @PostMapping("/interceptResultConfirm")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:interceptResultConfirm",
-            serviceClass = SoB2cDeliveryService.class,
-            keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> interceptResultConfirm(@RequestBody SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto) {
-        List<BatchResultDTO> resultDTOS = soB2cDeliveryService.interceptResultConfirm(dto);
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
      * 生成波次
      * @param dto 参数
      * @see BaseResultDTO.AddDTO
@@ -516,12 +498,12 @@ public class SoB2cDeliveryController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/handleErrorData")
-    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated SoB2cDeliveryDTO.HandleErrorDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO receiverResult;
             try {
-                receiverResult = soB2cDeliveryService.handleErrorData(id);
+                receiverResult = soB2cDeliveryService.handleErrorData(id,dto.getIsAddQty());
             } catch (Exception e) {
                 log.error("处理数据", e);
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);

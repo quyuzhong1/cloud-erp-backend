@@ -1,5 +1,6 @@
 package com.erp.rpc.tms.feign;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -25,6 +26,5 @@ public interface TmsFirstMileLogisticFeign {
      * 自动生成头程物流单
      **/
     @PostMapping("/feign/tmsFirstMileLogistic/autoGenerateFirstMileLogistic")
-    Boolean autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
-
+    BatchResultDTO autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
 }

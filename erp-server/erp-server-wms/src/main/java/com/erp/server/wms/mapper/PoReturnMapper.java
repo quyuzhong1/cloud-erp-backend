@@ -3,6 +3,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.srm.dto.CfgSettingDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -30,10 +31,6 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
     List<PurchaseReturnOrderDTO.GetReturnQtyDTO> getReturnQty(@Param("purchaseOrderId") String purchaseOrderId);
 
     List<PurchaseReturnOrderDTO.OrderRefReceiveDTO> purchaseOrderRefReturn(@Param("purchaseOrderId") String purchaseOrderId);
-
-    List<PurchaseReturnOrderDTO.PagingViewDTO> listExport(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
-    Page<PurchaseReturnOrderDTO.PagingViewDTO> listExport(@Param("page") Page<PurchaseReturnOrderDTO.PagingViewDTO> page, @Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
-
     Integer listCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
     Integer pdaListCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
@@ -83,4 +80,18 @@ public interface PoReturnMapper extends BaseMapper<PoReturnEntity> {
     List<String> listPoReturnAutoConfirm(@Param("params") List<CfgSettingDTO.ViewDTO> list);
 
     List<PoReturnDetailEntity> listPoReturnByPoDetailIds(@Param("podIds") List<String> podIds,@Param("approveStatusList") List<String> approveStatusList);
+
+    /**
+     * 获取委外订单列表
+     * @param poIds
+     * @return
+     */
+    List<PurchaseReturnOrderDTO.SubcontractOrderDTO> listSubcontractOrder(@Param("poIds") List<String> poIds);
+
+    /**
+     * 批量查询报价
+     * @param dto
+     * @return
+     */
+    List<PurchasePriceDetailDTO.PurchaseTaxPriceBatchViewDTO> batchGetTaxPrice(@Param("params") PurchasePriceDetailDTO.PurchaseTaxPriceBatchSearchDTO params);
 }

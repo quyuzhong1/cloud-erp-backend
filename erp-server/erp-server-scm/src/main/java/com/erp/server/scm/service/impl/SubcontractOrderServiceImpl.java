@@ -63,6 +63,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -103,6 +104,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
     @Resource
     private InventoryFeign inventoryFeign;
@@ -270,7 +273,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     public String add(SubcontractOrderDTO.AddDTO addDTO) {
         SubcontractOrderEntity subcontractOrderEntity = new SubcontractOrderEntity();
         BeanMapperUtils.copy(addDTO, subcontractOrderEntity);
-
         // 数据处理
         handleData(subcontractOrderEntity);
 
@@ -578,7 +580,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<KingdeePaymentConditionEntity> paymentConditionList =  kingdeePaymentConditionService.list();
 
         //仓位信息
-        List<String> warehouseLocationCodeList = detailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getWarehouseLocation())).map(SubcontractOrderDetailEntity::getWarehouseLocation).collect(Collectors.toList());
+        List<String> warehouseLocationCodeList = detailList.stream().map(SubcontractOrderDetailEntity::getWarehouseLocation).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationCodeList).list();
 
         List<SubcontractOrderDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ViewDTO.class, parentList);
@@ -603,6 +605,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //付款条件
             String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(viewDTO.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             viewDTO.setPaymentConditionName(paymentConditionName);
+
+            //仓位名称
+            String locationName = warehouseLocationList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),viewDTO.getWarehouseId()) && StrUtil.equals(obj.getCode(), viewDTO.getWarehouseLocation())).map(WarehouseLocationEntity::getName).findFirst().orElse("");
+            viewDTO.setWarehouseLocationName(locationName);
 
             //子集SKU
             List<SubcontractOrderDetailEntity> childList = detailList.stream().filter(obj -> obj.getParentId().equals(viewDTO.getId())).collect(Collectors.toList());
@@ -678,6 +684,22 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_95163);
         }
 
+        //仓位信息
+        List<String> warehouseLocationCodeList = list.stream().map(SubcontractOrderDTO.ViewGeneratePoDTO::getWarehouseLocation).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationCodeList).list();
+
+        //价目查询
+        List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
+        list.forEach(e -> {
+            priceList.add(PurchasePriceDTO.PriceDTO.builder()
+                    .purchaseOrgId(e.getPurchaseOrgId())
+                    .qty(e.getQty())
+                    .skuId(e.getSkuId())
+                    .supplierId(e.getSupplierId())
+                    .build());
+        });
+        List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
+
         List<SubcontractOrderDTO.ViewGeneratePoDTO> resultList = new ArrayList<>();
 
         for (SubcontractOrderDTO.ViewGeneratePoDTO dto : list) {
@@ -693,26 +715,30 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             }
             //报价信息查询
             if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId())) {
-                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO  = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-                searchDTO.setSkuId(dto.getSkuId());
-                searchDTO.setSkuNo(dto.getSkuNo());
-                searchDTO.setSupplierId(dto.getSupplierId());
-                searchDTO.setPurchaseOrgId(dto.getPurchaseOrgId());
-                searchDTO.setPurchaseQty(dto.getQty().intValue() );
-                Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> pair = purchasePriceDetailService.listPurchaseTaxPriceView(searchDTO);
-                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> value = pair.getValue();
-                if (CollectionUtils.isNotEmpty(value)) {
-                    dto.setPrice(value.get(0).getTaxPrice());
-                    dto.setTaxRate(value.get(0).getTaxRate());
-                    dto.setCurrency(value.get(0).getCurrency());
-                    dto.setCurrencySymbol(value.get(0).getCurrencySymbol());
-                    dto.setAmount(MathUtil.multiply(value.get(0).getTaxPrice(),searchDTO.getPurchaseQty()));
+                //采购单价赋值
+                PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                                obj.getSkuId().equals(dto.getSkuId())
+                                && obj.getSupplierId().equals(dto.getSupplierId())
+                                && StrUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
+                        .findFirst().orElse(null);
+                if (Objects.nonNull(viewDTO)){
+                    dto.setPrice(viewDTO.getTaxPrice());
+                    dto.setTaxRate(viewDTO.getTaxRate());
+                    dto.setCurrency(viewDTO.getCurrency());
+                    dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                    dto.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
                 }
             }
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
+
+            //仓位名称
+            String locationName = warehouseLocationList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),dto.getWarehouseId()) && StrUtil.equals(obj.getCode(), dto.getWarehouseLocation()))
+                    .map(WarehouseLocationEntity::getName).findFirst().orElse("");
+            dto.setWarehouseLocationName(locationName);
+
             dto.setIsConstitute(Boolean.FALSE);
             if (ObjectUtils.isEmpty(dto.getParentId())) {
                 dto.setIsConstitute(Boolean.TRUE);
@@ -723,7 +749,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //待申请数量
             Integer purchaseQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(purchaseOrderList)) {
-                 purchaseQty = purchaseOrderList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+                 purchaseQty = purchaseOrderList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId()))
+                         .map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             dto.setApplyQty(dto.getQty() - purchaseQty);
             dto.setQty(dto.getApplyQty());
@@ -764,6 +791,19 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
+        //价目查询
+        List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
+        resultList.forEach(e ->{
+            if (Objects.nonNull(e.getIsGift()) && !e.getIsGift()){
+                priceList.add(PurchasePriceDTO.PriceDTO.builder()
+                        .purchaseOrgId(e.getPurchaseOrgId())
+                        .qty(e.getQty())
+                        .skuId(e.getSkuId())
+                        .supplierId(e.getSupplierId())
+                        .build());
+            }
+        });
+        List<PurchasePriceDTO.PriceDTO> viewDTOList = purchasePriceService.batchGetPurchasePrice(priceList);
 
         List<String> poIds = new ArrayList<>();
         Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
@@ -825,13 +865,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
                 if (!addDetailDTO.getIsGift()) {
                     //供应商报价信息
-                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(addDetailDTO.getQty(),addDetailDTO.getSkuId(),addDetailDTO.getSkuNo(),addDetailDTO.getSupplierId(),addDetailDTO.getPurchaseOrgId());
-                    List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
-                    PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
-                    poDetailAddDTO.setCurrency(viewDTO.getCurrency());
-                    poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                    poDetailAddDTO.setTaxPrice(ObjectUtils.isEmpty(addDetailDTO.getTaxPrice())? viewDTO.getTaxPrice() : addDetailDTO.getTaxPrice());
-                    poDetailAddDTO.setDeliveryDay(viewDTO.getDeliveryDay());
+                    PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                                    obj.getSkuId().equals(addDetailDTO.getSkuId())
+                                            && obj.getSupplierId().equals(addDetailDTO.getSupplierId())
+                                            && StrUtil.equals(obj.getPurchaseOrgId(),addDetailDTO.getPurchaseOrgId()))
+                            .findFirst().orElse(null);
+                    if (Objects.nonNull(viewDTO)){
+                        poDetailAddDTO.setCurrency(viewDTO.getCurrency());
+                        poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                        poDetailAddDTO.setTaxPrice(ObjectUtils.isEmpty(addDetailDTO.getTaxPrice())? viewDTO.getTaxPrice() : addDetailDTO.getTaxPrice());
+                        poDetailAddDTO.setTaxRate(viewDTO.getTaxRate());
+                        poDetailAddDTO.setDeliveryDay(viewDTO.getDeliveryDay());
+                    }
                 }
                 poDetailAddDTO.setPurchaseAmount(MathUtil.multiply(poDetailAddDTO.getTaxPrice(),poDetailAddDTO.getPurchaseQty()));
                 poDetailList.add(poDetailAddDTO);
@@ -1173,7 +1218,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SubcontractOrderDTO.ListSelectDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.ListSelectDTO.class, list);
         return resultList;
     }
-
     /**
      * @description: 启动流程
      * @author Will

@@ -11,6 +11,7 @@ import java.util.Objects;
 @NoArgsConstructor
 public enum SourceTypeEnum {
     SELF_ADD("selfAdd", "手动新增",""),
+    AUTO_ADD("autoAdd", "自动新增",""),
 
 
 
@@ -44,17 +45,22 @@ public enum SourceTypeEnum {
     STOCKTAKING_TASK("stocktakingTask", "盘点任务单","stocktaking_task"),
     STOCKTAKING_PLAN("stocktakingPlan", "盘点计划单","stocktaking_plan"),
     OTHER_INSTOCK("otherInstock", "其他入库","other_instock"),
+    WDT_OTHER_INSTOCK("wdtOtherInstock", "其他入库","other_instock"),
     OTHER_OUTSTOCK("otherOutstock", "其他出库","other_outstock"),
+    WDT_OTHER_OUTSTOCK("wdtOtherOutstock", "其他出库","other_outstock"),
     WAREHOUSE("warehouse", "仓库","warehouse"),
     SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
+    SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
     PACKING_TASK("packingTask", "装箱任务",""),
 
 
     STOCKTAKING_PROFIT_LOSS("stocktakingTaskProfitLoss", "盘盈盘亏单","stocktaking_profit_loss"),
+    STOCKTAKING_LOSS("stocktakingTaskLoss", "盘亏单","stocktaking_profit_loss"),
+    STOCKTAKING_PROFIT("stocktakingTaskProfit", "盘盈单","stocktaking_profit_loss"),
     FBA_SHIPMENT("fbaShipment", "FBA货件","fba_shipment"),
     FBA_SHIPMENT_DETAIL("fbaShipmentDetail", "FBA货件明细","fba_shipment_detail"),
-    FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单","first_mile_delivery"),
+    FIRST_MILE_DELIVERY("firstMileDelivery", "头程发货单", "first_mile_delivery"),
     FIRST_MILE_DELIVERY_TO_ULANZI("firstMileDeliveryToUlanzi", "头程发货单（发货仓->优蓝子中转仓）","first_mile_delivery_to_ulanzi"),
     FIRST_MILE_DELIVERY_FROM_ULANZI("firstMileDeliveryFromUlanzi", "头程发货单（优蓝子中转仓->目的在途仓）","first_mile_delivery_from_ulanzi"),
     FBA_INVENTORY("fbaInventory", "FBA仓库","fba_inventory"),
@@ -65,6 +71,7 @@ public enum SourceTypeEnum {
     REQUISITION_APPLICATION_FINISH("requisitionApplicationFinish", "要货申请(完成)","requisition_application"),
 
     SUBCONTRACT_ISSUE("subcontractIssue", "委外发料单","subcontract_issue"),
+    SUBCONTRACT_RETURN("subcontractReturn", "委外退料单","subcontract_return"),
     WAREHOUSE_AREA_INFO("warehouseAreaInfo", "库区","warehouse_area_info"),
     VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单","virtual_warehouse_allocation"),
     PICKING_LISTS_ADD("pickingListsAdd", "拣货单新增","picking_lists_add"),
@@ -72,6 +79,7 @@ public enum SourceTypeEnum {
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
+    SO_B2C_RETURN("soB2cReturn", "B2c销售退货订单","so_return"),
     SO_INFO("soInfo", "B2B销售订单","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
@@ -102,6 +110,7 @@ public enum SourceTypeEnum {
     PRODUCT_COMBINATION("productCombination", "组合产品",""),
 
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
+    WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
@@ -197,6 +206,9 @@ public enum SourceTypeEnum {
 
     QIMEN_SO_OUT_STOCK("qimen_so_out_stock", "奇门销售出库单", "dmp_pull_task"),
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
+    PILOT_APPLICATION("pilotApplication", "试产量产单", "pilot_application"),
+    FIRST_MILE_ESTIMATED("first_mile_estimated", "头程暂估账单", "first_mile_estimated_bill"),
+    THIRD_WAREHOUSE_RETURN_INSTOCK("third_warehouse_return_instock", "三方仓退货入库单","dmp_pull_task"),
 
 
 

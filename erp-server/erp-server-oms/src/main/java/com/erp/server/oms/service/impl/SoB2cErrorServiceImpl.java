@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.PlatformShipOrderDTO;
@@ -125,6 +126,26 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         Boolean result = baseMapper.deleteB2cError(dto);
         if(result){
             soB2cService.removeSignError(dto.getMainId(),dto.getType());
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean removeAllTypeErrorOrder(String mainId) {
+        if(StringUtils.isBlank(mainId)){
+            return false;
+        }
+        List<SoB2cErrorEntity> list = this.lambdaQuery().eq(SoB2cErrorEntity::getMainId, mainId).list();
+        SoB2cErrorDTO.DeleteDTO dto=new SoB2cErrorDTO.DeleteDTO();
+        dto.setMainId(mainId);
+        Boolean result = baseMapper.deleteB2cError(dto);
+        if(result){
+            if(CollectionUtils.isNotEmpty(list)){
+                list.stream()
+                        .filter(v -> null != v.getType())
+                        .forEach(v ->  soB2cService.removeSignError(mainId,v.getType()));
+            }
         }
         return result;
     }

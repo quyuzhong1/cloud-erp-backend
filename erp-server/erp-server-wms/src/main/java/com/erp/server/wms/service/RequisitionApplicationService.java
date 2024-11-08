@@ -1,13 +1,13 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -171,12 +171,12 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * 生成拣货单弹窗
      * @param page 要货申请id
      */
-    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<String> page);
+    PagingVO<RequisitionApplicationDTO.PickingViewDTO> generatePickingView(PagingDTO<RequisitionApplicationDTO.GetPickingViewDTO> page);
     /**
      * 生成拣货单
      * @param picking 拣货参数
      */
-    void generatePickingList(RequisitionApplicationDTO.GeneratePickingDTO picking);
+    List<WarehouseLocationMoveDTO.GenPickToSkuMove> generatePickingList(RequisitionApplicationDTO.GeneratePickingDTO picking);
 
     List<BatchResultDTO> bindShipment(List<RequisitionApplicationDTO.BindShipment> dto);
 
@@ -212,4 +212,52 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
      * @return
      */
     PagingVO<RequisitionApplicationDTO.ListDTO> exportRequisitionApplication(PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto);
+
+    List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(String id);
+
+    RequisitionApplicationDTO.FbaBindShipmentViewDTO fbaBindShipmentMatching(RequisitionApplicationDTO.FbaBindShipmentMatchingDTO dto);
+
+    List<RequisitionApplicationDTO.FbaBindShipmentDetailViewDTO> fbaBindShipmentDetailView(RequisitionApplicationDTO.FbaBindShipmentDetailDTO dto);
+
+    void generateDeliveryWithFba(RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto);
+
+    List<RequisitionApplicationDTO.DeliverRecordView> listDeliverRecord(String id);
+
+    void assembleDownload(List<String> ids, HttpServletResponse response);
+
+    /**
+     * 要货申请完成飞书通知
+     * @author jack
+     * @date 2024/10/9
+     * @param requisitionApplication
+     */
+    void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication);
+    /**
+     * 下载货件装箱信息模板数据
+     *
+     * @param response
+     * @param detailDTOS
+     */
+    void downloadPackingTemplate(HttpServletResponse response, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailDTOS);
+
+    /**
+     * 批量导入
+     * @param excelFile
+     * @param fbaBindShipmentViewDTOS
+     * @param response
+     * @return
+     */
+    RequisitionApplicationDTO.ImportDTO importFile(MultipartFile excelFile, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS, HttpServletResponse response);
+
+    List<WarehouseLocationMoveDTO.GenPickToSkuMove> genPickToSkuMove(String warehouseId, String warehouseName, PickingListsDTO.AddDTO addDTO);
+
+
+    /**
+     * 打印fnsku预览
+     * @param dto
+     * @Author jack
+     * @Date 2024/10/16
+     * @return List<RequisitionApplicationDTO.PrintFnskuPreviewDTO>
+     **/
+    List<RequisitionApplicationDTO.PrintFnskuDetailDTO> printFnskuPreview(BaseIdsDTO.IdsDTO dto);
 }

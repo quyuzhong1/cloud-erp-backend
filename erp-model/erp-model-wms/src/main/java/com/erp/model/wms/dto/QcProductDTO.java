@@ -95,11 +95,11 @@ public class QcProductDTO {
         private BigDecimal boxWeight;
 
         /**
-         * 整单数量
+         * 整箱数量
          */
-        @NotNull(message = "整单数量不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @Min(value = 1, message = "整单数量最小值为1" , groups = {UpdateGroup.class, AddGroup.class})
-        @Max(value = 999999999, message = "整单数量最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
+        @NotNull(message = "整箱数量不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @Min(value = 1, message = "整箱数量最小值为1" , groups = {UpdateGroup.class, AddGroup.class})
+        @Max(value = 999999999, message = "整箱数量最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
         private Integer boxQty;
 
         /**
@@ -200,7 +200,7 @@ public class QcProductDTO {
         private BigDecimal boxHeight;
 
         /**
-         * 整单数量
+         * 整箱数量
          */
         private Integer boxQty;
 

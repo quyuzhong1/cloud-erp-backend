@@ -1,7 +1,9 @@
 package com.sdk.oms.shopee.service;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -12,10 +14,7 @@ import com.sdk.oms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.sdk.oms.shopee.constants.ShopeeConstants.*;
@@ -33,7 +32,7 @@ public class ShopeeOrderService {
     public static void main(String[] args) {
         ShopeeOrderService shopeeOrderService = new ShopeeOrderService();
         long timest = System.currentTimeMillis() / 1000L;
-        Long time_from = timest - (3600 * 24 * 14);
+        Long time_from = timest - (3600 * 24 * 15);
         Long time_to = timest;
         //订单列表
         OrderRequest orderRequest = OrderRequest.builder()
@@ -56,19 +55,17 @@ public class ShopeeOrderService {
     public void getAllOrder(OrderRequest orderRequest, List<OrderDetail> orderDetails) {
         ShopeeResponse shopeeResponse = this.getOrderList(orderRequest);
         if (Objects.isNull(shopeeResponse) || Objects.isNull(shopeeResponse.getResponse())){
+            log.error(StrUtil.format("虾皮订单拉取接口返回异常：{}", shopeeResponse));
             return;
         }
         JSONObject response = shopeeResponse.getResponse();
-        String error = response.getString("error");
+        String error = response.getStr("error");
         if (StringUtils.isNotEmpty(error)) {
-            return;
-        }
-        JSONArray jsonArray = (JSONArray) response.get("order_list");
-        if (Objects.isNull(jsonArray)){
+            log.error(StrUtil.format("虾皮订单拉取接口异常：{}", error));
             return;
         }
         //目录列表
-        List<ShopeeOrder> orderList = JSONObject.parseArray(jsonArray.toJSONString(), ShopeeOrder.class);
+        List<ShopeeOrder> orderList = JSONUtil.toList(response.getJSONArray("order_list"), ShopeeOrder.class);
         //获取item明细
         List<String> orderSns = orderList.stream().map(ShopeeOrder::getOrderSn).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(orderSns)) {
@@ -78,16 +75,16 @@ public class ShopeeOrderService {
             if (Objects.nonNull(responseBaseInfo)){
                 //循环填充
                 JSONArray listBase = responseBaseInfo.getJSONArray("order_list");
-                List<OrderDetail> list = JSONObject.parseArray(listBase.toJSONString(), OrderDetail.class);
+                List<OrderDetail> list = JSONUtil.toList(listBase, OrderDetail.class);
 
                 if (CollectionUtils.isNotEmpty(list)) {
                     orderDetails.addAll(list);
                 }
             }
         }
-        boolean more = response.getBoolean("more");
+        boolean more = response.getBool("more");
         if (more) {
-            String next_cursor = response.getString("next_cursor");
+            String next_cursor = response.getStr("next_cursor");
             orderRequest.setCursor(next_cursor);
             //还有订单数据
             this.getAllOrder(orderRequest, orderDetails);
@@ -113,18 +110,16 @@ public class ShopeeOrderService {
         orderRequest.setTimestamp(timestamp);
         HashMap<String, Object> paramMap = getOrderCommonParam(orderRequest);
         //create_time, update_time.
-        paramMap.put("time_range_field", "update_time");
-        //15天内
-//        Long time_from = timestamp - (3600 * 24 * 14);
-//        Long time_to = timestamp;
-
+        if(orderRequest.isCreateTime()) {
+        	paramMap.put("time_range_field", "create_time");
+        }else {
+        	paramMap.put("time_range_field", "update_time");
+        }
         if (Objects.nonNull(orderRequest.getTimeFrom())) {
             paramMap.put("time_from", orderRequest.getTimeFrom());
-//            paramMap.put("time_from", time_from);
         }
         if (Objects.nonNull(orderRequest.getTimeTo())) {
             paramMap.put("time_to", orderRequest.getTimeTo());
-//            paramMap.put("time_to", time_to);
         }
         paramMap.put("timestamp", timestamp);
         //1-100

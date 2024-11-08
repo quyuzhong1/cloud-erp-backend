@@ -81,4 +81,46 @@
             #{id}
         </foreach>
     </update>
+
+    <!-- 查询分货信息 -->
+    <select id="listAllocationData"
+            resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO$AllocationDataDTO">
+        select
+            vwa.type,
+            vwad.sku_id,
+            vwad.warehouse_id,
+            vwad.to_virtual_warehouse_id,
+            vwad.from_virtual_warehouse_id,
+            vwad.qty
+        from virtual_warehouse_allocation vwa
+        left join virtual_warehouse_allocation_detail vwad on vwad.is_deleted = false and vwa.id = vwad.main_id
+        <where>
+            vwa.is_deleted = false and vwa.status = 'handle' and vwa.disabled = false
+            <if test="skuIdList != null and skuIdList.size > 0">
+                and vwad.sku_id in
+                <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="warehouseIdList != null and warehouseIdList.size > 0">
+                and vwad.warehouse_id in
+                <foreach collection="warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="virtualWarehouseIdList != null and virtualWarehouseIdList.size > 0">
+                and (
+                vwad.from_virtual_warehouse_id in
+                <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+                or
+                vwad.to_virtual_warehouse_id in
+                <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+                )
+            </if>
+        </where>
+    </select>
 </mapper>

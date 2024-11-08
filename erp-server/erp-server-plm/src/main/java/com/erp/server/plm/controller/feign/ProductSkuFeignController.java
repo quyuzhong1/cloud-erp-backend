@@ -145,21 +145,6 @@ public class ProductSkuFeignController {
         syncKingdeeService.updateBusinessSyncKingdeeStatus(params);
     }
 
-
-    /**
-     * 根据skuid 集合获取到sku 信息
-     *
-     * @param skuIds
-     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
-     * @author yl
-     * @date 2023-03-21 12:06
-     */
-    @PostMapping("/getSkuInfoByIds")
-    public List<SkuVO> getSkuInfoBySkuIds(@RequestBody List<String> skuIds) {
-        List<SkuVO> skuList = productDetailService.getSkuInfoBySkuIds(skuIds);
-        return skuList;
-    }
-
     /**
      * 根据skuid 集合获取到sku 信息
      *

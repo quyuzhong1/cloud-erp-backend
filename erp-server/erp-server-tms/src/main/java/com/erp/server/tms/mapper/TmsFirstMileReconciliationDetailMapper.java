@@ -30,4 +30,21 @@ public interface TmsFirstMileReconciliationDetailMapper extends BaseMapper<TmsFi
     String getCurrencyById(@Param("id") String id);
 
     List<TmsFirstMileReconciliationDetailEntity> listByMainIdsBySort(@Param("mainIds") List<String> mainIds);
+
+    /**
+     * 根据明细id获取对账记录
+     * @param sourceIds
+     * @return
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIds(@Param("sourceIds") List<String> sourceIds, @Param("type")String type);
+
+    /**
+     * 根据业务单号获取对账明细
+     *
+     * @param sourceIds
+     * @param status
+     * @param type
+     * @return
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIdsAndStatus(@Param("sourceIds") List<String> sourceIds, @Param("status") String status,@Param("type") String type);
 }

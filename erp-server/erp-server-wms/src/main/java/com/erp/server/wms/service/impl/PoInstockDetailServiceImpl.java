@@ -21,7 +21,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PoInstockDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -177,6 +177,10 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             entity.setPurchaseQty(detailEntity.getPurchaseQty());
             entity.setVariantProperty(detailEntity.getVariantProperty());
             entity.setMainId(mainId);
+            entity.setTaxPrice(detailEntity.getTaxPrice());
+            entity.setTaxRate(detailEntity.getTaxRate());
+            entity.setCurrency(detailEntity.getCurrency());
+            entity.setCurrencySymbol(detailEntity.getCurrencySymbol());
             //修改操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
                 PoInstockDetailEntity old = this.getById(entity.getId());

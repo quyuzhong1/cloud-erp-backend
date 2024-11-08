@@ -18,7 +18,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -463,6 +462,24 @@ public class SoInfoController extends BaseController {
     }
 
     /**
+     * 查询销售订单合同PDF数据
+     * @author will
+     * @date 2024/11/5 9:34
+     * @param id
+     * @return ApiResult<ExportPdfDTO>
+     */
+    @GetMapping("/listSoContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:exportSoContractPdf",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id")
+    public ApiResult<SoInfoDTO.ExportPdfDTO> listSoContractPdf(@RequestParam("id") String id) {
+        SoInfoDTO.ExportPdfDTO result = soInfoService.listSoContractPdf(id);
+        return success(result);
+    }
+
+    /**
      * 导出销售订单合同PDF
      *
      * @return
@@ -470,15 +487,14 @@ public class SoInfoController extends BaseController {
      * @date 2023-05-18 12:01
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单合同PDF")
-    @GetMapping("/exportSoContractPdf")
+    @PostMapping("/exportSoContractPdf")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
             menuCode = "oms:so:exportSoContractPdf",
             serviceClass = SoInfoService.class,
             keyIdName = "id")
-    public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractPdf(@RequestParam("id") String id) {
-        SoInfoDTO.ExportPdfDTO result = soInfoService.exportSoContractPdf(id);
-        return success(result);
+    public void exportSoContractPdf(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+         soInfoService.exportSoContractPdf(dto.getId(),response);
     }
 
     /**

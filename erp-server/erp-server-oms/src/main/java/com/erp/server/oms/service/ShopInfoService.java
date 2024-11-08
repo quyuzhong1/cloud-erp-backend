@@ -1,5 +1,8 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -331,6 +334,14 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * 导出店铺
      */
     PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto);
+    void saveCustom(ShopInfoEntity shopInfoEntity);
+
+    /**
+     * 检查和更新亚马逊同账号店铺授权
+     */
+    Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO);
+
+    PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds);
     /**
      * 区域远程搜索
      * @author will

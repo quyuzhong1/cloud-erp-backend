@@ -39,9 +39,9 @@ import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoChangeFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
@@ -556,6 +556,17 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     private Boolean plmApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
+            case PILOT_APPLICATION:
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setId(dto.getId());
+                approveOneDTO.setComment(dto.getComment());
+                approveOneDTO.setType(dto.getType());
+                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
+                    plmTaskFeign.pilotApprovalPass(approveOneDTO);
+                } else {
+                    plmTaskFeign.pilotApprovalNoPass(approveOneDTO);
+                }
+                break;
             case PRODUCT_BOM_INFO:
                 AuditParamDTO auditParamDTO = new AuditParamDTO();
                 auditParamDTO.setId(dto.getId());
@@ -678,6 +689,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case DELIVERY_PLAN:
                 wmsTaskFeign.deliveryPlanApprove(baseApproveParamDTO);
+                break;
+            case TRANSFER_INFO:
+                wmsTaskFeign.transferInfoApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

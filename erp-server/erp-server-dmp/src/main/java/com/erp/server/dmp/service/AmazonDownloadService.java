@@ -4,10 +4,7 @@ import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFbaShipmentDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.sdk.oms.amz.spapi.dto.*;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 
 import java.util.List;
@@ -30,7 +27,7 @@ public interface AmazonDownloadService {
     /**
      * 单处理订单详情下载
      */
-    void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto);
+    void singleHandlerOrderDetailDownload(String key, String platform, String category, PlatformAmazonOrderDTO dto, String handleKey);
 
     /**
      * 处理订单地址详情下载
@@ -112,4 +109,10 @@ public interface AmazonDownloadService {
      * 远程查询仓储中心配置
      */
     List<CfgAmzFulfillmentCenterEntity> feignQueryFulfillmentCenterlist(List<String> centerCodeList);
+
+
+    /**
+     * 填充报告数据
+     */
+    List<ReportFulfilledShipmentsMongoDTO> reportFulfillmentFillData(List<ReportFulfilledShipmentsMongoDTO> allList);
 }

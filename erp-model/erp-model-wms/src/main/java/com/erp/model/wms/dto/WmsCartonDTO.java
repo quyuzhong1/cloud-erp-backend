@@ -1,16 +1,14 @@
 package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -91,6 +89,7 @@ public class WmsCartonDTO {
          */
         @Valid
         @Size(min = 1, message = "调整装箱后，装箱数量不能为0")
+        @NotEmpty(message = "装箱明细不能为空")
         private List<AdjustDetailDTO> cartonDetailList;
     }
     @Data
@@ -98,6 +97,7 @@ public class WmsCartonDTO {
     public static class AdjustDetailDTO{
         private String skuId;
         private String skuNo;
+        private String fnSku;
         /**
          * 装箱数量（调整装箱数量）
          */
@@ -134,6 +134,10 @@ public class WmsCartonDTO {
          * 产品信息(输入SKU/FNSKU/EAN码)
          */
         private String searchKey;
+        /**
+         * 箱子ID
+         */
+        private String cartonId;
     }
     /**
      * 装箱详情
@@ -145,6 +149,10 @@ public class WmsCartonDTO {
          * 装箱任务id
          */
         private String taskId;
+        /**
+         * 装箱任务编码
+         */
+        private String taskCode;
         /**
          * 箱子id
          */
@@ -359,8 +367,129 @@ public class WmsCartonDTO {
          */
         private String chargeName;
         /**
+         * 装箱人
+         */
+        private String packingUserName;
+
+        /**
+         * 序号
+         */
+        private Integer index;
+        /**
          * sku*qty
          */
         private List<String> skuList;
+    }
+
+    @Data
+    public static class DetailDTO{
+        /**
+         * 箱子ID
+         */
+        private String boxId;
+        /**
+         * 箱号
+         */
+        private String boxNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 装箱数量
+         */
+        private int packQty;
+        /**
+         * 箱子重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength = BigDecimal.ZERO;
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth = BigDecimal.ZERO;
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight = BigDecimal.ZERO;
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OutBoxNoDTO {
+        /**
+         * 箱号
+         */
+        private String outBoxNo;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 装箱任务编码
+         */
+        private String taskCode;
+        /**
+         * 发货单号
+         */
+        private String deliveryNo;
+
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+        /**
+         * 长宽高
+         */
+        private String size;
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength = BigDecimal.ZERO;
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth = BigDecimal.ZERO;
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight = BigDecimal.ZERO;
+        /**
+         * 箱子重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 箱子重量[展示使用]
+         */
+        private String packageWeightStr;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 装箱总数量
+         */
+        private int packTotalQty;
+
+        /**
+         * 产品明细
+         */
+        private List<WmsCartonDetailDTO.BoxDetailDTO> detailList;
     }
 }

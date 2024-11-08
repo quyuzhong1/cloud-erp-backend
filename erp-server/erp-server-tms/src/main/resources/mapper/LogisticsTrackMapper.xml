@@ -34,6 +34,49 @@
     <delete id="deleteByTrackNo">
         delete from logistics_track where track_no = #{trackNo}
     </delete>
+    <select id="getMaxByTrackTime" resultType="com.erp.model.tms.entity.LogisticsTrackEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from logistics_track
+        where is_deleted = false
+        <if test="trackNo != null and trackNo != ''">
+            and track_no = #{trackNo}
+        </if>
+        order by track_time desc limit 1
+    </select>
+    <select id="listBeforeThreeMonthTrack" resultType="com.erp.model.tms.dto.LogisticsTrackDTO$UpdateTrackDTO">
+        select
+        lbd.id,
+        lbd.track_no,
+        lbd.platform_order_no,
+        lb.carrier_id as carrierId,
+        lb.tel_number as telNumber,
+        lb.channel_id as channelId,
+        lb.transport_no as transportNo,
+        lc.track_query_type as trackQueryType
+        from logistics_bill_detail lbd
+        inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
+        LEFT JOIN logistics_channel lc on lb.channel_id = lc.id and lc.is_deleted = false
+        where lbd.track_status not in('sign','manualComplete','systemComplete')
+        and lbd.is_deleted = false and lbd.track_no != ''
+        and lbd.track_time  <![CDATA[<=]]> CURRENT_DATE - INTERVAL '3 month'
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
+            and lb.order_type in ('B2B','B2C')
+        </if>
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
+            and lb.order_type = 'firstMile'
+        </if>
+        <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
+            and lbd.track_query_mode = #{query.trackQueryMode}
+        </if>
+        <if test="query.registerStatus != null">
+            and lbd.register_status = #{query.registerStatus}
+        </if>
+        <if test="query.trackEnable != null">
+            and lbd.track_enable = #{query.trackEnable}
+        </if>
+        order by lbd.create_time desc
+    </select>
 
 
 </mapper>

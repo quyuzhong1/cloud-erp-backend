@@ -34,21 +34,26 @@
         is_deleted,
         main_id, cost_code, cost_name, cost_value, currency, exchange_rate, cfg_cost_id
     </sql>
-    <select id="getCostCompareListById"
+    <select id="getCostCompareListByIds"
             resultType="com.erp.model.tms.dto.TmsCostDetailDTO$CostCompareDTO">
 
         SELECT
             lbc.cfg_cost_id,
             MAX ( CASE WHEN lbc.TYPE = 'estimated' THEN lbc.id END ) AS id,
             MAX(CASE WHEN type = 'estimated' then main_id end ) as mainId,
-               MAX(CASE WHEN lbc.type = 'estimated' then lbc.cost_value end ) as estimatedFee,
-               MAX(CASE WHEN lbc.type = 'actual' then lbc.cost_value end ) as actualFee,
+            SUM(CASE WHEN lbc.type = 'estimated' then lbc.cost_value end ) as estimatedFee,
+            SUM(CASE WHEN lbc.type = 'actual' then lbc.cost_value end ) as actualFee,
                cc.dict_cost_category as costCode,
                cc.cost_name as costName
         from tms_cost_detail lbc
                  inner join tms_cfg_cost cc on cc.id = lbc.cfg_cost_id and cc.is_deleted =false
-        where lbc.main_id = #{id}
-          and lbc.is_deleted = false
+        where  lbc.is_deleted = false
+          <if test="ids != null and ids.size > 0">
+              and lbc.main_id in
+              <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                  #{item}
+              </foreach>
+          </if>
         group by lbc.cfg_cost_id,	 cc.dict_cost_category,cc.cost_name
     </select>
 

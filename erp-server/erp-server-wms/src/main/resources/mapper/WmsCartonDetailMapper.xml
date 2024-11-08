@@ -54,12 +54,15 @@
     </select>
     <select id="listByTaskIds" resultType="com.erp.model.wms.entity.WmsCartonDetailEntity">
         SELECT
+        wcd.id,
         wcd.main_id,
         wcd.sku_id,
         wcd.sku_no,
         wcd.pack_qty,
         wcd.gross_weight,
-        wcd.weight_unit
+        wcd.weight_unit,
+        wcd.fn_sku,
+        pt.id as taskId
         FROM wms_carton_detail wcd
         left join wms_carton wc on wc.id = wcd.main_id and wc.is_deleted = FALSE
         left join packing_task pt on pt.id = wc.packing_task_id and pt.is_deleted = FALSE

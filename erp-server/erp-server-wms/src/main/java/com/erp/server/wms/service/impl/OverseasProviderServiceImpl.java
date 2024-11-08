@@ -6,10 +6,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -19,6 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
@@ -203,7 +206,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         }
         OverseasProviderEntity existAccount = this.lambdaQuery().eq(OverseasProviderEntity::getPlatformAccount,dto.getPlatformAccount()).eq(OverseasProviderEntity::getCode,dto.getCode()).one();
         if(Objects.nonNull(existAccount)){
-            throw new ServiceException("已存在相同店铺");
+            throw new ServiceException("已存在相同账号");
         }
         OverseasProviderEntity add = BeanUtil.copyProperties(dto,OverseasProviderEntity.class);
         this.save(add);
@@ -228,6 +231,14 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             throw new ServiceException("海外仓为空");
         }
         BeanUtil.copyProperties(dto,entity);
+        OverseasProviderEntity existShortName = this.lambdaQuery().eq(OverseasProviderEntity::getShortName,dto.getShortName()).ne(OverseasProviderEntity::getId,entity.getId()).one();
+        if(Objects.nonNull(existShortName)){
+            throw new ServiceException("已存在相同仓库简称");
+        }
+        OverseasProviderEntity existAccount = this.lambdaQuery().eq(OverseasProviderEntity::getPlatformAccount,dto.getPlatformAccount()).eq(OverseasProviderEntity::getCode,entity.getCode()).ne(OverseasProviderEntity::getId,entity.getId()).one();
+        if(Objects.nonNull(existAccount)){
+            throw new ServiceException("已存在相同账号");
+        }
         boolean result = this.updateById(entity);
         if(result){
             String msg = StrUtil.format("用户【{}】编辑平台账号修改为【{}】,仓库简称修改为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), entity.getPlatformAccount(),entity.getShortName());
@@ -261,6 +272,21 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             return null;
         }
         return this.getById(overseasProviderWarehouseEntity.getMainId());
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        Page query = new Page(advanceQueryDTO.getCurrPage(), advanceQueryDTO.getPageSize());
+        IPage<SkuMappingDTO.SyncWarehouseProductView> pageData = baseMapper.pageWarehouseProduct(query, advanceQueryDTO.getParams());
+        List<SkuMappingDTO.SyncWarehouseProductView> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        list.forEach(v->{
+            v.setWarehouseProvideName(PlatformDictEnum.getNameByCode(v.getWarehouseProvideCode()));
+            v.setAuthStatusName(AuthStatusEnum.getName(v.getAuthStatus()));
+        });
+        return new PagingVO<>(pageData);
     }
 
     @Override

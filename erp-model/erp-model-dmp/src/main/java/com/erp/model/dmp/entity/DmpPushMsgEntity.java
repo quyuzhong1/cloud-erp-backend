@@ -85,6 +85,13 @@ public class DmpPushMsgEntity extends BaseEntity<DmpPushMsgEntity> {
      */
     @TableField("parent_id")
     private String parentId;
+    
+    /**
+     * 第三方单号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+    
     /**
     * 输入任务id
     */

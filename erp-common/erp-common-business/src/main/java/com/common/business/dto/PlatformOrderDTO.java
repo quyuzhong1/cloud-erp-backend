@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -245,6 +246,16 @@ public class PlatformOrderDTO extends UniqueDto {
     private Boolean isCancel;
 
     /**
+     * 退货单
+     */
+    private List<PlatformReturnOrderDTO> returnDTOList;
+
+    /**
+     * 退款单
+     */
+    private List<PlatformRefundOrderDTO> refundDTOList;
+
+    /**
      * 检查订单新增作废状态
      */
     public Boolean checkInsertInvalidStatus() {
@@ -263,6 +274,18 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
+                .filter(StrUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+    /**
+     * 明细平台SKU列表
+     */
+    public List<String> convertPlatformSkuIdList() {
+        return this.getDetails()
+                .stream()
+                .map(PlatformOrderDetailDTO::getPlatformSkuId)
+                .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }
@@ -274,6 +297,7 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSpuNo)
+                .filter(StrUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }

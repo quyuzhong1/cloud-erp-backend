@@ -20,8 +20,12 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.*;
+import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
@@ -580,7 +584,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //释放明细库存
             List<String> idList = saveOrUpdateList.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(idList)) {
-                idList.forEach(obj -> soDetailService.batchUnLockVirtualInventory(obj));
+                soDetailService.batchUnLockVirtualInventory(idList,null);
             }
         }
 

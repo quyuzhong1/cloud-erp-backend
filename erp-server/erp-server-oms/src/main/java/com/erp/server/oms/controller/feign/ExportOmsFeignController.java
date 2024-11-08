@@ -39,6 +39,11 @@ public class ExportOmsFeignController {
     @Resource
     private SoInfoService soInfoService;
 
+    @Resource
+    private RefundOrderService refundOrderService;
+
+    @Resource
+    private SoB2cReturnService soB2cReturnService;
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
@@ -85,11 +90,13 @@ public class ExportOmsFeignController {
     }
 
     @PostMapping("/platformSku")
+    @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto) {
         return skuMappingService.exportPlatformSku(dto);
     }
 
     @PostMapping("/warehouseSku")
+    @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
         return skuMappingService.exportWarehouseSku(dto);
     }
@@ -115,5 +122,17 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = SoInfoQueryHandler.class)
     public PagingVO<SoInfoDTO.PagingViewDTO> exportSo(@RequestBody PagingDTO<SoInfoDTO.ExportDTO> dto) {
         return soInfoService.exportSo(dto);
+    }
+
+    @PostMapping("/exportRefund")
+    @WebAdvanceQuery
+    public PagingVO<RefundOrderDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<RefundOrderDTO.PagingParamDTO> dto) {
+        return refundOrderService.exportRefund(dto);
+    }
+
+    @PostMapping("/exportSoB2cReturn")
+    @WebAdvanceQuery
+    public PagingVO<SoB2cReturnDTO.PagingViewDTO> exportSoB2cReturn(@RequestBody PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
+        return soB2cReturnService.paging(dto);
     }
 }

@@ -104,6 +104,10 @@ public class SoReturnInstockDTO {
          */
         private String id;
         /**
+         * id
+         */
+        private String soId;
+        /**
          * 明细id
          */
         private String detailId;
@@ -119,6 +123,10 @@ public class SoReturnInstockDTO {
          * 退货明细id
          */
         private String soReturnDetailId;
+        /**
+         * 退货明细id
+         */
+        private String soReturnId;
         /**
          * 退货入库单号
          */
@@ -173,6 +181,11 @@ public class SoReturnInstockDTO {
          * 销售员Id
          */
         private String sellerId;
+
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
         /**
          * 销售员
          */
@@ -234,6 +247,22 @@ public class SoReturnInstockDTO {
          * 是否委外（true是、false否）
          */
         private Boolean isSubContract;
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
+         *仓库id
+         */
+        private String warehouseId;
+        /**
+         *仓库名称
+         */
+        private String warehouseName;
+        /**
+         *仓位
+         */
+        private String warehouseLocation;
     }
 
     /**
@@ -275,6 +304,10 @@ public class SoReturnInstockDTO {
          */
         private String sourceCode;
         /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
+        /**
          * 退货客户id
          */
         private String customerId;
@@ -311,6 +344,11 @@ public class SoReturnInstockDTO {
          * 仓管员
          */
         private String warehouseKeeperId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -381,6 +419,11 @@ public class SoReturnInstockDTO {
          * 仓管员
          */
         private String warehouseKeeperId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -535,6 +578,11 @@ public class SoReturnInstockDTO {
          * 创建时间
          */
         private String createTime;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -964,5 +1012,20 @@ public class SoReturnInstockDTO {
          */
         private String childWarehouseLocation;
 
+    }
+    @Data
+    public static class SearchDTO {
+
+        private String id;
+
+        private String code;
+    }
+    @Data
+    public static class SelectDTO {
+
+        /**
+         * code
+         */
+        private String searchKeyword;
     }
 }

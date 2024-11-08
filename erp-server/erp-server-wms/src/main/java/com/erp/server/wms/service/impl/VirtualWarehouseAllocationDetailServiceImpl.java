@@ -15,7 +15,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -29,6 +29,7 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationDetailMapper;
@@ -74,6 +75,10 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     private DmpMqFeign dmpMqFeign;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -342,7 +347,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      * @return
      */
     @Override
-    public DmpPushTaskEntity viewSyncInfo(String id) {
+    public DmpPushTaskDTO.SyncInfoDTO viewSyncInfo(String id) {
         VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity = virtualWarehouseAllocationDetailService.getById(id);
         VirtualWarehouseAllocationEntity vmAllocationEntity;
         if (Objects.isNull(vmAllocationDetailEntity)) {
@@ -357,12 +362,12 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vmAllocationEntity.getId())
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vmAllocationDetailEntity.getId()));
-        DmpPushTaskEntity productBomHistoryTask = new DmpPushTaskEntity();
+        DmpPushTaskDTO.SyncInfoDTO syncInfoDTO = new DmpPushTaskDTO.SyncInfoDTO();
         if (Objects.nonNull(handleRelation)) {
-            productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
+            syncInfoDTO = dmpInoutTaskFeign.getErrorData(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
                     handleRelation.getHandleDetailId(), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc()));
         }
-        return productBomHistoryTask;
+        return syncInfoDTO;
     }
 
     private void handleData(List<VirtualWarehouseAllocationDetailEntity> detailEntityList, String mainId) {
@@ -497,6 +502,11 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             return;
         }
         list.forEach(this::updateDetailData);
+    }
+
+    @Override
+    public List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList) {
+        return baseMapper.listAllocationData(skuIdList,warehouseIdList,virtualWarehouseIdList);
     }
 
     /**

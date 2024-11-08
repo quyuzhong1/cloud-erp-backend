@@ -21,7 +21,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();
         }
-        return baseMapper.listByIds(ids);
+        return listByIds(ids);
     }
 
     @Override

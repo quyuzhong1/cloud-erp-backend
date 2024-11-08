@@ -100,6 +100,10 @@ public class SoReturnNoticeDTO {
          */
         private String id;
         /**
+         * 销售id
+         */
+        private String soId;
+        /**
          * 明细主键id
          */
         private String detailId;
@@ -204,6 +208,16 @@ public class SoReturnNoticeDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+
+        /**
+         * 类型
+         */
+        private String type;
     }
 
     /**
@@ -248,6 +262,11 @@ public class SoReturnNoticeDTO {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -264,6 +283,7 @@ public class SoReturnNoticeDTO {
          * 主键id
          */
         private String id;
+
         /**
          * 销售单id
          */
@@ -284,6 +304,11 @@ public class SoReturnNoticeDTO {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -408,6 +433,11 @@ public class SoReturnNoticeDTO {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
@@ -424,6 +454,8 @@ public class SoReturnNoticeDTO {
          * id
          */
         private String id;
+
+        private String type;
         /**
          * 主表id
          */
@@ -519,5 +551,10 @@ public class SoReturnNoticeDTO {
          * 审核状态
          */
         private String approveStatus;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
     }
 }
