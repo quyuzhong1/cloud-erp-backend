@@ -181,18 +181,20 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setTypeName(BillTypeEnum.getName(obj.getType()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 obj.setProductName(productDetailEntity.getName());
-                obj.setSalesQty(soDetailEntity.getQty());
-                Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-                obj.setDeliveryQty(actualQty);
-                obj.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
+                SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(null);
+                if(null != soDetailEntity){
+                    obj.setSalesQty(soDetailEntity.getQty());
+                    Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+                    obj.setDeliveryQty(actualQty);
+                    obj.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
+                    obj.setSalesAmount(soDetailEntity.getAmount());
+                    obj.setCurrency(soDetailEntity.getCurrency());
+                    obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+                }
                 obj.setUnit(productDetailEntity.getUnitName());
-                obj.setSalesAmount(soDetailEntity.getAmount());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
-                obj.setCurrency(soDetailEntity.getCurrency());
-                obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
                 Integer returnInStockQty = soReturnInstockDetailEntityList.stream().filter(detail -> obj.getDetailId().equals(detail.getSoReturnDetailId())  ).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setReturnInStockQty(returnInStockQty);
             });

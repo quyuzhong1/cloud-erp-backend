@@ -579,4 +579,44 @@
             #{item}
         </foreach>
     </select>
+
+    <select id="listSkuBySkuNos" resultType="com.erp.model.oms.dto.SkuMappingDTO$ProductSkuInfoDTO">
+        SELECT
+        sm.ID,
+        sm.shop_id,
+        si.customer_id,
+        sm.listing_id,
+        sm.dict_platform,
+        sm.platform_name,
+        li.product_sku_id AS skuId,
+        li.product_sku_no AS skuNo,
+        li.product_name AS skuName,
+        li.platform_sku_no,
+        li.platform_sku_name
+        from
+        sku_mapping sm
+        INNER JOIN shop_info si ON sm.shop_id = si.ID  AND si.is_deleted =FALSE
+        INNER JOIN listing_info li ON sm.listing_id = li.ID AND li.is_deleted = FALSE
+        INNER JOIN customer_info ci ON si.customer_id = ci.ID AND ci.is_deleted = FALSE
+        WHERE
+            sm.is_deleted=FALSE
+        AND sm.is_expire=FALSE
+        <if test="params.cutomerId != null and params.cutomerId != ''">
+            and ci.cutomer_id = #{params.cutomerId}
+        </if>
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND sm.product_sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND li.platform_sku_no IN
+            <foreach collection="params.platformSkuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        order by sm.create_time desc
+    </select>
+
 </mapper>

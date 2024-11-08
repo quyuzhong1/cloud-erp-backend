@@ -7,10 +7,12 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -20,6 +22,7 @@ import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -85,6 +88,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private SkuMappingService skuMappingService;
+    @Resource
+    private BomSkuFeign bomSkuFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -356,6 +363,12 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //组织列表
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIds);
 
+        //sku对照表
+        SkuMappingDTO.SkuParamDTO param = new SkuMappingDTO.SkuParamDTO();
+        param.setSkuNoList(skuIdList);
+        param.setCutomerId(list.get(0).getCustomerId());
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(param);
+
         for (SoDetailDTO.AddDetailView addDetailView : list) {
             String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(addDetailView.getWarehouseId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -381,8 +394,72 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             addDetailView.setMustQty(returnQty);
             addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));
             addDetailView.setReturnReasonDictName(ReturnReasonEnum.getName(addDetailView.getReturnReasonDict()));
+
+            //根据skuid获取平台sku信息
+            SkuMappingDTO.ProductSkuInfoDTO productSkuInfoDTO = productSkuInfoList.stream().filter(v -> v.getSkuId().equals(addDetailView.getSkuId())).findFirst().orElse(new SkuMappingDTO.ProductSkuInfoDTO());
+            addDetailView.setCustomerId(productSkuInfoDTO.getCustomerId());
+            addDetailView.setListingId(productSkuInfoDTO.getListingId());
+            addDetailView.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
+            addDetailView.setPlatformSkuName(productSkuInfoDTO.getPlatformSkuName());
         }
         return list;
+    }
+
+    @Override
+    public SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto) {
+        SoDetailDTO.ListAddDetailNoBomViewDTO view = new  SoDetailDTO.ListAddDetailNoBomViewDTO();
+        //平台sku匹配系统sku
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setPlatformSkuNoList(dto.getPlatformSkuNoList());
+        skuParamDTO.setCutomerId(dto.getCutomerId());
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoDTOList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+
+        List<String> skuNos = productSkuInfoDTOList.stream().map(SkuMappingDTO.ProductSkuInfoDTO::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(skuNos)){
+            throw new ServiceException("客户SKU未匹配到系统SKU");
+        }
+
+        //获取sku产品明细
+        listAddDetailViewDTO viewDTO = new listAddDetailViewDTO();
+        viewDTO.setSkuNoList(skuNos);
+        List<SoDetailDTO.AddDetailView> addDetailViews = listAddDetailView(viewDTO);
+        view.setNobomList(addDetailViews);
+
+        //根据系统sku 获取子件
+        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNos);
+        if(CollectionUtils.isNotEmpty(bomChildrenSkuList)){
+            List<SoDetailDTO.AddDetailView> bomList = new ArrayList<>();
+            //存在套装SKU
+            view.setExistBom(Boolean.TRUE);
+            //根据父skuno 分组
+            Map<String, List<BomChildrenSkuDTO>> collect = bomChildrenSkuList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
+            for (SoDetailDTO.AddDetailView addDetailView : addDetailViews) {
+                String skuNo = addDetailView.getSkuNo();
+                if(collect.containsKey(skuNo)){
+                    //把子件添加到结果集
+                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
+                    for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                        SoDetailDTO.AddDetailView addChildDetailView = new SoDetailDTO.AddDetailView();
+                        addChildDetailView.setSkuId(bomChildrenSkuDTO.getSkuId());
+                        addChildDetailView.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                        addChildDetailView.setProductName(bomChildrenSkuDTO.getSkuName());
+
+                        SkuMappingDTO.ProductSkuInfoDTO productSkuInfoDTO = productSkuInfoDTOList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).findFirst().orElse(new SkuMappingDTO.ProductSkuInfoDTO());
+                        addChildDetailView.setListingId(productSkuInfoDTO.getListingId());
+                        addChildDetailView.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
+                        addChildDetailView.setPlatformSkuName(productSkuInfoDTO.getPlatformSkuName());
+
+                        addChildDetailView.setReturnReasonDictName(addDetailView.getReturnReasonDictName());
+                        addChildDetailView.setReturnTypeDictName(addDetailView.getReturnTypeDictName());
+                        bomList.add(addChildDetailView);
+                    }
+                }else {
+                    bomList.add(addDetailView);
+                }
+            }
+            view.setBomList(bomList);
+        }
+        return view;
     }
 
     /**

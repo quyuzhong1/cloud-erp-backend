@@ -269,4 +269,30 @@
         )
         SELECT sku_id,sku_no,parent_sku_id, parent_sku_no,quantity FROM T;
     </select>
+
+
+    <select id="checkExistAndListCombinationSku" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        select
+        pbi.id as bomId,
+        pbi.bom_version as bomVersion,
+        pbi.type AS type,
+        pbs.parent_sku_id as parentSkuId,
+        pbs.parent_sku_no as parentSkuNo,
+        pbs.sku_id as skuId,
+        pbs.sku_no as skuNo,
+        pd.name as skuName
+        from product_bom_info pbi
+        inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        inner join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            pbi.is_deleted = false
+            and pbi.state = 4
+            and pbi.type = 'combination'
+            and pbs.parent_sku_no in
+            <foreach collection="parentSkuNos" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+        order by parentSkuId ,sku_id
+    </select>
 </mapper>

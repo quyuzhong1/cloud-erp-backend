@@ -339,4 +339,12 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     public List<BomDTO.BomSku> listAllBom(List<String> childSkuIdList) {
         return baseMapper.listAllBomByChildSkuIdList(childSkuIdList);
     }
+
+    @Override
+    public List<BomChildrenSkuDTO> checkExistAndListCombinationSku(List<String> parentSkuNos) {
+        if (CollectionUtils.isEmpty(parentSkuNos)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.checkExistAndListCombinationSku(parentSkuNos);
+    }
 }

@@ -2,6 +2,7 @@ package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.validator.ValidList;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -72,4 +73,12 @@ public interface SkuMappingFeign {
      */
     @PostMapping("feign/skuMapping/advanceQuerySku")
     List<ListingAdvanceQueryDTO> advanceQuerySku(@RequestBody AdvanceQueryContainer advanceQueryContainer);
+    /**
+     * 根据customerId和skuno 关联查询平台sku
+     * @author jack
+     * @date: 2024-11-07
+     * @param skuParamDTO
+     */
+    @PostMapping("feign/skuMapping/listSkuBySkuNos")
+    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO);
 }

@@ -610,6 +610,31 @@ public class SkuMappingDTO implements Serializable {
     public static class ProductSkuInfoDTO{
 
         /**
+         *
+         */
+        private String id;
+        /**
+         *
+         */
+        private String shopId;
+        /**
+         *
+         */
+        private String customerId;
+        /**
+         *
+         */
+        private String listingId;
+        /**
+         *
+         */
+        private String dictPlatform;
+        /**
+         *
+         */
+        private String platformName;
+
+        /**
          * sku id
          */
         private String skuId;
@@ -1150,4 +1175,23 @@ public class SkuMappingDTO implements Serializable {
          */
         private String syncResult;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuParamDTO {
+        /**
+         * 平台sku
+         */
+        private List<String> platformSkuNoList;
+        /**
+         * sku编号
+         */
+        private List<String> skuNoList;
+        /**
+         * 客户id
+         */
+        private String cutomerId;
+    }
+
 }
