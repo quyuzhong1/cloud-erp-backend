@@ -138,13 +138,53 @@ public class WarehouseExcelDTO  implements Serializable {
     @ExcelProperty(value = "仓库地理位置", index = 13)
     @FieldValid(fieldName = "仓库地理位置",isNotBlank = true)
     private String geographyLocationName;
+    
+    /**
+     * 所属渠道
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "所属渠道", index = 14)
+    @FieldValid(fieldName = "所属渠道",isNotBlank = true)
+    private String channelAffiliation;
+    
+    /**
+     * 发货组织
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "发货组织", index = 15)
+    @FieldValid(fieldName = "发货组织",isNotBlank = true)
+    private String shippingOrganization;
+    
+    /**
+     * 财务组织
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "财务组织", index = 16)
+    @FieldValid(fieldName = "财务组织",isNotBlank = true)
+    private String financialOrganization;
+    
+    /**
+     * 启用日期
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "启用日期", index = 17)
+    @FieldValid(fieldName = "启用日期",isNotBlank = true)
+    private String openTime;
+    
+    /**
+     * 停用日期
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "停用日期", index = 18)
+    @FieldValid(fieldName = "停用日期",isNotBlank = true)
+    private String closeTime;
 
 
     /**
      * 错误信息
      */
     @ColumnWidth(200)
-    @ExcelProperty(value = "错误信息", index = 14)
+    @ExcelProperty(value = "错误信息", index = 19)
     private String errorMsg;
 
 

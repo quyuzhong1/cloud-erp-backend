@@ -21,7 +21,12 @@
          kingdee_warehouse_code AS kingdeeWarehouseCode,
          is_virtual AS isVirtual,
          approve_status AS approveStatus,
-         is_enable_location as isEnableLocation
+         is_enable_location as isEnableLocation,
+         channel_affiliation channelAffiliation,
+         shipping_organization shippingOrganization,
+         financial_organization financialOrganization,
+         open_time openTime,
+         close_time closeTime
       FROM  warehouse  WHERE ${params.sqlMap.default}
         and is_deleted=false
         <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
