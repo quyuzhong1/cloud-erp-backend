@@ -630,6 +630,31 @@ public class SkuMappingDTO implements Serializable {
     public static class ProductSkuInfoDTO {
 
         /**
+         *
+         */
+        private String id;
+        /**
+         *
+         */
+        private String shopId;
+        /**
+         *
+         */
+        private String customerId;
+        /**
+         *
+         */
+        private String listingId;
+        /**
+         *
+         */
+        private String dictPlatform;
+        /**
+         *
+         */
+        private String platformName;
+
+        /**
          * sku id
          */
         private String skuId;
