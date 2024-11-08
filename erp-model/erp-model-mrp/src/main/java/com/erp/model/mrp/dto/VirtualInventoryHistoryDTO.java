@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +65,14 @@ public class VirtualInventoryHistoryDTO {
          * 虚拟仓冻结库存
          */
         private Integer virtualFrozenQty;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
         /**
          * 虚拟库存明细
          */
