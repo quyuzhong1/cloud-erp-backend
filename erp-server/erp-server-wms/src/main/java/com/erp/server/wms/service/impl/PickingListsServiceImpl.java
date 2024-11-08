@@ -469,6 +469,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         combinationPrintDetailView.setThirdSku("");
                         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                             combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
+                        }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(application.getType())){
+                            combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformSku()));
                         }
                         combinationPrintDetailView.setIsCombination(Boolean.TRUE);
                         combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo() + "【组】");
