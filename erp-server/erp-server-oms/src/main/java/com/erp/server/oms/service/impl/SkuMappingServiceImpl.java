@@ -1650,9 +1650,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
-        if(StringUtils.isBlank(skuParamDTO.getCutomerId()) || CollectionUtils.isEmpty(skuParamDTO.getSkuNoList())){
-            return Collections.emptyList();
-        }
         return this.baseMapper.listSkuBySkuNos(skuParamDTO);
     }
 

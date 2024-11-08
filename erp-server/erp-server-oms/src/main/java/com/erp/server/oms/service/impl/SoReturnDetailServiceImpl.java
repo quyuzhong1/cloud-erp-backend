@@ -422,6 +422,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //获取sku产品明细
         listAddDetailViewDTO viewDTO = new listAddDetailViewDTO();
         viewDTO.setSkuNoList(skuNos);
+        viewDTO.setId(dto.getId());
         List<SoDetailDTO.AddDetailView> addDetailViews = listAddDetailView(viewDTO);
         view.setNobomList(addDetailViews);
 
