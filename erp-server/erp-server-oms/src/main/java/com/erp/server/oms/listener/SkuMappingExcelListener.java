@@ -188,7 +188,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
         // 已存在
         if (isApiPlatform){
-            if( mappingDto.getMatchResult()){
+            if( ListingMatchResultEnum.TRUE.getCode().equals(mappingDto.getMatchResult())){
                 errorMsgList.add("该店铺平台sku已存在匹配关系");
                 skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(skuMappingImportExcelDTO);
