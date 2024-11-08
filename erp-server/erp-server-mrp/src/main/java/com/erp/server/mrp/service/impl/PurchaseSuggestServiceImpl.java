@@ -548,6 +548,10 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         List<String> currencyIdList = list.stream().map(PurchaseSuggestDTO.ListDTO::getCurrency).distinct().collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
+        //店铺信息
+        List<String> shopIdList = list.stream().map(PurchaseSuggestDTO.ListDTO::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+
         for (PurchaseSuggestDTO.ListDTO listDTO : list) {
 
             //币别
@@ -568,6 +572,9 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
             //物流方式（系统）
             listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
+            //店铺名称
+            String shopName = shopList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            listDTO.setShopName(shopName);
         }
     }
 }
