@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -303,10 +304,17 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         }
     }
 
+    @Override
+    public List<SoB2cErrorDTO.TypeCountDTO> getTypeCountDTO() {
+        return this.baseMapper.getTypeCountDTO();
+    }
+
     /**
     * 新增修改处理数据
     */
     private void handleData(SoB2cErrorEntity soB2cErrorEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+
 }
