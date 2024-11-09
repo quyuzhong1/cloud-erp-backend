@@ -94,6 +94,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             list.add(detailEntity);
         }
         return this.saveBatch(list);
@@ -139,6 +140,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setReturnQty(detailDto.getReturnQty());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             list.add(detailEntity);
         }
         return this.saveBatch(list);
@@ -185,6 +187,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 }
                 detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+                detailEntity.setPlatformSkuNo(soReturnDetailEntity.getPlatformSkuNo());
             }else{
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
@@ -197,8 +200,8 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 }
                 detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+                detailEntity.setPlatformSkuNo(soReturnDetailEntity.getPlatformSkuNo());
             }
-
             detailEntity.setMainId(dto.getId());
             detailEntity.setReturnQty(detailDto.getReturnQty());
             detailEntity.setRemark(detailDto.getRemark());

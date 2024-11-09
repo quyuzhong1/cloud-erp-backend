@@ -82,6 +82,11 @@ public class SoReturnReceiveDetailEntity extends BaseEntity<SoReturnReceiveDetai
 
     @TableField(exist = false)
     private String approveStatus;
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
 
 
     public static final String MAIN_ID = "main_id";

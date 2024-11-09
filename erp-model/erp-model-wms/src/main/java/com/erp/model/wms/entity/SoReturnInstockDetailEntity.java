@@ -155,6 +155,11 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
      */
     @TableField(exist = false)
     private LocalDateTime approveTime;
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
 
     public static final String MAIN_ID = "main_id";
 

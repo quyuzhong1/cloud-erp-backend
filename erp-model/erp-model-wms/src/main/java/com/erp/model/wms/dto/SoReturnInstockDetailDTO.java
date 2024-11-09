@@ -265,5 +265,10 @@ public class SoReturnInstockDetailDTO {
          * 币种
          */
         private String currency;
+        /**
+         * 平台sku
+         */
+        @TableField("platform_sku_no")
+        private String platformSkuNo;
     }
 }

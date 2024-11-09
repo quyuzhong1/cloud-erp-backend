@@ -30,10 +30,7 @@ import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.oms.dto.SoReturnDetailDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
@@ -152,6 +149,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     private DmpMqFeign dmpMqFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SkuMappingService skuMappingService;
 
 
     @Override
@@ -335,6 +334,26 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN.getCode(), soReturnEntity.getId(), "新增操作");
 
+        String customerId = dto.getCustomerId();
+        List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
+        List<String> skuNos = detailList.stream().map(SoReturnDetailDTO.Add::getSkuNo).collect(Collectors.toList());
+        //根据customerId和skunos 获取对应的平台sku
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setSkuNoList(skuNos);
+        skuParamDTO.setCutomerId(customerId);
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+        if(CollectionUtils.isNotEmpty(productSkuInfoList)){
+            detailList.stream().forEach(r -> {
+                SkuMappingDTO.ProductSkuInfoDTO productSkuInfo = productSkuInfoList.stream()
+                        .filter(v -> v.getSkuNo().equals(r.getSkuNo()))
+                        .findFirst()
+                        .orElse(new SkuMappingDTO.ProductSkuInfoDTO());
+                r.setListingId(productSkuInfo.getListingId());
+                r.setPlatformSkuName(productSkuInfo.getPlatformSkuName());
+                r.setPlatformSkuNo(productSkuInfo.getPlatformSkuNo());
+            });
+            dto.setDetailList(detailList);
+        }
         if(StringUtils.isNotBlank(dto.getSourceId())){
             //原业务逻辑
             soReturnDetailService.add(dto, soReturnEntity.getId());
@@ -386,6 +405,26 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
         boolean flag = this.updateById(soReturnEntity);
 
+        //根据customerId和skunos 获取对应的平台sku
+        String customerId = dto.getCustomerId();
+        List<SoReturnDetailDTO.Update> detailList = dto.getDetailList();
+        List<String> skuNos = detailList.stream().map(SoReturnDetailDTO.Update::getSkuNo).collect(Collectors.toList());
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setSkuNoList(skuNos);
+        skuParamDTO.setCutomerId(customerId);
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+        if(CollectionUtils.isNotEmpty(productSkuInfoList)){
+            detailList.stream().forEach(r -> {
+                SkuMappingDTO.ProductSkuInfoDTO productSkuInfo = productSkuInfoList.stream()
+                        .filter(v -> v.getSkuNo().equals(r.getSkuNo()))
+                        .findFirst()
+                        .orElse(new SkuMappingDTO.ProductSkuInfoDTO());
+                r.setListingId(productSkuInfo.getListingId());
+                r.setPlatformSkuName(productSkuInfo.getPlatformSkuName());
+                r.setPlatformSkuNo(productSkuInfo.getPlatformSkuNo());
+            });
+            dto.setDetailList(detailList);
+        }
         if(StringUtils.isNotBlank(dto.getSourceId())){
             //原业务逻辑
             soReturnDetailService.update(dto);

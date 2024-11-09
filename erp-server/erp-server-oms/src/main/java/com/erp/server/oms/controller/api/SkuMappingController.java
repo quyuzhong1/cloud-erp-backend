@@ -328,15 +328,15 @@ public class SkuMappingController extends BaseController {
         return this.success(skuMappingService.listSkuBySkuNos(skuParamDTO));
     }
 
-    /**
-     * 根据customerId和平台sku 查询是否存在套装bom
-     * @author jack
-     * @date: 2024-11-07
-     * @param skuParamDTO
-     * @return ApiResult<List<BomChildrenSkuDTO>>
-     */
-    @PostMapping("/checkBomByPlatformSkuNos")
-    public ApiResult<List<BomChildrenSkuDTO>> checkBomByPlatformSkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
-        return this.success(skuMappingService.checkBomByPlatformSkuNos(skuParamDTO));
-    }
+//    /**
+//     * 根据customerId和平台sku 查询是否存在套装bom
+//     * @author jack
+//     * @date: 2024-11-07
+//     * @param skuParamDTO
+//     * @return ApiResult<List<BomChildrenSkuDTO>>
+//     */
+//    @PostMapping("/checkBomByPlatformSkuNos")
+//    public ApiResult<List<BomChildrenSkuDTO>> checkBomByPlatformSkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
+//        return this.success(skuMappingService.checkBomByPlatformSkuNos(skuParamDTO));
+//    }
 }
