@@ -16,9 +16,9 @@ public enum CfgSettingEnum implements EnumMessage {
     FINISH_PACKING_NOTICE("finishPackingNotice","装箱完成通知"),
     CFG_PRINT("cfgPrint", "打印配置"),
     SUBCONTRACT_IN_STOCK("subcontractInStock", "委外入库"),
-
     WAREHOUSE_LOCATION_MOVE_BLACKLIST("warehouseLocationMoveBlacklist","库位移动同步旺店通黑名单"),
-    FS_REQUISITION_NOTICE("fsRequisitionNotice","飞书要货申请通知配置")
+    FS_REQUISITION_NOTICE("fsRequisitionNotice","飞书要货申请通知配置"),
+    FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE("fsWarehouseLocationReplenishNotice","飞书仓位补货通知配置"),
     ;
 
     /**
