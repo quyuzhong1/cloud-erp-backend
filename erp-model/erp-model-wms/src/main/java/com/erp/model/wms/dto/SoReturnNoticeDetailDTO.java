@@ -33,6 +33,18 @@ public class SoReturnNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * listing_id
+         */
+        private String listingId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 平台sku名称
+         */
+        private String platformSkuName;
     }
 
     /**
@@ -64,6 +76,18 @@ public class SoReturnNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * listing_id
+         */
+        private String listingId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 平台sku名称
+         */
+        private String platformSkuName;
     }
 
     /**
@@ -129,19 +153,9 @@ public class SoReturnNoticeDetailDTO {
          */
         private String remark;
         /**
-         * listing_id
-         */
-        @TableField("listing_id")
-        private String listingId;
-        /**
          * 平台sku
          */
         @TableField("platform_sku_no")
         private String platformSkuNo;
-        /**
-         * 平台sku名称
-         */
-        @TableField("platform_sku_name")
-        private String platformSkuName;
     }
 }

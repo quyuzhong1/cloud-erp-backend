@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -185,5 +186,10 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 平台sku
+         */
+        @TableField("platform_sku_no")
+        private String platformSkuNo;
     }
 }

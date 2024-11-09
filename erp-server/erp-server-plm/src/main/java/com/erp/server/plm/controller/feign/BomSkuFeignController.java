@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -157,7 +158,7 @@ public class BomSkuFeignController {
     @PostMapping("/checkExistAndListCombinationSku")
     public List<BomChildrenSkuDTO> checkExistAndListCombinationSku(@RequestBody List<String> skuNos) {
         if (CollectionUtils.isEmpty(skuNos)) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
         return bomSkuService.checkExistAndListCombinationSku(skuNos);
     }
