@@ -8,6 +8,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -21,6 +22,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -65,6 +67,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -145,6 +149,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setReturnTypeDict(returnTypeDict);
                     detailEntity.setReturnReasonDict(returnReasonDict);
                 }
+                //获取平台sku
+                String platformSkuNo = soReturnDetailEntities.stream()
+                        .filter(v -> v.getId().equals(detailDto.getSourceDetailId()))
+                        .map(SoReturnDetailEntity::getPlatformSkuNo).findFirst().orElse(null);
+                detailEntity.setPlatformSkuNo(platformSkuNo);
                 list.add(detailEntity);
             }
             //更新委外标识
@@ -179,6 +188,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         warehouseIds.add(dto.getWarehouseId());
         //获取仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(warehouseIds);
+        //sku映射表
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setCutomerId(dto.getCustomerId());
+        List<String> skuNos = skuInfoByIds.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+        skuParamDTO.setSkuNoList(skuNos);
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
         for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
             SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
@@ -195,7 +210,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             }
             detailEntity.setMainId(id);
             detailEntity.setSkuId(detailDto.getSkuId());
-
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
@@ -209,6 +223,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(v->v.getId().equals(detailDto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
             detailEntity.setWarehouseId(detailDto.getWarehouseId());
             detailEntity.setWarehouseName(updateDTO.getName());
+            //平台sku
+            String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+            detailEntity.setPlatformSkuNo(platformSkuNo);
             list.add(detailEntity);
         }
         //更新委外标识
@@ -293,7 +310,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setWarehouseId(detailDto.getWarehouseId());
                     detailEntity.setWarehouseName(updateDTO.getName());
                 }
-
+                //获取平台sku
+                String platformSkuNo = soReturnDetailEntities.stream()
+                        .filter(v -> v.getId().equals(detailDto.getSourceDetailId()))
+                        .map(SoReturnDetailEntity::getPlatformSkuNo).findFirst().orElse("");
+                detailEntity.setPlatformSkuNo(platformSkuNo);
                 list.add(detailEntity);
                 //修改操作日志
                 if (StringUtils.isNotBlank(detailEntity.getId())) {
@@ -348,6 +369,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
+        //sku对照表
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setCutomerId(dto.getCustomerId());
+        List<String> skuNos = skuInfoByIds.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+        skuParamDTO.setSkuNoList(skuNos);
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
         for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
             SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
@@ -387,6 +414,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseId(detailDto.getWarehouseId());
                 detailEntity.setWarehouseName(updateDTO.getName());
             }
+            String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+            detailEntity.setPlatformSkuNo(platformSkuNo);
             list.add(detailEntity);
             //修改操作日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {

@@ -584,10 +584,6 @@ public class SoReturnDTO {
          */
         private List<String> platformSkuNoList;
         /**
-         * 客户id
-         */
-        private String cutomerId;
-        /**
          * 退货销售单id
          */
         private String id;

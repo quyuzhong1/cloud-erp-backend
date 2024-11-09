@@ -663,6 +663,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (CollectionUtils.isEmpty(soDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
+        //退货单明细
+        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);
         for (String id : soReturnIdList) {
             List<SoReturnDTO.GenerateSoReturnNoticeView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
@@ -677,7 +679,12 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 detailAddDTO.setReturnQty(view.getReturnQty());
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getId());
-
+                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
+                        .filter(v -> v.getId().equals(view.getId()))
+                        .findFirst().orElse(new SoReturnDetailEntity());
+                detailAddDTO.setListingId(soReturnDetailEntity.getListingId());
+                detailAddDTO.setPlatformSkuName(soReturnDetailEntity.getPlatformSkuName());
+                detailAddDTO.setPlatformSkuNo(soReturnDetailEntity.getPlatformSkuNo());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);

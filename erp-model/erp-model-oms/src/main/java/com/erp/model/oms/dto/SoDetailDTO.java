@@ -983,17 +983,9 @@ public class SoDetailDTO implements Serializable {
          */
         private String customerId;
         /**
-         * listing_id
-         */
-        private String listingId;
-        /**
          * 平台sku
          */
         private String platformSkuNo;
-        /**
-         * 平台sku名称
-         */
-        private String platformSkuName;
     }
 
 

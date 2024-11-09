@@ -119,6 +119,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SoReturnNoticeDetailService soReturnNoticeDetailService;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {

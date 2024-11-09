@@ -78,20 +78,10 @@ public class SoReturnNoticeDetailEntity extends BaseEntity<SoReturnNoticeDetailE
     private String approveStatus;
 
     /**
-     * listing_id
-     */
-    @TableField("listing_id")
-    private String listingId;
-    /**
      * 平台sku
      */
     @TableField("platform_sku_no")
     private String platformSkuNo;
-    /**
-     * 平台sku名称
-     */
-    @TableField("platform_sku_name")
-    private String platformSkuName;
 
     public static final String MAIN_ID = "main_id";
 
