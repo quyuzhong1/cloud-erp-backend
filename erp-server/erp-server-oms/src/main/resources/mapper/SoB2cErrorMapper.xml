@@ -67,4 +67,14 @@
             #{item}
         </foreach>
     </delete>
+
+    <select id="getTypeCountDTO" resultType="com.erp.model.oms.dto.SoB2cErrorDTO$TypeCountDTO">
+        SELECT type,COUNT ( 0 ) AS typeCount
+        FROM
+            so_b2c_error
+        WHERE
+            main_id != ''
+	    AND type IN ( 'getLogisticsCode', 'submitDelivery', 'orderForecast', 'generateTransferInfo', 'virtualFreezeQty', 'generateOutstock', 'signDelivery' )
+        GROUP BY type
+    </select>
 </mapper>
