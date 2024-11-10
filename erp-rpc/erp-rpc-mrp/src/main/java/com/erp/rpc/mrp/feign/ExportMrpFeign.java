@@ -4,10 +4,7 @@ import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.mrp.dto.DeliverySuggestDTO;
-import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
-import com.erp.model.mrp.dto.PurchaseSuggestDTO;
-import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,6 +42,20 @@ public interface ExportMrpFeign {
     @PostMapping("/feign/export/pagingPurchaseSuggestion")
     PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto);
 
+    /**
+     * fba每日库存
+     */
     @PostMapping("/feign/export/fbaInventory")
     PagingVO<FbaHistoryInventoryDTO.ListDTO> exportFbaInventory(@RequestBody PagingDTO<FbaHistoryInventoryDTO.ExportDTO> dto);
+    /**
+     * 海外仓每日库存
+     */
+    @PostMapping("/feign/export/overseasInventory")
+    PagingVO<OverseasHistoryInventoryDTO.ListDTO> exportOverseasInventory(@RequestBody PagingDTO<OverseasHistoryInventoryDTO.ExportDTO> dto);
+
+    /**
+     * 本地仓每日库存
+     */
+    @PostMapping("/feign/export/localInventory")
+    PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> exportLocalInventory(@RequestBody PagingDTO<LocalHistoryInventoryDTO.ExportDTO> dto);
 }

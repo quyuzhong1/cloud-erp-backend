@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
+import com.erp.model.mrp.dto.LocalHistoryInventoryDTO;
 import com.erp.rpc.mrp.feign.ExportMrpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -17,20 +18,20 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_MRP_LOCAL_INVEN
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_INVENTORY;
 
 @Component
-public class ExportMrpInventoryHandler extends AbstractPageFileEventHandler<FbaHistoryInventoryDTO.ListDTO, FbaHistoryInventoryDTO.ExportDTO> {
+public class ExportMrpInventoryHandler extends AbstractPageFileEventHandler<LocalHistoryInventoryDTO.PagingViewDTO, LocalHistoryInventoryDTO.ExportDTO> {
     @Resource
     private ExportMrpFeign exportMrpFeign;
 
     @Override
-    protected List<FbaHistoryInventoryDTO.ListDTO> getData(FileTask fileTask) {
-        FbaHistoryInventoryDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<FbaHistoryInventoryDTO.ExportDTO>() {
+    protected List<LocalHistoryInventoryDTO.PagingViewDTO> getData(FileTask fileTask) {
+        LocalHistoryInventoryDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<LocalHistoryInventoryDTO.ExportDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<FbaHistoryInventoryDTO.ListDTO> getPageData(PagingDTO<FbaHistoryInventoryDTO.ExportDTO> dto) {
-        return exportMrpFeign.exportFbaInventory(dto);
+    protected PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> getPageData(PagingDTO<LocalHistoryInventoryDTO.ExportDTO> dto) {
+        return exportMrpFeign.exportLocalInventory(dto);
     }
 
     @Override

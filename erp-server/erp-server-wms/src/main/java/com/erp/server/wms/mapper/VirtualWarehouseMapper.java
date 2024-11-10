@@ -44,4 +44,10 @@ public interface VirtualWarehouseMapper extends BaseMapper<VirtualWarehouseEntit
     List<VirtualWarehouseDTO.SelectDTO> warehouseSelectList(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto);
 
     List<VirtualWarehouseDTO.SelectDTO> listByParam(@Param("params") VirtualWarehouseDTO.SearchDTO searchDTO);
+
+    /**
+     * 高级查询
+     */
+    List<String> listWarehouseBySql(@Param("compareCodeSplicingValueSql") String compareCodeSplicingValueSql);
+
 }

@@ -662,4 +662,9 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         }
         return baseMapper.listByParam(searchDTO);
     }
+
+    @Override
+    public List<String> listWarehouseBySql(String compareCodeSplicingValueSql) {
+        return baseMapper.listWarehouseBySql(compareCodeSplicingValueSql);
+    }
 }

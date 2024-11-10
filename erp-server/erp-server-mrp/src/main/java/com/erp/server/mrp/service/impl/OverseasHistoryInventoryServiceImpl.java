@@ -82,7 +82,7 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
         Page<OverseasHistoryInventoryDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<OverseasHistoryInventoryDTO.ListDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())){
-            new PagingVO<>(pageData);
+            return new PagingVO<>(pageData);
         }
         //填充分页数据
         filList(pageData.getRecords());

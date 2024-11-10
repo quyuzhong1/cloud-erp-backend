@@ -4,22 +4,22 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.VirtualInventoryHistoryEntity">
-        <result column="id" property="id" />
-        <result column="create_time" property="createTime" />
-        <result column="update_time" property="updateTime" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="warehouse_id" property="warehouseId" />
-        <result column="virtual_warehouse_id" property="virtualWarehouseId" />
-        <result column="sku_id" property="skuId" />
-        <result column="sku_no" property="skuNo" />
-        <result column="dict_inventory_status" property="dictInventoryStatus" />
-        <result column="qty" property="qty" />
-        <result column="bill_date" property="billDate" />
+        <result column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="warehouse_id" property="warehouseId"/>
+        <result column="virtual_warehouse_id" property="virtualWarehouseId"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="dict_inventory_status" property="dictInventoryStatus"/>
+        <result column="qty" property="qty"/>
+        <result column="bill_date" property="billDate"/>
     </resultMap>
     <select id="listVirtualWarehouseIdListAndSkuIdList"
             resultType="com.erp.model.mrp.dto.VirtualInventoryHistoryDTO$ListInventoryDTO">
@@ -30,9 +30,11 @@
         vi.dict_inventory_status,
         COALESCE(vi.qty,0) as virtualQty,
         vi.virtual_warehouse_id,
-        (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
-        (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
-        from virtual_inventory vi
+        COALESCE(lhi.usable_qty,0) as usableQty,
+        COALESCE(lhi.frozen_qty,0) as frozenQty
+        from virtual_inventory_history vi
+        left join local_history_inventory lhi on lhi.is_deleted = false and lhi.sku_id = vi.sku_id and lhi.warehouse_id
+        = vi.warehouse_id and lhi.bill_date = vi.bill_date
         <where>
             vi.is_deleted = false
             and vi.sku_id in
@@ -47,25 +49,26 @@
     </select>
     <select id="paging" resultType="com.erp.model.mrp.dto.VirtualInventoryHistoryDTO$ListDTO">
         select
-        string_agg(vi.id, ',') as indexId,
-        vi.sku_id as skuId,
-        vi.warehouse_id as warehouseId,
-        vi.virtual_warehouse_id as virtualWarehouseId
-        from virtual_inventory vi
-        left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        string_agg(id, ',') as indexId,
+        sku_id as skuId,
+        warehouse_id as warehouseId,
+        virtual_warehouse_id as virtualWarehouseId,
+        bill_date as billDate,
+        max(update_time) as updateTime
+        from virtual_inventory_history
         <where>
             ${params.sqlMap.default}
-            and vi.is_deleted = false
+            and is_deleted = false
             <if test="params.hideZeroInventory">
-                and  vi.qty != 0
+                and qty != 0
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
         </where>
-        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id
+        group by sku_id,warehouse_id,virtual_warehouse_id,bill_date
         order by
-        vi.sku_id
+        sku_id
     </select>
 
 </mapper>

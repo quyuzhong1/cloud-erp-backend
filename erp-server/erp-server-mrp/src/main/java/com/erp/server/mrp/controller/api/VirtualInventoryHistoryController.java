@@ -5,10 +5,8 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.mrp.dto.OverseasHistoryInventoryDTO;
 import com.erp.model.mrp.dto.VirtualInventoryHistoryDTO;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
-import com.erp.server.mrp.handler.OverseasHistoryInventoryHandler;
+import com.erp.server.mrp.handler.VirtualInventoryHistoryHandler;
 import com.erp.server.mrp.service.VirtualInventoryHistoryService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,7 +37,7 @@ public class VirtualInventoryHistoryController extends BaseController {
      * @param dto 入参
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualInventoryHistoryHandler.class)
     public ApiResult<PagingVO<VirtualInventoryHistoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto) {
         PagingVO<VirtualInventoryHistoryDTO.ListDTO> list = virtualInventoryHistoryService.paging(dto);
         return success(list);

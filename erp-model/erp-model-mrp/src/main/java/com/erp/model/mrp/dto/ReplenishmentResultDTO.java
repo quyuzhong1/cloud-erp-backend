@@ -20,6 +20,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -173,7 +174,7 @@ public class ReplenishmentResultDTO {
     /**
      * 店铺最近历史销量
      */
-    private Map<String, Integer> shopSalesMap;
+    private Map<String, Integer> shopSalesMap = new HashMap<>();
 
     @Getter
     @Setter
