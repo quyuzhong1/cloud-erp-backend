@@ -489,6 +489,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             }
         }
         view.setBomList(bomList);
+        view.setParentSkuNoList(parentSkuNoList);
         return view;
     }
 
