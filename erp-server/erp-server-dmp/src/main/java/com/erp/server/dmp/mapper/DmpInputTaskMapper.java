@@ -1,6 +1,7 @@
 package com.erp.server.dmp.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpInputTaskDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -21,4 +22,5 @@ import java.util.List;
 @Mapper
 public interface DmpInputTaskMapper extends BaseMapper<DmpInputTaskEntity> {
 
+    List<DmpInoutDTO.ListDTO> lastBySystemCodeAndBillType(List<String> strings, List<String> strings1, List<String> nextLevelIdList);
 }

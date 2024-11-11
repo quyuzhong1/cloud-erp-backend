@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -75,14 +76,20 @@ public class DmpInoutDTO implements Serializable {
         private String cfgInputId;
 
         /**
-         * 任务明细ID
-         */
-        private String detailId;
-
-        /**
          * 下一级ID
          */
         private String nextLevelId;
+
+        /**
+         * 状态对应
+         * SyncStatusEnum
+         */
+        private String status;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
 }
