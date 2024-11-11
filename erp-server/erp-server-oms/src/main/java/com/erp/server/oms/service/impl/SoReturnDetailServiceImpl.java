@@ -12,6 +12,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -375,6 +376,15 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
         //组织列表
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIds);
+
+        //sku映射表
+        SoReturnEntity soReturnEntity = soReturnService.getById(dto.getId());
+        List<String> skuNoList = list.stream().map(SoDetailDTO.AddDetailView::getSkuNo).distinct().collect(Collectors.toList());
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setCutomerId(soReturnEntity.getCustomerId());
+        skuParamDTO.setSkuNoList(skuNoList);
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+
         for (SoDetailDTO.AddDetailView addDetailView : list) {
             String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(addDetailView.getWarehouseId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -401,7 +411,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));
             addDetailView.setReturnReasonDictName(ReturnReasonEnum.getName(addDetailView.getReturnReasonDict()));
             //平台sku
-            addDetailView.setPlatformSkuNo(addDetailView.getPlatformSkuNo());
+            if(StringUtils.isBlank(addDetailView.getPlatformSkuNo())){
+                SkuMappingDTO.ProductSkuInfoDTO productSkuInfoDTO = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(addDetailView.getSkuNo())).findFirst().orElse(new SkuMappingDTO.ProductSkuInfoDTO());
+                addDetailView.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
+            }
         }
         return list;
     }
