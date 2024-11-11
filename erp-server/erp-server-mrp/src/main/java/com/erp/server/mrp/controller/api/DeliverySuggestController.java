@@ -173,10 +173,10 @@ public class DeliverySuggestController extends BaseController {
             try {
                 resultDTO = deliverySuggestService.confirm(id);
             }catch (Exception e){
-                log.error("发货建议计划 锁定失败",e);
+                log.error("发货建议计划 确认失败",e);
                 DeliverySuggestEntity entity = deliverySuggestService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "发货建议计划不存在, 锁定失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "发货建议计划不存在, 确认失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
