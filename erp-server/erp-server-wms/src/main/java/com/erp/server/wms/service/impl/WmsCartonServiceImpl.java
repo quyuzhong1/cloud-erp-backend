@@ -103,7 +103,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         if (CollectionUtils.isEmpty(cartonIds)) {
             return Boolean.TRUE;
         }
-        return lambdaUpdate().in(WmsCartonEntity::getSpecId, cartonIds).remove();
+        return lambdaUpdate().in(WmsCartonEntity::getId, cartonIds).remove();
     }
 
     @Override
