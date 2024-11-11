@@ -76,6 +76,33 @@ public class DmpInoutDTO implements Serializable {
         private String cfgInputId;
 
         /**
+         * 任务明细ID
+         */
+        private String detailId;
+
+        /**
+         * 下一级ID
+         */
+        private String nextLevelId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LastOneDTO {
+
+        /**
+         * 系统Code
+         */
+        private String systemCode;
+
+        /**
+         * 任务ID
+         */
+        private String cfgInputId;
+
+        /**
          * 下一级ID
          */
         private String nextLevelId;

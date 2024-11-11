@@ -41,5 +41,5 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
 
     boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e);
 
-    List<DmpInoutDTO.ListDTO> lastBySystemCodeAndBillType(List<String> strings, List<String> strings1, List<String> nextLevelIdList);
+    List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> strings, List<String> strings1, List<String> nextLevelIdList);
 }

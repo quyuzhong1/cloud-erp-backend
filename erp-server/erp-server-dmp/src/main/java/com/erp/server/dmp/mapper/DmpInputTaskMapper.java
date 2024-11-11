@@ -22,5 +22,5 @@ import java.util.List;
 @Mapper
 public interface DmpInputTaskMapper extends BaseMapper<DmpInputTaskEntity> {
 
-    List<DmpInoutDTO.ListDTO> lastBySystemCodeAndBillType(List<String> strings, List<String> strings1, List<String> nextLevelIdList);
+    List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> strings, List<String> strings1, List<String> nextLevelIdList);
 }

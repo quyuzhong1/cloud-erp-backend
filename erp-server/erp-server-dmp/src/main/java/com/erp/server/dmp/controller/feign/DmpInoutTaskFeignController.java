@@ -102,9 +102,9 @@ public class DmpInoutTaskFeignController{
 	 * 公共- 查询输入任务最新状态
 	 */
 	@PostMapping("/newInputTaskList")
-	public List<DmpInoutDTO.ListDTO> doInputTask(@RequestBody DmpInoutDTO.CommonDTO createDTO) {
+	public List<DmpInoutDTO.LastOneDTO> doInputTask(@RequestBody DmpInoutDTO.CommonDTO createDTO) {
 		//查询任务是否存在
-		List<DmpInoutDTO.ListDTO> list =  dmpInputTaskService.lastBySystemCodeAndBillType(
+		List<DmpInoutDTO.LastOneDTO> list =  dmpInputTaskService.lastBySystemCodeAndBillType(
 				Collections.singletonList(createDTO.getSystemCode()),
 				Collections.singletonList(createDTO.getBillType()),
 				createDTO.getNextLevelIdList());
