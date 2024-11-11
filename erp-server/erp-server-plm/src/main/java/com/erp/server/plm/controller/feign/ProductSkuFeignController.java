@@ -13,6 +13,7 @@ import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
@@ -579,4 +580,12 @@ public class ProductSkuFeignController {
         return productDetailService.dimensionalWeightMeasure(dto);
     }
 
+    /**
+     *  sku图片上传
+     *
+     */
+    @PostMapping("/uploadSkuImage")
+    public void uploadSkuImage(@RequestBody UploadSkuDTO dto){
+        productDetailService.uploadSkuImage(dto);
+    }
 }

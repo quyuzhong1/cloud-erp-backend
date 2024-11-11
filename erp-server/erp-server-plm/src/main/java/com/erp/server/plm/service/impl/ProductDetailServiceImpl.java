@@ -10,6 +10,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -58,11 +59,14 @@ import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -269,6 +273,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private FileTemplateFeign fileTemplateFeign;
+
+    @Resource
+    private PlmAttachmentService plmAttachmentService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -5398,6 +5405,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             document.close();
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015, e.getMessage());
+        }
+    }
+
+    @Override
+    public void uploadSkuImage(UploadSkuDTO dto) {
+        ProductDetailEntity productDetailEntity = getBySkuNoOrEan(dto.getEan());
+        if(Objects.nonNull(productDetailEntity)){
+            PlmAttachmentEntity entity = new PlmAttachmentEntity();
+            entity.setAttachUrl(dto.getAttachUrl());
+            entity.setAttachName(dto.getAttachName());
+            Class<ProductDetailEntity> aClass = ProductDetailEntity.class;
+            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+            entity.setType(tableName.value());
+            entity.setBusinessId(productDetailEntity.getId());
+            plmAttachmentService.save(entity);
         }
     }
 

@@ -13,12 +13,14 @@ import com.common.core.utils.FileUtil;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.dto.AttachmentDTO;
+import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.WmsAttachmentMapper;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -52,6 +54,9 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
 
     @Resource
     private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
@@ -199,6 +204,7 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
             //发货单信息
             SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryService.getByBusinessCode(code);
             if(Objects.isNull(soB2cDeliveryEntity)){
+                plmTaskFeign.uploadSkuImage(new UploadSkuDTO(code, url, dto.getFileName()));
                 return;
             }
             Class<SoB2cDeliveryEntity> aClass = SoB2cDeliveryEntity.class;
