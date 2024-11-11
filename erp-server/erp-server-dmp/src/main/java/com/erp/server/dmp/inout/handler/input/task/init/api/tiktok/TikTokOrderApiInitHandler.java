@@ -158,10 +158,12 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
             dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(ordersBeans));
             dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 
-            if (StringUtil.isBlank(orderDTO.getData().getNextPageToken())) {
+            pageToken = orderDTO.getData().getNextPageToken();
+
+            if (StringUtil.isBlank(pageToken)) {
                 break;
             }
-            pageToken = orderDTO.getData().getNextPageToken();
+
         }
         return dmpInputTaskInitDTOList;
     }

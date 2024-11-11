@@ -189,6 +189,21 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
      */
     @TableField("source_id")
     private String sourceId;
+    /**
+    * 卖家运费折扣
+    */
+    @TableField("shipping_fee_seller_discount")
+    private BigDecimal shippingFeeSellerDiscount;
+    /**
+    * 平台运费折扣
+    */
+    @TableField("shipping_fee_platform_discount")
+    private BigDecimal shippingFeePlatformDiscount;
+    /**
+    * 退款税费
+    */
+    @TableField("refund_tax")
+    private BigDecimal refundTax;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
