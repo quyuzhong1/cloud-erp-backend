@@ -5,19 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.validator.ValidList;
-import com.erp.model.dmp.dto.DmpPushWdtDTO;
-import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -25,12 +12,15 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -41,6 +31,8 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -61,6 +53,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -69,14 +62,12 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
-import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.mapper.TransferInfoMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
-import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -181,6 +172,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+
+    @Resource
+    private VirtualTransFlowService virtualTransFlowService;
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -700,6 +697,73 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferInfoEntity> transferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         updateSoDeliveryNoticeInventory(transferInfoList,detailList);
+
+        //来源B2C发货单
+        List<TransferInfoEntity> b2cDeliveryList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY.getCode(), obj.getSourceType()))
+                .distinct().collect(Collectors.toList());
+        updateB2cSoDeliveryInventory(b2cDeliveryList,detailList);
+    }
+
+    /**
+     * B2C发货来源直接调拨单处理
+     * @author will
+     * @date 2024/11/11 10:40
+     * @param transferInfoList
+     * @param detailList
+     */
+    private void updateB2cSoDeliveryInventory (List<TransferInfoEntity> transferInfoList,List<TransferInfoDetailEntity> detailList) {
+        if (CollectionUtils.isEmpty(transferInfoList)) {
+            return;
+        }
+        List<String> idList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
+        List<TransferInfoDetailEntity> pushDetailList = detailList.stream().filter(obj -> idList.contains(obj.getMainId())).collect(Collectors.toList());
+
+        //b2c发货单
+        List<String> sourceDetailIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByIds(sourceDetailIdList);
+
+        //历史流水
+        List<String> detailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(detailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
+
+        //出冻结库存
+        List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
+        for (TransferInfoDetailEntity detailEntity : pushDetailList) {
+            //直接调拨单
+            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(transferInfoEntity)) {
+                throw new ServiceException("直接调拨单未找到");
+            }
+            //b2c发货单
+            SoB2cDeliveryDetailEntity soB2cDeliveryDetail = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cDeliveryDetail) || StrUtil.isBlank(soB2cDeliveryDetail.getVirtualWarehouseId())) {
+                continue;
+            }
+            //判断是否是历史数据存在流水则不扣减虚拟仓流水
+            long count = virtualTransFlowList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), detailEntity.getId())).count();
+            if (count > MathUtil.ZERO) {
+                continue;
+            }
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(transferInfoEntity.getId());
+            outInStockDTO.setSourceCode(transferInfoEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_INFO);
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(detailEntity.getOutWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(soB2cDeliveryDetail.getVirtualWarehouseId());
+            outInStockDTO.setQty(detailEntity.getQty());
+            outList.add(outInStockDTO);
+        }
+        if (CollectionUtils.isNotEmpty(outList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
+            stockParamDTO.setParamList(outList);
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
     }
 
     /**

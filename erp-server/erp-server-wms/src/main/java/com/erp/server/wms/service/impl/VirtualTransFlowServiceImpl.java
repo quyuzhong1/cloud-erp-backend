@@ -27,6 +27,7 @@ import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -38,6 +39,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -159,6 +161,18 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             fillPageData(pageData.getRecords());
         }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listHistoryFlow(List<String> sourceDetailIdList,String sourceType) {
+        if (CollectionUtil.isEmpty(sourceDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery()
+                .in(VirtualTransFlowEntity::getSourceDetailId,sourceDetailIdList)
+                .eq(VirtualTransFlowEntity::getIsUnapproved,Boolean.FALSE)
+                .eq(VirtualTransFlowEntity::getSourceType,sourceType)
+                .list();
     }
 
     /**
