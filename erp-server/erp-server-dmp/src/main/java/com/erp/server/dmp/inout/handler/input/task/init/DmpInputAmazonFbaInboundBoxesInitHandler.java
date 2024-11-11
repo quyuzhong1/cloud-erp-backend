@@ -52,17 +52,17 @@ public class DmpInputAmazonFbaInboundBoxesInitHandler extends DmpInputInitHandle
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String shopId = dmpCfgInputDetailEntity.getNextLevelId();
+        String shopId = dmpInputTaskEntity.getNextLevelId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         // 系统时间
-        LocalDateTime systemBeginTime = dmpCfgInputDetailEntity.getLastTime();
+        LocalDateTime systemBeginTime = dmpInputTaskEntity.getStartTime();
 
         List<ParamData> paramDataList = new ArrayList<>();
         paramDataList.add(new ParamData("platformShopCode", "platformShopCode", PannoEnum.EQ, shopInfoDTO.getPlatformShopCode()));
         paramDataList.add(new ParamData("lastUpdatedAtSystemDate", "lastUpdatedAtSystemDate", PannoEnum.GTE, systemBeginTime));
         List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "amazon_fbaInboundPlan_data");
         if (CollUtil.isEmpty(findMongoData)) {
-            log.warn("未找到更新时间对应入库计划记录:taskDetailId={}", dmpCfgInputDetailEntity.getId());
+            log.warn("未找到更新时间对应入库计划记录:taskDetailId={}", dmpInputTaskEntity.getId());
             return Collections.emptyList();
         }
 
@@ -74,7 +74,7 @@ public class DmpInputAmazonFbaInboundBoxesInitHandler extends DmpInputInitHandle
             // 货件ID
             String shipmentId = checkAndGetMongoValue(findMongo, "shipmentId");
             // 请求亚马逊接口
-            List<Box> sourceResultList = requestAmazonFbaInboundBoxes(inboundPlanId, shipmentId, shopInfoDTO, dmpCfgInputDetailEntity.getExtendJson());
+            List<Box> sourceResultList = requestAmazonFbaInboundBoxes(inboundPlanId, shipmentId, shopInfoDTO, dmpInputTaskEntity.getExtendJson());
             // 补充信息
             List<JSONObject> resultList = sourceResultList.stream().map(e -> fillDataToJsonObject(e, inboundPlanId, shipmentId)).collect(Collectors.toList());
             dataList.addAll(resultList);
