@@ -273,6 +273,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				Map<String, String> sdyObject = new HashMap<>();
 				sdyObject.put(SdyCommonService.REQUEST_URL, outputMethod);
 				sdyObject.put(SdyCommonService.REQUEST_DATA, requestData);
+				requestData = JSON.toJSONString(sdyObject);
 				outputMethod = SdyCommonService.REQUEST_SDY;
 			}
 			try {

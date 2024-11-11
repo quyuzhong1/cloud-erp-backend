@@ -24,7 +24,7 @@ public class SdyCommonService {
 	@Value("${dmp.url:http://localhost:8080}")
     private String sdyUrl;
 	
-	public ApiResult<String> requestSdy(Object ext) {
+	public ApiResult<?> requestSdy(Object ext) {
 		JSONObject parseObject = JSON.parseObject(ext.toString());
 		String url = parseObject.getString(REQUEST_URL);
 		if(!url.startsWith("/")) {
@@ -36,12 +36,17 @@ public class SdyCommonService {
 		log.warn("请求数帝云请求报文：{}" , requestData);
 		String responseData = HttpUtil.post(url, requestData);
 		log.warn("请求数帝云响应报文：{}" , responseData);
-		JSONObject responseObject = JSON.parseObject(responseData);
-		Integer errno = responseObject.getInteger("errno");
-		if(0 == errno) {
-			return ApiResult.successMsg(responseData);
-		}else {
-			return ApiResult.error(responseData);
+		JSONObject responseObject = null;
+		try {
+			responseObject = JSON.parseObject(responseData);
+			Integer errno = responseObject.getInteger("errno");
+			if(0 == errno) {
+				return ApiResult.success(responseObject);
+			}else {
+				return ApiResult.error("" , responseObject);
+			}
+		} catch (Exception e) {
 		}
+		return ApiResult.error(responseData);
 	}
 }
