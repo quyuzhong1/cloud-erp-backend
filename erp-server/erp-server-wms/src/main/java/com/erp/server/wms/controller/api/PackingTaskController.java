@@ -142,23 +142,6 @@ public class PackingTaskController extends BaseController {
         dto.setOperation("装箱操作");
         dto.setContent("新增装箱");
         Boolean flag = packingTaskService.packingSave(dto, Boolean.FALSE);
-        if(flag){
-            PackingTaskEntity packingTaskEntity = packingTaskService.getById(dto.getTaskId());
-            //装箱完成
-            if(packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
-                    && packingTaskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())){
-                //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
-                RequisitionApplicationEntity entity = requisitionApplicationService.getById(dto.getSourceId());
-                if(null != entity){
-                    Map<String,String> map = new HashMap<>();
-                    map.put("code",entity.getCode());
-                    map.put("createUserId",entity.getCreateUserId());
-                    map.put("createUserName",entity.getCreateUserName());
-                    map.put("packingCode",packingTaskEntity.getCode());
-                    requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE);
-                }
-            }
-        }
         return flag ? success() : failure();
     }
 

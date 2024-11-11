@@ -182,23 +182,6 @@ public class PdaPackingTaskController extends BaseController {
         dto.setOperation("装箱操作");
         dto.setContent("完成装箱");
         WmsCartonDTO.PrintDTO printDTO = packingTaskService.pdaPackingSave(dto);
-        PackingTaskEntity packingTaskEntity = packingTaskService.getById(dto.getTaskId());
-        //装箱完成
-        if (null!= packingTaskEntity
-                && packingTaskEntity.getSourceType().equals(PickingSourceTypeEnum.THIRD.getCode())
-                && packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
-                && packingTaskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())) {
-            //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
-            RequisitionApplicationEntity entity = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
-            if(null != entity){
-                Map<String,String> map = new HashMap<>();
-                map.put("code",entity.getCode());
-                map.put("createUserId",entity.getCreateUserId());
-                map.put("createUserName",entity.getCreateUserName());
-                map.put("packingCode",packingTaskEntity.getCode());
-                requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE);
-            }
-        }
         return success(printDTO);
     }
 
