@@ -836,12 +836,16 @@ public class SoDetailDTO implements Serializable {
     public static class ListAddDetailNoBomViewDTO {
 
         /**
-         * 成功返回数据
+         *
+         */
+        private List<String> parentSkuNoList;
+        /**
+         *
          */
         private List<AddDetailView> nobomList;
 
         /**
-         * 成功返回数据
+         *
          */
         private List<AddDetailView> bomList;
 
