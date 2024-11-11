@@ -38,5 +38,37 @@
         main_id, next_level_id, last_time, next_time, interval_time, override_time, max_retry_count, exec_timeout, disabled, extend_json
     </sql>
 
-
+    <select id="listBySystemCodeAndBillType" resultType="com.erp.model.dmp.dto.DmpInoutDTO$ListDTO">
+        SELECT
+            dbs.code as systemCode,
+            dcid.id as detailId,
+            dcid.next_level_id as nextLevelId,
+            dcid.main_id as cfgInputId,
+        FROM
+            "dmp_cfg_input_detail" AS dcid
+            INNER JOIN dmp_cfg_input AS dci ON dci.ID = dcid.main_id
+            INNER JOIN dmp_basic_system AS dbs ON dbs.ID = dci.system_id
+        WHERE
+          dcid.is_deleted = FALSE
+          AND dci.is_deleted = FALSE
+          AND dbs.is_deleted = FALSE
+          AND dci.bill_type IN
+          <foreach collection="billTypeList" item="t" open="(" close=")">
+              #{t}
+          </foreach>
+          AND dcid.next_level_id IN
+          <foreach collection="nextLevelIdList" item="s" open="(" close=")">
+              #{s}
+          </foreach>
+          AND dbs.code ILIKE ANY ( ARRAY
+                <foreach collection="systemCodeList" item="s" open="[" close="]">
+                    #{s}
+                </foreach>
+          )
+        GROUP BY
+            dbs.code,
+            dcid.id,
+            dcid.next_level_id,
+            dcid.main_id
+    </select>
 </mapper>
