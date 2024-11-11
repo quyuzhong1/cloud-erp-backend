@@ -5,7 +5,7 @@
 
     <select id="paging" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$PagingView">
         select rs.id,
-        rs.update_time,
+        rsd.update_time,
         rs.platform_type,
         rs.sku_id,
         rs.sku_no,
