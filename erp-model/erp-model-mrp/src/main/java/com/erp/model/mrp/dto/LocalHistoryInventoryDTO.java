@@ -24,6 +24,10 @@ public class LocalHistoryInventoryDTO {
     public static class PagingViewDTO {
 
         /**
+         * id
+         */
+        private String id;
+        /**
          * sku id
          */
         private String skuId;

@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -31,6 +32,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -91,7 +93,7 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
 
     private void filList(List<OverseasHistoryInventoryDTO.ListDTO> list) {
         // 查询库存映射关系
-        List<String> plaformSkuNoList = list.stream().map(OverseasHistoryInventoryDTO.ListDTO::getPlatformSku).distinct().collect(Collectors.toList());
+        List<String> plaformSkuNoList = list.stream().map(OverseasHistoryInventoryDTO.ListDTO::getPlatformSku).filter(ObjectUtils::isNotEmpty).distinct().collect(Collectors.toList());
         //  查询仓库ID
         List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = overseasProviderFeign.listAllMatch();
         //获取库存sku信息

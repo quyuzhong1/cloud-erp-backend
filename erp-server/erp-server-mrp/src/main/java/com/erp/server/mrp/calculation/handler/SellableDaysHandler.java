@@ -60,9 +60,9 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
                 if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_USABLE.getCode().equals(code)) {
                     totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasUsableQty()) ? 0 : detail.getOverseasUsableQty();
                 } else if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_IN_TRANSIT.getCode().equals(code)) {
-                    totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasInTransitQty()) ? 0 : detail.getOverseasUsableQty();
+                    totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasInTransitQty()) ? 0 : detail.getOverseasInTransitQty();
                 } else if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_ESTIMATED_DELIVERY.getCode().equals(code)) {
-                    totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasPlanDeliveryQty()) ? 0 : detail.getOverseasUsableQty();
+                    totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasPlanDeliveryQty()) ? 0 : detail.getOverseasPlanDeliveryQty();
                 }
             }
             replenishmentResultDTO.getReplenishmentDetail().setOverseasSellableDays(new BigDecimal(totalOverseasQty)

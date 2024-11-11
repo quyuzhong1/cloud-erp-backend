@@ -344,7 +344,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .findFirst()
                     .orElse(new SalesInfoEntity());
             int saleQty = Optional.ofNullable(salesHistoryMap.get(date)).orElse(0);
-            if (!date.isBefore(startDate) && !date.isAfter(dto.getEndDate())) {
+            if (!date.isBefore(dto.getStartDate().minusDays(1)) && !date.isAfter(dto.getEndDate())) {
                 originalSales.add(new BigDecimal(saleQty));
                 sales.add(Optional.ofNullable(salesInfo.getSalesQty()).orElse(new BigDecimal(saleQty)));
             } else {
