@@ -265,7 +265,7 @@ public class InventoryServiceImpl implements InventoryService {
      */
     private Map<String, Integer> getPlatformShopSalesMap(ReplenishmentResultDTO replenishmentResultDTO, Map<String, List<String>> platformShop) {
         Set<String> allShopIds = platformShop.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
-        return replenishmentResultDTO.getShopSalesMap().entrySet().stream()
+        return Optional.ofNullable(replenishmentResultDTO.getShopSalesMap()).orElse(new HashMap<>()).entrySet().stream()
                 .filter(e -> allShopIds.contains(e.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
