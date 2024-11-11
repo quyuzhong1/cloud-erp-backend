@@ -661,12 +661,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 //如果调拨单没有审核，需要提示，请先审核通过关联的中转调拨单后审核出库单
                 List<String> transferCodeList = transferInfoEntities.stream().filter(e -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), e.getApproveStatus())).map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(transferCodeList)){
-                    throw new ServiceException(ApiError.ERROR_92154,String.join(",",transferCodeList));
+                    throw new ServiceException(ApiError.ERROR_92164,String.join(",",transferCodeList));
                 }
                 //需要限制出库日期不能早于最后一个（按日期排序）调拨单的调拨日期
                 TransferInfoEntity transferInfoEntity = transferInfoEntities.stream().max(Comparator.comparing(TransferInfoEntity::getBillDate)).orElse(null);
                 if (Objects.nonNull(transferInfoEntity) && entity.getBillDate().isBefore(transferInfoEntity.getBillDate())){
-                    throw new ServiceException(ApiError.ERROR_92155, transferInfoEntity.getBillDate());
+                    throw new ServiceException(ApiError.ERROR_92165, transferInfoEntity.getBillDate());
                 }
             }
         }

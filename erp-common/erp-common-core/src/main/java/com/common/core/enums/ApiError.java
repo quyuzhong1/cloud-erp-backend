@@ -1146,8 +1146,8 @@ public enum ApiError implements Serializable {
     UNPICKED_QUANTITY_SHORTAGE(92151, "未拣货数量不足，无法生成拣货单，请重新操作"),
     CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
     CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
-    ERROR_92154(92154,"请先审核通过关联的中转调拨单【{}】后审核出库单"),
-    ERROR_92155(92155,"出库日期不能早于最后一个调拨单的调拨日期【{}】"),
+    ERROR_92164(92164,"请先审核通过关联的中转调拨单【{}】后审核出库单"),
+    ERROR_92165(92165,"出库日期不能早于最后一个调拨单的调拨日期【{}】"),
 
     ERROR_VW_CHANNEL_ERROR(92234,"当前{}【{}】已经被虚拟仓【{}】绑定\n"),
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
