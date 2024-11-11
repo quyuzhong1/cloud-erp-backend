@@ -427,6 +427,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         SoDetailDTO.ListAddDetailNoBomViewDTO view = new  SoDetailDTO.ListAddDetailNoBomViewDTO();
         List<SoDetailDTO.AddDetailView> bomList = new ArrayList<>();
         List<SoDetailDTO.AddDetailView> noBomList = new ArrayList<>();
+        List<String> parentSkuNoList = new ArrayList<>();
         //获取sku产品明细
         listAddDetailViewDTO viewDTO = new listAddDetailViewDTO();
         viewDTO.setId(dto.getId());
@@ -443,8 +444,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             List<String> skuNOs = noBomList.stream().map(SoDetailDTO.AddDetailView::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNOs);
             if(CollectionUtils.isNotEmpty(bomChildrenSkuList)){
-
-
                 //存在套装SKU
                 view.setExistBom(Boolean.TRUE);
                 //根据父skuno 分组
@@ -468,6 +467,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                 for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
                     String skuNo = addDetailView.getSkuNo();
                     if(collect.containsKey(skuNo)){
+                        //父sku
+                        parentSkuNoList.add(skuNo);
                         //把子件添加到结果集
                         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
                         for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
