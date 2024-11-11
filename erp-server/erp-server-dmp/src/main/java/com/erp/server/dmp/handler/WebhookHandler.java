@@ -11,5 +11,5 @@ import com.erp.model.dmp.track123.WebhookRequest;
  */
 public interface WebhookHandler {
 
-    void process(WebhookRequest request);
+    void process(String request);
 }
