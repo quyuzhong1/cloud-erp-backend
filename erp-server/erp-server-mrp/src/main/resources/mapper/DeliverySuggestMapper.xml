@@ -75,7 +75,7 @@
         left join delivery_suggest_sys dss on ds.id = dss.source_id and dss.is_deleted = false
         left join product_detail pd on ds.sku_id = pd.id and pd.is_deleted = false
         <where>
-            ds.is_deleted = false and ds.source_id = #{params.sourceId}
+            ds.is_deleted = false and ds.status = 'draft' and ds.source_id = #{params.sourceId}
         </where>
     </select>
 

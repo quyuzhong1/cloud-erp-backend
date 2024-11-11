@@ -100,7 +100,7 @@
         left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
         left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
         <where>
-            ps.is_deleted = false and ps.source_id = #{params.sourceId}
+            ps.is_deleted = false and ps.status = 'draft' and ps.source_id = #{params.sourceId}
         </where>
     </select>
 
