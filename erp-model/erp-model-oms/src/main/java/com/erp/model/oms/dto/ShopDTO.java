@@ -1,14 +1,9 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.common.business.dto.AdvanceQueryDTO;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.annotation.Dict;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.oms.enums.ShopTypeEnum;
-import com.erp.model.wms.enums.WmsDataCompareTaskStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -846,6 +841,10 @@ public class ShopDTO implements Serializable {
          */
         private String dictPlatform;
         /**
+         * 区域
+         */
+        private String dictAreaCode;
+        /**
          * 是否已授权
          */
         private Boolean showByAuth = false;
@@ -933,5 +932,36 @@ public class ShopDTO implements Serializable {
          * 是否包含平台仓 true 包含
          */
         private Boolean  isHaveWarehouse;
+    }
+
+    /**
+     * 区域
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AreaDTO {
+
+       /**
+        * 区域
+        */
+        private String dictAreaCode;
+    }
+
+    /**
+     * 区域参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AreaParamDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
     }
 }

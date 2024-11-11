@@ -1,7 +1,6 @@
 package com.erp.server.plm.controller.feign;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -21,7 +20,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -579,4 +577,18 @@ public class ProductSkuFeignController {
         return productDetailService.dimensionalWeightMeasure(dto);
     }
 
+    @GetMapping("/listApproveAndListingSku")
+    List<SkuVO> listApproveAndListingSku(){
+        return productDetailService.listApproveAndListingSku();
+    }
+
+    @GetMapping("/getCategoryByQuerySql")
+    List<String> getCategoryByQuerySql(@RequestParam String compareCodeSplicingValueSql){
+        return productDetailService.getCategoryByQuerySql(compareCodeSplicingValueSql);
+    }
+
+    @GetMapping("/getBrandByQuerySql")
+    List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql){
+        return productDetailService.getBrandByQuerySql(compareCodeSplicingValueSql);
+    }
 }

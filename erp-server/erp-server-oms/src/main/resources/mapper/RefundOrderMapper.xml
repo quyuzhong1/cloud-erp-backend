@@ -25,6 +25,7 @@
         <result column="currency_symbol" property="currencySymbol" />
         <result column="reason" property="reason" />
         <result column="refund_time" property="refundTime" />
+        <result column="refund_cny_amount" property="refundCnyAmount" />
     </resultMap>
     <select id="paging" resultType="com.erp.model.oms.dto.RefundOrderDTO$PagingViewDTO">
         SELECT

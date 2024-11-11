@@ -169,6 +169,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         String newTrackStatusName = LogisticTrackStatusEnum.getName(trackStatus);
         detailEntity.setTrackStatus(trackStatus);
         detailEntity.setTrackTime(trackTime);
+        detailEntity.setTrackContent(trackDesc);
         this.updateById(detailEntity);
 
         //添加物流轨迹
@@ -226,12 +227,6 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 updateTrackDTO.setCarrierId(updateTrackDTO.getCarrierId());
             }
         });
-    }
-
-    @Override
-    public List<LogisticsBillDetailEntity> getDetailByTrackNo(String trackNo) {
-        return lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, trackNo)
-                .eq(LogisticsBillDetailEntity::getIsDeleted, false).list();
     }
 
     @Override
@@ -332,30 +327,13 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
                 .set(LogisticsBillDetailEntity::getTrackStatus, logisticsTrackEntity.getStatus())
                 .set(LogisticsBillDetailEntity::getTrackTime, trackTime)
+                .set(LogisticsBillDetailEntity::getTrackContent,logisticsTrackEntity.getContent())
                 .set(LogisticsBillDetailEntity::getSignTime, signTime)
                 .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
                 .update();
         //根据运单号查询更新
         if (StrUtil.isNotBlank(logisticsTrackEntity.getTrackNo())){
-            baseMapper.updateTransportNo(Collections.singletonList(logisticsTrackEntity.getTrackNo()),Boolean.TRUE,logisticsTrackEntity.getStatus(),signTime, trackTime);
-        }
-    }
-
-    @Override
-    public void updateTrackStatus(String trackNo, String status, LocalDateTime signTime, LocalDateTime trackTime) {
-        if (StrUtil.isBlank(trackNo) || StrUtil.isBlank(status)){
-            return;
-        }
-        this.lambdaUpdate().eq(LogisticsBillDetailEntity::getTrackNo, trackNo)
-                .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
-                .set(LogisticsBillDetailEntity::getTrackStatus, status)
-                .set(Objects.nonNull(trackTime), LogisticsBillDetailEntity::getTrackTime, trackTime)
-                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
-                .set(Objects.nonNull(signTime), LogisticsBillDetailEntity::getSignTime, signTime)
-                .update();
-        //根据运单号查询更新
-        if (StrUtil.isNotBlank(trackNo)){
-            baseMapper.updateTransportNo(Collections.singletonList(trackNo),Boolean.TRUE,status,signTime, LocalDateTime.now());
+            baseMapper.updateTransportNo(Collections.singletonList(logisticsTrackEntity.getTrackNo()),Boolean.TRUE,logisticsTrackEntity.getStatus(),signTime, trackTime,logisticsTrackEntity.getContent());
         }
     }
 
@@ -373,7 +351,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 .update();
         //根据运单号查询更新
         if (CollectionUtils.isNotEmpty(trackNoList)){
-            baseMapper.updateTransportNo(trackNoList,Boolean.TRUE,code,signTime, LocalDateTime.now());
+            baseMapper.updateTransportNo(trackNoList,Boolean.TRUE,code,signTime, LocalDateTime.now(), "");
         }
     }
 
