@@ -81,18 +81,12 @@ public class DmpInputAmzFinancialEventsApiInitHandler extends DmpInputInitHandle
         LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 
         String rateLimitStr = AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getRateLimit();
-        // 根据亚马逊的响应时间记录下次执行开始时间
-        LocalDateTime nextStartTime;
-        // 亚马逊订单下载
-        OrdersV0Api api = AmazonSpApiInitUtils.create(OrdersV0Api.class, shopInfoDTO, false);
         // 正式环境请求
         String postedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
         String postedBefore = DateUtil.plus8SameUtcOffset(endTime).toString();
 
         Integer maxResultsPerPage = 100;
         try {
-            // 请求全站点
-            List<String> marketplaceIds = new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet());
             // 发起请求
             FinancesApi financesApi = AmazonSpApiInitUtils.create(FinancesApi.class, shopInfoDTO, false);
             ApiResponse<ListFinancialEventsResponse> respWithHttpInfo = financesApi.listFinancialEventsWithHttpInfo(maxResultsPerPage, postedAfter, postedBefore, null);
