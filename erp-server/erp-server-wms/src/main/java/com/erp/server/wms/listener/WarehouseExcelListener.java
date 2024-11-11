@@ -13,6 +13,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -234,18 +235,19 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         addDTO.setFinancialOrganization(financialOrganization);
         
         String openTimeStr = warehouseExcelDTO.getOpenTime();
-        LocalDateTime openTime = this.getDateValue(openTimeStr);
-        if(openTime == null) {
-        	errorMsgList.add("启用日期格式错误");
+        if(StringUtils.isNotBlank(openTimeStr)) {
+        	LocalDateTime openTime = this.getDateValue(openTimeStr);
+            if(openTime == null) {
+            	errorMsgList.add("启用日期格式错误");
+            }
+            addDTO.setOpenTime(openTime);
         }
-        addDTO.setOpenTime(openTime);
         
-        String closeTimeStr = warehouseExcelDTO.getCloseTime();
-        LocalDateTime closeTime = this.getDateValue(closeTimeStr);
-        if(closeTime == null) {
-        	errorMsgList.add("停用日期格式错误");
+        WarehouseEntity warehouse = new WarehouseEntity();
+        BeanMapper.copy(addDTO, warehouse);
+        if(warehouseService.checkOpenCloseTime(warehouseEntity)) {
+        	errorMsgList.add(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL.msg);
         }
-        addDTO.setCloseTime(closeTime);
         
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {

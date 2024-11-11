@@ -29,6 +29,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -72,6 +73,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -619,7 +621,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkKingdeeWarehouseCode("", dto.getKingdeeWarehouseCode());
         WarehouseEntity warehouse = new WarehouseEntity();
         BeanMapper.copy(dto, warehouse);
-
+        this.validateOpenCloseTime(warehouse);
         //如果设置了在途仓，获取匹配在途仓名称
         if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
             WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
@@ -681,6 +683,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 //            checkDmpThirdMapping(warehouseId,warehouse.getName());
 //        }
         BeanMapper.copy(dto, warehouse);
+        this.validateOpenCloseTime(warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
         if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
@@ -789,7 +792,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean updateStatus(UpdateStateDTO dto) {
+    public Boolean updateStatus(WarehouseUpdateStateDTO dto) {
         // 删除缓存
         removeCache(Collections.singletonList(dto.getId()));
         //仓库id
@@ -804,6 +807,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 //            checkDmpThirdMapping(warehouseId,warehouse.getName());
 //        }
         warehouse.setDisabled(dto.getState());
+        this.validateOpenCloseTime(warehouse);
         this.updateById(warehouse);
 
         //发送金蝶
@@ -1397,4 +1401,19 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             }
         });
     }
+
+    @Override
+	public boolean checkOpenCloseTime(WarehouseEntity warehouseEntity) {
+		Boolean disabled = warehouseEntity.getDisabled();
+        if(Boolean.TRUE.equals(disabled)) {
+        	warehouseEntity.setCloseTime(LocalDateTime.now());
+        }
+        return Boolean.FALSE.equals(disabled) && warehouseEntity.getOpenTime() == null;
+	}
+	
+	private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
+		if(this.checkOpenCloseTime(warehouseEntity)) {
+			throw new ServiceException(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL);
+		}
+	}
 }

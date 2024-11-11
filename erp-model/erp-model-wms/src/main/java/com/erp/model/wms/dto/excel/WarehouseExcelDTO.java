@@ -168,17 +168,9 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "启用日期", index = 17)
-    @FieldValid(fieldName = "启用日期",isNotBlank = true)
+    @FieldValid(fieldName = "启用日期")
     private String openTime;
     
-    /**
-     * 停用日期
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "停用日期", index = 18)
-    @FieldValid(fieldName = "停用日期",isNotBlank = true)
-    private String closeTime;
-
 
     /**
      * 错误信息
