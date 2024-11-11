@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -40,4 +41,5 @@ public interface DmpInputTaskService extends SuperService<DmpInputTaskEntity> {
 
     boolean updateErrorStatus(String id , boolean errorFlag , Integer errorCount , Exception e);
 
+    List<DmpInoutDTO.ListDTO> lastBySystemCodeAndBillType(List<String> strings, List<String> strings1, List<String> nextLevelIdList);
 }

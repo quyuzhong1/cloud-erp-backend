@@ -96,4 +96,21 @@ public class DmpInoutTaskFeignController{
 		}
 		return resultList;
 	}
+
+
+	/**
+	 * 公共- 查询输入任务最新状态
+	 */
+	@PostMapping("/newInputTaskList")
+	public List<DmpInoutDTO.ListDTO> doInputTask(@RequestBody DmpInoutDTO.CommonDTO createDTO) {
+		//查询任务是否存在
+		List<DmpInoutDTO.ListDTO> list =  dmpInputTaskService.lastBySystemCodeAndBillType(
+				Collections.singletonList(createDTO.getSystemCode()),
+				Collections.singletonList(createDTO.getBillType()),
+				createDTO.getNextLevelIdList());
+		if (CollectionUtils.isEmpty(list)){
+			return Collections.emptyList();
+		}
+		return list;
+	}
 }
