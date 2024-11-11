@@ -77,7 +77,13 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-            sod.id DESC
+        <if test="params.sortField!=null and params.sortField!=''">
+            ${params.sortField}
+        </if>
+        <if test="params.sortField==null or params.sortField==''">
+            sod.id 
+        </if>
+        DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
@@ -146,7 +152,13 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-            sod.id DESC
+        <if test="params.sortField!=null and params.sortField!=''">
+            ${params.sortField}
+        </if>
+        <if test="params.sortField==null or params.sortField==''">
+            sod.id 
+        </if>
+        DESC
     </select>
 
 

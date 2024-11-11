@@ -9,10 +9,13 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.StringUtil;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderItemsBean;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
@@ -22,6 +25,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,6 +39,44 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class MercadoOrderDTO extends CleanBaseDTO {
+    public static void main(String[] args) {
+
+
+        String orderUrl = "https://api.mercadolibre.com/marketplace/orders/2000006213527517";
+
+        //入参
+        HashMap<String, Object> orderParams = new HashMap<>(1);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(1);
+        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-102321-f03bcdf2e89861f140ea4f491a82fd7b-1509269799");
+
+
+        List<ListingViewDTO> resultsBeanList = new ArrayList<>();
+
+        //每次最多获取200条
+        Integer pageSize = 50;
+        //当前页数
+        Integer pageNo = 0;
+        //总页数
+        Integer pageCount = 1;
+
+        Boolean nexflag = true;
+        String baseUrl = "https://api.mercadolibre.com/marketplace/users/1509269799";
+//user_id=1509269799
+        //入参
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("user_id", 1509269799);
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        if (!Objects.equals(apiResult.getCode(), 200)) {
+            nexflag = false;
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
+                    baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+
+
+    }
 
     private OrderViewDTO orderBean;
 
@@ -53,7 +95,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         this.setLastPushTime(dto.getNextTime().toString());
     }
 
-    public static String combineUnique(String orderId, String shopId){
+    public static String combineUnique(String orderId, String shopId) {
         return StrUtil.format("{}_{}", orderId, shopId);
     }
 
@@ -146,7 +188,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
             } else if ("me2".equalsIgnoreCase(shipmentViewDTO.getLogistic().getMode())
                     && (MercadoOrderLogisticTypeEnum.DROP_OFF.getCode().equals(shipmentViewDTO.getLogistic().getType()) || MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode().equalsIgnoreCase(shipmentViewDTO.getLogistic().getType()))
-            ){
+            ) {
                 //中转发货
                 lableMap.put("logisticType", shipmentViewDTO.getLogistic().getType());
                 logisticType = OrderLogisticTypeEnum.TRANSIT_WAREHOUSE.getCode();
@@ -159,7 +201,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             orderDTO.setLabelJson(JSONUtil.toJsonStr(lableMap));
             //扩展字段
             JSONObject extendDataJson = new JSONObject();
-            extendDataJson.put("mode",shipmentViewDTO.getLogistic().getMode());
+            extendDataJson.put("mode", shipmentViewDTO.getLogistic().getMode());
             extendDataJson.put("logisticType", shipmentViewDTO.getLogistic().getType());
             extendDataJson.put("shipmentId", orderBean.getShipping().getFid());
             orderDTO.setExtendData(extendDataJson.toString());
@@ -200,7 +242,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             } else if ("not_delivered".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-            }else if ("cancelled".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
+            } else if ("cancelled".equalsIgnoreCase(shipmentViewDTO.getStatus())) {
                 orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                 orderDTO.setInvalidStatus(Boolean.TRUE);
@@ -250,6 +292,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         orderDTO.setDmpSyncTaskId(dto.getDmpSyncTaskId());
         return orderDTO;
     }
+
     /**
      * 批量转换明细
      */
@@ -317,10 +360,11 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
     /**
      * 买家信息字段处理
-     * @Author Luo_WG
-     * @Date 2023/12/4 9:38
+     *
      * @param orderViewDTO
      * @return java.util.List<com.common.business.dto.PlatformOrderReceiverDTO>
+     * @Author Luo_WG
+     * @Date 2023/12/4 9:38
      **/
     private static PlatformOrderReceiverDTO parseReceiver(OrderViewDTO orderViewDTO) {
         if (Objects.isNull(orderViewDTO) || Objects.isNull(orderViewDTO.getShipping())) {
@@ -330,7 +374,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         return PlatformOrderReceiverDTO.builder()
                 .loginId(String.valueOf(orderViewDTO.getBuyer().getFid()))
                 .customerId(String.valueOf(orderViewDTO.getBuyer().getFid()))
-                .name(orderViewDTO.getBuyer().getFirstName()+" "+orderViewDTO.getBuyer().getLastName())
+                .name(orderViewDTO.getBuyer().getFirstName() + " " + orderViewDTO.getBuyer().getLastName())
                 .receiverName(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverName())
                 .telNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
                 .receiverTelNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
@@ -340,12 +384,12 @@ public class MercadoOrderDTO extends CleanBaseDTO {
                 .cityName(shippingAddress.getCity().getName())
                 .districtName(shippingAddress.getAddressLine())
                 .postCode(shippingAddress.getZipCode())
-                .firstAddress(shippingAddress.getNeighborhood().getName()+" "+
-                        (StringUtils.isNotBlank(shippingAddress.getMunicipality().getName()) ? shippingAddress.getMunicipality().getName() : "")+" "+
+                .firstAddress(shippingAddress.getNeighborhood().getName() + " " +
+                        (StringUtils.isNotBlank(shippingAddress.getMunicipality().getName()) ? shippingAddress.getMunicipality().getName() : "") + " " +
                         shippingAddress.getComment())
                 .secondAddress("")
-                .fullAddress(shippingAddress.getNeighborhood().getName()+" "+
-                        (StringUtils.isNotBlank(shippingAddress.getMunicipality().getName()) ? shippingAddress.getMunicipality().getName() : "") +" "+
+                .fullAddress(shippingAddress.getNeighborhood().getName() + " " +
+                        (StringUtils.isNotBlank(shippingAddress.getMunicipality().getName()) ? shippingAddress.getMunicipality().getName() : "") + " " +
                         shippingAddress.getComment())
                 .build();
     }
@@ -353,10 +397,11 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
     /**
      * 物流信息字段处理
-     * @Author Luo_WG
-     * @Date 2023/12/4 14:07
+     *
      * @param orderBean
      * @return java.util.List<com.common.business.dto.PlatformOrderLogisticsDTO>
+     * @Author Luo_WG
+     * @Date 2023/12/4 14:07
      **/
     private static List<PlatformOrderLogisticsDTO> parseLogistics(OrderViewDTO orderBean, String logisticType) {
         if (ObjectUtil.isEmpty(orderBean)) {
@@ -377,7 +422,6 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             //发货时间
             deliveryTime = offsetDateTime.toLocalDateTime();
         }
-
 
 
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
@@ -406,10 +450,11 @@ public class MercadoOrderDTO extends CleanBaseDTO {
 
     /**
      * 财务信息表
-     * @Author Luo_WG
-     * @Date 2023/12/4 14:07
+     *
      * @param orderViewDTO
      * @return java.util.List<com.common.business.dto.PlatformOrderFinanceDTO>
+     * @Author Luo_WG
+     * @Date 2023/12/4 14:07
      **/
     private static PlatformOrderFinanceDTO parseFinances(OrderViewDTO orderViewDTO) {
         BigDecimal vatRate = orderViewDTO.getPayments().stream().map(req -> req.getTaxesAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);

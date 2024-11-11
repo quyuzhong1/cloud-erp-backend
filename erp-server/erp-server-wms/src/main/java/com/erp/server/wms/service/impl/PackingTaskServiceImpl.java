@@ -2371,6 +2371,88 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     /**
+     * 根据外部箱号查询装箱的基础信息和产品明细
+     * @param outBoxNo
+     * @return
+     */
+    @Override
+    public WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(String outBoxNo) {
+        if (StringUtils.isBlank(outBoxNo)){
+            throw new ServiceException("箱号不能为空");
+        }
+        if (!outBoxNo.contains("-")){
+            throw new ServiceException("箱号格式【关联单号-箱号】错误");
+        }
+        String[] split = outBoxNo.split("-");
+        String sourceCode = split[0];
+        Integer boxNo = Integer.valueOf(split[1]);
+        List<PackingTaskEntity> taskEntityList = this.listBySourceCodes(Collections.singletonList(sourceCode));
+        if (CollectionUtil.isEmpty(taskEntityList)){
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        PackingTaskEntity packingTaskEntity = taskEntityList.get(0);
+        WmsCartonEntity wmsCartonEntity = wmsCartonService.findCartonByTaskIdAndBoxNo(packingTaskEntity.getId(), boxNo);
+        if (Objects.isNull(wmsCartonEntity)){
+            throw new ServiceException(ApiError.ERROR_92146);
+        }
+        WmsCartonSpecEntity specEntity = wmsCartonSpecService.getById(wmsCartonEntity.getSpecId());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listBySourceIds(Collections.singletonList(packingTaskEntity.getSourceId()));
+        List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(wmsCartonEntity.getId()));
+
+        //装箱总数量
+        int packTotalQty = detailEntityList.stream().filter(e -> Objects.nonNull(e)).mapToInt(WmsCartonDetailEntity::getPackQty).sum();
+        //产品明细
+        List<WmsCartonDetailDTO.BoxDetailDTO> detailList = CartonConverter.INSTANCE.convertCartonDetailToBoxDTO(detailEntityList);
+        //补充产品名称
+        List<String> skuIds = detailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())).map(WmsCartonDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuIds) && CollectionUtils.isNotEmpty(detailList)){
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+            detailList.forEach(e ->{
+                String productName = skuVOList.stream().filter(f -> Objects.nonNull(f) && f.getSkuId().equals(e.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse("");
+                e.setProductName(productName);
+            });
+        }
+        BigDecimal packageWeight = Objects.nonNull(specEntity.getPackageWeight()) ? specEntity.getPackageWeight() : BigDecimal.ZERO;
+        String packageWeightStr = Objects.nonNull(specEntity.getPackageWeight()) ? specEntity.getPackageWeight().stripTrailingZeros().toPlainString() : "";
+        return WmsCartonDTO.OutBoxNoDTO.builder()
+                .outBoxNo(outBoxNo)
+                .taskId(packingTaskEntity.getId())
+                .taskCode(packingTaskEntity.getCode())
+                .deliveryNo(getDeliveryNo(firstMileDeliveryEntityList))
+                .sizeUnit(specEntity.getSizeUnit())
+                .size(getSize(specEntity))
+                .packageWeight(packageWeight)
+                .packageWeightStr(packageWeightStr)
+                .weightUnit(specEntity.getWeightUnit())
+                .packTotalQty(packTotalQty)
+                .detailList(detailList)
+                .build();
+    }
+
+    /**
+     * 发货单
+     * @param firstMileDeliveryEntityList
+     * @return
+     */
+    private String getDeliveryNo(List<FirstMileDeliveryEntity> firstMileDeliveryEntityList) {
+        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
+            return "";
+        }
+        return firstMileDeliveryEntityList.get(0).getCode();
+    }
+
+    private static String getSize(WmsCartonSpecEntity specEntity) {
+        String size = "";
+        if (Objects.nonNull(specEntity)){
+            BigDecimal boxLength = Objects.nonNull(specEntity.getBoxLength()) ? specEntity.getBoxLength() : BigDecimal.ZERO;
+            BigDecimal boxWidth = Objects.nonNull(specEntity.getBoxWidth()) ? specEntity.getBoxWidth() : BigDecimal.ZERO;
+            BigDecimal boxHeight = Objects.nonNull(specEntity.getBoxHeight()) ? specEntity.getBoxHeight() : BigDecimal.ZERO;
+            size = boxLength.stripTrailingZeros().toPlainString() + "*" +boxWidth.stripTrailingZeros().toPlainString() +"*"+ boxHeight.stripTrailingZeros().toPlainString();
+        }
+        return size;
+    }
+
+    /**
     * 新增修改处理数据
     */
     private void handleData(PackingTaskEntity packingTaskEntity) {
