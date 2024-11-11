@@ -3095,6 +3095,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    public PagingVO<PurchaseOrderDTO.SourceCodeDTO> purchaseCodePaging(PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> pagingDTO) {
+        PurchaseOrderDTO.SourceCodeParamDTO params = pagingDTO.getParams();
+        params.setPermissionSql(pagingDTO.getPermissionSql());
+
+        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        query.setOrders(buildOrders(pagingDTO.getParams().getSortList()));
+        IPage<PurchaseOrderDTO.SourceCodeDTO> pageData = this.baseMapper.purchaseCodePaging(query, params);
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public List<DeliveryOrderDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
         WaitDeliveryCycleEnum[] values = WaitDeliveryCycleEnum.values();
         List<DeliveryOrderDTO.WaitDeliveryCountDTO> dtos = new ArrayList<>(values.length);
