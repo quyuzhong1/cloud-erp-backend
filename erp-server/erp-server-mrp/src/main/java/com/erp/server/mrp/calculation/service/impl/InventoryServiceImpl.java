@@ -278,7 +278,7 @@ public class InventoryServiceImpl implements InventoryService {
      * @param platformShopSalesMap 平台店铺销量
      */
     private int calculatePlatformSaleQty(CfgRuleWarehouseDTO.StrategyDetailResultDTO result, Map<String, List<String>> platformShop, Map<String, Integer> platformShopSalesMap) {
-        return platformShop.get(result.getDictPlatform()).stream()
+        return Optional.ofNullable(platformShop.get(result.getDictPlatform())).orElse(new ArrayList<>()).stream()
                 .map(v -> Optional.ofNullable(platformShopSalesMap.get(v)).orElse(0))
                 .reduce(0, Math::addExact);
     }
