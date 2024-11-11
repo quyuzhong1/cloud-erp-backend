@@ -19,6 +19,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.sys.dto.DictCityDTO;
@@ -46,6 +47,13 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -555,5 +563,34 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
                 .or()
                 .in(DictCountryEntity::getAlpha3, codeList)
                 .list();
+    }
+
+    @Override
+    public void renewCountryImg() {
+        List<DictCountryEntity> list = list();
+        String baseUrl = "https://flagcdn.com/w320/";
+        for (DictCountryEntity dictCountry : list) {
+            String imgName =dictCountry.getId().toLowerCase() + ".png";
+            Path tempFile = Paths.get(imgName);
+            try {
+                tempFile = Files.createTempFile(dictCountry.getId().toLowerCase(), ".png");
+                URL url = new URL(baseUrl + imgName);
+                try (InputStream inputStream = url.openStream()) {
+                    Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                }
+                byte[] imageData = Files.readAllBytes(tempFile);
+                String s = FastDFSClientUtil.uploadFile(imageData, imgName, null);
+                dictCountry.setFlagUrl(s);
+            } catch (IOException e) {
+                log.error("获取失败");
+            } finally {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException e) {
+                    log.error("删除失败");
+                }
+            }
+        }
+        updateBatchById(list);
     }
 }

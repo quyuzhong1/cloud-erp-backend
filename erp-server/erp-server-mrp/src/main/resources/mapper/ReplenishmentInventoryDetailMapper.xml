@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.ReplenishmentInventoryDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="replenishment_detail_id" property="replenishmentDetailId" />
+        <result column="inventory_type" property="inventoryType" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+        <result column="warehouse_type" property="warehouseType" />
+        <result column="channel_type" property="channelType" />
+        <result column="channel_id_json" property="channelIdJson" jdbcType="OTHER" typeHandler="com.erp.server.mrp.handler.ObjectJsonArrayHandler" />
+        <result column="inventory_allocate_type" property="inventoryAllocateType" />
+        <result column="total_qty" property="totalQty" />
+        <result column="calc_version" property="calcVersion" />
+    </resultMap>
+
+</mapper>

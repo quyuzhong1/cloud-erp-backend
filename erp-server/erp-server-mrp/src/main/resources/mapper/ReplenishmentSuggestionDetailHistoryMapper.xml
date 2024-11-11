@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.ReplenishmentSuggestionDetailHistoryMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.ReplenishmentSuggestionDetailHistoryEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="main_id" property="mainId" />
+        <result column="sku_type" property="skuType" />
+        <result column="fba_usable_qty" property="fbaUsableQty" />
+        <result column="fba_in_transit_qty" property="fbaInTransitQty" />
+        <result column="fba_plan_delivery_qty" property="fbaPlanDeliveryQty" />
+        <result column="overseas_usable_qty" property="overseasUsableQty" />
+        <result column="overseas_in_transit_qty" property="overseasInTransitQty" />
+        <result column="overseas_plan_delivery_qty" property="overseasPlanDeliveryQty" />
+        <result column="local_usable_qty" property="localUsableQty" />
+        <result column="local_in_transit_qty" property="localInTransitQty" />
+        <result column="local_plan_purchase_qty" property="localPlanPurchaseQty" />
+        <result column="total_inventory_qty" property="totalInventoryQty" />
+        <result column="sales_qty" property="salesQty" />
+        <result column="avg_sales_qty" property="avgSalesQty" />
+        <result column="sales_estimate_qty" property="salesEstimateQty" />
+        <result column="avg_sales_estimate_qty" property="avgSalesEstimateQty" />
+        <result column="purchase_approve_days" property="purchaseApproveDays" />
+        <result column="production_days" property="productionDays" />
+        <result column="supplier_delivery_days" property="supplierDeliveryDays" />
+        <result column="qc_days" property="qcDays" />
+        <result column="purchase_cycle_days" property="purchaseCycleDays" />
+        <result column="safe_days" property="safeDays" />
+        <result column="instock_days" property="instockDays" />
+        <result column="fba_sellable_days" property="fbaSellableDays" />
+        <result column="sellable_days" property="sellableDays" />
+        <result column="overseas_sellable_days" property="overseasSellableDays" />
+        <result column="local_sellable_days" property="localSellableDays" />
+        <result column="total_sellable_days" property="totalSellableDays" />
+        <result column="calc_version" property="calcVersion" />
+        <result column="delivery_min_days" property="deliveryMinDays" />
+        <result column="delivery_default_days" property="deliveryDefaultDays" />
+        <result column="delivery_max_days" property="deliveryMaxDays" />
+        <result column="cfg_fba_in_transit" property="cfgFbaInTransit" />
+        <result column="calc_date" property="calcDate" />
+        <result column="cfg_rule" property="cfgRule" />
+        <result column="purchase_price" property="purchasePrice" />
+        <result column="sales_price" property="salesPrice" />
+        <result column="logistics_cycle_days" property="logisticsCycleDays" />
+        <result column="stock_up_min_days" property="stockUpMinDays" />
+        <result column="stock_up_default_days" property="stockUpDefaultDays" />
+        <result column="stock_up_max_days" property="stockUpMaxDays" />
+        <result column="logistics_min_cycle_days" property="logisticsMinCycleDays" />
+        <result column="logistics_max_cycle_days" property="logisticsMaxCycleDays" />
+        <result column="logistics_min_method" property="logisticsMinMethod" />
+        <result column="logistics_method" property="logisticsMethod" />
+        <result column="logistics_max_method" property="logisticsMaxMethod" />
+    </resultMap>
+
+</mapper>
