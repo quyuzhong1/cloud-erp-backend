@@ -125,6 +125,8 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "syncKingdeeId", source = "oldEntity.syncKingdeeId"),
             @Mapping(target = "shopName", source = "oldEntity.shopName"),
             @Mapping(target = "totalDiscount", source = "oldEntity.totalDiscount"),
+            @Mapping(target = "totalCancelGoodsAmount", source = "oldEntity.totalCancelGoodsAmount"),
+            @Mapping(target = "cancelGoodsCurrency", source = "oldEntity.cancelGoodsCurrency"),
             @Mapping(target = "sellerOrderCode",ignore = true),
     })
     SoB2cEntity convertUpdateMainOrder(SoB2cEntity oldEntity, PlatformOrderDTO dto);

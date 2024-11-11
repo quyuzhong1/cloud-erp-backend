@@ -323,6 +323,24 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("total_discount")
     private BigDecimal totalDiscount;
 
+    /**
+     * 取消商品总价
+     */
+    @TableField("total_cancel_goods_amount")
+    private BigDecimal totalCancelGoodsAmount;
+
+    /**
+     * 取消商品币别
+     */
+    @TableField("cancel_goods_currency")
+    private String cancelGoodsCurrency;
+
+    /**
+     * 取消商品总数量
+     */
+    @TableField("total_cancel_goods_qty")
+    private Integer cancelGoodsCurrencyQty;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

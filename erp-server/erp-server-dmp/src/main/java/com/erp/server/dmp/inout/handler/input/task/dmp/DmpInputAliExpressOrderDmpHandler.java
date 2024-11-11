@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,6 +10,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.core.utils.MathUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -78,7 +81,7 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 		}
 		
 		Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
-		
+		BigDecimal payAmount = BigDecimal.ZERO;
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
@@ -88,11 +91,14 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 				dmpDataMap.put("shopId", nextLevelId);
 				Object payAmountObj = mongoDataMap.get("pay_amount");
 				if(payAmountObj != null) {
-					Map<String, Object> payAmount = (Map)payAmountObj;
-					dmpDataMap.put("payAmount", payAmount.get("amount"));
-					dmpDataMap.put("currencyCode", payAmount.get("currency_code"));
+					Map<String, Object> payAmountMap = (Map)payAmountObj;
+					if (payAmountMap.get("amount") != null) {
+						payAmount = MathUtil.valueOf(payAmountMap.get("amount"));
+						dmpDataMap.put("payAmount", payAmount);
+					}
+					dmpDataMap.put("currencyCode", payAmountMap.get("currency_code"));
 				}
-				
+
 				// 平台取消
 		        boolean isCancel = sourceOrder.convertCancel();
 		        dmpDataMap.put("isCancel", isCancel);
@@ -114,7 +120,27 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 					if(memo != null) {
 						dmpDataMap.put("buyerRemark", memo);
 					}
-					
+
+					Object orderAmountObj = detailData.get("order_amount");
+					if(orderAmountObj != null) {
+						Map<String, Object> orderAmountMap = (Map) orderAmountObj;
+						Object amount = orderAmountMap.get("amount");
+						if (amount != null) {
+							dmpDataMap.put("totalDiscount", MathUtil.valueOf(amount).subtract(payAmount));
+						}
+					}
+
+					//退款
+					Object refundInfoObj = detailData.get("refund_info");
+					if(refundInfoObj != null) {
+						Map<String, Object> refundInfoMap = (Map) refundInfoObj;
+						if (refundInfoMap.get("refund_cash_amt") != null) {
+							Map<String, Object> refundCashAmtMap = (Map) refundInfoMap.get("refund_cash_amt");
+							refundCashAmtMap.get("amount");
+							refundCashAmtMap.get("currency_code");
+						}
+					}
+
 					// 标签json
 			        Map<String, Object> labelMap = new HashMap<>();
 			        //订单明细

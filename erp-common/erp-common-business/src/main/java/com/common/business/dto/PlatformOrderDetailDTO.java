@@ -1,7 +1,9 @@
 package com.common.business.dto;
 
+import com.common.business.enums.BillApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 
 import java.math.BigDecimal;
 
@@ -116,6 +118,8 @@ public class PlatformOrderDetailDTO {
      * 明细是否退款
      */
     private Boolean isDetailRefund = false;
-
-
+    /**
+     * 商品状态：shipped 已发货、cancel 已取消、unShipped未发货';
+     */
+    private String itemStatus;
 }

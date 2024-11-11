@@ -39,44 +39,6 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class MercadoOrderDTO extends CleanBaseDTO {
-    public static void main(String[] args) {
-
-
-        String orderUrl = "https://api.mercadolibre.com/marketplace/orders/2000006213527517";
-
-        //入参
-        HashMap<String, Object> orderParams = new HashMap<>(1);
-
-        //设置请求头
-        Map<String, String> headerMap = new HashMap<>(1);
-        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-102321-f03bcdf2e89861f140ea4f491a82fd7b-1509269799");
-
-
-        List<ListingViewDTO> resultsBeanList = new ArrayList<>();
-
-        //每次最多获取200条
-        Integer pageSize = 50;
-        //当前页数
-        Integer pageNo = 0;
-        //总页数
-        Integer pageCount = 1;
-
-        Boolean nexflag = true;
-        String baseUrl = "https://api.mercadolibre.com/marketplace/users/1509269799";
-//user_id=1509269799
-        //入参
-        HashMap<String, Object> params = new HashMap<>();
-        params.put("user_id", 1509269799);
-        //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
-        if (!Objects.equals(apiResult.getCode(), 200)) {
-            nexflag = false;
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                    baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
-        }
-
-
-    }
 
     private OrderViewDTO orderBean;
 

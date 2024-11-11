@@ -12,6 +12,10 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.common.core.utils.StrUtils;
+import com.erp.model.dmp.entity.*;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -202,15 +206,20 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 0=详情数据需要更新(不发送MQ)
         // 1=详情数据已更新(发送MQ)
         orderDTO.setDownloadStatus(1);
+
+
         // 记录详情
         if (!CollectionUtils.isEmpty(dmpSoDetailEntityList)) {
             List<PlatformOrderDetailDTO> detailDTO = dmpSoDetailEntityList.stream()
-                    .map(this::intPlatformOrderDetailDTO)
+                    .map(req -> intPlatformOrderDetailDTO(req))
                     .collect(Collectors.toList());
             orderDTO.setDetails(detailDTO);
             orderDTO.setDownloadStatus(1);
         }
 
+        //总优惠
+        BigDecimal discount = dmpSoDetailEntityList.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        orderDTO.setTotalDiscount(discount);
 
         // 订单财务信息
         if (!CollectionUtils.isEmpty(dmpSoDetailEntityList)) {
@@ -314,6 +323,8 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         detailDTO.setWarehouseOrgName("");
         // 库位
         detailDTO.setWarehouseLocation("");
+        // 商品状态
+        detailDTO.setItemStatus(item.getItemStatus());
         return detailDTO;
     }
 

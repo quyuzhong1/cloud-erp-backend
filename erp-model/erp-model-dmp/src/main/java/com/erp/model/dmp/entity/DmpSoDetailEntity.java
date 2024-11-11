@@ -180,6 +180,17 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
      */
     @TableField("platform_package_id")
     private String platformPackageId;
+    /**
+     * 优惠额（亚马逊）
+     */
+    @TableField("discount")
+    private BigDecimal discount;
+    /**
+     * 商品状态：shipped 已发货、cancel 已取消、unShipped未发货
+     * 枚举：SoB2cItemStatusEnum
+     */
+    @TableField("item_status")
+    private String itemStatus;
 
     public static final String MAIN_ID = "main_id";
 

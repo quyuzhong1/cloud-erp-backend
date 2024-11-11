@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
@@ -18,10 +19,12 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import com.erp.server.dmp.service.DmpSoReceiverService;
+import com.sdk.oms.mercado.dto.MercadoOrderDTO;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -97,6 +100,7 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 Map<String, Object> lableMap = new HashMap<>();
+                MercadoOrderDTO sourceOrder = JSON.parseObject(JSON.toJSONString(dmpDataMap), MercadoOrderDTO.class);
 
                 dmpDataMap.put("nextLevelId", parentTaskEntityList.get(0).getNextLevelId());
                 dmpDataMap.put("shopId", parentTaskEntityList.get(0).getNextLevelId());
@@ -232,9 +236,10 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                             dmpDataMap.put("allAmount", transactionAmount);
                             BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("shippingCost", shippingAmount);
+                            BigDecimal totalDiscount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("couponAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            dmpDataMap.put("totalDiscount", totalDiscount);
 
                             BigDecimal taxesAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("taxesAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
-
                             lableMap.put("taxesAmount", taxesAmount);
 
                         }

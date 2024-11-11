@@ -226,6 +226,21 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     */
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
+    /**
+     * 总优惠金额
+     */
+    @TableField("total_discount")
+    private BigDecimal totalDiscount;
+    /**
+     * 取消商品总价
+     */
+    @TableField("total_cancel_goods_amount")
+    private BigDecimal totalCancelGoodsAmount;
+    /**
+     * 取消商品币别
+     */
+    @TableField("cancel_goods_currency")
+    private String cancelGoodsCurrency;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
@@ -308,5 +323,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     public Serializable pkVal() {
         return null;
     }
+
+
 
 }
