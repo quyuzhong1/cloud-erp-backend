@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.IdUtil;
@@ -60,6 +61,7 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.SoOutstockDTO.ExportDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -1283,8 +1285,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+    	ExportDTO params = dto.getParams();
+    	List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
+        if(CollUtil.isNotEmpty(advanceQueryDTOList)) {
+        	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("so.tab") && "waitSubmit".equals(a.getValue()))) {
+        		params.setSortField("so.create_time");
+        	}else {
+        		params.setSortField("sod.id");
+        	}
+        }
         //获取导出数据
-        Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+		Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),params);
         if (CollectionUtils.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -1414,6 +1425,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         SoOutstockDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
+        if(CollUtil.isNotEmpty(advanceQueryDTOList)) {
+        	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("so.tab") && "waitSubmit".equals(a.getValue()))) {
+        		params.setSortField("so.create_time");
+        	}else {
+        		params.setSortField("sod.id");
+        	}
+        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<SoOutstockDTO.PagingViewDTO> list = pageData.getRecords();

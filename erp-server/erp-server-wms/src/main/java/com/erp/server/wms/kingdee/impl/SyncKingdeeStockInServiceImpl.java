@@ -6,9 +6,9 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -31,14 +31,14 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -50,7 +50,6 @@ import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.service.PoInstockDetailService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
-
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -206,10 +205,12 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 
         //获取用户部门id
         if (StringUtils.isNotBlank(entity.getPurchaseDeptId())) {
-            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(entity.getPurchaseDeptId());
-            //采购部门
-            if (ObjectUtil.isNotEmpty(departmentDTO)) {
-                resultMap.put("purchaseDeptCode", departmentDTO.getCode());
+            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+            dto.setDeptId(entity.getPurchaseDeptId());
+            dto.setOrgId(purchaseOrderEntity.getPurchaseOrgId());
+            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+            if (ObjectUtils.isNotEmpty(deptKingdee)) {
+                resultMap.put("purchaseDeptCode", deptKingdee.getKingdeeDeptCode());
             }
         }
         //入库日期
