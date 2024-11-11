@@ -1391,6 +1391,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeWarehouseService.syncDataToKingdee(obj, operate);
+            syncKingdeeWarehouseService.syncDataToSdy(obj, operate);
             resultList.add(pushTaskEntity);
         });
         //推送金蝶

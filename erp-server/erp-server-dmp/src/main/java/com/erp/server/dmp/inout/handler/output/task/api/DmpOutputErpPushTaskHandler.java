@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,6 +38,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.push.service.sdy.SdyCommonService;
 import com.erp.server.dmp.service.DmpPushMsgService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -267,6 +269,12 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		String responseData = "";
 		String message = "";
 		if(StringUtils.isNotBlank(requestData) && !"null".equals(requestData)) {
+			if(systemCode.equals(DmpBasicSystemCodeEnum.SDY.getCode())) {
+				Map<String, String> sdyObject = new HashMap<>();
+				sdyObject.put(SdyCommonService.REQUEST_URL, outputMethod);
+				sdyObject.put(SdyCommonService.REQUEST_DATA, requestData);
+				outputMethod = SdyCommonService.REQUEST_SDY;
+			}
 			try {
 				method = bean.getClass().getMethod(outputMethod, Object.class);
 			} catch (NoSuchMethodException | SecurityException e) {
