@@ -1080,7 +1080,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }else {
                 detailAddDto.setOutWarehouseLocation("");
             }
-            detailAddDto.setInWarehouseId(toWarehouse);
+            //头程发货单审核通过时，按照中转配置的仓库依次走调拨，最后从最低级的中转仓调拨至在途仓，，调拨时库存状态为冻结
+            if (isLastTransfer){
+                detailAddDto.setInWarehouseId(destWarehouse.getOnwayWarehouseId());
+            }else {
+                detailAddDto.setInWarehouseId(toWarehouse);
+            }
             detailAddDto.setInWarehouseLocation("");
             detailAddDto.setSourceDetailId(detailEntity.getId());
             //如果是备货海外仓
