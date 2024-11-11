@@ -65,6 +65,7 @@
                pl.source_id          as sourceId,
                pl.source_code        as sourceCode,
                pl.warehouse_id       as warehouseId,
+               pd.id                 as detailId,
                pd.sku_id             as skuId,
                pd.sku_no             as skuNo,
                pd.warehouse_location as warehouseLocation,

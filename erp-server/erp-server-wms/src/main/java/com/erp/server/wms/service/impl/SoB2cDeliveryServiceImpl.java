@@ -1981,7 +1981,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             TransferInfoDetailDTO.AddDTO detailAddDTO = new TransferInfoDetailDTO.AddDTO();
             detailAddDTO.setSkuId(sourceView.getSkuId());
             detailAddDTO.setSkuNo(sourceView.getSkuNo());
-            detailAddDTO.setSourceDetailId(sourceView.getId());
+            detailAddDTO.setSourceDetailId(sourceView.getDetailId());
             detailAddDTO.setQty(sourceView.getQty());
             detailAddDTO.setOutWarehouseId(sourceView.getWarehouseId());
             detailAddDTO.setOutWarehouseLocation(sourceView.getWarehouseLocation());

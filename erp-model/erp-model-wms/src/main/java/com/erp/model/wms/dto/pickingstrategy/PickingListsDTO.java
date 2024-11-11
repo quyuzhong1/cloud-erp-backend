@@ -391,6 +391,10 @@ public class PickingListsDTO {
          * 仓库id
          */
         private String warehouseId;
+        /**
+         * 拣货明细id
+         */
+        private String detailId;
 
         /**
          * skuId
