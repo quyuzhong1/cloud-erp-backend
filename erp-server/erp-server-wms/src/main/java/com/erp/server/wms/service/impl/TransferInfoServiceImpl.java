@@ -1791,6 +1791,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 }
             }
         }
+        //校验是否有关联的中转调拨单
+
         this.lambdaUpdate().eq(TransferInfoEntity::getId, entity.getId()).set(TransferInfoEntity::getBillDate, billDate).update();
         String msg = "【{}】更新了调拨日期由【{}】改为【{}】";
         operateLogService.addModuleOperateLog(StrUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getBillDate(),billDate), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "批量修改调拨日期");

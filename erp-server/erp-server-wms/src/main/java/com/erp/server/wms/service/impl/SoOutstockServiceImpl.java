@@ -652,6 +652,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }
+        //销售出库单反审核后修改出库日期审核时，需要校验是否有关联的中转调拨单
+        if (StrUtil.isNotBlank(entity.getSourceId())){
+            List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getSourceId());
+            if (CollectionUtils.isNotEmpty(transferInfoEntities)){
+                //如果调拨单没有审核，需要提示，请先审核通过关联的中转调拨单后审核出库单
+                List<String> transferCodeList = transferInfoEntities.stream().filter(e -> !Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), e.getApproveStatus())).map(TransferInfoEntity::getCode).distinct().collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(transferCodeList)){
+                    throw new ServiceException(ApiError.ERROR_92154,String.join(",",transferCodeList));
+                }
+                //需要限制出库日期不能早于最后一个（按日期排序）调拨单的调拨日期
+                TransferInfoEntity transferInfoEntity = transferInfoEntities.stream().max(Comparator.comparing(TransferInfoEntity::getBillDate)).orElse(null);
+                if (Objects.nonNull(transferInfoEntity) && entity.getBillDate().isBefore(transferInfoEntity.getBillDate())){
+                    throw new ServiceException(ApiError.ERROR_92155, transferInfoEntity.getBillDate());
+                }
+            }
+        }
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
