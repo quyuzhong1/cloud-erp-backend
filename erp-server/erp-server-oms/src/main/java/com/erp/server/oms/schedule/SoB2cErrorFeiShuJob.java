@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -47,6 +48,8 @@ import static com.rtfparserkit.rtf.Command.list;
 @Slf4j
 public class SoB2cErrorFeiShuJob {
 
+    private static String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
+
     @Resource
     private SoB2cErrorService soB2cErrorService;
     /**
@@ -63,15 +66,15 @@ public class SoB2cErrorFeiShuJob {
 
         StringBuffer sb = new StringBuffer();
         sb.append("B2C销售订单异常订单汇总提醒");
-        sb.append("\r\n");
+        sb.append("\n");
         sb.append("业务名称：B2C销售订单-异常订单");
-        sb.append("\r\n");
+        sb.append("\n");
         sb.append("关键信息：");
-        sb.append("\r\n");
+        sb.append("\n");
         for (SoB2cErrorDTO.TypeCountDTO typeCountDTO : list) {
             SoB2cErrorTypeEnum soB2cErrorTypeEnum = SoB2cErrorTypeEnum.getEnum(typeCountDTO.getType());
             sb.append(soB2cErrorTypeEnum.getName()+"，数量："+typeCountDTO.getTypeCount());
-            sb.append("\r\n");
+            sb.append("\n");
         }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
         bodyMap.put("msg_type", "text");
@@ -79,8 +82,11 @@ public class SoB2cErrorFeiShuJob {
         contentMap.put("text", sb.toString());
         bodyMap.put("content", contentMap);
         String url = "";
-        HttpUtil.post(url, JSON.toJSONString(bodyMap));
-
+        if("prod".equals(namespace)) {
+            XxlJobHelper.log("SoB2cErrorFeiShuJob 发送至机器人");
+            url = "";
+            HttpUtil.post(url, JSON.toJSONString(bodyMap));
+        }
         XxlJobHelper.log("SoB2cErrorFeiShuJob 执行任务列表结束");
         return ReturnT.SUCCESS;
     }
