@@ -12,6 +12,7 @@ import org.apache.ibatis.type.JdbcType;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -138,6 +139,22 @@ public class PurchaseSuggestMergeEntity extends BaseEntity<PurchaseSuggestMergeE
     */
     @TableField("remark")
     private String remark;
+
+    /**
+     * 作废时间
+     */
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
+    /**
+     * 作废人id
+     */
+    @TableField("invalid_user_id")
+    private String invalidUserId;
+    /**
+     * 作废人名称
+     */
+    @TableField("invalid_user_name")
+    private String invalidUserName;
 
 
     public static final String CODE = "code";

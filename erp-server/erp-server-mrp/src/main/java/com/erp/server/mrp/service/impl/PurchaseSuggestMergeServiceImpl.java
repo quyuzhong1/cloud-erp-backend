@@ -18,6 +18,8 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.dto.FileExcelDTO;
@@ -58,6 +60,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -237,9 +240,14 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
+        //创建人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //更新成作废状态
         old.setInvalidStatus(Boolean.TRUE);
         old.setInvalidRemark(remark);
+        old.setInvalidTime(LocalDateTime.now());
+        old.setInvalidUserId(userInfo.getUid());
+        old.setInvalidUserName(userInfo.getUserName());
         this.updateById(old);
 
         // 操作日志
