@@ -227,7 +227,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
         }
         validateSubmit(entity);
-        SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO());
+        SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO(id,new ArrayList<>(),"edit"));
         detailService.checkData(viewDTO.getViewDetailList());
         // 更新单据审核状态
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -364,7 +364,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 || soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()))) {
             throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
         }
-        SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO());
+        SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO(entity.getId(),new ArrayList<>(),"edit"));
         detailService.checkData(viewDTO.getViewDetailList());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
