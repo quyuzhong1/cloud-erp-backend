@@ -137,4 +137,6 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     PagingVO<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaging(PagingDTO<SoDeliveryNoticeChangeDTO.ProductAddDTO> dto);
 
     BatchResultDTO invalid(String id);
+
+    List<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaste(SoDeliveryNoticeChangeDTO.ProductAddDTO dto);
 }

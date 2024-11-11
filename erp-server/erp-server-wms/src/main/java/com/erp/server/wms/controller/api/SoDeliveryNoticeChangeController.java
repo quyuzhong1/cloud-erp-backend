@@ -67,6 +67,19 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     }
 
     /**
+     * 产品快粘贴
+     * @author lrp
+     * @date:  2024-10-23
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/addProductPaste")
+    @WebAdvanceQuery
+    public ApiResult<List<SoDeliveryNoticeChangeDTO.ProductDTO>> addProductPaste(@RequestBody @Validated SoDeliveryNoticeChangeDTO.ProductAddDTO dto) {
+        return success(soDeliveryNoticeChangeService.addProductPaste(dto));
+    }
+
+    /**
     * 新增
     * @author lrp
     * @date:  2024-10-23

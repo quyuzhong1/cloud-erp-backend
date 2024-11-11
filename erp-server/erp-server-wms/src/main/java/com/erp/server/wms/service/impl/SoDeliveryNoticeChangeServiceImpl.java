@@ -457,6 +457,33 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     }
 
     @Override
+    public List<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaste(SoDeliveryNoticeChangeDTO.ProductAddDTO dto) {
+        Page query = new Page(1, Integer.MAX_VALUE);
+        IPage<SoDeliveryNoticeChangeDTO.ProductDTO> pageData = this.baseMapper.productPaging(query, dto);
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new ArrayList<>();
+        }
+        List<String> skuIds = pageData.getRecords().stream().map(v->v.getSkuId()).collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        // 数据处理
+        for (SoDeliveryNoticeChangeDTO.ProductDTO record : pageData.getRecords()) {
+            record.setMaxCanChangeQty(record.getSaleQty() - record.getAllNoticeQty() + record.getCurrentNoticeQty());
+            SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(record.getSkuId())).findFirst().orElse(new SkuVO());
+            record.setProductName(skuVO.getSkuName());
+        }
+        List<String> skuNos = dto.getSkuNoList();
+        if(CollUtil.isNotEmpty(skuNos)){
+            List<SoDeliveryNoticeChangeDTO.ProductDTO> productDTOS = new ArrayList<>();
+            for (String skuNo : skuNos) {
+                SoDeliveryNoticeChangeDTO.ProductDTO productDTO = pageData.getRecords().stream().filter(v->v.getSkuNo().equals(skuNo)).findFirst().orElse(new SoDeliveryNoticeChangeDTO.ProductDTO());
+                productDTOS.add(productDTO);
+            }
+            pageData.setRecords(productDTOS);
+        }
+        return pageData.getRecords();
+    }
+
+    @Override
     public SoDeliveryNoticeChangeDTO.ViewDTO view(SoDeliveryNoticeChangeDTO.ViewIdDTO viewIdDTO) {
         String type = viewIdDTO.getType();
         String id = viewIdDTO.getId();
