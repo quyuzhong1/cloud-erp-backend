@@ -38,39 +38,39 @@ public class ShudiyunB2cOrderDTO {
      * total_goods_transaction_amount
      * 商品总成交金额（合计）
      */
-    private BigDecimal total_goods_transaction_amount;
+    private BigDecimal total_goods_transaction_amount = BigDecimal.ZERO;
     /**
      * 优惠抵扣金额|佣金（合计）
      */
-    private BigDecimal discount_deduction_amount;
+    private BigDecimal discount_deduction_amount = BigDecimal.ZERO;
     /**
      * 取消商品总金额（合计）
      */
-    private BigDecimal total_canceled_goods_amount;
+    private BigDecimal total_canceled_goods_amount = BigDecimal.ZERO;
     /**
      * 应付总金额（合计）
      */
-    private BigDecimal total_amount_payable;
+    private BigDecimal total_amount_payable = BigDecimal.ZERO;
     /**
      * 买家实付
      */
-    private BigDecimal buyer_actual_payment;
+    private BigDecimal buyer_actual_payment = BigDecimal.ZERO;
     /**
      * 订单总运费
      */
-    private BigDecimal total_freight;
+    private BigDecimal total_freight = BigDecimal.ZERO;
     /**
      * 商品总数量 （合计）
      */
-    private Integer total_goods_quantity;
+    private Integer total_goods_quantity = 0;
     /**
      * 取消商品数量 （合计）
      */
-    private Integer total_canceled_goods_quantity;
+    private Integer total_canceled_goods_quantity = 0;
     /**
      * 订单应发数量（合计）
      */
-    private Integer order_quantity_to_be_shipped;
+    private Integer order_quantity_to_be_shipped = 0;
     /**
      * 线上申请退货总数量
      */

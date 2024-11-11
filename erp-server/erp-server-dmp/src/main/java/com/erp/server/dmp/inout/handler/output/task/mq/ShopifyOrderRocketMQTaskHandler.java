@@ -480,15 +480,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         detailDTO.setWarehouseLocation("");
         //包裹号
         detailDTO.setPlatformPackageId(soDetailEntity.getPlatformPackageId());
-        // 商品状态
-        if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getOrderStatus())) {
-            detailDTO.setItemStatus(SoB2cItemStatusEnum.SHIPPED.getCode());
-        } else {
-            detailDTO.setItemStatus(SoB2cItemStatusEnum.UN_SHIPPED.getCode());
-        }
-        if (dmpSoInfoEntity.getIsCancel()) {
-            detailDTO.setItemStatus(SoB2cItemStatusEnum.CANCEL.getCode());
-        }
         return detailDTO;
     }
 

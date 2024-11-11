@@ -323,8 +323,6 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         detailDTO.setWarehouseOrgName("");
         // 库位
         detailDTO.setWarehouseLocation("");
-        // 商品状态
-        detailDTO.setItemStatus(item.getItemStatus());
         return detailDTO;
     }
 

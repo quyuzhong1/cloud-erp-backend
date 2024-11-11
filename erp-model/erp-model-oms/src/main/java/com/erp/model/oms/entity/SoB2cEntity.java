@@ -335,12 +335,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("cancel_goods_currency")
     private String cancelGoodsCurrency;
 
-    /**
-     * 取消商品总数量
-     */
-    @TableField("total_cancel_goods_qty")
-    private Integer cancelGoodsCurrencyQty;
-
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

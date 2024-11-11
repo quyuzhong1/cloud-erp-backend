@@ -1005,4 +1005,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
 
     Boolean tempTikTokOrderDate();
+
+    /**
+     * 同步速递云数据
+     * @param soId
+     * @param operateEnum
+     */
+    Boolean shudiyunFieldHandler(SoB2cEntity soId, String operateEnum);
 }

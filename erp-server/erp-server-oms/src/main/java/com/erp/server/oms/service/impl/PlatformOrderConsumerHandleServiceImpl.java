@@ -207,11 +207,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (0 == count) {
             //推送到DMP
             soB2cService.syncOrderToDmp(mainEntity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
-
-
-            //推送数帝云
-
-
         }
 
         // 退货单处理

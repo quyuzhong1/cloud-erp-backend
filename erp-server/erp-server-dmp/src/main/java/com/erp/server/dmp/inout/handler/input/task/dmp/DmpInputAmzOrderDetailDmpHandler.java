@@ -31,37 +31,16 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
 
     @Override
     protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList) {
-        List<ParamData> paramDataList = new ArrayList<>();
-        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getId, inputTaskId).list();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
-        List<Map<String, Object>> dmpInputMongoList = mongoService.findMongoData(paramDataList, "amazon_order_data");
-
         if (CollUtil.isEmpty(dmpInputMongoChildList)) {
             return dmpInputMongoChildList;
         }
         for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
-            Object itemPriceObj = dmpInputMongoChild.get("itemPrice");
-            if (null != itemPriceObj) {
-                // 订单买家信息
-                Money itemPrice = JSON.parseObject(JSON.toJSONString(itemPriceObj), Money.class);
-                // 金额
-                BigDecimal amount = new BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount());
-                dmpInputMongoChild.put("amount", amount);
-                dmpInputMongoChild.put("afterAmount", amount);
 
-                Object quantityOrderedObj = dmpInputMongoChild.get("quantityOrdered");
-                if (null != quantityOrderedObj){
-                     int quantityOrdered = Integer.parseInt(quantityOrderedObj.toString());
-                    // 计算单价
-                    BigDecimal price = BigDecimal.ZERO;
-                    if (0 < quantityOrdered) {
-                        price = amount.divide(BigDecimal.valueOf(quantityOrdered), 2, RoundingMode.DOWN);
-                    }
-                    // 单价
-                    dmpInputMongoChild.put("price", price);
-                    dmpInputMongoChild.put("sellPrice", price);
-                }
-            }
+            //优惠
+            Object promotionDiscountObj = dmpInputMongoChild.get("promotionDiscount");
+            if (promotionDiscountObj != null) {
+                Map<String, Object> promotionDiscountMap = (Map<String, Object>) promotionDiscountObj;
+                dmpInputMongoChild.put("discount", promotionDiscountMap.get("amount"));
 
         }
         return dmpInputMongoChildList;

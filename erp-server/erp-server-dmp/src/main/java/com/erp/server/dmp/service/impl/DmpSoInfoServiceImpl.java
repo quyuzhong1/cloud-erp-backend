@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -89,4 +90,16 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
     private void handleData(DmpSoInfoEntity dmpSoInfoEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+
+    /**
+    * 数帝云线上字段映射
+    */
+    public void shudiyunFieldDmpOrderHandler(String platformCode) {
+        List<DmpSoInfoEntity> dmpSoInfoEntityList = lambdaQuery().eq(DmpSoInfoEntity::getPlatformCode, platformCode).list();
+
+
+    }
+
+
 }

@@ -68,20 +68,6 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 								c.put("currencyCode", currency_code_obj);
 							}
 						}
-						Boolean isAliexpressPlatformWarehouseOrder = Boolean.FALSE;
-						if (AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(c.get("logistics_warehouse_type"))) {
-							isAliexpressPlatformWarehouseOrder = Boolean.TRUE;
-						}
-
-						// 商品状态
-						if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder))) {
-							c.put("itemStatus", SoB2cItemStatusEnum.SHIPPED.getCode());
-						} else {
-							c.put("itemStatus",SoB2cItemStatusEnum.UN_SHIPPED.getCode());
-						}
-						if (sourceOrder.convertCancel()) {
-							c.put("itemStatus",SoB2cItemStatusEnum.CANCEL.getCode());
-						}
 
 						Map<String, Object> lableMap = new HashMap<>();
 						lableMap.put("alreadyTaxed", c.get("already_taxed"));

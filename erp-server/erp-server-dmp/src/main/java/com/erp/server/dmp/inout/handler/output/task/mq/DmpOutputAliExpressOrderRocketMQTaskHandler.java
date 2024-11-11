@@ -370,9 +370,6 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 detailDTO.setWarehouseOrgName("");
                 // 库位
                 detailDTO.setWarehouseLocation("");
-
-				// 商品状态
-                detailDTO.setItemStatus(dmpSoDetailEntity.getItemStatus());
                 details.add(detailDTO);
         	}
         }
