@@ -560,6 +560,10 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private String type;
         /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
          * 店铺id
          */
         private String shopId;

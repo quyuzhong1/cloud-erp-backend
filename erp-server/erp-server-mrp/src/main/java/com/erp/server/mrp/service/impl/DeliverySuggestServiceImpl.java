@@ -356,7 +356,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         DeliverySuggestEntity entity = deliverySuggestList.get(0);
         viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
-        viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
+        viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode());
+        viewPushDeliveryPlanDTO.setTypeName(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getName());
         viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
         viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
         viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
@@ -394,7 +395,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             detailDTO.setDeliverySuggestList(suggestInfoList);
 
             //sku映射表
-            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getShopId())).findFirst().orElse(null);
+            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(skuMappingEntity)) {
                 //listing信息
                 List<ListingInfoEntity> detailListingList = listingList.stream().filter(obj -> StrUtil.equals(skuMappingEntity.getListingId(), obj.getId())).collect(Collectors.toList());
