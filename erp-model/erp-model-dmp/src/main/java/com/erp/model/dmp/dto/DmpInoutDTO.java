@@ -114,6 +114,12 @@ public class DmpInoutDTO implements Serializable {
         private String status;
 
         /**
+         * 状态对应名称
+         * SyncStatusEnum
+         */
+        private String statusName;
+
+        /**
          * 更新时间
          */
         private LocalDateTime updateTime;
