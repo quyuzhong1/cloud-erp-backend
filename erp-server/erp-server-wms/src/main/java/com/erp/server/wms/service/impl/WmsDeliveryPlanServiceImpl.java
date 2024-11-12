@@ -938,7 +938,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).collect(Collectors.toList());
                 List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->requisitionIdList.contains(v.getSourceId()) || v.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
-                List<String> deliveryIds = deliveryEntities.stream().map(v->v.getId()).collect(Collectors.toList());
+                List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(BaseEntity::getId).collect(Collectors.toList());
                 List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = fbaDeliveryDetailEntities.stream().filter(req -> deliveryIds.contains(req.getMainId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deliveryEntities)) {
                     data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
