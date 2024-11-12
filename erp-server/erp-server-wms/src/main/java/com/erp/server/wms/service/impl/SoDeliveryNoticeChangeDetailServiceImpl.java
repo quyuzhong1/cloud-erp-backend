@@ -145,7 +145,7 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
      */
     @Override
     public void checkData( List<SoDeliveryNoticeChangeDTO.ViewDetail> viewDetailList) {
-        List<String> noticeDetailIds = viewDetailList.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
+        List<String> noticeDetailIds = viewDetailList.stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listByIds(noticeDetailIds);
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(noticeDetailIds);
         for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : viewDetailList) {

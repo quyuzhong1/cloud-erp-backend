@@ -525,8 +525,8 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         /**
          * 来源明细Id
          */
-        @NotBlank(message = "来源明细Id不能为空")
         private String sourceDetailId;
+
         /**
          * 销售明细Id
          */
