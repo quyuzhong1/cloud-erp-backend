@@ -336,10 +336,21 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
         String customerId = dto.getCustomerId();
         List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
-        List<String> skuNos = detailList.stream().map(SoReturnDetailDTO.Add::getSkuNo).collect(Collectors.toList());
+        List<String> skuIds = detailList.stream().map(SoReturnDetailDTO.Add::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntities = plmTaskFeign.getByIdList(skuIds);
+        if(CollectionUtils.isNotEmpty(productDetailEntities)){
+            detailList.stream().forEach(r -> {
+                ProductDetailEntity entity = productDetailEntities.stream()
+                        .filter(v -> v.getId().equals(r.getSkuId()))
+                        .findFirst()
+                        .orElse(new ProductDetailEntity());
+                r.setSkuNo(entity.getSkuNo());
+            });
+            dto.setDetailList(detailList);
+        }
         //根据customerId和skunos 获取对应的平台sku
         SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
-        skuParamDTO.setSkuNoList(skuNos);
+        skuParamDTO.setSkuIdList(skuIds);
         skuParamDTO.setCutomerId(customerId);
         List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
         if(CollectionUtils.isNotEmpty(productSkuInfoList)){
@@ -408,9 +419,20 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //根据customerId和skunos 获取对应的平台sku
         String customerId = dto.getCustomerId();
         List<SoReturnDetailDTO.Update> detailList = dto.getDetailList();
-        List<String> skuNos = detailList.stream().map(SoReturnDetailDTO.Update::getSkuNo).collect(Collectors.toList());
+        List<String> skuIds = detailList.stream().map(SoReturnDetailDTO.Update::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntities = plmTaskFeign.getByIdList(skuIds);
+        if(CollectionUtils.isNotEmpty(productDetailEntities)){
+            detailList.stream().forEach(r -> {
+                ProductDetailEntity e = productDetailEntities.stream()
+                        .filter(v -> v.getId().equals(r.getSkuId()))
+                        .findFirst()
+                        .orElse(new ProductDetailEntity());
+                r.setSkuNo(e.getSkuNo());
+            });
+            dto.setDetailList(detailList);
+        }
         SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
-        skuParamDTO.setSkuNoList(skuNos);
+        skuParamDTO.setSkuIdList(skuIds);
         skuParamDTO.setCutomerId(customerId);
         List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
         if(CollectionUtils.isNotEmpty(productSkuInfoList)){
@@ -422,6 +444,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 r.setListingId(productSkuInfo.getListingId());
                 r.setPlatformSkuName(productSkuInfo.getPlatformSkuName());
                 r.setPlatformSkuNo(productSkuInfo.getPlatformSkuNo());
+                r.setSkuNo(productSkuInfo.getSkuNo());
             });
             dto.setDetailList(detailList);
         }
@@ -451,6 +474,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             soReturnEntity.setTelNumber(customerAddressEntity.getTelNumber());
             soReturnEntity.setReceiveAddress(customerAddressEntity.getAddress());
         }
+        soReturnEntity.setSourceType(dto.getSourceType());
+        soReturnEntity.setWarehouseId(dto.getWarehouseId());
         soReturnEntity.setBillDate(dto.getBillDate());
     }
     //生成销售退货单
@@ -498,8 +523,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if (CollectionUtils.isEmpty(detailEntityList)) {
             throw new ServiceException(ApiError.ERROR_92023);
         }
-        SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
-        BeanMapperUtils.copy(soInfoEntity, viewDTO);
+        if(StringUtils.isNotBlank(soReturnEntity.getSourceId())){
+            SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
+            BeanMapperUtils.copy(soInfoEntity, viewDTO);
+        }
         BeanMapperUtils.copy(soReturnEntity, viewDTO);
         //能否编辑销售单号
         viewDTO.setCanChangeSoInfo(soReturnEntity.getSourceType().equals(SourceTypeEnum.SO_INFO.getCode()) ? Boolean.FALSE : Boolean.TRUE);
@@ -514,11 +541,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
-        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soReturnEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         soReturnEntity.setCustomerName(customerInfoEntity.getName());
         List<String> soIds = soDetailEntities.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
-        CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+        CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soReturnEntity.getReceiveAddress());
         if (ObjectUtil.isNotEmpty(customerAddressEntity)) {
             viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
         }
@@ -526,16 +553,18 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             SoReturnDetailDTO.View detailView = new SoReturnDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
             detailView.setProductName(productDetailEntity.getName());
-            detailView.setSalesQty(soDetailEntity.getQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-            detailView.setDeliveryQty(actualQty);
-            detailView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
-            detailView.setSalesAmount(soDetailEntity.getAmount());
-            detailView.setCurrency(soDetailEntity.getCurrency());
-            detailView.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
+            if(null != soDetailEntity){
+                detailView.setSalesQty(soDetailEntity.getQty());
+                Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+                detailView.setDeliveryQty(actualQty);
+                detailView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
+                detailView.setSalesAmount(soDetailEntity.getAmount());
+                detailView.setCurrency(soDetailEntity.getCurrency());
+                detailView.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+            }
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);

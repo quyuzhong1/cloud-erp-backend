@@ -599,6 +599,12 @@
         <if test="params.cutomerId != null and params.cutomerId != ''">
             and si.customer_id = #{params.cutomerId}
         </if>
+        <if test="params.skuIdList !=null and params.skuIdList.size>0">
+            AND sm.product_sku_id IN
+            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
             AND sm.product_sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
