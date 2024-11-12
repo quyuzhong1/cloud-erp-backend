@@ -619,6 +619,10 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private List<DeliverySuggestInfoDTO> deliverySuggestList;
         /**
+         * 主键id（用skuId,前端用于合并）
+         */
+        private String id;
+        /**
          * skuId
          */
         private String skuId;
@@ -637,7 +641,7 @@ public class DeliverySuggestDTO implements Serializable {
         private Integer deliveryStockUpQty;
 
         /**
-         * 计划发货量（计划修正值）
+         * 计划发货量
          */
         private Integer planDeliveryQty;
         /**

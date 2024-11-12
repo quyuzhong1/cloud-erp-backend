@@ -42,6 +42,7 @@ import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -367,9 +368,9 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         List<PurchaseSuggestEntity> splitList = new ArrayList<>();
         for (PurchaseSuggestEntity entity : list) {
             List<BomChildrenSkuDTO> bomSkuList = bomChildrenSkuList.stream()
-                    .filter(obj -> StrUtil.equals(obj.getParentSkuId(), entity.getSkuId()))
+                    .filter(obj -> StrUtil.equals(obj.getParentSkuId(), entity.getSkuId()) && StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType()))
                     .collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            if (CollectionUtils.isEmpty(bomSkuList)) {
                 splitList.add(entity);
                 continue;
             }

@@ -429,7 +429,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 DeliverySuggestDTO.DeliverySuggestInfoDTO deliverySuggestInfoDTO = new DeliverySuggestDTO.DeliverySuggestInfoDTO();
                 deliverySuggestInfoDTO.setSourceId(deliverySuggestEntity.getId());
                 deliverySuggestInfoDTO.setSourceCode(deliverySuggestEntity.getCode());
-                deliverySuggestInfoDTO.setPlanDeliveryQty(deliverySuggestEntity.getSuggestDeliveryQty());
+                deliverySuggestInfoDTO.setPlanDeliveryQty(deliverySuggestEntity.getDeliveryStockUpQty());
                 suggestInfoList.add(deliverySuggestInfoDTO);
             }
             detailDTO.setDeliverySuggestList(suggestInfoList);
@@ -442,10 +442,13 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 for (ListingInfoEntity listingInfoEntity : detailListingList) {
                     DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO newDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
                     BeanMapperUtils.copy(detailDTO,newDTO);
+                    newDTO.setId(suggestEntity.getSkuId());
                     newDTO.setMSKu(listingInfoEntity.getPlatformSkuNo());
                     newDTO.setFnSku(listingInfoEntity.getPlatformFnSku());
                     newDTO.setAsin(listingInfoEntity.getPlatformSpuNo());
                     newDTO.setPlatformSkuName(listingInfoEntity.getPlatformSkuName());
+                    //清空计划发货数量，前端填写
+                    newDTO.setPlanDeliveryQty(null);
                     detailList.add(newDTO);
                 }
             } else {
