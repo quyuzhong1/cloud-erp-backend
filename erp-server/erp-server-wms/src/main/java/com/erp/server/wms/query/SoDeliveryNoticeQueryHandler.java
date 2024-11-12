@@ -35,7 +35,7 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
             if((Boolean) value){
                 return "  sdn.id in ( SELECT main_id FROM so_delivery_notice_detail sdnd WHERE sdnd.is_deleted = FALSE " +
                         "    GROUP BY main_id HAVING COUNT(*) = COUNT(     CASE " +
-                        "            WHEN (SELECT COALESCE(SUM(pd.picked_qty), 0) " +
+                        "            WHEN (SELECT COALESCE(SUM(pd.qty), 0) " +
                         "                  FROM picking_detail pd " +
                         "                  WHERE pd.is_deleted = FALSE AND pd.source_detail_id = sdnd.id) = sdnd.delivery_qty " +
                         "            THEN 1 " +
@@ -46,7 +46,7 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
             }else{
                 return "  sdn.id not in ( SELECT main_id FROM so_delivery_notice_detail sdnd WHERE sdnd.is_deleted = FALSE " +
                         "    GROUP BY main_id HAVING COUNT(*) = COUNT(     CASE " +
-                        "            WHEN (SELECT COALESCE(SUM(pd.picked_qty), 0) " +
+                        "            WHEN (SELECT COALESCE(SUM(pd.qty), 0) " +
                         "                  FROM picking_detail pd " +
                         "                  WHERE pd.is_deleted = FALSE AND pd.source_detail_id = sdnd.id) = sdnd.delivery_qty " +
                         "            THEN 1 " +
