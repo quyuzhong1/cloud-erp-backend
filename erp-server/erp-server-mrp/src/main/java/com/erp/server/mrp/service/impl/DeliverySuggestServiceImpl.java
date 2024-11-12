@@ -137,16 +137,22 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             throw new ServiceException("补货计划保存失败");
         }
         //保存系统值
-        DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
-        BeanMapperUtils.copy(deliverySuggestEntity,dto);
-        dto.setSourceId(deliverySuggestEntity.getId());
-        dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
-        deliverySuggestSysService.add(dto);
+        addDeliverySuggestSys (deliverySuggestEntity);
 
         // 操作日志
         String msg = StrUtil.format("新建了补货计划【编号：{}】",code);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), deliverySuggestEntity.getId(), "");
         return new BaseResultDTO.AddDTO(deliverySuggestEntity.getId(), code);
+    }
+
+    @Override
+    public void addDeliverySuggestSys (DeliverySuggestEntity deliverySuggestEntity) {
+        //保存系统值
+        DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
+        BeanMapperUtils.copy(deliverySuggestEntity,dto);
+        dto.setSourceId(deliverySuggestEntity.getId());
+        dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
+        deliverySuggestSysService.add(dto);
     }
 
     /**
@@ -507,6 +513,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //导出错误数据
         exportErrorExcel (response,errorList);
     }
+
 
     /**
      * 上传正确数据

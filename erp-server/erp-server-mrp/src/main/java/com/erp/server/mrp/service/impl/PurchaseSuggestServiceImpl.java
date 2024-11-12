@@ -128,16 +128,22 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             throw new ServiceException("建议采购保存失败");
         }
         //保存系统值
-        PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
-        BeanMapperUtils.copy(purchaseSuggestEntity,dto);
-        dto.setSourceId(purchaseSuggestEntity.getId());
-        dto.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
-        purchaseSuggestSysService.addOrUpdate(dto);
+        addPurchaseSuggestSys(purchaseSuggestEntity);
 
         // 操作日志
         String msg = StrUtil.format("新建了采购建议【编号：{}】",code);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), purchaseSuggestEntity.getId(), "");
         return new BaseResultDTO.AddDTO(purchaseSuggestEntity.getId(), code);
+    }
+
+
+    @Override
+    public void addPurchaseSuggestSys (PurchaseSuggestEntity purchaseSuggestEntity) {
+        PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
+        BeanMapperUtils.copy(purchaseSuggestEntity,dto);
+        dto.setSourceId(purchaseSuggestEntity.getId());
+        dto.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
+        purchaseSuggestSysService.addOrUpdate(dto);
     }
 
     /**

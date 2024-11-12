@@ -32,6 +32,14 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
     BaseResultDTO.AddDTO add(DeliverySuggestDTO.AddDTO dto);
 
     /**
+     * 添加发货建议（系统）
+     * @author will
+     * @date 2024/11/12 10:41
+     * @param deliverySuggestEntity
+     */
+    void addDeliverySuggestSys (DeliverySuggestEntity deliverySuggestEntity);
+
+    /**
     * 修改
     * @author will
     * @date: 2024-08-27
