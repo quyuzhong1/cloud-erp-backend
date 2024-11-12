@@ -209,12 +209,14 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         
         //所属渠道
         String channelAffiliationName = warehouseExcelDTO.getChannelAffiliation();
-        List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
-        		.eq(com.erp.model.oms.entity.DictBasicEntity::getName, channelAffiliationName).list();
-        if(CollUtil.isEmpty(channelAffiliationList)) {
-        	errorMsgList.add("所属渠道不存在");
+        if(StringUtils.isNotBlank(channelAffiliationName)) {
+            List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+            		.eq(com.erp.model.oms.entity.DictBasicEntity::getName, channelAffiliationName).list();
+            if(CollUtil.isEmpty(channelAffiliationList)) {
+            	errorMsgList.add("所属渠道不存在");
+            }
+            addDTO.setChannelAffiliation(channelAffiliationList.get(0).getId());	
         }
-        addDTO.setChannelAffiliation(channelAffiliationList.get(0).getId());
         
         //发货组织
         String shippingOrganizationName = warehouseExcelDTO.getShippingOrganization();
