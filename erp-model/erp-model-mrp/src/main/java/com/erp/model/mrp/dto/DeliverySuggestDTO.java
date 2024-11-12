@@ -723,6 +723,12 @@ public class DeliverySuggestDTO implements Serializable {
         private String remark;
 
         /**
+         * 类型
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
+        /**
          * 明细
          */
         @NotEmpty(message = "明细不能为空")

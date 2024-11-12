@@ -1514,6 +1514,7 @@ public enum ApiError implements Serializable {
     ERROR_SUGGEST_UPDATE_REMARK(97019,"仅稿和待确认数据支持更新备注操作"),
     ERROR_SUGGEST_UPDATE(97020,"仅稿和待确认数据支持更新备操作"),
     ERROR_DELIVERY_SUGGEST_PUSH(97021,"发货建议【{}】非已完成不支持下推"),
+    ERROR_DELIVERY_SUGGEST_PUSH_INVALID(97021,"发货建议【{}】已作废不支持下推"),
 
 
 

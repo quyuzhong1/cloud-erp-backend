@@ -365,9 +365,15 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (CollectionUtils.isEmpty(deliverySuggestList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        String codes = deliverySuggestList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
+        String codes = deliverySuggestList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode()))
+                .map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
         if (StrUtil.isNotBlank(codes)) {
             throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH,codes);
+        }
+        String invalidCodes = deliverySuggestList.stream().filter(obj -> obj.getInvalidStatus().equals(Boolean.TRUE))
+                .map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(invalidCodes)) {
+            throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH_INVALID,codes);
         }
 
         DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDTO();
@@ -466,11 +472,12 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public Boolean pushDeliveryPlan(DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO) {
         WmsDeliveryPlanDTO.AddDTO addDTO = new WmsDeliveryPlanDTO.AddDTO();
         addDTO.setShopId(deliveryPlanDTO.getShopId());
-        addDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
+        addDTO.setType(deliveryPlanDTO.getType());
         addDTO.setPlanDeliveryDate(deliveryPlanDTO.getDeliveryDate());
         addDTO.setToWarehouseId(deliveryPlanDTO.getWarehouseId());
         addDTO.setExpectLogisticsMethod(deliveryPlanDTO.getLogisticsMethod());
         addDTO.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
+        addDTO.setRemark(deliveryPlanDTO.getRemark());
         List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
         //建议
         List<DeliverySuggestDTO.DeliverySuggestInfoDTO> deliverySuggestList = new ArrayList<>();
