@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,7 +70,7 @@ public class DmpInoutTaskFeignController{
 	 * 公共-创建快速输入任务
 	 */
 	@PostMapping("/doHotfixInputTask")
-	public List<DmpInputFinishResponse> doInputTask(@RequestBody DmpInoutDTO.CreateInputDTO createDTO) {
+	public Boolean doInputTask(@RequestBody DmpInoutDTO.CreateInputDTO createDTO) {
 		//查询任务是否存在
 		List<DmpInoutDTO.ListDTO> list =  dmpCfgInputDetailService.listBySystemCodeAndBillType(
                 Collections.singletonList(createDTO.getSystemCode()),
@@ -91,10 +95,14 @@ public class DmpInoutTaskFeignController{
 			dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
 			dmpInputHotfixCreateRequest.setCfgInputId(listDTO.getCfgInputId());
 			dmpInputHotfixCreateRequest.setDetailExtendJson(createDTO.getDetailExtendJson());
+			// 拉取当天
+			LocalDate today = LocalDate.now();
+			dmpInputHotfixCreateRequest.setStartTime(LocalDateTime.of(LocalDate.now(), LocalTime.MIN));
+			dmpInputHotfixCreateRequest.setEndTime(today.atTime(LocalTime.now()));
 			List<DmpInputFinishResponse> dmpInputResponses = dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
 			resultList.addAll(dmpInputResponses);
 		}
-		return resultList;
+		return true;
 	}
 
 
@@ -111,6 +119,7 @@ public class DmpInoutTaskFeignController{
 		if (CollectionUtils.isEmpty(list)){
 			return Collections.emptyList();
 		}
+		// 转换对应信息
 		return list;
 	}
 }
