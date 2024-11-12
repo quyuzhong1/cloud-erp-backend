@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.erp.model.dmp.dto.DmpLogisticsTrackRegisterDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -109,4 +110,6 @@ public interface TrackDataConverter {
     @Mapping(target = "content", source = "eventDetail")
     LogisticsTrackEntity convertWebHookToEntity(LogisticsTrackDTO.TrackingDetail trackingDetail);
     List<LogisticsTrackEntity> convertWebHookToEntity(List<LogisticsTrackDTO.TrackingDetail> trackingDetails);
+
+    DmpLogisticsTrackRegisterDTO.AddDTO convertToDmpRegisterDTO(LogisticsTrackDTO.UpdateTrackDTO record);
 }
