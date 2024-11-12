@@ -728,7 +728,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
         for (SoDeliveryNoticeChangeDetailEntity changeDetailEntity : detailList) {
             //销售通知单明细
-            SoDeliveryNoticeDetailEntity detailEntity = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), changeDetailEntity.getSoDetailId())).findFirst().orElse(null);
+            SoDeliveryNoticeDetailEntity detailEntity = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), changeDetailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST);
             }
