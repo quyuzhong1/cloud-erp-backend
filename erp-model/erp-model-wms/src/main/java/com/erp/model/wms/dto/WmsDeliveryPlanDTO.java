@@ -789,7 +789,7 @@ public class WmsDeliveryPlanDTO implements Serializable {
          */
         private Integer deliveryPlanQty;
         /**
-         * 计划数量
+         * 发货数量
          */
         private Integer hasDeliveryPlanQty;
 
