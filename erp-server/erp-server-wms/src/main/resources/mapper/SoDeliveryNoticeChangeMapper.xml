@@ -102,7 +102,7 @@
                sd.qty as saleQty,
                 (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sdnd.source_detail_id and a.is_deleted = false) as allNoticeQty,
                 sdnd.delivery_qty as currentNoticeQty,
-                (select  COALESCE(sum(a.picked_qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
+                (select  COALESCE(sum(a.qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
                sd.remark
                 from so_delivery_notice_change sdnc
         inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id
@@ -121,7 +121,7 @@
             sd.qty as saleQty,
         (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sd.id and a.is_deleted = false) as allNoticeQty,
         COALESCE(sdnd.delivery_qty,0) as currentNoticeQty,
-        (select  COALESCE(sum(a.picked_qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
+        (select  COALESCE(sum(a.qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
         sd.remark
         from so_info si
         inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
