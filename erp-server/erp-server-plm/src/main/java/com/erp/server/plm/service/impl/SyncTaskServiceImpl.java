@@ -8,6 +8,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
+import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
@@ -57,6 +58,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private ProductBomHistoryService productBomHistoryService;
+    
+    @Resource
+    private ProductBomSkuHistoryService productBomSkuHistoryService;
 
     @Resource
     private SyncKingdeeBomInfoService syncKingdeeBomInfoService;
@@ -193,6 +197,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case PRODUCT_BOM_INFO:
 //                resultList = newSyncBomInfo(sourceDetailList);
                 break;
+            case SDY_PRODUCT_BOM_INFO:
+//                resultList = newSyncBomInfo(sourceDetailList);
+            	break;
             default:
                 break;
         }
@@ -270,6 +277,27 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     			continue;
     		}
     		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeProductDetailService.newSyncDataToSdy(poroductDetailEntity, syncParamDetailDTO.getSyncOperate()));
+    	}
+    	return resultList;
+    }
+    
+    private Map<String , Map<String, Object>> newSyncSdyBomInfo (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<ProductBomSkuHistoryEntity> list = productBomSkuHistoryService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncBomInfo >>>> 未找到数据！");
+            return resultList;
+        }
+    	for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+    		String sourceId = syncParamDetailDTO.getSourceId();
+    		ProductBomSkuHistoryEntity productBomSkuHistoryEntity = list.stream().filter(obj -> {
+    			return obj.getId().equals(sourceId);
+    		}).findFirst().orElse(null);
+    		if (ObjectUtils.isEmpty(productBomSkuHistoryEntity)) {
+    			continue;
+    		}
+    		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeBomInfoService.newSyncDataToSdy(productBomSkuHistoryEntity, syncParamDetailDTO.getSyncOperate()));
     	}
     	return resultList;
     }

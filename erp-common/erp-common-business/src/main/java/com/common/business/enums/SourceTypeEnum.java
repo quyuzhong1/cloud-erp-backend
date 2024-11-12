@@ -109,6 +109,7 @@ public enum SourceTypeEnum {
 
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
+    SDY_PRODUCT_BOM_INFO("sdy_productBomInfo", "BOM管理","product_bom_info"),
     PRODUCT_COMBINATION("productCombination", "组合产品",""),
 
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
