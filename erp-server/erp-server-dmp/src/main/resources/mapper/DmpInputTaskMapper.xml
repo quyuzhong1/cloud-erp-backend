@@ -38,14 +38,16 @@
             systemCode,
             nextLevelId,
             cfgInputId,
-            update_time AS latestUpdateTime,
+            latestUpdateTime,
+            billType,
             status
         FROM (
                  SELECT
                      dbs.code AS systemCode,
                      dit.next_level_id AS nextLevelId,
                      dit.cfg_input_id AS cfgInputId,
-                     dit.update_time,
+                     dit.update_time AS latestUpdateTime,
+                     dci.bill_type AS billType,
                      dit.status,
                      ROW_NUMBER() OVER (
                          PARTITION BY dbs.code, dit.next_level_id, dit.cfg_input_id
@@ -59,9 +61,19 @@
                      dit.is_deleted = FALSE
                    AND dci.is_deleted = FALSE
                    AND dbs.is_deleted = FALSE
-                   AND dci.code IN ('product')
-                   AND dit.next_level_id IN ('')
-                   AND dbs.code ILIKE ANY (ARRAY['goodcang'])
+                   AND dci.bill_type IN
+                   <foreach collection="billTypeList" item="t" open="(" close=")">
+                       #{t}
+                   </foreach>
+                   AND dit.next_level_id IN
+                   <foreach collection="nextLevelIdList" item="nextLevelId" open="(" close=")">
+                       #{nextLevelId}
+                   </foreach>
+                   AND dbs.code ILIKE ANY ( ARRAY
+                   <foreach collection="systemCodeList" item="systemCode" open="[" close="]">
+                       #{systemCode}
+                   </foreach>
+                   )
              ) AS latest_records
         WHERE row_num = 1
     </select>

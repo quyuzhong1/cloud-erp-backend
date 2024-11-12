@@ -1,9 +1,12 @@
 package com.erp.model.dmp.dto;
 
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.SyncStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -42,14 +45,14 @@ public class DmpInoutDTO implements Serializable {
         private LocalDateTime endTime;
 
         public LocalDateTime checkAndGetStartTime() {
-            if (null == this.startTime){
+            if (null == this.startTime) {
                 return LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
             }
             return startTime;
         }
 
         public LocalDateTime checkAndGetEndTime() {
-            if (null == this.endTime){
+            if (null == this.endTime) {
                 return LocalDateTime.now();
             }
             return endTime;
@@ -145,9 +148,45 @@ public class DmpInoutDTO implements Serializable {
         private String statusName;
 
         /**
-         * 更新时间
+         * 业务类型
+         * BusinessTypeEnum
          */
-        private LocalDateTime updateTime;
+        private String billType;
+
+        /**
+         * 最新更新时间
+         */
+        private LocalDateTime latestUpdateTime;
+
+        public static LastOneDTO init(List<LastOneDTO> list, String systemCode, String billType, String nextLevelId) {
+            LastOneDTO lastOneDTO = new LastOneDTO();
+            lastOneDTO.setSystemCode(systemCode);
+            lastOneDTO.setBillType(billType);
+            lastOneDTO.setNextLevelId(nextLevelId);
+            if (CollectionUtils.isEmpty(list)) {
+                lastOneDTO.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+                lastOneDTO.setStatusName(SyncStatusEnum.TO_BE_SYNC.getName());
+                return lastOneDTO;
+            }
+            LastOneDTO curLastOneDTO = list.stream()
+                    .filter(e -> e.getSystemCode().equalsIgnoreCase(systemCode)
+                            && e.getBillType().equalsIgnoreCase(billType)
+                            && e.getNextLevelId().equalsIgnoreCase(nextLevelId))
+                    .findFirst()
+                    .orElse(null);
+            if (null == curLastOneDTO){
+                lastOneDTO.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
+                lastOneDTO.setStatusName(SyncStatusEnum.TO_BE_SYNC.getName());
+                return lastOneDTO;
+            }
+            lastOneDTO.setCfgInputId(curLastOneDTO.getCfgInputId());
+            lastOneDTO.setLatestUpdateTime(curLastOneDTO.getLatestUpdateTime());
+            // 中台任务状态转换
+            SyncStatusEnum syncStatusEnum = SyncStatusEnum.getByDmpInputTaskStatus(curLastOneDTO.getStatus());
+            lastOneDTO.setStatus(syncStatusEnum.getCode());
+            lastOneDTO.setStatusName(syncStatusEnum.getName());
+            return lastOneDTO;
+        }
     }
 
 }

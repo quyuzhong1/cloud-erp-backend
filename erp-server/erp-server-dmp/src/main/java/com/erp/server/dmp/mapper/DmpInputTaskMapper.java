@@ -7,6 +7,7 @@ import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -24,10 +25,11 @@ public interface DmpInputTaskMapper extends BaseMapper<DmpInputTaskEntity> {
 
     /**
      * 根据系统代号和业务代号查询最新任务记录
-     * @param systemCodeList 系统代号列表
-     * @param billTypeList 业务代号列表
+     *
+     * @param systemCodeList  系统代号列表
+     * @param billTypeList    业务代号列表
      * @param nextLevelIdList 下一级ID列表
      * @return 最新任务信息
      */
-    List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList);
+    List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(@Param("systemCodeList") List<String> systemCodeList, @Param("billTypeList") List<String> billTypeList, @Param("nextLevelIdList") List<String> nextLevelIdList);
 }

@@ -57,12 +57,12 @@
               #{t}
           </foreach>
           AND dcid.next_level_id IN
-          <foreach collection="nextLevelIdList" item="s" open="(" close=")">
-              #{s}
+          <foreach collection="nextLevelIdList" item="nextLevelId" open="(" close=")">
+              #{nextLevelId}
           </foreach>
           AND dbs.code ILIKE ANY ( ARRAY
-                <foreach collection="systemCodeList" item="s" open="[" close="]">
-                    #{s}
+                <foreach collection="systemCodeList" item="systemCode" open="[" close="]">
+                    #{systemCode}
                 </foreach>
           )
         GROUP BY

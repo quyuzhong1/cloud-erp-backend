@@ -1,7 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -9,11 +8,9 @@ import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
-import com.erp.server.dmp.inout.dto.response.DmpInputFinishResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
-import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -23,11 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -105,19 +100,18 @@ public class DmpInoutTaskFeignController{
 
 
 	/**
-	 * 公共- 查询输入任务最新状态
+	 * 公共-查询输入任务最新状态
 	 */
 	@PostMapping("/newInputTaskList")
-	public List<DmpInoutDTO.LastOneDTO> doInputTask(@RequestBody DmpInoutDTO.CommonDTO createDTO) {
+	public List<DmpInoutDTO.LastOneDTO> doInputTask(@RequestBody DmpInoutDTO.CommonDTO commonDTO) {
 		//查询任务是否存在
 		List<DmpInoutDTO.LastOneDTO> list =  dmpInputTaskService.lastBySystemCodeAndBillType(
-				Collections.singletonList(createDTO.getSystemCode()),
-				Collections.singletonList(createDTO.getBillType()),
-				createDTO.getNextLevelIdList());
-		if (CollectionUtils.isEmpty(list)){
-			return Collections.emptyList();
-		}
+				Collections.singletonList(commonDTO.getSystemCode()),
+				Collections.singletonList(commonDTO.getBillType()),
+				commonDTO.getNextLevelIdList());
 		// 转换对应信息
-		return list;
+		return commonDTO.getNextLevelIdList().stream()
+				.map(e -> DmpInoutDTO.LastOneDTO.init(list, commonDTO.getSystemCode(), commonDTO.getBillType(), e))
+				.collect(Collectors.toList());
 	}
 }
