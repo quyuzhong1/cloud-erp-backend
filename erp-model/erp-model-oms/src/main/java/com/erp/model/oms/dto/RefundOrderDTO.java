@@ -44,6 +44,8 @@ public class RefundOrderDTO implements Serializable {
     public static class PagingViewDTO {
 
         private String id;
+
+        private String detailId;
         /**
          * 单据单号
          */

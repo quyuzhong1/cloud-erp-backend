@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.IdUtil;
@@ -36,7 +37,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
@@ -59,6 +59,7 @@ import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.SoOutstockDTO.ExportDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -72,9 +73,9 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -1266,8 +1267,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+    	ExportDTO params = dto.getParams();
+    	List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
+        if(CollUtil.isNotEmpty(advanceQueryDTOList)) {
+        	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("so.tab") && "waitSubmit".equals(a.getValue()))) {
+        		params.setSortField("so.create_time");
+        	}else {
+        		params.setSortField("sod.id");
+        	}
+        }
         //获取导出数据
-        Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+		Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),params);
         if (CollectionUtils.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -1397,6 +1407,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         SoOutstockDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
+        List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
+        if(CollUtil.isNotEmpty(advanceQueryDTOList)) {
+        	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("so.tab") && "waitSubmit".equals(a.getValue()))) {
+        		params.setSortField("so.create_time");
+        	}else {
+        		params.setSortField("sod.id");
+        	}
+        }
         Page query = new Page(dto.getCurrPage(), dto.getPageSize() , dto.getIsSearchCount());
         IPage pageData = baseMapper.paging(query, params);
         List<SoOutstockDTO.PagingViewDTO> list = pageData.getRecords();
@@ -2383,6 +2401,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(soB2cId);
             if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(generateB2cDTO.getSourceType())) {
                 SoB2cDeliveryEntity notCancelBySoId = soB2cDeliveryService.getNotCancelBySoId(soB2cId);
+                List<TransferInfoEntity> entities = transferInfoService.listBySourceId(notCancelBySoId.getId());
                 generateB2cDTO.setSourceId(notCancelBySoId.getId());
                 generateB2cDTO.setSourceCode(notCancelBySoId.getCode());
                 List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(notCancelBySoId.getId()));
@@ -2395,7 +2414,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
                             .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
                     SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
-                    addDTO.setWarehouseLocation(Objects.isNull(notCancelBySoId.getBatchNo()) ? view.getWarehouseLocation() : "");
+                    addDTO.setWarehouseLocation(CollectionUtils.isEmpty(entities) ? view.getWarehouseLocation() : "");
                     addDTO.setSkuNo(view.getSkuNo());
                     addDTO.setSkuId(view.getSkuId());
                     addDTO.setActualQty(view.getQty());
@@ -3101,7 +3120,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @return
      */
     @Override
-    @DataIdempotent(keyIdName = "redissonKey")
+    @DataIdempotent(keyIdName = "redissonKey", waitTime = 10)
     public Boolean generateB2cSoOutstockByPlatformData(PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO, String redissonKey) {
         List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTO = platformGenerateSoOutstockDTO.getPlatformDeliveryDetailDTOList();
         if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){

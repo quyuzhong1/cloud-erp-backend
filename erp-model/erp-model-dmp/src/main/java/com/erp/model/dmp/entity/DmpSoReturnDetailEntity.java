@@ -189,6 +189,11 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     @TableField("data_encrypt")
     private String dataEncrypt;
 
+    /**
+     * 退款税费
+     */
+    @TableField("refund_tax")
+    private BigDecimal refundTax;
 
     public static final String MAIN_ID = "main_id";
 

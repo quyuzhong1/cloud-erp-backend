@@ -391,23 +391,33 @@ public class DownloadHandler {
 
     private static Map<Integer, String> getExcelConfig(Map<String, Integer> p, Map<String, String> excelConfig, String recordType, String filePath) {
         Map<Integer, String> r = new HashMap<>();
+        Map<Integer, String> notExistMap = new HashMap<>();
         for (Map.Entry<String, Integer> entry : p.entrySet()) {
             if (excelConfig.get(entry.getKey()) != null) {
                 r.put(entry.getValue(), excelConfig.get(entry.getKey()));
+            } else {
+                // 不存在配置的字段：原生返回
+                notExistMap.put(entry.getValue(), entry.getKey());
             }
         }
         if (r.isEmpty()) {
             throw new ServiceException("未找到字段配置");
         }
-        // 查找不存在的键
-        List<String> notExistKeyList = p.keySet().stream()
-                .filter(key -> !excelConfig.containsKey(key))
-                .collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(notExistKeyList)) {
+        if (CollectionUtil.isEmpty(notExistMap)) {
             return r;
         }
-        String msg = StrUtil.format("cfg_amz_report_field报告类型【{}】, filePath={},存在未配置的字段：{}", recordType, filePath, notExistKeyList);
-        throw new ServiceException(msg);
+        log.warn("cfg_amz_report_field报告类型【{}】, filePath={},存在未配置的字段：{}", recordType, filePath, notExistMap.values());
+        r.putAll(notExistMap);
+        return r;
+        // 查找不存在的键
+//        List<String> notExistKeyList = p.keySet().stream()
+//                .filter(key -> !excelConfig.containsKey(key))
+//                .collect(Collectors.toList());
+//        if (CollectionUtil.isEmpty(notExistKeyList)) {
+//            return r;
+//        }
+//        String msg = StrUtil.format("cfg_amz_report_field报告类型【{}】, filePath={},存在未配置的字段：{}", recordType, filePath, notExistKeyList);
+//        throw new ServiceException(msg);
     }
 
     private static JSONObject getReportData(String str, Map<Integer, String> r) {

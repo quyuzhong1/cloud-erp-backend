@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -363,70 +364,19 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnNoticeDTO.Update dto) {
-        //获取退货单信息
-        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
-        //获取销售单信息
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
-        SoReturnNoticeEntity existEntity = this.getById(dto.getId());
-        SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
-        //获取用户信息
-        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
-            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
-            entity.setWarehouseKeeperId(userDTO.getUserId());
-            entity.setWarehouseKeeperName(userDTO.getUserName());
+        SoReturnNoticeEntity entity = this.getById(dto.getId());
+        if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
         }
-        entity.setSoId(soInfoEntity.getId());
-        entity.setSoCode(soInfoEntity.getCode());
-        entity.setType(soInfoEntity.getOrderType());
-        entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
-        entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
-        entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
-        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
-            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
-            if (dept != null) {
-                entity.setSalesDeptName(dept.getName());
-            }
-        }
-        entity.setSellerId(soInfoEntity.getSellerId());
-        entity.setSellerName(soInfoEntity.getSellerName());
-        entity.setCustomerId(soInfoEntity.getCustomerId());
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-        entity.setCustomerName(customerInfoEntity.getName());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
-        if (CollectionUtils.isNotEmpty(warehouseList)) {
-            entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
-        }
-        entity.setId(dto.getId());
-        if(existEntity != null && !existEntity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",existEntity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
-        }
-        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
-        entity.setSourceId(dto.getSourceId());
-        entity.setSourceCode(soReturnEntity.getCode());
-        entity.setBillDate(soReturnEntity.getBillDate());
-        entity.setInventoryOrgId(dto.getInventoryOrgId());
-        if (ObjectUtils.isNotEmpty(sysAccountingCompanyEntity)) {
-            entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
-        }
-        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
-            entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
-        }
-        //获取仓库信息
-        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
-        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
-            entity.setWarehouseId(dto.getWarehouseId());
-            entity.setWarehouseName(warehouseEntity.getName());
-        }
+        BeanUtil.copyProperties(dto,entity);
         //操作日志
         SoReturnNoticeEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "", "");
 
         boolean flag = this.updateById(entity);
 
-        soReturnNoticeDetailService.update(dto);
+        soReturnNoticeDetailService.update(entity,dto);
         return flag;
     }
 

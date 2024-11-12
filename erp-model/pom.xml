@@ -26,6 +26,7 @@
         <module>erp-model-oms</module>
         <module>erp-model-tms</module>
         <module>erp-model-srm</module>
+        <module>erp-model-mrp</module>
     </modules>
 
     <dependencies>

@@ -41,7 +41,7 @@ public class JasperHelperUtil {
      * @param jasperReport
      * @param docType
      */
-    private static void prepareReport(JasperReport jasperReport, String docType) {
+    public static void prepareReport(JasperReport jasperReport, String docType) {
         /*
          * 如果导出的是excel，则需要去掉周围的margin
          */

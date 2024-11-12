@@ -13,24 +13,30 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
+import com.erp.server.wms.service.FbaInventoryService;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +57,8 @@ public class RequisitionApplicationController extends BaseController {
     private PackingTaskService packingTaskService;
     @Resource
     private PickingListsService pickingListsService;
+    @Resource
+    private FbaInventoryService fbaInventoryService;
 
     /**
     * 新增
@@ -62,6 +70,11 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "要货申请单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated RequisitionApplicationDTO.AddDTO dto) {
+        // 检查和刷新fnSku
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType())){
+            fbaInventoryService.checkAndUpdateFnsku(dto);
+        }
+
         return success(requisitionApplicationService.add(dto));
     }
 
@@ -80,6 +93,10 @@ public class RequisitionApplicationController extends BaseController {
         serviceClass = RequisitionApplicationService.class,
         keyIdName = "id")
     public ApiResult update(@RequestBody @Validated RequisitionApplicationDTO.UpdateDTO dto) {
+        // 检查和刷新fnSku
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equalsIgnoreCase(dto.getType())){
+            fbaInventoryService.checkAndUpdateFnsku(dto);
+        }
         requisitionApplicationService.update(dto);
         return success();
     }
@@ -340,9 +357,9 @@ public class RequisitionApplicationController extends BaseController {
      * @param picking 参数
      */
     @PostMapping("/generatePickingList")
-    public ApiResult<String> generatePickingList(@RequestBody @Validated RequisitionApplicationDTO.GeneratePickingDTO picking) {
-        requisitionApplicationService.generatePickingList(picking);
-        return success();
+    public ApiResult<List<WarehouseLocationMoveDTO.GenPickToSkuMove>> generatePickingList(@RequestBody @Validated RequisitionApplicationDTO.GeneratePickingDTO picking) {
+        List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = requisitionApplicationService.generatePickingList(picking);
+        return success(moves);
     }
 
     /**
@@ -528,6 +545,32 @@ public class RequisitionApplicationController extends BaseController {
         requisitionApplicationService.generateDeliveryWithFba(dto);
         return success();
     }
+
+    /**
+     * 下载货件装箱信息模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载货件装箱信息模板数据")
+    @PostMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(@RequestBody @Validated List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailDTOS, HttpServletResponse response) {
+        requisitionApplicationService.downloadPackingTemplate(response,detailDTOS);
+        return success();
+    }
+    /**
+     * 批量导入Excel
+     * @author zdy
+     * @date: 2024/8/14 9:39
+     * @param excelImportDTO
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "批量导入Excel")
+    @PostMapping("/importFile")
+    public ApiResult<RequisitionApplicationDTO.ImportDTO> importFile(@ModelAttribute @Validated RequisitionApplicationDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        RequisitionApplicationDTO.ImportDTO dto = requisitionApplicationService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getFbaBindShipmentViewDTOS(),response);
+        return success(dto);
+    }
     /**
      * 查询发货记录
      **/
@@ -544,5 +587,17 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult assembleDownload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
         requisitionApplicationService.assembleDownload(dto.getIds(), response);
         return success();
+    }
+
+    /**
+     * 打印fnsku预览
+     * @param dto
+     * @Author jack
+     * @Date 2024/10/16
+     * @return void
+     **/
+    @PostMapping("/printFnskuPreview")
+    public ApiResult<List<RequisitionApplicationDTO.PrintFnskuDetailDTO>> printFnskuPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(requisitionApplicationService.printFnskuPreview(dto));
     }
 }

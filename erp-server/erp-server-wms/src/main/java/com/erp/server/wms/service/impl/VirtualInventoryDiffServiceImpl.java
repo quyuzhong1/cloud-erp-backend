@@ -307,32 +307,14 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         List<String> virtualWarehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDiffExportDataDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
 
-        //标识,用于判断是否需要赋值（相同sku、仓库只需要第一条赋值）
-        List<String> flagList = new ArrayList<>();
-
         for (VirtualInventoryDiffDTO.ListDiffExportDataDTO listDTO : list) {
             //虚拟仓库
             VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             listDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
             listDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-            //标识
-            String flag = StrUtil.format("{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId());
-            if (flagList.contains(flag)) {
-                listDTO.setSkuNo("");
-                listDTO.setProductName("");
-                listDTO.setWarehouseName("");
-                listDTO.setRealQty(null);
-                listDTO.setUsableQty(null);
-                listDTO.setFrozenQty(null);
-                listDTO.setInTransitQty(null);
-                listDTO.setWaitQcQty(null);
-                continue;
-            }
-            flagList.add(flag);
-            //是否差异
             //是否有差异
-            boolean isDiff = listDTO.getTotalVirtualQty() > listDTO.getRealQty();
+            boolean isDiff = listDTO.getVirtualQty() > listDTO.getRealQty();
             listDTO.setIsDiff(isDiff);
             listDTO.setIsDiffName(isDiff ? "是" : "否");
             //仓库分配数量

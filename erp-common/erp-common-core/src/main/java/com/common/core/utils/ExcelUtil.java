@@ -374,6 +374,7 @@ public class ExcelUtil {
         }
     }
 
+
     /**
      * 返回文件
      * @author yl
@@ -630,7 +631,7 @@ public class ExcelUtil {
                 cell.setCellValue(headerName.get(i)); // 写入名称
                 // 自适应列宽
                 // 计算内容宽度并设置单元格宽度
-                int contentWidth = headerName.get(i).getBytes(StandardCharsets.UTF_8).length * 256; // 中文字符宽度按照字节数计算
+                int contentWidth = headerName.get(i).getBytes(StandardCharsets.UTF_8).length * 400; // 中文字符宽度按照字节数计算
                 sheet.setColumnWidth(i, contentWidth); // 设置列宽度
             }
             // 输出Excel文件

@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformOutboundDTO;
 import com.common.business.dto.PlatformReturnInstockDTO;
@@ -12,12 +13,15 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import io.seata.common.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Scope("prototype")
 public class AntuReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler{
@@ -95,13 +99,21 @@ public class AntuReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTaskH
 		if (StringUtils.isBlank(erpStatus)) {
 			return null;
 		}
+		List<DmpThirdReturnInboundDetailEntity> filterDmpDetaiList = dmpDetailList.stream()
+				.filter(e -> null != e.getRealQty() && e.getRealQty() > 0)
+				.collect(Collectors.toList());
+		if (CollectionUtils.isEmpty(filterDmpDetaiList)){
+			log.warn("安兔退货找不到上架数量大于0的明细: {}", JSONUtil.toJsonStr(dmpMainEntity));
+			return null;
+		}
+
 		PlatformReturnInstockDTO dto = BeanUtil.copyProperties(dmpMainEntity, PlatformReturnInstockDTO.class);
 		String sourcePlatform = dmpMainEntity.getSourcePlatform();
 		dto.setPlatform(sourcePlatform);
 		dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
 		dto.setReturnType(erpStatus);
 		// 明细
-		List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
+		List<PlatformReturnInstockDTO.Detail> detailList = filterDmpDetaiList.stream().map(this::convertDetail).collect(Collectors.toList());
 		dto.setProductDetailList(detailList);
 
 		return dto;

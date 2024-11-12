@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -286,81 +287,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnReceiveDTO.Update dto) {
-        //获取组织信息
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getSalesOrgId()));
-        //获取用户信息
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(dto.getSellerId(), dto.getWarehouseKeeperId()));
-        //获取客户信息
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Arrays.asList(dto.getCustomerId()));
-        //获取部门信息
-        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(Arrays.asList(dto.getSalesDeptId()));
-        //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
 
-        SoReturnReceiveEntity existEntity = this.getById(dto.getId());
-        SoReturnReceiveEntity entity = new SoReturnReceiveEntity();
-        entity.setId(dto.getId());
-        entity.setType(dto.getType());
-        entity.setSalesOrgId(dto.getSalesOrgId());
-        String orgName = orgList.stream().filter(o -> dto.getSalesOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        entity.setSalesOrgName(orgName);
-        entity.setSalesDeptId(dto.getSalesDeptId());
-        String deptName = departmentList.stream().filter(o -> dto.getSalesDeptId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        entity.setSalesDeptName(deptName);
-        entity.setSellerId(dto.getSellerId());
-        String userName = userList.stream().filter(d -> d.getUserId().equals(dto.getSellerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-        entity.setSellerName(userName);
-        entity.setCustomerId(dto.getCustomerId());
-        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(dto.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
-        entity.setCustomerName(customerInfoEntity.getName());
-        entity.setReturnDate(dto.getReturnDate());
-        if(existEntity != null && !existEntity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",existEntity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
+        SoReturnReceiveEntity entity = this.getById(dto.getId());
+        if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
+            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
         }
-        entity.setReturnLogisticCode(dto.getReturnLogisticCode());
-        //如果有退货订单号
-        if (StringUtils.isNotBlank(dto.getSourceId())) {
-            //获取退货单信息
-            SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
-            if (ObjectUtil.isEmpty(soReturnEntity)) {
-                throw new ServiceException(ApiError.ERROR_92023);
-            }
-            //获取销售单信息
-            SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
-/*            entity.setType(soReturnEntity.getType());
-            entity.setSalesOrgId(soReturnEntity.getSalesOrgId());
-            entity.setSalesOrgName(soReturnEntity.getSalesOrgName());
-            entity.setSalesDeptId(soReturnEntity.getSalesDeptId());
-            if (StringUtils.isNotBlank(soReturnEntity.getSalesDeptId())) {
-                SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soReturnEntity.getSalesDeptId());
-                if (dept != null) {
-                    entity.setSalesDeptName(dept.getName());
-                }
-            }
-            entity.setSellerId(soReturnEntity.getSellerId());
-            entity.setSellerName(soReturnEntity.getSellerName());
-            entity.setCustomerId(soReturnEntity.getCustomerId());
-            entity.setCustomerName(customerInfoEntity.getName());
-            entity.setReturnDate(soReturnEntity.getBillDate());*/
-            entity.setSourceCode(soReturnEntity.getCode());
-            entity.setSoCode(soInfoEntity.getCode());
-            entity.setSoId(soInfoEntity.getId());
-        }
+        BeanUtil.copyProperties(dto,entity);
 
-        //获取仓库信息
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
-        if (CollectionUtils.isNotEmpty(warehouseList)) {
-            entity.setWarehouseId(warehouseList.get(MathUtil.ZERO).getId());
-            entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
-        }
-        entity.setSourceId(dto.getSourceId());
-        entity.setInventoryOrgId(dto.getInventoryOrgId());
-        entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
-        entity.setBillDate(dto.getBillDate());
-        String warehouseKeeperUserName = userList.stream().filter(d -> d.getUserId().equals(dto.getWarehouseKeeperId())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-        entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
-        entity.setWarehouseKeeperName(warehouseKeeperUserName);
         //操作日志
         SoReturnReceiveEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "", "");

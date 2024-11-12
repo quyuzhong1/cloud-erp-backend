@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.AmazonTokenUpdateDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -188,5 +189,22 @@ public class ShopInfoFeignController extends BaseController {
     @PostMapping("/pagingSelect")
     public PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
         return shopInfoService.pagingSelect(dto);
+    }
+
+    /**
+     * 检查和更新亚马逊同账号店铺授权
+     */
+    @PostMapping("/checkAndSaveAllAmazonToken")
+    public Boolean checkAndSaveAllAmazonToken(@RequestBody @Validated AmazonTokenUpdateDTO updateDTO){
+        return shopInfoService.checkAndSaveAllAmazonToken(updateDTO);
+    }
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    @GetMapping("/listShopInfoByPlatform")
+    public List<String> listShopInfoByPlatform(@RequestParam String platform){
+        return shopInfoService.listShopInfoByPlatform(platform);
     }
 }

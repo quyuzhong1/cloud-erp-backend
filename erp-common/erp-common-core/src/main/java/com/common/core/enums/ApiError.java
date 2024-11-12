@@ -1051,12 +1051,12 @@ public enum ApiError implements Serializable {
     ERROR_92144(92144,"发货通知到记录不存在"),
     ERROR_92145(92145,"箱规记录不存在"),
     ERROR_92146(92146,"装箱记录不存在"),
-    ERROR_92147(92147,"SKU【{}】不可超过未装箱数量【{}】"),
+    ERROR_92147(92147,"SKU【{}】FnSKU【{}】不可超过未装箱数量【{}】"),
     ERROR_92148(92148,"SKU【{}】不可超过本箱已装箱数量【{}】"),
     ERROR_92149(92149,"SKU【{}】在关联单中没有记录"),
     ERROR_92150(92150,"SKU【{}】在装箱中没有记录不能移出"),
     ERROR_92251(92251,"关联单号已审核，不支持编辑修改删除"),
-    ERROR_92252(92252,"装箱中SKU【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
+    ERROR_92252(92252,"装箱中SKU【{}】FnSku【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
     ERROR_92253(92253,"装箱中SKU累计装箱数量不可大于拣货数量"),
     ERROR_92254(92254,"本箱已完成称重，不支持调整装箱"),
     ERROR_92255(92255,"调整装箱后，装箱数量不能为0"),
@@ -1489,6 +1489,31 @@ public enum ApiError implements Serializable {
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
+
+
+
+    /**
+     * MRP 错误
+     * 从97000 开始
+     */
+    ERROR_NOT_RESTOCKING_REPLENISHMENT(97001,"只有正常补货数据支持暂不补货"),
+    ERROR_RESTORE_REPLENISHMENT(97002,"只有暂不补货数据支持恢复补货"),
+    ERROR_CFG_RULE_STOCK_UP_NOT_EXIST(97003,"备货（规则配置）不存在"),
+    ERROR_CFG_RULE_SALES_NOT_EXIST(97004,"销量（{}规则配置）不存在"),
+    ERROR_CFG_RULE_NEWS_NOT_EXIST(97010,"新品系统规则配置不存在"),
+    ERROR_CFG_RULE_REPLENISHMENT_NOT_EXIST(97011,"补货天数规则配置不存在"),
+    ERROR_DETAIL_NOT_EXIST(97012,"明细数据不存在"),
+    ERROR_LOGISTICS_NOT_EXIST(97013,"物流配置不存在"),
+    ERROR_TABLE_NOT_EXIST(97014,"表{}不存在"),
+    ERROR_TIME_FRAME_NOT_EXIST(97015,"*建议时间范围规则配置不存在"),
+
+
+
+
+
+
+
+
 
     //旺店通异常
     ERROR_3000(3000, "请求旺店通接口异常"),

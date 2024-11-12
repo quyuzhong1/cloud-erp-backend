@@ -231,6 +231,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSoReturnDetailId).collect(Collectors.toList());
             List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
             List<String> returnIds = soReturnDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+            List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
+            if(CollectionUtils.isNotEmpty(soB2cReturnDetailEntityList)){
+                returnIds.addAll(soB2cReturnDetailEntityList.stream().map(v->v.getMainId()).collect(Collectors.toList()));
+            }
             List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnIds);
             List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceDetailIds(returnDetailIds);
             List<SoReturnInstockDetailEntity> list = new ArrayList<>();

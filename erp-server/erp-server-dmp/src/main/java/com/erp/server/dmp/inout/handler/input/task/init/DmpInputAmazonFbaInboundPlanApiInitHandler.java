@@ -53,7 +53,7 @@ public class DmpInputAmazonFbaInboundPlanApiInitHandler extends DmpInputInitHand
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String shopId = dmpCfgInputDetailEntity.getNextLevelId();
+        String shopId = dmpInputTaskEntity.getNextLevelId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         String extendJson = dmpInputTaskEntity.getExtendJson();
 

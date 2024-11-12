@@ -11,13 +11,16 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.wms.mapper.VirtualWarehouseRelationMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualWarehouseRelationService;
@@ -229,6 +232,73 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                 .in(VirtualWarehouseRelationEntity::getVirtualWarehouseId,virtualWarehouseIdList)
                 .list();
         return list;
+    }
+
+    @Override
+    public List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO> isExistVirtualWarehouse(List<VirtualWarehouseRelationDTO.IsExistVirtualDTO> paramList) {
+        //关联信息
+        List<String> warehouseIdList = paramList.stream().map(VirtualWarehouseRelationDTO.IsExistVirtualDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> shopIdList = paramList.stream().map(VirtualWarehouseRelationDTO.IsExistVirtualDTO::getRelationId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseRelationDTO.SelectResultDTO> list = baseMapper.listWarehouseIdList(warehouseIdList,shopIdList);
+
+        //平台下店铺
+        List<String> platformList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getDictPlatform())).map(VirtualWarehouseRelationDTO.SelectResultDTO::getDictPlatform).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopList = CollectionUtils.isEmpty(platformList) ? new ArrayList<>() : FeignQuery.create(ShopInfoEntity.class)
+                .in(ShopInfoEntity::getDictPlatform, platformList)
+                .eq(ShopInfoEntity::getDisabled,Boolean.FALSE)
+                .list();
+
+
+        List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO> resultDTOList = new ArrayList<>();
+        for (VirtualWarehouseRelationDTO.IsExistVirtualDTO dto :paramList) {
+            VirtualWarehouseRelationDTO.IsExistVirtualResultDTO isExistVirtualResultDTO = new VirtualWarehouseRelationDTO.IsExistVirtualResultDTO();
+            isExistVirtualResultDTO.setWarehouseId(dto.getWarehouseId());
+            isExistVirtualResultDTO.setRelationId(dto.getRelationId());
+
+            List<VirtualWarehouseRelationDTO.SelectResultDTO> selectResultList = list.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), dto.getWarehouseId())).collect(Collectors.toList());
+            //无虚拟仓数据则直接返回
+            if (CollectionUtils.isEmpty(selectResultList)) {
+                isExistVirtualResultDTO.setIsExistVirtual(Boolean.FALSE);
+                resultDTOList.add(isExistVirtualResultDTO);
+                continue;
+            }
+            //未传关联id则直接返回
+            if (StrUtil.isBlank(dto.getRelationId())) {
+                isExistVirtualResultDTO.setIsExistVirtual(Boolean.TRUE);
+                resultDTOList.add(isExistVirtualResultDTO);
+                continue;
+            }
+            //平台
+            String platform = shopList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getRelationId())).map(ShopInfoEntity::getDictPlatform).findFirst().orElse("");
+
+            //关联仓库按平台
+            String type = selectResultList.get(0).getType();
+            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(type)) {
+                List<ShopInfoEntity> platformShopList = shopList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), platform)).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(platformShopList)) {
+                    isExistVirtualResultDTO.setIsExistVirtual(Boolean.FALSE);
+                    resultDTOList.add(isExistVirtualResultDTO);
+                    continue;
+                }
+                long count = platformShopList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getRelationId())).count();
+                isExistVirtualResultDTO.setIsExistVirtual(count > 0 ? Boolean.TRUE : Boolean.FALSE);
+                resultDTOList.add(isExistVirtualResultDTO);
+            } else {
+                //按店铺
+                long count = selectResultList.stream().filter(obj -> StrUtil.equals(obj.getRelationId(), dto.getRelationId())).count();
+                isExistVirtualResultDTO.setIsExistVirtual(count > 0 ? Boolean.TRUE : Boolean.FALSE);
+                resultDTOList.add(isExistVirtualResultDTO);
+            }
+        }
+        return resultDTOList;
+    }
+
+    @Override
+    public List<VirtualWarehouseRelationEntity> listByVirtualWarehouseIdList(List<String> virtualWarehouseIdList) {
+        if (CollectionUtils.isEmpty(virtualWarehouseIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(VirtualWarehouseRelationEntity::getVirtualWarehouseId,virtualWarehouseIdList).list();
     }
 
 }

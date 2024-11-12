@@ -87,4 +87,11 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
     List<RequisitionApplicationDTO.DeliverRecordView> listFbaDeliverRecord(String id);
 
     List<RequisitionApplicationDTO.DeliverRecordView> listWarehouseDeliverRecord(@Param("params") String id);
+
+    /**
+     * 根据要货申请id集合 查询fnsku msku 平台sku等信息
+     * @Author jack
+     * @Date 2024/10/16
+     **/
+    List<RequisitionApplicationDTO.PrintFnskuDetailDTO> listPrintPreviewByIds(@Param("ids")List<String> ids);
 }

@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
@@ -14,11 +15,10 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -36,6 +36,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.server.oms.convert.ShopInfoConverter;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
@@ -70,7 +71,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -1449,6 +1449,32 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public PagingVO<ShopDTO.AreaDTO> pagingSelectArea(PagingDTO<ShopDTO.AreaParamDTO> dto) {
+        ShopDTO.AreaParamDTO params = dto.getParams();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ShopDTO.AreaDTO> pagResult = baseMapper.pagingSelectArea(query, params);
+        return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public List<ShopDTO.ListDTO> listSelect(ShopDTO.SelectDTO dto) {
+        PagingDTO<ShopDTO.SelectDTO> pagingParamDTO = new PagingDTO<>();
+        pagingParamDTO.setParams(dto);
+        pagingParamDTO.setPageSize(-1);
+        PagingVO<ShopDTO.ListDTO> resultList = this.pagingSelect(pagingParamDTO);
+        List<ShopDTO.ListDTO> list = (List<ShopDTO.ListDTO>) resultList.getList();
+        return list;
+    }
+
+    @Override
+    public List<String> listShopInfoByPlatform(String platform) {
+        List<ShopInfoEntity> list = list(Wrappers.<ShopInfoEntity>lambdaQuery()
+                .eq(ShopInfoEntity::getDictPlatform, platform)
+                .eq(ShopInfoEntity::getDisabled, false));
+        return list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> deleteByIds(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
@@ -1595,5 +1621,40 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 }
             }
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO) {
+        ShopInfoEntity shopInfo = updateDTO.getShopInfo();
+        ShopAuthEntity shopAuth = updateDTO.getShopAuth();
+        String accessToken = updateDTO.getAccessToken();
+        String refreshToken = updateDTO.getRefreshToken();
+        // 亚马逊关联的店铺列表
+        List<ShopInfoEntity> entityList = getRelatedShopById(shopInfo.getPlatformShopCode());
+        if (org.springframework.util.CollectionUtils.isEmpty(entityList)){
+            // 更新当前店铺shopAuth
+            shopAuth.setAccessToken(accessToken);
+            shopAuth.setRefreshToken(refreshToken);
+            shopAuthService.updateShopAuthById(shopAuth);
+            return true;
+        }
+        List<String> shopIds = entityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<ShopAuthEntity> authList = shopAuthService.listShopAuthByShopIds(shopIds);
+        if (org.springframework.util.CollectionUtils.isEmpty(authList)){
+            // 更新当前店铺shopAuth
+            shopAuth.setAccessToken(accessToken);
+            shopAuth.setRefreshToken(refreshToken);
+            shopAuthService.updateShopAuthById(shopAuth);
+            return true;
+        }
+        // 批量更新
+        authList.add(shopAuth);
+        authList.forEach(e->{
+            e.setAccessToken(accessToken);
+            e.setRefreshToken(refreshToken);
+        });
+        shopAuthService.batchUpdateShopAuthById(authList);
+        return true;
     }
 }
