@@ -289,7 +289,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE_CHANGE.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -337,7 +337,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        revokeDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        revokeDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE_CHANGE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         //操作日志
@@ -550,7 +550,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        startDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SO_DELIVERY_NOTICE_CHANGE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
