@@ -161,4 +161,10 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return Boolean
      */
     Boolean importUpdate(DeliverySuggestDTO.ImportUpdateDTO updateDTO);
+    /**
+     * 补货计划作废
+     * @author will
+     * @date 2024/11/12 10:54
+     */
+    void deliverySuggestInvalid();
 }

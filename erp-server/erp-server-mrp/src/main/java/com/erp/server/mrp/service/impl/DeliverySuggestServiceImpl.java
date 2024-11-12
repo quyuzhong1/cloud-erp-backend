@@ -76,6 +76,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -200,6 +201,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     }
 
     @Override
+    public void deliverySuggestInvalid() {
+
+    }
+
+    @Override
     public PagingVO<DeliverySuggestDTO.ListDTO> paging(PagingDTO<DeliverySuggestDTO.PagingParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
@@ -267,6 +273,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         //更新成完成状态
         old.setStatus(SuggestStatusEnum.FINISH.getCode());
+        old.setFinishDate(LocalDate.now());
         this.updateById(old);
 
         // 操作日志

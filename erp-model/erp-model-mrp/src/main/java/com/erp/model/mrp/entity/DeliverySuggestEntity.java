@@ -83,6 +83,12 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
      */
     @TableField("status")
     private String status;
+
+    /**
+     * 完成时间
+     */
+    @TableField("finish_date")
+    private LocalDate finishDate;
     /**
     * 来源id
     */
