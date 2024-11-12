@@ -378,8 +378,9 @@ public class SoDeliveryNoticeChangeController extends BaseController {
             tableAlias = "sdnc"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "发货通知变更单导出Excel数据")
-    public void exportList(@RequestBody @Validated SoDeliveryNoticeChangeDTO.PagingParamDTO dto) {
+    public ApiResult<Boolean> exportList(@RequestBody @Validated SoDeliveryNoticeChangeDTO.PagingParamDTO dto) {
         soDeliveryNoticeChangeService.exportList(dto);
+        return success();
     }
 
 
