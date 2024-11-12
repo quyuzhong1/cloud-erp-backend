@@ -204,7 +204,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             if(StringUtils.isEmpty(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isEmpty(ruleConditionsDTO.getChildQtySplitSymbol())){
                 throw new ServiceException("拆分符号不能为空");
             }
-            List<String> splitList = Arrays.asList(result.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
+            List<String> splitList = this.splitWithoutDelimiter(result,ruleConditionsDTO.getChildCombineSplitSymbol());
             String desc = "";
             for (String childrenSku : splitList) {
                 SkuMappingRuleDTO.SplitSkuDTO splitSkuDTO = this.splitByLastSymbol(childrenSku,ruleConditionsDTO.getChildQtySplitSymbol());
@@ -395,7 +395,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     JSONObject jsonObject = new JSONObject(skuMappingRuleEntity.getRuleContent());
                     SkuMappingRuleDTO.RuleDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<SkuMappingRuleDTO.RuleDTO>() {}.getType());
                     SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO = ruleDTO.getRuleContentList().get(0);
-                    List<String> splitList = Arrays.asList(handlePlatformSkuNo.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
+                    List<String> splitList = this.splitWithoutDelimiter(handlePlatformSkuNo,ruleConditionsDTO.getChildCombineSplitSymbol());
                     StringBuilder matchStr = new StringBuilder();
                     for (String childrenSku : splitList) {
                         SkuMappingRuleDTO.SplitSkuDTO splitSkuDTO = this.splitByLastSymbol(childrenSku,ruleConditionsDTO.getChildQtySplitSymbol());
@@ -522,4 +522,62 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         // 如果任何一个字符串没有被正确分割成两部分，返回 false
         return false;
     }
+
+
+    /**
+     * 按照给定的分隔符拆分字符串，特殊处理连续分隔符和末尾分隔符的情况。
+     *
+     * @param input 待拆分的字符串
+     * @param delimiter 分隔符
+     * @return 拆分后的字符串列表
+     */
+    public List<String> splitWithoutDelimiter(String input, String delimiter) {
+        if(StringUtils.isBlank(input)){
+            return new ArrayList<>();
+        }
+        if(StringUtils.isBlank(delimiter)){
+            return Collections.singletonList(input);
+        }
+
+        List<String> result = new ArrayList<>();
+        int start = 0;
+        int delimiterLength = delimiter.length();
+
+        int index = input.indexOf(delimiter, start);
+        while (index >= 0) {
+            // 添加当前分隔符之前的子字符串
+            String addStr = "";
+            if (index > start) {
+                addStr = input.substring(start, index);
+            }
+            // 记录分隔符的起始位置
+            int delimiterStart = index;
+            // 跳过分隔符，处理连续分隔符
+            index += delimiterLength;
+            while (index <= input.length() - delimiterLength && input.substring(index, index + delimiterLength).equals(delimiter)) {
+                index += delimiterLength;
+            }
+            // 更新 start 为最后一个分隔符之后的位置
+            start = index;
+            // 处理连续分隔符的特殊情况
+            if (start > delimiterStart + delimiterLength) {
+                addStr = addStr + input.substring(delimiterStart, start-1);
+            }
+            // 查找下一个分隔符
+            index = input.indexOf(delimiter, start);
+            result.add(addStr);
+        }
+        // 处理最后一个子字符串
+        if (start < input.length()) {
+            result.add(input.substring(start));
+        }
+        if (input.endsWith(delimiter)) {
+            String lastStr = result.get(result.size() - 1);
+            result.remove(result.size() - 1);
+            result.add(lastStr + input.substring(start-delimiter.length()));
+        }
+
+        return result;
+    }
+
 }
