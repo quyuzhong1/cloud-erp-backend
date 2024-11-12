@@ -411,7 +411,6 @@ public class SoOutstockDTO implements Serializable {
 
         private List<LocalDate> billDateList;
         
-        private String sortField;
     }
 
     /**
