@@ -202,7 +202,34 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Override
     public void deliverySuggestInvalid() {
-
+       LocalDate now = LocalDate.now();
+       List<DeliverySuggestEntity> list =  baseMapper.listFinishDeliverySuggest(now.minusDays(30L));
+       if (CollectionUtils.isEmpty(list)) {
+           return;
+       }
+        //补货计划
+        List<String> ids = list.stream().map(DeliverySuggestEntity::getId).collect(Collectors.toList());
+        List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(ids);
+        List<String> idList = new ArrayList<>();
+        for (DeliverySuggestEntity entity :list) {
+            //补货计划
+            WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = deliveryPlanDetailList.stream().filter(obj -> {
+                    long count = BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), entity.getId())).count();
+                    if (count > 0) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+            }).findFirst().orElse(null);
+            //以下推的发货建议数据直接跳过
+            if (ObjectUtil.isNotEmpty(wmsDeliveryPlanDetailEntity)) {
+                continue;
+            }
+            idList.add(entity.getId());
+        }
+        if (CollectionUtils.isEmpty(idList)) {
+            return;
+        }
+        idList.stream().forEach(obj -> this.invalid(obj,"超期自动作废"));
     }
 
     @Override
@@ -289,11 +316,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         Boolean isPush = isPushDeliveryPlan(id);
         if (isPush) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_SUGGEST_INVALID.msg);
         }
 
         if (old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98012.msg);
         }
         //创建人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
