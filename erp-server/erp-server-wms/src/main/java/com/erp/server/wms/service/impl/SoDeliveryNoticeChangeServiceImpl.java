@@ -11,6 +11,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -20,6 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -43,6 +45,7 @@ import com.erp.server.wms.service.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -603,6 +606,19 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         List<SoDetailEntity> soDetailEntityList = FeignQuery.getByIds(SoDetailEntity.class,soDetailIds);
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(sourceDetails);
+        List<String> ids = list.stream().map(SoDeliveryNoticeChangeDTO.ListDTO::getId).collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        ids.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_DELIVERY_NOTICE_CHANGE.getCode(), obj));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+            }
+        }
         // 属性赋值
         for(SoDeliveryNoticeChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -614,6 +630,13 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             data.setChangeTypeName(SoDeliveryNoticeChangeTypeEnum.getName(data.getChangeType()));
             List<PickingDetailEntity> currentPickingDetailList = pickingDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(data.getSourceDetailId())).collect(Collectors.toList());
             data.setPickedQty(currentPickingDetailList.stream().map(PickingDetailEntity::getPickedQty).reduce(0, Integer::sum));
+            //最新待审核人
+            if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if(StringUtils.isNotBlank(curApprove)){
+                    data.setApproveUserName(curApprove);
+                }
+            }
         }
     }
     /**
