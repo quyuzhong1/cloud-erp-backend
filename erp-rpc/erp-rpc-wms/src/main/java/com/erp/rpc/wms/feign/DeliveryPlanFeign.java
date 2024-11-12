@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -18,7 +19,7 @@ import java.util.List;
 public interface DeliveryPlanFeign {
 
     @PostMapping("feign/deliveryPlan/addDeliveryPlan")
-    void addDeliveryPlan(@RequestBody @Valid WmsDeliveryPlanDTO.AddDTO addDTO);
+    BaseResultDTO.AddDTO addDeliveryPlan(@RequestBody @Valid WmsDeliveryPlanDTO.AddDTO addDTO);
 
     /**
      * 根据来源id查询

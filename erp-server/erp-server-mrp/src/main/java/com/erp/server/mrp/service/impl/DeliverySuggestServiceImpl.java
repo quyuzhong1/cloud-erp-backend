@@ -142,6 +142,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         dto.setSourceId(deliverySuggestEntity.getId());
         dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
         deliverySuggestSysService.add(dto);
+
+        // 操作日志
+        String msg = StrUtil.format("新建了补货计划【编号：{}】",code);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), deliverySuggestEntity.getId(), "");
         return new BaseResultDTO.AddDTO(deliverySuggestEntity.getId(), code);
     }
 
@@ -412,6 +416,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean pushDeliveryPlan(DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO) {
         WmsDeliveryPlanDTO.AddDTO addDTO = new WmsDeliveryPlanDTO.AddDTO();
         addDTO.setShopId(deliveryPlanDTO.getShopId());
@@ -421,6 +427,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         addDTO.setExpectLogisticsMethod(deliveryPlanDTO.getLogisticsMethod());
         addDTO.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
         List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
+        //建议
+        List<DeliverySuggestDTO.DeliverySuggestInfoDTO> deliverySuggestList = new ArrayList<>();
         for (DeliverySuggestDTO.PushDeliveryPlanDetailDTO detailDTO: deliveryPlanDTO.getDetailList()) {
             WmsDeliveryPlanDetailDTO.AddDTO addDetailDTO = new WmsDeliveryPlanDetailDTO.AddDTO();
             addDetailDTO.setMSKU(detailDTO.getMSKu());
@@ -434,9 +442,17 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonDTOList = BeanMapperUtils.copyList(WmsDeliveryPlanDetailDTO.SourceJsonDTO.class, detailDTO.getDeliverySuggestList());
             addDetailDTO.setSourceJsonList(sourceJsonDTOList);
             detailList.add(addDetailDTO);
+            deliverySuggestList.addAll(detailDTO.getDeliverySuggestList());
         }
         addDTO.setDetailList(detailList);
-        deliveryPlanFeign.addDeliveryPlan(addDTO);
+        BaseResultDTO.AddDTO addReturnDTO = deliveryPlanFeign.addDeliveryPlan(addDTO);
+
+        //超期提醒
+        deliverySuggestList.stream().distinct().forEach(obj -> {
+            // 操作日志
+            String msg = StrUtil.format("补货计划【编号:{}】,下推生成发货计划【发货计划编号:{}】",obj.getSourceCode(),addReturnDTO.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), obj.getSourceId(), "下推");
+        });
         return Boolean.TRUE;
     }
 

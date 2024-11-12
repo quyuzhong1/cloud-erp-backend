@@ -130,6 +130,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         dto.setSourceId(purchaseSuggestMergeEntity.getId());
         dto.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode());
         purchaseSuggestSysService.addOrUpdate(dto);
+
+        if (StrUtil.isBlank(addOrUpdateDTO.getId())) {
+            // 操作日志
+            String msg = StrUtil.format("新建了采购建议（合并）【编号：{}】",purchaseSuggestMergeEntity);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), purchaseSuggestMergeEntity.getId(), "");
+        }
         return new BaseResultDTO.AddDTO(purchaseSuggestMergeEntity.getId(), purchaseSuggestMergeEntity.getCode());
     }
 
