@@ -3,6 +3,9 @@ import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpSoInfoDTO;
+import com.erp.model.wms.dto.ShudiyunB2cOrderDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +35,8 @@ public interface DmpSoInfoService extends SuperService<DmpSoInfoEntity> {
     */
     Boolean update(DmpSoInfoDTO.UpdateDTO dto);
 
-
+    /**
+     * 数帝云线上字段映射
+     */
+    List<ShudiyunB2cOrderDTO> shudiyunFieldDmpOrderHandler(String thirdCode);
 }

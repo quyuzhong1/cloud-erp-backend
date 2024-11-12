@@ -216,6 +216,7 @@ public enum SourceTypeEnum {
 
     //速帝云
     SDY_DELIVERY_ORDER("sdyDeliveryOrder", "速帝云配货单","so_outstock"),
+    SDY_ONLINE_ORDER("sdyOnlineOrder", "速帝云线上订单","dmp_so_info"),
     ;
 
     /**

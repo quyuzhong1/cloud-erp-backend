@@ -100,6 +100,7 @@ import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.rpc.dmp.feign.DmpSoInfoFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
@@ -372,6 +373,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private CustomerInfoService customerInfoService;
     @Autowired
     private OmsPushMsgService omsPushMsgService;
+    @Autowired
+    private DmpSoInfoFeign dmpSoInfoFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -9396,7 +9399,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
             }
 
-            shudiyunB2cOrderDTO.setPost_amount(soB2cEntity.getAmount());
+            shudiyunB2cOrderDTO.setPost_amount(soB2cEntity.getShippingFee());
             shudiyunB2cOrderDTO.setMsku_code(skuVO.getSpuNo());
             shudiyunB2cOrderDTO.setMsku_name(skuVO.getSpuName());
             shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
@@ -9418,23 +9421,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         omsPushMsgEntity.setSourceCode(soB2cEntity.getSourceCode());
         omsPushMsgEntity.setSyncOperate(operateEnum);
         omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
+
+        //同步配货单
+        omsPushMsgService.save(omsPushMsgEntity);
+
+        //同步线上订单
+        return SdyDmpSoInfoHandler(soB2cEntity.getPlatformCode(), operateEnum);
+
+    }
+
+    /**
+     * 线上订单同步数帝云
+     * @param platformCode
+     * @param operateEnum
+     * @return
+     */
+    private Boolean SdyDmpSoInfoHandler(String platformCode, String operateEnum) {
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = dmpSoInfoFeign.shudiyunFieldDmpOrderHandler(platformCode);
+        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_ONLINE_ORDER.getCode());
+        omsPushMsgEntity.setSourceId(platformCode);
+        omsPushMsgEntity.setSourceCode(platformCode);
+        omsPushMsgEntity.setSyncOperate(operateEnum);
+        omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
         return omsPushMsgService.save(omsPushMsgEntity);
-
-
-/*
-        // 保存中台推送记录，推送数据
-        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-        dmpSyncTaskDTO.setSourceId(entity.getId());
-        dmpSyncTaskDTO.setSourceCode(entity.getSourceCode());
-        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
-        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_SUDUYUN_ERP_TOPIC);
-        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.SDY_GENERAL_PUSH_TAG.getName());
-        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(shudiyunB2cOrderDTOList));
-        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.SUDIYUN.getDesc());
-        dmpSyncTaskDTO.setSyncOperate(operateEnum.getCode());
-        dmpSyncTaskDTO.setStatus(SyncStatusEnum.IN_SYNC.getCode());
-
-        dmpMqFeign.saveTaskList(Collections.singletonList(dmpSyncTaskDTO));*/
     }
 }

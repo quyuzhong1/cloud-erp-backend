@@ -190,7 +190,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 是否组合装
      */
-    private Integer is_comb;
+    private Integer is_comb = 0;
     /**
      * 是否虚拟商品
      */
@@ -394,11 +394,11 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 交易币别
      */
-    private String transaction_currency;
+    private String transaction_currency = "";
     /**
      * 交易币别代码
      */
-    private String transaction_currency_code;
+    private String transaction_currency_code = "";
     /**
      * 店铺本位币
      */
@@ -446,11 +446,11 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 组合装编码
      */
-    private String suite_no;
+    private String suite_no = "";
     /**
      * 组合装名称
      */
-    private String suite_name;
+    private String suite_name = "";
     /**
      * MSKU编码
      */
