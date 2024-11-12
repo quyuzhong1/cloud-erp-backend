@@ -396,8 +396,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         DeliverySuggestEntity entity = deliverySuggestList.get(0);
         viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
-        viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode());
-        viewPushDeliveryPlanDTO.setTypeName(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getName());
+        boolean isAmazon = StrUtil.equals(deliverySuggestList.get(0).getPlatformType(), CfgRulePlatformTypeEnum.AMAZON.getCode());
+        viewPushDeliveryPlanDTO.setType(isAmazon ? DeliveryPlanTypeEnum.FBA.getCode() : DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode());
+        viewPushDeliveryPlanDTO.setTypeName(isAmazon ? DeliveryPlanTypeEnum.FBA.getName() :DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getName());
         viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
         viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
         viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
