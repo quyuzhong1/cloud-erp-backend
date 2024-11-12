@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -29,6 +31,29 @@ public class DmpInoutDTO implements Serializable {
          * dmp_cfg_input_detail明细扩展参数
          */
         private String detailExtendJson;
+
+        /**
+         * 数据开始时间:默认当天零点
+         */
+        private LocalDateTime startTime;
+        /**
+         * 数据结束时间:默认当前
+         */
+        private LocalDateTime endTime;
+
+        public LocalDateTime checkAndGetStartTime() {
+            if (null == this.startTime){
+                return LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+            }
+            return startTime;
+        }
+
+        public LocalDateTime checkAndGetEndTime() {
+            if (null == this.endTime){
+                return LocalDateTime.now();
+            }
+            return endTime;
+        }
     }
 
 

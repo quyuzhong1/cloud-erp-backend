@@ -82,10 +82,10 @@ public class DmpInoutTaskFeignController{
 					createDTO.getBillType(),
 					createDTO.getNextLevelIdList());
 		}
+		// 按系统和主任务分组触发
 		Map<String, List<DmpInoutDTO.ListDTO>> groupTaskList = list.stream()
 				.collect(Collectors.groupingBy(item -> StrUtil.format("{}_{}", item.getSystemCode(), item.getCfgInputId())));
 
-		List<DmpInputFinishResponse> resultList = new LinkedList<>();
 		for (Map.Entry<String, List<DmpInoutDTO.ListDTO>> entry : groupTaskList.entrySet()) {
 			DmpInoutDTO.ListDTO listDTO = entry.getValue().stream().findFirst().orElse(new DmpInoutDTO.ListDTO());
 
@@ -95,12 +95,10 @@ public class DmpInoutTaskFeignController{
 			dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
 			dmpInputHotfixCreateRequest.setCfgInputId(listDTO.getCfgInputId());
 			dmpInputHotfixCreateRequest.setDetailExtendJson(createDTO.getDetailExtendJson());
-			// 拉取当天
-			LocalDate today = LocalDate.now();
-			dmpInputHotfixCreateRequest.setStartTime(LocalDateTime.of(LocalDate.now(), LocalTime.MIN));
-			dmpInputHotfixCreateRequest.setEndTime(today.atTime(LocalTime.now()));
-			List<DmpInputFinishResponse> dmpInputResponses = dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
-			resultList.addAll(dmpInputResponses);
+			// 拉取时间
+			dmpInputHotfixCreateRequest.setStartTime(createDTO.checkAndGetStartTime());
+			dmpInputHotfixCreateRequest.setEndTime(createDTO.checkAndGetEndTime());
+			dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
 		}
 		return true;
 	}
