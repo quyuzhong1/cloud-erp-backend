@@ -26,9 +26,16 @@ public interface DmpInoutTaskFeign {
      */
     @PostMapping("feign/inout/getErrorData")
     DmpPushTaskDTO.SyncInfoDTO getErrorData(@RequestBody @Valid DmpSyncTaskDTO.OneDTO oneDTO);
+
     /**
-     * 查询同步数据
+     * 公共-创建快速输入任务
      */
     @PostMapping("feign/inout/doHotfixInputTask")
-    Boolean doInputTask(@RequestBody DmpInoutDTO.CreateInputDTO createDTO);
+    Boolean doInputTask(@RequestBody List<DmpInoutDTO.CreateInputDTO> createDTOList);
+
+    /**
+     * 公共-查询输入任务最新状态
+     */
+    @PostMapping("feign/inout/newInputTaskList")
+    List<DmpInoutDTO.LastOneDTO> newInputTaskList(@RequestBody List<DmpInoutDTO.CommonDTO> commonDTOList);
 }
