@@ -1,13 +1,18 @@
 package com.erp.model.mrp.dto;
 
+import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
+import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+import lombok.Setter;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -185,6 +190,41 @@ public class CalcSalesInfoDimDTO implements Serializable {
 
 
     }
+
+    @Getter
+    @Setter
+    public static class CalcResultDTO {
+
+        /**
+         * sku_id
+         */
+        private String calcSalesInfoDimId;
+        /**
+         * 试算开始日期
+         */
+        private LocalDate startCalcDate;
+
+        /**
+         * 试算结束日期
+         */
+        private LocalDate endCalcDate;
+
+        /**
+         * 历史销量
+         */
+        private Map<LocalDate, Integer> salesHistoryMap;
+
+        /**
+         * 试算销量公式
+         */
+        private List<CfgRuleSalesFormulaCalcEntity> formulaCalcEntities;
+
+        /**
+         * 试算销量去噪信息
+         */
+        private List<CfgRuleSalesDenoisingCalcEntity> salesDenoising;
+    }
+
 
 
 }

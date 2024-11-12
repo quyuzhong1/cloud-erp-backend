@@ -1,19 +1,20 @@
 package com.erp.model.mrp.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.mrp.entity.CfgRuleCalcEntity;
 import lombok.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -123,8 +124,6 @@ public class CfgRuleCalcDTO implements Serializable {
         /**
          * 文件地址
          */
-        @NotBlank(message = "文件地址不能为空")
-        @Size(max = 255, message = "文件地址最大长度不能超过255位")
         private String fileUrl;
 
         /**
@@ -200,20 +199,93 @@ public class CfgRuleCalcDTO implements Serializable {
     @Getter
     @Setter
     public static class HistorySaleDTO {
-
+        /**
+         * SKU
+         */
         private String skuId;
-
+        /**
+         * SKU
+         */
         private String skuNo;
-
+        /**
+         * 平台
+         */
         private String platform;
-
+        /**
+         * 店铺
+         */
         private String shopId;
+        /**
+         * 店铺
+         */
+        private String shopName;
+        /**
+         * 日期
+         */
+        private LocalDate billDate;
+        /**
+         * 数量
+         */
+        private Integer qty;
 
+    }
+
+    @Getter
+    @Setter
+    public static class HistorySaleImportDTO {
+        /**
+         * SKU
+         */
+        @ExcelProperty(value = "SKU", index = 0)
+        @FieldValid(fieldName = "SKU", isNotBlank = true, maxLength = 32)
+        private String skuNo;
+        /**
+         * 平台
+         */
+        @ExcelProperty(value = "平台", index = 1)
+        @FieldValid(fieldName = "平台", isNotBlank = true, maxLength = 32)
+        private String platform;
+        /**
+         * 店铺
+         */
+        @ExcelProperty(value = "店铺", index = 2)
+        @FieldValid(fieldName = "店铺", isNotBlank = true, maxLength = 32)
         private String shopName;
 
-        private LocalDate billDate;
+        /**
+         * 日期
+         */
+        @ExcelProperty(value = "日期", index = 3)
+        @FieldValid(fieldName = "日期", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DATE)
+        private String billDate;
 
+        /**
+         * 数量
+         */
+        @ExcelProperty(value = "数量", index = 0)
+        @FieldValid(fieldName = "数量", isNotBlank = true, maxLength = 32)
         private Integer qty;
+
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    public static class GroupDTO {
+        /**
+         * SKU
+         */
+        private String skuId;
+        /**
+         * 店铺
+         */
+        private String shopId;
+        /**
+         * 日期
+         */
+        private LocalDate billDate;
 
     }
 }

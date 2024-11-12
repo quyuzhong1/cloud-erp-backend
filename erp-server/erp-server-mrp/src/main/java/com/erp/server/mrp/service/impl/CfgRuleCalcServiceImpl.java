@@ -1,43 +1,52 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
-import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
-import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.MathUtil;
+import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
+import com.erp.model.mrp.dto.CfgRuleCalcDTO;
+import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
 import com.erp.model.mrp.entity.CfgRuleCalcEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import com.erp.model.mrp.enums.HistorySalesTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.mrp.es.entity.CalcSalesInfoHisEsEntity;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
+import com.erp.server.mrp.es.service.CalcSalesInfoHisEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
+import com.erp.server.mrp.listener.HistorySalesQtyExcelListener;
 import com.erp.server.mrp.mapper.CfgRuleCalcMapper;
-import com.erp.server.mrp.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import com.erp.server.mrp.service.CalcSalesInfoDimService;
+import com.erp.server.mrp.service.CfgRuleCalcService;
+import com.erp.server.mrp.service.CfgRuleSalesDenoisingCalcService;
+import com.erp.server.mrp.service.CfgRuleSalesFormulaCalcService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.mrp.dto.CfgRuleCalcDTO;
-
-import java.time.LocalDate;
-import java.util.*;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -56,21 +65,39 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
     private CfgRuleSalesFormulaCalcService cfgRuleSalesFormulaCalcService;
     @Resource
     private OrderHistorySalesEsService orderHistorySalesEsService;
-
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
     @Resource
     private CfgRuleSalesDenoisingCalcService cfgRuleSalesDenoisingCalcService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private CalcSalesInfoHisEsService calcSalesInfoHisEsService;
+
+    @Resource
+    private CalcSalesInfoDimService calcSalesInfoDimService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgRuleCalcDTO.AddDTO addDTO) {
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(addDTO.getSkuIds());
+        Map<String, String> skuMap = skuVOS.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
+        List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(addDTO.getShopIds());
+        Map<String, ShopInfoEntity> shopMap = shopInfoList.stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
         CfgRuleCalcEntity entity = CfgRuleCalcDTO.AddDTO.buildCfgRuleCalcEntity(addDTO);
+        entity.setId(IdWorker.getIdStr());
+        List<CalcSalesInfoHisEsEntity> historySaleList;
         if (HistorySalesTypeEnum.SYSTEM.getCode().equals(addDTO.getSaleType())) {
-            List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(addDTO.getShopIds(), addDTO.getSkuIds(),
-                    addDTO.getStartCalcDate().minusDays(361), addDTO.getStartCalcDate().minusDays(1));
+            historySaleList = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
         } else {
-
+            HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener();
+            EasyExcel.read(FastDFSClientUtil.getInputStream(addDTO.getFileUrl()), CfgRuleCalcDTO.HistorySaleImportDTO.class, excelListener).headRowNumber(1).sheet(0).doRead();
+            historySaleList = excelListener.getDateList();
         }
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLSS);
         entity.setCode(code);
@@ -79,8 +106,88 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         cfgRuleSalesFormulaCalcService.saveBatch(formulaCalcEntities);
         List<CfgRuleSalesDenoisingCalcEntity> salesDenoising = handleSalesDenoising(addDTO, entity.getId());
         cfgRuleSalesDenoisingCalcService.saveBatch(salesDenoising);
-        //todo 异步计算销量预测
+        calcSalesInfoHisEsService.batchSave(historySaleList);
+        List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList = new ArrayList<>();
+        List<CalcSalesInfoDimEntity> calcSalesInfoDimList = buildCalcSalesInfoDim(addDTO, shopMap, historySaleList, entity.getId(), skuMap, formulaCalcEntities, salesDenoising, calcResultList);
+        calcSalesInfoDimService.calcSalesInfo(calcResultList);
+        calcSalesInfoDimService.saveBatch(calcSalesInfoDimList);
         return new BaseResultDTO.AddDTO(entity.getId(), code);
+    }
+
+    /**
+     * 构造
+     *
+     * @param addDTO              入参
+     * @param shopMap             店铺
+     * @param historySaleList     历史销量
+     * @param cfgRuleCalcId       id
+     * @param skuMap              sku
+     * @param formulaCalcEntities 试算销量公式
+     * @param salesDenoising      试算销量去噪信息
+     * @param calcResultList      试算结果
+     */
+    private static List<CalcSalesInfoDimEntity> buildCalcSalesInfoDim(CfgRuleCalcDTO.AddDTO addDTO, Map<String, ShopInfoEntity> shopMap,
+                                                                      List<CalcSalesInfoHisEsEntity> historySaleList, String cfgRuleCalcId,
+                                                                      Map<String, String> skuMap, List<CfgRuleSalesFormulaCalcEntity> formulaCalcEntities,
+                                                                      List<CfgRuleSalesDenoisingCalcEntity> salesDenoising,
+                                                                      List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList) {
+        List<CalcSalesInfoDimEntity> calcSalesInfoDimList = new ArrayList<>();
+        for (String shopId : addDTO.getShopIds()) {
+            ShopInfoEntity info = Optional.ofNullable(shopMap.get(shopId)).orElse(new ShopInfoEntity());
+            for (String skuId : addDTO.getSkuIds()) {
+                Map<LocalDate, Integer> historySaleMap = historySaleList.stream()
+                        .filter(v -> v.getSkuId().equals(skuId))
+                        .filter(v -> v.getShopId().equals(shopId))
+                        .collect(Collectors.toMap(CalcSalesInfoHisEsEntity::getDate, CalcSalesInfoHisEsEntity::getQty, Integer::sum));
+                CalcSalesInfoDimEntity salesInfoDimEntity = new CalcSalesInfoDimEntity();
+                salesInfoDimEntity.setId(IdWorker.getIdStr());
+                salesInfoDimEntity.setCfgRuleCalcId(cfgRuleCalcId);
+                salesInfoDimEntity.setSkuId(skuId);
+                salesInfoDimEntity.setSkuNo(skuMap.get(skuId));
+                salesInfoDimEntity.setShopId(shopId);
+                salesInfoDimEntity.setCountry(info.getDictCountryCode());
+                salesInfoDimEntity.setPlatform(info.getDictPlatform());
+                calcSalesInfoDimList.add(salesInfoDimEntity);
+                CalcSalesInfoDimDTO.CalcResultDTO resultDTO = new CalcSalesInfoDimDTO.CalcResultDTO();
+                resultDTO.setCalcSalesInfoDimId(salesInfoDimEntity.getId());
+                resultDTO.setStartCalcDate(addDTO.getStartCalcDate());
+                resultDTO.setEndCalcDate(addDTO.getEndCalcDate());
+                resultDTO.setSalesHistoryMap(historySaleMap);
+                resultDTO.setFormulaCalcEntities(formulaCalcEntities);
+                resultDTO.setSalesDenoising(salesDenoising);
+                calcResultList.add(resultDTO);
+            }
+        }
+        return calcSalesInfoDimList;
+    }
+
+    /**
+     * 获取系统历史销量
+     *
+     * @param addDTO  参数
+     * @param skuMap  sku
+     * @param shopMap 店铺
+     */
+    private List<CalcSalesInfoHisEsEntity> getSysHistorySalesQty(CfgRuleCalcDTO.AddDTO addDTO, String id,
+                                                                 Map<String, String> skuMap, Map<String, ShopInfoEntity> shopMap) {
+        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(addDTO.getShopIds(), addDTO.getSkuIds(),
+                addDTO.getStartCalcDate().minusDays(361), addDTO.getStartCalcDate().minusDays(1));
+        return new ArrayList<>(salesInfos.stream()
+                .collect(Collectors.toMap(
+                        v -> new CfgRuleCalcDTO.GroupDTO(v.getSkuId(), v.getShopId(), v.getDate()),
+                        v -> {
+                            CalcSalesInfoHisEsEntity dto = CalcSalesInfoHisEsEntity.buildCalcSalesInfoHis(v);
+                            dto.setShopName(Optional.ofNullable(shopMap.get(v.getShopId())).orElse(new ShopInfoEntity()).getName());
+                            dto.setSkuNo(skuMap.get(v.getSkuId()));
+                            dto.setCfgRuleCalcId(id);
+                            return dto;
+                        },
+                        (v1, v2) -> {
+                            v1.setQty(v1.getQty() + v2.getQty());
+                            return v1;
+                        }
+                ))
+                .values());
     }
 
     @Override

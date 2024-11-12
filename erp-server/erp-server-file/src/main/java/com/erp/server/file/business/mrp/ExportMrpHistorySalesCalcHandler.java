@@ -13,7 +13,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_MRP_HISTORY_SALES_CALC;
 
@@ -27,7 +29,17 @@ public class ExportMrpHistorySalesCalcHandler  extends AbstractPageFileEventHand
     protected List<CfgRuleCalcDTO.HistorySaleDTO> getData(FileTask fileTask) {
         CfgRuleCalcDTO.DownloadDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<CfgRuleCalcDTO.DownloadDTO>() {
         });
-        return listSeqData(dto);
+        List<CfgRuleCalcDTO.HistorySaleDTO> dtos = listSeqData(dto);
+        return new ArrayList<>(dtos.stream()
+                .collect(Collectors.toMap(
+                        v -> new CfgRuleCalcDTO.GroupDTO(v.getSkuId(), v.getShopId(), v.getBillDate()),
+                        v -> v,
+                        (v1, v2) -> {
+                            v1.setQty(v1.getQty() + v2.getQty());
+                            return v1;
+                        }
+                ))
+                .values());
     }
 
     @Override

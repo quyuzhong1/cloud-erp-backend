@@ -1,8 +1,10 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
+import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,23 +16,10 @@ import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
  */
 public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEntity> {
 
-    /**
-    * 新增
-    * @author liaohui
-    * @date: 2024-11-11
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CalcSalesInfoDimDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author liaohui
-    * @date: 2024-11-11
-    * @param dto
-    * @return
-    */
-    Boolean update(CalcSalesInfoDimDTO.UpdateDTO dto);
-
-
+     *
+     * @param calcResultList 计算参数
+     */
+    void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList);
 }
