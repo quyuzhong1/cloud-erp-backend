@@ -1556,8 +1556,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         } else {
             soOutstockDetailService.checkB2cOrderQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
         }
-
-
+        //待提交状态
+        if(soOutstock.getApproveStatus().getCode().equals(ApproveStatusEnum.WAIT_SUBMIT.getCode())){
+            String tradeLabel = dto.getTradeLabel();
+            String oldTradeLabel = soOutstock.getTradeLabel();
+            if(!tradeLabel.equals(oldTradeLabel)){
+                throw new ServiceException("订单标签只有提交状态下可编辑");
+            }
+        }
         String code = soOutstock.getCode();
         LocalDate billDate = dto.getBillDate();
         //旧的

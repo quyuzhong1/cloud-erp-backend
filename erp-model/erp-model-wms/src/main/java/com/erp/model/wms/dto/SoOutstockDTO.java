@@ -516,6 +516,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate billDate;
 
+
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
+
         /**
          * 详情
          */
