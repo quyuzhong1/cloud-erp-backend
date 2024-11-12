@@ -637,17 +637,38 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto) {
         SoInfoDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+
 
         List<String> fieldList = CollectionUtils.isEmpty(params.getAdvanceQueryDTOList()) ? new ArrayList<>() :  params.getAdvanceQueryDTOList().stream().map(AdvanceQueryDTO::getField).collect(Collectors.toList());
         params.setFieldList(fieldList);
-        IPage pageData = baseMapper.paging(query, params);
-        List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isEmpty(list)) {
+
+        //是否虚拟仓缺货
+        List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
+        Boolean isVirtualOutStock = (Boolean)advanceQueryDTOList.stream().filter(v->v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
+        if(Objects.nonNull(isVirtualOutStock)){
+            //查询全部数据，过滤出有缺货
+            Page query = new Page(1,Integer.MAX_VALUE,false);
+            IPage pageData = baseMapper.paging(query, params);
+            List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
+            if (CollectionUtils.isEmpty(list)) {
+                return new PagingVO<>(pageData);
+            }
+            fillPagingDb(list);
+            list = list.stream().filter(v -> v.getIsVirtualScarce()!= null && v.getIsVirtualScarce().equals(isVirtualOutStock)).collect(Collectors.toList());
+            Page result = new Page(dto.getCurrPage(), dto.getPageSize(),list.size());
+            list = com.common.business.utils.CollectionUtils.paginateList(list,dto.getPageSize(),dto.getCurrPage());
+            result.setRecords(list);
+            return new PagingVO<>(result);
+        }else {
+            Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+            IPage pageData = baseMapper.paging(query, params);
+            List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
+            if (CollectionUtils.isEmpty(list)) {
+                return new PagingVO<>(pageData);
+            }
+            fillPagingDb(list);
             return new PagingVO<>(pageData);
         }
-        fillPagingDb(list);
-        return new PagingVO<>(pageData);
     }
 
     /**
