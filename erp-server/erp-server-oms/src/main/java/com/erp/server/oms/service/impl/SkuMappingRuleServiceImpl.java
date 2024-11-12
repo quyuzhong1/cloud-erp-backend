@@ -407,6 +407,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     }
                     //匹配销售套装bom
                     for (Map.Entry<String, String> entry : bomSkuMap.entrySet()) {
+                        if(entry.getKey().equals("1856167788667125761")){
+                            System.out.println(1);
+                        }
                         if (compareSplitStrings(entry.getValue(),matchStr.toString())) {
                             SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(entry.getKey())).findFirst().orElse(null);
                             if(Objects.nonNull(skuVO)){
@@ -464,8 +467,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 oldLogEntity.setProductSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
                 oldLogEntity.setProductSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
                 oldLogEntity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
-                operateLogService.addModuleOperateLogByObj(oldLogEntity, skuMappingEntitity, ModuleTypeEnum.SKU_MAPPING.getCode(),skuMappingEntitity.getListingId() , "自动匹配sku对照表");
-            }
+                String msg = StrUtil.format("用户【{}】执行自动匹配规则，匹配前sku【{}】,匹配后sku【{}】", UserContext.getDefaultLoginUser().getUserName(),oldLogEntity.getProductSkuNo() , skuMappingEntitity.getProductSkuNo());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntitity.getListingId(), "自动匹配");
+             }
         }
         if(CollectionUtils.isNotEmpty(updateListingList)){
             listingInfoService.updateBatchById(updateListingList,2000);
@@ -507,12 +511,12 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     }
     public boolean compareSplitStrings(String a, String b) {
         // 分割字符串 a
-        String[] partsA = a.split("丨", 2);
+        String[] partsA = a.split("丨");
         // 分割字符串 b
-        String[] partsB = b.split("丨", 2);
+        String[] partsB = b.split("丨");
 
         // 检查分割后的部分是否相等，顺序可以不一致
-        if (partsA.length == 2 && partsB.length == 2) {
+        if (partsA.length == partsB.length) {
             Set<String> setA = new HashSet<>(Arrays.asList(partsA));
             Set<String> setB = new HashSet<>(Arrays.asList(partsB));
 
