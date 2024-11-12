@@ -123,7 +123,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
 
         //平台订单号
-        orderDTO.setPlatformCode(dmpSoInfoEntity.getPlatformCode());
+        orderDTO.setPlatformCode(dmpSoInfoEntity.getThirdCode());
 
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());

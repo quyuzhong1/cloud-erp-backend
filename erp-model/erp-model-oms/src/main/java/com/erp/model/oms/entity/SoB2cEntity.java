@@ -335,6 +335,13 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("cancel_goods_currency")
     private String cancelGoodsCurrency;
 
+    /**
+     * 订单交易子状态
+     * 枚举：OrderSubTypeEnum
+     */
+    @TableField("transaction_sub_type")
+    private String transactionSubType;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

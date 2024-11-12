@@ -303,6 +303,13 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("is_declare")
     private Boolean isDeclare;
 
+    /**
+     * 订单交易子状态
+     * 枚举：OrderSubTypeEnum
+     */
+    @TableField("transaction_sub_type")
+    private String transactionSubType;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
