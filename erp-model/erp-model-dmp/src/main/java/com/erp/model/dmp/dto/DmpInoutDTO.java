@@ -83,8 +83,8 @@ public class DmpInoutDTO implements Serializable {
          * 销售平台=shop_info店铺ID
          * 第三方仓平台=overseas_provider授权ID
          */
-        @NotNull(message = "nextLevelIdList不能为空")
-        private List<String> nextLevelIdList;
+        @NotNull(message = "nextLevelId不能为空")
+        private String nextLevelId;
     }
 
 
@@ -112,6 +112,11 @@ public class DmpInoutDTO implements Serializable {
          * 下一级ID
          */
         private String nextLevelId;
+
+        /**
+         * 业务类型
+         */
+        private String billType;
     }
 
 

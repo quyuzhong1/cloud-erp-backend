@@ -44,6 +44,7 @@
             dcid.id as detailId,
             dcid.next_level_id as nextLevelId,
             dcid.main_id as cfgInputId,
+            dci.bill_type as billType
         FROM
             "dmp_cfg_input_detail" AS dcid
             INNER JOIN dmp_cfg_input AS dci ON dci.ID = dcid.main_id

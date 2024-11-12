@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.feign;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -65,29 +67,29 @@ public class DmpInoutTaskFeignController{
 	 * 公共-创建快速输入任务
 	 */
 	@PostMapping("/doHotfixInputTask")
-	public Boolean doInputTask(@RequestBody DmpInoutDTO.CreateInputDTO createDTO) {
+	public Boolean doInputTask(@RequestBody List<DmpInoutDTO.CreateInputDTO> createDTOList) {
+		List<String> systemCodeList = createDTOList.stream().map(DmpInoutDTO.CommonDTO::getSystemCode).distinct().collect(Collectors.toList());
+		List<String> billTypeList = createDTOList.stream().map(DmpInoutDTO.CommonDTO::getBillType).distinct().collect(Collectors.toList());
+		List<String> nextLevelIdList = createDTOList.stream().map(DmpInoutDTO.CommonDTO::getNextLevelId).distinct().collect(Collectors.toList());
 		//查询任务是否存在
 		List<DmpInoutDTO.ListDTO> list =  dmpCfgInputDetailService.listBySystemCodeAndBillType(
-                Collections.singletonList(createDTO.getSystemCode()),
-                Collections.singletonList(createDTO.getBillType()),
-				createDTO.getNextLevelIdList());
+				systemCodeList,
+                billTypeList,
+				nextLevelIdList);
 		if (CollectionUtils.isEmpty(list)){
-			ServiceException.runError("任务不存在:系统={},业务={},nextLevelId={}",
-					createDTO.getSystemCode(),
-					createDTO.getBillType(),
-					createDTO.getNextLevelIdList());
+			ServiceException.runError("任务不存在");
 		}
-		// 按系统和主任务分组触发
-		Map<String, List<DmpInoutDTO.ListDTO>> groupTaskList = list.stream()
-				.collect(Collectors.groupingBy(item -> StrUtil.format("{}_{}", item.getSystemCode(), item.getCfgInputId())));
-
-		for (Map.Entry<String, List<DmpInoutDTO.ListDTO>> entry : groupTaskList.entrySet()) {
-			DmpInoutDTO.ListDTO listDTO = entry.getValue().stream().findFirst().orElse(new DmpInoutDTO.ListDTO());
-
-			List<String> inputDetailIds = entry.getValue().stream().map(DmpInoutDTO.ListDTO::getDetailId).distinct().collect(Collectors.toList());
+		for (DmpInoutDTO.CreateInputDTO createDTO : createDTOList) {
+			DmpInoutDTO.ListDTO listDTO = list.stream().filter(e -> e.getSystemCode().equalsIgnoreCase(createDTO.getSystemCode())
+					&& e.getBillType().equalsIgnoreCase(createDTO.getBillType())
+					&& e.getNextLevelId().equalsIgnoreCase(createDTO.getNextLevelId())
+			).findFirst().orElse(null);
+			if (null == listDTO){
+				ServiceException.runError("任务不存在:{}", JSONUtil.toJsonStr(createDTO));
+			}
 			// 创建新中台hotfix任务
 			DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-			dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
+			dmpInputHotfixCreateRequest.setCfgInputDetailIdList(Collections.singletonList(listDTO.getDetailId()));
 			dmpInputHotfixCreateRequest.setCfgInputId(listDTO.getCfgInputId());
 			dmpInputHotfixCreateRequest.setDetailExtendJson(createDTO.getDetailExtendJson());
 			// 拉取时间
@@ -103,15 +105,19 @@ public class DmpInoutTaskFeignController{
 	 * 公共-查询输入任务最新状态
 	 */
 	@PostMapping("/newInputTaskList")
-	public List<DmpInoutDTO.LastOneDTO> doInputTask(@RequestBody DmpInoutDTO.CommonDTO commonDTO) {
+	public List<DmpInoutDTO.LastOneDTO> newInputTaskList(@RequestBody List<DmpInoutDTO.CommonDTO> commonDTOList) {
+		List<String> systemCodeList = commonDTOList.stream().map(DmpInoutDTO.CommonDTO::getSystemCode).distinct().collect(Collectors.toList());
+		List<String> billTypeList = commonDTOList.stream().map(DmpInoutDTO.CommonDTO::getBillType).distinct().collect(Collectors.toList());
+		List<String> nextLevelIdList = commonDTOList.stream().map(DmpInoutDTO.CommonDTO::getNextLevelId).distinct().collect(Collectors.toList());
+
 		//查询任务是否存在
 		List<DmpInoutDTO.LastOneDTO> list =  dmpInputTaskService.lastBySystemCodeAndBillType(
-				Collections.singletonList(commonDTO.getSystemCode()),
-				Collections.singletonList(commonDTO.getBillType()),
-				commonDTO.getNextLevelIdList());
+				systemCodeList,
+				billTypeList,
+				nextLevelIdList);
 		// 转换对应信息
-		return commonDTO.getNextLevelIdList().stream()
-				.map(e -> DmpInoutDTO.LastOneDTO.init(list, commonDTO.getSystemCode(), commonDTO.getBillType(), e))
+		return commonDTOList.stream()
+				.map(e -> DmpInoutDTO.LastOneDTO.init(list, e.getSystemCode(), e.getBillType(), e.getNextLevelId()))
 				.collect(Collectors.toList());
 	}
 }
