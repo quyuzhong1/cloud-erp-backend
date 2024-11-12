@@ -5159,6 +5159,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(obj, operate);
+            syncKingdeeProductDetailService.syncDataToSdy(obj, operate);
             resultList.add(pushTaskEntity);
         });
         //推送金蝶

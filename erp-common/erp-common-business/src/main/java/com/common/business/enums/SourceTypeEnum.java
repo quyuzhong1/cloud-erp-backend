@@ -112,6 +112,7 @@ public enum SourceTypeEnum {
     PRODUCT_COMBINATION("productCombination", "组合产品",""),
 
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
+    SDY_PRODUCT_DETAIL("sdy_productDetail", "产品管理","product_detail"),
     WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),

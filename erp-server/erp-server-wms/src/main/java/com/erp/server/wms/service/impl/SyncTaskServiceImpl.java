@@ -639,6 +639,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SUBCONTRACT_ISSUE:
                 resultList = newSyncSubcontractIssue(sourceDetailList);
                 break;
+            case SDY_WAREHOUSE:
+            	resultList = newSdySyncWarehouse(sourceDetailList);
+            	break;
             default:
                 break;
         }
@@ -927,6 +930,27 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeWarehouseService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
         }
         return resultList;
+    }
+    
+    private Map<String , Map<String, Object>> newSdySyncWarehouse(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+    	List<WarehouseEntity> list = warehouseService.listByIds(sourceIdList);
+    	if (CollectionUtils.isEmpty(list)) {
+    		log.error("syncSdyWarehouse >>>> 未找到数据！");
+    		return resultList;
+    	}
+    	for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+    		String sourceId = syncParamDetailDTO.getSourceId();
+    		WarehouseEntity entity = list.stream().filter(obj -> {
+    			return obj.getId().equals(sourceId);
+    		}).findFirst().orElse(null);
+    		if (ObjectUtils.isEmpty(entity)) {
+    			continue;
+    		}
+    		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeWarehouseService.newSyncDataToSdy(entity, syncParamDetailDTO.getSyncOperate()));
+    	}
+    	return resultList;
     }
     
     /**

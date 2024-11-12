@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -23,6 +24,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.sys.dto.PlmCfgSettingDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -313,5 +315,44 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             resultMap.put("allowInventory", Boolean.FALSE);
         }
         return resultMap;
+	}
+
+
+	@Override
+	public void syncDataToSdy(ProductDetailEntity entity, String operate) {
+		PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.SDY_PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceId(entity.getId());
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(operate);
+        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+	}
+
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(ProductDetailEntity entity, String operate) {
+		ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
+		
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("data_source_system", "SDC");
+		resultMap.put("biz_uni_key", entity.getId());
+		resultMap.put("goods_code", entity.getSkuNo());
+		resultMap.put("goods_name", entity.getName());
+		resultMap.put("uni_retail_price", productCostEntity.getRetailPrice());
+		resultMap.put("main_unit", entity.getUnitName());
+		resultMap.put("created_time", entity.getCreateTime());
+		resultMap.put("latest_update_time", entity.getUpdateTime());
+		resultMap.put("enable_time", entity.getUpdateTime());
+		resultMap.put("out_system_code", "SDC");
+		
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "已删除");
+		}else {
+			resultMap.put("status", ProductDetailStatusEnum.getName(entity.getStatus()));
+		}
+		return resultMap;
 	}
 }
