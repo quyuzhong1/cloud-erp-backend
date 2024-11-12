@@ -163,8 +163,8 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 	}
 
 	@Override
-	public List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> strings, List<String> strings1, List<String> nextLevelIdList) {
-		return baseMapper.lastBySystemCodeAndBillType(strings, strings1, nextLevelIdList);
+	public List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList) {
+		return baseMapper.lastBySystemCodeAndBillType(systemCodeList, billTypeList, nextLevelIdList);
 	}
 
 }
