@@ -36,69 +36,35 @@ public class DmpInputAmzRefundDmpHandler extends DmpInputDbConvertDmpHandler {
     @Resource
     private CfgTimezoneService cfgTimezoneService;
 
-
     @Override
-    protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(List<Map<String, Object>> dmpInputMongoEntityList) {
-        Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertDataMap = super.convertData(dmpInputMongoEntityList);
-        if (convertDataMap.isEmpty()) {
-            return convertDataMap;
-        }
+    protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
+        log.debug("DmpInputAmzRefundDmpHandler afterConvertData 处理");
         // 解析所有数据来源店铺
         String shopId = dmpInputTaskEntity.getNextLevelId();
         AmazonShopInfoDTO shopInfoDTO = appClientService.cacheAndFindShopAuth(shopId);
         // 渠道配置
         List<CfgTimezoneEntity> timeList = cfgTimezoneService.listAndCache();
 
-
-        for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> entry : convertDataMap.entrySet()) {
-            List<TreeMap<String, Object>> dmpDataMap = entry.getValue();
-            if (CollectionUtils.isEmpty(dmpDataMap)) {
-                continue;
-            }
-            TreeMap<String, Object> sourceMap = dmpDataMap.get(0);
-            Object shopIdObj = sourceMap.get("nextLevelId");
-            if (null == shopIdObj) {
-                String msg = StrUtil.format("未找到shopId:takId={}", dmpInputTaskEntity.getId());
-                ServiceException.runError(msg);
-            }
-
-            List<TreeMap<String, Object>> refundDataList = new LinkedList<>();
-            for (TreeMap<String, Object> treeMap : dmpDataMap) {
-                // 退货数据
-                Object refundEventListObj = treeMap.get("refundEventList");
-                if (null == refundEventListObj) {
-                    continue;
+        for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> entry : dmpInputDataDmpRelationMaps.entrySet()) {
+            for (TreeMap<String, Object> dataMap : entry.getValue()) {
+                AmazonShopInfoDTO.ShopNameDTO shopNameDTO = parseShopByChannel(dataMap, shopInfoDTO, timeList);
+                if (null == shopNameDTO) {
+                    dataMap.put("shopId", shopInfoDTO.getId());
+                    dataMap.put("shopName", shopInfoDTO.getName());
+                } else {
+                    dataMap.put("shopId", shopNameDTO.getShopId());
+                    dataMap.put("shopName", shopNameDTO.getShopName());
                 }
-
-                List<Map<String, Object>> refundEventList = (List<Map<String, Object>>) refundEventListObj;
-                if (CollectionUtils.isEmpty(refundEventList)) {
-                    continue;
-                }
-                // marketplaceName -> Amazon.com
-                for (Map<String, Object> dataMap : refundEventList) {
-                    AmazonShopInfoDTO.ShopNameDTO shopNameDTO = parseShopByChannel(dataMap, shopInfoDTO, timeList);
-                    if (null == shopNameDTO) {
-                        dataMap.put("shopId", shopInfoDTO.getId());
-                        dataMap.put("shopName", shopInfoDTO.getName());
-                    } else {
-                        dataMap.put("shopId", shopNameDTO.getShopId());
-                        dataMap.put("shopName", shopNameDTO.getShopName());
-                    }
-                    ShipmentEvent shipmentEvent = JSONUtil.toBean(JSONUtil.toJsonStr(dataMap), ShipmentEvent.class);
-                    if (null != shipmentEvent) {
-                        // 计算退款总金额:
-                        convertAllAmount(dataMap, shipmentEvent);
-                    }
-                    TreeMap<String, Object> resultTreeMap = new TreeMap<>(dataMap);
-                    refundDataList.add(resultTreeMap);
+                ShipmentEvent shipmentEvent = JSONUtil.toBean(JSONUtil.toJsonStr(dataMap), ShipmentEvent.class);
+                if (null != shipmentEvent) {
+                    // 计算退款总金额:
+                    convertAllAmount(dataMap, shipmentEvent);
                 }
             }
-            // 修改内容(打平退款信息)
-            entry.setValue(refundDataList);
         }
 
-        return convertDataMap;
     }
+
 
     /**
      * 计算总金额
@@ -161,11 +127,6 @@ public class DmpInputAmzRefundDmpHandler extends DmpInputDbConvertDmpHandler {
             }
         }
         return null;
-    }
-
-    @Override
-    protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        super.afterConvertData(dmpInputDataDmpRelationMaps);
     }
 
 }

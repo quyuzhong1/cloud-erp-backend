@@ -80,7 +80,7 @@ public class DmpInputAmzFinancialEventsApiInitHandler extends DmpInputInitHandle
         // 结束时间
         LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 
-        String rateLimitStr = AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getRateLimit();
+        String rateLimitStr = AmazonRequestTypeRateLimiterEnum.FINANCIAL_EVENTS.getRateLimit();
         // 正式环境请求
         String postedAfter = DateUtil.plus8SameUtcOffset(startTime).toString();
         String postedBefore = DateUtil.plus8SameUtcOffset(endTime).toString();
