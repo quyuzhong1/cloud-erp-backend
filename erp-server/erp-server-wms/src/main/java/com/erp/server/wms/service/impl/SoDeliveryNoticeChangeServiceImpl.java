@@ -490,8 +490,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(soDeliveryNoticeChangeEntity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
         }
         if(!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
-                || ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
-            throw new ServiceException("只有待提交、待审核状态允许下推");
+                || ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
+                || ApproveStatusEnum.REJECT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
+            throw new ServiceException("只有待提交、待审核,审核不通过状态允许下推");
         }
 
         SoDeliveryNoticeDTO.View noticeView = soDeliveryNoticeService.view(soDeliveryNoticeEntity.getId());
