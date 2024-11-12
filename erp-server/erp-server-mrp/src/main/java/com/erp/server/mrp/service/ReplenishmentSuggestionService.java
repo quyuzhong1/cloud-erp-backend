@@ -357,4 +357,10 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param orderType   订单类型
      */
     Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, String orderType);
+
+    /**
+     * 导出历史销量
+     * @param dto 参数
+     */
+    PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto);
 }

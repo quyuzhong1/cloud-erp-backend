@@ -24,6 +24,17 @@ public class OutStockHistorySalesEsEntity extends BaseEsEntity {
     @Field(type = FieldType.Keyword)
     private String replenishmentId;
     /**
+     * sku id
+     */
+    @Field(type = FieldType.Keyword)
+    private String skuId;
+
+    /**
+     * 店铺 id
+     */
+    @Field(type = FieldType.Keyword)
+    private String shopId;
+    /**
      * 日期
      */
     @Field(type = FieldType.Date, format = DateFormat.basic_date,pattern = "yyyy-MM-dd")
@@ -39,20 +50,14 @@ public class OutStockHistorySalesEsEntity extends BaseEsEntity {
     @Field(type = FieldType.Keyword)
     private String orderType;
 
-    public static OutStockHistorySalesEsEntity createOutStockHistorySales(String replenishmentId, LocalDate billDate, Integer qty) {
+    public static OutStockHistorySalesEsEntity createOutStockHistorySales(String replenishmentId, LocalDate billDate, Integer qty, String skuId, String shopId) {
         OutStockHistorySalesEsEntity entity = new OutStockHistorySalesEsEntity();
         entity.setId(IdWorker.getIdStr());
         entity.setReplenishmentId(replenishmentId);
         entity.setDate(billDate);
         entity.setOriginalSalesQty(qty);
-        return entity;
-    }
-
-
-    public static OutStockHistorySalesEsEntity updateHistoryInventory(String id, Integer qty) {
-        OutStockHistorySalesEsEntity entity = new OutStockHistorySalesEsEntity();
-        entity.setId(id);
-        entity.setOriginalSalesQty(qty);
+        entity.setSkuId(skuId);
+        entity.setShopId(shopId);
         return entity;
     }
 }

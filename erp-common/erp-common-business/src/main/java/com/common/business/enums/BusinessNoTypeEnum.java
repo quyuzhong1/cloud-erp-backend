@@ -96,6 +96,7 @@ public enum BusinessNoTypeEnum {
     CODE_PP(73, "PP","采购建议",BusinessNoConstant.PP),
     CODE_TLD(67, "tld","委外发退料单",BusinessNoConstant.TLD),
     CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TKD),
+    CODE_XLSS(80, "XLSS","销量试算",BusinessNoConstant.XLSS),
     ;
 
 

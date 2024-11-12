@@ -41,4 +41,16 @@ public interface OrderHistorySalesEsRepository extends ElasticsearchRepository<O
      * @param endDate          结束时间
      */
     void deleteByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate);
+
+
+    /**
+     * 根据sku和店铺id查询一个范围内的销量
+     *
+     * @param skuIds    skuId
+     * @param shopIds   店铺
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     * @param pageable  分页
+     */
+    Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> skuIds, List<String> shopIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
 }

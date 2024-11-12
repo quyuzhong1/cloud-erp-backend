@@ -66,4 +66,25 @@ public interface OrderHistorySalesEsService {
      * @param orderType 订单类型
      */
     Map<String, Integer> listByType(String orderType);
+
+
+    /**
+     * 根据sku和店铺id查询一个范围内的销量
+     *
+     * @param skuIds    skuId
+     * @param shopIds   店铺
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     */
+    List<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate);
+    /**
+     * 根据sku和店铺id查询一个范围内的销量
+     *
+     * @param skuIds    skuId
+     * @param shopIds   店铺
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     */
+    Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
 }

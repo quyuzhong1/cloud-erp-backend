@@ -180,4 +180,22 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
         }
         return result;
     }
+
+    @Override
+    public List<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate) {
+        List<OrderHistorySalesEsEntity> orderHistorySalesList = new ArrayList<>();
+        Page<OrderHistorySalesEsEntity> orderHistorySalesPage;
+        int page = 0;
+        do {
+            orderHistorySalesPage = orderHistorySalesEsRepository.findByShopIdInAndSkuIdInAndDateBetween(shopIds, skuIds, startDate, endDate, PageRequest.of(page, 10000));
+            orderHistorySalesList.addAll(orderHistorySalesPage.toList());
+            page++;
+        } while (!orderHistorySalesPage.isLast());
+        return orderHistorySalesList;
+    }
+
+    @Override
+    public Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        return orderHistorySalesEsRepository.findByShopIdInAndSkuIdInAndDateBetween(shopIds, skuIds, startDate, endDate, pageable);
+    }
 }

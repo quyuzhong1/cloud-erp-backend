@@ -82,7 +82,7 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
             if (ObjectUtils.isEmpty(suggestId)) {
                 continue;
             }
-            result.add(OrderHistorySalesEsEntity.createOrderHistorySales(suggestId, dto.getDate(), dto.getOriginalSalesQty()));
+            result.add(OrderHistorySalesEsEntity.createOrderHistorySales(suggestId, dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
         }
         return result;
     }
@@ -121,7 +121,7 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
             if (ObjectUtils.isEmpty(suggestId)) {
                 continue;
             }
-            result.add(OutStockHistorySalesEsEntity.createOutStockHistorySales(suggestId, dto.getDate(), dto.getOriginalSalesQty()));
+            result.add(OutStockHistorySalesEsEntity.createOutStockHistorySales(suggestId, dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
         }
         return result;
     }

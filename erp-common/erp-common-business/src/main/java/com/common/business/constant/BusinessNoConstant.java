@@ -159,4 +159,5 @@ public interface BusinessNoConstant {
     String SCLC = "SCLC";
     String THD = "THD";
     String TKD = "TKD";
+    String XLSS = "XLSS";
 }

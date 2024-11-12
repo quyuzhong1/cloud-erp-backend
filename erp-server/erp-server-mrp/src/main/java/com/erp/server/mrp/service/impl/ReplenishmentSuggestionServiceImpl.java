@@ -55,6 +55,8 @@ import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1133,6 +1135,41 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                                 entity -> salesMap.getOrDefault(entity.getId(), 0)
                         )
                 ));
+    }
+
+    @Override
+    public PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto) {
+        CfgRuleCalcDTO.DownloadDTO params = dto.getParams();
+        LocalDate startDate = params.getStartCalcDate().minusDays(361);
+        LocalDate endDate = params.getStartCalcDate().minusDays(1);
+        org.springframework.data.domain.Page<OrderHistorySalesEsEntity> historySales = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(params.getShopIds(), params.getSkuIds(), startDate, endDate,
+                PageRequest.of(dto.getCurrPage(), dto.getPageSize()));
+        if (ObjectUtil.isEmpty(historySales.toList())) {
+            return new PagingVO<>();
+        }
+        List<String> shopIds = historySales.stream().map(OrderHistorySalesEsEntity::getShopId).distinct().collect(Collectors.toList());
+        List<String> skuIds = historySales.stream().map(OrderHistorySalesEsEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfo = shopInfoFeign.listShopInfoByIds(shopIds);
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
+
+        List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
+        for (OrderHistorySalesEsEntity entity : historySales.toList()) {
+            ShopInfoEntity info = shopInfo.stream()
+                    .filter(v -> v.getId().equals(entity.getShopId()))
+                    .findFirst()
+                    .orElse(new ShopInfoEntity());
+            CfgRuleCalcDTO.HistorySaleDTO saleDTO = new CfgRuleCalcDTO.HistorySaleDTO();
+            saleDTO.setSkuId(entity.getSkuId());
+            saleDTO.setSkuNo(skuMap.get(entity.getSkuId()));
+            saleDTO.setShopId(entity.getShopId());
+            saleDTO.setShopName(info.getName());
+            saleDTO.setQty(entity.getOriginalSalesQty());
+            saleDTO.setPlatform(info.getDictPlatform());
+            saleDTO.setBillDate(entity.getDate());
+            list.add(saleDTO);
+        }
+        return new PagingVO<>(list, (int) historySales.getTotalElements(), dto.getPageSize(), dto.getCurrPage());
     }
 
     /**

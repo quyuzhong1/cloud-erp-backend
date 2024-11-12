@@ -23,6 +23,19 @@ public class OrderHistorySalesEsEntity extends BaseEsEntity {
      */
     @Field(type = FieldType.Keyword)
     private String replenishmentId;
+
+    /**
+     * sku id
+     */
+    @Field(type = FieldType.Keyword)
+    private String skuId;
+
+    /**
+     * 店铺 id
+     */
+    @Field(type = FieldType.Keyword)
+    private String shopId;
+
     /**
      * 日期
      */
@@ -39,20 +52,15 @@ public class OrderHistorySalesEsEntity extends BaseEsEntity {
     @Field(type = FieldType.Keyword)
     private String orderType;
 
-    public static OrderHistorySalesEsEntity createOrderHistorySales(String replenishmentId, LocalDate billDate, Integer qty) {
+    public static OrderHistorySalesEsEntity createOrderHistorySales(String replenishmentId, LocalDate billDate, Integer qty, String skuId, String shopId) {
         OrderHistorySalesEsEntity entity = new OrderHistorySalesEsEntity();
         entity.setId(IdWorker.getIdStr());
         entity.setReplenishmentId(replenishmentId);
         entity.setDate(billDate);
         entity.setOriginalSalesQty(qty);
+        entity.setSkuId(skuId);
+        entity.setShopId(shopId);
         return entity;
     }
 
-
-    public static OrderHistorySalesEsEntity updateOrderHistorySales(String id, Integer qty) {
-        OrderHistorySalesEsEntity entity = new OrderHistorySalesEsEntity();
-        entity.setId(id);
-        entity.setOriginalSalesQty(qty);
-        return entity;
-    }
 }

@@ -6,10 +6,7 @@ import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.mrp.dto.DeliverySuggestDTO;
-import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
-import com.erp.model.mrp.dto.PurchaseSuggestDTO;
-import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.dto.*;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.DeliverySuggestService;
@@ -39,6 +36,7 @@ public class ExportMrpFeignController {
 
     @Resource
     private FbaHistoryInventoryService fbaHistoryInventoryService;
+
     /**
      * 历史销量导出数据查询
      * @author will
@@ -117,9 +115,22 @@ public class ExportMrpFeignController {
     }
 
 
+    /**
+     * fba库存
+     * @param dto 参数
+     */
     @PostMapping("/fbaInventory")
     @WebAdvanceQuery
     public PagingVO<FbaHistoryInventoryDTO.ListDTO> exportFbaInventory(@RequestBody PagingDTO<FbaHistoryInventoryDTO.ExportDTO> dto) {
         return fbaHistoryInventoryService.exportFbaInventory(dto);
+    }
+
+    /**
+     * 导出历史销量
+     * @param dto 参数
+     */
+    @PostMapping("/exportCalcHistorySale")
+    public PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto) {
+        return replenishmentSuggestionService.exportCalcHistorySale(dto);
     }
 }
