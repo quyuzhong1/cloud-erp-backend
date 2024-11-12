@@ -75,7 +75,8 @@
         psm.status,
         psm.plan_purchase_qty as planPurchaseQty,
         psm.purchase_stock_up_qty as purchaseStockUpQty,
-        psm.remark
+        psm.remark,
+        psm.bom_version
     </sql>
 
     <!-- 分页查询 -->

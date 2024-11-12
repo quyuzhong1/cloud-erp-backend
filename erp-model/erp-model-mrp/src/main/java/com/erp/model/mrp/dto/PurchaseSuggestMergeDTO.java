@@ -116,7 +116,10 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 创建类型名称
          */
         private String dataTypeName;
-
+        /**
+         * 是否组合品，true是，false否
+         */
+        private Boolean isCombination;
         /**
          * 状态
          */
@@ -251,6 +254,11 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 来源id，备货建议id
          */
         private String sourceId;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 
 
@@ -586,6 +594,11 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         */
         @NotBlank(message = "采购建议id集合不能为空")
         private String purchaseSuggestIdJson;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 
     /**

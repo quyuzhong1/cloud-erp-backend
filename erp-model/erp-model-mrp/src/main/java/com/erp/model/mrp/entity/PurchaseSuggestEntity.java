@@ -161,6 +161,13 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("invalid_user_name")
     private String invalidUserName;
 
+
+    /**
+     * bom版本
+     */
+    @TableField(exist = false)
+    private String bomVersion;
+
     public static final String CODE = "code";
 
     public static final String CREATE_TYPE = "create_type";

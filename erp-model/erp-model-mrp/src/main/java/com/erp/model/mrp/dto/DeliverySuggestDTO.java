@@ -770,4 +770,50 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private String platformSkuName;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseSuggestBomDTO {
+        /**
+         * 采购建议编码
+         */
+        private String code;
+        /**
+         * 父级SKU
+         */
+        private String parentSkuNo;
+        /**
+         * 子级SKU
+         */
+        private String skuNo;
+        /**
+         * 系统建议值
+         */
+        private Integer suggestPurchaseQty;
+        /**
+         * 采购备货数
+         */
+        private Integer purchaseStockUpQty;
+        /**
+         * 建议值说明
+         */
+        private List<BomDetailDTO> bomList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BomDetailDTO {
+        /**
+         * 父级sku
+         */
+        private String parentSkuNo;
+        /**
+         * 子级sku
+         */
+        private String skuNo;
+        /**
+         * 用量
+         */
+        private Integer quantity;
+    }
 }

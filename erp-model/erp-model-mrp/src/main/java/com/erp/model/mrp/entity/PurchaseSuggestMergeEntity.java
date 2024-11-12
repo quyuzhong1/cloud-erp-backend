@@ -120,6 +120,11 @@ public class PurchaseSuggestMergeEntity extends BaseEntity<PurchaseSuggestMergeE
     @TableField("sku_id")
     private String skuId;
     /**
+     * bom版本
+     */
+    @TableField("bom_version")
+    private String bomVersion;
+    /**
     * 状态
     */
     @TableField("status")

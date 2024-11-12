@@ -3,6 +3,7 @@ package com.erp.server.mrp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -232,4 +233,16 @@ public class PurchaseSuggestMergeController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 查询采购bom信息
+     * @author will
+     * @date 2024/11/12 16:51
+     * @param dto
+     * @return ApiResult<List<PurchaseSuggestBomDTO>>
+     */
+    @PostMapping(value = "/listPurchaseSuggestBom")
+    public ApiResult<List<DeliverySuggestDTO.PurchaseSuggestBomDTO>> listPurchaseSuggestBom(@RequestBody BaseIdDTO dto) {
+        List<DeliverySuggestDTO.PurchaseSuggestBomDTO> list = purchaseSuggestMergeService.listPurchaseSuggestBom(dto.getId());
+        return success(list);
+    }
 }
