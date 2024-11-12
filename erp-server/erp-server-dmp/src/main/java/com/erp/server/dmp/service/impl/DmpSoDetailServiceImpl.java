@@ -1,8 +1,12 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
+import com.common.business.utils.CollectionUtils;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +24,8 @@ import com.erp.server.dmp.service.DmpSoDetailService;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.thymeleaf.util.StringUtils;
+
 /**
  * <p>
  * 中台销售订单详情表 服务实现类
@@ -88,5 +94,13 @@ public class DmpSoDetailServiceImpl extends SuperServiceImpl<DmpSoDetailMapper, 
     */
     private void handleData(DmpSoDetailEntity dmpSoDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<DmpSoDetailEntity> listByMainId(String mainId) {
+        if (StringUtils.isEmpty(mainId)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().eq(DmpSoDetailEntity::getMainId, mainId).list();
     }
 }

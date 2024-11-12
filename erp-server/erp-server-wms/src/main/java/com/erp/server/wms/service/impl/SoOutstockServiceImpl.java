@@ -264,12 +264,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Resource
-    private FeignQuery feignQuery;
-
-    @Resource
-    private WmsPushMsgService wmsPushMsgService;
-
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {

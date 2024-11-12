@@ -1,9 +1,14 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.wms.dto.ShudiyunB2cOrderDTO;
+import com.erp.server.dmp.service.DmpSoDetailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +26,9 @@ import com.erp.server.dmp.service.DmpSoInfoService;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 中台销售订单表 服务实现类
@@ -32,6 +40,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpSoInfoEntity> implements DmpSoInfoService {
+
+    @Resource
+    private DmpSoDetailService dmpSoDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -95,9 +106,20 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
     /**
     * 数帝云线上字段映射
     */
-    public void shudiyunFieldDmpOrderHandler(String platformCode) {
-        List<DmpSoInfoEntity> dmpSoInfoEntityList = lambdaQuery().eq(DmpSoInfoEntity::getPlatformCode, platformCode).list();
+    public void shudiyunFieldDmpOrderHandler(String thirdCode) {
+        DmpSoInfoEntity dmpSoInfoEntity = lambdaQuery().eq(DmpSoInfoEntity::getThirdCode, thirdCode).last("LIMIT 1").one();
+        if (ObjectUtil.isEmpty(dmpSoInfoEntity)) {
+            return;
+        }
 
+        //数帝云数据结构
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+
+        //B2C订单详情
+        List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailService.listByMainId(dmpSoInfoEntity.getId());
+        for (DmpSoDetailEntity dmpSoDetailEntity : dmpSoDetailEntities) {
+            ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
+        }
 
     }
 
