@@ -39,6 +39,8 @@ import com.erp.model.mrp.dto.DeliverySuggestSysDTO;
 import com.erp.model.mrp.dto.HistoryImportRecordDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.dto.excel.DeliverySuggestImportExcelDTO;
+import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
+import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
@@ -117,6 +119,12 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private CfgRuleWarehouseService cfgRuleWarehouseService;
+
+    @Autowired
+    private CfgRuleWarehouseDetailService cfgRuleWarehouseDetailService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -230,6 +238,28 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             return;
         }
         idList.stream().forEach(obj -> this.invalid(obj,"超期自动作废"));
+    }
+
+    @Override
+    public List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> listOverseasWarehouse(List<String> ids) {
+        List<DeliverySuggestEntity> deliverySuggestList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(deliverySuggestList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划");
+        }
+        //非海外平台直接返回空
+        long count = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())).count();
+        if (count > MathUtil.ZERO) {
+            return Collections.EMPTY_LIST;
+        }
+        CfgRuleWarehouseEntity  ruleWarehouseEntity = cfgRuleWarehouseService.getByPlatformType(CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+        if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> shopIdList = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().collect(Collectors.toList());
+
+        List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+        List<CfgRuleWarehouseDetailEntity> detailList =  cfgRuleWarehouseDetailService.listByShopIdList(shopIdList,ruleWarehouseEntity.getId());
+        return null;
     }
 
     @Override
@@ -411,15 +441,19 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
         viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
         viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
-        //店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
-            viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
-            viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
-            viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
-            viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+        //亚马逊需要店铺信息
+        if (isAmazon) {
+            //店铺信息
+            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
+                viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
+                viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
+                viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
+                viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+            }
         }
+
         List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> detailList = new ArrayList<>();
 
         Map<String, List<DeliverySuggestEntity>> map = deliverySuggestList.stream().collect(Collectors.groupingBy(DeliverySuggestEntity::getSkuId));
@@ -505,11 +539,18 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             addDetailDTO.setPlatformSku(detailDTO.getMSKu());
             addDetailDTO.setSkuId(detailDTO.getSkuId());
             addDetailDTO.setQty(detailDTO.getPlanDeliveryQty());
+            if (StrUtil.isBlank(detailDTO.getMSKu()) || StrUtil.isBlank(detailDTO.getFnSku())) {
+                continue;
+            }
             //来源信息
             List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonDTOList = BeanMapperUtils.copyList(WmsDeliveryPlanDetailDTO.SourceJsonDTO.class, detailDTO.getDeliverySuggestList());
             addDetailDTO.setSourceJsonList(sourceJsonDTOList);
             detailList.add(addDetailDTO);
             deliverySuggestList.addAll(detailDTO.getDeliverySuggestList());
+        }
+        //无明细数据则直接跳过
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException("未找到可新增的数据");
         }
         addDTO.setDetailList(detailList);
         BaseResultDTO.AddDTO addReturnDTO = deliveryPlanFeign.addDeliveryPlan(addDTO);

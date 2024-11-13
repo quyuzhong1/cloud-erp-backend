@@ -288,4 +288,17 @@ public class DeliverySuggestController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+
+    /**
+     * 海外仓下拉
+     * @author will
+     * @date 2024/11/13 12:04
+     * @param dto
+     * @return ApiResult<DeliverySuggestWarehouseDTO>
+     */
+    @PostMapping(value = "/listOverseasWarehouse")
+    public ApiResult<List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO>> listOverseasWarehouse(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> list = deliverySuggestService.listOverseasWarehouse(dto.getIds());
+        return success(list);
+    }
 }

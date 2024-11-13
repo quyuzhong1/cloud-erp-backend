@@ -822,4 +822,18 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private Integer quantity;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliverySuggestWarehouseDTO {
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+    }
 }

@@ -167,4 +167,12 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @date 2024/11/12 10:54
      */
     void deliverySuggestInvalid();
+    /**
+     * 查询海外仓
+     * @author will
+     * @date 2024/11/13 12:05
+     * @param ids
+     * @return List<DeliverySuggestWarehouseDTO>
+     */
+    List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> listOverseasWarehouse(List<String> ids);
 }
