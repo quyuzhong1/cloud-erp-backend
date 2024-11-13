@@ -101,15 +101,14 @@
                sdncd.new_qty as newNoticeQty,
                sd.qty as saleQty,
                 (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sdnd.source_detail_id and a.is_deleted = false) as allNoticeQty,
-                sdnd.delivery_qty as currentNoticeQty,
+               COALESCE(sdnd.delivery_qty,0) as currentNoticeQty,
                 (select  COALESCE(sum(a.qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
                sd.remark
                 from so_delivery_notice_change sdnc
         inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id
-        inner join so_delivery_notice_detail sdnd on sdnd.id = sdncd.source_detail_id
-        inner join so_detail sd on sd.id = sdncd.so_detail_id
-        where sdnc.is_deleted = false and sdncd.is_deleted = false and sdnd.is_deleted = false
-        and sd.is_deleted = false
+        LEFT join so_delivery_notice_detail sdnd on sdnd.id = sdncd.source_detail_id and sdnd.is_deleted = false
+        LEFT join so_detail sd on sd.id = sdncd.so_detail_id  and sd.is_deleted = false
+        where sdnc.is_deleted = false and sdncd.is_deleted = false
         and sdnc.id = #{id}
         </select>
     <select id="productPaging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ProductDTO">

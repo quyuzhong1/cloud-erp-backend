@@ -242,6 +242,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 || ApproveStatusEnum.REJECT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
             throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核,审核不通过时允许提交",soDeliveryNoticeEntity.getCode());
         }
+        if(entity.getInvalidStatus()){
+            throw new ServiceException("已作废不能提审");
+        }
         validateSubmit(entity);
         SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO(id,new ArrayList<>(),"edit"));
         detailService.checkData(viewDTO.getViewDetailList());
@@ -292,6 +295,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 || ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
                 || ApproveStatusEnum.REJECT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
             throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核,审核不通过时允许审核",soDeliveryNoticeEntity.getCode());
+        }
+        if(entity.getInvalidStatus()){
+            throw new ServiceException("已作废不能审核");
         }
         SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO(entity.getId(),new ArrayList<>(),"edit"));
         detailService.checkData(viewDTO.getViewDetailList());
@@ -344,7 +350,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         super.removeById(id);
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getCode(), "删除发货通知变更单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getId(), "删除发货通知变更单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
@@ -490,7 +496,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         super.updateById(entity);
         // 删除日志数据
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getCode(), "作废发货通知变更单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getId(), "作废发货通知变更单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 

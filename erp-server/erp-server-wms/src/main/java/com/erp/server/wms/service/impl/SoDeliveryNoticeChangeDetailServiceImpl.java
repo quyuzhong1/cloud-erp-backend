@@ -11,6 +11,7 @@ import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
 import com.erp.server.wms.mapper.SoDeliveryNoticeChangeDetailMapper;
 import com.erp.server.wms.service.*;
@@ -75,10 +76,15 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
             if(Objects.isNull(dbEntity)){
                 continue;
             }
-            if(dbEntity.getSkuNo().equals(viewDetail.getSkuNo())){
-                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新发货通知sku【{}】数量从【{}】为【{}】",dbEntity.getSkuNo(),dbEntity.getNewQty(),viewDetail.getNewNoticeQty()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),dbEntity.getMainId(),"编辑操作"));
-            }else{
-                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新发货通知sku从【{}】为【{}】,数量从【{}】为【{}】",dbEntity.getSkuNo(),viewDetail.getSkuNo(),dbEntity.getNewQty(),viewDetail.getNewNoticeQty()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),dbEntity.getMainId(),"编辑操作"));
+            if(!dbEntity.getChangeType().equals(viewDetail.getChangeType())){
+                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了sku【{}】变更类型从【{}】为【{}】",viewDetail.getSkuNo(), SoDeliveryNoticeChangeTypeEnum.getName(dbEntity.getChangeType()),SoDeliveryNoticeChangeTypeEnum.getName(viewDetail.getChangeType())), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),dbEntity.getMainId(),"编辑操作"));
+            }
+            if(!dbEntity.getSkuNo().equals(viewDetail.getSkuNo()) || !dbEntity.getNewQty().equals(viewDetail.getNewNoticeQty())){
+                if(dbEntity.getSkuNo().equals(viewDetail.getSkuNo())){
+                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新发货通知sku【{}】数量从【{}】为【{}】",dbEntity.getSkuNo(),dbEntity.getNewQty(),viewDetail.getNewNoticeQty()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),dbEntity.getMainId(),"编辑操作"));
+                }else{
+                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新发货通知sku从【{}】为【{}】,数量从【{}】为【{}】",dbEntity.getSkuNo(),viewDetail.getSkuNo(),dbEntity.getNewQty(),viewDetail.getNewNoticeQty()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),dbEntity.getMainId(),"编辑操作"));
+                }
             }
             dbEntity.setSkuId(viewDetail.getSkuId());
             dbEntity.setSkuNo(viewDetail.getSkuNo());
