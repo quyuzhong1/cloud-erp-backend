@@ -180,21 +180,15 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             //根据配置进行获取
             List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
             //根据配置进行组装注册数据
-            records.forEach(updateTrackDTO -> {
-                if (TrackQueryTypeEnum.TRANSPORT_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTransportNo())){
-                    String transportNo = updateTrackDTO.getTransportNo();
-                    if (StrUtil.isNotBlank(transportNo)){
-                        logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
-                                .trackNo(transportNo)
-                                .phoneSuffix(updateTrackDTO.getTelNumber())
-                                .build());
-                    }
-                }else {
-                    logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
-                            .trackNo(updateTrackDTO.getTrackNo())
-                            .phoneSuffix(updateTrackDTO.getTelNumber())
-                            .build());
+            records.forEach(record -> {
+                String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+                if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTrackNo())){
+                    trackNo = record.getTrackNo();
                 }
+                logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
+                        .trackNo(trackNo)
+                        .phoneSuffix(record.getTelNumber())
+                        .build());
             });
             if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
                 return null;

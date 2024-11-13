@@ -159,6 +159,8 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             return;
         }
         List<LogisticsTrackEntity> newList = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
+        //设置唯一值
+        newList.forEach(e-> {e.setMd5(getDataMd5(e,dto.getTrackNo()));e.setTrackNo(dto.getTrackNo());});
         //增量数据库记录
         this.saveIncrementTrackData(dto.getTrackNo(), newList);
         //获取最新记录
@@ -234,7 +236,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
      */
     private String getDataMd5(LogisticsTrackEntity trackingDetail, String trackNo) {
         String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
-        return DigestUtil.md5Hex(trackNo + trackingDetail.getContent() + trackTime);
+        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
     }
 
 
