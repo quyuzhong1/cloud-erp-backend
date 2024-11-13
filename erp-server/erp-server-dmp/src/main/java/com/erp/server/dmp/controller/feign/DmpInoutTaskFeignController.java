@@ -68,7 +68,7 @@ public class DmpInoutTaskFeignController{
 	 */
 	@PostMapping("/doHotfixInputTask")
 	public Boolean doInputTask(@RequestBody List<DmpInoutDTO.CreateInputDTO> createDTOList) {
-		List<String> systemCodeList = createDTOList.stream().map(DmpInoutDTO.CommonDTO::getSystemCode).distinct().collect(Collectors.toList());
+		List<String> systemCodeList = createDTOList.stream().map(e -> e.getSystemCode().toLowerCase()).distinct().collect(Collectors.toList());
 		List<String> billTypeList = createDTOList.stream().map(DmpInoutDTO.CommonDTO::getBillType).distinct().collect(Collectors.toList());
 		List<String> nextLevelIdList = createDTOList.stream().map(DmpInoutDTO.CommonDTO::getNextLevelId).distinct().collect(Collectors.toList());
 		//查询任务是否存在
@@ -106,7 +106,7 @@ public class DmpInoutTaskFeignController{
 	 */
 	@PostMapping("/newInputTaskList")
 	public List<DmpInoutDTO.LastOneDTO> newInputTaskList(@RequestBody List<DmpInoutDTO.CommonDTO> commonDTOList) {
-		List<String> systemCodeList = commonDTOList.stream().map(DmpInoutDTO.CommonDTO::getSystemCode).distinct().collect(Collectors.toList());
+		List<String> systemCodeList = commonDTOList.stream().map(e -> e.getSystemCode().toLowerCase()).distinct().collect(Collectors.toList());
 		List<String> billTypeList = commonDTOList.stream().map(DmpInoutDTO.CommonDTO::getBillType).distinct().collect(Collectors.toList());
 		List<String> nextLevelIdList = commonDTOList.stream().map(DmpInoutDTO.CommonDTO::getNextLevelId).distinct().collect(Collectors.toList());
 
