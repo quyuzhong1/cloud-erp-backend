@@ -190,6 +190,14 @@ public class CustomerDTO implements Serializable {
          * 名称
          */
         private String code;
+        /**
+         * 简称
+         */
+        private String shortName;
+        /**
+         * 简称
+         */
+        private String approveStatus;
     }
     /**
      * 远程搜索
@@ -780,6 +788,10 @@ public class CustomerDTO implements Serializable {
          * name
          */
         private String name;
+        /**
+         * 简称
+         */
+        private String shortName;
 
         private ApproveStatusEnum approveStatus;
 
