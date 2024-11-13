@@ -96,7 +96,6 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
             operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除一行sku{}",v.getSkuNo()), ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(),v.getMainId(),"编辑操作"));
         });
 
-        this.checkData(addDTO.getViewDetailList());
         this.update(addList,updateList,deleteList);
         operateLogService.batchAddModuleOperateLog(operateLogList);
     }
@@ -159,6 +158,9 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailEntityList.stream().filter(v->v.getId().equals(viewDetail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("变更明细数据错误"));
                 if(viewDetail.getNewNoticeQty() > soDeliveryNoticeDetailEntity.getDeliveryQty()){
                     continue;
+                }
+                if(soDeliveryNoticeDetailEntity.getDeliveryQty().equals(viewDetail.getNewNoticeQty())){
+                    throw new ServiceException("{} 发货数量不能等于原发货数量",viewDetail.getSkuNo());
                 }
                 List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getSourceDetailId())).collect(Collectors.toList());
                 Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
