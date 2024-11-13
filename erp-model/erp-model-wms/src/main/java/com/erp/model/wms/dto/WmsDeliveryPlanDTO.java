@@ -438,7 +438,7 @@ public class WmsDeliveryPlanDTO implements Serializable {
         /**
          * 期望发货时间
          */
-        private String expectDeliveryDate;
+        private LocalDate expectDeliveryDate;
 
         /**
          * 期望物流方式

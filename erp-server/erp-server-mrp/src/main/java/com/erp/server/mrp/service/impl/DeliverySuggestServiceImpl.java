@@ -476,6 +476,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         addDTO.setPlanDeliveryDate(deliveryPlanDTO.getDeliveryDate());
         addDTO.setToWarehouseId(deliveryPlanDTO.getWarehouseId());
         addDTO.setExpectLogisticsMethod(deliveryPlanDTO.getLogisticsMethod());
+        addDTO.setExpectDeliveryDate(deliveryPlanDTO.getDeliveryDate());
         addDTO.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
         addDTO.setRemark(deliveryPlanDTO.getRemark());
         List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
