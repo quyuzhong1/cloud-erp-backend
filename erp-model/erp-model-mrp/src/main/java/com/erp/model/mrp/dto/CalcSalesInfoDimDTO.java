@@ -124,7 +124,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 预估销量
          */
-        private List<SalesVO> monthSalesEstimateQtyList;
+        private List<MonthSalesVO> monthSalesEstimateQtyList;
         /**
          * 真实销量
          */
@@ -132,7 +132,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 真实销量
          */
-        private List<SalesVO> monthRealSalesQtyList;
+        private List<MonthSalesVO> monthRealSalesQtyList;
 
         /**
          * 更新时间
@@ -168,6 +168,21 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 类型
          */
         private String type;
+        /**
+         * 数量
+         */
+        private BigDecimal qty;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MonthSalesVO {
+        /**
+         * 类型
+         */
+        private Integer month;
         /**
          * 数量
          */
@@ -284,17 +299,6 @@ public class CalcSalesInfoDimDTO implements Serializable {
     public static class TimePeriodSalesDTO {
 
         private TimePeriodEnum code;
-
-        private BigDecimal qty;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TimePeriodSalesEstimateDTO {
-
-        private Integer code;
 
         private BigDecimal qty;
     }

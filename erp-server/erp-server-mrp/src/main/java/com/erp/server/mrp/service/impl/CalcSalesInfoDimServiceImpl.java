@@ -41,7 +41,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -90,8 +89,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(dto, allSalesList, entity);
                 //开始计算销量预估
                 List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calculationSalesEstimates(dto, avgTimePeriodSales, allSalesList);
-                //开始计算分时段销量和日均预估
-                calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList);
+                //开始计算分时段预估
+                calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, dto.getSalesHistoryMap());
                 calcSalesInfoDenoisingService.saveBatch(calculationSales);
                 calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
                 updateById(entity);
@@ -133,8 +132,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             view.setShopName(shopInfoEntity.getName());
             view.setSalesQtyList(JSON.parseObject(view.getSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>(){}));
             view.setAvgSalesQtyList(JSON.parseObject(view.getAvgSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>(){}));
-            view.setMonthSalesEstimateQtyList(JSON.parseObject(view.getMonthSalesEstimateQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>(){}));
-            view.setMonthRealSalesQtyList(JSON.parseObject(view.getMonthRealSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>(){}));
+            view.setMonthSalesEstimateQtyList(JSON.parseObject(view.getMonthSalesEstimateQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.MonthSalesVO>>(){}));
+            view.setMonthRealSalesQtyList(JSON.parseObject(view.getMonthRealSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.MonthSalesVO>>(){}));
             CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcList.stream()
                     .filter(v -> v.getId().equals(view.getCfgRuleCalcId()))
                     .findFirst()
@@ -208,15 +207,17 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     /**
      * 计算分时段销量预估
      *
-     * @param startCalcDate  计算开始时间
-     * @param entity         参数
-     * @param salesEstimates 预估销量
+     * @param startCalcDate   计算开始时间
+     * @param entity          参数
+     * @param salesEstimates  预估销量
+     * @param salesHistoryMap 历史销量
      */
-    private void calculationTimePeriodSalesEstimates(LocalDate startCalcDate, CalcSalesInfoDimEntity entity, List<CalcSalesInfoEstimateEntity> salesEstimates) {
+    private void calculationTimePeriodSalesEstimates(LocalDate startCalcDate, CalcSalesInfoDimEntity entity, List<CalcSalesInfoEstimateEntity> salesEstimates, Map<LocalDate, Integer> salesHistoryMap) {
 
         LocalDate endDate = startCalcDate.plusDays(120);
-        List<CalcSalesInfoDimDTO.TimePeriodSalesEstimateDTO> timePeriodSalesEstimates = new ArrayList<>();
-        List<CalcSalesInfoDimDTO.TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates = new ArrayList<>();
+        // 从开始日期所在的月份的1号开始
+        List<CalcSalesInfoDimDTO.MonthSalesVO> timePeriodSalesEstimates = new ArrayList<>();
+        List<CalcSalesInfoDimDTO.MonthSalesVO> realTimePeriodSales = new ArrayList<>();
         // 从开始日期所在的月份的1号开始
         LocalDate current = startCalcDate.withDayOfMonth(1);
         while (!current.isAfter(endDate)) {
@@ -227,13 +228,17 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                     .filter(v -> !calcStartDate.isAfter(v.getDate()) && !calcEndDate.isBefore(v.getDate()))
                     .map(CalcSalesInfoEstimateEntity::getQty)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            timePeriodSalesEstimates.add(new CalcSalesInfoDimDTO.TimePeriodSalesEstimateDTO(currentMonth.getMonthValue(), followingSales));
-            avgTimePeriodSalesEstimates.add(new CalcSalesInfoDimDTO.TimePeriodSalesEstimateDTO(currentMonth.getMonthValue(), followingSales.divide(BigDecimal.valueOf(ChronoUnit.DAYS.between(calcStartDate, calcEndDate) + 1), 2, RoundingMode.HALF_UP)));
+            BigDecimal realSales = salesEstimates.stream()
+                    .filter(v -> !calcStartDate.isAfter(v.getDate()) && !calcEndDate.isBefore(v.getDate()))
+                    .map(CalcSalesInfoEstimateEntity::getQty)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            timePeriodSalesEstimates.add(new CalcSalesInfoDimDTO.MonthSalesVO(currentMonth.getMonthValue(), followingSales));
+            realTimePeriodSales.add(new CalcSalesInfoDimDTO.MonthSalesVO(currentMonth.getMonthValue(), realSales));
             // 移动到下一个月
             current = current.plusMonths(1);
         }
-        entity.setMonthRealSalesQtyJson(JSONUtil.parseArray(timePeriodSalesEstimates));
-        entity.setMonthSalesEstimateQtyJson(JSONUtil.parseArray(avgTimePeriodSalesEstimates));
+        entity.setMonthSalesEstimateQtyJson(JSONUtil.parseArray(timePeriodSalesEstimates));
+        entity.setMonthRealSalesQtyJson(JSONUtil.parseArray(realTimePeriodSales));
     }
 
     /**
@@ -339,8 +344,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             }
             avgTimePeriodSales.add(new CalcSalesInfoDimDTO.TimePeriodSalesDTO(value, avgQty));
         }
-        entity.setSalesQtyJson(JSONUtil.parseArray(timePeriodSales));
-        entity.setAvgSalesQtyJson(JSONUtil.parseArray(avgTimePeriodSales));
+        entity.setSalesQtyJson(JSONUtil.parseArray(timePeriodSales.stream().map(v -> new CalcSalesInfoDimDTO.SalesVO(v.getCode().getName(), v.getQty()))
+                .collect(Collectors.toList())));
+        entity.setAvgSalesQtyJson(JSONUtil.parseArray(avgTimePeriodSales.stream().map(v -> new CalcSalesInfoDimDTO.SalesVO(v.getCode().getName(), v.getQty()))
+                .collect(Collectors.toList())));
         return avgTimePeriodSales;
     }
 
