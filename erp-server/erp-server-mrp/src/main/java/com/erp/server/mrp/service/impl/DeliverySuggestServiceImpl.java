@@ -628,7 +628,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //导入文件名称
         String originalFilename = excelFile.getOriginalFilename();
         //上传正确数据
-        upLoadSuccessExcel (originalFilename,successList);
+        upLoadSuccessExcel (originalFilename,successList,platformType);
         //导出错误数据
         exportErrorExcel (response,errorList);
     }
@@ -641,7 +641,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
      * @param originalFilename
      * @param successList
      */
-    private void upLoadSuccessExcel (String originalFilename, List<DeliverySuggestImportExcelDTO> successList) {
+    private void upLoadSuccessExcel (String originalFilename, List<DeliverySuggestImportExcelDTO> successList,String platformType) {
         //全部为空则无需处理
         if (CollectionUtils.isEmpty(successList) ) {
             return;
@@ -659,6 +659,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         HistoryImportRecordDTO.AddDTO dto = new HistoryImportRecordDTO.AddDTO();
         dto.setName(fileName);
         dto.setModule(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
+        dto.setPlatformType(platformType);
         dto.setType(HistoryImportRecordTypeEnum.DELIVERY_SUGGESTION_CONFIRM.getCode());
         dto.setExportFileDTO(exportFileDTO);
         historyImportRecordService.add(dto);
@@ -716,7 +717,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 errorMsgList.add("未找到补货计划");
             } else {
                 if (!StrUtil.equals(platformType,deliverySuggestEntity.getPlatformType())) {
-                    errorMsgList.add(StrUtil.format("【{}】平台类型是{},不支持导入",CfgRulePlatformTypeEnum.getName(platformType)));
+                    errorMsgList.add("补货建议数据不支持跨平台类型导入");
                 }
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
