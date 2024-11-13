@@ -21,7 +21,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -105,7 +104,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     @Override
     public BaseResultDTO.AddDTO add(SoDeliveryNoticeChangeDTO.ViewDTO addDTO) {
         List<String> sourceDetailIds = addDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        this.checkExist(sourceDetailIds,addDTO.getNoticeId());
+        this.checkExist(sourceDetailIds,addDTO.getNoticeId(), addDTO.getId());
         SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity = this.buildEntity(addDTO);
         // 数据处理
         handleData(soDeliveryNoticeChangeEntity);
@@ -142,7 +141,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     public Boolean update(SoDeliveryNoticeChangeDTO.ViewDTO updateDTO) {
         SoDeliveryNoticeChangeEntity old = super.getById(updateDTO.getId());
         List<String> sourceDetailIds = updateDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        this.checkExist(sourceDetailIds,old.getSourceId());
+        this.checkExist(sourceDetailIds,old.getSourceId(), updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货通知变更单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(old.getApproveStatus()))) {
@@ -898,16 +897,18 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         }
     }
 
-    private void checkExist(List<String> sourceDetailIds,String noticeId){
+    private void checkExist(List<String> sourceDetailIds, String noticeId, String id){
         if(CollectionUtils.isEmpty(sourceDetailIds) || StringUtils.isBlank(noticeId)){
             return;
         }
-        SoDeliveryNoticeChangeEntity exist = this.lambdaQuery().eq(SoDeliveryNoticeChangeEntity::getSourceId, noticeId).ne(SoDeliveryNoticeChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()).eq(SoDeliveryNoticeChangeEntity::getInvalidStatus,false).last("limit 1").one();
-        if(Objects.nonNull(exist) && CollectionUtils.isNotEmpty(sourceDetailIds)){
-            List<SoDeliveryNoticeChangeDetailEntity> existList = detailService.lambdaQuery().eq(SoDeliveryNoticeChangeDetailEntity::getMainId,exist.getId()).in(SoDeliveryNoticeChangeDetailEntity::getSourceDetailId,sourceDetailIds).list();
-            if(CollectionUtils.isNotEmpty(existList)){
-                throw new ServiceException("发货通知单存在未审核且未作废变更单，请勿重复提交");
-            }
+        List<SoDeliveryNoticeChangeEntity> exist = this.lambdaQuery().ne(StringUtils.isNotBlank(id),SoDeliveryNoticeChangeEntity::getId,id).eq(SoDeliveryNoticeChangeEntity::getSourceId, noticeId).ne(SoDeliveryNoticeChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()).eq(SoDeliveryNoticeChangeEntity::getInvalidStatus,false).list();
+        if(CollectionUtils.isEmpty(exist)){
+            return;
+        }
+        List<String> mainIds = exist.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<SoDeliveryNoticeChangeDetailEntity> allExistDetailList = detailService.lambdaQuery().in(SoDeliveryNoticeChangeDetailEntity::getMainId,mainIds).in(SoDeliveryNoticeChangeDetailEntity::getSourceDetailId,sourceDetailIds).list();
+        if(CollectionUtils.isNotEmpty(allExistDetailList)){
+            throw new ServiceException("发货通知单存在未审核且未作废变更单，请勿重复提交");
         }
     }
 }
