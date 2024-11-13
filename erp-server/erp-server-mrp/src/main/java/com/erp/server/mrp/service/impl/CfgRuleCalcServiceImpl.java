@@ -10,6 +10,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
@@ -41,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +97,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         if (HistorySalesTypeEnum.SYSTEM.getCode().equals(addDTO.getSaleType())) {
             historySaleList = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
         } else {
-            HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener();
+            HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener(skuMap, shopMap);
             EasyExcel.read(FastDFSClientUtil.getInputStream(addDTO.getFileUrl()), CfgRuleCalcDTO.HistorySaleImportDTO.class, excelListener).headRowNumber(1).sheet(0).doRead();
             historySaleList = excelListener.getDateList();
         }
@@ -193,6 +195,13 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
     @Override
     public void downloadHistorySales(CfgRuleCalcDTO.DownloadDTO dto) {
         downloadTaskFeign.saveDownloadTask("历史销量导出(销量试算)", FileTaskEventEnum.EXPORT_MRP_HISTORY_SALES_CALC.getCode(), dto);
+    }
+
+    @Override
+    public void downloadRuleTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/calcHistorySaleQtyTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ExcelUtil.downloadTemplate(path,excelName,response);
     }
 
 

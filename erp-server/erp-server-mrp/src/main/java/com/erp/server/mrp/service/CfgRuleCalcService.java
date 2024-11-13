@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleCalcDTO;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * 试算配置 服务类
@@ -25,4 +27,6 @@ public interface CfgRuleCalcService extends SuperService<CfgRuleCalcEntity> {
 
 
     void downloadHistorySales(CfgRuleCalcDTO.DownloadDTO dto);
+
+    void downloadRuleTemplate(HttpServletResponse response);
 }
