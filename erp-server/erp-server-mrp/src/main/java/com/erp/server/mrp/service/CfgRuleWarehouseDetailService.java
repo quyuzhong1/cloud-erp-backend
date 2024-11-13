@@ -60,13 +60,5 @@ public interface CfgRuleWarehouseDetailService extends SuperService<CfgRuleWareh
      * @return List<CfgRuleWarehouseDetailEntity>
      */
     List<CfgRuleWarehouseDetailEntity> listRefreshVirtual(List<String> warehouseIdList, List<String> virtualWarehouseIdList, List<String> dictPlatformList, String type);
-    /**
-     * 根据店铺和主表id查询
-     * @author will
-     * @date 2024/11/13 14:22
-     * @param shopIdList
-     * @param id
-     * @return List<CfgRuleWarehouseDetailEntity>
-     */
-    List<CfgRuleWarehouseDetailEntity> listByShopIdList(List<String> shopIdList, String id);
+
 }

@@ -296,10 +296,6 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
                 .list();
     }
 
-    @Override
-    public List<CfgRuleWarehouseDetailEntity> listByShopIdList(List<String> shopIdList, String id) {
-        return null;
-    }
 
     /**
      * 查询需要删除的数据

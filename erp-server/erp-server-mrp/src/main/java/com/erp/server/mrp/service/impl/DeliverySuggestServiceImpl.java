@@ -34,12 +34,8 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.mrp.dto.DeliverySuggestDTO;
-import com.erp.model.mrp.dto.DeliverySuggestSysDTO;
-import com.erp.model.mrp.dto.HistoryImportRecordDTO;
-import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.DeliverySuggestImportExcelDTO;
-import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
@@ -61,6 +57,7 @@ import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -258,8 +255,28 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         List<String> shopIdList = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().collect(Collectors.toList());
 
         List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
-        List<CfgRuleWarehouseDetailEntity> detailList =  cfgRuleWarehouseDetailService.listByShopIdList(shopIdList,ruleWarehouseEntity.getId());
-        return null;
+        List<String> dictPlatformList = shopList.stream().map(ShopInfoEntity::getDictPlatform).distinct().collect(Collectors.toList());
+        List<CfgRuleWarehouseDetailDTO.ViewDTO> viewList = cfgRuleWarehouseDetailService.listViewByMainIdList(Arrays.asList(ruleWarehouseEntity.getId()));
+        if (CollectionUtils.isEmpty(viewList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> resultList = new ArrayList<>();
+        for (CfgRuleWarehouseDetailDTO.ViewDTO viewDTO : viewList) {
+            //按店铺
+            if (StrUtil.equals(viewDTO.getChannelType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())) {
+                long shopCont = viewDTO.getChannelIdList().stream().filter(obj -> shopList.contains(obj)).count();
+                if (shopCont > 0) {
+                    resultList.add(new DeliverySuggestDTO.DeliverySuggestWarehouseDTO(viewDTO.getWarehouseId(),viewDTO.getWarehouseName()));
+                }
+                continue;
+            }
+            //按平台
+            long platformCont = viewDTO.getChannelIdList().stream().filter(obj -> dictPlatformList.contains(obj)).count();
+            if (platformCont > 0) {
+                resultList.add(new DeliverySuggestDTO.DeliverySuggestWarehouseDTO(viewDTO.getWarehouseId(),viewDTO.getWarehouseName()));
+            }
+        }
+        return resultList;
     }
 
     @Override

@@ -459,6 +459,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         for (PurchaseSuggestEntity purchaseSuggestEntity : purchaseSuggestList) {
             DeliverySuggestDTO.PurchaseSuggestBomDTO purchaseSuggestBomDTO = new DeliverySuggestDTO.PurchaseSuggestBomDTO();
             purchaseSuggestBomDTO.setCode(purchaseSuggestEntity.getCode());
+            purchaseSuggestBomDTO.setSourceId(purchaseSuggestEntity.getSourceId());
             //父级SKU
             String parentSkuNo = StrUtil.equals(old.getSkuId(),purchaseSuggestEntity.getSkuId()) ? "" : productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestEntity.getSkuId()))
                     .map(ProductDetailEntity::getSkuNo).findFirst().orElse("");

@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -781,6 +782,10 @@ public class DeliverySuggestDTO implements Serializable {
     @NoArgsConstructor
     public static class PurchaseSuggestBomDTO {
         /**
+         * 补货建议id
+         */
+        private String sourceId;
+        /**
          * 采购建议编码
          */
         private String code;
@@ -826,6 +831,7 @@ public class DeliverySuggestDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class DeliverySuggestWarehouseDTO {
         /**
          * 仓库Id
