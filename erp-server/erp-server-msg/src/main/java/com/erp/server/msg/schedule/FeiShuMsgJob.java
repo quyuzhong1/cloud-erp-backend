@@ -4,17 +4,17 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeOmsStatusEnum;
-import com.common.business.enums.SyncStatusEnum;
+import com.common.business.enums.*;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.msg.config.MsgContext;
 import com.erp.server.msg.constant.MongoTableConstant;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -46,6 +46,8 @@ public class FeiShuMsgJob {
     private MsgContext msgContext;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     /**
      * 飞书预警消息汇总报告
@@ -63,6 +65,7 @@ public class FeiShuMsgJob {
             statusList.add(SyncStatusEnum.IN_SYNC.getCode());
             statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
         }
+
 
         //获取汇总消息
         List<DmpTaskMsgDTO> warnTaskReport = dmpTaskFeign.getWarnTaskReport(statusList);
@@ -203,5 +206,50 @@ public class FeiShuMsgJob {
             warnMsgInfoDTOS.add(warnMsgInfo);
         }
         return warnMsgInfoDTOS;
+    }
+
+    /**
+     * 飞书预警消息渠道汇总报告
+     */
+    @XxlJob("sendFeiShuWarnMsgReportByChannel")
+    public void sendFeiShuWarnMsgReportByChannel() {
+        XxlJobHelper.log("飞书预警消息渠道汇总报告:start");
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> statusList = new ArrayList<>();
+        if (StrUtil.isNotBlank(jobParam)){
+            String[] params = jobParam.split(",");
+            statusList.add(params[0]);
+            statusList.add(params[1]);
+        }else {
+            statusList.add(SyncStatusEnum.IN_SYNC.getCode());
+            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
+        }
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .registerStatus(1)
+                .trackEnable(true)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .build();
+        List<LogisticsChannelDTO.WarnReportDTO> warnReportByChannel = logisticsFeign.getWarnReportByChannel(query);
+        //获取汇总消息
+        List<DmpTaskMsgDTO> warnTaskReport = dmpTaskFeign.getWarnTaskReport(statusList);
+        if (CollectionUtil.isNotEmpty(warnTaskReport)){
+            WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName("预警消息");
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+            warnMsgInfo.setTitle("异常预警消息汇总");
+            warnMsgInfo.setTableName("dmp_pull_task/dmp_push_task");
+            warnMsgInfo.setTableId("");
+            warnMsgInfo.setHappenTime(LocalDateTime.now());
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            List<String> keyInfoList = new ArrayList<>(warnTaskReport.size());
+            warnTaskReport.forEach(dmpTaskMsgDTO -> {
+                String format = StrUtil.format("【{}】->【{}】失败,业务【{}】,数量:{}", dmpTaskMsgDTO.getSourcePlatformName(), dmpTaskMsgDTO.getTargetPlatformName(),SourceTypeEnum.getName(dmpTaskMsgDTO.getSourceType()), dmpTaskMsgDTO.getTotal());
+                keyInfoList.add(format);
+            });
+            warnMsgInfo.setKeyInfo(String.join("\n", keyInfoList));
+            msgContext.routeSendWarnMsg(warnMsgInfo);
+        }
+        XxlJobHelper.log("飞书预警消息渠道汇总报告:end");
     }
 }

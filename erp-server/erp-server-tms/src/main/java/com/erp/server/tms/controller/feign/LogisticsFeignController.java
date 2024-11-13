@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.feign;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -154,5 +155,15 @@ public class LogisticsFeignController {
     @PostMapping("/listAddressByType")
     public List<LogisticsAddressDTO.ListDTO> listAddressByType(@RequestBody @Validated LogisticsAddressDTO.AddressByTypeDTO dto) {
         return logisticsAddressService.listAddressByType(dto);
+    }
+
+    /**
+     * 根据渠道汇总时间段内未更新运单号记录
+     * @param query
+     * @return
+     */
+    @PostMapping("/getWarnReportByChannel")
+    public List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@RequestBody LogisticsBillDetailQueryDTO query){
+        return logisticsChannelService.getWarnReportByChannel(query);
     }
 }
