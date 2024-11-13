@@ -93,6 +93,7 @@ public enum SourceTypeEnum {
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
+    SDY_SKU_MAPPING( "sdy_skuMapping", "sku映射","sku_mapping"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),

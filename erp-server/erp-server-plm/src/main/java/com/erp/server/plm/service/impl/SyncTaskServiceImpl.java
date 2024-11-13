@@ -198,7 +198,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 //                resultList = newSyncBomInfo(sourceDetailList);
                 break;
             case SDY_PRODUCT_BOM_INFO:
-//                resultList = newSyncBomInfo(sourceDetailList);
+                resultList = newSyncSdyBomInfo(sourceDetailList);
             	break;
             default:
                 break;

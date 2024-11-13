@@ -221,6 +221,7 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
                 plmPushMsgEntity.setSourceCode(skuHistory.getSkuNo());
                 plmPushMsgEntity.setSyncOperate(operate);
                 plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(skuHistory, operate)));
+                plmPushMsgEntityList.add(plmPushMsgEntity);
             }
         	plmPushMsgService.saveBatch(plmPushMsgEntityList);
         }

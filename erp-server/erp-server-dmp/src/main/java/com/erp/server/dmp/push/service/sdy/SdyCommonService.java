@@ -33,7 +33,7 @@ public class SdyCommonService {
 		url = sdyUrl + url;
 		
 		String requestData = parseObject.getString(REQUEST_DATA);
-		log.warn("请求数帝云请求报文：{}" , requestData);
+		log.warn("请求地址：{}，请求数帝云请求报文：{}" , url , requestData);
 		String responseData = HttpUtil.post(url, requestData);
 		log.warn("请求数帝云响应报文：{}" , responseData);
 		JSONObject responseObject = null;

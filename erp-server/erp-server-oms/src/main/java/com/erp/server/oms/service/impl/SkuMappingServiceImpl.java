@@ -1,8 +1,10 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -15,6 +17,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -24,16 +28,20 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.OperateLogDTO;
@@ -113,6 +121,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private SkuMappingExtendService skuMappingExtendService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    
+    @Resource
+    private OmsPushMsgService omsPushMsgService;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -1366,4 +1377,52 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         paramDTO.setIsExpire(isExpire);
         return paramDTO;
     }
+
+
+	@Override
+	public List<OmsPushMsgEntity> syncDataToSdy(LocalDateTime startTime, LocalDateTime endTime) {
+		List<OmsPushMsgEntity> omsPushMsgEntityList = new ArrayList<>();
+		List<SkuMappingEntity> skuMappingEntityList = lambdaQuery().ge(SkuMappingEntity::getUpdateTime, startTime).le(SkuMappingEntity::getUpdateTime, endTime).list();
+		if(CollUtil.isNotEmpty(skuMappingEntityList)) {
+			for(SkuMappingEntity skuMappingEntity : skuMappingEntityList) {
+				String operate = SyncOperateEnum.OPERATE_APPROVE.getCode();
+				if(skuMappingEntity.getIsExpire()) {
+					operate = SyncOperateEnum.OPERATE_DELETE.getCode();
+				}
+				OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+		        omsPushMsgEntity.setSourceId(skuMappingEntity.getId());
+		        Map<String, Object> newSyncDataToSdy = this.newSyncDataToSdy(skuMappingEntity, operate);
+		        omsPushMsgEntity.setSourceCode(newSyncDataToSdy.get("map_product_code").toString());
+		        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SKU_MAPPING.getCode());
+				omsPushMsgEntity.setPushData(JSON.toJSONString(newSyncDataToSdy));
+		        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+		        omsPushMsgEntity.setSyncOperate(operate);
+		        omsPushMsgEntityList.add(omsPushMsgEntity);
+			}
+		    omsPushMsgService.saveBatch(omsPushMsgEntityList);
+		}
+		return omsPushMsgEntityList;
+	}
+
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(SkuMappingEntity entity, String operate) {
+		ListingInfoEntity listingInfoEntity = listingInfoService.getById(entity.getListingId());
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("biz_uni_key", entity.getId());
+		resultMap.put("mapping_system_attribute", "主数据来源");
+		resultMap.put("mapping_system_mdm_type", "msku");
+		resultMap.put("map_product_code", listingInfoEntity.getPlatformSkuNo());
+		resultMap.put("map_product_name", listingInfoEntity.getPlatformSkuName());
+		resultMap.put("mdm_system", "SDC");
+		resultMap.put("product_code", entity.getProductSkuNo());
+		resultMap.put("product_name", entity.getProductName());
+		
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "未匹配");
+		}else {
+			resultMap.put("status", "已匹配");
+		}
+		return resultMap;
+	}
 }
