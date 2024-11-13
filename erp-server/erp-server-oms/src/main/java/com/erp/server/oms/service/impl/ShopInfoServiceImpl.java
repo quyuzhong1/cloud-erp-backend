@@ -22,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -32,6 +33,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -142,6 +144,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
     /**
      * 添加店铺
      *
@@ -1643,11 +1647,26 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        List<DmpInoutDTO.CommonDTO> commonDTOList = new ArrayList<>();
+        list.forEach(v->{
+            DmpInoutDTO.CommonDTO commonDTO = new DmpInoutDTO.CommonDTO();
+            commonDTO.setSystemCode(v.getDictPlatform());
+            commonDTO.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+            commonDTO.setNextLevelId(v.getShopId());
+            commonDTOList.add(commonDTO);
+        });
+
+        List<DmpInoutDTO.LastOneDTO> lastOneDTOS = dmpInoutTaskFeign.newInputTaskList(commonDTOList);
         list.forEach(v->{
             String authStatus = v.getAuthStatus();
             String authStatusName = AuthStatusEnum.getName(authStatus);
             v.setAuthStatusName(authStatusName);
+            DmpInoutDTO.LastOneDTO lastOneDTO = lastOneDTOS.stream().filter(o->o.getNextLevelId().equals(v.getShopId())).findFirst().orElse(new DmpInoutDTO.LastOneDTO());
+            v.setSyncResult(lastOneDTO.getStatusName());
+            v.setLastSyncTime(lastOneDTO.getLatestUpdateTime());
         });
         return new PagingVO<>(pageData);
     }
 }
+
+

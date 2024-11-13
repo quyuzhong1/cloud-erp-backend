@@ -317,13 +317,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         String soReturnId = dto.getSoReturnId();
         //当退货单不为空的时候
         if (StringUtils.isNotBlank(soReturnId)) {
-            if(dto.getType().equals("B2C")){
+            if(dto.getType().contains("B2C")){
                 SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,dto.getSoReturnId());
                 //获取销售单信息
                 SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class,soB2cReturnEntity.getSoId());
                 ShopInfoEntity shopInfoEntity = FeignQuery.getById(ShopInfoEntity.class,soB2cReturnEntity.getShopId());
                 if(Objects.nonNull(soB2cEntity)){
                     dto.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+
                     SoOutstockEntity soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
                     if(Objects.nonNull(soOutstock)){
                         dto.setSellerId(soOutstock.getSellerId());

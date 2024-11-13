@@ -10,6 +10,7 @@ import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,6 +21,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -28,6 +30,7 @@ import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
@@ -69,6 +72,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     /**
     * 修改
@@ -282,9 +288,22 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        List<DmpInoutDTO.CommonDTO> commonDTOList = new ArrayList<>();
+        list.forEach(v->{
+            DmpInoutDTO.CommonDTO commonDTO = new DmpInoutDTO.CommonDTO();
+            commonDTO.setSystemCode(v.getWarehouseProvideCode());
+            commonDTO.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+            commonDTO.setNextLevelId(v.getAuthId());
+            commonDTOList.add(commonDTO);
+        });
+
+        List<DmpInoutDTO.LastOneDTO> lastOneDTOS = dmpInoutTaskFeign.newInputTaskList(commonDTOList);
         list.forEach(v->{
             v.setWarehouseProvideName(PlatformDictEnum.getNameByCode(v.getWarehouseProvideCode()));
             v.setAuthStatusName(AuthStatusEnum.getName(v.getAuthStatus()));
+            DmpInoutDTO.LastOneDTO lastOneDTO = lastOneDTOS.stream().filter(o->o.getNextLevelId().equals(v.getAuthId())).findFirst().orElse(new DmpInoutDTO.LastOneDTO());
+            v.setSyncResult(lastOneDTO.getStatusName());
+            v.setLastSyncTime(lastOneDTO.getLatestUpdateTime());
         });
         return new PagingVO<>(pageData);
     }
