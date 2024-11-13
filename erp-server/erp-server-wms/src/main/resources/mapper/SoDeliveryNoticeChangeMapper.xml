@@ -83,7 +83,7 @@
         SELECT
         approve_status AS tabFlag,
         count(*)  AS count
-        FROM  so_delivery_notice_change
+        FROM  so_delivery_notice_change sdnc
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

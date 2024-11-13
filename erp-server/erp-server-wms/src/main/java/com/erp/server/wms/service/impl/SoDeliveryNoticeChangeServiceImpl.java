@@ -404,6 +404,10 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         List<SoDeliveryNoticeDetailEntity> deleteList = new ArrayList<>();
         for (SoDeliveryNoticeChangeDetailEntity detail : detailList) {
             if(SoDeliveryNoticeChangeTypeEnum.ADD.getCode().equals(detail.getChangeType())){
+                SoDeliveryNoticeDetailEntity existEntity = soDeliveryNoticeDetailList.stream().filter(v->v.getSourceDetailId().equals(detail.getSoDetailId())).findFirst().orElse(null);
+                if(Objects.nonNull(existEntity)){
+                    throw new ServiceException("发货通知单明细中已存在SKU【{}】,不允许新增",detail.getSkuNo());
+                }
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = BeanUtil.copyProperties(detail,SoDeliveryNoticeDetailEntity.class);
                 soDeliveryNoticeDetailEntity.setMainId(soDeliveryNotice.getId());
                 soDeliveryNoticeDetailEntity.setSourceDetailId(detail.getSoDetailId());

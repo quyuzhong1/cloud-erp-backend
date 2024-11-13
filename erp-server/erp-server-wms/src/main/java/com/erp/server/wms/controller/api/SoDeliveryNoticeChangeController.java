@@ -119,7 +119,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:soDeliveryNoticeChange:paging",
-            tableAlias = ""
+            tableAlias = "sdnc"
     )
     public ApiResult<List<SoDeliveryNoticeChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(soDeliveryNoticeChangeService.tabList(dto));
