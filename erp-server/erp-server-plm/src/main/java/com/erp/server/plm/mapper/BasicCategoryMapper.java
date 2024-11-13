@@ -2,6 +2,7 @@ package com.erp.server.plm.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.BasicCategoryTreeDTO;
 import com.erp.model.plm.dto.SkuCategoryDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
@@ -36,4 +37,6 @@ public interface BasicCategoryMapper extends BaseMapper<BasicCategoryEntity> {
      * @return
      */
     List<BasicCategoryTreeDTO> categoryGradeDown();
+
+    List<BasicCategoryDTO> getCategoryByPid(@Param("pid") String pid);
 }

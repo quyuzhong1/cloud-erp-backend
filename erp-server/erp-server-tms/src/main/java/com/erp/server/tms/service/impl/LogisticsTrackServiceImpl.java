@@ -152,57 +152,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     }
 
     @Override
-    public void deleteByTrackNo(String trackNo) {
-        baseMapper.deleteByTrackNo(trackNo);
-    }
-
-    /**
-     * 运输状态 状态
-     * notFind 查询不到
-     * waitCollect等待揽收
-     * trackIng运输途中
-     * arriveWaitTake到达待取
-     * deliveryIng派送途中
-     * deliveryFail投递失败
-     * sign 成功签收
-     * maybeException可能异常
-     * transportLong  运输过久
-     *
-     * @param logisticsTrackEntity
-     */
-    @Override
-    public void checkTrackStatus(LogisticsTrackEntity logisticsTrackEntity) {
-        if (Objects.isNull(logisticsTrackEntity)) return;
-        List<LogisticsBillDetailEntity> detailList = logisticsBillDetailService.getDetailByTrackNo(logisticsTrackEntity.getTrackNo());
-        if (CollectionUtils.isEmpty(detailList)) return;
-        //状态更新同步
-        detailList.forEach(detailByTrackNo -> {
-            if (!detailByTrackNo.getTrackStatus().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
-                detailByTrackNo.setTrackStatus(logisticsTrackEntity.getStatus());
-                detailByTrackNo.setTrackTime(LocalDateTime.now());
-                detailByTrackNo.setIsApiUpdate(Boolean.TRUE);
-                if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
-                    //TODO 同步订单状态
-                    detailByTrackNo.setSignTime(logisticsTrackEntity.getTrackTime());
-                } else {
-                    detailByTrackNo.setSignTime(null);
-                }
-            }
-        });
-        if (CollectionUtils.isNotEmpty(detailList)){
-            logisticsBillDetailService.updateBatchById(detailList);
-        }
-    }
-
-    @Override
-    public LogisticsTrackEntity getMaxByTrackTime(String trackNo) {
-        if (StrUtil.isBlank(trackNo)){
-            return null;
-        }
-        return baseMapper.getMaxByTrackTime(trackNo);
-    }
-
-    @Override
     @Async("tmsExecutor")
     public void processTrackData(PlatformTrackDTO dto){
         log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));

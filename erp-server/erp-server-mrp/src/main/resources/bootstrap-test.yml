@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.100.12
+        namespace: test
+      config:
+        server-addr: 172.16.100.12
+        namespace: test
+        shared-configs: common.yml,db-mrp.yml,druid-common.yml
+
+sfs:
+  nacos:
+    application: seata-server
+    server-addr: 172.16.100.12:8848
+    namespace: seata-server
+    group: SEATA_GROUP
+
+

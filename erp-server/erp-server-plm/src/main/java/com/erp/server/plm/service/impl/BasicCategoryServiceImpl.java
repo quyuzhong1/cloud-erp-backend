@@ -478,6 +478,11 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         return baseMapper.categoryGradeDown();
     }
 
+    @Override
+    public List<BasicCategoryDTO> getCategoryByPid(String pid) {
+        return baseMapper.getCategoryByPid(pid);
+    }
+
     /**
      * list加入父级品类
      */

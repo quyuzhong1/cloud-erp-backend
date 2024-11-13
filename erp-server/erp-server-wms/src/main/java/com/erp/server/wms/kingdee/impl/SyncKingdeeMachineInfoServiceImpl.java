@@ -1,24 +1,11 @@
 package com.erp.server.wms.kingdee.impl;
 
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.alibaba.fastjson.JSON;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -39,11 +26,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.wms.entity.MachineDetailEntity;
-import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.MachineSubComponentsEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -52,13 +35,15 @@ import com.erp.server.wms.service.MachineDetailService;
 import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @description: 同步其他入库单
@@ -271,7 +256,13 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
                 subObject.set("skuNo",machineSubComponents.getSkuNo());
                 subObject.set("unit",machineSubComponents.getUnit());
                 subObject.set("qty",machineSubComponents.getQty());
-                subObject.set("warehouseLocation",machineSubComponents.getWarehouseLocation());
+                //是否下推仓位
+                Boolean isPushSub = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), machineSubComponents.getWarehouseId()))
+                        .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+                if (isPushSub) {
+                    //仓位
+                    subObject.set("warehouseLocation",machineSubComponents.getWarehouseLocation());
+                }
                 if (CollectionUtils.isNotEmpty(warehouseList)) {
                     //仓库编码
                     String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(machineSubComponents.getWarehouseId()))

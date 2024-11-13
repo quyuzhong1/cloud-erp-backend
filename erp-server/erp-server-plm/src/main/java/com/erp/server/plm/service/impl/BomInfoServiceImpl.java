@@ -710,7 +710,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (ObjectUtils.isEmpty(bomInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
-
+        //更新金蝶
+        List<DmpPushTaskEntity> pushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
         boolean flag = this.removeById(bomId);
         if (flag) {
             bomSkuService.deleteByBomId(bomId);
@@ -718,8 +719,15 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String operateContent = BomOperateContent.DELETE;
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.DELETE.getType(), operateContent);
         }
-        //发送金蝶
-        sendPushTask(Arrays.asList(bomInfoEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
+        //推送金蝶
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                if (CollectionUtils.isNotEmpty(pushTaskList)) {
+                    dmpMqFeign.sendTask(pushTaskList);
+                }
+            }
+        });
         return flag;
     }
 

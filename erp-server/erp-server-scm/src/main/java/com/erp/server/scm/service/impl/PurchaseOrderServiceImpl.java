@@ -1731,7 +1731,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 throw new ServiceException(ApiError.USER_NOT_EXIST);
             }
             entity.setPurchaseUserName(purchaseUser.getUserName());
-
             // 部门
             entity.setPurchaseDeptId(purchaseUser.getDepartmentId());
             entity.setPurchaseDeptName(purchaseUser.getDepartmentName());
