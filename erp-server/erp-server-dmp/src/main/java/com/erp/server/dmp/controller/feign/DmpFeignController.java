@@ -70,7 +70,8 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private CfgApiAuthService cfgApiAuthService;
-
+    @Resource
+    private DmpLogisticsTrackRegisterService dmpLogisticsTrackRegisterService;
 
     @PostMapping("/getShopById")
     public BiShopInfoDTO getShopById(@RequestBody String shopId) {
@@ -272,5 +273,10 @@ public class DmpFeignController extends BaseController {
     public CfgApiAuthEntity getByKey(@RequestBody CfgApiAuthDTO.FeignDTO feignDTO) {
         CfgApiAuthEntity authEntity = cfgApiAuthService.getByKey(feignDTO.getKey(), feignDTO.getApiGroup(), feignDTO.getApiPlatformId());
         return ObjectUtils.isEmpty(authEntity) ? new CfgApiAuthEntity() :authEntity ;
+    }
+
+    @PostMapping("/trackRegister/batchAdd")
+    private void batchAdd(@RequestBody List<DmpLogisticsTrackRegisterDTO.AddDTO> addDTOList){
+        dmpLogisticsTrackRegisterService.batchAdd(addDTOList);
     }
 }

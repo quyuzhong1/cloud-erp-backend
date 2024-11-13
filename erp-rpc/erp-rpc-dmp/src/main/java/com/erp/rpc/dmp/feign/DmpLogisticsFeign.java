@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 
 /**
- * DMP远程调用亚马逊SDK接口
+ * DMP远程调用物流接口
  *
- * @author Jim
+ * @author zdy
  * @since 2023-11-08
  */
-@FeignClient(value = "erp-dmp", path = "/feign/trackRegister", contextId = "DmpLogisticsFeign")
+@FeignClient(value = "erp-dmp", path = "feign/trackRegister", contextId = "DmpLogisticsFeign")
 public interface DmpLogisticsFeign {
 
     @PostMapping("/batchAdd")

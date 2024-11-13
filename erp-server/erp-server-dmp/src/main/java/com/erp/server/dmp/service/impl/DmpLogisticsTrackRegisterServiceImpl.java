@@ -12,7 +12,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,6 +95,13 @@ public class DmpLogisticsTrackRegisterServiceImpl extends SuperServiceImpl<DmpLo
         List<DmpLogisticsTrackRegisterEntity> entityList = DmpTrackConverter.INSTANCE.converterRegisterToEntity(addDTOList);
         entityList.forEach(e ->{
             e.setId(getRecordByTrackNoAndTransportNo(e.getTrackNo(),e.getTransportNo()));
+            e.setTrackNo(StrUtil.isBlank(e.getTrackNo()) ? StrUtil.EMPTY : e.getTrackNo());
+            e.setTransportNo(StrUtil.isBlank(e.getTransportNo()) ? StrUtil.EMPTY : e.getTransportNo());
+            e.setTrackQueryType(StrUtil.isBlank(e.getTrackQueryType()) ? StrUtil.EMPTY : e.getTrackQueryType());
+            e.setChannelId(StrUtil.isBlank(e.getChannelId()) ? StrUtil.EMPTY : e.getChannelId());
+            e.setPlatformOrderNo(StrUtil.isBlank(e.getPlatformOrderNo()) ? StrUtil.EMPTY : e.getPlatformOrderNo());
+            e.setCarrierId(StrUtil.isBlank(e.getCarrierId()) ? StrUtil.EMPTY : e.getCarrierId());
+            e.setTelNumber(StrUtil.isBlank(e.getTelNumber()) ? StrUtil.EMPTY : e.getTelNumber());
         });
         this.saveOrUpdateBatch(entityList);
     }
