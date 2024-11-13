@@ -176,7 +176,8 @@
     <select id="pageAuthShop" resultType="com.erp.model.oms.dto.SkuMappingDTO$SyncPlatformProductView">
         select si.id as shopId ,
                si.name as shopName,
-               si.auth_status as authStatus
+               si.auth_status as authStatus,
+                si.dict_platform as dictPlatform
         from shop_info si
         where
             ${params.sqlMap.default}

@@ -289,4 +289,8 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
 
     PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+    void syncPlatformProduct(List<String> ids);
+
+    void syncWarehouseProduct(List<String> ids);
+
 }

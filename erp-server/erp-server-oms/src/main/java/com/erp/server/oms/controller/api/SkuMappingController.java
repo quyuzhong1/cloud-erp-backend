@@ -295,7 +295,7 @@ public class SkuMappingController extends BaseController {
     }
 
     /**
-     * 同步平台商品view
+     * 平台同步平台商品view
      * @return
      */
     @PostMapping("/syncPlatformProductView")
@@ -305,12 +305,31 @@ public class SkuMappingController extends BaseController {
     }
 
     /**
-     * 同步平台商品view
+     * 仓库同步平台商品view
      * @return
      */
     @PostMapping("/syncWarehouseProductView")
     @WebAdvanceQuery
     public ApiResult<PagingVO<SkuMappingDTO.SyncWarehouseProductView>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
         return success(skuMappingService.syncWarehouseProductView(advanceQueryDTO));
+    }
+    /**
+     * 平台同步平台商品
+     * @return
+     */
+    @PostMapping("/syncPlatformProduct")
+    public ApiResult<Boolean> syncPlatformProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        skuMappingService.syncPlatformProduct(dto.getIds());
+        return success();
+    }
+
+    /**
+     * 仓库同步平台商品
+     * @return
+     */
+    @PostMapping("/syncWarehouseProduct")
+    public ApiResult<Boolean> syncWarehouseProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        skuMappingService.syncWarehouseProduct(dto.getIds());
+        return success();
     }
 }

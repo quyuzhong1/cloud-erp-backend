@@ -1109,6 +1109,11 @@ public class SkuMappingDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
         /**
          * 店铺名称
          */
