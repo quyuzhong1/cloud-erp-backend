@@ -990,6 +990,10 @@ public class SoDetailDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuNo;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo = false;
     }
 
 

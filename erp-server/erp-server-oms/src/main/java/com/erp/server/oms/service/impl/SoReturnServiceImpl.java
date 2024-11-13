@@ -38,6 +38,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -333,7 +334,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         this.save(soReturnEntity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN.getCode(), soReturnEntity.getId(), "新增操作");
-
+        //查询skuNo
         String customerId = dto.getCustomerId();
         List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
         List<String> skuIds = detailList.stream().map(SoReturnDetailDTO.Add::getSkuId).collect(Collectors.toList());
@@ -348,7 +349,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             });
             dto.setDetailList(detailList);
         }
-        //根据customerId和skunos 获取对应的平台sku
+        //根据customerId和sku 获取对应的平台sku
         SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
         skuParamDTO.setSkuIdList(skuIds);
         skuParamDTO.setCutomerId(customerId);
@@ -465,8 +466,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<CustomerAddressEntity> customerAddressList = customerAddressService.lambdaQuery()
                 .eq(CustomerAddressEntity::getMainId, dto.getCustomerId())
                 .eq(CustomerAddressEntity::getDisabled, Boolean.FALSE)
-                .last("order by create_time desc")
+                .last(" order by create_time desc")
                 .list();
+        //客户信息
         if(CollectionUtils.isNotEmpty(customerAddressList)){
             CustomerAddressEntity customerAddressEntity = customerAddressList.stream().filter(v -> v.getIsDefault().equals(Boolean.TRUE)).findFirst().orElse(new CustomerAddressEntity());
             soReturnEntity.setCustomerName(customerInfoEntity.getName());
@@ -474,10 +476,23 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             soReturnEntity.setTelNumber(customerAddressEntity.getTelNumber());
             soReturnEntity.setReceiveAddress(customerAddressEntity.getAddress());
         }
+        //默认B2B单据类型
+        soReturnEntity.setType(OrderTypeEnum.B2B.getCode());
+        //销售组织匹配客户的使用组织 ，销售员匹配客户的销售员，销售部门通过销售员查找所属部门
+        soReturnEntity.setSalesOrgId(customerInfoEntity.getUseOrgId());
+        soReturnEntity.setSalesOrgName(customerInfoEntity.getUseOrgName());
+        soReturnEntity.setSellerId(customerInfoEntity.getSellerId());
+        soReturnEntity.setSellerName(customerInfoEntity.getSellerName());
+        if(StringUtils.isNotBlank(customerInfoEntity.getSellerId())){
+            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(customerInfoEntity.getSellerId());
+            soReturnEntity.setSalesDeptId(deptByUserId.getDepartmentId());
+            soReturnEntity.setSalesDeptName(deptByUserId.getDepartmentName());
+        }
         soReturnEntity.setSourceType(dto.getSourceType());
         soReturnEntity.setWarehouseId(dto.getWarehouseId());
         soReturnEntity.setBillDate(dto.getBillDate());
     }
+
     //生成销售退货单
     private void generateSoReturn(SoReturnDTO.Add dto,SoReturnEntity soReturnEntity){
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());

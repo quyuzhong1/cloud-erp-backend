@@ -115,6 +115,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
     @Override
     public PagingVO<SoReturnNoticeDTO.PagingView> paging(PagingDTO<SoReturnNoticeDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -655,7 +657,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         Boolean flag = Boolean.TRUE;
         List<String> soReturnIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getMainId).distinct().collect(Collectors.toList());
         List<String> soDetailIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getSourceDetailId).distinct().collect(Collectors.toList());
-        long count = soReturnFeign.listByIds(soReturnIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        List<SoReturnEntity> soReturnEntities = soReturnFeign.listByIds(soReturnIdList);
+        long count = soReturnEntities.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92014);
         }
@@ -666,7 +669,15 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //退货单明细
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);
         for (String id : soReturnIdList) {
+            SoReturnEntity soReturnEntity = soReturnEntities.stream().filter(v -> v.getId().equals(id)).findFirst().orElse(new SoReturnEntity());
             List<SoReturnDTO.GenerateSoReturnNoticeView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
+            //查sku对照表
+            List<String> skuIds = viewList.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+            skuParamDTO.setSkuIdList(skuIds);
+            skuParamDTO.setCutomerId(soReturnEntity.getCustomerId());
+            List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
+
             SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
             dto.setSourceId(id);
             dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
@@ -682,9 +693,13 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
                         .filter(v -> v.getId().equals(view.getId()))
                         .findFirst().orElse(new SoReturnDetailEntity());
-                detailAddDTO.setListingId(soReturnDetailEntity.getListingId());
-                detailAddDTO.setPlatformSkuName(soReturnDetailEntity.getPlatformSkuName());
-                detailAddDTO.setPlatformSkuNo(soReturnDetailEntity.getPlatformSkuNo());
+                if(null != soReturnDetailEntity.getPlatformSkuNo()){
+                    detailAddDTO.setPlatformSkuNo(soReturnDetailEntity.getPlatformSkuNo());
+                }else {
+                    //查系统对应表
+                    SkuMappingDTO.ProductSkuInfoDTO productSkuInfoDTO = productSkuInfoList.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuMappingDTO.ProductSkuInfoDTO());
+                    detailAddDTO.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
+                }
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
