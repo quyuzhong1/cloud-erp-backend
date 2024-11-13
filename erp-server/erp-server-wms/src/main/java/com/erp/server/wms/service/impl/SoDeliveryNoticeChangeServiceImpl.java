@@ -405,7 +405,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         for (SoDeliveryNoticeChangeDetailEntity detail : detailList) {
             if(SoDeliveryNoticeChangeTypeEnum.ADD.getCode().equals(detail.getChangeType())){
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = BeanUtil.copyProperties(detail,SoDeliveryNoticeDetailEntity.class);
-                soDeliveryNoticeDetailEntity.setMainId(entity.getId());
+                soDeliveryNoticeDetailEntity.setMainId(soDeliveryNotice.getId());
                 soDeliveryNoticeDetailEntity.setSourceDetailId(detail.getSoDetailId());
                 soDeliveryNoticeDetailEntity.setDeliveryQty(detail.getNewQty());
                 addList.add(soDeliveryNoticeDetailEntity);
