@@ -1089,6 +1089,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(receiptConditionId);
             base.setReceiveConditionName(receiptCondition != null ? receiptCondition.getName() : "");
         }
+        if(StringUtils.isNotBlank(customer.getSellerId())){
+            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(customer.getSellerId());
+            base.setSalesDeptId(deptByUserId.getDepartmentId());
+            base.setSalesDeptName(deptByUserId.getDepartmentName());
+        }
         return base;
     }
 
