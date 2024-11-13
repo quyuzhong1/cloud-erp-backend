@@ -39,10 +39,7 @@ import com.erp.model.mrp.dto.excel.DeliverySuggestImportExcelDTO;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
-import com.erp.model.mrp.enums.CreateTypeEnum;
-import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
-import com.erp.model.mrp.enums.SuggestStatusEnum;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -244,7 +241,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划");
         }
         //非海外平台直接返回空
-        long count = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())).count();
+        long count = deliverySuggestList.stream().filter(obj -> !StrUtil.equals(obj.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())).count();
         if (count > MathUtil.ZERO) {
             return Collections.EMPTY_LIST;
         }
@@ -262,6 +259,10 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> resultList = new ArrayList<>();
         for (CfgRuleWarehouseDetailDTO.ViewDTO viewDTO : viewList) {
+            if (!StrUtil.equals(CfgRuleWarehouseTypeEnum.OVERSEAS.getCode(),viewDTO.getWarehouseType())) {
+                continue;
+            }
+
             //按店铺
             if (StrUtil.equals(viewDTO.getChannelType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())) {
                 long shopCont = viewDTO.getChannelIdList().stream().filter(obj -> shopList.contains(obj)).count();
