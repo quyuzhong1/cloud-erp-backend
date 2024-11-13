@@ -88,6 +88,12 @@ public class SoReturnReceiveDetailEntity extends BaseEntity<SoReturnReceiveDetai
     @TableField("platform_sku_no")
     private String platformSkuNo;
 
+    /**
+     * 是否子sku
+     */
+    @TableField("is_child_sku_no")
+    private String isChildSkuNo;
+
 
     public static final String MAIN_ID = "main_id";
 

@@ -152,7 +152,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 }
                 //获取平台sku
                 String platformSkuNo = soReturnDetailEntities.stream()
-                        .filter(v -> v.getId().equals(detailDto.getSourceDetailId()))
+                        .filter(v -> v.getId().equals(detailDto.getSourceDetailId()) && StringUtils.isNotBlank(v.getPlatformSkuNo()))
                         .map(SoReturnDetailEntity::getPlatformSkuNo).findFirst().orElse(null);
                 detailEntity.setPlatformSkuNo(platformSkuNo);
                 list.add(detailEntity);
@@ -313,7 +313,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 }
                 //获取平台sku
                 String platformSkuNo = soReturnDetailEntities.stream()
-                        .filter(v -> v.getId().equals(detailDto.getSourceDetailId()))
+                        .filter(v -> v.getId().equals(detailDto.getSourceDetailId()) && StringUtils.isNotBlank(v.getPlatformSkuNo()))
                         .map(SoReturnDetailEntity::getPlatformSkuNo).findFirst().orElse("");
                 detailEntity.setPlatformSkuNo(platformSkuNo);
                 list.add(detailEntity);
