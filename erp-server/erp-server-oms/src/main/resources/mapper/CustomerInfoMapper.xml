@@ -98,7 +98,6 @@
         ci.approve_status
         from customer_info ci
         where  ci.is_deleted = FALSE
-        and ci.approve_status = 'approve'
         <if test="params.disabled != null">
             and ci.disabled=#{params.disabled}
         </if>
