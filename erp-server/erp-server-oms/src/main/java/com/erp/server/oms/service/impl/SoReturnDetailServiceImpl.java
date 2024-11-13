@@ -438,7 +438,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<String> parentSkuNoList = new ArrayList<>();
 
         //没销售订单id，只有客户id
-        if(StringUtils.isNotBlank(dto.getCustomerId())){
+        if(StringUtils.isBlank(dto.getCustomerId())){
             throw new ServiceException("客户id不能为空");
         }
         if(CollectionUtils.isEmpty(dto.getPlatformSkuNoList())){
