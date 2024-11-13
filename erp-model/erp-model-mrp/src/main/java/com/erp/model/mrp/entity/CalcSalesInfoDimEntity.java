@@ -1,13 +1,14 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONArray;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -53,22 +54,22 @@ public class CalcSalesInfoDimEntity extends BaseEntity<CalcSalesInfoDimEntity> {
     * 累计销量(去噪后)
     */
     @TableField("sales_qty_json")
-    private String salesQtyJson;
+    private JSONArray salesQtyJson;
     /**
     * 日均销量(去噪后)
     */
     @TableField("avg_sales_qty_json")
-    private String avgSalesQtyJson;
+    private JSONArray avgSalesQtyJson;
     /**
     * 预估销量
     */
     @TableField("month_sales_estimate_qty_json")
-    private String monthSalesEstimateQtyJson;
+    private JSONArray monthSalesEstimateQtyJson;
     /**
     * 真实销量
     */
     @TableField("month_real_sales_qty_json")
-    private String monthRealSalesQtyJson;
+    private JSONArray monthRealSalesQtyJson;
     /**
     * 试算配置id
     */

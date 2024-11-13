@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CalcSalesInfoEstimateEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.mrp.dto.CalcSalesInfoEstimateDTO;
+import com.erp.model.mrp.entity.CalcSalesInfoEstimateEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +16,9 @@ import com.erp.model.mrp.dto.CalcSalesInfoEstimateDTO;
 public interface CalcSalesInfoEstimateService extends SuperService<CalcSalesInfoEstimateEntity> {
 
 
+    /**
+     * 通过试算id查询预估销量
+     * @param ids ids
+     */
+    List<CalcSalesInfoEstimateEntity> listByCalcSalesInfoIds(List<String> ids);
 }

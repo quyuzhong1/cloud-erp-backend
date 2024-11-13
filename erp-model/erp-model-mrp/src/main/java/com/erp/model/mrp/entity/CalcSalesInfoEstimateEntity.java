@@ -1,15 +1,15 @@
 package com.erp.model.mrp.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -35,7 +35,7 @@ public class CalcSalesInfoEstimateEntity extends BaseEntity<CalcSalesInfoEstimat
     * 日期
     */
     @TableField("date")
-    private LocalDateTime date;
+    private LocalDate date;
     /**
     * 销量
     */

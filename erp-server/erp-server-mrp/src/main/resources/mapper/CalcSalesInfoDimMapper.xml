@@ -3,26 +3,26 @@
 <mapper namespace="com.erp.server.mrp.mapper.CalcSalesInfoDimMapper">
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.CalcSalesInfoDimEntity">
-       <result column="id" property="id" />
-       <result column="create_user_id" property="createUserId" />
-       <result column="create_user_name" property="createUserName" />
-       <result column="create_time" property="createTime" />
-       <result column="update_user_id" property="updateUserId" />
-       <result column="update_user_name" property="updateUserName" />
-       <result column="update_time" property="updateTime" />
-       <result column="version" property="version" />
-       <result column="is_deleted" property="isDeleted" />
-       <result column="sku_id" property="skuId" />
-       <result column="sku_no" property="skuNo" />
-       <result column="country" property="country" />
-       <result column="shop_id" property="shopId" />
-       <result column="platform" property="platform" />
-       <result column="sales_qty_json" property="salesQtyJson" />
-       <result column="avg_sales_qty_json" property="avgSalesQtyJson" />
-       <result column="month_sales_estimate_qty_json" property="monthSalesEstimateQtyJson" />
-       <result column="month_real_sales_qty_json" property="monthRealSalesQtyJson" />
-       <result column="cfg_rule_calc_id" property="cfgRuleCalcId" />
-       <result column="remark" property="remark" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="country" property="country"/>
+        <result column="shop_id" property="shopId"/>
+        <result column="platform" property="platform"/>
+        <result column="sales_qty_json" property="salesQtyJson"/>
+        <result column="avg_sales_qty_json" property="avgSalesQtyJson"/>
+        <result column="month_sales_estimate_qty_json" property="monthSalesEstimateQtyJson"/>
+        <result column="month_real_sales_qty_json" property="monthRealSalesQtyJson"/>
+        <result column="cfg_rule_calc_id" property="cfgRuleCalcId"/>
+        <result column="remark" property="remark"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -38,6 +38,25 @@
         is_deleted,
         sku_id, sku_no, country, shop_id, platform, sales_qty_json, avg_sales_qty_json, month_sales_estimate_qty_json, month_real_sales_qty_json, cfg_rule_calc_id, remark
     </sql>
+    <select id="paging" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$PagingView">
+        select id,
+               update_time,
+               sku_id,
+               sku_no,
+               country,
+               shop_id,
+               platform,
+               sales_qty_json,
+               avg_sales_qty_json,
+               month_sales_estimate_qty_json,
+               month_real_sales_qty_json,
+               cfg_rule_calc_id
+        from calc_sales_info_dim
+        where ${params.sqlMap.default}
+          and is_deleted = FALSE
+        order by update_time desc
+
+    </select>
 
 
 </mapper>

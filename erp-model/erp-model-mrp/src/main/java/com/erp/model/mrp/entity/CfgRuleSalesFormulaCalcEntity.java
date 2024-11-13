@@ -1,14 +1,17 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 
 /**
@@ -70,12 +73,15 @@ public class CfgRuleSalesFormulaCalcEntity extends BaseEntity<CfgRuleSalesFormul
     */
     @TableField("fixed_value")
     private Integer fixedValue;
-    /**
-    * 百分比json
-    */
-    @TableField("percent_json")
-    private String percentJson;
 
+    @TableField(value = "percent_json", jdbcType = JdbcType.OTHER)
+    private JSONObject percentJson;
+
+    /**
+     * 百分比对象
+     */
+    @TableField(exist = false)
+    private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
 
     public static final String TYPE = "type";
 

@@ -1,16 +1,16 @@
 package com.erp.model.mrp.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.erp.model.mrp.enums.TimePeriodEnum;
+import lombok.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -21,173 +21,225 @@ import java.util.Map;
  *
  * @author liaohui
  * @since 2024-11-11
-*/
+ */
 @Data
 @NoArgsConstructor
 public class CalcSalesInfoDimDTO implements Serializable {
 
 
+    /**
+     * 高级查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+    }
+
+
+    @Getter
+    @Setter
+    public static class PagingView {
+        /**
+         * 主表id
+         */
+        private String id;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * sku图片
+         */
+        private String skuImgUrl;
+        /**
+         * 品名
+         */
+        private String productName;
+        /**
+         * 国家
+         */
+        private String country;
+        /**
+         * 国家名字
+         */
+        private String countryName;
+        /**
+         * 国家图片
+         */
+        private String countryImgUrl;
+        /**
+         * 店铺
+         */
+        private String shopId;
+        /**
+         * 店铺名字
+         */
+        private String shopName;
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * 销量分析
+         */
+        private SalesEstimateVO salesEstimateVO;
+        /**
+         * 分时段销量
+         */
+        private String salesQtyJson;
+        /**
+         * 分时段销量
+         */
+        private List<SalesVO> salesQtyList;
+        /**
+         * 分时段日均销
+         */
+        private String avgSalesQtyJson;
+        /**
+         * 分时段日均销
+         */
+        private List<SalesVO> avgSalesQtyList;
+        /**
+         * 预估销量
+         */
+        private String monthSalesEstimateQtyJson;
+        /**
+         * 预估销量
+         */
+        private List<SalesVO> monthSalesEstimateQtyList;
+        /**
+         * 真实销量
+         */
+        private String monthRealSalesQtyJson;
+        /**
+         * 真实销量
+         */
+        private List<SalesVO> monthRealSalesQtyList;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        /**
+         * 试算配置id
+         */
+        private String cfgRuleCalcId;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SalesEstimateVO {
+        /**
+         * 日期
+         */
+        private List<LocalDate> date;
+        /**
+         * 数量
+         */
+        private List<BigDecimal> qty;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SalesVO {
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * 数量
+         */
+        private BigDecimal qty;
+    }
 
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * skuId
-        */
+         * skuId
+         */
         private String skuId;
 
         /**
-        * sku
-        */
+         * sku
+         */
         private String skuNo;
 
         /**
-        * 国家
-        */
+         * 国家
+         */
         private String country;
 
         /**
-        * 店铺
-        */
+         * 店铺
+         */
         private String shopId;
 
         /**
-        * 平台
-        */
+         * 平台
+         */
         private String platform;
 
         /**
-        * 累计销量(去噪后)
-        */
+         * 累计销量(去噪后)
+         */
         private String salesQtyJson;
 
         /**
-        * 日均销量(去噪后)
-        */
+         * 日均销量(去噪后)
+         */
         private String avgSalesQtyJson;
 
         /**
-        * 预估销量
-        */
+         * 预估销量
+         */
         private String monthSalesEstimateQtyJson;
 
         /**
-        * 真实销量
-        */
+         * 真实销量
+         */
         private String monthRealSalesQtyJson;
 
         /**
-        * 试算配置id
-        */
+         * 试算配置id
+         */
         private String cfgRuleCalcId;
 
         /**
-        * 备注
-        */
+         * 备注
+         */
         private String remark;
-
-
-    }
-
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
-
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class CommonDTO {
-
-        /**
-        * skuId
-        */
-        @NotBlank(message = "skuId不能为空")
-        @Size(max = 19,message = "skuId最大长度不能超过19位")
-        private String skuId;
-
-        /**
-        * 国家
-        */
-        @NotBlank(message = "国家不能为空")
-        @Size(max = 255,message = "国家最大长度不能超过255位")
-        private String country;
-
-        /**
-        * 店铺
-        */
-        @NotBlank(message = "店铺不能为空")
-        @Size(max = 19,message = "店铺最大长度不能超过19位")
-        private String shopId;
-
-        /**
-        * 平台
-        */
-        @NotBlank(message = "平台不能为空")
-        @Size(max = 255,message = "平台最大长度不能超过255位")
-        private String platform;
-
-        /**
-        * 累计销量(去噪后)
-        */
-        private String salesQtyJson;
-
-        /**
-        * 日均销量(去噪后)
-        */
-        private String avgSalesQtyJson;
-
-        /**
-        * 预估销量
-        */
-        private String monthSalesEstimateQtyJson;
-
-        /**
-        * 真实销量
-        */
-        private String monthRealSalesQtyJson;
-
-        /**
-        * 试算配置id
-        */
-        @NotBlank(message = "试算配置id不能为空")
-        @Size(max = 19,message = "试算配置id最大长度不能超过19位")
-        private String cfgRuleCalcId;
-
-        /**
-        * 备注
-        */
-        private String remark;
-
 
     }
 
@@ -225,6 +277,26 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private List<CfgRuleSalesDenoisingCalcEntity> salesDenoising;
     }
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TimePeriodSalesDTO {
 
+        private TimePeriodEnum code;
+
+        private BigDecimal qty;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TimePeriodSalesEstimateDTO {
+
+        private Integer code;
+
+        private BigDecimal qty;
+    }
 
 }

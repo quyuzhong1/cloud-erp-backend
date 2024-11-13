@@ -1,6 +1,8 @@
 package com.erp.server.mrp.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
 
@@ -22,4 +24,10 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param calcResultList 计算参数
      */
     void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList);
+
+    /**
+     * 分页
+     * @param params 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.PagingView> paging(PagingDTO<CalcSalesInfoDimDTO.PagingParamDTO> params);
 }

@@ -1,25 +1,15 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.entity.CalcSalesInfoEstimateEntity;
 import com.erp.server.mrp.mapper.CalcSalesInfoEstimateMapper;
 import com.erp.server.mrp.service.CalcSalesInfoEstimateService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.mrp.dto.CalcSalesInfoEstimateDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 /**
  * <p>
  * 试算销量预估 服务实现类
@@ -33,4 +23,9 @@ import com.common.core.enums.ApiError;
 public class CalcSalesInfoEstimateServiceImpl extends SuperServiceImpl<CalcSalesInfoEstimateMapper, CalcSalesInfoEstimateEntity> implements CalcSalesInfoEstimateService {
 
 
+    @Override
+    public List<CalcSalesInfoEstimateEntity> listByCalcSalesInfoIds(List<String> ids) {
+        return list(Wrappers.<CalcSalesInfoEstimateEntity>lambdaQuery()
+                .in(CalcSalesInfoEstimateEntity::getCalcSalesInfoDimId, ids));
+    }
 }
