@@ -31,17 +31,17 @@ public class SoReturnNoticeDetailDTO {
          */
         private String sourceDetailId;
         /**
-         * listing_id
-         */
-        private String listingId;
-        /**
          * 平台sku
          */
         private String platformSkuNo;
         /**
-         * 平台sku名称
+         * skuId
          */
-        private String platformSkuName;
+        private String skuId;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
     }
 
     /**
@@ -74,17 +74,17 @@ public class SoReturnNoticeDetailDTO {
          */
         private String sourceDetailId;
         /**
-         * listing_id
-         */
-        private String listingId;
-        /**
          * 平台sku
          */
         private String platformSkuNo;
         /**
-         * 平台sku名称
+         * skuId
          */
-        private String platformSkuName;
+        private String skuId;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
     }
 
     /**

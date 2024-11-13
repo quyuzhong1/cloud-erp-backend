@@ -82,6 +82,11 @@ public class SoReturnNoticeDetailEntity extends BaseEntity<SoReturnNoticeDetailE
      */
     @TableField("platform_sku_no")
     private String platformSkuNo;
+    /**
+     * 是否子sku
+     */
+    @TableField("is_child_sku_no")
+    private Boolean isChildSkuNo;
 
     public static final String MAIN_ID = "main_id";
 
