@@ -395,6 +395,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //产品信息
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
+        //补货计划
+        List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(ids);
+
         long count = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().count();
         //校验
         if (count > MathUtil.ONE) {
@@ -433,6 +436,17 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             //补货计划
             List<DeliverySuggestDTO.DeliverySuggestInfoDTO> suggestInfoList = new ArrayList<>();
             for (DeliverySuggestEntity deliverySuggestEntity : value) {
+                //补货计划
+                WmsDeliveryPlanDetailEntity deliveryPlanDetail = deliveryPlanDetailList.stream().filter(obj -> {
+                    long planCount = BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(),deliverySuggestEntity.getId())).count();
+                    if (planCount > 0) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(deliveryPlanDetail)) {
+                    throw new ServiceException(StrUtil.format("发货建议【{}】已下推发货计划【{}】，不支持再次下推",deliverySuggestEntity.getCode(),deliveryPlanDetail.getCode()));
+                }
                 DeliverySuggestDTO.DeliverySuggestInfoDTO deliverySuggestInfoDTO = new DeliverySuggestDTO.DeliverySuggestInfoDTO();
                 deliverySuggestInfoDTO.setSourceId(deliverySuggestEntity.getId());
                 deliverySuggestInfoDTO.setSourceCode(deliverySuggestEntity.getCode());
