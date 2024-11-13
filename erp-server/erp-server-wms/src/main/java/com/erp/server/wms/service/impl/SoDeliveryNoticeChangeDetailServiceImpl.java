@@ -156,6 +156,9 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
             }
             if(SoDeliveryNoticeChangeTypeEnum.UPDATE.getCode().equals(viewDetail.getChangeType())){
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailEntityList.stream().filter(v->v.getId().equals(viewDetail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("变更明细数据错误"));
+                if(viewDetail.getNewNoticeQty() <= 0){
+                    throw new ServiceException("{} 发货数量必须大于0",viewDetail.getSkuNo());
+                }
                 if(viewDetail.getNewNoticeQty() > soDeliveryNoticeDetailEntity.getDeliveryQty()){
                     continue;
                 }
@@ -163,7 +166,7 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
                     throw new ServiceException("{} 发货数量不能等于原发货数量",viewDetail.getSkuNo());
                 }
                 List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getSourceDetailId())).collect(Collectors.toList());
-                Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
+                Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
                 if(viewDetail.getNewNoticeQty() < pickedQty){
                     throw new ServiceException("【{}】发货数量【{}】不能小于已拣货数量【{}】",viewDetail.getSkuNo(),viewDetail.getNewNoticeQty(),pickedQty);
                 }
@@ -172,7 +175,7 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
             }else if(SoDeliveryNoticeChangeTypeEnum.DELETE.getCode().equals(viewDetail.getChangeType())){
                 List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getSourceDetailId())).collect(Collectors.toList());
                 if(CollectionUtils.isNotEmpty(currentPickList)){
-                    Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
+                    Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
                     throw new ServiceException("【{}】已拣货【{}】，不允许删除",viewDetail.getSkuNo(),pickedQty);
                 }
             }else {
