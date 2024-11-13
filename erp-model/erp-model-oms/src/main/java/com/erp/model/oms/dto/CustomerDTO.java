@@ -194,6 +194,10 @@ public class CustomerDTO implements Serializable {
          * 简称
          */
         private String shortName;
+        /**
+         * 简称
+         */
+        private String approveStatus;
     }
     /**
      * 远程搜索

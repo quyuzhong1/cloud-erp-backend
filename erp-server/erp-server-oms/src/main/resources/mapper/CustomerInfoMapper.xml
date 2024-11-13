@@ -89,14 +89,16 @@
         ORDER BY ca.is_default desc limit 1
     </select>
     <select id="pageSelect" resultType="com.erp.model.oms.dto.CustomerDTO$PageSelectDTO">
-        select id, name,short_name,code from (
+        select id, name,short_name,code , approve_status from (
         select
         ci.id,
         ci.code,
         ci.short_name,
-        ci.name
+        ci.name,
+        ci.approve_status
         from customer_info ci
         where  ci.is_deleted = FALSE
+        and ci.approve_status = 'approve'
         <if test="params.disabled != null">
             and ci.disabled=#{params.disabled}
         </if>
