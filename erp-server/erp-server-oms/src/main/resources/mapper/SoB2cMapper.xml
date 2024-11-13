@@ -110,7 +110,12 @@
         end
         as shippingCostCurrency,
         sb2c.seller_order_code as sellerOrderCode,
-        sb2c.platform_code as platformCode,
+        CASE
+	    WHEN sb2c.merge_platform_code != '' THEN
+		    sb2c.merge_platform_code
+	    ELSE
+		    sb2c.platform_code
+        END AS platformCode,
         sb2c.approve_status as approveStatus,
         sb2c.bill_status as billStatus,
         sb2c.amount as amount,
@@ -168,7 +173,9 @@
         sb2cr.post_code as postCode,
         sb2cr.receiver_tax_no as receiverTaxNo,
         si.country_name as countryName,
-        sbrc.categoryNames
+        sbrc.categoryNames,
+        sbd.create_time as createDeliveryTime,
+		sbd.finish_print_time as finishPrintTime
     </sql>
     <update id="updateBatchApproveById">
         <foreach collection="updateList" item="item" index="index" separator=";">
@@ -827,6 +834,7 @@
         left join (
             select so_b2c_id,array_to_string(array_agg(category_name), ',') as categoryNames from so_b2c_ref_category where is_deleted = false group by so_b2c_id
         ) sbrc on sb2c.id = sbrc.so_b2c_id
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false
