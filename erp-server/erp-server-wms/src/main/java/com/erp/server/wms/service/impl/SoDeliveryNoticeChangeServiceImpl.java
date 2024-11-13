@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
@@ -382,12 +383,19 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 || soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()))) {
             throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
         }
+
+        //查询发货通知单明细数据
+        List<SoDeliveryNoticeDetailEntity> oldDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainId(soDeliveryNoticeEntity.getId());
+        if (CollectionUtils.isEmpty(oldDeliveryNoticeDetailList)) {
+            throw new ServiceException("未找到发货通知单明细数据");
+        }
+
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         List<SoDeliveryNoticeChangeDetailEntity> detailList = detailService.listByMainId(entity.getId());
         changeNotice(entity,detailList);
         //虚拟库存变更
-        virtualInventoryChange(entity,detailList);
+        virtualInventoryChange(entity,detailList,oldDeliveryNoticeDetailList);
         return Boolean.TRUE;
     }
 
@@ -398,7 +406,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
         SoDeliveryNoticeEntity soDeliveryNotice = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainId(soDeliveryNotice.getId());
-
+        List<SoDeliveryNoticeChangeDetailEntity> sourceDetailList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> addList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> updateList = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> deleteList = new ArrayList<>();
@@ -412,7 +420,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 soDeliveryNoticeDetailEntity.setMainId(soDeliveryNotice.getId());
                 soDeliveryNoticeDetailEntity.setSourceDetailId(detail.getSoDetailId());
                 soDeliveryNoticeDetailEntity.setDeliveryQty(detail.getNewQty());
+                soDeliveryNoticeDetailEntity.setLastPickingQty(detail.getNewQty());
+                soDeliveryNoticeDetailEntity.setId(IdWorker.getIdStr());
                 addList.add(soDeliveryNoticeDetailEntity);
+                //发货通知变更单明细
+                detail.setSourceDetailId(soDeliveryNoticeDetailEntity.getId());
+                sourceDetailList.add(detail);
             }else if (SoDeliveryNoticeChangeTypeEnum.UPDATE.getCode().equals(detail.getChangeType())){
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到发货通知单明细数据",detail.getSkuNo()));
                 soDeliveryNoticeDetailEntity.setChangeBeforeSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
@@ -420,6 +433,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 soDeliveryNoticeDetailEntity.setSkuNo(detail.getSkuNo());
                 soDeliveryNoticeDetailEntity.setChangeBeforeQty(soDeliveryNoticeDetailEntity.getDeliveryQty());
                 soDeliveryNoticeDetailEntity.setDeliveryQty(detail.getNewQty());
+                soDeliveryNoticeDetailEntity.setLastPickingQty(detail.getNewQty());
                 updateList.add(soDeliveryNoticeDetailEntity);
             }else if (SoDeliveryNoticeChangeTypeEnum.DELETE.getCode().equals(detail.getChangeType())){
                 SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = soDeliveryNoticeDetailList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到发货通知单明细数据",detail.getSkuNo()));
@@ -427,8 +441,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             }
         }
         soDeliveryNoticeService.updateByNoticeChange(addList,updateList,deleteList);
-    }
 
+        //新增的数据回填销售通知变更单明细
+        if(CollectionUtils.isNotEmpty(sourceDetailList)) {
+            detailService.updateBatchById(sourceDetailList);
+        }
+    }
 
     @Override
     public PagingVO<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaging(PagingDTO<SoDeliveryNoticeChangeDTO.ProductAddDTO> pagingParamDTO) {
@@ -694,7 +712,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
      * @param entity
      * @param detailList
      */
-    private void virtualInventoryChange (SoDeliveryNoticeChangeEntity entity,List<SoDeliveryNoticeChangeDetailEntity> detailList) {
+    private void virtualInventoryChange (SoDeliveryNoticeChangeEntity entity,List<SoDeliveryNoticeChangeDetailEntity> detailList,List<SoDeliveryNoticeDetailEntity> oldDeliveryNoticeDetailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -719,8 +737,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             return;
         }
         //销售订单明细
-        List<String> sourceDetailIdList = soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIdList);
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
         if (CollectionUtils.isEmpty(soDetailList)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
@@ -758,18 +775,29 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
          */
 
         for (SoDeliveryNoticeChangeDetailEntity changeDetailEntity : detailList) {
+
             //销售通知单明细
             SoDeliveryNoticeDetailEntity detailEntity = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), changeDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            //删除类型的明细需要从旧数据中查关联
+            if (StrUtil.equals(SoDeliveryNoticeChangeTypeEnum.DELETE.getCode(),changeDetailEntity.getChangeType())) {
+                detailEntity = oldDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), changeDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            }
+
             if (ObjectUtil.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST);
             }
             //销售订单明细
-            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            SoDeliveryNoticeDetailEntity finalDetailEntity = detailEntity;
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), finalDetailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
+            //删除类型时新数量设置为0
+            Integer newQty = StrUtil.equals(SoDeliveryNoticeChangeTypeEnum.DELETE.getCode(),changeDetailEntity.getChangeType())
+                    ? MathUtil.ZERO : changeDetailEntity.getNewQty();
+
             //差异数量
-            Integer diffQty = changeDetailEntity.getNewQty() - changeDetailEntity.getOriginQty();
+            Integer diffQty = newQty -  changeDetailEntity.getOriginQty();
             //销售订单追加冻结
             handleSoParam(soInfoEntity, soDetailEntity,soParamList,diffQty);
             //销售订单扣减冻结
@@ -855,6 +883,10 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         outInStockDTO.setQty(diffQty - soDetailEntity.getFrozenQty());
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+        //库存数量为0不添加
+        if (MathUtil.compareTo(outInStockDTO.getQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+            return;
+        }
         soParamList.add(outInStockDTO);
     }
 
@@ -882,6 +914,10 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         outInStockDTO.setQty(diffQty);
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
+        //库存数量为0不添加
+        if (MathUtil.compareTo(outInStockDTO.getQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+            return;
+        }
         paramList.add(outInStockDTO);
     }
 
@@ -909,6 +945,10 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         outInStockDTO.setQty(Math.abs(diffQty));
         outInStockDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soDeliveryNoticeEntity.getVirtualWarehouseId());
+        //库存数量为0不添加
+        if (MathUtil.compareTo(outInStockDTO.getQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+            return;
+        }
         if (diffQty > MathUtil.ZERO) {
             addNoticeParamList.add(outInStockDTO);
         } else {
