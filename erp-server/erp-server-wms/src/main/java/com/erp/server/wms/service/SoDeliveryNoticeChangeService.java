@@ -139,4 +139,6 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
     BatchResultDTO invalid(String id);
 
     List<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaste(SoDeliveryNoticeChangeDTO.ProductAddDTO dto);
+
+    List<SoDeliveryNoticeChangeEntity> listNoApproveByNoticeId(String noticeId);
 }

@@ -236,9 +236,10 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             throw new ServiceException("未找到发货通知变更单数据");
         }
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
-        if(!(soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
-        || soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus()))) {
-            throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核时允许变更",soDeliveryNoticeEntity.getCode());
+        if(!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
+                || ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
+                || ApproveStatusEnum.REJECT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
+            throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核,审核不通过时允许提交",soDeliveryNoticeEntity.getCode());
         }
         validateSubmit(entity);
         SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO(id,new ArrayList<>(),"edit"));
@@ -284,6 +285,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
+        }
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
+        if(!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
+                || ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
+                || ApproveStatusEnum.REJECT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
+            throw new ServiceException("【发货通知单】{} 状态只有待提交、待审核,审核不通过时允许审核",soDeliveryNoticeEntity.getCode());
         }
         SoDeliveryNoticeChangeDTO.ViewDTO viewDTO = this.view(new SoDeliveryNoticeChangeDTO.ViewIdDTO(entity.getId(),new ArrayList<>(),"edit"));
         detailService.checkData(viewDTO.getViewDetailList());
@@ -493,6 +500,14 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     }
 
     @Override
+    public List<SoDeliveryNoticeChangeEntity> listNoApproveByNoticeId(String noticeId) {
+        if(StringUtils.isBlank(noticeId)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().eq(SoDeliveryNoticeChangeEntity::getSourceId, noticeId).ne(SoDeliveryNoticeChangeEntity::getSourceId, noticeId).ne(SoDeliveryNoticeChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()).eq(SoDeliveryNoticeChangeEntity::getInvalidStatus,false).list();
+    }
+
+    @Override
     public SoDeliveryNoticeChangeDTO.ViewDTO view(SoDeliveryNoticeChangeDTO.ViewIdDTO viewIdDTO) {
         String type = viewIdDTO.getType();
         String id = viewIdDTO.getId();
@@ -500,14 +515,14 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         SoDeliveryNoticeEntity soDeliveryNoticeEntity;
         if("pushDown".equals(type)){
             soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
+            if(!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
+                    || ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
+                    || ApproveStatusEnum.REJECT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
+                throw new ServiceException("只有待提交、待审核,审核不通过状态允许下推");
+            }
         }else{
             soDeliveryNoticeChangeEntity = this.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知变更单数据"));
             soDeliveryNoticeEntity = soDeliveryNoticeService.getByIdOpt(soDeliveryNoticeChangeEntity.getSourceId()).orElseThrow(() -> new ServiceException("未找到发货通知单数据"));
-        }
-        if(!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
-                || ApproveStatusEnum.APPROVE_ING.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus())
-                || ApproveStatusEnum.REJECT.getStatus().equals(soDeliveryNoticeEntity.getApproveStatus()))){
-            throw new ServiceException("只有待提交、待审核,审核不通过状态允许下推");
         }
 
         SoDeliveryNoticeDTO.View noticeView = soDeliveryNoticeService.view(soDeliveryNoticeEntity.getId());
