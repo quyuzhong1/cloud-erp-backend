@@ -159,9 +159,10 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         detailService.update(updateDTO,soDeliveryNoticeChangeEntity);
 
         // 记录主单操作日志
-        log.info("编辑 开始记录发货通知变更单日志数据，单号：【{}】", soDeliveryNoticeChangeEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soDeliveryNoticeChangeEntity.getCode(), "发货通知变更单");
-        operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeChangeEntity, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), soDeliveryNoticeChangeEntity.getId(), msg);
+        if(!old.getChangeReason().equals(updateDTO.getChangeReason())){
+            String remarkMsg = StrUtil.format("备注由【{}】修改为【{}】", old.getChangeReason(), updateDTO.getChangeReason());
+            operateLogService.addModuleOperateLog(remarkMsg,  ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), soDeliveryNoticeChangeEntity.getId(), "编辑操作");
+        }
         return Boolean.TRUE;
     }
 

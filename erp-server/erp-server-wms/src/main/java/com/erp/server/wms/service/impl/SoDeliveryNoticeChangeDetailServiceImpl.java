@@ -156,6 +156,14 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
         }
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listByIds(noticeDetailIds);
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(noticeDetailIds);
+        Set<String> soDetailIdSet = viewDetailList.stream()
+                .map(SoDeliveryNoticeChangeDTO.ViewDetail::getSoDetailId)
+                .collect(Collectors.toSet());
+
+        // 如果 Set 的大小小于 List 的大小，说明存在重复的 soDetailId
+        if(soDetailIdSet.size() < viewDetailList.size()){
+            throw new ServiceException("存在重复的明细");
+        }
         for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : viewDetailList) {
             if(Objects.nonNull(viewDetail.getNewNoticeQty()) && viewDetail.getNewNoticeQty() > viewDetail.getMaxCanChangeQty()){
                 throw new ServiceException("{} 变更数量不能大于可变更数量",viewDetail.getSkuNo());
