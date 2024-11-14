@@ -1,8 +1,11 @@
 package com.erp.sdk.fs.service;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
 import com.common.core.enums.ApiError;
@@ -41,7 +44,9 @@ public class FsService {
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
 
-
+    private final static String CONTENT = "content";
+    private final static String AUTHORIZATION = "Authorization";
+    private final static String CONTENT_TYPE = "Content-Type";
     /**
      * 根据code 获取飞书用户信息
      *
@@ -71,8 +76,8 @@ public class FsService {
                     String accessToken = tokenMap.get("access_token").toString();
                     String authorization = LoginConstant.FS_AUTHORIZATION + accessToken;
                     Map<String, String> headerMap = new HashMap<>();
-                    headerMap.put("Authorization", authorization);
-                    headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
+                    headerMap.put(AUTHORIZATION, authorization);
+                    headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
                     String userStr = OkHttpUtils.doGet(ThirdConstants.FS_USER_URL, null, headerMap);
                     Map<String, Object> userMap = JSONObject.parseObject(userStr, Map.class);
                     return userMap;
@@ -216,9 +221,9 @@ public class FsService {
             default:
                 content = JSONUtil.toJsonStr(getTextMessageMap(textContent));
         }
-        bodyMap.put("content", content);
+        bodyMap.put(CONTENT, content);
         String resultStr = OkHttpUtils.doPostJson(ThirdConstants.LARK_SEND_MESSAGE_URL, bodyMap, headerMap);
-        LarkResultDTO resultMap = JSONObject.parseObject(resultStr, LarkResultDTO.class);
+        LarkResultDTO resultMap = JSONUtil.toBean(resultStr, LarkResultDTO.class);
 
         if(null == resultMap || 0 != resultMap.getCode()){
             log.error("批量发送飞书消息失败 result ={}", JSONUtil.toJsonStr(resultMap));
@@ -228,7 +233,7 @@ public class FsService {
     }
 
     public LarkResultDTO pressMessage(String messageId, List<String> unionIds) {
-        if(StrUtil.isBlank(messageId) || CollectionUtil.isEmpty(unionIds)){
+        if(CharSequenceUtil.isBlank(messageId) || CollUtil.isEmpty(unionIds)){
             throw new ServiceException(ApiError.ERROR_MSG_ID_OR_UNION_ID_IS_NULL);
         }
         //获取飞书的应用token
@@ -245,7 +250,7 @@ public class FsService {
         paramMap.put("user_id_list", unionIds);
         RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(paramMap));
         Request request = new Request.Builder()
-                .url(StrUtil.format(ThirdConstants.LARK_PRESS_URL,messageId))
+                .url(CharSequenceUtil.format(ThirdConstants.LARK_PRESS_URL,messageId))
                 .method("PATCH", body)
                 .addHeader("Content-Type", ThirdConstants.CONTENT_TYPE)
                 .addHeader("Authorization", authorization)
@@ -253,7 +258,7 @@ public class FsService {
         LarkResultDTO larkResultDTO = new LarkResultDTO();
         try {
             Response response = client.newCall(request).execute();
-            larkResultDTO = JSONObject.parseObject(response.body().string(), LarkResultDTO.class);
+            larkResultDTO = JSON.parseObject(response.body().string(), LarkResultDTO.class);
             if(0 != larkResultDTO.getCode()){
                 log.error(StrUtil.format("发送应用内加急失败！param={}, messageId={},返回数据larkResultDTO={}",JSONUtil.toJsonStr(paramMap), messageId, JSONUtil.toJsonStr(larkResultDTO)));
                 throw new RuntimeException(StrUtil.format("发送应用内加急失败！param={}, messageId={},返回数据larkResultDTO={}",JSONUtil.toJsonStr(paramMap), messageId, JSONUtil.toJsonStr(larkResultDTO)));
@@ -274,7 +279,7 @@ public class FsService {
      * @author yl
      * @date 2022-11-18 12:31
      */
-    public Map<String, Object> getCardMessageMap(String messageContent, String productContent, String url,Boolean isPress) {
+    public Map<String, Object> getCardMessageMap(String messageContent, String productContent, String url,boolean isPress) {
         Map<String, Object> cardMap = new LinkedHashMap<>();
         Map<String, Boolean> configMap = new HashMap<>();
         configMap.put("wide_screen_mode", true);
@@ -285,13 +290,13 @@ public class FsService {
         titleMap.put("content", messageContent);
         headerMap.put("title", titleMap);
         cardMap.put("header", headerMap);
-        List<Map> elements = new ArrayList<>();
+        List<Map<String, Object>> elements = new ArrayList<>();
         Map<String, Object> fieldAllMap = new LinkedHashMap<>();
         fieldAllMap.put("tag", "div");
-        List<Map> fieldMapList = new ArrayList<>();
+        List<Map<String, Object>> fieldMapList = new ArrayList<>();
         Map<String, Object> fieldMap = new LinkedHashMap<>();
         fieldMap.put("is_short", true);
-        Map textMap = new HashMap();
+        Map<String, Object> textMap = new HashMap<>();
         textMap.put("tag", "lark_md");
         textMap.put("content", productContent);
         fieldMap.put("text", textMap);
@@ -302,7 +307,7 @@ public class FsService {
             Map<String, Object> actionAllMap = new LinkedHashMap<>();
             actionAllMap.put("tag", "action");
             actionAllMap.put("layout", "bisected");
-            List<Map> actionList = new ArrayList<>();
+            List<Map<String, Object>> actionList = new ArrayList<>();
             Map<String, Object> actionMap = new LinkedHashMap<>();
             actionMap.put("tag", "button");
             actionMap.put("url", url);
