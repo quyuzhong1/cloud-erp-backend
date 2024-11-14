@@ -200,6 +200,9 @@
         ) wls
 
     </select>
+    <select id="getWarnReportByChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$WarnReportDTO">
+
+    </select>
 
 
 </mapper>

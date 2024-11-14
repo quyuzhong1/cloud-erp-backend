@@ -3,6 +3,7 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -229,4 +230,10 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return
      */
     List<LogisticsChannelEntity> listByMainId(String id);
+
+    /**
+     * 根据渠道汇总时间段内未更新运单号记录
+     * @return
+     */
+    List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(LogisticsBillDetailQueryDTO query);
 }
