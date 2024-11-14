@@ -272,14 +272,15 @@ public class ReportsApiTest {
         // 亚马逊物流管理库存
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.c92cf4e4-7473-47c1-8bf5-7d201a147570.T157CJXNIMCGN5.2650";
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.adbe9060-0721-4959-9edb-6e51b38efd5b.T22ITFOKN9MSCT.84700";
-        String reportDocumentId = "amzn1.spdoc.1.4.eu.625d7d85-1a85-4a6b-8ada-59f8d5760a7f.T1UGB3IC1EZX9V.2650";
+//        String reportDocumentId = "amzn1.spdoc.1.4.fe.7f7d9dae-019a-4785-825d-2d6f5bd0a2cd.T29ETTNR9WI8F9.401";
+        String reportDocumentId = "amzn1.spdoc.1.4.na.50288161-7732-4368-b671-2e5782c97268.T21BZKD35Q9EIF.2602";
         // 亚马逊物流管理库存状况报告
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.534c50b5-5a71-41e5-ab3f-8b569d68a0e0.T2OKFOUSONXBF0.19600";
         // 亚马逊物流预留库存报告
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.3f9ae729-3c81-4962-8337-70773b6650ed.T23ILE2UF410OH.2681";
         // 沙箱环境参数
 //        String reportDocumentId = "0356cf79-b8b0-4226-b4b9-0ee058ea5760";
-        String shopId = "1735509194041200643";
+        String shopId = "1799018226391191553";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -373,11 +374,13 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_ALL_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_MERCHANT_LISTINGS_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
-        List<String> reportTypes = Arrays.asList("GET_FBA_INVENTORY_PLANNING_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE");
+//        List<String> reportTypes = Arrays.asList("GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA");
-//        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_ALL_INVENTORY_DATA");
+        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
+//        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Stream.of(AmazonReportRecordTypeEnum.values())
 //                .map(AmazonReportRecordTypeEnum::getRecordType)
@@ -385,10 +388,10 @@ public class ReportsApiTest {
         List<String> processingStatuses = Arrays.asList(Report.ProcessingStatusEnum.DONE.getValue());
 //        List<String> processingStatuses = null;
 //        List<String> marketplaceIds = Arrays.asList("A1VC38T7YXB528");
-        ;
-        Integer pageSize = 20;
-        String createdSince = null;
-        String createdUntil = null;
+
+        Integer pageSize = 50;
+        String createdSince = "2024-10-18T00:00Z";
+        String createdUntil = "2024-10-25T00:00Z";;
         String nextToken = null;
 //        String shopId = "1734464159535337474";
 //        String shopId = "1734478618723094529";
@@ -396,7 +399,7 @@ public class ReportsApiTest {
 //        String shopId = "1738050804738166786";
 //        String shopId = "1739563826220634113";
 //        String shopId = "1736695621504471042";
-        String shopId = "1735553314990329858";
+        String shopId = "1735515751097307138";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -404,9 +407,9 @@ public class ReportsApiTest {
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 //        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.IN;
-        List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
+//        List<String> marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
 //        List<String> marketplaceIds = Arrays.asList("AMEN7PMS3EDWL");
-//        List<String> marketplaceIds = null;
+        List<String> marketplaceIds = null;
         ReportsApi api = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
         GetReportsResponse response = api.getReports(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
         System.out.println("getReportsTest");
@@ -430,10 +433,13 @@ public class ReportsApiTest {
 //        String reportDocumentId = "amzn1.spdoc.1.4.na.432063e2-6fd9-4f35-99ae-75e9e4e0adee.T11BXPXCLBFLJA.2511";
 //        String shopId = "1739563826220634113";
 //        String reportDocumentId = "amzn1.spdoc.1.4.fe.39848124-e707-4b55-8b93-5fb7060f5c21.T3U2NV4DQ1QPED.2651";
-        String reportDocumentId = "amzn1.spdoc.1.4.fe.39fb9ac6-4e86-497c-8a01-0c70e2099c84.T2M4IOECDJE0M0.2650";
+//        String reportDocumentId = "amzn1.spdoc.1.4.fe.39fb9ac6-4e86-497c-8a01-0c70e2099c84.T2M4IOECDJE0M0.2650";
+//        String reportDocumentId = "amzn1.spdoc.1.4.fe.7f7d9dae-019a-4785-825d-2d6f5bd0a2cd.T29ETTNR9WI8F9.401";
+        String reportDocumentId = "amzn1.spdoc.1.4.eu.f1939342-e914-40bf-bf7f-563e268c0344.T35QYWQGCEZSAF.2650";
 //        String shopId = "1739494918432231426";
 //        String shopId = "1736695621504471042";
-        String shopId = "1735553314990329858";
+//        String shopId = "1735553314990329858";
+        String shopId = "1735512797405515781";
 
 
         // 获取店铺授权信息
@@ -450,6 +456,7 @@ public class ReportsApiTest {
 //        String recordType= AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA.getRecordType();
 //        String recordType= "GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA";
         String recordType= "GET_FBA_MYI_ALL_INVENTORY_DATA";
+//        String recordType= "GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
 //        Map<String, String> configMap = cfgAmzReportFieldService.mayByReportType(recordTypeEnum.getRecordType());
         String compressionAlgorithm = null == reportDocument.getCompressionAlgorithm() ? "" : reportDocument.getCompressionAlgorithm().getValue();

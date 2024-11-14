@@ -39,12 +39,14 @@ public interface LogisticsBillDetailMapper extends BaseMapper<LogisticsBillDetai
 
     /**
      * 用于更新使用运单号做物流轨迹查询数据更新
+     *
      * @param trackNoList
      * @param aTrue
      * @param trackStatus
      * @param signTime
+     * @param content
      */
-    void updateTransportNo(@Param("trackNoList") List<String> trackNoList, @Param("aTrue") Boolean aTrue, @Param("trackStatus") String trackStatus, @Param("signTime") LocalDateTime signTime, @Param("trackTime") LocalDateTime trackTime);
+    void updateTransportNo(@Param("trackNoList") List<String> trackNoList, @Param("aTrue") Boolean aTrue, @Param("trackStatus") String trackStatus, @Param("signTime") LocalDateTime signTime, @Param("trackTime") LocalDateTime trackTime, @Param("content") String content);
 
     /**
      * 根据运单号更新注册状态

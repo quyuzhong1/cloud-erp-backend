@@ -1342,4 +1342,23 @@ public class FirstMileDeliveryDTO implements Serializable {
          */
         private String overseasWarehouseCode;
     }
+
+
+    @Getter
+    @Setter
+    public static class FbaShipmentDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
+    }
 }

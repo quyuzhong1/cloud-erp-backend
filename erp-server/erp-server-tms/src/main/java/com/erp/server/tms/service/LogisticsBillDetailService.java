@@ -98,13 +98,6 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query);
 
     /**
-     * 根据运单号查询明细记录
-     * @param trackNo
-     * @return
-     */
-    List<LogisticsBillDetailEntity> getDetailByTrackNo(String trackNo);
-
-    /**
      * 更改运输单号
      * @param billDTO
      * @return
@@ -128,13 +121,6 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      */
     void updateLogisticsBillDetailByTrackNo(LogisticsTrackEntity max);
 
-    /**
-     * 更新跟踪号信息
-     * @param trackNo
-     * @param status
-     * @param signTime
-     */
-    void updateTrackStatus(String trackNo, String status, LocalDateTime signTime, LocalDateTime trackTime);
 
     /**
      * 批量更新跟踪号信息

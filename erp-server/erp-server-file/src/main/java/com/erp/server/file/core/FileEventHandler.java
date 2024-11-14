@@ -35,4 +35,8 @@ public interface FileEventHandler {
     default List<Converter<?>> getConverter() {
         return Collections.emptyList();
     }
+
+    default List<String> getSheetName() {
+        return Collections.emptyList();
+    }
 }

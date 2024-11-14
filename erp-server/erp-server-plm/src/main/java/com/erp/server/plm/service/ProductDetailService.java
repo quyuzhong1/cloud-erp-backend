@@ -817,6 +817,21 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(List<String> skuIds);
 
     /**
+     * 获取已审核，已上市数据
+     */
+    List<SkuVO> listApproveAndListingSku();
+
+    /**
+     * 获取skuId
+     */
+    List<String> getCategoryByQuerySql(String compareCodeSplicingValueSql);
+    /**
+     * 获取skuId
+     */
+    List<String> getBrandByQuerySql(String compareCodeSplicingValueSql);
+
+
+    /**
      * 打印EAN
      * @param printEanDTO 打印参数
      * @param response    响应
