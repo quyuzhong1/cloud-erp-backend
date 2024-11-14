@@ -2799,6 +2799,16 @@ public class SoB2cDTO implements Serializable {
          */
         private LocalDate soOutStockTime;
 
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
+
         //get方法
         private String getLengthStr () {
             return this.length.stripTrailingZeros().toPlainString();
