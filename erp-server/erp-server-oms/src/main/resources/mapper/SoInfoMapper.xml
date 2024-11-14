@@ -48,7 +48,7 @@
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
         left join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
-        <if test="params.fieldList != null and params.fieldList.size > 0 and ( params.fieldList.contains('isVirtualScarce') or params.fieldList.contains('isVirtualOutStock') )">
+        <if test="params.fieldList != null and params.fieldList.size > 0 and params.fieldList.contains('isVirtualScarce')">
             left join (
             select sum(sdnd.delivery_qty) as deliveryQty ,sdnd.source_detail_id  from so_delivery_notice sdn left join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
             where sdn.is_deleted = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
