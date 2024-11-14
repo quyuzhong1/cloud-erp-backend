@@ -1,18 +1,16 @@
 package com.erp.model.oms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 /**
  * <p>
@@ -20,7 +18,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author Lambda
- * @since 2023-08-25
+ * @since 2024-09-12
  */
 @Getter
 @Setter
@@ -118,6 +116,12 @@ public class RefundOrderEntity extends BaseEntity<RefundOrderEntity> {
     @TableField("platform_create_time")
     private LocalDateTime platformCreateTime;
 
+    /**
+     * 退款金额人名币
+     */
+    @TableField("refund_cny_amount")
+    private BigDecimal refundCnyAmount;
+
 
     public static final String CODE = "code";
 
@@ -142,6 +146,8 @@ public class RefundOrderEntity extends BaseEntity<RefundOrderEntity> {
     public static final String REASON = "reason";
 
     public static final String REFUND_TIME = "refund_time";
+
+    public static final String REFUND_CNY_AMOUNT = "refund_cny_amount";
 
     @Override
     public Serializable pkVal() {

@@ -145,4 +145,11 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/checkAndSaveAllAmazonToken")
     Boolean checkAndSaveAllAmazonToken(@RequestBody @Validated AmazonTokenUpdateDTO updateDTO);
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    @GetMapping("feign/shop/listShopInfoByPlatform")
+    List<String> listShopInfoByPlatform(@RequestParam String platform);
 }

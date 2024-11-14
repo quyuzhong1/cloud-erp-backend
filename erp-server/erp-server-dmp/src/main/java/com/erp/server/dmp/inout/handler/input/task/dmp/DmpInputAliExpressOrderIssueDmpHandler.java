@@ -50,7 +50,7 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 					if(CollUtil.isEmpty(list)) {
 						throw new ServiceException("所有退货订单未查询到订单数据");
 					}
-					orderIdMaps = list.stream().collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, DmpSoInfoEntity::getId));
+					orderIdMaps = list.stream().collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, DmpSoInfoEntity::getId , (v1 , v2) -> v1));
 				}
 				for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 					List<TreeMap<String, Object>> value = dmpInputDataDmpRelationMap.getValue();

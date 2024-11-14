@@ -98,6 +98,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Autowired
     private LogisticsSupplierService logisticsSupplierService;
     @Autowired
+    private LogisticsAuthService logisticsAuthService;
+    @Autowired
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
     @Autowired
     private TransferLogisticsChannelService transferLogisticsChannelService;
@@ -400,7 +402,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         List<String> soIdList = transferDeclareDetailList.stream().map(TransferDeclareDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIdList);
         List<PackageForecastDTO.ExportViewDTO> exportViewDTOS = packageForecastFeign.listPackageForecastBySoIdList(soIdList);
-
+        String platform = "";
+        if(StringUtils.isNotBlank(transferDeclareEntity.getDeliveryLogisticsSupplierId())){
+            LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthService.getAuthBySupplierId(transferDeclareEntity.getDeliveryLogisticsSupplierId());
+            if(Objects.nonNull(authDTO)){
+                platform = authDTO.getLogisticsPlatform();
+            }
+        }
         //下单
         for (TransferDeclareDetailEntity transferDeclareDetailEntity : transferDeclareDetailList) {
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(e -> e.getId().equals(transferDeclareDetailEntity.getSoId())).findFirst().orElse(null);
@@ -410,7 +418,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
                 if (transferDeclareDetailEntity.getWeightUnit().equals("g") && transferDeclareDetailEntity.getPackageWeight().compareTo(BigDecimal.ZERO) != 0) {
                     maxWeight = transferDeclareDetailEntity.getPackageWeight().divide(BigDecimal.valueOf(1000));
                 }
-
+                if(LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(platform) && StringUtils.isBlank(packageForecastDTO.getTransportNo())){
+                    throw new ServiceException("物流物流中转报关必须要有4PX单号");
+                }
                 TransferLogisticsCreateInboundReq.ReceiveItem receiveItem = TransferLogisticsCreateInboundReq.ReceiveItem.builder()
                         .orderCode(soB2cEntity.getShippingOrderNo())
                         .packNum(StringUtils.isBlank(packageForecastDTO.getTransportNo())?packageForecastDTO.getCode():packageForecastDTO.getTransportNo())

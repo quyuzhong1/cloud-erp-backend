@@ -36,8 +36,10 @@ public enum FieldFormatPatternTypeEnum  {
     ENUM_HTML("HTML", "HTML","<(/S*?)[^>]*>.*?<//1>|<.*? />"),
     ENUM_IP("IP", "IP","/d+/./d+/./d+/./d+"),
     ENUM_URL ("url","网址","(http|ftp|https):\\/\\/[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&:/~\\+#]*[\\w\\-\\@?^=%&/~\\+#])?|[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&:/~\\+#]*[\\w\\-\\@?^=%&/~\\+#])"),
-    ENUM_BANK_CARD_NO("bankCardNo","银行卡号","[1-9]/d{16}(?!/d)|");
-
+    ENUM_BANK_CARD_NO("bankCardNo","银行卡号","[1-9]/d{16}(?!/d)|"),
+    ENUM_YEAR_DAYS("year_days", "365天","^([1-9]|([1-9][0-9])|([1-2][0-9][0-9])|([3][0-6][0-5])|([0]{1}))$"),
+    ENUM_NUMBER_99("number_99", "0-99（保留两位小数）","^([1-9]|([1-9]{1}[0-9]{1}))(\\.(\\d){0,2})?$"),
+    ENUM_NAME("name", "名称","^[a-zA-Z0-9\\u4e00-\\u9fa5]+$");
 
 
     public static final String BANK_CARD_NO = "bankCardNo";
@@ -52,6 +54,7 @@ public enum FieldFormatPatternTypeEnum  {
     public static final String AMOUNT2 = "amount2";
     public static final String AMOUNT4 = "amount4";
     public static final String AMOUNT6 = "amount6";
+    public static final String AMOUNT_DECIMAL = "amount_decimal";
     public static final String DATE = "date";
     public static final String DATE_S = "dates";
     public static final String DATETIME = "date_time";
@@ -66,6 +69,9 @@ public enum FieldFormatPatternTypeEnum  {
     public static final String ID = "ID";
     public static final String HTML= "HTML";
     public static final String IP = "IP";
+    public static final String YEAR_DAYS = "year_days";
+    public static final String NUMBER_99 = "number_99";
+    public static final String NAME = "name";
 
     private String code;
 

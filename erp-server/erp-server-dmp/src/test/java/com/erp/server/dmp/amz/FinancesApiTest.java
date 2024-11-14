@@ -13,18 +13,36 @@
 
 package com.erp.server.dmp.amz;
 
+import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.model.finances.ListFinancialEventGroupsResponse;
 import com.erp.sdk.oms.amz.spapi.model.finances.ListFinancialEventsResponse;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.Ignore;
 import org.junit.Test;
 import com.erp.sdk.oms.amz.spapi.api.*;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
+
+import javax.annotation.Resource;
+import javax.xml.bind.util.JAXBSource;
 
 /**
  * API tests for DefaultApi
  */
-@Ignore
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
 public class FinancesApiTest {
+
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
     private final FinancesApi api = null;
 
@@ -39,13 +57,22 @@ public class FinancesApiTest {
      */
     @Test
     public void listFinancialEventGroupsTest() throws ApiException {
-        Integer maxResultsPerPage = null;
-        String financialEventGroupStartedBefore = null;
-        String financialEventGroupStartedAfter = null;
+        Integer maxResultsPerPage = 100;
+        String financialEventGroupStartedBefore = "2024-10-31";
+        String financialEventGroupStartedAfter = "2024-10-30";
         String nextToken = null;
-        ListFinancialEventGroupsResponse response = api.listFinancialEventGroups(maxResultsPerPage, financialEventGroupStartedBefore, financialEventGroupStartedAfter, nextToken);
 
-        // TODO: test validations
+        String shopId = "1799018226391191553";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        FinancesApi financesApi = AmazonSpApiInitUtils.create(FinancesApi.class, shopInfoDTO, false);
+        ListFinancialEventGroupsResponse response = financesApi.listFinancialEventGroups(maxResultsPerPage, financialEventGroupStartedBefore, financialEventGroupStartedAfter, nextToken);
+        System.out.println("listFinancialEventGroupsTest 开始");
+        System.out.println(JSONUtil.toJsonStr(response));
+        System.out.println("listFinancialEventGroupsTest 结束");
     }
     
     /**
@@ -58,12 +85,25 @@ public class FinancesApiTest {
      */
     @Test
     public void listFinancialEventsTest() throws ApiException {
-        Integer maxResultsPerPage = null;
-        String postedAfter = null;
-        String postedBefore = null;
+        Integer maxResultsPerPage = 100;
+        String postedBefore = "2024-10-31T00:00:00Z";
+        String postedAfter = "2024-10-30T23:00:00Z";
         String nextToken = null;
-        ListFinancialEventsResponse response = api.listFinancialEvents(maxResultsPerPage, postedAfter, postedBefore, nextToken);
 
+//        String financialEventGroupStartedBefore = "2024-10-31";
+//        String financialEventGroupStartedAfter = "2024-10-30";
+
+        String shopId = "1799018226391191553";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        FinancesApi financesApi = AmazonSpApiInitUtils.create(FinancesApi.class, shopInfoDTO, false);
+        ListFinancialEventsResponse response = financesApi.listFinancialEvents(maxResultsPerPage, postedAfter, postedBefore, nextToken);
+        System.out.println("listFinancialEventsTest begin");
+        System.out.println(JSONUtil.toJsonStr(response));
+        System.out.println("listFinancialEventsTest end");
         // TODO: test validations
     }
     

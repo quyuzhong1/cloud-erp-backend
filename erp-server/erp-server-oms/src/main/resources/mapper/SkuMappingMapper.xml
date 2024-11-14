@@ -150,8 +150,9 @@
         INNER JOIN
         shop_info si ON sm.shop_id=si.id and si.is_deleted=FALSE
         INNER join listing_info li on li.id = sm.listing_id and li.is_deleted = false
+        INNER JOIN customer_info ci ON si.customer_code = ci.code and ci.is_deleted = false
         WHERE sm.is_deleted=FALSE AND sm.is_expire=FALSE
-        AND si.customer_code=(SELECT code FROM customer_info WHERE id=#{params.customerId})
+        and ci.id = #{params.customerId}
         <if test="params.no!=null and params.no!=''">
             AND (
             sm.product_sku_no ILIKE concat('%',#{params.no}::text,'%') OR

@@ -407,9 +407,6 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     }
                     //匹配销售套装bom
                     for (Map.Entry<String, String> entry : bomSkuMap.entrySet()) {
-                        if(entry.getKey().equals("1856167788667125761")){
-                            System.out.println(1);
-                        }
                         if (compareSplitStrings(entry.getValue(),matchStr.toString())) {
                             SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(entry.getKey())).findFirst().orElse(null);
                             if(Objects.nonNull(skuVO)){

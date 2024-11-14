@@ -1498,6 +1498,31 @@ public enum ApiError implements Serializable {
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 
+
+
+    /**
+     * MRP 错误
+     * 从97000 开始
+     */
+    ERROR_NOT_RESTOCKING_REPLENISHMENT(97001,"只有正常补货数据支持暂不补货"),
+    ERROR_RESTORE_REPLENISHMENT(97002,"只有暂不补货数据支持恢复补货"),
+    ERROR_CFG_RULE_STOCK_UP_NOT_EXIST(97003,"备货（规则配置）不存在"),
+    ERROR_CFG_RULE_SALES_NOT_EXIST(97004,"销量（{}规则配置）不存在"),
+    ERROR_CFG_RULE_NEWS_NOT_EXIST(97010,"新品系统规则配置不存在"),
+    ERROR_CFG_RULE_REPLENISHMENT_NOT_EXIST(97011,"补货天数规则配置不存在"),
+    ERROR_DETAIL_NOT_EXIST(97012,"明细数据不存在"),
+    ERROR_LOGISTICS_NOT_EXIST(97013,"物流配置不存在"),
+    ERROR_TABLE_NOT_EXIST(97014,"表{}不存在"),
+    ERROR_TIME_FRAME_NOT_EXIST(97015,"*建议时间范围规则配置不存在"),
+
+
+
+
+
+
+
+
+
     //旺店通异常
     ERROR_3000(3000, "请求旺店通接口异常"),
     ERROR_WDT_CANCEL_PUSH(3001, "该单据的前序推送任务未完成, 此任务取消执行"),
