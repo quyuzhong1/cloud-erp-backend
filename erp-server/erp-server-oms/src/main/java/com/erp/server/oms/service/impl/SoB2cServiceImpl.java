@@ -5852,9 +5852,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 平台仓/海外仓出库单不中转
         if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equalsIgnoreCase(sourceType)){
             List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(entity.getId()));
+            SoB2cDeliveryEntity soB2cDeliveryEntity = null;
             if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
-                transferWarehouseIdList = StrUtil.split(soB2cDeliveryEntities.get(0).getTransferWarehouseIds(), ",");
-                isTransit = Boolean.TRUE;
+                soB2cDeliveryEntity = soB2cDeliveryEntities.stream().filter(e -> Objects.equals(e.getStatus(), SoB2cDeliveryStatusEnum.SHIPPED.getCode())).findFirst().orElse(null);
+            }
+            if (Objects.nonNull(soB2cDeliveryEntity)){
+                String transferWarehouseIds = soB2cDeliveryEntity.getTransferWarehouseIds();
+                transferWarehouseIdList = StrUtil.isBlank(transferWarehouseIds) ? null : StrUtil.split(transferWarehouseIds, ",");
             }else {
                 // B2C订单根据中转规则判断是否中转
                 CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
