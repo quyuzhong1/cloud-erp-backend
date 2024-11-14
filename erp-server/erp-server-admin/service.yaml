@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-server-admin
+  labels:
+    app: erp-server-admin
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: erp-server-admin
+  template:
+    metadata:
+      labels:
+        app: erp-server-admin
+    spec:
+      imagePullSecrets: 				#使用imagePullSecrets参数指定镜像拉取秘钥
+        - name: harbor-registry		#使用我们的secret，即harbor-registry
+      containers:
+        - name: erp-server-admin
+          image: 172.16.100.10：5000/sdc-erp/erp-server-admin:0.0.1
+          ports:
+            - containerPort: 8080   #修改成你项目的端口
+          imagePullPolicy: Always #镜像拉取策略：每次都拉去最新的镜像
+
+
+---
+apiVersion: v1
+kind: service
+metadata:
+  name: erp-server-admin
+  labels:
+    app: erp-server-admin
+spec:
+  ports:
+    - name: http
+      # 修改你的项目端口号
+      port: 8080
+      # 容器暴露的访问端口 要确定与其他服务不冲突
+      nodePort: 8040
+  type: NodePort
+  selector:
+    app: erp-server-admin
