@@ -12,7 +12,15 @@
         use_org_name,group_id,group_name,
         use_org_id,
         create_user_name,create_time,
-        ci.platform_type as platformType
+        ci.platform_type as platformType,
+        financial_organization,
+        enable_time,
+        down_time,
+        trade_currency,
+        business_mode,
+        transactional_mode,
+        period_setting,
+        check_type
         FROM customer_info ci
         WHERE
 
@@ -34,7 +42,15 @@
         name,short_name,disabled,
         use_org_name,group_id,group_name,
         create_user_name,create_time,
-        ci.platform_type as platformType
+        ci.platform_type as platformType,
+        financial_organization,
+        enable_time,
+        down_time,
+        trade_currency,
+        business_mode,
+        transactional_mode,
+        period_setting,
+        check_type
         FROM customer_info ci
         WHERE
 

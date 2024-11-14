@@ -242,16 +242,6 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
      */
      @TableField("check_type")
      private String checkType;
-     /**
-     * 区域id 对应sys
-     */
-     @TableField("dict_area_code")
-     private String dictAreaCode;
-     /**
-     * 国家id
-     */
-     @TableField("dict_country_code")
-     private String dictCountryCode;
 
     public static final String CODE = "code";
 

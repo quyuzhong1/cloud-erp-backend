@@ -7,6 +7,8 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.UpdateStateDTO.BatchUpdateDTO;
 import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.oms.enums.ShopTypeEnum;
 import com.erp.model.wms.enums.WmsDataCompareTaskStatusEnum;
@@ -185,10 +187,12 @@ public class ShopDTO implements Serializable {
         /**
          * 结算币别
          */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
          private String settlementCurrency;
          /**
          * 交易币别
          */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
          private String tradeCurrency;
          /**
          * 启用时间
@@ -706,6 +710,19 @@ public class ShopDTO implements Serializable {
 
     }
 
+    /**
+     * 批量修改
+     * 状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopBatchUpdateDTO extends BatchUpdateDTO{
+    	/**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+    }
+    
     @Data
     @NoArgsConstructor
     public static class BatchSetCostDTO  {

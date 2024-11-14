@@ -323,4 +323,47 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("customerList", contactEntities);
         return resultMap;
 	}
+
+
+	@Override
+	public void syncDataToSdy(CustomerInfoEntity entity, String operate) {
+		OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_CUSTOMER_INFO.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        omsPushMsgEntity.setSyncOperate(operate);
+        omsPushMsgService.save(omsPushMsgEntity);
+	}
+
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(CustomerInfoEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("oms_system", "SDC");
+		resultMap.put("biz_uni_key", entity.getId());
+		resultMap.put("sub_platform_code", "");
+		resultMap.put("shop_code", entity.getCode());
+		resultMap.put("shop_site", entity.getCountryId());
+		resultMap.put("shop_name", entity.getName());
+		resultMap.put("currency_code", entity.getTradeCurrency());
+		resultMap.put("settlement_currency_code", entity.getCurrency());
+		resultMap.put("business_mode", entity.getBusinessMode());
+		resultMap.put("transactional_mode", entity.getTransactionalMode());
+		resultMap.put("financial_organization", entity.getFinancialOrganization());
+		resultMap.put("sales_organization", entity.getUseOrgId());
+		resultMap.put("period_setting", entity.getPeriodSetting());
+		resultMap.put("check_type", entity.getCheckType());
+		resultMap.put("is_check", "是");
+		resultMap.put("enable_time", entity.getEnableTime());
+		resultMap.put("down_time", entity.getDownTime());
+		
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("is_enable", "已删除");
+		}else {
+			resultMap.put("is_enable", entity.getApproveStatus().getName());
+		}
+		return resultMap;
+	}
 }

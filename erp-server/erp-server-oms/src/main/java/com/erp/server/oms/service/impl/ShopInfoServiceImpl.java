@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -174,6 +175,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             checkDomain("", dto.getDomain());
         }
         BeanMapper.copy(dto, shop);
+        
         String salesOrgId = dto.getSalesOrgId();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
         String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
@@ -228,7 +230,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //平台
         customer.setPlatformType(shop.getDictPlatform());
         String countryId = shop.getDictCountryCode();
-        String currency = "CNY";
+        String currency = shop.getSettlementCurrency();
         if (StringUtils.isNotBlank(countryId)) {
             //根据国家查询
             List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
@@ -249,6 +251,20 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setConditionDict(Objects.nonNull(one) ? one.getId() : "");
         customer.setSourceId(shop.getId());
         customer.setSourceType(SourceTypeEnum.SHOP.getCode());
+        
+        customer.setFinancialOrganization(shop.getSalesOrgId());
+        customer.setEnableTime(shop.getEnableTime());
+        customer.setTradeCurrency(shop.getTradeCurrency());
+        customer.setCountryId(shop.getDictCountryCode());
+        customer.setBusinessMode(CustomerInfoBusinessModeEnum.O2C.getCode());
+        if(PlatformDictEnum.SHOPIFY.getCode().equals(shop.getDictPlatform())) {
+        	customer.setTransactionalMode(CustomerInfoTransactionalModeEnum.XKHH.getCode());
+        }else {
+        	customer.setTransactionalMode(CustomerInfoTransactionalModeEnum.DBJY.getCode());
+        }
+        customer.setPeriodSetting(CustomerInfoPeriodSettingEnum.MONTH.getCode());
+        customer.setCheckType(CustomerInfoCheckTypeEnum.SHIP.getCode());
+        
         CustomerInfoEntity customerInfoEntity = customerInfoService.addOrGetCustom(customer);
         if (Objects.nonNull(customerInfoEntity)) {
             CustomerInfoEntity customerB2b = customerInfoService.getById(customerInfoEntity.getId());
@@ -470,6 +486,31 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        
+        String customerId = shopInfo.getCustomerId();
+        if(StringUtils.isNotBlank(customerId)) {
+        	CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+        	if(customerInfoEntity != null && (customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE_ING 
+        			|| customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE)) {
+        		boolean errorFlag = false;
+        		if(!shopInfo.getSettlementCurrency().equals(dto.getSettlementCurrency())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getTradeCurrency().equals(dto.getTradeCurrency())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getSalesOrgId().equals(dto.getSalesOrgId())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getChargeId().equals(dto.getChargeId())) {
+        			errorFlag = true;
+        		}
+        		if(errorFlag) {
+        			throw new ServiceException("对应的客户信息状态为审核中/已审核时，不可修改【店铺站点，结算币种，交易币种，销售组织，销售员】字段");
+        		}
+        	}
+        }
+        
         //旧负责人
         String oldChargeId = shopInfo.getChargeId();
         shopInfo.setName(dto.getName());
@@ -693,6 +734,15 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             shop.setDisabled(disabled);
             this.updateById(shop);
+            String customerId = shop.getCustomerId();
+			if(StringUtils.isNotBlank(customerId)) {
+            	customerInfoService.lambdaUpdate()
+	            	.eq(CustomerInfoEntity::getId, customerId)
+	            	.set(CustomerInfoEntity::getDisabled, disabled)
+	            	.set(CustomerInfoEntity::getEnableTime, shop.getEnableTime())
+	            	.set(CustomerInfoEntity::getDownTime, shop.getDownTime())
+	            	.update();
+            }
             if (!Objects.equals(ShopTypeEnum.INTERNAL.getCode(), shop.getType())) {
                 // 禁用启用任务
                 dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shop.getId(),
@@ -1472,6 +1522,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), ApiError.ERROR_SHOP_UNDISABLED.msg);
                 resultDTOS.add(deleteResult);
                 continue;
+            }
+            String customerId = shopInfoEntity.getCustomerId();
+            if (StringUtils.isNotBlank(customerId) && customerInfoService.getById(customerId) != null) {
+            	deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), "已下推B2B客户列表，不允许删除");
+            	resultDTOS.add(deleteResult);
+            	continue;
             }
             try {
                 boolean flag = removeById(id);

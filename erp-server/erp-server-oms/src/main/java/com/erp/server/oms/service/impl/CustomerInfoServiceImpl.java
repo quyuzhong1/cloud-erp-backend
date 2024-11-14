@@ -22,6 +22,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -34,6 +35,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -138,6 +140,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private DmpMqFeign dmpMqFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    
+    @Resource
+    private ShopInfoService shopInfoService;
 
 
     /**
@@ -682,6 +687,19 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         customer.setUseOrgName(useOrgName);
         Boolean updateResult = this.updateById(customer);
+        
+        shopInfoService.lambdaUpdate()
+	        .eq(ShopInfoEntity::getCustomerId, id)
+	        .set(ShopInfoEntity::getDictCountryCode, customer.getCountryId())
+	        .set(ShopInfoEntity::getDictAreaCode, FeignQuery.getById(DictCountryEntity.class, customer.getCountryId()).getRegionCode())
+	        .set(ShopInfoEntity::getSettlementCurrency, customer.getCurrency())
+	        .set(ShopInfoEntity::getTradeCurrency, customer.getTradeCurrency())
+	        .set(ShopInfoEntity::getSalesOrgId, customer.getUseOrgId())
+	        .set(ShopInfoEntity::getSalesOrgName, customer.getUseOrgName())
+	        .set(ShopInfoEntity::getChargeId, customer.getSellerId())
+	        .set(ShopInfoEntity::getChargeName, customer.getSellerName())
+	        .update();
+        
         if (updateResult) {
 
             /**
@@ -923,7 +941,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto) {
+    public Boolean updateStatus(CustomerBatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         List<CustomerInfoEntity> customerList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(customerList)) {
@@ -931,11 +949,29 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
 
         Boolean disabled = dto.getDisabled();
+        LocalDateTime enableTime = dto.getEnableTime();
+		if(!disabled && enableTime == null) {
+        	throw new ServiceException("修改状态为启用，启用时间必填");
+        }
         long count = customerList.stream().filter(d -> !d.getDisabled() == disabled).count();
         if (count != customerList.size()) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        customerList.forEach(d -> d.setDisabled(disabled));
+        customerList.forEach(d -> {
+        	d.setDisabled(disabled);
+        	if(disabled) {
+        		d.setDownTime(LocalDateTime.now());
+        	}else {
+        		d.setEnableTime(enableTime);
+        	}
+        	shopInfoService.lambdaUpdate()
+	        	.eq(ShopInfoEntity::getCustomerId, d.getId())
+	        	.eq(ShopInfoEntity::getDisabled, d.getDisabled())
+	        	.eq(ShopInfoEntity::getEnableTime, d.getEnableTime())
+	        	.eq(ShopInfoEntity::getDownTime, d.getDownTime())
+	        	.update();
+        });
+        
         //添加日志
         List<Pair<String, String>> pairList = customerList.stream().
                 map(obj -> new Pair<>(obj.getId(), obj.getName())).collect(Collectors.toList());

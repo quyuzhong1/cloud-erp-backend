@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.UpdateStateDTO.BatchUpdateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
@@ -16,6 +17,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -170,6 +172,12 @@ public class CustomerDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
+        /**
+         * 结算币别 
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
+        private String currency;
+        
          /**
          * 财务组织 名称字段financialOrganizationName
          */
@@ -186,6 +194,7 @@ public class CustomerDTO implements Serializable {
          /**
          * 交易币别 
          */
+         @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
          private String tradeCurrency;
          /**
          * 平台类型: 名称字段businessModeName
@@ -207,14 +216,6 @@ public class CustomerDTO implements Serializable {
          */
          @Dict(enumClass = CustomerInfoCheckTypeEnum.class)
          private String checkType;
-         /**
-         * 区域id 对应sys 同店铺区域获取方式
-         */
-         private String dictAreaCode;
-         /**
-         * 国家id 同店铺国家获取方式
-         */
-         private String dictCountryCode;
     }
 
     @Data
@@ -458,16 +459,6 @@ public class CustomerDTO implements Serializable {
          */
         @NotBlank(message = "确收方式不能为空")
          private String checkType;
-         /**
-         * 区域id 对应sys 同店铺区域获取方式
-         */
-        @NotBlank(message = "区域id不能为空")
-         private String dictAreaCode;
-         /**
-         * 国家id 同店铺国家获取方式
-         */
-        @NotBlank(message = "国家id不能为空")
-         private String dictCountryCode;
     }
 
     /**
@@ -706,14 +697,7 @@ public class CustomerDTO implements Serializable {
          */
          @Dict(enumClass = CustomerInfoCheckTypeEnum.class)
          private String checkType;
-         /**
-         * 区域id 对应sys 同店铺区域获取方式
-         */
-         private String dictAreaCode;
-         /**
-         * 国家id 同店铺国家获取方式
-         */
-         private String dictCountryCode;        
+               
     }
 
 
@@ -722,7 +706,18 @@ public class CustomerDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class CustomerBatchUpdateDTO extends BatchUpdateDTO{
+    	/**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+    }
+    	/**
+    	 * 修改
+    	 */
+    	@Data
+    	@NoArgsConstructor
+    	public static class UpdateDTO {
 
         /**
          * id
@@ -912,16 +907,6 @@ public class CustomerDTO implements Serializable {
          */
         @NotBlank(message = "确收方式不能为空")
          private String checkType;
-         /**
-         * 区域id 对应sys 同店铺区域获取方式
-         */
-        @NotBlank(message = "区域id不能为空")
-         private String dictAreaCode;
-         /**
-         * 国家id 同店铺国家获取方式
-         */
-        @NotBlank(message = "国家id不能为空")
-         private String dictCountryCode;
     }
 
     @Data
