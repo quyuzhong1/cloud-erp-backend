@@ -329,7 +329,9 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                     .filter(obj -> StrUtil.equals(obj.getPlatformType(), addOrUpdateDTO.getPlatformType())
                             && StrUtil.equals(obj.getPlatform(), addOrUpdateDTO.getPlatform())
                             && StrUtil.equals(obj.getSkuId(), addOrUpdateDTO.getSkuId())
-                            && StrUtil.equals(obj.getStatus(),SuggestStatusEnum.DRAFT.getCode()))
+                            && StrUtil.equals(obj.getStatus(),SuggestStatusEnum.DRAFT.getCode())
+                            && !obj.getInvalidStatus()
+                    )
                     .findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(purchaseSuggestMergeEntity)) {
                 addOrUpdateDTO.setId(purchaseSuggestMergeEntity.getId());
@@ -456,7 +458,11 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         Integer purchaseStockUpQty = old.getPurchaseStockUpQty();
 
         List<DeliverySuggestDTO.PurchaseSuggestBomDTO> resultList = new ArrayList<>();
-        for (PurchaseSuggestEntity purchaseSuggestEntity : purchaseSuggestList) {
+        //备货总数
+        Integer totalQty = MathUtil.ZERO;
+        for (int i = 0;i < purchaseSuggestList.size();i++) {
+            PurchaseSuggestEntity purchaseSuggestEntity = purchaseSuggestList.get(i);
+
             DeliverySuggestDTO.PurchaseSuggestBomDTO purchaseSuggestBomDTO = new DeliverySuggestDTO.PurchaseSuggestBomDTO();
             purchaseSuggestBomDTO.setCode(purchaseSuggestEntity.getCode());
             purchaseSuggestBomDTO.setSourceId(purchaseSuggestEntity.getSourceId());
@@ -471,9 +477,16 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             //系统建议值
             purchaseSuggestBomDTO.setSuggestPurchaseQty(purchaseSuggestEntity.getSuggestPurchaseQty());
             //采购备货数
-            Integer childPurchaseStockUpQty = old.getSuggestPurchaseQty() > MathUtil.ZERO ?
-                    purchaseStockUpQty * (purchaseSuggestEntity.getSuggestPurchaseQty() / old.getSuggestPurchaseQty()) : MathUtil.ZERO;
-            purchaseSuggestBomDTO.setPurchaseStockUpQty(childPurchaseStockUpQty);
+            if (i == purchaseSuggestList.size() - 1) {
+                purchaseSuggestBomDTO.setPurchaseStockUpQty(purchaseStockUpQty - totalQty);
+            } else {
+                //备货数 = 合计备货数 * 建议数比例
+                double ratio = old.getSuggestPurchaseQty() == 0 ? 0 : (double) purchaseSuggestEntity.getSuggestPurchaseQty() / old.getSuggestPurchaseQty();
+                BigDecimal childPurchaseStockUpQty = BigDecimal.valueOf(purchaseStockUpQty * ratio);
+                double floor = Math.floor(Double.valueOf(childPurchaseStockUpQty.toString()));
+                purchaseSuggestBomDTO.setPurchaseStockUpQty(Integer.valueOf((int) floor));
+                totalQty = totalQty + purchaseSuggestBomDTO.getPurchaseStockUpQty();
+            }
 
             //如果是bom则需要显示bom信息
             if (StrUtil.equals(old.getSkuId(),purchaseSuggestEntity.getSkuId())) {
