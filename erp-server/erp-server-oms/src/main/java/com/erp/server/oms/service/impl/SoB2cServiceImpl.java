@@ -5838,6 +5838,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 ruleDTO.setReceiveCountry(soB2cReceiver.getCountry());
                 String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
                 ruleDTO.setFromWarehouse(deliveryWarehouseId);
+                ruleDTO.setSalesOrgId(entity.getOrgId());
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);
                 isTransit = resultDTO.getIsTransit();
                 transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();

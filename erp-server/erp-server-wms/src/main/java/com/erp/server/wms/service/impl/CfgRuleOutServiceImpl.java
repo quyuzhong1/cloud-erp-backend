@@ -437,12 +437,14 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         detailMap.put("receiveCountry", dto.getReceiveCountry());
         detailMap.put("destWarehouse", dto.getDestWarehouse());
         detailMap.put("fromWarehouse",dto.getFromWarehouse());
+        detailMap.put("saleOrg",dto.getSalesOrgId());
         Map<String, Object> map = new HashMap<>();
         map.put("detailList", Collections.singletonList(detailMap));
         map.put("type", dto.getType());
         map.put("receiveCountry", dto.getReceiveCountry());
         map.put("destWarehouse", dto.getDestWarehouse());
         map.put("fromWarehouse",dto.getFromWarehouse());
+        map.put("saleOrg",dto.getSalesOrgId());
 
         List<CfgRuleOutEntity> cfgRuleOutList = this.baseMapper.selectList(new LambdaQueryWrapper<CfgRuleOutEntity>().eq(CfgRuleOutEntity::getType, CfgRuleOutEnum.CfgRuleOutTypeEnum.STOCK_OUT_TRANSFER.getCode()));
         for (CfgRuleOutEntity entity : cfgRuleOutList) {
