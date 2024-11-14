@@ -1476,6 +1476,11 @@ public class SoB2cController extends BaseController {
                 resultDTOS.add(BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("只有订单明细行数量大于1的订单允许操作按SKU拆分").build());
                 continue;
             }
+            SoB2cDetailEntity soB2cDetail = detailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).findFirst().orElse(null);
+            if (Objects.isNull(soB2cDetail)){
+                resultDTOS.add(BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("订单不包含拆分SKU").build());
+                continue;
+            }
             List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS = detailList.stream().filter(e -> Objects.equals(id, e.getId())).collect(Collectors.toList());
             try {
                 //构建拆分数据
@@ -1483,7 +1488,7 @@ public class SoB2cController extends BaseController {
                 //拆分sku
                 SoB2cDTO.SplitSaveResultDTO resultDTO = soB2cSplitService.splitSave(dto);
                 String content = StrUtil.format("拆分后订单编号：【{}】",String.join(",", resultDTO.getSoCodeList()));
-                result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("订单拆分成功").content(content).build();
+                result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("操作成功").content(content).build();
             } catch (Exception e) {
                 log.error("B2C销售订单取消拆分失败", e);
                 result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg(e.getMessage()).build();
