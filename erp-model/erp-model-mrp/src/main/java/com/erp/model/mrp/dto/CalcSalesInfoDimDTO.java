@@ -314,16 +314,34 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 日期
          */
-        private List<LocalDate> dates;
+        private List<LocalDate> dateList;
         /**
          * 历史销量数量
          */
-        private List<Integer> historySales;
+        private List<Integer> historySalesList;
 
         /**
          * 去噪销量数量
          */
-        private List<Integer> denoisingSales;
+        private List<BigDecimal> denoisingSalesList;
+    }
+
+    @Getter
+    @Setter
+    public static class SalesEstimateDTO {
+        /**
+         * 日期
+         */
+        private List<LocalDate> dateList;
+        /**
+         * 预估销量数量
+         */
+        private List<Integer> salesEstimateList;
+
+        /**
+         * 真实销量数量
+         */
+        private List<BigDecimal> realSalesList;
     }
 
     @Getter

@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CalcSalesInfoDenoisingEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.mrp.dto.CalcSalesInfoDenoisingDTO;
+import com.erp.model.mrp.entity.CalcSalesInfoDenoisingEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,5 +16,9 @@ import com.erp.model.mrp.dto.CalcSalesInfoDenoisingDTO;
 public interface CalcSalesInfoDenoisingService extends SuperService<CalcSalesInfoDenoisingEntity> {
 
 
-
+    /**
+     * 根据试算id查询去噪销量
+     * @param calcSalesInfoId 试算id
+     */
+    List<CalcSalesInfoDenoisingEntity> listByCalcSalesInfoId(String calcSalesInfoId);
 }

@@ -1,14 +1,14 @@
 package com.erp.model.mrp.dto;
 
-import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -33,60 +33,59 @@ public class CfgRuleSalesFormulaCalcDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String  id;
 
         /**
-        * 销量类型：default=默认，dynamic=动态、fixed=固定
-        */
+         * 销量类型：default=默认，dynamic=动态、fixed=固定
+         */
         private String type;
 
         /**
-        * 销量默认类型：dynamic=动态、fixed=固定
-        */
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
         private String defaultType;
 
         /**
-        * 排序字段
-        */
+         * 排序字段
+         */
         private Integer index;
 
         /**
-        * 优先级字段
-        */
+         * 优先级字段
+         */
         private Integer priority;
 
         /**
-        * 名称
-        */
+         * 名称
+         */
         private String name;
 
         /**
-        * 开始日期
-        */
-        private LocalDate startDate;
+         * 时间
+         */
+        private List<LocalDate> dateList;
 
         /**
-        * 结束日期
-        */
-        private LocalDate endDate;
-
-        /**
-        * 试算配置id
-        */
+         * 试算配置id
+         */
         private String cfgRuleCalcId;
 
         /**
-        * 固定值
-        */
+         * 固定值
+         */
         private Integer fixedValue;
 
         /**
-        * 百分比json
-        */
+         * 百分比json
+         */
         private String percentJson;
 
+        /**
+         * 百分比json
+         */
+        private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
 
     }
 

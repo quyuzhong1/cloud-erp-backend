@@ -1,14 +1,14 @@
 package com.erp.model.mrp.dto;
 
-import java.time.LocalDate;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -32,39 +32,35 @@ public class CfgRuleSalesDenoisingCalcDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewDTO {
 
+
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String  id;
 
         /**
-        * 序号
-        */
+         * 序号
+         */
         private Integer index;
 
         /**
-        * 名称
-        */
+         * 名称
+         */
         private String name;
 
         /**
-        * 开始日期
-        */
-        private LocalDate startDate;
+         * 时间
+         */
+        private List<LocalDate> dateList;
 
         /**
-        * 结束日期
-        */
-        private LocalDate endDate;
-
-        /**
-        * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪
-        */
+         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪
+         */
         private String denoisingType;
 
         /**
-        * 有效值（去噪后的）
-        */
+         * 有效值（去噪后的）
+         */
         private Integer effectiveValue;
 
         /**

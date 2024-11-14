@@ -26,6 +26,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.mrp.es.entity.CalcSalesInfoHisEsEntity;
 import com.erp.server.mrp.es.service.CalcSalesInfoHisEsService;
 import com.erp.server.mrp.mapper.CalcSalesInfoDimMapper;
 import com.erp.server.mrp.service.CalcSalesInfoDenoisingService;
@@ -145,8 +146,65 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             startDate = cfgRuleCalc.getStartCalcDate().minusDays(361);
             endDate = cfgRuleCalc.getStartCalcDate();
         }
+        List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdAndSkuIdAndShopIdAndDateBetween(entity.getCfgRuleCalcId(),
+                entity.getSkuId(), entity.getShopId(), startDate, endDate);
+        Map<LocalDate, Integer> calcSalesInfoHisMap = calcSalesInfoHisList.stream()
+                .collect(Collectors.toMap(CalcSalesInfoHisEsEntity::getDate, CalcSalesInfoHisEsEntity::getQty));
+        List<CalcSalesInfoDenoisingEntity> calcSalesInfoDenoisingList = calcSalesInfoDenoisingService.listByCalcSalesInfoId(dto.getId());
+        Map<LocalDate, BigDecimal> calcSalesInfoDenoisingMap = calcSalesInfoDenoisingList.stream()
+                .collect(Collectors.toMap(CalcSalesInfoDenoisingEntity::getDate, CalcSalesInfoDenoisingEntity::getQty));
+        List<LocalDate> dates = new ArrayList<>();
+        List<Integer> historySales = new ArrayList<>();
+        List<BigDecimal> denoisingSales = new ArrayList<>();
+        while (!startDate.isAfter(endDate)) {
+            dates.add(startDate);
+            Integer historyQty = Optional.ofNullable(calcSalesInfoHisMap.get(startDate)).orElse(0);
+            historySales.add(historyQty);
+            BigDecimal denoising = Optional.ofNullable(calcSalesInfoDenoisingMap.get(startDate)).orElse(new BigDecimal(historyQty));
+            denoisingSales.add(denoising);
+            startDate = startDate.plusDays(1);
+        }
+        CalcSalesInfoDimDTO.HistorySalesVO salesVO = new CalcSalesInfoDimDTO.HistorySalesVO();
+        salesVO.setDateList(dates);
+        salesVO.setHistorySalesList(historySales);
+        salesVO.setDenoisingSalesList(denoisingSales);
+        return salesVO;
+    }
 
-        return null;
+    @Override
+    public CalcSalesInfoDimDTO.SalesEstimateDTO salesEstimation(CalcSalesInfoDimDTO.HistorySalesDTO dto) {
+        CalcSalesInfoDimEntity entity = getById(dto.getId());
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算数据");
+        }
+        CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(entity.getCfgRuleCalcId());
+        if (ObjectUtils.isEmpty(cfgRuleCalc)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
+        }
+        LocalDate startDate = dto.getStartDate();
+        LocalDate endDate = dto.getEndDate();
+        if (ObjectUtils.isEmpty(dto.getStartDate()) || ObjectUtils.isEmpty(dto.getEndDate())) {
+            startDate = cfgRuleCalc.getStartCalcDate().minusDays(361);
+            endDate = cfgRuleCalc.getStartCalcDate();
+        }
+
+
+
+        List<LocalDate> dates = new ArrayList<>();
+        List<Integer> salesEstimateList = new ArrayList<>();
+        List<BigDecimal> realSalesList = new ArrayList<>();
+        while (!startDate.isAfter(endDate)) {
+            dates.add(startDate);
+
+
+
+            startDate = startDate.plusDays(1);
+        }
+        CalcSalesInfoDimDTO.SalesEstimateDTO salesEstimateDTO = new CalcSalesInfoDimDTO.SalesEstimateDTO();
+        salesEstimateDTO.setDateList(dates);
+        salesEstimateDTO.setSalesEstimateList(salesEstimateList);
+        salesEstimateDTO.setRealSalesList(realSalesList);
+        return salesEstimateDTO;
     }
 
 

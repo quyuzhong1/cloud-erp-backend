@@ -62,6 +62,15 @@ public class CalcSalesInfoDimController extends BaseController {
         return success(historySales);
     }
 
+    /**
+     * 日销量预估
+     * @param dto 参数
+     */
+    @PostMapping("/salesEstimation")
+    public ApiResult<CalcSalesInfoDimDTO.SalesEstimateDTO> salesEstimation(@RequestBody @Validated CalcSalesInfoDimDTO.HistorySalesDTO dto) {
+        CalcSalesInfoDimDTO.SalesEstimateDTO result = calcSalesInfoDimService.salesEstimation(dto);
+        return success(result);
+    }
 
 
 
