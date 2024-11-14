@@ -1214,7 +1214,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         jsonObject.set(now.format(DateTimeFormatter.ofPattern("yyyy年MM月")),"currentMonthSalesQty");
         jsonObject.set(now.plusMonths(1L).format(DateTimeFormatter.ofPattern("yyyy年MM月")),"nextMonthSales");
         jsonObject.set(now.plusMonths(2L).format(DateTimeFormatter.ofPattern("yyyy年MM月")),"followingMonthSales");
-        jsonObject.set("错误信息","error");
+        jsonObject.set("6","错误信息");
         return jsonObject;
     }
 
