@@ -12,6 +12,7 @@ import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 
 /**
@@ -82,6 +83,12 @@ public class CfgRuleSalesFormulaCalcEntity extends BaseEntity<CfgRuleSalesFormul
      */
     @TableField(exist = false)
     private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
+
+    /**
+     * 时间
+     */
+    @TableField(exist = false)
+    private List<LocalDate> dateList;
 
     public static final String TYPE = "type";
 

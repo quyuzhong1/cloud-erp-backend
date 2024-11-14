@@ -30,4 +30,16 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param params 参数
      */
     PagingVO<CalcSalesInfoDimDTO.PagingView> paging(PagingDTO<CalcSalesInfoDimDTO.PagingParamDTO> params);
+
+    /**
+     * 详情
+     * @param id id
+     */
+    CalcSalesInfoDimDTO.ViewDTO view(String id);
+
+    /**
+     * 历史销量
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.HistorySalesVO historySales(CalcSalesInfoDimDTO.HistorySalesDTO dto);
 }

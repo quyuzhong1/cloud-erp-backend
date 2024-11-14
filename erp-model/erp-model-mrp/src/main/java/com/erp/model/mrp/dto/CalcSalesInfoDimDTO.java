@@ -44,6 +44,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private Map<String, String> sqlMap;
 
+        /**
+         * 试算模板id
+         */
+        private String cfgRuleCalcId;
+
     }
 
 
@@ -202,7 +207,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String id;
 
         /**
-         * skuId
+         * sku id
          */
         private String skuId;
 
@@ -210,46 +215,44 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * sku
          */
         private String skuNo;
-
+        /**
+         * sku图片
+         */
+        private String skuImgUrl;
+        /**
+         * 品名
+         */
+        private String productName;
         /**
          * 国家
          */
         private String country;
-
+        /**
+         * 国家名字
+         */
+        private String countryName;
         /**
          * 店铺
          */
         private String shopId;
-
+        /**
+         * 店铺名字
+         */
+        private String shopName;
         /**
          * 平台
          */
         private String platform;
 
         /**
-         * 累计销量(去噪后)
-         */
-        private String salesQtyJson;
-
-        /**
-         * 日均销量(去噪后)
-         */
-        private String avgSalesQtyJson;
-
-        /**
-         * 预估销量
-         */
-        private String monthSalesEstimateQtyJson;
-
-        /**
-         * 真实销量
-         */
-        private String monthRealSalesQtyJson;
-
-        /**
          * 试算配置id
          */
         private String cfgRuleCalcId;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
 
         /**
          * 备注
@@ -303,4 +306,41 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private BigDecimal qty;
     }
 
+
+    @Getter
+    @Setter
+    public static class HistorySalesVO {
+
+        /**
+         * 日期
+         */
+        private List<LocalDate> dates;
+        /**
+         * 历史销量数量
+         */
+        private List<Integer> historySales;
+
+        /**
+         * 去噪销量数量
+         */
+        private List<Integer> denoisingSales;
+    }
+
+    @Getter
+    @Setter
+    public static class HistorySalesDTO {
+
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+    }
 }

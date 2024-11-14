@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
@@ -24,6 +26,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.mrp.es.service.CalcSalesInfoHisEsService;
 import com.erp.server.mrp.mapper.CalcSalesInfoDimMapper;
 import com.erp.server.mrp.service.CalcSalesInfoDenoisingService;
 import com.erp.server.mrp.service.CalcSalesInfoDimService;
@@ -75,6 +78,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     private SysDictFeign sysDictFeign;
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private CalcSalesInfoHisEsService calcSalesInfoHisEsService;
 
     @Override
     public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList) {
@@ -106,6 +111,42 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             processData(pagingVO.getRecords());
         }
         return new PagingVO<>(pagingVO);
+    }
+
+    @Override
+    public CalcSalesInfoDimDTO.ViewDTO view(String id) {
+        CalcSalesInfoDimDTO.ViewDTO view = baseMapper.view(id);
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(view.getCountry()));
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(Collections.singletonList(view.getSkuId()));
+        List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(Collections.singletonList(view.getShopId()));
+        SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuVO());
+        DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(view.getCountry())).findFirst().orElse(new DictCountryEntity());
+        ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(view.getShopId())).findFirst().orElse(new ShopInfoEntity());
+        view.setSkuImgUrl(skuVO.getSkuImagesUrl());
+        view.setProductName(skuVO.getSkuName());
+        view.setCountryName(dictCountry.getNameCn());
+        view.setShopName(shopInfoEntity.getName());
+        return view;
+    }
+
+    @Override
+    public CalcSalesInfoDimDTO.HistorySalesVO historySales(CalcSalesInfoDimDTO.HistorySalesDTO dto) {
+        CalcSalesInfoDimEntity entity = getById(dto.getId());
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算数据");
+        }
+        CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(entity.getCfgRuleCalcId());
+        if (ObjectUtils.isEmpty(cfgRuleCalc)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
+        }
+        LocalDate startDate = dto.getStartDate();
+        LocalDate endDate = dto.getEndDate();
+        if (ObjectUtils.isEmpty(dto.getStartDate()) || ObjectUtils.isEmpty(dto.getEndDate())) {
+            startDate = cfgRuleCalc.getStartCalcDate().minusDays(361);
+            endDate = cfgRuleCalc.getStartCalcDate();
+        }
+
+        return null;
     }
 
 
@@ -212,7 +253,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
      * @param salesEstimates  预估销量
      * @param salesHistoryMap 历史销量
      */
-    private void calculationTimePeriodSalesEstimates(LocalDate startCalcDate, CalcSalesInfoDimEntity entity, List<CalcSalesInfoEstimateEntity> salesEstimates, Map<LocalDate, Integer> salesHistoryMap) {
+    private void calculationTimePeriodSalesEstimates(LocalDate startCalcDate, CalcSalesInfoDimEntity entity,
+                                                     List<CalcSalesInfoEstimateEntity> salesEstimates, Map<LocalDate, Integer> salesHistoryMap) {
 
         LocalDate endDate = startCalcDate.plusDays(120);
         // 从开始日期所在的月份的1号开始
@@ -228,9 +270,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                     .filter(v -> !calcStartDate.isAfter(v.getDate()) && !calcEndDate.isBefore(v.getDate()))
                     .map(CalcSalesInfoEstimateEntity::getQty)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal realSales = salesEstimates.stream()
-                    .filter(v -> !calcStartDate.isAfter(v.getDate()) && !calcEndDate.isBefore(v.getDate()))
-                    .map(CalcSalesInfoEstimateEntity::getQty)
+            BigDecimal realSales = salesHistoryMap.entrySet().stream()
+                    .filter(v -> !calcStartDate.isAfter(v.getKey()) && !calcEndDate.isBefore(v.getKey()))
+                    .map(Map.Entry::getValue)
+                    .map(BigDecimal::valueOf)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             timePeriodSalesEstimates.add(new CalcSalesInfoDimDTO.MonthSalesVO(currentMonth.getMonthValue(), followingSales));
             realTimePeriodSales.add(new CalcSalesInfoDimDTO.MonthSalesVO(currentMonth.getMonthValue(), realSales));

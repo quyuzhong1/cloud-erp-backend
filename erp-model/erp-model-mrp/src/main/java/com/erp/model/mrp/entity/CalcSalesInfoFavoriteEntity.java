@@ -1,13 +1,13 @@
 package com.erp.model.mrp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -32,13 +32,13 @@ public class CalcSalesInfoFavoriteEntity extends BaseEntity<CalcSalesInfoFavorit
     /**
     * 试算id
     */
-    @TableField("calc_sales_info_dim_id")
-    private String calcSalesInfoDimId;
+    @TableField("cfg_rule_calc_id")
+    private String cfgRuleCalcId;
 
 
     public static final String USER_ID = "user_id";
 
-    public static final String CALC_SALES_INFO_DIM_ID = "calc_sales_info_dim_id";
+    public static final String CFG_RULE_CALC_ID = "cfg_rule_calc_id";
 
     @Override
     public Serializable pkVal() {

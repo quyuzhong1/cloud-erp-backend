@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.mrp.dto.CfgRuleSalesFormulaCalcDTO;
+import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +16,10 @@ import com.erp.model.mrp.dto.CfgRuleSalesFormulaCalcDTO;
 public interface CfgRuleSalesFormulaCalcService extends SuperService<CfgRuleSalesFormulaCalcEntity> {
 
 
+    /**
+     * 根据试算配置id查询销量公式
+     *
+     * @param id 试算id
+     */
+    List<CfgRuleSalesFormulaCalcEntity> listByCfgRuleCalcId(String id);
 }

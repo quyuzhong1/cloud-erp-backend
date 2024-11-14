@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.mrp.dto.CfgRuleSalesDenoisingCalcDTO;
+import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +16,5 @@ import com.erp.model.mrp.dto.CfgRuleSalesDenoisingCalcDTO;
 public interface CfgRuleSalesDenoisingCalcService extends SuperService<CfgRuleSalesDenoisingCalcEntity> {
 
 
+    List<CfgRuleSalesDenoisingCalcEntity> listByCfgRuleCalcId(String id);
 }

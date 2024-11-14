@@ -20,6 +20,16 @@ import org.apache.ibatis.annotations.Param;
 public interface CalcSalesInfoDimMapper extends BaseMapper<CalcSalesInfoDimEntity> {
 
 
-    Page<CalcSalesInfoDimDTO.PagingView> paging(@Param("page") Page<CalcSalesInfoDimDTO.PagingView> objectPage, @Param("params") CalcSalesInfoDimDTO.PagingParamDTO params);
+    /**
+     *
+     * @param page 分页
+     * @param params 参数
+     */
+    Page<CalcSalesInfoDimDTO.PagingView> paging(@Param("page") Page<CalcSalesInfoDimDTO.PagingView> page, @Param("params") CalcSalesInfoDimDTO.PagingParamDTO params);
 
+    /**
+     *
+     * @param id id
+     */
+    CalcSalesInfoDimDTO.ViewDTO view(String id);
 }

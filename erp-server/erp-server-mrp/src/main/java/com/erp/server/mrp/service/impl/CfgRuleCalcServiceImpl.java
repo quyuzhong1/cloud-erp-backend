@@ -2,14 +2,18 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -18,12 +22,8 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
-import com.erp.model.mrp.dto.CfgRuleCalcDTO;
-import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
-import com.erp.model.mrp.entity.CfgRuleCalcEntity;
-import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
-import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
+import com.erp.model.mrp.dto.*;
+import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import com.erp.model.mrp.enums.HistorySalesTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -37,10 +37,7 @@ import com.erp.server.mrp.es.service.CalcSalesInfoHisEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.listener.HistorySalesQtyExcelListener;
 import com.erp.server.mrp.mapper.CfgRuleCalcMapper;
-import com.erp.server.mrp.service.CalcSalesInfoDimService;
-import com.erp.server.mrp.service.CfgRuleCalcService;
-import com.erp.server.mrp.service.CfgRuleSalesDenoisingCalcService;
-import com.erp.server.mrp.service.CfgRuleSalesFormulaCalcService;
+import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -84,6 +81,9 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
     @Resource
     private CalcSalesInfoDimService calcSalesInfoDimService;
 
+    @Resource
+    private CalcSalesInfoFavoriteService calcSalesInfoFavoriteService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -96,7 +96,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 .collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
         CfgRuleCalcEntity entity = CfgRuleCalcDTO.AddDTO.buildCfgRuleCalcEntity(addDTO);
         entity.setId(IdWorker.getIdStr());
-        List<CalcSalesInfoHisEsEntity> historySaleList = new ArrayList<>();
+        List<CalcSalesInfoHisEsEntity> historySaleList;
         if (HistorySalesTypeEnum.SYSTEM.getCode().equals(addDTO.getSaleType())) {
             historySaleList = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
         } else {
@@ -230,6 +230,69 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         String path = "classpath:excel/calcHistorySaleQtyTemplate.xlsx";
         String excelName = "template.xlsx";
         ExcelUtil.downloadTemplate(path,excelName,response);
+    }
+
+    @Override
+    public CfgRuleCalcDTO.ViewDTO view(String id) {
+        CfgRuleCalcEntity cfgRuleCalc = getById(id);
+        if (ObjectUtil.isEmpty(cfgRuleCalc)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
+        }
+        CfgRuleCalcDTO.ViewDTO dto = BeanMapperUtils.map(CfgRuleCalcDTO.ViewDTO.class, cfgRuleCalc);
+        dto.setSkuIds(cfgRuleCalc.getSkuJson().toList(String.class));
+        dto.setShopIds(cfgRuleCalc.getShopJson().toList(String.class));
+        List<CfgRuleSalesFormulaCalcEntity> formulaList = cfgRuleSalesFormulaCalcService.listByCfgRuleCalcId(id);
+
+        //默认日销量
+        CfgRuleSalesFormulaCalcEntity defaultSalesFormula = formulaList.stream().filter(obj ->
+                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && StrUtil.equals(obj.getCfgRuleCalcId(), id)
+        ).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(defaultSalesFormula)) {
+            CfgRuleSalesFormulaCalcDTO.ViewDTO defaultViewDTO = BeanMapperUtils.map(CfgRuleSalesFormulaCalcDTO.ViewDTO.class, defaultSalesFormula);
+            dto.setDefaultSalesQtyDTO(defaultViewDTO);
+        }
+        //动态日销量
+        List<CfgRuleSalesFormulaCalcEntity> dynamicSalesFormulaList = formulaList.stream().filter(obj ->
+                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()) && StrUtil.equals(obj.getCfgRuleCalcId(), id)
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(dynamicSalesFormulaList)) {
+            List<CfgRuleSalesFormulaCalcDTO.ViewDTO> dynamicViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaCalcDTO.ViewDTO.class, dynamicSalesFormulaList);
+            dto.setDynamicSalesQtyList(dynamicViewList);
+        }
+        //固定日销量
+        List<CfgRuleSalesFormulaCalcEntity> fixedSalesFormulaList = formulaList.stream().filter(obj ->
+                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) && StrUtil.equals(obj.getCfgRuleCalcId(), id)
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(fixedSalesFormulaList)) {
+            List<CfgRuleSalesFormulaCalcDTO.ViewDTO> fixedViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaCalcDTO.ViewDTO.class, fixedSalesFormulaList);
+            dto.setFixedSalesQtyList(fixedViewList);
+        }
+        List<CfgRuleSalesDenoisingCalcEntity> denoisingList = cfgRuleSalesDenoisingCalcService.listByCfgRuleCalcId(id);
+        dto.setSalesDenoisingList(BeanMapperUtils.copyList(CfgRuleSalesDenoisingCalcDTO.ViewDTO.class, denoisingList));
+        return dto;
+    }
+
+    @Override
+    public void addFavorite(CalcSalesInfoFavoriteDTO.AddDTO dto) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        int count = calcSalesInfoFavoriteService.count(Wrappers.<CalcSalesInfoFavoriteEntity>lambdaQuery()
+                .eq(CalcSalesInfoFavoriteEntity::getUserId, user.getUid())
+                .eq(CalcSalesInfoFavoriteEntity::getCfgRuleCalcId, dto.getCfgRuleCalcId()));
+        if (count > 0) {
+            throw new ServiceException("试算模板已关注，无需再次关注");
+        }
+        CalcSalesInfoFavoriteEntity calcSalesInfoFavoriteEntity = new CalcSalesInfoFavoriteEntity();
+        calcSalesInfoFavoriteEntity.setCfgRuleCalcId(dto.getCfgRuleCalcId());
+        calcSalesInfoFavoriteEntity.setUserId(user.getUid());
+        calcSalesInfoFavoriteService.save(calcSalesInfoFavoriteEntity);
+    }
+
+    @Override
+    public void cancelFavorite(CalcSalesInfoFavoriteDTO.CancelDTO dto) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        calcSalesInfoFavoriteService.remove(Wrappers.<CalcSalesInfoFavoriteEntity>lambdaQuery()
+                .eq(CalcSalesInfoFavoriteEntity::getUserId, user.getUid())
+                .in(CalcSalesInfoFavoriteEntity::getCfgRuleCalcId, dto.getCfgRuleCalcId()));
     }
 
 

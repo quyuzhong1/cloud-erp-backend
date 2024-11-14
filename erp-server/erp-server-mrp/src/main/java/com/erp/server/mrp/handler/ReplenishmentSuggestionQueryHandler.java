@@ -45,10 +45,10 @@ public class ReplenishmentSuggestionQueryHandler extends AbstractQueryHandler {
             if (QueryConditionEnum.BETWEEN.equals(queryConditionEnum)) {
                 String compareCodeSplicingValueSql1 = compareCodeSplicingValueSql.replace("restockDate", "suggest_delivery_date");
                 String compareCodeSplicingValueSql2 = compareCodeSplicingValueSql.replace("restockDate", "suggest_purchase_date");
-                return "EXISTS (SELECT 1 FROM delivery_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_delivery_date " + compareCodeSplicingValueSql1 + ")  OR EXISTS  (SELECT 1 FROM purchase_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_purchase_date " + compareCodeSplicingValueSql2 + ")";
+                return "(EXISTS (SELECT 1 FROM delivery_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_delivery_date " + compareCodeSplicingValueSql1 + ")  OR EXISTS  (SELECT 1 FROM purchase_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_purchase_date " + compareCodeSplicingValueSql2 + "))";
 
             }
-            return "EXISTS (SELECT 1 FROM delivery_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_delivery_date " + compareCodeSplicingValueSql + ")  OR EXISTS (SELECT 1 FROM purchase_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_purchase_date " + compareCodeSplicingValueSql + ")";
+            return "(EXISTS (SELECT 1 FROM delivery_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_delivery_date " + compareCodeSplicingValueSql + ")  OR EXISTS (SELECT 1 FROM purchase_suggest WHERE source_id = rsd.id AND is_deleted = FALSE AND suggest_purchase_date " + compareCodeSplicingValueSql + "))";
         }
         if("outOfStockDay".equals(field)) {
             if (QueryConditionEnum.BETWEEN.equals(queryConditionEnum)) {

@@ -13,7 +13,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -37,24 +36,28 @@ public class CfgRuleCalcDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-         * 主键id
+         * id
          */
         private String id;
-
         /**
          * sku_id
          */
-        private String skuJson;
+        private List<String> skuIds;
 
         /**
-         * 试算日期
+         * 试算开始日期
          */
-        private LocalDateTime calcDate;
+        private LocalDate startCalcDate;
+
+        /**
+         * 试算结束日期
+         */
+        private LocalDate endCalcDate;
 
         /**
          * 店铺json
          */
-        private String shopJson;
+        private List<String> shopIds;
 
         /**
          * 历史销量类型
@@ -72,15 +75,24 @@ public class CfgRuleCalcDTO implements Serializable {
         private String name;
 
         /**
-         * 试算配置编号
+         * 默认日销量
          */
-        private String code;
+        private CfgRuleSalesFormulaCalcDTO.ViewDTO defaultSalesQtyDTO;
 
         /**
-         * 试算状态
+         * 动态日销量
          */
-        private String status;
+        private List<CfgRuleSalesFormulaCalcDTO.ViewDTO> dynamicSalesQtyList;
 
+        /**
+         * 固定日销量
+         */
+        private List<CfgRuleSalesFormulaCalcDTO.ViewDTO> fixedSalesQtyList;
+
+        /**
+         * 销量去噪
+         */
+        private List<CfgRuleSalesDenoisingCalcDTO.ViewDTO> salesDenoisingList;
 
     }
 

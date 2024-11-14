@@ -54,9 +54,21 @@
         from calc_sales_info_dim
         where ${params.sqlMap.default}
           and is_deleted = FALSE
+        and cfg_rule_calc_id = #{params.cfgRuleCalcId}
         order by update_time desc
 
     </select>
-
-
+    <select id="view" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ViewDTO">
+        select id,
+               update_time,
+               sku_id,
+               sku_no,
+               country,
+               shop_id,
+               platform,
+               remark,
+               cfg_rule_calc_id
+        from calc_sales_info_dim
+        where id = #{id}
+    </select>
 </mapper>

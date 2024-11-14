@@ -1,25 +1,19 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
 import com.erp.server.mrp.mapper.CfgRuleSalesFormulaCalcMapper;
 import com.erp.server.mrp.service.CfgRuleSalesFormulaCalcService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.mrp.dto.CfgRuleSalesFormulaCalcDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * <p>
  * 试算销量公式（规则设置） 服务实现类
@@ -32,4 +26,19 @@ import com.common.core.enums.ApiError;
 @Service
 public class CfgRuleSalesFormulaCalcServiceImpl extends SuperServiceImpl<CfgRuleSalesFormulaCalcMapper, CfgRuleSalesFormulaCalcEntity> implements CfgRuleSalesFormulaCalcService {
 
+    @Override
+    public List<CfgRuleSalesFormulaCalcEntity> listByCfgRuleCalcId(String id) {
+        List<CfgRuleSalesFormulaCalcEntity> list = list(Wrappers.<CfgRuleSalesFormulaCalcEntity>lambdaQuery()
+                .eq(CfgRuleSalesFormulaCalcEntity::getCfgRuleCalcId, id)
+                .orderByAsc(CfgRuleSalesFormulaCalcEntity::getIndex));
+
+        for (CfgRuleSalesFormulaCalcEntity formulaEntity : list) {
+            //百分比json
+            CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(formulaEntity.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
+            formulaEntity.setPercentJsonDTO(percentJsonDTO);
+            //时间
+            formulaEntity.setDateList(Arrays.asList(formulaEntity.getStartDate(),formulaEntity.getEndDate()));
+        }
+        return list;
+    }
 }

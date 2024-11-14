@@ -2,11 +2,10 @@ package com.erp.server.mrp.controller.api;
 
 
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
+import com.erp.model.mrp.dto.CalcSalesInfoFavoriteDTO;
 import com.erp.model.mrp.dto.CfgRuleCalcDTO;
 import com.erp.server.mrp.service.CfgRuleCalcService;
 import lombok.extern.slf4j.Slf4j;
@@ -39,11 +38,23 @@ public class CfgRuleCalcController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "试算配置新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgRuleCalcDTO.AddDTO dto, HttpServletResponse response) {
         return success(cfgRuleCalcService.add(dto, response));
     }
 
+
+
+    /**
+     * 详情
+     * @author liaohui
+     * 2024-11-11
+     * @param id 参数
+     * @return ApiResult<String>
+     */
+    @GetMapping("/view")
+    public ApiResult<CfgRuleCalcDTO.ViewDTO> view(@RequestParam String id) {
+        return success(cfgRuleCalcService.view(id));
+    }
 
     /**
      * 下载历史销量
@@ -66,4 +77,24 @@ public class CfgRuleCalcController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 新增关注模板
+     * @param dto 参数
+     */
+    @PostMapping("/addFavorite")
+    public ApiResult<String> addFavorite(@RequestBody @Validated CalcSalesInfoFavoriteDTO.AddDTO dto) {
+        cfgRuleCalcService.addFavorite(dto);
+        return success();
+    }
+
+    /**
+     * 取消关注模板
+     * @param dto 参数
+     */
+    @PostMapping("/cancelFavorite")
+    public ApiResult<String> cancelFavorite(@RequestBody @Validated CalcSalesInfoFavoriteDTO.CancelDTO dto) {
+        cfgRuleCalcService.cancelFavorite(dto);
+        return success();
+    }
 }

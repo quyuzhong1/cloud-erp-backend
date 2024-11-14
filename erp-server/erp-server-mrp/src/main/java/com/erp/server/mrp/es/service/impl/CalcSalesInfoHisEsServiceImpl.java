@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -32,4 +33,10 @@ public class CalcSalesInfoHisEsServiceImpl implements CalcSalesInfoHisEsService 
                 .map(dataList -> CompletableFuture.runAsync(() -> calcSalesInfoHisEsRepository.saveAll(dataList), threadPoolTaskExecutor))
                 .toArray(CompletableFuture[]::new)).join();
     }
+
+    @Override
+    public List<CalcSalesInfoHisEsEntity> findByCfgRuleCalcIdAndSkuIdAndShopIdAndDateBetween(String cfgRuleCalcId, String skuId, String shopId, LocalDate startDate, LocalDate endDate) {
+        return calcSalesInfoHisEsRepository.findByCfgRuleCalcIdAndSkuIdAndShopIdAndDateBetween(cfgRuleCalcId, skuId, shopId, startDate, endDate);
+    }
+
 }
