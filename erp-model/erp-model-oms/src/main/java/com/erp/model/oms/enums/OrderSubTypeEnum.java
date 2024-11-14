@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.stream.Stream;
 
 public enum OrderSubTypeEnum implements EnumMessage {
-    OFFLINE_ORDER("100.20.00", "线下订单"),
+    OFFLINE_ORDER("100.30.01", "线下订单"),
     ONLINE_ORDER("100.20.01", "线上订单"),
     GIFT_ORDER("100.20.02", "赠品订单"),
     GIFT_REPLENISHMENT("100.20.03", "赠品补发"),

@@ -567,4 +567,5 @@ public class ShudiyunB2cOrderDTO {
      * 原始根节点交易号
      */
     private String root_node_no_initial;
+
 }

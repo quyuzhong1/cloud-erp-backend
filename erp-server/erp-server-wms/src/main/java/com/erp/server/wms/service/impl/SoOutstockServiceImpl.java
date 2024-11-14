@@ -47,6 +47,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
@@ -3552,8 +3553,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //默认出库单
             shudiyunB2cOrderDTO.setTransaction_type("200.10");
 
-
-            shudiyunB2cOrderDTO.setTransaction_sub_type(transactionSubType);
+            shudiyunB2cOrderDTO.setTransaction_sub_type(convertOutstockTransactionSubType(transactionSubType));
             shudiyunB2cOrderDTO.setBiz_status(operateEnum);
 
             // todo 收款组织：暂无数据需要新增(必填字段)
@@ -3632,5 +3632,30 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //同步B2B订单
         return wmsPushMsgService.save(wmsPushMsgEntity);
 
+    }
+
+    /**
+     * 出库单子状态转换
+     * @param transactionSubType
+     * @return
+     */
+    private String convertOutstockTransactionSubType(String transactionSubType) {
+        if (OrderSubTypeEnum.OFFLINE_ORDER.getCode().equals(transactionSubType) || OrderSubTypeEnum.ONLINE_ORDER.getCode().equals(transactionSubType)) {
+            //普通出库
+            transactionSubType = "200.10.01";
+        } else if (OrderSubTypeEnum.GIFT_ORDER.getCode().equals(transactionSubType) || OrderSubTypeEnum.GIFT_REPLENISHMENT.getCode().equals(transactionSubType)) {
+            //赠品出库
+            transactionSubType = "200.10.02";
+        } else if (OrderSubTypeEnum.EXCHANGE_REPLACEMENT.getCode().equals(transactionSubType)) {
+            //换货补发
+            transactionSubType = "200.10.03";
+        } else if (OrderSubTypeEnum.REPLENISHMENT.getCode().equals(transactionSubType)) {
+            //补发出库
+            transactionSubType = "200.10.04";
+        } else {
+            //其他
+            transactionSubType = "200.10.05";
+        }
+        return transactionSubType;
     }
 }
