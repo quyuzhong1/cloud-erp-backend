@@ -110,7 +110,7 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 			platformTrackDetail.setTrackNo(dmpLogisticsTrackEntity.getTrackNo());
 			platformTrackDetail.setTrackTime(dmpLogisticsTrackEntity.getTrackTime());
 			platformTrackDetail.setStatus(dmpLogisticsTrackEntity.getStatus());
-			if(null != dmpLogisticsTrackEntity.getTrackNo()){
+			if(null != dmpLogisticsTrackEntity.getTrackTime()){
 				// 设置唯一值
 				platformTrackDetail.setMd5(getDataMd5(dmpLogisticsTrackEntity));
 			} else {

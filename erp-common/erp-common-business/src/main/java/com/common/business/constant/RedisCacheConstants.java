@@ -239,6 +239,6 @@ public interface RedisCacheConstants {
     /**
      * DMP物流跟踪记录分页查询缓存LastId
      */
-    String DMP_LOGISTICS_TRACK = "dmp_logistics_track:lastId";
+    String DMP_LOGISTICS_TRACK = "dmp_logistics_track:last_page";
 
 }
