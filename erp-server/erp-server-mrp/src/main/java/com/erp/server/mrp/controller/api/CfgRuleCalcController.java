@@ -40,8 +40,8 @@ public class CfgRuleCalcController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "试算配置新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgRuleCalcDTO.AddDTO dto) {
-        return success(cfgRuleCalcService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgRuleCalcDTO.AddDTO dto, HttpServletResponse response) {
+        return success(cfgRuleCalcService.add(dto, response));
     }
 
 

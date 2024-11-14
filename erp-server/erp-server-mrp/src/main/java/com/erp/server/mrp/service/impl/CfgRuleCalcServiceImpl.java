@@ -3,16 +3,21 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 import com.erp.model.mrp.dto.CfgRuleCalcDTO;
 import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
@@ -43,11 +48,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -84,7 +87,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgRuleCalcDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(CfgRuleCalcDTO.AddDTO addDTO, HttpServletResponse response) {
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(addDTO.getSkuIds());
         Map<String, String> skuMap = skuVOS.stream()
                 .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
@@ -93,13 +96,20 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 .collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
         CfgRuleCalcEntity entity = CfgRuleCalcDTO.AddDTO.buildCfgRuleCalcEntity(addDTO);
         entity.setId(IdWorker.getIdStr());
-        List<CalcSalesInfoHisEsEntity> historySaleList;
+        List<CalcSalesInfoHisEsEntity> historySaleList = new ArrayList<>();
         if (HistorySalesTypeEnum.SYSTEM.getCode().equals(addDTO.getSaleType())) {
             historySaleList = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
         } else {
-            HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener(skuMap, shopMap);
-            EasyExcel.read(FastDFSClientUtil.getInputStream(addDTO.getFileUrl()), CfgRuleCalcDTO.HistorySaleImportDTO.class, excelListener).headRowNumber(1).sheet(0).doRead();
-            historySaleList = excelListener.getDateList();
+            HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener(skuVOS, shopInfoList, entity);
+            try {
+                EasyExcel.read(FastDFSClientUtil.getInputStream(addDTO.getFileUrl()), CfgRuleCalcDTO.HistorySaleImportDTO.class, excelListener).headRowNumber(1).sheet(0).doRead();
+                //导出错误数据
+                exportErrorExcel(response,excelListener.getErrorList());
+                historySaleList = excelListener.getDataList();
+            } catch (ExcelCommonException e) {
+                log.error("导入格式错误！", e);
+                throw new ServiceException(ApiError.ERROR_1016);
+            }
         }
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLSS);
         entity.setCode(code);
@@ -114,6 +124,24 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         calcSalesInfoDimService.saveBatch(calcSalesInfoDimList);
         calcSalesInfoDimService.calcSalesInfo(calcResultList);
         return new BaseResultDTO.AddDTO(entity.getId(), code);
+    }
+
+    private void exportErrorExcel(HttpServletResponse response, List<CfgRuleCalcDTO.HistorySaleImportDTO> errorList) {
+        if (CollectionUtils.isEmpty(errorList)) {
+            return;
+        }
+        String name = "试算历史销量错误数据";
+        StringBuilder sb = new StringBuilder();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/calcHistorySaleQtyError.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("导出失败 原因{}", e.getMessage(), e);
+            throw new ServiceException("试算历史销量错误数据导出失败");
+        }
     }
 
     /**

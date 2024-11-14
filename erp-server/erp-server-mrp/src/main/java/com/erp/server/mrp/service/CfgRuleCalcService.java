@@ -17,12 +17,13 @@ import javax.servlet.http.HttpServletResponse;
 public interface CfgRuleCalcService extends SuperService<CfgRuleCalcEntity> {
 
     /**
-    * 新增
-    * @author liaohui
-    * @date: 2024-11-11
-    * @param dto 参数
-    */
-    BaseResultDTO.AddDTO add(CfgRuleCalcDTO.AddDTO dto);
+     * 新增
+     *
+     * @param dto      参数
+     * @author liaohui
+     * @date: 2024-11-11
+     */
+    BaseResultDTO.AddDTO add(CfgRuleCalcDTO.AddDTO dto, HttpServletResponse response);
 
 
 

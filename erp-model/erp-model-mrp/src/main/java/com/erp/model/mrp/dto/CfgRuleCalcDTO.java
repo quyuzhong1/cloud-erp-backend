@@ -264,8 +264,12 @@ public class CfgRuleCalcDTO implements Serializable {
          */
         @ExcelProperty(value = "数量", index = 0)
         @FieldValid(fieldName = "数量", isNotBlank = true, maxLength = 32)
-        private Integer qty;
+        private String qty;
 
+        /**
+         * 错误数据
+         */
+        private String errorMsg;
     }
 
     @Getter
