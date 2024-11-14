@@ -35,8 +35,7 @@
         name,short_name,disabled,
         use_org_name,group_id,group_name,
         create_user_name,create_time,
-        ci.platform_type as platformType,
-        ci.country_id
+        ci.platform_type as platformType
         FROM customer_info ci
         WHERE
 
