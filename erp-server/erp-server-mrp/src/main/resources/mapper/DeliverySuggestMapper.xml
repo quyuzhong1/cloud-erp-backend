@@ -44,7 +44,6 @@
         ds.logistics_days as logisticsDays,
         ds.estimate_sales_date as estimateSalesDate,
         ds.logistics_cost as logisticsCost,
-        dss.logistics_cost as sysLogisticsCost,
         ds.invalid_status as invalidStatus,
         ds.invalid_remark as invalidRemark,
         ds.invalid_time as invalidTime,
