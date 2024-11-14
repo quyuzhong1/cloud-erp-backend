@@ -1976,6 +1976,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
             }
         }
+        // 国家
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String,String> countryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(countryList)){
+            countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
+        }
+
         for (CustomerDTO.PagingViewDTO item : page.getRecords()) {
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
@@ -1990,6 +1997,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 item.setApproveUserName(curApprove);
             }
+            //国家
+            item.setCountryName(countryMap.get(item.getCountryId()));
         }
         return new PagingVO<>(page);
     }
