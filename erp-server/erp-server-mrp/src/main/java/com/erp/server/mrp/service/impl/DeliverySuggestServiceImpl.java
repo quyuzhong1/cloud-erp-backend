@@ -394,12 +394,16 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         switch (CfgRulePlatformTypeEnum.getEnum(platformType)){
             case AMAZON:
                 fileName = "补货计划_本地发FBA";
+                break;
             case OVERSEAS:
                 fileName = "补货计划_本地发海外仓";
+                break;
             case INTERNAL:
                 fileName = "补货计划_本地备货";
+                break;
             case B2B:
                 fileName = "补货计划_B2B本地备货";
+                break;
             default:
                 ;
         }
@@ -453,23 +457,13 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         DeliverySuggestEntity entity = deliverySuggestList.get(0);
         viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
-        boolean isAmazon = StrUtil.equals(deliverySuggestList.get(0).getPlatformType(), CfgRulePlatformTypeEnum.AMAZON.getCode());
-        viewPushDeliveryPlanDTO.setType(isAmazon ? DeliveryPlanTypeEnum.FBA.getCode() : DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode());
-        viewPushDeliveryPlanDTO.setTypeName(isAmazon ? DeliveryPlanTypeEnum.FBA.getName() :DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getName());
-        viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
-        viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
-        viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
-        //亚马逊需要店铺信息
-        if (isAmazon) {
-            //店铺信息
-            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-                viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
-                viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
-                viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
-                viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
-                viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
-            }
+        boolean isOverseas = StrUtil.equals(deliverySuggestList.get(0).getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+        if (isOverseas) {
+            //海外平台
+            handleOverseas (viewPushDeliveryPlanDTO,entity);
+        } else {
+            //亚马逊平台数据处理
+            handleAmazon (viewPushDeliveryPlanDTO,entity,shopInfoList);
         }
 
         List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> detailList = new ArrayList<>();
@@ -530,6 +524,47 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         viewPushDeliveryPlanDTO.setDetailList(detailList);
         return viewPushDeliveryPlanDTO;
+    }
+
+    /**
+     * 海外平台
+     * @author will
+     * @date 2024/11/14 9:50
+     * @param viewPushDeliveryPlanDTO
+     * @param entity
+     */
+    private void handleOverseas (DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO, DeliverySuggestEntity entity) {
+            viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode() );
+            viewPushDeliveryPlanDTO.setTypeName( DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getName());
+            viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
+            viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
+            viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
+    }
+
+    /**
+     * 处理亚马逊数据
+     * @author will
+     * @date 2024/11/14 9:45
+     * @param viewPushDeliveryPlanDTO
+     * @param entity
+     * @param shopInfoList
+     */
+    private void handleAmazon (DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO, DeliverySuggestEntity entity,
+                               List<ShopInfoEntity> shopInfoList) {
+        viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.FBA.getCode() );
+        viewPushDeliveryPlanDTO.setTypeName( DeliveryPlanTypeEnum.FBA.getName());
+        viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
+        viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
+        viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
+        //店铺信息
+        ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
+            viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
+            viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
+            viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
+            viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+        }
     }
 
     @Override
