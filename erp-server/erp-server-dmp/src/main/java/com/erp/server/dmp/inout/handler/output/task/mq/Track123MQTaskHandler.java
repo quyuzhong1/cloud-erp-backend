@@ -3,6 +3,8 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformProductDTO;
@@ -23,6 +25,7 @@ import com.sdk.tms.track123.model.response.OceanTrackInfo;
 import com.sdk.tms.track123.model.response.OceanTrackingDetail;
 import com.sdk.tms.track123.model.response.Rejected;
 import io.seata.common.util.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -33,9 +36,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Scope("prototype")
 public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
+
+	private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 	@Override
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -104,7 +110,12 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 			platformTrackDetail.setTrackNo(dmpLogisticsTrackEntity.getTrackNo());
 			platformTrackDetail.setTrackTime(dmpLogisticsTrackEntity.getTrackTime());
 			platformTrackDetail.setStatus(dmpLogisticsTrackEntity.getStatus());
-
+			if(null != dmpLogisticsTrackEntity.getTrackNo()){
+				// 设置唯一值
+				platformTrackDetail.setMd5(getDataMd5(dmpLogisticsTrackEntity));
+			} else {
+				log.warn("Track123 数据异常: 无跟踪时间:{}", JSONUtil.toJsonStr(dmpLogisticsTrackEntity));
+			}
 			details.add(platformTrackDetail);
 		}
 
@@ -119,5 +130,13 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 	@Override
 	protected List<String> getSourceCodeKeys() {
 		return Arrays.asList("trackNo");
+	}
+
+	/**
+	 * 获取唯一值
+	 */
+	private String getDataMd5(DmpLogisticsTrackEntity dmpEntity) {
+		String trackTime = dmpEntity.getTrackTime().format(TIME_FORMAT);
+		return DigestUtil.md5Hex(dmpEntity.getTrackNo() + "-" + dmpEntity.getContent() + "-" + trackTime);
 	}
 }

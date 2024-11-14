@@ -55,6 +55,11 @@ public class DmpLogisticsTrackRegisterEntity extends BaseEntity<DmpLogisticsTrac
     @TableField("carrier_id")
     private String carrierId;
     /**
+     * 船司/航司编码
+     */
+    @TableField("carrier_code")
+    private String carrierCode;
+    /**
     * 电话
     */
     @TableField("tel_number")
