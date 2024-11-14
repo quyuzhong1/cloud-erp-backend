@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -347,7 +348,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         SoDeliveryNoticeChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知变更单数据"));
         // 只有待提交数据允许删除
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
-            throw new ServiceException("只有待提交或审核不通过数据支持作废");
+            throw new ServiceException("只有待提交或审核不通过数据支持删除");
         }
         detailService.removeByMainId(entity.getId());
         // 删除主单数据
@@ -402,10 +403,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        List<SoDeliveryNoticeChangeDetailEntity> detailList = detailService.listByMainId(entity.getId());
-        changeNotice(entity,detailList);
-        //虚拟库存变更
-        virtualInventoryChange(entity,detailList,oldDeliveryNoticeDetailList);
+        if (dto.getType().equals(ApproveType.PASS)) {
+            List<SoDeliveryNoticeChangeDetailEntity> detailList = detailService.listByMainId(entity.getId());
+            changeNotice(entity,detailList);
+            //虚拟库存变更
+            virtualInventoryChange(entity,detailList,oldDeliveryNoticeDetailList);
+        }
         return Boolean.TRUE;
     }
 

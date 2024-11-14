@@ -199,7 +199,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         //发货通知变更
         SoDeliveryNoticeChangeEntity entity = soDeliveryNoticeChangeService.getById(dto.getBusinessId());
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-        approveOneDTO.setType(ApproveTypeEnum.PASS.getStatus());
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return soDeliveryNoticeChangeService.approveEnd(approveOneDTO,entity);
     }
 
