@@ -100,6 +100,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
+    @Resource
+    private PackingTaskService packingTaskService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -453,6 +456,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         if(CollectionUtils.isNotEmpty(sourceDetailList)) {
             detailService.updateBatchById(sourceDetailList);
         }
+
+        //同步装箱任务明细
+        packingTaskService.syncByDeliveryNoticeChange(soDeliveryNotice,addList,updateList,deleteList);
     }
 
     @Override

@@ -2360,6 +2360,58 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         this.updatePackingStatus(listGroupSkuById(taskId),taskId);
     }
 
+    @Override
+    public void syncByDeliveryNoticeChange(SoDeliveryNoticeEntity soDeliveryNotice, List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList) {
+        PackingTaskEntity packingTaskEntity = this.getBySourceCode(soDeliveryNotice.getCode());
+        if(Objects.isNull(packingTaskEntity)){
+            return;
+        }
+        List<PackingTaskDetailEntity> dbDetailList = packingTaskDetailService.listByMainIds(Arrays.asList(packingTaskEntity.getId()));
+        List<PackingTaskDetailEntity> addTaskDetailList =  new ArrayList<>();
+        List<PackingTaskDetailEntity> updateTaskDetailList =  new ArrayList<>();
+        List<PackingTaskDetailEntity> deleteTaskDetailList =  new ArrayList<>();
+        //处理新增
+        if(CollectionUtils.isNotEmpty(addList)){
+            addList.forEach(v->{
+                PackingTaskDetailEntity packingTaskDetailEntity = new PackingTaskDetailEntity();
+                packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
+                packingTaskDetailEntity.setSkuId(v.getSkuId());
+                packingTaskDetailEntity.setSkuNo(v.getSkuNo());
+                packingTaskDetailEntity.setDeliveryQty(v.getDeliveryQty());
+                packingTaskDetailEntity.setSourceDetailId(v.getId());
+                addTaskDetailList.add(packingTaskDetailEntity);
+            });
+        }
+        //处理更新
+        if(CollectionUtils.isNotEmpty(updateList)){
+            updateList.forEach(v->{
+                PackingTaskDetailEntity packingTaskDetailEntity = dbDetailList.stream().filter(d->d.getSourceDetailId().equals(v.getId())).findFirst().orElse(null);
+                if(Objects.isNull(packingTaskDetailEntity)){
+                    return;
+                }
+                packingTaskDetailEntity.setDeliveryQty(v.getDeliveryQty());
+                updateTaskDetailList.add(packingTaskDetailEntity);
+            });
+        }
+
+        //处理删除
+        if(CollectionUtils.isNotEmpty(deleteList)){
+            deleteList.forEach(v->{
+                PackingTaskDetailEntity packingTaskDetailEntity = dbDetailList.stream().filter(d->d.getSourceDetailId().equals(v.getId())).findFirst().orElse(null);
+                if(Objects.isNull(packingTaskDetailEntity)){
+                    return;
+                }
+                deleteTaskDetailList.add(packingTaskDetailEntity);
+            });
+        }
+
+        packingTaskDetailService.updateByChange(addTaskDetailList,updateTaskDetailList,deleteTaskDetailList);
+        //重新查询明细并更新主表的发货数量
+        List<PackingTaskDetailEntity> currentDetailList = packingTaskDetailService.listByMainIds(Arrays.asList(packingTaskEntity.getId()));
+        packingTaskEntity.setDeliveryQty(currentDetailList.stream().map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
+        this.updateById(packingTaskEntity);
+    }
+
     /**
     * 新增修改处理数据
     */

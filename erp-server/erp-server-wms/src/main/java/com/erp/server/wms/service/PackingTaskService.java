@@ -282,4 +282,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     void updatePackingStatusByTaskId(String taskId);
+
+    void syncByDeliveryNoticeChange(SoDeliveryNoticeEntity soDeliveryNotice, List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
 }
