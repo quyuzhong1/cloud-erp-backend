@@ -2923,14 +2923,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             data.setCategoryIdList(categoryIdList);
         }
         //发货单--提交发货时间、面单打印时间
-//        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(id)).stream()
-//                .sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime).reversed())//降序
-//                .collect(Collectors.toList());;
-        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = FeignQuery.create(SoB2cDeliveryEntity.class)
-                .eq(SoB2cDeliveryEntity::getId, id)
-                .ne(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())
-                .last("order by create_time desc")
-                .list();
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(id))
+                .stream()
+                .filter(v -> !v.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()))
+                .sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime).reversed())//降序
+                .collect(Collectors.toList());;
         if(CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
             SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.get(0);
             data.setFinishPrintTime(soB2cDeliveryEntity.getFinishPrintTime());
@@ -8113,6 +8110,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         partionSoIds.forEach(v->{
             soOutstockEntityList.addAll(FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getSoId,v).select(SoOutstockEntity::getSoId,SoOutstockEntity::getBillDate).list());
         });
+        List<String> ids = records.stream().map(SoB2cDTO.ExcelExportDTO::getId).collect(Collectors.toList());
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(ids);
 
         for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
             SoOutstockEntity soOutstock = soOutstockEntityList.stream().filter(v->v.getSoId().equals(exportDTO.getId())).findFirst().orElse(new SoOutstockEntity());
@@ -8179,7 +8178,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), exportDTO.getSkuId())
                             && StrUtil.equals(BomTypeEnum.COMBINATION.getType(), obj.getType()))
                     .collect(Collectors.toList());
-
+            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSourceId(), exportDTO.getId())).findFirst().orElse(null);
+            //发货单--提交发货时间、面单打印时间
+            List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream()
+                    .filter(e -> Objects.nonNull(e) && Objects.equals(e.getSourceId(), exportDTO.getId()))
+                    .filter(v -> !v.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()))
+                    .sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime).reversed())//降序
+                    .collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(collect)){
+                exportDTO.setFinishPrintTime(soB2cDeliveryEntities.get(0).getFinishPrintTime());
+                exportDTO.setCreateDeliveryTime(soB2cDeliveryEntities.get(0).getCreateTime());
+            }
             //销售套装bom
             if (CollectionUtils.isNotEmpty(childList)) {
                 List<Integer> qtyList = new ArrayList<>();

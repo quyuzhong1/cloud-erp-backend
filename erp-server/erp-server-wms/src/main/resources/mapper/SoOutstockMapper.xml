@@ -130,10 +130,10 @@
             sod.so_detail_id as soDetailId,
            sod.source_detail_id AS sourceDetailId,
            sod.warehouse_location AS warehouseLocation,
-            sbc.dict_platform
+        ci.platform_type as dict_platform
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND  sod.is_deleted=FALSE
-        LEFT JOIN so_b2c sbc ON so.so_id = sbc.id AND sbc.is_deleted = FALSE
+        LEFT JOIN customer_info ci ON so.customer_id = ci.id AND ci.is_deleted = FALSE
         WHERE
             ${params.sqlMap.default}
           and so.is_deleted=FALSE
@@ -316,7 +316,7 @@
             sum(sod.all_amount_local_currency) as totalTaxAmount
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
-        LEFT JOIN so_b2c sbc ON so.so_id = sbc.id AND sbc.is_deleted = FALSE
+        LEFT JOIN customer_info ci ON so.customer_id = ci.id AND ci.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
            and so.is_deleted = FALSE
