@@ -138,7 +138,7 @@
         from purchase_suggest ps
         left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
         <where>
-            ps.is_deleted = false and ps.status = 'draft'
+            ps.is_deleted = false and ps.status = 'draft' and ps.invalid_status = false
             AND NOT EXISTS (
                 SELECT 1
                 FROM purchase_suggest_merge psm
