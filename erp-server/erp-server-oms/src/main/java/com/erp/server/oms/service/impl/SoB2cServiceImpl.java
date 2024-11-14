@@ -5831,6 +5831,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(Collections.singletonList(entity.getId()));
             if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
                 transferWarehouseIdList = StrUtil.split(soB2cDeliveryEntities.get(0).getTransferWarehouseIds(), ",");
+                isTransit = Boolean.TRUE;
             }else {
                 // B2C订单根据中转规则判断是否中转
                 CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
