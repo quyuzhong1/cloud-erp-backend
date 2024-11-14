@@ -179,6 +179,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
 
+    @Resource
+    private PickingDetailService pickingDetailService;
+
+
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -722,6 +726,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<String> sourceDetailIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByIds(sourceDetailIdList);
 
+        //拣货明细
+        List<String> deliveryDetailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listPickingDetailBySourceDetailIds(deliveryDetailIdList);
+        if (CollectionUtils.isEmpty(pickingDetailList)) {
+            throw new ServiceException("未找到拣货单明细数据");
+        }
+
         //历史流水
         List<String> detailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).distinct().collect(Collectors.toList());
         List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(detailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
@@ -734,11 +745,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
                 throw new ServiceException("直接调拨单未找到");
             }
+            //发货单Id
+            String soB2cDeliveryDetailId = pickingDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).map(PickingDetailEntity::getSourceDetailId).findFirst().orElse("");
+
             //b2c发货单
-            SoB2cDeliveryDetailEntity soB2cDeliveryDetail = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            SoB2cDeliveryDetailEntity soB2cDeliveryDetail = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDeliveryDetailId)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soB2cDeliveryDetail) || StrUtil.isBlank(soB2cDeliveryDetail.getVirtualWarehouseId())) {
                 continue;
             }
+
             //判断是否是历史数据存在流水则不扣减虚拟仓流水
             long count = virtualTransFlowList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), detailEntity.getId())).count();
             if (count > MathUtil.ZERO) {
