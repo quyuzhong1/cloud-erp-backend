@@ -74,6 +74,7 @@
             odp.shop_name as shopName,
             odp.expect_delivery_date as expectDeliveryDate,
             odp.expect_logistics_method as expectLogisticsMethod,
+            odp.source_type as sourceType,
             odpd.source_json as sourceJson
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE

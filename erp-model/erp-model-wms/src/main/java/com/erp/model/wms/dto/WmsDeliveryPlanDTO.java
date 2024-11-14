@@ -276,6 +276,11 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private JSONArray sourceJson;
 
         /**
+         * 来源类型，deliverySuggestion发货建议
+         */
+        private String sourceType;
+
+        /**
          * 来源编码
          */
         private String sourceCodes;

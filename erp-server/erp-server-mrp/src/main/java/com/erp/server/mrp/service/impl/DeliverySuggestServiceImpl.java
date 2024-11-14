@@ -502,21 +502,23 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             detailDTO.setDeliverySuggestList(suggestInfoList);
 
             //sku映射表
-            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(skuMappingEntity)) {
-                //listing信息
-                List<ListingInfoEntity> detailListingList = listingList.stream().filter(obj -> StrUtil.equals(skuMappingEntity.getListingId(), obj.getId())).collect(Collectors.toList());
-                for (ListingInfoEntity listingInfoEntity : detailListingList) {
-                    DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO newDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
-                    BeanMapperUtils.copy(detailDTO,newDTO);
-                    newDTO.setId(suggestEntity.getSkuId());
-                    newDTO.setMSKu(listingInfoEntity.getPlatformSkuNo());
-                    newDTO.setFnSku(listingInfoEntity.getPlatformFnSku());
-                    newDTO.setAsin(listingInfoEntity.getPlatformSpuNo());
-                    newDTO.setPlatformSkuName(listingInfoEntity.getPlatformSkuName());
-                    //清空计划发货数量，前端填写
-                    newDTO.setPlanDeliveryQty(null);
-                    detailList.add(newDTO);
+            List<SkuMappingEntity> skuMappingList = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(skuMappingList)) {
+                for (SkuMappingEntity skuMappingEntity : skuMappingList) {
+                    //listing信息
+                    List<ListingInfoEntity> detailListingList = listingList.stream().filter(obj -> StrUtil.equals(skuMappingEntity.getListingId(), obj.getId())).collect(Collectors.toList());
+                    for (ListingInfoEntity listingInfoEntity : detailListingList) {
+                        DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO newDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
+                        BeanMapperUtils.copy(detailDTO,newDTO);
+                        newDTO.setId(suggestEntity.getSkuId());
+                        newDTO.setMSKu(listingInfoEntity.getPlatformSkuNo());
+                        newDTO.setFnSku(listingInfoEntity.getPlatformFnSku());
+                        newDTO.setAsin(listingInfoEntity.getPlatformSpuNo());
+                        newDTO.setPlatformSkuName(listingInfoEntity.getPlatformSkuName());
+                        //清空计划发货数量，前端填写
+                        newDTO.setPlanDeliveryQty(null);
+                        detailList.add(newDTO);
+                    }
                 }
             } else {
                 detailList.add(detailDTO);

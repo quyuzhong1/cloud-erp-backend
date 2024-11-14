@@ -644,7 +644,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             throw new ServiceException("采购建议不存在");
         }
         //bom信息
-        List<String> skuIdList = purchaseSuggestList.stream().map(PurchaseSuggestEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = purchaseSuggestList.stream().map(PurchaseSuggestEntity::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         Map<String, List<PurchaseSuggestMergeDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId()));
@@ -691,7 +691,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
                 //是否是组合品
                 long count = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getBomVersion(), listDTO.getBomVersion()) && StrUtil.equals(obj.getParentSkuId(), entity.getSkuId())).count();
-                listDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
+                childDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
                 resultList.add(childDTO);
             }
         }
