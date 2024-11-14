@@ -9,8 +9,11 @@ import com.common.business.validator.ValidList;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -173,6 +176,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SoB2cFeign soB2cFeign;
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
+    @Resource
+    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+    @Resource
+    private PickingListsService pickingListsService;
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -707,6 +718,173 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseByDeliveryNotice(e, detailList,soDeliveryNoticeEntities)).collect(Collectors.toList());
         }
         updateSoDeliveryNoticeInventory(transferInfoList,detailList);
+        //来源发货单
+        List<TransferInfoEntity> b2cDeliveryTransferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY.getCode(), obj.getSourceType()))
+                .distinct().collect(Collectors.toList());
+        //过滤来源单发货仓库和调拨单出库仓库不一致数据
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = null;
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities = null;
+        if (CollectionUtils.isNotEmpty(b2cDeliveryTransferInfoList)){
+            List<String> sourceIds = b2cDeliveryTransferInfoList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+            soB2cDeliveryEntities = soB2cDeliveryService.listByIds(sourceIds);
+            soB2cDeliveryDetailEntities = soB2cDeliveryDetailService.listByMainIds(sourceIds);
+            List<SoB2cDeliveryEntity> finalSoB2cDeliveryEntities = soB2cDeliveryEntities;
+            List<SoB2cDeliveryDetailEntity> finalSoB2cDeliveryDetailEntities = soB2cDeliveryDetailEntities;
+            transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseByB2cDelivery(e, detailList, finalSoB2cDeliveryEntities, finalSoB2cDeliveryDetailEntities)).collect(Collectors.toList());
+        }
+        updateB2cDeliveryInventory(transferInfoList,detailList,soB2cDeliveryEntities,soB2cDeliveryDetailEntities);
+
+        //来源销售订单
+        List<TransferInfoEntity> b2cTransferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C.getCode(), obj.getSourceType()))
+                .distinct().collect(Collectors.toList());
+        //过滤来源单发货仓库和调拨单出库仓库不一致数据
+        List<SoB2cEntity> soB2cEntityList = null;
+        List<SoB2cDetailEntity> soB2cDetailEntityList = null;
+        if (CollectionUtils.isNotEmpty(b2cTransferInfoList)){
+            List<String> sourceIds = b2cTransferInfoList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+            soB2cEntityList = soB2cFeign.listByIds(sourceIds);
+            soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(sourceIds);
+            List<SoB2cDetailEntity> finalSoB2cDetailEntityList = soB2cDetailEntityList;
+            List<SoB2cEntity> finalSoB2cEntityList = soB2cEntityList;
+            transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseBySoB2C(e, detailList, finalSoB2cEntityList, finalSoB2cDetailEntityList)).collect(Collectors.toList());
+        }
+        updateSoB2CInventory(transferInfoList,detailList,soB2cEntityList,soB2cDetailEntityList);
+    }
+
+    private void updateSoB2CInventory(List<TransferInfoEntity> transferInfoList, List<TransferInfoDetailEntity> detailList, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> soB2cDetailEntityList) {
+        if (CollectionUtils.isEmpty(transferInfoList)) {
+            return;
+        }
+        List<String> idList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
+        List<TransferInfoDetailEntity> pushDetailList = detailList.stream().filter(obj -> idList.contains(obj.getMainId())).collect(Collectors.toList());
+        //出冻结库存
+        List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
+
+        for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
+            //直接调拨单
+            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(transferInfoEntity)) {
+                throw new ServiceException("直接调拨单未找到");
+            }
+            //发货通知单明细
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cEntity)) {
+                throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到销售订单",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
+            }
+            SoB2cDetailEntity SoB2cDetailEntity = soB2cDetailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), transferInfoDetailEntity.getSkuNo())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(SoB2cDetailEntity)) {
+                throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到销售订单对应明细",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
+            }
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(transferInfoEntity.getId());
+            outInStockDTO.setSourceCode(transferInfoEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_INFO);
+            outInStockDTO.setSourceDetailId(transferInfoDetailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(transferInfoDetailEntity.getSkuId());
+            outInStockDTO.setSkuNo(transferInfoDetailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(transferInfoDetailEntity.getOutWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(SoB2cDetailEntity.getVirtualWarehouseId());
+            outInStockDTO.setQty(transferInfoDetailEntity.getQty());
+            outList.add(outInStockDTO);
+        }
+        if (CollectionUtils.isNotEmpty(outList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
+            stockParamDTO.setParamList(outList);
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
+    }
+
+    private void updateB2cDeliveryInventory(List<TransferInfoEntity> transferInfoList, List<TransferInfoDetailEntity> detailList, List<SoB2cDeliveryEntity> soB2cDeliveryEntities, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities) {
+        if (CollectionUtils.isEmpty(transferInfoList)) {
+            return;
+        }
+
+        List<String> idList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
+        List<TransferInfoDetailEntity> pushDetailList = detailList.stream().filter(obj -> idList.contains(obj.getMainId())).collect(Collectors.toList());
+
+        //出冻结库存
+        List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
+
+        for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
+            //直接调拨单
+            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(transferInfoEntity)) {
+                throw new ServiceException("直接调拨单未找到");
+            }
+            //发货通知单明细
+            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
+                throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到发货单",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
+            }
+            SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity = soB2cDeliveryDetailEntities.stream().filter(e -> Objects.equals(e.getSkuNo(), transferInfoDetailEntity.getSkuNo())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cDeliveryDetailEntity)) {
+                throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到发货单对应明细",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
+            }
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(transferInfoEntity.getId());
+            outInStockDTO.setSourceCode(transferInfoEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_INFO);
+            outInStockDTO.setSourceDetailId(transferInfoDetailEntity.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(transferInfoDetailEntity.getSkuId());
+            outInStockDTO.setSkuNo(transferInfoDetailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(transferInfoDetailEntity.getOutWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(soB2cDeliveryDetailEntity.getVirtualWarehouseId());
+            outInStockDTO.setQty(transferInfoDetailEntity.getQty());
+            outList.add(outInStockDTO);
+        }
+        if (CollectionUtils.isNotEmpty(outList)) {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
+            stockParamDTO.setParamList(outList);
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        }
+    }
+
+    private boolean hasSameWarehouseByB2cDelivery(TransferInfoEntity transferInfoEntity, List<TransferInfoDetailEntity> detailList,
+                                                  List<SoB2cDeliveryEntity> soB2cDeliveryEntities, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities) {
+        if (CollectionUtils.isEmpty(soB2cDeliveryEntities)){
+            return Boolean.FALSE;
+        }
+        List<TransferInfoDetailEntity> detailEntityList = detailList.stream().filter(e -> Objects.equals(e.getMainId(), transferInfoEntity.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            return Boolean.FALSE;
+        }
+        String outWarehouseId = detailEntityList.get(0).getOutWarehouseId();
+        SoB2cDeliveryEntity soDeliveryNoticeEntity = soB2cDeliveryEntities.stream().filter(e -> Objects.equals(transferInfoEntity.getSourceId(), e.getId())).findFirst().orElse(null);
+        if (Objects.isNull(soDeliveryNoticeEntity)){
+            return Boolean.FALSE;
+        }
+        SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity = soB2cDeliveryDetailEntities.stream().filter(e -> Objects.equals(e.getMainId(), soDeliveryNoticeEntity.getId()) && Objects.equals(e.getWarehouseId(), outWarehouseId)).findFirst().orElse(null);
+        if (Objects.nonNull(soB2cDeliveryDetailEntity)){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    private boolean hasSameWarehouseBySoB2C(TransferInfoEntity transferInfoEntity, List<TransferInfoDetailEntity> detailList, List<SoB2cEntity> soB2cEntityList,
+                                            List<SoB2cDetailEntity> soB2cDetailEntityList) {
+        if (CollectionUtils.isEmpty(soB2cEntityList)){
+            return Boolean.FALSE;
+        }
+        List<TransferInfoDetailEntity> detailEntityList = detailList.stream().filter(e -> Objects.equals(e.getMainId(), transferInfoEntity.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            return Boolean.FALSE;
+        }
+        String outWarehouseId = detailEntityList.get(0).getOutWarehouseId();
+        SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> Objects.equals(transferInfoEntity.getSourceId(), e.getId())).findFirst().orElse(null);
+        if (Objects.isNull(soB2cEntity)){
+            return Boolean.FALSE;
+        }
+        SoB2cDetailEntity soB2cDetail = soB2cDetailEntityList.stream().filter(e -> Objects.equals(e.getMainId(), soB2cEntity.getId()) && Objects.equals(e.getWarehouseId(), outWarehouseId)).findFirst().orElse(null);
+        if (Objects.nonNull(soB2cDetail)){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     private boolean hasSameWarehouseByFirstMile(TransferInfoEntity transferInfoEntity, List<TransferInfoDetailEntity> detailList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList) {
