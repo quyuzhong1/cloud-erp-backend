@@ -1687,6 +1687,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         } else {
             entity.setType(TransferTypeEnum.CROSS_ORG.getCode());
         }
+        if (Objects.isNull(entity.getIndex())){
+            entity.setIndex(MathUtil.ZERO);
+        }
     }
 
     /**
@@ -1979,7 +1982,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollectionUtils.isEmpty(batchNoList)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).list();
+        return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).orderByDesc(TransferInfoEntity::getIndex).list();
     }
 
     @Override

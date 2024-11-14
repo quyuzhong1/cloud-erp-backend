@@ -988,16 +988,16 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 isLastTransfer = Boolean.TRUE;
             }
             if (0 == i || firstWarehouseSame){
-                addTransferOrder(Boolean.TRUE,entity.getDeliveryWarehouseId(), transferWarehouseIdList.get(i),entity, detailEntityList,batchNo, isLastTransfer);
+                addTransferOrder(Boolean.TRUE,entity.getDeliveryWarehouseId(), transferWarehouseIdList.get(i),entity, detailEntityList,batchNo, isLastTransfer, i);
             }else {
-                addTransferOrder(Boolean.FALSE, transferWarehouseIdList.get(i - 1), transferWarehouseIdList.get(i),entity, detailEntityList,batchNo, isLastTransfer);
+                addTransferOrder(Boolean.FALSE, transferWarehouseIdList.get(i - 1), transferWarehouseIdList.get(i),entity, detailEntityList,batchNo, isLastTransfer, i);
             }
         }
         //配置规则中最后一个中转仓 和目的仓一致时 不需要再次进行中转
         Boolean isFirst = Boolean.FALSE;
         String lastWarehouserId = transferWarehouseIdList.get(transferWarehouseIdList.size() -1);
         if (!lastWarehouserId.equals(entity.getDestWarehouseId())){
-            addTransferOrder(isFirst, lastWarehouserId, entity.getDestWarehouseId(),entity, detailEntityList,batchNo, Boolean.TRUE);
+            addTransferOrder(isFirst, lastWarehouserId, entity.getDestWarehouseId(),entity, detailEntityList,batchNo, Boolean.TRUE, transferWarehouseIdList.size());
         }
     }
 
@@ -1009,9 +1009,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * @param entity
      * @param detailEntityList
      * @param batchNo
-     * @param isLastTransfer 最后一次调拨
+     * @param isLastTransfer   最后一次调拨
+     * @param index
      */
-    private void addTransferOrder(Boolean isFirst, String fromWarehouse, String toWarehouse, FirstMileDeliveryEntity entity, List<FirstMileDeliveryDetailEntity> detailEntityList, String batchNo, Boolean isLastTransfer) {
+    private void addTransferOrder(Boolean isFirst, String fromWarehouse, String toWarehouse, FirstMileDeliveryEntity entity,
+                                  List<FirstMileDeliveryDetailEntity> detailEntityList, String batchNo, Boolean isLastTransfer, int index) {
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(toWarehouse, fromWarehouse));
 
         //仓库列表配置的在途归属仓库，目的仓为FBA第三方仓时，在途仓优先取仓库列表配置，配置为空时默认为“FBA在途仓-xgwj-fba”
@@ -1067,6 +1069,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceCode(entity.getCode());
         addDTO.setBatchNo(batchNo);
+        addDTO.setIndex(index);
         addDTO.setRemark(String.format("发货单【%s】审核通过自动创建", entity.getCode()));
         //查询已下推的海外入库单
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Collections.singletonList(entity.getId()));
