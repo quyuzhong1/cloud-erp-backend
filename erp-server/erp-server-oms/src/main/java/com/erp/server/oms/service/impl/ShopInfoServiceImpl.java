@@ -1593,10 +1593,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                     List<String> ids = Arrays.asList(customerInfoEntity.getId());
                     //提交
                     Boolean submitResult = customerInfoService.submit(ids);
-                    if (submitResult) {
-                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
-                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
-                    }
+//                    if (submitResult) {
+//                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+//                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
+//                    }
                 }
             }
         }

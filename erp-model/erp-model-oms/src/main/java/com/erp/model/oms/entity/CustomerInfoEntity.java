@@ -202,11 +202,6 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     @TableField("mail_address")
     private String mailAddress;
     
-    /**
-     * 结算币别
-     */
-     @TableField("settlement_currency")
-     private String settlementCurrency;
      /**
      * 财务组织
      */

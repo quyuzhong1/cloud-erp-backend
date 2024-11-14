@@ -170,10 +170,6 @@ public class CustomerDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
-        /**
-         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
-         */
-         private String settlementCurrency;
          /**
          * 财务组织 名称字段financialOrganizationName
          */
@@ -427,12 +423,6 @@ public class CustomerDTO implements Serializable {
         @Valid
         private List<InvoiceDTO.AddDTO> invoiceList;
 
-
-        /**
-         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
-         */
-        @NotBlank(message = "结算币别不能为空")
-         private String settlementCurrency;
          /**
          * 财务组织 http://172.16.100.11:3002/project/36/interface/api/30795
          */
@@ -679,10 +669,6 @@ public class CustomerDTO implements Serializable {
          */
         private List<SellerDTO.ViewDTO> sellerList;
         
-        /**
-         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
-         */
-         private String settlementCurrency;
          /**
          * 财务组织 名称字段financialOrganizationName
          */
@@ -891,11 +877,6 @@ public class CustomerDTO implements Serializable {
          */
         private List<InvoiceDTO.ViewDTO> invoiceList;
 
-        /**
-         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
-         */
-        @NotBlank(message = "结算币别不能为空")
-         private String settlementCurrency;
          /**
          * 财务组织 http://172.16.100.11:3002/project/36/interface/api/30795
          */
