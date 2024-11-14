@@ -5,16 +5,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.validator.ValidList;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -25,7 +21,6 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -694,12 +689,69 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferInfoEntity> pushFirstMileDeliveryList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode(), obj.getSourceType())
                         || StrUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(pushFirstMileDeliveryList)){
+            List<String> sourceIds = pushFirstMileDeliveryList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listByIds(sourceIds);
+            pushFirstMileDeliveryList = pushFirstMileDeliveryList.stream().filter(e -> hasSameWarehouseByFirstMile(e, detailList,firstMileDeliveryEntityList)).collect(Collectors.toList());
+
+        }
         updateFirstMileDeliveryInventory(pushFirstMileDeliveryList,detailList);
 
         //来源发货通知单
         List<TransferInfoEntity> transferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
+        //过滤来源单发货仓库和调拨单出库仓库不一致数据
+        if (CollectionUtils.isNotEmpty(transferInfoList)){
+            List<String> sourceIds = transferInfoList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+            List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities = soDeliveryNoticeService.listByIds(sourceIds);
+            transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseByDeliveryNotice(e, detailList,soDeliveryNoticeEntities)).collect(Collectors.toList());
+        }
         updateSoDeliveryNoticeInventory(transferInfoList,detailList);
+    }
+
+    private boolean hasSameWarehouseByFirstMile(TransferInfoEntity transferInfoEntity, List<TransferInfoDetailEntity> detailList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList) {
+        if (Objects.equals(transferInfoEntity.getSourceType(), SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())){
+            return Boolean.TRUE;
+        }
+        if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)){
+            return Boolean.FALSE;
+        }
+        List<TransferInfoDetailEntity> detailEntityList = detailList.stream().filter(e -> Objects.equals(e.getMainId(), transferInfoEntity.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            return Boolean.FALSE;
+        }
+        String outWarehouseId = detailEntityList.get(0).getOutWarehouseId();
+        FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> Objects.equals(transferInfoEntity.getSourceId(), e.getId())
+                && Objects.equals(e.getDeliveryWarehouseId(), outWarehouseId)).findFirst().orElse(null);
+        if (Objects.nonNull(firstMileDeliveryEntity)){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 判断调拨出库单和发货通知单原单是否一致
+     *
+     * @param transferInfoEntity
+     * @param detailList
+     * @param soDeliveryNoticeEntities
+     * @return
+     */
+    private boolean hasSameWarehouseByDeliveryNotice(TransferInfoEntity transferInfoEntity, List<TransferInfoDetailEntity> detailList, List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities) {
+        if (CollectionUtils.isEmpty(soDeliveryNoticeEntities)){
+            return Boolean.FALSE;
+        }
+        List<TransferInfoDetailEntity> detailEntityList = detailList.stream().filter(e -> Objects.equals(e.getMainId(), transferInfoEntity.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            return Boolean.FALSE;
+        }
+        String outWarehouseId = detailEntityList.get(0).getOutWarehouseId();
+        SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeEntities.stream().filter(e -> Objects.equals(transferInfoEntity.getSourceId(), e.getId())
+                && Objects.equals(e.getWarehouseId(), outWarehouseId)).findFirst().orElse(null);
+        if (Objects.nonNull(soDeliveryNoticeEntity)){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     /**
