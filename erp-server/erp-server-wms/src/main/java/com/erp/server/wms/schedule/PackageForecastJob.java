@@ -2,6 +2,7 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.StrUtil;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.enums.HandoverStatusEnum;
 import com.erp.server.wms.service.PackageForecastService;
@@ -36,43 +37,27 @@ public class PackageForecastJob {
     private final int maxExecutionCount = 72;
 
     /**
-     * 同步组包订单详情
+     * 同步组包订单详情（拉取组包状态及编码数据）
      */
     @XxlJob(value = "syncPackageForecastInfo")
     public void SyncPackageForecastInfo() throws Exception {
         XxlJobHelper.log("syncPackageForecastInfo start : {}", LocalDateTime.now());
         DateTime dateTime = DateUtil.offsetMonth(DateUtil.date(), -3);
         //根据订单查询组包明细  默认查询 3月内的组包数据
-        List<PackageForecastEntity> orders = packageForecastService.getAliExpressHandoverList(dateTime);
-        //每12小时执行一次
-        List<PackageForecastEntity> awaitingPickupList = new ArrayList<>();
-        if (executionCount.incrementAndGet() >= maxExecutionCount) {
-            // 还原计数器
-            executionCount.decrementAndGet();
-            //查询AWAITING_PICKUP状态的组包数，3个月内的
-            awaitingPickupList = packageForecastService.lambdaQuery().ne(PackageForecastEntity::getHandoverNo, "")
-                    .eq(PackageForecastEntity::getHandoverStatus, HandoverStatusEnum.AWAITING_PICKUP.getCode())
-                    .gt(PackageForecastEntity::getBillDate, dateTime).list();
-            XxlJobHelper.log("syncPackageForecastInfo get awaitingPickupList size : {}", awaitingPickupList.size());
-
-        }
-        if (CollectionUtils.isEmpty(orders) && CollectionUtils.isEmpty(awaitingPickupList)){
+        List<PackageForecastEntity> orders = packageForecastService.lambdaQuery()
+                .ne(PackageForecastEntity::getHandoverNo, StrUtil.EMPTY)
+                .eq(PackageForecastEntity::getHandoverStatus,StrUtil.EMPTY)
+                .gt(PackageForecastEntity::getBillDate, dateTime)
+                .list();
+        if (CollectionUtils.isEmpty(orders)){
             XxlJobHelper.log("syncPackageForecastInfo end : {}", LocalDateTime.now());
             return;
         }
         //查询需要查询的订单
-        if(CollectionUtils.isNotEmpty(orders)){
-            orders.forEach(packageForecastEntity -> {
-                packageForecastService.queryAliExpressInfo(packageForecastEntity);
-                XxlJobHelper.log("syncPackageForecastInfo update : {}", packageForecastEntity.getHandoverNo());
-            });
-        }
-        if(CollectionUtils.isNotEmpty(awaitingPickupList)){
-            awaitingPickupList.forEach(packageForecastEntity -> {
-                packageForecastService.queryAliExpressInfo(packageForecastEntity);
-                XxlJobHelper.log("syncPackageForecastInfo awaitingPickupList update : {}", packageForecastEntity.getHandoverNo());
-            });
-        }
+        orders.forEach(packageForecastEntity -> {
+            packageForecastService.queryAliExpressInfo(packageForecastEntity);
+            XxlJobHelper.log("syncPackageForecastInfo update : {}", packageForecastEntity.getHandoverNo());
+        });
         XxlJobHelper.log("syncPackageForecastInfo end : {}", LocalDateTime.now());
     }
 }

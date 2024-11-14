@@ -22,15 +22,5 @@ public interface CfgRuleOutFeign {
      * @return Boolean
      */
     @PostMapping("feign/cfgRuleOut/matchTransferRule")
-    Boolean matchTransferRule(@RequestBody CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO);
-
-    /**
-     * 是否匹配中转规则
-     * @author will
-     * @date 2024/7/18 21:17
-     * @param ruleDTO
-     * @return CfgRuleOutDTO.MatchTransferResultDTO
-     */
-    @PostMapping("feign/cfgRuleOut/matchTransferAndWarehouse")
-    CfgRuleOutDTO.MatchTransferResultDTO matchTransferAndWarehouse(@RequestBody CfgRuleOutDTO.MatchTransferDTO ruleDTO);
+    CfgRuleOutDTO.MatchTransferResultDTO matchTransferRule(@RequestBody CfgRuleOutDTO.MatchTransferRuleDTO ruleDTO);
 }

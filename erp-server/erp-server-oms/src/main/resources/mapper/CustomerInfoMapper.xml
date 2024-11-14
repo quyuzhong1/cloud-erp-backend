@@ -12,7 +12,8 @@
         use_org_name,group_id,group_name,
         use_org_id,
         create_user_name,create_time,
-        ci.platform_type as platformType
+        ci.platform_type as platformType,
+        ci.country_id
         FROM customer_info ci
         WHERE
 

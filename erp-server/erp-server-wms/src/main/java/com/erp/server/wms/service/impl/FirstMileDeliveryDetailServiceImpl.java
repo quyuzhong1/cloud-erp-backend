@@ -174,6 +174,15 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         return firstMileDeliveryDetailEntityList;
     }
 
+    @Override
+    public List<FirstMileDeliveryDetailEntity> listByFbaShipmentCodes(List<String> shipmentCodes) {
+        if (CollectionUtils.isEmpty(shipmentCodes)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(FirstMileDeliveryDetailEntity::getFbaShipmentCode, shipmentCodes).list();
+
+    }
+
     /**
     * 新增修改处理数据
     */

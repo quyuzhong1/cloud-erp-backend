@@ -38,4 +38,11 @@ public interface FbaShipmentPackingService extends SuperService<FbaShipmentPacki
     void removeByFbaCodeList(List<String> fbaCodeList);
 
     List<FbaShipmentPackingEntity> listByPackingTaskId(String taskId);
+
+    /**
+     * 根据装箱获取货件记录
+     * @param cartonIds
+     * @return
+     */
+    List<FbaShipmentPackingEntity> listByCartonIds(List<String> cartonIds);
 }

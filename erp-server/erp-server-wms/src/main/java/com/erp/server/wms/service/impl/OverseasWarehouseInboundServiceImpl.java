@@ -919,7 +919,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         //默认来源类型：FBA货件
         addDTO.setSourceType(SourceTypeEnum.OVERSEAS_INBOUND.getCode());
         //默认调出日期：当前日期
-        addDTO.setBillDate(LocalDate.now());
+        LocalDateTime receiveTime = detailEntityList.stream().map(OverseasWarehouseInboundDetailEntity::getReceiveTime).filter(Objects::nonNull).findFirst().orElse(LocalDateTime.now());
+        addDTO.setBillDate(LocalDate.from(receiveTime));
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
