@@ -336,12 +336,12 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 预估销量数量
          */
-        private List<Integer> salesEstimateList;
+        private List<BigDecimal> salesEstimateList;
 
         /**
          * 真实销量数量
          */
-        private List<BigDecimal> realSalesList;
+        private List<Integer> realSalesList;
     }
 
     @Getter

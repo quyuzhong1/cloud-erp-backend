@@ -27,7 +27,9 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.mrp.es.entity.CalcSalesInfoHisEsEntity;
+import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.service.CalcSalesInfoHisEsService;
+import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.mapper.CalcSalesInfoDimMapper;
 import com.erp.server.mrp.service.CalcSalesInfoDenoisingService;
 import com.erp.server.mrp.service.CalcSalesInfoDimService;
@@ -82,6 +84,9 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     @Resource
     private CalcSalesInfoHisEsService calcSalesInfoHisEsService;
 
+    @Resource
+    private OrderHistorySalesEsService orderHistorySalesEsService;
+
     @Override
     public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList) {
         for (CalcSalesInfoDimDTO.CalcResultDTO dto : calcResultList) {
@@ -132,14 +137,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public CalcSalesInfoDimDTO.HistorySalesVO historySales(CalcSalesInfoDimDTO.HistorySalesDTO dto) {
-        CalcSalesInfoDimEntity entity = getById(dto.getId());
-        if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算数据");
-        }
-        CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(entity.getCfgRuleCalcId());
-        if (ObjectUtils.isEmpty(cfgRuleCalc)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
-        }
+        CalcSalesInfoDimEntity entity = validateAndFetchEntity(dto.getId());
+        CfgRuleCalcEntity cfgRuleCalc = fetchCfgRuleCalcEntity(entity.getCfgRuleCalcId());
         LocalDate startDate = dto.getStartDate();
         LocalDate endDate = dto.getEndDate();
         if (ObjectUtils.isEmpty(dto.getStartDate()) || ObjectUtils.isEmpty(dto.getEndDate())) {
@@ -173,31 +172,28 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public CalcSalesInfoDimDTO.SalesEstimateDTO salesEstimation(CalcSalesInfoDimDTO.HistorySalesDTO dto) {
-        CalcSalesInfoDimEntity entity = getById(dto.getId());
-        if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算数据");
-        }
-        CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(entity.getCfgRuleCalcId());
-        if (ObjectUtils.isEmpty(cfgRuleCalc)) {
-            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
-        }
+        CalcSalesInfoDimEntity entity = validateAndFetchEntity(dto.getId());
+        CfgRuleCalcEntity cfgRuleCalc = fetchCfgRuleCalcEntity(entity.getCfgRuleCalcId());
         LocalDate startDate = dto.getStartDate();
         LocalDate endDate = dto.getEndDate();
         if (ObjectUtils.isEmpty(dto.getStartDate()) || ObjectUtils.isEmpty(dto.getEndDate())) {
-            startDate = cfgRuleCalc.getStartCalcDate().minusDays(361);
-            endDate = cfgRuleCalc.getStartCalcDate();
+            startDate = cfgRuleCalc.getStartCalcDate();
+            endDate = cfgRuleCalc.getEndCalcDate();
         }
-
-
-
+        List<OrderHistorySalesEsEntity> orderHistorySalesList = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(Collections.singletonList(entity.getShopId()),
+                Collections.singletonList(entity.getShopId()), startDate, endDate);
+        Map<LocalDate, Integer> orderHistorySalesMap = orderHistorySalesList.stream()
+                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty));
+        List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(Collections.singletonList(dto.getId()));
+        Map<LocalDate, BigDecimal> calcSalesInfoEstimateMap = calcSalesInfoEstimateList.stream()
+                .collect(Collectors.toMap(CalcSalesInfoEstimateEntity::getDate, CalcSalesInfoEstimateEntity::getQty));
         List<LocalDate> dates = new ArrayList<>();
-        List<Integer> salesEstimateList = new ArrayList<>();
-        List<BigDecimal> realSalesList = new ArrayList<>();
+        List<Integer> realSalesList = new ArrayList<>();
+        List<BigDecimal> salesEstimateList = new ArrayList<>();
         while (!startDate.isAfter(endDate)) {
             dates.add(startDate);
-
-
-
+            realSalesList.add(Optional.ofNullable(orderHistorySalesMap.get(startDate)).orElse(0));
+            salesEstimateList.add(Optional.ofNullable(calcSalesInfoEstimateMap.get(startDate)).orElse(BigDecimal.ZERO));
             startDate = startDate.plusDays(1);
         }
         CalcSalesInfoDimDTO.SalesEstimateDTO salesEstimateDTO = new CalcSalesInfoDimDTO.SalesEstimateDTO();
@@ -207,6 +203,29 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         return salesEstimateDTO;
     }
 
+    /**
+     * 验证并获取试算数据
+     * @param id id
+     */
+    private CalcSalesInfoDimEntity validateAndFetchEntity(String id) {
+        CalcSalesInfoDimEntity entity = getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算数据");
+        }
+        return entity;
+    }
+
+    /**
+     * 验证并获取试算配置
+     * @param cfgRuleCalcId 配置id
+     */
+    private CfgRuleCalcEntity fetchCfgRuleCalcEntity(String cfgRuleCalcId) {
+        CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(cfgRuleCalcId);
+        if (ObjectUtils.isEmpty(cfgRuleCalc)) {
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, "试算配置");
+        }
+        return cfgRuleCalc;
+    }
 
     private void processData(List<CalcSalesInfoDimDTO.PagingView> records) {
         List<String> skuIds = records.stream().map(CalcSalesInfoDimDTO.PagingView::getSkuId).distinct().collect(Collectors.toList());

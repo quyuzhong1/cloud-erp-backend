@@ -2,7 +2,6 @@ package com.erp.server.mrp.calculation.strategy.platform;
 
 
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.server.mrp.es.entity.HistoryInventoryEsEntity;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
@@ -10,10 +9,6 @@ import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.service.HistoryInventoryEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
-import com.google.common.collect.Lists;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -21,8 +16,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public abstract class AbstractCalculationStrategy implements PlatformCalculationStrategy {
@@ -33,8 +26,6 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
     private OrderHistorySalesEsService orderHistorySalesEsService;
     @Resource
     private OutStockHistorySalesEsService outStockHistorySalesEsService;
-    @Resource
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     @Override
     public void cleanHistoryInventory(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay) {
