@@ -795,7 +795,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
         SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO = new SoB2cDTO.SplitSaveResultDTO();
         splitSaveResultDTO.setSoB2cIds(soIdList);
-        splitSaveResultDTO.setSoB2cIds(soCodeList);
+        splitSaveResultDTO.setSoCodeList(soCodeList);
         splitSaveResultDTO.setTikTokPramDTO(tikTokPramDTO);
         splitSaveResultDTO.setOldEntity(entity);
         splitSaveResultDTO.setNeedRuleIds(needRuleList);
