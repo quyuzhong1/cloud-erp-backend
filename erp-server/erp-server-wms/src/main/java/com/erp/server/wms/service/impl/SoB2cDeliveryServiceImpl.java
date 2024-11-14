@@ -252,10 +252,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtil.isEmpty(receiverList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
         }
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(soB2cDeliveryEntity.getSourceId());
+        if(Objects.isNull(soB2cEntity)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
         CfgRuleOutDTO.MatchTransferRuleDTO dto = new CfgRuleOutDTO.MatchTransferRuleDTO();
         dto.setType(StockOutTransferTypeEnum.B2C.getCode());
         dto.setReceiveCountry(receiverList.get(0).getCountry());
         dto.setFromWarehouse(soB2cDeliveryDetailList.get(0).getWarehouseId());
+        dto.setSalesOrgId(soB2cEntity.getOrgId());
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
             if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){

@@ -234,6 +234,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         matchRuleDTO.setReceiveCountry(entity.getCountryId());
         matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
         matchRuleDTO.setFromWarehouse(entity.getDeliveryWarehouseId());
+        matchRuleDTO.setSalesOrgId(entity.getInventoryOrgId());
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(matchRuleDTO);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
             if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){
