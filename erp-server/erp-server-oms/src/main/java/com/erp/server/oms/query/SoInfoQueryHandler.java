@@ -74,7 +74,6 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
             }
         }
 
-
         if("tab".equals(field)){
             switch (value.toString()) {
                 case OmsConstant.WAIT_SUBMIT:
