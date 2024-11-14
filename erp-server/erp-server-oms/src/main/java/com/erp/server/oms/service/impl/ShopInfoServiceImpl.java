@@ -688,6 +688,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (dbDisabled.equals(disabled)) {
                 throw new ServiceException("存在相同的状态");
             }
+            if(disabled) {
+            	shop.setDownTime(LocalDateTime.now());
+            }
             shop.setDisabled(disabled);
             this.updateById(shop);
             if (!Objects.equals(ShopTypeEnum.INTERNAL.getCode(), shop.getType())) {

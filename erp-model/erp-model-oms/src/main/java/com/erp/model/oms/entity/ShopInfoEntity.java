@@ -195,6 +195,32 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("voec_tax_no")
     private String voecTaxNo;
+    
+    /**
+     * 结算币别
+     */
+     @TableField("settlement_currency")
+     private String settlementCurrency;
+     /**
+     * 交易币别
+     */
+     @TableField("trade_currency")
+     private String tradeCurrency;
+     /**
+     * 启用时间
+     */
+     @TableField("enable_time")
+     private LocalDateTime enableTime;
+     /**
+     * 停用时间
+     */
+     @TableField("down_time")
+     private LocalDateTime downTime;
+     /**
+     * 店铺退货仓库
+     */
+     @TableField("return_warehouse")
+     private String returnWarehouse;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

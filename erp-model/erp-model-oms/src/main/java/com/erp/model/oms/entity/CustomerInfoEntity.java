@@ -201,6 +201,62 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
      */
     @TableField("mail_address")
     private String mailAddress;
+    
+    /**
+     * 结算币别
+     */
+     @TableField("settlement_currency")
+     private String settlementCurrency;
+     /**
+     * 财务组织
+     */
+     @TableField("financial_organization")
+     private String financialOrganization;
+     /**
+     * 启用时间
+     */
+     @TableField("enable_time")
+     private LocalDateTime enableTime;
+     /**
+     * 停用时间
+     */
+     @TableField("down_time")
+     private LocalDateTime downTime;
+     /**
+     * 交易币别
+     */
+     @TableField("trade_currency")
+     private String tradeCurrency;
+     /**
+     * 平台类型:o2b=线上2B，o2c=线上2C，x2b=线下2B，x2c=线上2C，o2o=O2O  枚举：CustomerInfoBusinessModeEnum
+     */
+     @TableField("business_mode")
+     private String businessMode;
+     /**
+     * 交易模式:dbjy=担保交易，xkhh=先款后货  枚举：CustomerInfoTransactionalModeEnum
+     */
+     @TableField("transactional_mode")
+     private String transactionalMode;
+     /**
+     * 账期设置：month=自然月,platform=平台自定义账期,shop=店铺自定义  枚举：CustomerInfoPeriodSettingEnum
+     */
+     @TableField("period_setting")
+     private String periodSetting;
+     /**
+     * 确收方式:ship=签收确收，settlement=结算确收，default=自定义确收方式  枚举：CustomerInfoCheckTypeEnum
+     */
+     @TableField("check_type")
+     private String checkType;
+     /**
+     * 区域id 对应sys
+     */
+     @TableField("dict_area_code")
+     private String dictAreaCode;
+     /**
+     * 国家id
+     */
+     @TableField("dict_country_code")
+     private String dictCountryCode;
 
     public static final String CODE = "code";
 

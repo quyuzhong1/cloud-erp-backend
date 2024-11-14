@@ -7,6 +7,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.oms.enums.ShopTypeEnum;
 import com.erp.model.wms.enums.WmsDataCompareTaskStatusEnum;
 import lombok.AllArgsConstructor;
@@ -180,6 +181,28 @@ public class ShopDTO implements Serializable {
          * 扩展字段的 数据+值
          */
         private String extendData;
+        
+        /**
+         * 结算币别
+         */
+         private String settlementCurrency;
+         /**
+         * 交易币别
+         */
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+         /**
+          * 停用时间
+          */
+         private LocalDateTime downTime;
+         /**
+         * 店铺退货仓库：名称字段为returnWarehouseName
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.WMS , queryFieldName = "id" , returnFieldName = "name" , tableName = "warehouse")
+         private String returnWarehouse;
     }
 
 
@@ -317,7 +340,7 @@ public class ShopDTO implements Serializable {
         private String dictAreaCode;
 
         /**
-         * 国家id
+         * 站点，必须选一个
          */
         private List<String> dictCountryCodeList;
 
@@ -327,7 +350,7 @@ public class ShopDTO implements Serializable {
         private String domain;
 
         /**
-         * 仓库id
+         * 店铺平台仓库
          */
         private String warehouseId;
 
@@ -335,6 +358,27 @@ public class ShopDTO implements Serializable {
          * VOEC税号
          */
         private String voecTaxNo;
+        
+        /**
+         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "结算币别不能为空")
+         private String settlementCurrency;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+         @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 店铺退货仓库： 同店铺平台仓库获取方式
+         */
+         @NotBlank(message = "店铺退货仓库不能为空")
+         private String returnWarehouse;
     }
 
 
@@ -488,7 +532,27 @@ public class ShopDTO implements Serializable {
          */
         private String customerCode;
 
-
+        /**
+         * 结算币别
+         */
+         private String settlementCurrency;
+         /**
+         * 交易币别
+         */
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+         /**
+          * 停用时间
+          */
+         private LocalDateTime downTime;
+         /**
+         * 店铺退货仓库：名称字段为returnWarehouseName
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.WMS , queryFieldName = "id" , returnFieldName = "name" , tableName = "warehouse")
+         private String returnWarehouse;
     }
 
     @Data
@@ -588,6 +652,27 @@ public class ShopDTO implements Serializable {
          */
 //        @NotBlank(message = "客户的id不能为空")
         private String customerId;
+        
+        /**
+         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "结算币别不能为空")
+         private String settlementCurrency;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+         @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 店铺退货仓库：同店铺平台仓库获取方式
+         */
+         @NotBlank(message = "店铺退货仓库不能为空")
+         private String returnWarehouse;
 
     }
     @Data
