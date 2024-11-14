@@ -380,7 +380,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtil.isEmpty(generateLogisticDTO)){
             return null;
         }
-        return generateLogisticDTO.get(0);
+        FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO1 = generateLogisticDTO.get(0);
+        if(StrUtil.isNotBlank(outstockId)){
+            List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(outstockId));
+            generateLogisticDTO1.setBusinessCode(CollectionUtils.isNotEmpty(businessDTOList) ? businessDTOList.get(0).getBusinessCode() : "");
+        }
+        return generateLogisticDTO1;
     }
 
     /**
@@ -537,8 +542,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOList = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(dto);
         List<String> carrierIds = list.stream().map(TmsFirstMileLogisticDTO.PagingVO::getCarrierId).distinct().collect(Collectors.toList());
         List<LogisticsCarrierEntity> carrierList = logisticsCarrierService.listByIds(carrierIds);
-        //业务单号查询
-        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(outstockIdList);
         //根据物流单获取对账单数据
         List<TmsFirstMileLogisticDTO.ReconciliationDTO> reconciliationDTOList = tmsFirstMileReconciliationService.listReconciliationAndCostByBillIds(ids);
         list.forEach(pagingVO ->{
@@ -612,13 +615,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 }else{
                     pagingVO.setWarnMsg(StrUtil.format("已超期[]小时",pagingVO.getWarnHour()));
                 }
-            }
-            //业务单号查询逻辑修改 展示FBA发货单号和第三方货号-同期初展示逻辑
-            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(e -> Objects.equals(e.getId(), pagingVO.getOutstockId())).findFirst().orElse(null);
-            if (Objects.nonNull(businessDTO)){
-                pagingVO.setBusinessCode(businessDTO.getBusinessCode());
-            }else {
-                pagingVO.setBusinessCode("");
             }
         });
     }

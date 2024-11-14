@@ -224,6 +224,7 @@
             ${params.sqlMap.default}
         and  lbd.is_deleted = false
     </select>
+
     <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
         with tms_cost as (
         select lbc.logistics_bill_id,
@@ -242,13 +243,12 @@
         lb.transport_no as transportNo,
         lb.counter_no as counterNo,
         lb.carrier_id as carrierId,
-        lb.source_code as businessCode,
         lb.outstock_code as outstockCode,
+        lb.business_code as businessCode,
         lbd.id as detailId,
         lbd.track_no as trackNo,
         lbd.track_status as logisticsStatus,
-        CASE WHEN lbd.track_no !=''    then
-        (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false and lt.content !='' order by lt.track_time desc limit 1) else '' end  as logisticsTrack ,
+        lbd.track_content  as logisticsTrack ,
         lb.invoices_status as invoicesStatus,
         lb.shipping_method as shippingMethod,
         lb.channel_id as logisticsChannelId,
@@ -309,7 +309,7 @@
         lb.shop_id as shopId,
         lb.shop_name as shopName,
         lbd.track_status as logisticsStatus,
-               (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
+               lbd.track_content as logisticsTrack,
                lb.counter_no as counterNo,
                lb.carrier_id as carrierId,
         lb.source_code as businessCode,
@@ -445,7 +445,7 @@
                lb.source_code as businessCode,
                lb.outstock_code as outstockCode,
                lbd.track_status as logisticsStatus,
-               (select lt.content from logistics_track lt where lt.track_no = lbd.track_no and lt.is_deleted = false order by lt.update_time desc limit 1) as logisticsTrack,
+               lbd.track_content as logisticsTrack,
                lb.invoices_status as invoicesStatus,
                lbc.reconciliation_status as reconciliationStatus,
                lb.shipping_method as shippingMethod,
