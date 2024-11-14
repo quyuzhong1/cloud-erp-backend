@@ -1221,6 +1221,11 @@ public class SoInfoDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
          * 审核人
          */
         private String approveUserName;

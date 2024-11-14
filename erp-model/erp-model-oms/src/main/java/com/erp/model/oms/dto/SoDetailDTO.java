@@ -364,6 +364,11 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal taxPriceLc;
 
+        /**
+         * 发货状态 unShipped 未发货  partialShipment 部分发货  completeShipment 已发货
+         */
+        private String deliveryStatus;
+
     }
 
     /**

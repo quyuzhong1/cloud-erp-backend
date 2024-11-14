@@ -9256,7 +9256,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     /**
-     * 同步速递云数据
+     * 同步速递云线上订单/配货单
      * @param soB2cEntity
      * @param operateEnum
      */
@@ -9289,7 +9289,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
             shudiyunB2cOrderDTO.setTransaction_unique_key(soB2cEntity.getId()+soB2cDetailEntity.getId());
-            shudiyunB2cOrderDTO.setBiz_no(soB2cEntity.getPlatformCode());
+            shudiyunB2cOrderDTO.setBiz_no(soB2cEntity.getCode());
             shudiyunB2cOrderDTO.setBiz_time(soB2cEntity.getPayTime());
             // 平台订单：默认配货单  手工单：默认线下订单
             if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
