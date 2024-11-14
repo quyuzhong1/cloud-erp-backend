@@ -53,7 +53,7 @@
         where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id) as packingQty,
         pt.packing_status as packingStatus,
             sdn.create_time AS createTime,
-            (SELECT COALESCE(sum(pd.qty),0)  from picking_detail pd where pd.is_deleted = false and pd.source_detail_id = sdnd.id ) as pickedQty,
+        sdnd.picking_qty as pickedQty,
         g.generationPickStatus
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
