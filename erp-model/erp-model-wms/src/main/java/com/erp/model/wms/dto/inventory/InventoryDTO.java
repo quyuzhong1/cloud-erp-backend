@@ -14,6 +14,8 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -1230,11 +1232,13 @@ public class InventoryDTO implements Serializable {
         private Integer receiveMaterielQty;
 
         public Integer getTotalInstockQty() {
-            return this.totalInstockQty = this.purchaseInstockQty + this.otherInstockQty + this.transferInstockQty + this.inventoryProfitInstockQty + this.saleReturnQty + this.machineInstockQty + this.returnMaterielQty;
+            List<Integer> integerList = Arrays.asList(this.purchaseInstockQty , this.otherInstockQty , this.transferInstockQty , this.inventoryProfitInstockQty , this.saleReturnQty , this.machineInstockQty , this.returnMaterielQty);
+            return this.totalInstockQty = integerList.stream().mapToInt(Integer::intValue).sum();
         }
 
         public Integer getTotalOutstockQty() {
-            return this.totalOutstockQty = this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty + this.receiveMaterielQty;
+            List<Integer> integerList = Arrays.asList(this.purchaseReturnQty , this.saleOutstockQty , this.otherOutstockQty , this.inventoryLossOutstockQty , this.transferOutstockQty , this.machineOutstockQty , this.receiveMaterielQty);
+            return this.totalOutstockQty = integerList.stream().mapToInt(Integer::intValue).sum();
         }
 
         public Integer getPurchaseInstockQty() {

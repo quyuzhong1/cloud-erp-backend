@@ -20,6 +20,9 @@ import java.util.List;
  * @version: 1.0
  */
 public class WmsCartonDTO {
+    private WmsCartonDTO() {
+        throw new IllegalStateException("Utility WmsCartonDTO class");
+    }
     /**
      * 调整装箱扫码
      */

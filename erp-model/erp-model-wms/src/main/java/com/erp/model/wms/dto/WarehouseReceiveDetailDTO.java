@@ -15,9 +15,10 @@ import java.time.LocalDate;
  * @Date 2023/4/6 17:18
  **/
 @Data
-@NoArgsConstructor
 public class WarehouseReceiveDetailDTO {
-
+    private WarehouseReceiveDetailDTO() {
+        throw new IllegalStateException("Utility WarehouseReceiveDetailDTO class");
+    }
     /**
      * 添加
      */

@@ -8,6 +8,9 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
 public class SoReturnNoticeDetailDTO {
+    private SoReturnNoticeDetailDTO() {
+        throw new IllegalStateException("Utility SoReturnNoticeDetailDTO class");
+    }
     /**
      * 添加
      */
