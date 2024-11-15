@@ -98,9 +98,7 @@
         ci.approve_status
         from customer_info ci
         where  ci.is_deleted = FALSE
-        <if test="params.disabled != null">
-            and ci.disabled=#{params.disabled}
-        </if>
+        and ci.approve_status = 'approve'
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and  ((ci.id=#{params.searchKeyword} or ci.code = #{params.searchKeyword}) or ci.name ilike concat('%', #{params.searchKeyword}::text ,'%') or ci.short_name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
