@@ -1,6 +1,8 @@
 package com.erp.server.bi.controller.api;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.controller.BaseController;
@@ -297,7 +299,7 @@ public class BiDropDownListController extends BaseController {
                 .eq(BiShopInfoEntity::getIsVijim, Boolean.TRUE)
                 .eq(null != status, BiShopInfoEntity::getStatus, status)
                 .list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownIdVO> result = list.stream()
@@ -313,7 +315,7 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/category/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listCategoryDropDown() {
         List<BiSkuInfoEntity> list = dmpSkuInfoService.list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream().map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getParentCategoryName()))
@@ -329,12 +331,12 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/brand/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listBrandDropDown() {
         List<BiSkuInfoEntity> list = dmpSkuInfoService.list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream().map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getBrandName()))
                 .distinct()
-                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .filter(x -> CharSequenceUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

@@ -6,20 +6,18 @@ package com.erp.server.bi.listener;/**
  * @Created by yl
  */
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.excel.TargetNewProductSettingImportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetStaffSettingImportExcelDTO;
 import com.erp.model.bi.enums.MetricsEnum;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @Description TODO
@@ -64,7 +62,7 @@ public class BiTargetNewProductSettingExcelListener extends AnalysisEventListene
         FindUserDTO user = userList.stream().
                 filter(u -> u.getUserName().equals(staffName)).
                 findFirst().orElse(null);
-        if (Objects.isNull(user)) {
+        if (ObjectUtil.isEmpty(user)) {
             errorMsgList.add("人员不存在");
         }
         //添加错误数据

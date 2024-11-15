@@ -27,5 +27,5 @@ public interface HistoryImportRecordMapper extends BaseMapper<HistoryImportRecor
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<HistoryImportRecordDTO.ListDTO> paging(Page query,@Param("params") HistoryImportRecordDTO.PagingParamDTO params);
+    IPage<HistoryImportRecordDTO.ListDTO> paging(Page<HistoryImportRecordDTO.ListDTO> query,@Param("params") HistoryImportRecordDTO.PagingParamDTO params);
 }

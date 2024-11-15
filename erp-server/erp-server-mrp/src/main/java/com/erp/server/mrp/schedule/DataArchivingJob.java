@@ -27,7 +27,7 @@ public class DataArchivingJob {
      * 归档，全量更新数据
      */
     @XxlJob("dataArchiving")
-    public ReturnT dataArchiving(LocalDate calculationDate) {
+    public ReturnT<String> dataArchiving(LocalDate calculationDate) {
     	if(calculationDate == null) {
     		String calculationDateParam = XxlJobHelper.getJobParam();
     		if(StringUtils.isNotBlank(calculationDateParam)) {

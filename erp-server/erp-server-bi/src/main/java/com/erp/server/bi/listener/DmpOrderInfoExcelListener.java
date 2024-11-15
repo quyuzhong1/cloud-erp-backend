@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInfoImportExcelDTO> {
-    private Integer importType;
 
     private BiShopInfoService biShopInfoService;
 
@@ -43,8 +42,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
 
     private List<SysDepartmentDTO> deptList;
 
-    public DmpOrderInfoExcelListener(Integer importType, List<SysDepartmentDTO> deptList, PlmTaskFeign plmTaskFeign, BiShopInfoService biShopInfoService, SysUserFeign sysUserFeign) {
-        this.importType = importType;
+    public DmpOrderInfoExcelListener(List<SysDepartmentDTO> deptList, PlmTaskFeign plmTaskFeign, BiShopInfoService biShopInfoService, SysUserFeign sysUserFeign) {
         this.biShopInfoService = biShopInfoService;
         this.sysUserFeign = sysUserFeign;
         this.plmTaskFeign = plmTaskFeign;
@@ -91,15 +89,11 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
                 errorMsgList.add("在平台站点中未找到该店铺");
             }
         }
-        if (StringUtils.isNotBlank(dto.getManPhone())) {
-            if (!ValidatorUtil.isMobile(dto.getManPhone())) {
+        if (StringUtils.isNotBlank(dto.getManPhone()) && !ValidatorUtil.isMobile(dto.getManPhone())) {
                 errorMsgList.add("下单电话1不正确");
-            }
         }
-        if (StringUtils.isNotBlank(dto.getSecondPhone())) {
-            if (!ValidatorUtil.isMobile(dto.getSecondPhone())) {
-                errorMsgList.add("下单电话2不正确");
-            }
+        if (StringUtils.isNotBlank(dto.getSecondPhone()) && !ValidatorUtil.isMobile(dto.getSecondPhone())) {
+            errorMsgList.add("下单电话2不正确");
         }
         if (StringUtils.isNotBlank(dto.getChargeName())) {
             if (CollectionUtils.isEmpty(deptList)) {
@@ -112,7 +106,7 @@ public class DmpOrderInfoExcelListener extends AnalysisEventListener<DmpOrderInf
             }
         }
 
-        List<FindUserDTO> chargeNameList = new ArrayList<>();
+        List<FindUserDTO> chargeNameList;
         if (StringUtils.isNotBlank(dto.getChargeName())) {
             BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
             baseSearchDTO.setSearchKeyword(dto.getChargeName());

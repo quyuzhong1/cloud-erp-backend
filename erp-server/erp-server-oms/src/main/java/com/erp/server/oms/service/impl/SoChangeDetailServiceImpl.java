@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -84,13 +85,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
-    @Autowired
+    @Resource
     private CustomerAddressService customerAddressService;
 
-    @Autowired
+    @Resource
     private SoReturnService soReturnService;
 
-    @Autowired
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
     /**
@@ -582,7 +583,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //关闭关联单据的关闭状态
             wmsTaskFeign.closeBySoDetailIds(closeSoDetailIdList);
             //释放明细库存
-            List<String> idList = saveOrUpdateList.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
+            List<String> idList = saveOrUpdateList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(idList)) {
                 soDetailService.batchUnLockVirtualInventory(idList,null);
             }

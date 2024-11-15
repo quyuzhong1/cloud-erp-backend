@@ -1,7 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -12,7 +12,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.dto.excel.TargetStaffSettingImportExcelDTO;
-import com.erp.model.bi.entity.BiProductInfoEntity;
 import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 
 import com.common.core.exception.ServiceException;
@@ -28,8 +27,6 @@ import com.erp.server.bi.service.BiTargetStaffSettingService;
 import com.erp.server.bi.service.BiTargetYearService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -82,8 +79,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         List<BiTargetStaffSettingDTO.CommonDTO> detailList = addDTO.getDetailList();
         // 数据处理
         handleData(targetYear, detailList, LogActionEnum.INSERT);
-        Boolean save = biTargetYearService.save(targetYear);
-        if (!save) {
+        if (!biTargetYearService.save(targetYear)) {
             throw new ServiceException("人员目标设置单保存失败");
         }
         //添加明细
@@ -268,8 +264,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         targetYear.setMetrics(metricsList.stream().collect(Collectors.joining(",")));
         List<BiTargetStaffSettingDTO.CommonDTO> detailList = updateDTO.getDetailList();
         handleData(targetYear, detailList, LogActionEnum.UPDATE);
-        Boolean result = biTargetYearService.updateById(targetYear);
-        if (!result) {
+        if (!biTargetYearService.updateById(targetYear)) {
             throw new ServiceException("人员目标设置单保存失败");
         }
         this.batchUpdate(id, detailList);
@@ -379,7 +374,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
-        IPage pageData = baseMapper.paging(query, params, multiplyNum);
+        IPage<BiTargetStaffSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params, multiplyNum);
         List<BiTargetStaffSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -438,7 +433,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         BiTargetStaffSettingExcelListener excelListenerUtil = new BiTargetStaffSettingExcelListener(metricsNameList, userList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), TargetStaffSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), TargetStaffSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("人员目标设置 导入错误>>>{}", e);
         }
@@ -479,12 +474,11 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
      */
     @Override
     public Boolean delete(BiTargetStaffSettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetStaffSettingEntity::getStaffId, dto.getStaffId()).
                 eq(BiTargetStaffSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetStaffSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
-        return result;
     }
 
     /**
@@ -497,8 +491,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO result = baseMapper.pagingTotal(dto, multiplyNum);
-        return result;
+        return baseMapper.pagingTotal(dto, multiplyNum);
     }
 
 

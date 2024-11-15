@@ -8,10 +8,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
-import com.erp.model.bi.dto.BiTargetStaffSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.dto.excel.TargetCategorySettingExportExcelDTO;
 import com.erp.model.bi.dto.excel.TargetNewProductSettingExportExcelDTO;
 import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetNewProductSettingService;
@@ -26,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -144,7 +139,7 @@ public class BiTargetNewProductSettingController extends BaseController {
 //        serviceClass = BiTargetNewProductSettingService.class,
 //        keyIdName = "id")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改目标管理新品")
-    public ApiResult update(@RequestBody @Validated BiTargetNewProductSettingDTO.UpdateDTO dto) {
+    public ApiResult<Void> update(@RequestBody @Validated BiTargetNewProductSettingDTO.UpdateDTO dto) {
         biTargetNewProductSettingService.update(dto);
         return success();
     }
@@ -157,7 +152,7 @@ public class BiTargetNewProductSettingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出目标管理新品")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Void> downloadTemplate(HttpServletResponse response) {
         biTargetNewProductSettingService.downloadTemplate(response);
         return success();
     }
@@ -180,8 +175,8 @@ public class BiTargetNewProductSettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "新品目标设置删除")
-    public ApiResult remove(@RequestBody @Validated BiTargetNewProductSettingDTO.RemoveDTO dto) {
-        Boolean result = biTargetNewProductSettingService.delete(dto);
+    public ApiResult<Void> remove(@RequestBody @Validated BiTargetNewProductSettingDTO.RemoveDTO dto) {
+        boolean result = biTargetNewProductSettingService.delete(dto);
         return result ? success() : failure();
     }
 }

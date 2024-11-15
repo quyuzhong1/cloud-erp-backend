@@ -1,6 +1,6 @@
 package com.erp.model.workflow.dto;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
@@ -23,6 +23,9 @@ import java.util.Map;
  * @Date 2023/4/26 10:16
  **/
 public class ProcessManagementDTO {
+
+    private ProcessManagementDTO() {
+    }
 
     @Data
     @NoArgsConstructor
@@ -153,7 +156,7 @@ public class ProcessManagementDTO {
             private Map<String,Object> variablesMap;
 
             public String getComment() {
-                return StrUtil.isNotBlank(comment) ? comment : approveType.getName();
+                return CharSequenceUtil.isNotBlank(comment) ? comment : approveType.getName();
             }
 
     }
@@ -570,12 +573,6 @@ public class ProcessManagementDTO {
          * 节点状态
          */
         private String activityStatus;
-
-        /**
-         *  orSignature 或签  jointSignature 会签
-         * 节点类型
-         */
-//        private DictBasicEnum activityType;
 
         public HistoryActivityResultDTO(ManagementTaskDTO task) {
             this.processDefinitionId = task.getProcessDefinitionId();

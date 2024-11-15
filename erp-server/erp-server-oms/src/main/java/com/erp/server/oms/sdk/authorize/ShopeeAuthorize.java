@@ -95,7 +95,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
         ShopAuthDTO.ReturnDTO returnDTO = new ShopAuthDTO.ReturnDTO();
         returnDTO.setCode(dto.getCode());
         returnDTO.setId(dto.getId());
-        if(StrUtil.isNotBlank(dto.getShop_id())){
+        if(CharSequenceUtil.isNotBlank(dto.getShop_id())){
             returnDTO.setShopId(Integer.valueOf(dto.getShop_id()));
         }
         returnDTO.setMainAccountId(dto.getMain_account_id());

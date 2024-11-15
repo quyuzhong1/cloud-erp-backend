@@ -14,6 +14,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CountrySiteEnum;
@@ -400,7 +401,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (StringUtils.isBlank(trackNo)) {
             return null;
         }
-        return lambdaQuery().eq(SoB2cLogisticsEntity::getTrackNo, trackNo).last("LIMIT 1").one();
+        return lambdaQuery().eq(SoB2cLogisticsEntity::getTrackNo, trackNo).last( SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -496,7 +497,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
 
     @Override
     public void updateLogisticsBySoId(String soId, String trackNo) {
-        if (StrUtil.isNotBlank(soId)){
+        if (CharSequenceUtil.isNotBlank(soId)){
             this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, soId).set(SoB2cLogisticsEntity::getTrackNo, trackNo).update();
         }
     }

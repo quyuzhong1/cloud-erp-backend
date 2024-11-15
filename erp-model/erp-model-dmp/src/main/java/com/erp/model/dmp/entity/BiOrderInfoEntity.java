@@ -381,6 +381,11 @@ public class BiOrderInfoEntity implements Serializable {
         this.cnySettleRate = exchangeRate;
     }
 
+    public static final String PLATFORM_CREATE_TIME = "platform_create_time";
+
+    public static final String PLATFORM_UPDATE_TIME = "platform_update_time";
+
+    public static final String DELIVERY_TIME = "delivery_time";
 
     @Override
     public String toString() {

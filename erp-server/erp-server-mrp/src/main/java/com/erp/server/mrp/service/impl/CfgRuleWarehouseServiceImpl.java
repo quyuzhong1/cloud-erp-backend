@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -217,21 +218,20 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
      */
     private List<String> handleCheckShop (List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgList,List<ShopInfoEntity> shopList) {
         if (CollectionUtils.isEmpty(cfgList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<String> shopIdList = new ArrayList<>();
         for (CfgRuleWarehouseDetailDTO.UpdateDTO warehouseDTO : cfgList) {
-            if (StrUtil.equals(VitualWarehouseChannelTypeEnum.SHOP.getCode(),warehouseDTO.getChannelType())) {
+            if (CharSequenceUtil.equals(VitualWarehouseChannelTypeEnum.SHOP.getCode(),warehouseDTO.getChannelType())) {
                 //按店铺
                 shopIdList.addAll(warehouseDTO.getChannelIdList());
             } else {
                 //按平台
-                List<String> platformShopIdList = shopList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), warehouseDTO.getDictPlatform())).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+                List<String> platformShopIdList = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictPlatform(), warehouseDTO.getDictPlatform())).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
                 shopIdList.addAll(platformShopIdList);
             }
         }
-        List<String> shopNameList = shopList.stream().filter(obj -> !shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
-        return  shopNameList;
+        return shopList.stream().filter(obj -> !shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
     }
 
     /**

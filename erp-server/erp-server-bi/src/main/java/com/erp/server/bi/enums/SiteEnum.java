@@ -24,7 +24,7 @@ public enum SiteEnum {
     SE("se", "欧洲站"),
 
     PL("pl", "欧洲站"),
-    us("us", "美国站"),
+    US("us", "美国站"),
     JP("jp", "日本站");
 
     private String site;

@@ -2,6 +2,7 @@ package com.erp.server.bi.service.impl;
 
 
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.common.core.exception.ServiceException;
@@ -92,8 +93,6 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
         if (!save) {
             throw new ServiceException("年度目标单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         return Boolean.TRUE;
     }
 
@@ -156,7 +155,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                 LocalDate date = setMonthDate(dto, yearMonth);
                 String yearStr = String.valueOf(date.getYear());
                 DateTimeFormatter fmt = new DateTimeFormatterBuilder()
-                        .appendPattern("yyyy-MM")
+                        .appendPattern(DateUtil.fmt_month)
                         .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
                         .toFormatter();
                 String yearMonthStr = date.format(fmt);
@@ -172,7 +171,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                 LocalDate grossProfitDate = setMonthDate(dto, yearMonth);
                 String grossProfitYearStr = String.valueOf(grossProfitDate.getYear());
                 DateTimeFormatter grossProfitFmt = new DateTimeFormatterBuilder()
-                        .appendPattern("yyyy-MM")
+                        .appendPattern(DateUtil.fmt_month)
                         .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
                         .toFormatter();
                 String grossProfitYearMonthStr = grossProfitDate.format(grossProfitFmt);
@@ -196,7 +195,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                 LocalDate grossProfitRateDate = setMonthDate(dto, yearMonth);
                 String grossProfitRateYearStr = String.valueOf(grossProfitRateDate.getYear());
                 DateTimeFormatter grossProfitRateFmt = new DateTimeFormatterBuilder()
-                        .appendPattern("yyyy-MM")
+                        .appendPattern(DateUtil.fmt_month)
                         .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
                         .toFormatter();
                 String grossProfitRateYearMonthStr = grossProfitRateDate.format(grossProfitRateFmt);
@@ -247,7 +246,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
     private LocalDate setYearDate(BiTargetYearDTO.SearchDTO dto, String yearMonth) {
         if (StringUtils.isNotBlank(yearMonth) && yearMonth.length() >= 7) {
             DateTimeFormatter fmt = new DateTimeFormatterBuilder()
-                    .appendPattern("yyyy-MM")
+                    .appendPattern(DateUtil.fmt_month)
                     .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
                     .toFormatter();
             LocalDate yearMonthDate = LocalDate.parse(yearMonth, fmt);
@@ -273,7 +272,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
     private LocalDate setMonthDate(BiTargetYearDTO.SearchDTO dto, String yearMonth) {
         if (StringUtils.isNotBlank(yearMonth) && yearMonth.length() >= 7) {
             DateTimeFormatter fmt = new DateTimeFormatterBuilder()
-                    .appendPattern("yyyy-MM")
+                    .appendPattern(DateUtil.fmt_month)
                     .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
                     .toFormatter();
             LocalDate yearMonthDate = LocalDate.parse(yearMonth, fmt);

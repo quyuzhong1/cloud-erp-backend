@@ -1,20 +1,14 @@
 package com.erp.server.tms.query;
 
-import cn.hutool.core.collection.CollectionUtil;
-import com.common.business.enums.QueryConditionEnum;
-import com.common.business.enums.QueryDataTypeEnum;
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.query.AbstractQueryHandler;
-import com.common.business.utils.CollectionUtils;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.enums.DictBasicEnum;
-import com.erp.model.tms.enums.TransferDeclareTabFlagEnum;
-import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.server.tms.service.DictBasicService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -39,7 +33,7 @@ public class LogisticsBillQueryHandler extends AbstractQueryHandler {
                 String code = viewDTO.getCode();
                 List<String> statusList = trackStatusList.stream().filter(s -> StringUtils.isNotBlank(code) && StringUtils.isNotBlank(s.getRemark())
                                 && s.getRemark().equals(code)).map(DictBasicDTO.ViewDTO::getCode).collect(Collectors.toList());
-                if (CollectionUtil.isNotEmpty(statusList)){
+                if (CollUtil.isNotEmpty(statusList)){
                     this.buildDefaultDTO("lbd.track_status", statusList);
                 }
             }

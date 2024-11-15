@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 
 public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundInfoImportExcelDTO> {
-    private Integer importType;
-
 
     private BiOrderInfoService biOrderInfoService;
 
@@ -46,9 +44,8 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
 
     private List<BiRefundInfoEntity> refundList;
 
-    public DmpRefundInfoExcelListener(Integer importType, List<BiRefundInfoEntity> refundList, BiOrderInfoService biOrderInfoService, BiRefundInfoService biRefundInfoService
+    public DmpRefundInfoExcelListener(List<BiRefundInfoEntity> refundList, BiOrderInfoService biOrderInfoService, BiRefundInfoService biRefundInfoService
             , BiShopInfoService biShopInfoService, BiRefundItemService biRefundItemService, PlmTaskFeign plmTaskFeign) {
-        this.importType = importType;
         this.biOrderInfoService = biOrderInfoService;
         this.biShopInfoService = biShopInfoService;
         this.biRefundInfoService = biRefundInfoService;

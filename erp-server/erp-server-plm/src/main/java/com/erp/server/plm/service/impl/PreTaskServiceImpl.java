@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
@@ -64,7 +65,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         List<PreTaskEntity> oldTaskEntityList = lambdaQuery().eq(PreTaskEntity::getTaskId, taskId)
                 .list();
         Map<String, PreTaskEntity> oldTaskPreMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(oldTaskEntityList)) {
+        if (CollUtil.isNotEmpty(oldTaskEntityList)) {
             //先删除前置任务
             removePreTaskByTaskId(taskId, preTaskList);
             oldTaskPreMap = oldTaskEntityList.stream()

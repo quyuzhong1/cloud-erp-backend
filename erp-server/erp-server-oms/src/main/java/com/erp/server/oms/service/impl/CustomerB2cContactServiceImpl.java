@@ -4,6 +4,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -47,6 +48,8 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private CustomerB2cContactService customerB2cContactService;
 
     /**
      * 检查客户默认联系人是否多个
@@ -89,7 +92,7 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHLXRC);
             addDTO.setCode(code);
         }
-        this.saveBatch(addList);
+        customerB2cContactService.saveBatch(addList);
     }
 
 
@@ -107,8 +110,7 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
         if (CollectionUtils.isEmpty(dbList)) {
             return Collections.emptyList();
         }
-        List<CustomerContactDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, CustomerContactDTO.ViewDTO.class);
-        return resultList;
+        return BeanMapper.copyList(dbList, CustomerContactDTO.ViewDTO.class);
     }
 
     @Override
@@ -172,7 +174,7 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
             }
         }
         if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
-            this.saveOrUpdateBatch(saveOrUpdateList);
+            customerB2cContactService.saveOrUpdateBatch(saveOrUpdateList);
         }
     }
 
@@ -223,22 +225,19 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
             if (StringUtils.isBlank(entity.getEmail())){
                 entity.setEmail(receiverEntity.getEmail());
             }
-            if (!entity.getIsDefault()){
+            if (Boolean.FALSE.equals(entity.getIsDefault())){
                 entity.setIsDefault(true);
             }
-            if (entity.getDisabled()){
+            if (Boolean.TRUE.equals(entity.getDisabled())){
                 entity.setIsDefault(false);
             }
             updateById(entity);
-//            if (!updateById(entity)){
-//                throw new ServiceException("[CustomerB2cSellerEntity] 更新失败");
-//            }
         }
     }
 
     @Override
     public CustomerB2cContactEntity getByMainId(String mainId) {
-        return lambdaQuery().eq(CustomerB2cContactEntity::getMainId, mainId).last("LIMIT 1").one();
+        return lambdaQuery().eq(CustomerB2cContactEntity::getMainId, mainId).last( SqlConstants.LIMIT_1).one();
     }
 
 }

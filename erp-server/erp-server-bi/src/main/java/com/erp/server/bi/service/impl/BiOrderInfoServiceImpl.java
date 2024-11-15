@@ -1,6 +1,8 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -129,26 +131,12 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         }
         String fileName = getFileName("销售数据导出");
         ExcelUtil.export(fileName, "销售数据导出", excelList, DmpOrderInfoExcelDTO.class, response);
-        return;
     }
 
     @Override
     @Cacheable(cacheNames = "cache:bi:sumSales", keyGenerator = "myKeyGenerator")
     public TargetSaleSumVO sumSales(BiFilterDTO dto) {
         // 没有sku情况
-//        BigDecimal amount = BigDecimal.ZERO;
-//        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
-        // 条件存在sku的情况
-        // 先查询订单号
-//        query.select("id");
-//        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-//        if (CollectionUtils.isEmpty(list)) {
-//            return new TargetSaleSumVO(amount);
-//        }
-//        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-//        // 根据订单号获取订单详情，筛选sku
-//        amount = dmpOrderItemService.sumSales(orderIds, dto);
-//        Integer flag = null;
         if (null != dto.getHasNewSign() && dto.getHasNewSign()) {
             dto.setNewSign(1);
         }
@@ -245,11 +233,11 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
 
     private static QueryWrapper<BiOrderInfoEntity> getDmpOrderInfoEntityQueryWrapper(BiFilterDTO dto) {
         QueryWrapper<BiOrderInfoEntity> query = new QueryWrapper<>();
-        query.ge(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getStartTime())
-                .lt(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), "platform_create_time", dto.getEndTime())
+        query.ge(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), BiOrderInfoEntity.PLATFORM_CREATE_TIME, dto.getStartTime())
+                .lt(dto.getTimeType().equals(TimeTypeEnum.ORDER_TIME.getCode()), BiOrderInfoEntity.PLATFORM_CREATE_TIME, dto.getEndTime())
                 // 订单时间字段
-                .ge(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getStartTime())
-                .lt(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), "delivery_time", dto.getEndTime())
+                .ge(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), BiOrderInfoEntity.DELIVERY_TIME, dto.getStartTime())
+                .lt(dto.getTimeType().equals(TimeTypeEnum.DELIVERY_TIME.getCode()), BiOrderInfoEntity.DELIVERY_TIME, dto.getEndTime())
                 // 高级筛选字段待完善 事业部 站点 品类 品牌 人员
                 //事业部
                 .in(CollectionUtils.isNotEmpty(dto.getDepartment()), "dept_id", dto.getDepartment())
@@ -272,18 +260,6 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
 
     @Override
     public TargetSaleCountVO countSalesVolume(BiFilterDTO dto) {
-//        Integer count = 0;
-//        QueryWrapper<DmpOrderInfoEntity> query = getDmpOrderInfoEntityQueryWrapper(dto);
-//        // 先查询订单号
-//        query.select("id")
-//                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
-//        List<DmpOrderInfoEntity> list = baseMapper.selectList(query);
-//        if (CollectionUtils.isEmpty(list)) {
-//            return new TargetSaleCountVO(count);
-//        }
-//        List<String> orderIds = list.stream().map(DmpOrderInfoEntity::getId).collect(Collectors.toList());
-//        // 根据订单号获取订单详情，筛选sku
-//        count = dmpOrderItemService.countSalesVolume(orderIds, dto.getSku());
         Integer count = baseMapper.countSalesVolume(dto);
         return new TargetSaleCountVO(count);
     }
@@ -424,7 +400,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
      */
     @Override
     public String getFileName(String fileName) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(fileName);
         sb.append(date);
@@ -653,14 +629,14 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标数据
         List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getPermissionSql());
-        if (CollectionUtil.isEmpty(targetList)) {
+        if (CollUtil.isEmpty(targetList)) {
             return new ArrayList<>();
         }
         Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getTargetType));
         // 查询目标销售额
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(salesList)) {
+        if (CollUtil.isNotEmpty(salesList)) {
             targetSalesMap = salesList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getPlatformName,
                     MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
@@ -668,7 +644,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         // 查询目标销量
         List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
         Map<String, Integer> targetSalesVolumeMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(salesVolumeList)) {
+        if (CollUtil.isNotEmpty(salesVolumeList)) {
             targetSalesVolumeMap = salesVolumeList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getPlatformName,
                     Collectors.summingInt(x -> x.getJanuary().intValue())));
         }
@@ -705,14 +681,14 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标数据
         List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getPermissionSql());
-        if (CollectionUtil.isEmpty(targetList)) {
+        if (CollUtil.isEmpty(targetList)) {
             return new ArrayList<>();
         }
         Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getTargetType));
         // 查询目标销售额
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(salesList)) {
+        if (CollUtil.isNotEmpty(salesList)) {
             targetSalesMap = salesList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getCategory,
                     MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
@@ -720,7 +696,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         // 查询目标销量
         List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
         Map<String, Integer> targetSalesVolumeMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(salesVolumeList)) {
+        if (CollUtil.isNotEmpty(salesVolumeList)) {
             targetSalesVolumeMap = salesVolumeList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getCategory,
                     Collectors.summingInt(x -> x.getJanuary().intValue())));
         }
@@ -760,14 +736,14 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标数据
         List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getPermissionSql());
-        if (CollectionUtil.isEmpty(targetList)) {
+        if (CollUtil.isEmpty(targetList)) {
             return new ArrayList<>();
         }
         Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getTargetType));
         // 查询目标销售额
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(salesList)) {
+        if (CollUtil.isNotEmpty(salesList)) {
             targetSalesMap = salesList.stream().filter(x -> null == newSign || newSign.equals(x.getProductType())).collect(Collectors.groupingBy(x -> x.getSkuNo(),
                     MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
@@ -775,7 +751,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         // 查询目标销量
         List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
         Map<String, Integer> targetSalesVolumeMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(salesVolumeList)) {
+        if (CollUtil.isNotEmpty(salesVolumeList)) {
             targetSalesVolumeMap = salesVolumeList.stream().filter(x -> null == newSign || newSign.equals(x.getProductType())).collect(Collectors.groupingBy(x -> x.getSkuNo(),
                     Collectors.summingInt(x -> x.getJanuary().intValue())));
         }
@@ -822,14 +798,14 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getPermissionSql());
-        if (CollectionUtil.isEmpty(targetList)) {
+        if (CollUtil.isEmpty(targetList)) {
             return new ArrayList<>();
         }
         Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getTargetType));
         // 查询目标销售额
         List<BiTargetManagementEntity> salesList = salesTypeMap.get(1);
         Map<String, BigDecimal> targetSalesMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(salesList)) {
+        if (CollUtil.isNotEmpty(salesList)) {
             targetSalesMap = salesList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
                     MathUtil.summingBigDecimal(BiTargetManagementEntity::getJanuary)));
         }
@@ -837,7 +813,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         // 查询目标销量
         List<BiTargetManagementEntity> salesVolumeList = salesTypeMap.get(0);
         Map<String, Integer> targetSalesVolumeMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(salesVolumeList)) {
+        if (CollUtil.isNotEmpty(salesVolumeList)) {
             targetSalesVolumeMap = salesVolumeList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
                     Collectors.summingInt(x -> x.getJanuary().intValue())));
         }
@@ -890,7 +866,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getPermissionSql());
-        if (CollectionUtil.isEmpty(targetList)) {
+        if (CollUtil.isEmpty(targetList)) {
             return new ArrayList<>();
         }
         Map<Integer, List<BiTargetManagementEntity>> salesTypeMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getTargetType));
@@ -1106,7 +1082,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
     @Transactional(rollbackFor = Exception.class)
     public Boolean importOrderFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
-        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(importType, deptList, plmTaskFeign, biShopInfoService, sysUserFeign);
+        DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(deptList, plmTaskFeign, biShopInfoService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
 
@@ -1229,11 +1205,11 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
     public Map<Integer, BigDecimal> statisticsSalesByDate(BiFilterDTO dto, Integer type) {
         // 查询销售额
         List<BiOrderInfoEntity> list = lambdaQuery()
-                .in(CollectionUtil.isNotEmpty(dto.getDepartment()), BiOrderInfoEntity::getDeptId, dto.getDepartment())
-                .in(CollectionUtil.isNotEmpty(dto.getPlatform()), BiOrderInfoEntity::getSourcePlatform, dto.getPlatform())
-                .in(CollectionUtil.isNotEmpty(dto.getSite()), BiOrderInfoEntity::getSite, dto.getSite())
-                .in(CollectionUtil.isNotEmpty(dto.getShopName()), BiOrderInfoEntity::getShopName, dto.getShopName())
-                .in(CollectionUtil.isNotEmpty(dto.getUserId()), BiOrderInfoEntity::getChargeId, dto.getUserId())
+                .in(CollUtil.isNotEmpty(dto.getDepartment()), BiOrderInfoEntity::getDeptId, dto.getDepartment())
+                .in(CollUtil.isNotEmpty(dto.getPlatform()), BiOrderInfoEntity::getSourcePlatform, dto.getPlatform())
+                .in(CollUtil.isNotEmpty(dto.getSite()), BiOrderInfoEntity::getSite, dto.getSite())
+                .in(CollUtil.isNotEmpty(dto.getShopName()), BiOrderInfoEntity::getShopName, dto.getShopName())
+                .in(CollUtil.isNotEmpty(dto.getUserId()), BiOrderInfoEntity::getChargeId, dto.getUserId())
                 .ge(2 != type && ObjectUtil.isNotEmpty(dto.getStartTime()), BiOrderInfoEntity::getPlatformCreateTime, dto.getStartTime())
                 .le(2 != type && ObjectUtil.isNotEmpty(dto.getEndTime()), BiOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
                 .list();
@@ -1257,7 +1233,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
     @Override
     public Map<String, BigDecimal> statisticsSalesByCondition(BiFilterDTO dto, String groupName) {
         List<DimensionSalesVO> list = this.sumSalesByCondition(dto, groupName);
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return new HashMap<>();
         }
         Map<String, BigDecimal> collect = list.stream()
@@ -1268,8 +1244,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
 
     @Override
     public List<DimensionSalesVO> sumSalesByCondition(BiFilterDTO dto, String groupName) {
-        List<DimensionSalesVO> list = baseMapper.sumByDeptAndCostType(dto, groupName);
-        return list;
+        return baseMapper.sumByDeptAndCostType(dto, groupName);
     }
 
 
@@ -1289,9 +1264,14 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         List<SalesCompletionInfoVO> rankResult = resultList.stream()
                 .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate).reversed()
                         .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate).reversed())
-                .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
+                .map(x -> {
+                    // 显式设置排名
+                    x.setRanking(rankIndex.getAndIncrement());
+                    return x;
+                })
                 .filter(x -> x.getRanking() <= dto.getRankNum())
                 .collect(Collectors.toList());
+
         return rankResult;
     }
 
@@ -1315,7 +1295,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         vo.setList(resultList);
         HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
         yearMap.put(yearSales.getDimension(), new BigDecimal(yearSales.getRealNum()).setScale(0));
-        yearMap.put("目标销售额", new BigDecimal(yearSales.getTargetNum()).setScale(0));
+        yearMap.put(QuarterMonthSalesVolumeVO.TARGET_SALES_AMOUNT, new BigDecimal(yearSales.getTargetNum()).setScale(0));
         yearMap.put("完成率", yearSales.getCompletionRate());
         vo.setYearSalesTarget(yearMap);
         return vo;
@@ -1341,7 +1321,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         vo.setList(resultList);
         HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
         yearMap.put(yearSales.getDimension(), yearSales.getRealAmount());
-        yearMap.put("目标销售额", yearSales.getTargetAmount());
+        yearMap.put(QuarterMonthSalesVolumeVO.TARGET_SALES_AMOUNT, yearSales.getTargetAmount());
         yearMap.put("完成率", yearSales.getCompletionRate());
         vo.setYearSalesTarget(yearMap);
         return vo;
@@ -1366,7 +1346,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         QuarterMonthSalesVolumeVO yearSales = new QuarterMonthSalesVolumeVO(quarterTargetMap, quarterMap, year);
         HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
         yearMap.put(yearSales.getDimension(), new BigDecimal(yearSales.getRealNum()).setScale(0));
-        yearMap.put("目标销售额", new BigDecimal(yearSales.getTargetNum()).setScale(0));
+        yearMap.put(QuarterMonthSalesVolumeVO.TARGET_SALES_AMOUNT, new BigDecimal(yearSales.getTargetNum()).setScale(0));
         yearMap.put("完成率", yearSales.getCompletionRate());
         vo.setYearSalesTarget(yearMap);
         return vo;
@@ -1391,7 +1371,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         QuarterMonthSalesVO yearSales = new QuarterMonthSalesVO(quarterTargetMap, quarterMap, year);
         HashMap<String, BigDecimal> yearMap = new LinkedHashMap<>();
         yearMap.put(yearSales.getDimension(), yearSales.getRealAmount());
-        yearMap.put("目标销售额", yearSales.getTargetAmount());
+        yearMap.put(QuarterMonthSalesVolumeVO.TARGET_SALES_AMOUNT, yearSales.getTargetAmount());
         yearMap.put("完成率", yearSales.getCompletionRate());
         vo.setYearSalesTarget(yearMap);
         return vo;
@@ -1423,7 +1403,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
      */
     @Override
     public BiOrderInfoEntity firstOrderBySkuNo(String skuNo) {
-        String subSql = StrUtil.format("select order_id from bi_order_item_split where sku_no = '{}'", skuNo);
+        String subSql = CharSequenceUtil.format("select order_id from bi_order_item_split where sku_no = '{}'", skuNo);
 
         return lambdaQuery()
                 .inSql(BiOrderInfoEntity::getId, subSql)
@@ -1437,7 +1417,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
      */
     @Override
     public Map<String, BiOrderInfoEntity> mapFirstOrderBySkuNo(String skuNo) {
-        String subSql = StrUtil.format(" select order_id from bi_order_item_split where sku_no = '{}' ", skuNo);
+        String subSql = CharSequenceUtil.format(" select order_id from bi_order_item_split where sku_no = '{}' ", skuNo);
 
         List<BiOrderInfoEntity> list = query()
                 .select("MIN(platform_create_time) as platform_create_time",

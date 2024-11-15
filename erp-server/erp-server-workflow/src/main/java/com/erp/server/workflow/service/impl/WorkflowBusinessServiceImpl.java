@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.common.core.utils.BeanMapper;
 import com.common.business.dto.FindUserDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
@@ -39,7 +40,7 @@ public class WorkflowBusinessServiceImpl extends ServiceImpl<WorkflowBusinessMap
 
     @Override
     public List<WorkflowBusinessVO> getBusinessList(FindProcessDTO dto) {
-        LambdaQueryWrapper<WorkflowBusinessEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<WorkflowBusinessEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WorkflowBusinessEntity::getBusinessType, dto.getBusinessType());
         queryWrapper.eq(WorkflowBusinessEntity::getParam, dto.getPlatform());
         List<WorkflowBusinessEntity> list = this.list(queryWrapper);
@@ -77,10 +78,10 @@ public class WorkflowBusinessServiceImpl extends ServiceImpl<WorkflowBusinessMap
     @Override
     public BusinessInfoDTO getBusiness(FindProcessDTO dto) {
         BusinessInfoDTO result = new BusinessInfoDTO();
-        LambdaQueryWrapper<WorkflowBusinessEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<WorkflowBusinessEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WorkflowBusinessEntity::getBusinessType, dto.getBusinessType());
         queryWrapper.eq(WorkflowBusinessEntity::getPlatform, dto.getPlatform());
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         WorkflowBusinessEntity businessEntity = this.getOne(queryWrapper);
         if (businessEntity != null) {
             result.setId(businessEntity.getId());
