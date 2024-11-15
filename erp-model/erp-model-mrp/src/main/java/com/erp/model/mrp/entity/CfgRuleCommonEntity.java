@@ -26,6 +26,7 @@ import java.util.List;
 @TableName("cfg_rule_common")
 public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
 
+    private static final long serialVersionUID = -1194747493662470448L;
     /**
     * 排序字段
     */
@@ -107,7 +108,7 @@ public class CfgRuleCommonEntity extends BaseEntity<CfgRuleCommonEntity> {
      * 子级信息
      */
     @TableField(exist = false)
-    List<CfgRuleCommonDTO.UpdateDTO> childrenList;
+    private List<CfgRuleCommonDTO.UpdateDTO> childrenList;
 
     public static final String INDEX = "index";
 

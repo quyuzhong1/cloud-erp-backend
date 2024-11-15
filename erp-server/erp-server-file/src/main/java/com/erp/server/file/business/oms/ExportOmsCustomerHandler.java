@@ -15,7 +15,6 @@ import javax.annotation.Resource;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 
 @Component
 @Slf4j

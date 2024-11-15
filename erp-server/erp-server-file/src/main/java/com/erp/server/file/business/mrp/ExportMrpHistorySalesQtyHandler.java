@@ -1,6 +1,6 @@
 package com.erp.server.file.business.mrp;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
@@ -51,6 +51,6 @@ public class ExportMrpHistorySalesQtyHandler extends AbstractDynamicHeadersFileE
     public List<String> getSheetName() {
         String sheetName = threadLocal.get();
         threadLocal.remove();
-        return StrUtil.isBlank(sheetName) ? null : Collections.singletonList(sheetName);
+        return CharSequenceUtil.isBlank(sheetName) ? null : Collections.singletonList(sheetName);
     }
 }

@@ -416,11 +416,20 @@ public class ReplenishmentResultDTO {
             return dto;
         }
 
-        public static ReplenishmentSuggestionDetailEntity buildReplenishmentSuggestionDetail(DetailDTO dto, CfgRuleStrategyDTO cfgRuleStrategy, List<TimePeriodSalesEstimateDTO> timePeriodSalesEstimates,
-                                                                                             List<TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates, List<TimePeriodSalesDTO> timePeriodSales,
-                                                                                             List<TimePeriodSalesDTO> avgTimePeriodSales, BigDecimal purchasePrice, BigDecimal salesPrice) {
+        public static void setJsonAttributes(ReplenishmentSuggestionDetailEntity detail, DetailDTO dto, List<TimePeriodSalesEstimateDTO> timePeriodSalesEstimates,
+                                             List<TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates, List<TimePeriodSalesDTO> timePeriodSales,
+                                             List<TimePeriodSalesDTO> avgTimePeriodSales) {
 
-            ReplenishmentSuggestionDetailEntity detail = new ReplenishmentSuggestionDetailEntity();
+
+            // 设置销售数量
+            detail.setSalesQty(convertToSalesVOJson(timePeriodSales));
+            detail.setAvgSalesQty(convertToSalesVOJson(avgTimePeriodSales));
+            detail.setSalesEstimateQty(convertToSalesEstimateVOJson(timePeriodSalesEstimates, dto, false));
+            detail.setAvgSalesEstimateQty(convertToSalesEstimateVOJson(avgTimePeriodSalesEstimates, dto, true));
+        }
+
+        // 提取基础属性
+        public static void setBasicAttributes(ReplenishmentSuggestionDetailEntity detail, DetailDTO dto) {
             detail.setId(dto.getDetailId());
             detail.setMainId(dto.getMainId());
             detail.setSkuType(dto.getSkuType());
@@ -434,22 +443,31 @@ public class ReplenishmentResultDTO {
             detail.setLocalInTransitQty(dto.getLocalInTransitQty());
             detail.setLocalPlanPurchaseQty(dto.getLocalPlanPurchaseQty());
             detail.setTotalInventoryQty(dto.getTotalInventoryQty());
-            if (!CollectionUtils.isEmpty(timePeriodSales)) {
-                detail.setSalesQty(JSONUtil.parseArray(timePeriodSales.stream().map(v -> new ReplenishmentSuggestionVO.SalesVO(v.getCode().getName(), v.getQty()))
-                        .collect(Collectors.toList())));
+        }
+
+        // 转换销售数据为 JSON
+        private static JSONArray convertToSalesVOJson(List<TimePeriodSalesDTO> salesList) {
+            if (CollectionUtils.isEmpty(salesList)) {
+                return new JSONArray();
             }
-            if (!CollectionUtils.isEmpty(avgTimePeriodSales)) {
-                detail.setAvgSalesQty(JSONUtil.parseArray(avgTimePeriodSales.stream().map(v -> new ReplenishmentSuggestionVO.SalesVO(v.getCode().getName(), v.getQty()))
-                        .collect(Collectors.toList())));
+            return JSONUtil.parseArray(salesList.stream()
+                    .map(v -> new ReplenishmentSuggestionVO.SalesVO(v.getCode().getName(), v.getQty()))
+                    .collect(Collectors.toList()));
+        }
+
+        // 转换销售预估数据为 JSON
+        private static JSONArray convertToSalesEstimateVOJson(List<TimePeriodSalesEstimateDTO> estimates, DetailDTO dto, boolean isAvg) {
+            if (CollectionUtils.isEmpty(estimates)) {
+                return new JSONArray();
             }
-            if (!CollectionUtils.isEmpty(timePeriodSalesEstimates)) {
-                detail.setSalesEstimateQty(JSONUtil.parseArray(timePeriodSalesEstimates.stream().map(v -> new ReplenishmentSuggestionVO.SalesVO(RecentTimePeriodEnum.getNameByCode(v.getCode(), false, dto.getCalcDate()), v.getQty()))
-                        .collect(Collectors.toList())));
-            }
-            if (!CollectionUtils.isEmpty(avgTimePeriodSalesEstimates)) {
-                detail.setAvgSalesEstimateQty(JSONUtil.parseArray(avgTimePeriodSalesEstimates.stream().map(v -> new ReplenishmentSuggestionVO.SalesVO(RecentTimePeriodEnum.getNameByCode(v.getCode(), true, dto.getCalcDate()), v.getQty()))
-                        .collect(Collectors.toList())));
-            }
+            return JSONUtil.parseArray(estimates.stream()
+                    .map(v -> new ReplenishmentSuggestionVO.SalesVO(RecentTimePeriodEnum.getNameByCode(v.getCode(), isAvg, dto.getCalcDate()), v.getQty()))
+                    .collect(Collectors.toList()));
+        }
+
+        // 设置其他属性
+        public static void setOtherAttributes(ReplenishmentSuggestionDetailEntity detail, DetailDTO dto,
+                                               CfgRuleStrategyDTO cfgRuleStrategy, BigDecimal purchasePrice, BigDecimal salesPrice) {
             detail.setPurchaseApproveDays(dto.getPurchaseApproveDays());
             detail.setProductionDays(dto.getProductionDays());
             detail.setSupplierDeliveryDays(dto.getSupplierDeliveryDays());
@@ -480,7 +498,6 @@ public class ReplenishmentResultDTO {
             detail.setCfgRule(JSON.toJSONString(cfgRuleStrategy));
             detail.setPurchasePrice(purchasePrice);
             detail.setSalesPrice(salesPrice);
-            return detail;
         }
 
         public static ReplenishmentSuggestionDetailEntity buildNewDetail(DetailDTO detailDTO) {

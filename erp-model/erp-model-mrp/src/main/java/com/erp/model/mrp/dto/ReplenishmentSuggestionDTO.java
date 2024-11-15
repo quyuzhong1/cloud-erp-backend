@@ -3,10 +3,7 @@ package com.erp.model.mrp.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -20,10 +17,14 @@ import java.util.Map;
 public class ReplenishmentSuggestionDTO implements Serializable {
 
 
+    private static final long serialVersionUID = 7176520727559717436L;
+
     @Getter
     @Setter
+    @EqualsAndHashCode(callSuper = true)
     public static class PagingParamDTO extends SortDTO {
 
+        private static final long serialVersionUID = 3607402030033334190L;
         /**
          * 页面高级查询
          */
@@ -453,7 +454,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 销量去噪导出
          */
-        private List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> salesDenoisingExportList;
+        private List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> salesDenoisingExportList;
     }
 
 

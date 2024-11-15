@@ -3,6 +3,7 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -22,8 +23,10 @@ import java.time.LocalDate;
 @Setter
 @Accessors(chain = true)
 @TableName("fba_history_inventory")
+@EqualsAndHashCode(callSuper = true)
 public class FbaHistoryInventoryEntity extends BaseEntity<FbaHistoryInventoryEntity> {
 
+    private static final long serialVersionUID = 846903016198172338L;
     /**
      * 仓库id
      */
