@@ -1,7 +1,8 @@
 package com.erp.server.workflow.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import com.common.core.constant.SqlConstants;
+import org.apache.commons.collections4.CollectionUtils;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.enums.ApproveStatusEnum;
@@ -58,7 +59,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
             update = lambdaUpdate()
                     .set(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.REJECT)
                     .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
-                    .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
+                    .set(CharSequenceUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
                     .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
                     .set(ProcessTaskManagementEntity::getApproveName, entity.getCurApproveName())
                     .eq(ProcessTaskManagementEntity::getProcessInstanceId, entity.getProcessInstanceId())
@@ -69,7 +70,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
             update = lambdaUpdate()
                     .set(ProcessTaskManagementEntity::getTaskStatus, ApproveTypeEnum.PASS.equals(approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT)
                     .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
-                    .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
+                    .set(CharSequenceUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
                     .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
                     .set(ProcessTaskManagementEntity::getApproveName, entity.getCurApproveName())
                     .eq(ProcessTaskManagementEntity::getExecutionId, entity.getExecutionId())
@@ -95,8 +96,8 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
             }
         }
         // 发送抄送消息
-        String title = StrUtil.format("【流程管理中心】审批结果抄送");
-        String content = StrUtil.format("**单据名称: **{}\n**审批人：** {} \n**审批结果：**{}！", managementEntity.getProcessName(), entity.getCurApproveName(), approveType.getName());
+        String title = CharSequenceUtil.format("【流程管理中心】审批结果抄送");
+        String content = CharSequenceUtil.format("**单据名称: **{}\n**审批人：** {} \n**审批结果：**{}！", managementEntity.getProcessName(), entity.getCurApproveName(), approveType.getName());
         processTaskCcService.sendCcMsg(entity, title, content);
         return Boolean.TRUE;
     }
@@ -109,7 +110,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
                 .orderByDesc(ProcessTaskManagementEntity::getCreateTime)
                 .list();
-        if(CollectionUtil.isEmpty(list)){
+        if(CollectionUtils.isEmpty(list)){
             return new LinkedHashMap<>();
         }
         return list.stream()
@@ -125,7 +126,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
                 .ne(ProcessTaskManagementEntity::getCurActivityId, insertTask.getCurActivityId())
                 .orderByDesc(ProcessTaskManagementEntity::getCreateTime)
-                .last("limit 1")
+                .last(SqlConstants.LIMIT_1)
                 .one();
         if(null != entity){
             insertTask.setPreActivityId(entity.getCurActivityId());
@@ -142,10 +143,10 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
     public void updateTransfer(String taskId, String targetUserId, String targetUserName, String sourceUserId, String remark) {
         List<ProcessTaskManagementEntity> entityList = lambdaQuery()
                 .eq(ProcessTaskManagementEntity::getTaskId, taskId)
-                .eq(StrUtil.isNotBlank(sourceUserId), ProcessTaskManagementEntity::getCurApproveId, sourceUserId)
+                .eq(CharSequenceUtil.isNotBlank(sourceUserId), ProcessTaskManagementEntity::getCurApproveId, sourceUserId)
                 .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
                 .list();
-        if(CollectionUtil.isEmpty(entityList)){
+        if(CollectionUtils.isEmpty(entityList)){
             throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
         }
         // 关闭原有记录
@@ -154,7 +155,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .set(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
                     .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
                     .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
-                    .set(ProcessTaskManagementEntity::getRemark, StrUtil.format("【{}】已将任务转移给【{}】办理，备注：{}", entity.getCurApproveName(), targetUserName, remark))
+                    .set(ProcessTaskManagementEntity::getRemark, CharSequenceUtil.format("【{}】已将任务转移给【{}】办理，备注：{}", entity.getCurApproveName(), targetUserName, remark))
                     .eq(ProcessTaskManagementEntity::getId, entity.getId())
                     .update();
         }
@@ -197,7 +198,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 .eq(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId)
                 .in(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE, ApproveStatusEnum.REJECT)
                 .orderByDesc(ProcessTaskManagementEntity::getApproveTime, ProcessTaskManagementEntity::getTaskStatus)
-                .last("limit 1")
+                .last(SqlConstants.LIMIT_1)
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS));
         return entity;
     }

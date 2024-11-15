@@ -1,7 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementAttachmentEntity;
 import com.erp.server.workflow.mapper.ProcessTaskManagementAttachmentMapper;
@@ -10,7 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,7 @@ public class ProcessTaskManagementAttachmentServiceImpl extends SuperServiceImpl
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "审核附件表（保存用户审核时提交的附件）" , processTaskManagementAttachmentEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "审核附件表（保存用户审核时提交的附件）" , processTaskManagementAttachmentEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         return new BaseResultDTO.AddDTO(processTaskManagementAttachmentEntity.getId(), processTaskManagementAttachmentEntity.getId());
     }
@@ -73,7 +73,7 @@ public class ProcessTaskManagementAttachmentServiceImpl extends SuperServiceImpl
 
         // 记录主单操作日志
             log.info("编辑 开始记录审核附件表（保存用户审核时提交的附件）日志数据，id：【{}】", processTaskManagementAttachmentEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), processTaskManagementAttachmentEntity.getId(), "审核附件表（保存用户审核时提交的附件）");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), processTaskManagementAttachmentEntity.getId(), "审核附件表（保存用户审核时提交的附件）");
         return Boolean.TRUE;
     }
 

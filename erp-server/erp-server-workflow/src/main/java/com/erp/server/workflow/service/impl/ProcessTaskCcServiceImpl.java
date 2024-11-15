@@ -1,6 +1,6 @@
 package com.erp.server.workflow.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.message.service.mq.MQProducerService;
@@ -36,7 +36,7 @@ public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveCcUser(String taskId, List<FindUserDTO> copyUser, String taskManagementId) {
-        if(CollectionUtil.isEmpty(copyUser)){
+        if(CollectionUtils.isEmpty(copyUser)){
             return;
         }
         for (FindUserDTO user : copyUser) {
@@ -61,7 +61,7 @@ public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCcTransfer(List<ProcessTaskManagementEntity> entityList, ProcessTaskManagementEntity insertEntity) {
-        if(CollectionUtil.isEmpty(entityList)){
+        if(CollectionUtils.isEmpty(entityList)){
             return;
         }
         ConcurrentHashMap<String, String> ccUserMap = new ConcurrentHashMap<>();
@@ -84,7 +84,7 @@ public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapp
         List<ProcessTaskCcEntity> list = lambdaQuery()
                 .eq(ProcessTaskCcEntity::getTaskId, entity.getTaskId())
                 .list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollectionUtils.isEmpty(list)) {
             return;
         }
         List<String> userIdList = list.stream().map(ProcessTaskCcEntity::getCcUserId).distinct().collect(Collectors.toList());

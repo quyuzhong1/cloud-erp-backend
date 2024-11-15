@@ -5,11 +5,11 @@ import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.server.workflow.service.ProcessTaskService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -24,13 +24,13 @@ import java.util.List;
 @Profile("dev")
 public class ErpServerWorkApplicationTests {
 
-    @Autowired
+    @Resource
     private ProcessTaskService processTaskService;
 
 
     @Test
-    public void test() {
-        List<AuditorHandleDTO> resultList =    processTaskService.getHistoryTaskByProcessId("fd226ba4-d76a-11ed-901e-2ed55b4d95a2");
+    public void testAuditorHandleDTO() {
+        List<AuditorHandleDTO> resultList =  processTaskService.getHistoryTaskByProcessId("fd226ba4-d76a-11ed-901e-2ed55b4d95a2");
 
         System.out.println(JSONObject.toJSON(resultList));
     }

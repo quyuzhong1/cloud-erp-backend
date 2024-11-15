@@ -1,7 +1,8 @@
 package com.erp.server.workflow.listeners;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
@@ -70,8 +71,7 @@ public class CamundaGlobalListener {
   @EventListener
   public void onTaskEvent(TaskEvent taskEvent) {
     // 任务完成时，会触发该事件 eventType = complete create
-//    log.info("Handle immutable task event = {}", taskEvent.toString());
-
+    log.debug("Handle immutable task event = {}", taskEvent.toString());
   }
 
   /**
@@ -95,7 +95,7 @@ public class CamundaGlobalListener {
     if (ExecutionListener.EVENTNAME_START.equals(executionDelegate.getEventName()) && ActivityInstanceState.STARTING.getStateCode() == activityInstanceState) {
       // 任务创建时的逻辑处理
       log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
-//      processManagementService.getCandidateByExecution(executionDelegate);
+
     }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())) {
       if ((ActivityInstanceState.CANCELED.getStateCode() == activityInstanceState && ObjectUtil.isEmpty(type)) || endTypeList.contains(type)) {
         log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState, executionDelegate.getCurrentActivityName());
@@ -128,13 +128,13 @@ public class CamundaGlobalListener {
       }
       Map<String, Object> nextActPropertiesMap = destination.getProperties().toMap();
       String nextActType = (String) nextActPropertiesMap.get("type");
-      if (StrUtil.isBlank(nextActType) || !(StrUtil.equals(nextActType,"userTask") || StrUtil.equals(nextActType,"multiInstanceBody"))){
+      if (CharSequenceUtil.isBlank(nextActType) || !(CharSequenceUtil.equals(nextActType,"userTask") || CharSequenceUtil.equals(nextActType,"multiInstanceBody"))){
         return;
       }
-      Boolean isMultiInstance = null != nextActPropertiesMap.get("isMultiInstance") ? Boolean.valueOf(nextActPropertiesMap.get("isMultiInstance").toString()) : false;
+      Boolean isMultiInstance = null != nextActPropertiesMap.get("isMultiInstance") && Boolean.parseBoolean(nextActPropertiesMap.get("isMultiInstance").toString());
       String startUserId = (String) executionDelegate.getVariable("creator");
       List<String> candidateUsers = processManagementService.getCandidateByAct(destination, executionDelegate.getProcessDefinitionId(),startUserId);
-      if(isMultiInstance || StrUtil.equals(nextActType, "multiInstanceBody")){
+      if(Boolean.TRUE.equals(isMultiInstance) || CharSequenceUtil.equals(nextActType, "multiInstanceBody")){
         executionDelegate.setVariable("mulUserList", candidateUsers);
       }else {
         executionDelegate.setVariable("userList", candidateUsers);
@@ -163,7 +163,7 @@ public class CamundaGlobalListener {
   @EventListener
   public void onHistoryEvent(HistoryEvent historyEvent) {
 //     任务完成后，会触发该事件 eventType = complete
-//    log.info("History event: {}",  JSONUtil.toJsonStr(historyEvent));
+    log.debug("History event: {}",  JSONUtil.toJsonStr(historyEvent));
   }
  
 }
