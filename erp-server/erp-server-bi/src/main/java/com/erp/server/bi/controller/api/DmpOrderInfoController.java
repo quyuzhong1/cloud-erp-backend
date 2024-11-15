@@ -66,9 +66,9 @@ public class DmpOrderInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "销售数据修改状态：id={id},订单修正状态={state}(2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款)")
     @PostMapping("/updateState")
-    public ApiResult updateState(@RequestBody @Validated DmpOrderStateDTO dto) {
-        Boolean flag = biOrderInfoService.updateState(dto);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<Void> updateState(@RequestBody @Validated DmpOrderStateDTO dto) {
+        boolean flag = biOrderInfoService.updateState(dto);
+        return flag ? this.success() : this.failure();
     }
 
     /**
@@ -80,7 +80,7 @@ public class DmpOrderInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "销售数据导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpOrderInfo:paging", tableAlias = "doi")
-    public ApiResult exportExcel(@RequestBody DmpOrderInfoSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody DmpOrderInfoSearchDTO dto, HttpServletResponse response) {
         biOrderInfoService.exportExcel(dto, response);
         return success();
     }
@@ -96,9 +96,9 @@ public class DmpOrderInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "销售数据导入")
     @PostMapping("/importOrderFile")
-    public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = biOrderInfoService.importOrderFile(excelFile, importType, response);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<Void> importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        boolean flag = biOrderInfoService.importOrderFile(excelFile, importType, response);
+        return flag ? this.success() : this.failure();
     }
 
 
@@ -111,7 +111,7 @@ public class DmpOrderInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "销售数据下载模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/dmpOrderInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();

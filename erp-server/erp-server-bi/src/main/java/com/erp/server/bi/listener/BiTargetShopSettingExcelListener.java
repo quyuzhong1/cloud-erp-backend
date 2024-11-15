@@ -1,11 +1,12 @@
 package com.erp.server.bi.listener;/**
  * @author Lambda
  * @Classname BiTargetShopSettingExcelListener
- * @Description TODO
+ * @Description
  * @Date 2023-09-15 16:36
  * @Created by yl
  */
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-15 16:36
  */
@@ -61,7 +62,7 @@ public class BiTargetShopSettingExcelListener extends AnalysisEventListener<Targ
         BiShopInfoEntity shop = shopList.stream().
                 filter(u -> u.getName().equals(shopName)).
                 findFirst().orElse(null);
-        if (Objects.isNull(shop)) {
+        if (ObjectUtil.isEmpty(shop)) {
             errorMsgList.add("店铺不存在");
         }
         //添加错误数据

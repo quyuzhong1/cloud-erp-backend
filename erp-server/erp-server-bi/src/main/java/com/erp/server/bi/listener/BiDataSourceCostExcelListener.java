@@ -1,6 +1,7 @@
 package com.erp.server.bi.listener;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -73,153 +74,187 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
         BiDataSourceCostEntity entity = new BiDataSourceCostEntity();
         List<BiDataSourceCostDetailEntity> detailList = new ArrayList<>();
         //旧数据时记录
-        if (ObjectUtils.isNotEmpty(iterator)) {
-            while (iterator .hasNext()){
-                Map.Entry entry  =  (java.util.Map.Entry)iterator.next();
+        if (iterator != null) {
+            while (iterator.hasNext()) {
+                Map.Entry<Integer, String> entry = iterator.next();
                 if (ObjectUtils.isEmpty(entry.getKey())) {
                     continue;
                 }
-                Integer mapKey = Integer.valueOf(entry.getKey().toString()) ;
-                String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString() ;
-                String key = headMap.get(mapKey);
-                BiDataSourceCostDetailEntity detailEntity = new BiDataSourceCostDetailEntity();
-                if (StringUtils.isNotBlank(key))  {
-                    if (BiDataSourceCostEnum.MONTH.getDesc().equals(key)) {
-                        try {
-                            Date parse = DateUtil.stringToDate(value);
-                            entity.setMonth(LocalDateUtil.date2LocalDateTime(parse));
-                        } catch (Exception e) {
-                            errorMsgList.add("月份格式错误");
-                        }
-                        continue;
-                    }
-                    if (BiDataSourceCostEnum.DEPTNAME.getDesc().equals(key)) {
-                        entity.setDeptName(value);
-                        continue;
-                    }
-                    if (BiDataSourceCostEnum.PLATFORMNAME.getDesc().equals(key)) {
-                        entity.setPlatformName(value);
-                        continue;
-                    }
-                    if (BiDataSourceCostEnum.SITE.getDesc().equals(key)) {
-                        entity.setSite(value);
-                        continue;
-                    }
-                    if (BiDataSourceCostEnum.SHOPNAME.getDesc().equals(key)) {
-                        entity.setShopName(value);
-                        continue;
-                    }
-                    if (BiDataSourceCostEnum.CHARGENAME.getDesc().equals(key)) {
-                        if (CollectionUtils.isNotEmpty(userList)) {
-                            FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserName().equals(value)).findFirst().orElse(null);
-                            if (ObjectUtils.isEmpty(findUserDTO)) {
-                                errorMsgList.add("系统中不存在该负责人");
-                                continue;
-                            }
-                            entity.setChargeId(findUserDTO.getUserId());
-                        }
-                        entity.setChargeName(value);
-                        continue;
-                    }
-                    if (BiDataSourceCostEnum.COMBINATION.getDesc().equals(key)) {
-                        entity.setCombination(value);
-                        continue;
-                    }
-                    if (CollectionUtils.isNotEmpty(dictList)) {
-                        String costType = dictList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse(null);
-                        if (StringUtils.isBlank(costType)) {
-                            errorMsgList.add("未找到成本数据:"+key);
-                        }
-                        detailEntity.setCostType(costType);
-                        //既不是数值也不是百分比
-                        if (!StrUtils.isDigit(value) && !StrUtils.isPercentage(value)) {
-                            errorMsgList.add("成本必须是数值或百分比数据");
-                        } else {
-                            if (StrUtils.isDigit(value)) {
-                                detailEntity.setCostValue(MathUtil.valueOf(value));
-                                detailEntity.setValueType(MathUtil.ZERO);
-                                detailList.add(detailEntity);
-                            } else {
-                                detailEntity.setValueType(MathUtil.ONE);
-                                String costValue = value.replace("%", "");
-                                detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue),new BigDecimal(100),4));
-                                detailList.add(detailEntity);
-                            }
-                        }
-                    }
+
+                String key = headMap.get(entry.getKey());
+                String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue();
+
+                // 处理具体字段
+                if (StringUtils.isNotBlank(key)) {
+                    handleField(entity, detailList, errorMsgList, key, value);
                 }
             }
-            if (StringUtils.isBlank(entity.getDeptName())) {
-                errorMsgList.add("销售事业部不能为空");
+        }
+
+
+        if (StringUtils.isBlank(entity.getDeptName())) {
+            errorMsgList.add("销售事业部不能为空");
+        } else {
+            String deptId = deptList.stream().filter(obj -> obj.getName().equals(entity.getDeptName())).map(SysDepartmentDTO::getId).findFirst().orElse("");
+            if (StringUtils.isBlank(deptId)) {
+                errorMsgList.add(CharSequenceUtil.format("部门{}不存在", entity.getDeptName()));
             } else {
-                String deptId = deptList.stream().filter(obj -> obj.getName().equals(entity.getDeptName())).map(SysDepartmentDTO::getId).findFirst().orElse("");
-                if (StringUtils.isBlank(deptId)) {
-                    errorMsgList.add(StrUtil.format("部门{}不存在",entity.getDeptName()));
-                } else {
-                    entity.setDeptId(deptId);
-                }
+                entity.setDeptId(deptId);
             }
-            if (StringUtils.isBlank(entity.getPlatformName())) {
-                errorMsgList.add("平台名称不能为空");
-            } else {
-                PlatformDictEnum platformEnum = PlatformDictEnum.getByName(entity.getPlatformName());
-                if (ObjectUtils.isEmpty(platformEnum)) {
-                    errorMsgList.add("系统中不存在此平台名称");
-                }
+        }
+        if (StringUtils.isBlank(entity.getPlatformName())) {
+            errorMsgList.add("平台名称不能为空");
+        } else {
+            PlatformDictEnum platformEnum = PlatformDictEnum.getByName(entity.getPlatformName());
+            if (ObjectUtils.isEmpty(platformEnum)) {
+                errorMsgList.add("系统中不存在此平台名称");
             }
-            if (StringUtils.isBlank(entity.getSite())) {
-                errorMsgList.add("站点不能为空");
-            }
-            if (StringUtils.isBlank(entity.getShopName())) {
-                errorMsgList.add("店铺名称不能为空");
-            }
-            if (StringUtils.isBlank(entity.getChargeName())) {
-                errorMsgList.add("负责人不能为空");
-            }
-            BiShopInfoEntity biShopInfoEntity = shopList.stream().filter(obj -> obj.getName().equals(entity.getShopName()) && obj.getSite().equals(entity.getSite()) && obj.getPlatformName().equals(entity.getPlatformName())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(biShopInfoEntity)) {
-                errorMsgList.add("在平台站点中未找到该店铺");
-            }
-            String errStr = "";
-            if (errorMsgList.size() > 0) {
-                for (int i = 0; i < errorMsgList.size(); i++) {
-                    Integer indexTemp = i + 1;
-                    errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
-                }
-                map.put(map.size() ,errStr);
-                list.add(map);
-                return;
-            }
+        }
+        if (StringUtils.isBlank(entity.getSite())) {
+            errorMsgList.add("站点不能为空");
+        }
+        if (StringUtils.isBlank(entity.getShopName())) {
+            errorMsgList.add("店铺名称不能为空");
+        }
+        if (StringUtils.isBlank(entity.getChargeName())) {
+            errorMsgList.add("负责人不能为空");
+        }
+        BiShopInfoEntity biShopInfoEntity = shopList.stream().filter(obj -> obj.getName().equals(entity.getShopName()) && obj.getSite().equals(entity.getSite()) && obj.getPlatformName().equals(entity.getPlatformName())).findFirst().orElse(null);
+        if (biShopInfoEntity == null) {
+            errorMsgList.add("在平台站点中未找到该店铺");
+        } else {
             entity.setShopId(biShopInfoEntity.getId());
-            //根据月份、店铺数据查询
-            BiDataSourceCostEntity cost = biDataSourceCostService.getByCostParam(entity);
-            if (ObjectUtils.isEmpty(cost)) {
-                //新增成本主表数据
-                biDataSourceCostService.save(entity);
-                if (CollectionUtils.isNotEmpty(detailList)) {
-                    detailList.forEach(obj -> obj.setCostId(entity.getId()));
-                    biDataSourceCostDetailService.saveBatch(detailList);
-                }
+        }
+        if (errorMsg(map, errorMsgList)) {
+            return;
+        }
+        //根据月份、店铺数据查询
+        saveData(entity, detailList);
+    }
+
+    private void handleField(BiDataSourceCostEntity entity,
+                             List<BiDataSourceCostDetailEntity> detailList,
+                             List<String> errorMsgList,
+                             String key,
+                             String value) {
+        switch (BiDataSourceCostEnum.getEnum(key)) {
+            case MONTH:
+                handleMonthField(entity, value, errorMsgList);
+                break;
+            case DEPTNAME:
+                entity.setDeptName(value);
+                break;
+            case PLATFORMNAME:
+                entity.setPlatformName(value);
+                break;
+            case SITE:
+                entity.setSite(value);
+                break;
+            case SHOPNAME:
+                entity.setShopName(value);
+                break;
+            case CHARGENAME:
+                handleChargeName(entity, value, errorMsgList);
+                break;
+            case COMBINATION:
+                entity.setCombination(value);
+                break;
+            default:
+                handleCostTypeField(key, value, detailList, errorMsgList);
+                break;
+        }
+    }
+
+    private void handleChargeName(BiDataSourceCostEntity entity, String value, List<String> errorMsgList) {
+        if (CollectionUtils.isNotEmpty(userList)) {
+            FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserName().equals(value)).findFirst().orElse(null);
+            if (findUserDTO == null) {
+                errorMsgList.add("系统中不存在该负责人");
             } else {
-                entity.setId(cost.getId());
-                //更新成本主表数据
-                biDataSourceCostService.updateById(entity);
-                //删除成本明细重新新增
-                biDataSourceCostDetailService.removeByCostId(cost.getId());
-                if (CollectionUtils.isNotEmpty(detailList)) {
-                    detailList.forEach(obj -> obj.setCostId(entity.getId()));
-                    biDataSourceCostDetailService.saveBatch(detailList);
+                entity.setChargeId(findUserDTO.getUserId());
+            }
+        }
+        entity.setChargeName(value);
+    }
+
+    private void handleMonthField(BiDataSourceCostEntity entity, String value, List<String> errorMsgList) {
+        try {
+            Date parse = DateUtil.stringToDate(value);
+            entity.setMonth(LocalDateUtil.date2LocalDateTime(parse));
+        } catch (Exception e) {
+            errorMsgList.add("月份格式错误");
+        }
+    }
+
+    private void handleCostTypeField(String key, String value, List<BiDataSourceCostDetailEntity> detailList, List<String> errorMsgList) {
+        if (CollectionUtils.isNotEmpty(dictList)) {
+            String costType = dictList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse(null);
+            if (StringUtils.isBlank(costType)) {
+                errorMsgList.add("未找到成本数据: " + key);
+            }
+
+            BiDataSourceCostDetailEntity detailEntity = new BiDataSourceCostDetailEntity();
+            detailEntity.setCostType(costType);
+
+            if (!StrUtils.isDigit(value) && !StrUtils.isPercentage(value)) {
+                errorMsgList.add("成本必须是数值或百分比数据");
+            } else {
+                if (StrUtils.isDigit(value)) {
+                    detailEntity.setCostValue(MathUtil.valueOf(value));
+                    detailEntity.setValueType(MathUtil.ZERO);
+                } else {
+                    detailEntity.setValueType(MathUtil.ONE);
+                    String costValue = value.replace("%", "");
+                    detailEntity.setCostValue(MathUtil.divide(MathUtil.valueOf(costValue), new BigDecimal(100), 4));
                 }
+                detailList.add(detailEntity);
             }
         }
     }
 
+
+    private void saveData(BiDataSourceCostEntity entity, List<BiDataSourceCostDetailEntity> detailList) {
+        BiDataSourceCostEntity cost = biDataSourceCostService.getByCostParam(entity);
+        if (ObjectUtils.isEmpty(cost)) {
+            // 新增成本主表数据
+            biDataSourceCostService.save(entity);
+            if (CollUtil.isNotEmpty(detailList)) {
+                detailList.forEach(obj -> obj.setCostId(entity.getId()));
+                biDataSourceCostDetailService.saveBatch(detailList);
+            }
+        } else {
+            entity.setId(cost.getId());
+            // 更新成本主表数据
+            biDataSourceCostService.updateById(entity);
+            // 删除成本明细重新新增
+            biDataSourceCostDetailService.removeByCostId(cost.getId());
+            if (CollUtil.isNotEmpty(detailList)) {
+                detailList.forEach(obj -> obj.setCostId(entity.getId()));
+                biDataSourceCostDetailService.saveBatch(detailList);
+            }
+        }
+    }
+
+    private boolean errorMsg(Map<Integer, String> map, List<String> errorMsgList) {
+        String errStr = "";
+        if (errorMsgList.size() > 0) {
+            for (int i = 0; i < errorMsgList.size(); i++) {
+                Integer indexTemp = i + 1;
+                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+            }
+            map.put(map.size() ,errStr);
+            list.add(map);
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> headList = map.values().stream().collect(Collectors.toList());
-        headList.add("错误信息");
+        List<String> msglist = map.values().stream().collect(Collectors.toList());
+        msglist.add("错误信息");
         this.headMap = map;
-        this.headList = headList;
+        this.headList = msglist;
     }
 
     public List<String> getHead(){

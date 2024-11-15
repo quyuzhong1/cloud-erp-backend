@@ -61,9 +61,9 @@ public class DmpShopInfoController extends BaseController {
     */
     @LogAction(value = LogActionEnum.INSERT, desc = "店铺数据新增")
     @PostMapping("/add")
-    public ApiResult addDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
-        Boolean flag = this.biShopInfoService.addDmpShopInfo(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> addDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
+        boolean flag = this.biShopInfoService.addDmpShopInfo(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -76,8 +76,8 @@ public class DmpShopInfoController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "店铺数据编辑")
     @PostMapping("/update")
     public ApiResult updateDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
-        Boolean flag = this.biShopInfoService.updateDmpShopInfo(dto);
-        return flag == true ? success() : failure();
+        boolean flag = this.biShopInfoService.updateDmpShopInfo(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -104,9 +104,9 @@ public class DmpShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "店铺数据负责人变更:店铺id={id},负责人id={chargeId}")
     @PostMapping("/changeChargeName")
-    public ApiResult changeChargeName(@RequestBody DmpShopInfoChangeDTO dto) {
-        Boolean flag = this.biShopInfoService.changeChargeName(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> changeChargeName(@RequestBody DmpShopInfoChangeDTO dto) {
+        boolean flag = this.biShopInfoService.changeChargeName(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -118,9 +118,9 @@ public class DmpShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "店铺数据部门变更:部门id={deptId},负责人id={chargeId}")
     @PostMapping("/changeDept")
-    public ApiResult changeDept(@RequestBody DmpShopInfoDeptChangeDTO dto) {
-        Boolean flag = this.biShopInfoService.changeDept(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> changeDept(@RequestBody DmpShopInfoDeptChangeDTO dto) {
+        boolean flag = this.biShopInfoService.changeDept(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -146,7 +146,7 @@ public class DmpShopInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "店铺数据导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpShopInfo:paging", tableAlias = "dsi")
-    public ApiResult exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody DmpShopInfoSearchDTO dto, HttpServletResponse response) {
         biShopInfoService.exportExcel(dto, response);
         return  success();
     }

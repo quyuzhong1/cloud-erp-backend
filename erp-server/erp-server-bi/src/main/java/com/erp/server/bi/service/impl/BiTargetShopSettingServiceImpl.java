@@ -1,7 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -236,7 +236,6 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         if (!save) {
             throw new ServiceException("店铺目标设置单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
         this.removeByMainId(id);
         this.batchAdd(id, detailList);
         return Boolean.TRUE;
@@ -357,7 +356,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(metrics);
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params,multiplyNum);
+        IPage<BiTargetShopSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params,multiplyNum);
         List<BiTargetShopSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -568,7 +567,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         List<BiShopInfoEntity> shopInfoList = biShopInfoService.list();
         BiTargetShopSettingExcelListener excelListenerUtil = new BiTargetShopSettingExcelListener(metricsNameList, shopInfoList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), TargetShopSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), TargetShopSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("人员目标设置 导入错误>>>{}", e);
         }
@@ -625,8 +624,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto,multiplyNum);
-        return pagingTotal;
+        return baseMapper.pagingTotal(dto,multiplyNum);
     }
 
 }

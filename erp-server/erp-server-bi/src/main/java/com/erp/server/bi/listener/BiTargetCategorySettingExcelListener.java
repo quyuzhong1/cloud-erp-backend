@@ -1,30 +1,26 @@
 package com.erp.server.bi.listener;/**
  * @author Lambda
  * @Classname BiTargetShopSettingExcelListener
- * @Description TODO
+ * @Description
  * @Date 2023-09-15 16:36
  * @Created by yl
  */
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
-import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.excel.TargetCategorySettingImportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
-import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.server.bi.service.BiProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-15 16:36
  */
@@ -64,7 +60,7 @@ public class BiTargetCategorySettingExcelListener extends AnalysisEventListener<
         String categoryName = excelDTO.getCategoryName();
         BasicCategoryEntity category = basicCategoryList.stream().filter(c -> c.getName().equals(categoryName))
                 .findFirst().orElse(null);
-        if (Objects.isNull(category)) {
+        if (ObjectUtil.isEmpty(category)) {
             errorMsgList.add("分类不存在");
         }
         //添加错误数据

@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -100,12 +100,12 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
         //系统中已存在的退款订单
         List<BiRefundInfoEntity> refundList = this.list();
 
-        DmpRefundInfoExcelListener excelListenerUtil = new DmpRefundInfoExcelListener(importType,refundList, biOrderInfoService, biRefundInfoService, biShopInfoService, biRefundItemService,plmTaskFeign);
+        DmpRefundInfoExcelListener excelListenerUtil = new DmpRefundInfoExcelListener(refundList, biOrderInfoService, biRefundInfoService, biShopInfoService, biRefundItemService,plmTaskFeign);
         try {
-            EasyExcel.read(excelFile.getInputStream(), DmpRefundInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), DmpRefundInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<DmpRefundInfoImportExcelDTO> list = excelListenerUtil.getDateList();
             if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/dmpRefundInfo.xlsx";
                 String name = "dmpRefundInfo";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);

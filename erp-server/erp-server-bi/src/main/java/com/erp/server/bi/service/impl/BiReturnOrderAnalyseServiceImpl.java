@@ -39,8 +39,7 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
     @Override
     @Cacheable(cacheNames = "cache:bi:returnOrderAnalByCategoryPaging",keyGenerator = "myKeyGenerator")
     public List<ReturnOrderAnalyseTableVO> returnOrderAnalByCategoryPaging(BiFilterDTO biFilterDTO) {
-        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByCategoryPaging(biFilterDTO);
-        return returnOrderAnalyseTableVoIPage;
+        return baseMapper.returnOrderAnalByCategoryPaging(biFilterDTO);
     }
 
     /**
@@ -53,8 +52,7 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
     @Override
     @Cacheable(cacheNames = "cache:bi:returnOrderAnalByShopPaging",keyGenerator = "myKeyGenerator")
     public List<ReturnOrderAnalyseTableVO> returnOrderAnalByShopPaging(BiFilterDTO biFilterDTO) {
-        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByShopPaging(biFilterDTO);
-        return returnOrderAnalyseTableVoIPage;
+        return baseMapper.returnOrderAnalByShopPaging(biFilterDTO);
     }
 
     /**
@@ -67,8 +65,7 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
     @Override
     @Cacheable(cacheNames = "cache:bi:returnOrderAnalByPlatformPaging",keyGenerator = "myKeyGenerator")
     public List<ReturnOrderAnalyseTableVO> returnOrderAnalByPlatformPaging(BiFilterDTO biFilterDTO) {
-        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVOIPage = baseMapper.returnOrderAnalByPlatformPaging(biFilterDTO);
-        return returnOrderAnalyseTableVOIPage;
+        return baseMapper.returnOrderAnalByPlatformPaging(biFilterDTO);
     }
 
     /**
@@ -81,8 +78,7 @@ public class BiReturnOrderAnalyseServiceImpl extends ServiceImpl<BiReturnOrderAn
     @Override
     @Cacheable(cacheNames = "cache:bi:returnOrderAnalByDeptPaging",keyGenerator = "myKeyGenerator")
     public List<ReturnOrderAnalyseTableVO> returnOrderAnalByDeptPaging(BiFilterDTO biFilterDTO) {
-        List<ReturnOrderAnalyseTableVO> returnOrderAnalyseTableVoIPage = baseMapper.returnOrderAnalByDeptPaging(biFilterDTO);
-        return returnOrderAnalyseTableVoIPage;
+        return baseMapper.returnOrderAnalByDeptPaging(biFilterDTO);
     }
 
     /**

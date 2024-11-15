@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpReturnOrderInfoImportExcelDTO> {
-    private Integer importType;
-
 
     private BiOrderInfoService biOrderInfoService;
 
@@ -47,9 +45,8 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
 
     private List<BiReturnOrderInfoEntity> returnOrderList;
 
-    public DmpReturnOrderInfoExcelListener(Integer importType, List<BiReturnOrderInfoEntity> returnOrderList, BiOrderInfoService biOrderInfoService, BiReturnOrderInfoService biReturnOrderInfoService
+    public DmpReturnOrderInfoExcelListener(List<BiReturnOrderInfoEntity> returnOrderList, BiOrderInfoService biOrderInfoService, BiReturnOrderInfoService biReturnOrderInfoService
             , BiShopInfoService biShopInfoService, BiReturnOrderItemService biReturnOrderItemService, PlmTaskFeign plmTaskFeign) {
-        this.importType = importType;
         this.biOrderInfoService = biOrderInfoService;
         this.biShopInfoService = biShopInfoService;
         this.biReturnOrderInfoService = biReturnOrderInfoService;

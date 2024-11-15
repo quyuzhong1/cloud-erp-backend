@@ -5,7 +5,6 @@ import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.bi.dto.BiTargetNewProductSettingDTO;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;

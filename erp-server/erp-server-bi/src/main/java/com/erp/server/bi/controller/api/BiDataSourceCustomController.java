@@ -11,6 +11,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiDataSourceCustomGraphicalDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
 import com.erp.model.bi.dto.BiTargetTypeDTO;
@@ -69,7 +70,7 @@ public class BiDataSourceCustomController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "自助数据-导出")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
     }
@@ -142,7 +143,7 @@ public class BiDataSourceCustomController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "自助数据-市场数据-导出")
     @PostMapping(value = "/market/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:market:paging", tableAlias = "bdsc")
-    public ApiResult marketExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> marketExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
     }
@@ -157,7 +158,7 @@ public class BiDataSourceCustomController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "自助数据-供应链数据-导出")
     @PostMapping(value = "/supplyChain/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:supplyChain:paging", tableAlias = "bdsc")
-    public ApiResult supplyChainExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> supplyChainExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
     }
@@ -172,7 +173,7 @@ public class BiDataSourceCustomController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "自助数据-经营数据-导出")
     @PostMapping(value = "/operate/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:operate:paging", tableAlias = "bdsc")
-    public ApiResult operateExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> operateExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
     }
@@ -187,7 +188,7 @@ public class BiDataSourceCustomController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "自助数据-财务数据-导出")
     @PostMapping(value = "/finance/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "create_user_id", menuCode = "bi:dataSourceCustom:finance:paging", tableAlias = "bdsc")
-    public ApiResult financeExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> financeExportExcel(@RequestBody BiDataSourceCustomSearchDTO dto, HttpServletResponse response) {
         biDataSourceCustomService.exportExcel(dto, response);
         return  success();
     }
@@ -202,9 +203,9 @@ public class BiDataSourceCustomController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "自助数据-导入")
     @PostMapping("/importBiDataSourceCustomFile")
-    public ApiResult importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, @RequestParam(value = "dataType") Integer dataType, HttpServletResponse response) {
-        Boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType,dataType);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<Void> importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, @RequestParam(value = "dataType") Integer dataType, HttpServletResponse response) {
+        boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType,dataType);
+        return flag ? this.success() : this.failure();
     }
 
     /**
@@ -216,7 +217,7 @@ public class BiDataSourceCustomController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "自助数据-下载模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response , @RequestParam(value = "importType") Integer importType) {
+    public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response , @RequestParam(value = "importType") Integer importType) {
         String path = "";
         switch (importType) {
             case 1:
@@ -266,8 +267,8 @@ public class BiDataSourceCustomController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/listGraphicalData")
-    public ApiResult<ChartVO> listGraphicalData(@RequestParam("moduleId") String moduleId,@RequestParam("year") Integer year) {
-        ChartVO vo = biDataSourceCustomService.listGraphicalData(moduleId,year);
+    public ApiResult<ChartVO<BiDataSourceCustomGraphicalDTO>> listGraphicalData(@RequestParam("moduleId") String moduleId, @RequestParam("year") Integer year) {
+        ChartVO<BiDataSourceCustomGraphicalDTO> vo = biDataSourceCustomService.listGraphicalData(moduleId,year);
         return success(vo);
     }
 
@@ -305,7 +306,7 @@ public class BiDataSourceCustomController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/updateTargetType")
-    public ApiResult updateTargetType(@RequestBody @Validated BiTargetTypeDTO dto) {
+    public ApiResult<Void> updateTargetType(@RequestBody @Validated BiTargetTypeDTO dto) {
         biDataSourceCustomService.updateTargetType(dto);
         return success();
     }
