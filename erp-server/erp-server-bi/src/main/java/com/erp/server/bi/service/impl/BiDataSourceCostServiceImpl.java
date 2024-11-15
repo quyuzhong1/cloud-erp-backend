@@ -3,6 +3,7 @@ package com.erp.server.bi.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -174,7 +175,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .in(CollUtil.isNotEmpty(dto.getUserId()), BiDataSourceCostEntity::getChargeId, dto.getUserId())
                 .ge(BiDataSourceCostEntity::getMonth,dto.getStartTime())
                 .le(BiDataSourceCostEntity::getMonth,dto.getEndTime())
-                .last(StrUtil.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
+                .last(CharSequenceUtil.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
                 .list();
         return dataSourceCostList;
     }
@@ -196,7 +197,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .in(CollUtil.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
                 .in(CollUtil.isNotEmpty(dto.getUserId()), BiDataSourceCostEntity::getChargeId, dto.getUserId())
                 .eq(BiDataSourceCostEntity::getMonth, maxMonthEntity.getMonth())
-                .last(StrUtil.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
+                .last(CharSequenceUtil.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
                 .list();
         if (CollectionUtils.isEmpty(dataSourceCostList)) {
             return new ArrayList<>();
