@@ -730,9 +730,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             soB2cDeliveryDetailEntities = soB2cDeliveryDetailService.listByMainIds(sourceIds);
             List<SoB2cDeliveryEntity> finalSoB2cDeliveryEntities = soB2cDeliveryEntities;
             List<SoB2cDeliveryDetailEntity> finalSoB2cDeliveryDetailEntities = soB2cDeliveryDetailEntities;
-            transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseByB2cDelivery(e, detailList, finalSoB2cDeliveryEntities, finalSoB2cDeliveryDetailEntities)).collect(Collectors.toList());
+            b2cDeliveryTransferInfoList = b2cDeliveryTransferInfoList.stream().filter(e -> hasSameWarehouseByB2cDelivery(e, detailList, finalSoB2cDeliveryEntities, finalSoB2cDeliveryDetailEntities)).collect(Collectors.toList());
         }
-        updateB2cDeliveryInventory(transferInfoList,detailList,soB2cDeliveryEntities,soB2cDeliveryDetailEntities);
+        updateB2cDeliveryInventory(b2cDeliveryTransferInfoList,detailList,soB2cDeliveryEntities,soB2cDeliveryDetailEntities);
 
         //来源销售订单
         List<TransferInfoEntity> b2cTransferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C.getCode(), obj.getSourceType()))
@@ -746,9 +746,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(sourceIds);
             List<SoB2cDetailEntity> finalSoB2cDetailEntityList = soB2cDetailEntityList;
             List<SoB2cEntity> finalSoB2cEntityList = soB2cEntityList;
-            transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseBySoB2C(e, detailList, finalSoB2cEntityList, finalSoB2cDetailEntityList)).collect(Collectors.toList());
+            b2cTransferInfoList = b2cTransferInfoList.stream().filter(e -> hasSameWarehouseBySoB2C(e, detailList, finalSoB2cEntityList, finalSoB2cDetailEntityList)).collect(Collectors.toList());
         }
-        updateSoB2CInventory(transferInfoList,detailList,soB2cEntityList,soB2cDetailEntityList);
+        updateSoB2CInventory(b2cTransferInfoList,detailList,soB2cEntityList,soB2cDetailEntityList);
     }
 
     private void updateSoB2CInventory(List<TransferInfoEntity> transferInfoList, List<TransferInfoDetailEntity> detailList, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> soB2cDetailEntityList) {

@@ -974,13 +974,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //检查是否存在流程
         ApproveOneDTO dto = new ApproveOneDTO(entity.getId(),ApproveTypeEnum.PASS.getStatus(),"", Boolean.FALSE);
         if (!checkProcess(entity,dto) && isProcess){
-            BatchResultDTO approve = this.approve(dto, null, "");
-            ruleProcess(entity);
+            ruleProcess(entity,dto);
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
-
-    private void ruleProcess(SoB2cEntity entity) {
+    @Transactional(rollbackFor = Exception.class)
+    public void ruleProcess(SoB2cEntity entity, ApproveOneDTO dto) {
+        this.approve(dto, null, "");
         //速卖通平台仓订单不走任何规则
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
             return;
