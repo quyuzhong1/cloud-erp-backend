@@ -99,7 +99,7 @@ public interface UserInfoFeign {
      * 删除SRM用户
      */
     @RequestMapping("feign/user/deleteSrmUser")
-    ApiResult deleteSrmUser(@RequestBody List<String> uids);
+    ApiResult<Object> deleteSrmUser(@RequestBody List<String> uids);
 
     /**
      * 批量启用/禁用
@@ -108,7 +108,7 @@ public interface UserInfoFeign {
      * @return
      */
     @RequestMapping("feign/user/updateStateSrm")
-    ApiResult updateStateSrm(@RequestBody @Validated UpdateUserStateDTO stateDTO);
+    ApiResult<Object> updateStateSrm(@RequestBody @Validated UpdateUserStateDTO stateDTO);
 
     /**
      * 重置密码
@@ -119,7 +119,7 @@ public interface UserInfoFeign {
      * @Date 2023/4/20 9:43
      **/
     @GetMapping("feign/user/changePassword")
-    ApiResult changePassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
+    ApiResult<Object> changePassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
 
     /**
      * 忘记密码
@@ -130,7 +130,7 @@ public interface UserInfoFeign {
      * @Date 2023/4/20 11:16
      **/
     @PostMapping("feign/user/forgotPassword")
-    ApiResult forgotPassword(@RequestBody ForgotPasswordDTO dto);
+    ApiResult<Object> forgotPassword(@RequestBody ForgotPasswordDTO dto);
 
     /**
      * 忘记密码-获取验证码
