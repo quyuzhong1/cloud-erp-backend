@@ -423,7 +423,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //相同sku去空格
             String currentSku = "";
             for (PickingListsDTO.PrintDetailView printDetailView : viewList){
-                if(StringUtils.isBlank(currentSku)){
+                if(CharSequenceUtil.isBlank(currentSku)){
                     currentSku = printDetailView.getSkuNo();
                     continue;
                 }
@@ -496,7 +496,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 String currentParentSku = "";
                 Integer parentQty = 0;
                 for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
-                    if(StringUtils.isBlank(currentParentSku)){
+                    if(CharSequenceUtil.isBlank(currentParentSku)){
                         currentParentSku = combinationPrintDetailView.getParentSku();
                         parentQty = combinationPrintDetailView.getParentSkuQty();
                         continue;
@@ -572,7 +572,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 String currentParentSku = "";
                 Integer parentQty = 0;
                 for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
-                    if(StringUtils.isBlank(currentParentSku)){
+                    if(CharSequenceUtil.isBlank(currentParentSku)){
                         currentParentSku = combinationPrintDetailView.getParentSku();
                         parentQty = combinationPrintDetailView.getParentSkuQty();
                         continue;

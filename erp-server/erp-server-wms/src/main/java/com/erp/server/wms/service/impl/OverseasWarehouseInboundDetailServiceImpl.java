@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -72,7 +73,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓入库单详情", overseasWarehouseInboundDetailEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓入库单详情", overseasWarehouseInboundDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, overseasWarehouseInboundDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -101,7 +102,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
         // 记录主单操作日志
         log.info("编辑 开始记录海外仓入库单详情日志数据，id：【{}】", overseasWarehouseInboundDetailEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasWarehouseInboundDetailEntity.getId(), "海外仓入库单详情");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasWarehouseInboundDetailEntity.getId(), "海外仓入库单详情");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasWarehouseInboundDetailEntity, null, overseasWarehouseInboundDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -143,14 +144,14 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 //        OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getById(entity.getMainId());
 //        Optional.ofNullable(mainEntity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
 //        // 非手动单
-//        if (StringUtils.isNotBlank(mainEntity.getDictPlatform())){
-//            String msg = StrUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
+//        if (CharSequenceUtil.isNotBlank(mainEntity.getDictPlatform())){
+//            String msg = CharSequenceUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
 //            throw new ServiceException(msg);
 //        }
 //        if (!OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus()) &&
 //                !OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
 //        ){
-//            String msg = StrUtil.format("【{}】不等于待签收和部分签收，无法手动签收", mainEntity.getCode());
+//            String msg = CharSequenceUtil.format("【{}】不等于待签收和部分签收，无法手动签收", mainEntity.getCode());
 //            throw new ServiceException(msg);
 //        }
 //        if (entity.getPackQty() < entity.getReceiveQty() + dto.getReceivedQty()){
@@ -189,7 +190,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 //        }
 //        // 生成直接调拨单
 //        String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entity, receivedEntity);
-//        if (StringUtils.isNotBlank(transferOutId)) {
+//        if (CharSequenceUtil.isNotBlank(transferOutId)) {
 //            //提交
 //            transferInfoService.submit(Collections.singletonList(transferOutId));
 //            //审核
@@ -247,17 +248,17 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getById(entity.getMainId());
             Optional.ofNullable(mainEntity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
             // 非手动单
-            if (StringUtils.isNotBlank(mainEntity.getDictPlatform())){
+            if (CharSequenceUtil.isNotBlank(mainEntity.getDictPlatform())){
                 OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseIdWithNotDisabled(mainEntity.getToWarehouseId());
                 if(Objects.nonNull(overseasProviderWarehouseEntity)){
-                    String msg = StrUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
+                    String msg = CharSequenceUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
                     throw new ServiceException(msg);
                 }
             }
             if (!OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus()) &&
                     !OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
             ){
-                String msg = StrUtil.format("【{}】不等于待签收和部分签收，无法手动签收", mainEntity.getCode());
+                String msg = CharSequenceUtil.format("【{}】不等于待签收和部分签收，无法手动签收", mainEntity.getCode());
                 throw new ServiceException(msg);
             }
             if (entity.getPackQty() < entity.getReceiveQty() + dto.getReceivedQty()){
@@ -320,7 +321,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
             // 生成直接调拨单
             String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entry.getValue(), receiverdMap);
-            if (StringUtils.isNotBlank(transferOutId)) {
+            if (CharSequenceUtil.isNotBlank(transferOutId)) {
                 //提交
                 transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
                 //审核

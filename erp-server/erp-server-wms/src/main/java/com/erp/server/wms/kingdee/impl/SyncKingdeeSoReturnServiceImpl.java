@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -208,7 +209,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
         //退货单
-        SoReturnEntity soReturnEntity = StringUtils.isNotBlank(entity.getSourceId())?soReturnFeign.getSoReturnById(entity.getSourceId()):null;
+        SoReturnEntity soReturnEntity = CharSequenceUtil.isNotBlank(entity.getSourceId())?soReturnFeign.getSoReturnById(entity.getSourceId()):null;
 
 
 
@@ -226,14 +227,14 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
         //销售单
         SoInfoEntity soInfoEntity = new SoInfoEntity();
-        if (StringUtils.isNotBlank(soId)) {
+        if (CharSequenceUtil.isNotBlank(soId)) {
             soInfoEntity = soInfoFeign.getSoInfoById(soId);
         }
 
 
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = new ArrayList<>();
-        if (StringUtils.isNotBlank(soId)) {
+        if (CharSequenceUtil.isNotBlank(soId)) {
             soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soId));
         }
         List<String> warehouseIds = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toList());
@@ -260,7 +261,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         String sellerId = entity.getSellerId();
 
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(entity.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
@@ -274,7 +275,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             }
         }
 
-        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
@@ -338,7 +339,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(finalSoDetailId)).findFirst().orElse(new SoDetailEntity());
             Map<String,Object> map = new HashMap<>();
             //退货原因
-            if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getReturnReasonDict())) {
                 resultMap.put("returnReason", ReturnReasonEnum.getEnum(detailEntity.getReturnReasonDict()).getKingdeeCode());
             }
             //销售订单金蝶id

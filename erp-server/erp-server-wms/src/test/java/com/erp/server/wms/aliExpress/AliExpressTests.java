@@ -1,6 +1,7 @@
 package com.erp.server.wms.aliExpress;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.enums.ApiError;
@@ -167,10 +168,10 @@ public class AliExpressTests {
                     .logistics_no(declareDeliverRequest.getLogisticsNo())
                     .service_name(declareDeliverRequest.getServiceName())
                     .build();
-            if (StringUtils.isNotBlank(declareDeliverRequest.getActualCarrier())){
+            if (CharSequenceUtil.isNotBlank(declareDeliverRequest.getActualCarrier())){
                 shipment.setActual_carrier(declareDeliverRequest.getActualCarrier());
             }
-            if (StringUtils.isNotBlank(declareDeliverRequest.getTrackingWebSite())){
+            if (CharSequenceUtil.isNotBlank(declareDeliverRequest.getTrackingWebSite())){
                 shipment.setTracking_web_site(declareDeliverRequest.getTrackingWebSite());
             }
             List<QueryShipmentOrder.SubTradeOrder> subTradeOrders = new LinkedList<>();
@@ -204,7 +205,7 @@ public class AliExpressTests {
             if (!success){
                 String errorMsg = resultJson.getStr("error_msg", "");
                 Integer errorCode = resultJson.getInt("error_code", -1000000);
-                if (StringUtils.isNotBlank(errorMsg)){
+                if (CharSequenceUtil.isNotBlank(errorMsg)){
                     ServiceException.runError(errorCode, errorMsg);
                 } else {
                     ServiceException.runError(errorCode, JSONUtil.toJsonStr(body));
@@ -265,10 +266,10 @@ public class AliExpressTests {
                 .logistics_no(declareDeliverRequest.getLogisticsNo())
                 .service_name(declareDeliverRequest.getServiceName())
                 .build();
-        if (StringUtils.isNotBlank(declareDeliverRequest.getActualCarrier())) {
+        if (CharSequenceUtil.isNotBlank(declareDeliverRequest.getActualCarrier())) {
             shipment.setActual_carrier(declareDeliverRequest.getActualCarrier());
         }
-        if (StringUtils.isNotBlank(declareDeliverRequest.getTrackingWebSite())) {
+        if (CharSequenceUtil.isNotBlank(declareDeliverRequest.getTrackingWebSite())) {
             shipment.setTracking_web_site(declareDeliverRequest.getTrackingWebSite());
         }
         QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()

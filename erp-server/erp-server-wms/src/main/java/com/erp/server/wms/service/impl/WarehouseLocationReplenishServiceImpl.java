@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.lang.Pair;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -162,7 +163,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         //没有待处理的补货单之后，将发货单状态变为待处理，并清除异常原因
         WarehouseLocationReplenishEntity replenish = this.baseMapper.selectById(id);
         String sourceId = replenish.getSourceId();
-        if(StringUtils.isNotBlank(sourceId)){
+        if(CharSequenceUtil.isNotBlank(sourceId)){
             List<WarehouseLocationReplenishEntity> commonSourceList = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationReplenishEntity>().eq("source_id", sourceId));
             boolean allMatch = commonSourceList.stream().allMatch(item -> {
                 String status = item.getStatus();
@@ -196,12 +197,12 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             return Collections.emptyList();
         }
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        List<String> skuIds = addList.stream().filter(v -> StringUtils.isNotBlank(v.getSkuId())).map(WarehouseLocationReplenishDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = addList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getSkuId())).map(WarehouseLocationReplenishDTO.AddDTO::getSkuId).collect(Collectors.toList());
         //获取推荐仓位补货推荐区域
         List<ProductDetailEntity> productDetailEntities = productDetailFeign.listByIds(skuIds);
         Map<String,String> toWarehouseLocationMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(productDetailEntities)){
-            toWarehouseLocationMap = productDetailEntities.stream().filter(v -> StringUtils.isNotBlank(v.getWarehouseLocation())).collect(Collectors.toMap(ProductDetailEntity::getId,ProductDetailEntity::getWarehouseLocation));
+            toWarehouseLocationMap = productDetailEntities.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getWarehouseLocation())).collect(Collectors.toMap(ProductDetailEntity::getId,ProductDetailEntity::getWarehouseLocation));
         }
         for (WarehouseLocationReplenishDTO.AddDTO dto : addList) {
             if(toWarehouseLocationMap.containsKey(dto.getSkuId())){
@@ -275,7 +276,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             BeanMapper.copy(entity, replenishItem);
             //按照SKU找产品管理中配置的“推荐仓位（小货区）”取仓位，有多个时取第一个生成仓位补货单
             Boolean isExist = Boolean.FALSE;
-            if(StringUtils.isNotBlank(dto.getToWarehouseLocation())){
+            if(CharSequenceUtil.isNotBlank(dto.getToWarehouseLocation())){
                 String[] split = dto.getToWarehouseLocation().split(",");
                 WarehouseLocationEntity location = warehouseLocationService.lambdaQuery()
                         .eq(WarehouseLocationEntity::getWarehouseId, dto.getWarehouseId())
@@ -398,7 +399,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
             inventoryEntity = pickInventoryList.stream().
                     filter(r -> warehouseLocation.equals(r.getWarehouseLocation())).findFirst().orElse(null);
         }else {
-            pickInventoryList = pickInventoryList.stream().filter(v -> StringUtils.isNotBlank(v.getWarehouseLocation()))
+            pickInventoryList = pickInventoryList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getWarehouseLocation()))
                     .sorted(Comparator.comparing(InventoryEntity::getWarehouseLocation))
                     .collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(pickInventoryList)){
@@ -444,7 +445,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
         }
 
         //修改发货单状态，清除异常
-        if(StringUtils.isNotBlank(fullEntity.getSourceId())){
+        if(CharSequenceUtil.isNotBlank(fullEntity.getSourceId())){
             List<WarehouseLocationReplenishEntity> commonSourceList = this.baseMapper.selectList(new QueryWrapper<WarehouseLocationReplenishEntity>().eq("source_id", fullEntity.getSourceId()));
             boolean allMatch = commonSourceList.stream().allMatch(item -> {
                 String status = item.getStatus();

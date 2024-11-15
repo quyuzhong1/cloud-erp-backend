@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformReturnInstockDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -84,7 +85,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	@Override
 	public void handle(String data) {
 		PlatformReturnInstockDTO dto = JSONUtil.toBean(data, PlatformReturnInstockDTO.class);
-		if(Objects.isNull(dto) || StringUtils.isBlank(dto.getAuthId())|| StringUtils.isBlank(dto.getWarehouseCode())){
+		if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAuthId())|| CharSequenceUtil.isBlank(dto.getWarehouseCode())){
 			return;
 		}
 
@@ -93,13 +94,13 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			return;
 		}
 		OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(),dto.getWarehouseCode());
-		if(Objects.isNull(overseasProviderWarehouseEntity) || StringUtils.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
+		if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
 			throw new ServiceException("仓库信息不存在");
 		}
 		SoB2cEntity soB2cEntity = null;
 		SoOutstockEntity soOutstock = null;
 		WarehouseEntity warehouseEntity = warehouseService.getById(overseasProviderWarehouseEntity.getWarehouseId());
-		if(StringUtils.isNotBlank(dto.getOrderReferenceNo())){
+		if(CharSequenceUtil.isNotBlank(dto.getOrderReferenceNo())){
 			soB2cEntity = soB2cFeign.getSoCode(dto.getOrderReferenceNo());
 			if(Objects.nonNull(soB2cEntity)){
 				soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
@@ -124,7 +125,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	 * @param soB2cEntity
 	 */
 	private void matchSoReturn(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList, PlatformReturnInstockDTO dto,SoB2cEntity soB2cEntity) {
-		if(Objects.isNull(soB2cEntity) || StringUtils.isBlank(soB2cEntity.getPlatformCode())){
+		if(Objects.isNull(soB2cEntity) || CharSequenceUtil.isBlank(soB2cEntity.getPlatformCode())){
 			return;
 		}
 		List<SoB2cReturnEntity> soB2cReturnEntityList = FeignQuery.create(SoB2cReturnEntity.class).eq(SoB2cReturnEntity::getPlatformOrderNo,soB2cEntity.getPlatformCode()).list();

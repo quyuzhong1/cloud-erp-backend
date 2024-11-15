@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.core.exception.ServiceException;
@@ -54,7 +55,7 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         }
         //根据拣货车编号查询
         List<WaveListEntity> pickingWaveList = waveListService.listByCarCode(businessCode);
-        if(CollectionUtil.isEmpty(pickingWaveList)){
+        if(CollUtil.isEmpty(pickingWaveList)){
             if(businessCode.contains("JHBC")){
                 throw new ServiceException("拣货波次编号错误");
             }else{
@@ -70,7 +71,7 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         LocalDateTime today = LocalDateTime.now().toLocalDate().atStartOfDay();
         pickingWaveList = pickingWaveList.stream().filter(v->v.getStatus().equals(WaveStatusEnum.FINISH.getCode()) && Objects.nonNull(v.getPickingTime()) && v.getPickingTime().isAfter(today)).sorted((o1, o2)->o2.getPickingTime().compareTo(o1.getPickingTime())).collect(Collectors.toList());
 
-        if(CollectionUtil.isEmpty(pickingWaveList)){
+        if(CollUtil.isEmpty(pickingWaveList)){
             throw new ServiceException("拣货车关联没有今天完成的波次");
         }
 
@@ -85,7 +86,7 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         }
         List<WaveListDetailEntity> detailEntityList = waveListDetailService.listByMainId(pickingWave.getId());
         List<String> deliveryIds = detailEntityList.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
-        if(CollectionUtil.isEmpty(deliveryIds)){
+        if(CollUtil.isEmpty(deliveryIds)){
             throw new ServiceException("关联的发货单为空");
         }
         SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam param = new SoB2cDeliveryDTO.PrintLogisticsBillConfirmParam();

@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -53,7 +54,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderDataMapper, ReportOrderDataEntity> implements ReportOrderDataService {
-    @Autowired
+    @Resource
     private ReportOrderDemandDetailService reportOrderDemandDetailService;
 
     @Resource
@@ -112,7 +113,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             return;
         }
         if (isAuto) {
-            LocalTime now = StrUtil.isBlank(time) ? LocalTime.now() : LocalTime.parse(time,DateTimeFormatter.ofPattern("HH:mm"));
+            LocalTime now = CharSequenceUtil.isBlank(time) ? LocalTime.now() : LocalTime.parse(time,DateTimeFormatter.ofPattern("HH:mm"));
             boolean isGenerate = virtualRuleDTO.getExecTimeList().contains(LocalTime.parse(now.format(DateTimeFormatter.ofPattern("HH:mm")), DateTimeFormatter.ofPattern("HH:mm")));
             if (!isGenerate) {
                 return;
@@ -567,7 +568,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         if (CollectionUtils.isEmpty(resultList)) {
             return resultList;
         }
-        List<String> sourceDetailIdList = resultList.stream().filter(obj -> StrUtil.isNotEmpty(obj.getSourceDetailId())).map(ReportOrderDataEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> sourceDetailIdList = resultList.stream().filter(obj -> CharSequenceUtil.isNotEmpty(obj.getSourceDetailId())).map(ReportOrderDataEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<List<String>> sourceDetailIdListPartition = Lists.partition(sourceDetailIdList, 50000);
 
         //发货通知单

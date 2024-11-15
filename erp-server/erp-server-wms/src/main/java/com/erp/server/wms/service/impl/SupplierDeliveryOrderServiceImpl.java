@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -87,12 +88,12 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
 
                 if(detailEntity.getReceiveQty() > detailEntity.getDeliveryQty() || detailEntity.getGiftReceiveQty() > detailEntity.getGiftQty()){
                     resultDTO.setSuccess(false);
-                    resultDTO.setMsg(StrUtil.format("sku:【{}】，收货数量不可超过发货数量",detailEntity.getSkuNo()));
+                    resultDTO.setMsg(CharSequenceUtil.format("sku:【{}】，收货数量不可超过发货数量",detailEntity.getSkuNo()));
                     return;
                 }
-                if(StringUtils.isNotBlank(detailEntity.getReceiptStatus())){
+                if(CharSequenceUtil.isNotBlank(detailEntity.getReceiptStatus())){
                     resultDTO.setSuccess(false);
-                    resultDTO.setMsg(StrUtil.format("sku:{}，收货状态不为空，不可下推收货单",detailEntity.getSkuNo()));
+                    resultDTO.setMsg(CharSequenceUtil.format("sku:{}，收货状态不为空，不可下推收货单",detailEntity.getSkuNo()));
                     return;
                 }
                 detailEntity.setReceiptStatus(DeliveryOrderEnum.ReceiptStatusEnum.WAIT_CONFIRMED.getCode());
@@ -106,7 +107,7 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
             addDTO.setGenerateByDelivery(true);
             addDTO.setReceiveUserId(loginUser.getUid());
-            if(StringUtils.isNotBlank(firstDTO.getReceiveDeptId())){
+            if(CharSequenceUtil.isNotBlank(firstDTO.getReceiveDeptId())){
                 addDTO.setReceiveDeptId(firstDTO.getReceiveDeptId());
             }
             if(Objects.nonNull(firstDTO.getBillDate())){

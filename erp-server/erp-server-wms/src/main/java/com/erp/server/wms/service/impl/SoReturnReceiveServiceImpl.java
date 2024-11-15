@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -227,7 +228,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setSalesDeptName(deptName);
         entity.setSellerId(dto.getSellerId());
         String userName = userList.stream().filter(d -> d.getUserId().equals(dto.getSellerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-        if(StringUtils.isNotBlank(dto.getSellerName())){
+        if(CharSequenceUtil.isNotBlank(dto.getSellerName())){
             entity.setSellerName(dto.getSellerName());
         }else{
             entity.setSellerName(userName);
@@ -238,7 +239,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setReturnDate(dto.getReturnDate());
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //如果有退货订单号
-        if (StringUtils.isNotBlank(dto.getSourceId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getSourceId())) {
             if(entity.getType().equals("B2C")){
                 SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,dto.getSourceId());
                 if(Objects.nonNull(soB2cReturnEntity)){
@@ -290,7 +291,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
         SoReturnReceiveEntity entity = this.getById(dto.getId());
         if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
         }
         BeanUtil.copyProperties(dto,entity);
 
@@ -349,17 +350,17 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 detailView.setSalesQty(soDetailEntity.getQty());
 
-                if (StringUtils.isNotBlank(detailEntity.getReturnTypeDict())) {
+                if (CharSequenceUtil.isNotBlank(detailEntity.getReturnTypeDict())) {
                     detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
                 } else {
-                    if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                    if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                         detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
                     }
                 }
-                if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
+                if (CharSequenceUtil.isNotBlank(detailEntity.getReturnReasonDict())) {
                     detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
                 } else {
-                    if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                    if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
                         detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
                     }
                 }
@@ -404,7 +405,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     public Boolean addAndSubmit(SoReturnReceiveDTO.Add dto) {
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         return this.submit(Arrays.asList(id));
@@ -447,7 +448,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     .update();
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -500,13 +501,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
         for (QcInfoDTO.SoReturnReceiveToQcDTO newItem : qcList) {
             //为空所有的加，等级为空用销售方式，销售方式为空用等级
-            if ((StringUtils.isNotBlank(newProductGrade) && StringUtils.isNotBlank(newSaleMethod))) {
+            if ((CharSequenceUtil.isNotBlank(newProductGrade) && CharSequenceUtil.isNotBlank(newSaleMethod))) {
                 QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
                 BeanMapper.copy(newItem, newQc);
                 newQc.setQcType(returnQc);
                 addList.add(newQc);
-            } else if (StringUtils.isBlank(newProductGrade)) {
-                if (StringUtils.isNotBlank(newItem.getSaleMethod())) {
+            } else if (CharSequenceUtil.isBlank(newProductGrade)) {
+                if (CharSequenceUtil.isNotBlank(newItem.getSaleMethod())) {
                     String[] split = newItem.getSaleMethod().split(",");
                     for (String s : split) {
                         if (newSaleMethod.contains(s)) {
@@ -519,8 +520,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     }
                 }
 
-            } else if (StringUtils.isBlank(newSaleMethod)) {
-                if (StringUtils.isNotBlank(newItem.getProductGrade())) {
+            } else if (CharSequenceUtil.isBlank(newSaleMethod)) {
+                if (CharSequenceUtil.isNotBlank(newItem.getProductGrade())) {
                     String[] split = newItem.getProductGrade().split(",");
                     for (String s : split) {
                         if (newProductGrade.contains(s)) {
@@ -697,7 +698,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             }
             dto.setDetailList(detailList);
             String noticeId = this.add(dto);
-            if (StringUtils.isBlank(noticeId)) {
+            if (CharSequenceUtil.isBlank(noticeId)) {
                 flag = Boolean.FALSE;
             }
         }
@@ -761,10 +762,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         for (SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView view : list) {
-            if (StringUtils.isNotBlank(view.getReturnTypeDict())) {
+            if (CharSequenceUtil.isNotBlank(view.getReturnTypeDict())) {
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(view.getReturnTypeDict()));
             }
-            if (StringUtils.isNotBlank(view.getReturnReasonDict())) {
+            if (CharSequenceUtil.isNotBlank(view.getReturnReasonDict())) {
                 view.setReturnReasonDictName(ReturnReasonEnum.getName(view.getReturnReasonDict()));
             }
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());

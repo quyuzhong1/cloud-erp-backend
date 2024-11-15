@@ -90,7 +90,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    @Autowired
+    @Resource
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 
     @Resource
@@ -112,7 +112,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     public void add(String billId, QcResultDTO.AddDTO qcInfo) {
         QcResultEntity qcResultEntity = new QcResultEntity();
         String id = qcInfo.getId();
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             id = IdWorker.getIdStr();
         }
 
@@ -454,7 +454,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             noticeMsgInfoDTO.setTitle(NoticeMsgConstant.QC_BACK_FILL_PACK_HEAD);
             String productSize = CharSequenceUtil.format("{}X{}X{}", productPackDTO.getProductLength(), productPackDTO.getProductWidth(), productPackDTO.getProductHeight());
             String boxSize = CharSequenceUtil.format("{}X{}X{}", productPackDTO.getBoxLength(), productPackDTO.getBoxWeight(), productPackDTO.getBoxHeight());
-            String msgContent = StrUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT, productPackDTO.getSkuNo(), productSize,
+            String msgContent = CharSequenceUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT, productPackDTO.getSkuNo(), productSize,
                     boxSize, productPackDTO.getNetWeight(), productPackDTO.getBoxQty(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             noticeMsgInfoDTO.setContent(msgContent);
             noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
@@ -543,7 +543,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                     userIdList.addAll(people.getProductChargeIdList());
                 }
             }
-            userIdList = userIdList.stream().filter(u -> StringUtils.isNotBlank(u)).collect(Collectors.toList());
+            userIdList = userIdList.stream().filter(u -> CharSequenceUtil.isNotBlank(u)).collect(Collectors.toList());
             NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
             noticeMsgInfoDTO.setReceiverUserIds(userIdList);
             noticeMsgInfoDTO.setTitle(msgHead);

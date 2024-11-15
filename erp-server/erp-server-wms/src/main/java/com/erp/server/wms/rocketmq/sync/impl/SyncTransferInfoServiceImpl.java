@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -216,7 +217,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             TransferInfoDetailEntity detailEntity = new TransferInfoDetailEntity();
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(dmpDetailEntity.getSkuNo())).
                     findFirst().map(SkuVO::getSkuId).orElse("");
-            if (StringUtils.isBlank(skuId)) {
+            if (CharSequenceUtil.isBlank(skuId)) {
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpDetailEntity.getSkuNo());
             }
             //明细id赋值
@@ -231,13 +232,13 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
 
             //调入仓库
             String inWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(dmpDetailEntity.getInWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-            if (StringUtils.isBlank(inWarehouseId)) {
+            if (CharSequenceUtil.isBlank(inWarehouseId)) {
                 throw new ServiceException(ApiError.ERROR_99076,dmpDetailEntity.getInWarehouseCode());
             }
             detailEntity.setInWarehouseId(inWarehouseId);
             //调出仓库
             String outWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(dmpDetailEntity.getOutWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-            if (StringUtils.isBlank(outWarehouseId)) {
+            if (CharSequenceUtil.isBlank(outWarehouseId)) {
                 throw new ServiceException(ApiError.ERROR_99076,dmpDetailEntity.getOutWarehouseCode());
             }
             detailEntity.setOutWarehouseId(outWarehouseId);

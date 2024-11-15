@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -89,7 +90,7 @@ public class SoReturnNoticeController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoReturnNoticeDTO.Add dto) {
         String id = soReturnNoticeService.add(dto);
-        return StringUtils.isNotBlank(id) == true ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) == true ? success() : failure();
     }
 
     /**

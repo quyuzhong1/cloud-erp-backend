@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -84,22 +85,22 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Service
 public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlowMapper, TransactionFlowEntity> implements TransactionFlowService {
 
-    @Autowired
+    @Resource
     private TransactionFlowMapper transactionFlowMapper;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
-    @Autowired
+    @Resource
     private TransferOutService transferOutService;
 
-    @Autowired
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
     @Resource
@@ -540,7 +541,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         Map<String, InventoryReportDTO.ListDailyInventoryDTO> warehouseIdSkuStartMaps = new HashMap<>();
         Map<String, InventoryReportDTO.ListDailyInventoryDTO> warehouseIdSkuEndMaps = new HashMap<>();
         
-        List<String> warehouseIdList = dataList.stream().filter(i -> StringUtils.isNotBlank(i.getWarehouseId()))
+        List<String> warehouseIdList = dataList.stream().filter(i -> CharSequenceUtil.isNotBlank(i.getWarehouseId()))
         		.map(InventoryDTO.InOutStockSummaryPagingViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
 		if(CollUtil.isNotEmpty(warehouseIdList) && CollUtil.isNotEmpty(skuIds)) {
 			// 查询期初库存
@@ -571,13 +572,13 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             }
             // 仓库名称赋值
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(), (v) -> warehouseService.detailWithCache(v));
-            if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+            if (Objects.nonNull(warehouseDetail) && CharSequenceUtil.isNotEmpty(warehouseDetail.getId())) {
                 data.setWarehouseName(warehouseDetail.getName());
             }
             
             Integer initQty = MathUtil.ZERO;
             Integer balanceQty = MathUtil.ZERO;
-            if(StringUtils.isNotBlank(data.getWarehouseId()) && StringUtils.isNotBlank(data.getSkuId())) {
+            if(CharSequenceUtil.isNotBlank(data.getWarehouseId()) && CharSequenceUtil.isNotBlank(data.getSkuId())) {
             	String qtyKey = data.getWarehouseId() + "_" + data.getSkuId();
                 ListDailyInventoryDTO listDailyInventoryDTO = warehouseIdSkuStartMaps.get(qtyKey);
     			if (listDailyInventoryDTO != null) {
@@ -606,7 +607,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         list.stream().forEach(data -> {
             // 仓库名称赋值
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(), (v) -> warehouseService.detailWithCache(v));
-            if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+            if (Objects.nonNull(warehouseDetail) && CharSequenceUtil.isNotEmpty(warehouseDetail.getId())) {
                 data.setWarehouseName(warehouseDetail.getName());
             }
             // 仓库组织
@@ -786,7 +787,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             rowContent.setHeightInPoints((short) 60);
             cell = rowContent.createCell(0);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("{}\n{}", data.getSkuNo(), data.getProductName()));
+            cell.setCellValue(CharSequenceUtil.format("{}\n{}", data.getSkuNo(), data.getProductName()));
             cell = rowContent.createCell(1);
             cell.setCellStyle(contentCellStyle);
             cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getSpuNo()));
@@ -804,7 +805,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalInstockQty()));
             cell = rowContent.createCell(6);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("采购入库：{}盘盈入库：{}\n其他入库：{}退货入库：{}\n调拨入库：{}加工入库：{}\n退料入库：{}",
+            cell.setCellValue(CharSequenceUtil.format("采购入库：{}盘盈入库：{}\n其他入库：{}退货入库：{}\n调拨入库：{}加工入库：{}\n退料入库：{}",
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getPurchaseInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getInventoryProfitInstockQty()), 10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getSaleReturnQty()), 10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineInstockQty()), 10, " " ),
@@ -814,14 +815,14 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalOutstockQty()));
             cell = rowContent.createCell(8);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("采购退货：{}调拨出库：{}\n销售出库：{}盘亏出库：{}\n其他出库：{}加工出库：{}\n领料出库：{}",
+            cell.setCellValue(CharSequenceUtil.format("采购退货：{}调拨出库：{}\n销售出库：{}盘亏出库：{}\n其他出库：{}加工出库：{}\n领料出库：{}",
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getPurchaseReturnQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferOutstockQty()), 10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getSaleOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getInventoryLossOutstockQty()), 10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineOutstockQty()),10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getReceiveMaterielQty()),10, " ")));
         }
 
-        String fileName = StrUtil.format("出入库列表数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        String fileName = CharSequenceUtil.format("出入库列表数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
         try {
             response.setCharacterEncoding("utf-8");
             response.setContentType("application/octet-stream");

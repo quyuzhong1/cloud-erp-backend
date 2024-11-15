@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -98,7 +99,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     @Transactional(rollbackFor = Exception.class)
     public List<FbaShipmentReceiveEntity> checkAndSetReceiveSkuMapping(List<FbaShipmentDetailEntity> oldDetailEntityList, List<FbaShipmentReceiveEntity> sourceReceiveEntityList) {
 //        Map<Boolean, List<FbaShipmentReceiveEntity>> gourpMap = sourceReceiveEntityList.stream()
-//                .collect(Collectors.groupingBy(e -> StringUtils.isBlank(e.getSkuId()) || StringUtils.isBlank(e.getSkuNo())));
+//                .collect(Collectors.groupingBy(e -> CharSequenceUtil.isBlank(e.getSkuId()) || CharSequenceUtil.isBlank(e.getSkuNo())));
 //        // 签收记录丢失映射关系的
 //        List<FbaShipmentReceiveEntity> missingSkuMappingReceiveList = gourpMap.get(true);
 //        if (CollectionUtils.isEmpty(missingSkuMappingReceiveList)){
@@ -108,9 +109,9 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         List<FbaShipmentReceiveEntity> missingSkuMappingReceiveList = sourceReceiveEntityList;
 
         // 检查详情是否都有映射
-        FbaShipmentDetailEntity missingSkuMappingEntity = oldDetailEntityList.stream().filter(e -> StringUtils.isBlank(e.getSkuId()) || StringUtils.isBlank(e.getSkuNo())).findFirst().orElse(null);
+        FbaShipmentDetailEntity missingSkuMappingEntity = oldDetailEntityList.stream().filter(e -> CharSequenceUtil.isBlank(e.getSkuId()) || CharSequenceUtil.isBlank(e.getSkuNo())).findFirst().orElse(null);
         if (null != missingSkuMappingEntity){
-            String msg = StrUtil.format("【FBA货件更新】未找到平台sku【{}】映射数据", missingSkuMappingEntity.getMsku());
+            String msg = CharSequenceUtil.format("【FBA货件更新】未找到平台sku【{}】映射数据", missingSkuMappingEntity.getMsku());
             throw new ServiceException(msg);
         }
         Map<String, FbaShipmentDetailEntity> detailEntityMap = oldDetailEntityList.stream().collect(Collectors.toMap(FbaShipmentDetailEntity::getMsku, Function.identity()));
@@ -148,10 +149,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         LocalDate billDate = saveList.get(0).getReceiveDate().toLocalDate();
 
         for (FbaShipmentReceiveEntity entity : saveList) {
-            if (StringUtils.isBlank(entity.getUniqueMd5()) ||
-                    StringUtils.isBlank(entity.getFbaShipmentId()) ||
-                    StringUtils.isBlank(entity.getMsku()) ||
-                    StringUtils.isBlank(entity.getFnSku()) ||
+            if (CharSequenceUtil.isBlank(entity.getUniqueMd5()) ||
+                    CharSequenceUtil.isBlank(entity.getFbaShipmentId()) ||
+                    CharSequenceUtil.isBlank(entity.getMsku()) ||
+                    CharSequenceUtil.isBlank(entity.getFnSku()) ||
                     null == entity.getReceiveQty() ||
                     null == entity.getReceiveDate()
             ){
@@ -180,7 +181,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 //        // 过滤得到不存在的记录
 //        List<FbaShipmentReceiveEntity> saveList = entityList.stream().filter(e -> !oldList.contains(e.getUniqueMd5())).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(saveList)){
-            throw new ServiceException(StrUtil.format("FBA签收记录消费异常:不存在需要保存的记录, list={}", JSONUtil.toJsonStr(saveList)));
+            throw new ServiceException(CharSequenceUtil.format("FBA签收记录消费异常:不存在需要保存的记录, list={}", JSONUtil.toJsonStr(saveList)));
         }
 
         // 历史货件的签收记录只按指定时间保存
@@ -217,10 +218,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
                     entity.setId(old.getId());
                     entity.setCreateTime(old.getCreateTime());
                     entity.setVersion(old.getVersion());
-                    if (StringUtils.isNotBlank(old.getSkuId())){
+                    if (CharSequenceUtil.isNotBlank(old.getSkuId())){
                         entity.setSkuId(old.getSkuId());
                     }
-                    if (StringUtils.isNotBlank(old.getSkuNo())){
+                    if (CharSequenceUtil.isNotBlank(old.getSkuNo())){
                         entity.setSkuNo(old.getSkuNo());
                     }
                 }
@@ -260,7 +261,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLog = new OperateLogDTO.AddModuleOperateLogDTO();
             addModuleOperateLog.setBusinessId(fbaShipmentEntity.getId());
             addModuleOperateLog.setOperation("FBA签收数量变更");
-            String msg = StrUtil.format("FBA货件【{}】,平台SKU【{}】签收变化数量【{}】",
+            String msg = CharSequenceUtil.format("FBA货件【{}】,平台SKU【{}】签收变化数量【{}】",
                     fbaShipmentEntity.getFbaShipmentId(),
                     entity.getMsku(),
                     entity.getReceiveQty()
@@ -287,7 +288,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             entity.setHandleStatus(FbaReceiveHandleStatusEnum.ALREADY.getCode());
             FbaShipmentDetailEntity currentDetailEntity = detailEntityList.stream()
                     .filter(e -> e.getMsku().equalsIgnoreCase(entity.getMsku()) && e.getFnSku().equalsIgnoreCase(entity.getFnSku()))
-                    .findFirst().orElseThrow(() -> new ServiceException(StrUtil.format("[FBA签收记录数据消费异常]：未找到货件对应明细:fba_shipment_id={}, mSku={}, fnSku={}]", fbaShipmentEntity.getFbaShipmentId(), entity.getMsku(), entity.getFnSku())));
+                    .findFirst().orElseThrow(() -> new ServiceException(CharSequenceUtil.format("[FBA签收记录数据消费异常]：未找到货件对应明细:fba_shipment_id={}, mSku={}, fnSku={}]", fbaShipmentEntity.getFbaShipmentId(), entity.getMsku(), entity.getFnSku())));
             entity.setDetailId(currentDetailEntity.getId());
             entity.setSkuNo(currentDetailEntity.getSkuNo());
             entity.setSkuId(currentDetailEntity.getSkuId());
@@ -369,7 +370,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         SendResult result = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_FBA_SHIPMENT_RECEIVE_TAG.getName(),
                 JSONUtil.toJsonStr(groupEntity), groupEntity.getUniqueId(), 1);
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-            throw new RuntimeException(StrUtil.format("发送领星FBA货件签收MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            throw new RuntimeException(CharSequenceUtil.format("发送领星FBA货件签收MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         return null;
     }
@@ -388,7 +389,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     @Override
     public void sendWarnMsg(String tableId, String errorMsg) {
         //查询redis,预警8小时发送一次
-        String existKey = StrUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, tableId);
+        String existKey = CharSequenceUtil.format(RedisKeyConstant.DMP_PUSH_TASK_WARN, tableId);
         boolean isHas = redisUtil.hasKey(existKey);
         if (isHas) {
             return;
@@ -400,7 +401,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(sourceTypeEnum.getName());
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-        String title = StrUtil.format("亚马逊FBA货件【{}】签收变化,发审核处理异常", tableId);
+        String title = CharSequenceUtil.format("亚马逊FBA货件【{}】签收变化,发审核处理异常", tableId);
         warnMsgInfo.setTitle(title);
         warnMsgInfo.setTableName(sourceTypeEnum.getTableName());
         warnMsgInfo.setTableId(tableId);

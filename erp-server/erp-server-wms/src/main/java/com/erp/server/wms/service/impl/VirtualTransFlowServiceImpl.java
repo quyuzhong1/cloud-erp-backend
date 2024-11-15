@@ -168,7 +168,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
      * @param list
      */
     private void fillPageData (List<VirtualTransFlowDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //产品信息
@@ -216,7 +216,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
      * @param list
      */
     private void fillPageDetailData (List<VirtualTransFlowDTO.InventoryDetailDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //实体仓库

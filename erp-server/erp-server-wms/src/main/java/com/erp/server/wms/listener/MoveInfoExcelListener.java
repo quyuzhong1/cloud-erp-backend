@@ -2,6 +2,7 @@
 package com.erp.server.wms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -90,13 +91,13 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
             return;
         }
         WarehouseLocationMoveDTO.PcAddDTO pcAddDTO = new WarehouseLocationMoveDTO.PcAddDTO();
-        if (StringUtils.isBlank(moveInfoExcelDTO.getSkuNo())) {
+        if (CharSequenceUtil.isBlank(moveInfoExcelDTO.getSkuNo())) {
             errorMsgList.add("SKU不能为空");
         }
         WarehouseLocationMoveDTO.DetailViewDTO pcViewDTO = new WarehouseLocationMoveDTO.DetailViewDTO();
 
         //查看sku是否存在
-        if (StringUtils.isNotBlank(moveInfoExcelDTO.getSkuNo())) {
+        if (CharSequenceUtil.isNotBlank(moveInfoExcelDTO.getSkuNo())) {
             //根据sku编号查询sku
             Map<String, String> skuParams = new HashMap<>();
             skuParams.put("skuNo", moveInfoExcelDTO.getSkuNo());
@@ -113,7 +114,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
         if (!StrUtils.isDigit(String.valueOf(moveInfoExcelDTO.getQty())) || ObjectUtil.isEmpty(moveInfoExcelDTO.getQty())) {
             errorMsgList.add("移动数量只能是数字");
         }
-        if (StringUtils.isBlank(moveInfoExcelDTO.getWarehouseName())) {
+        if (CharSequenceUtil.isBlank(moveInfoExcelDTO.getWarehouseName())) {
             errorMsgList.add("仓库名称不能为空");
         }
 
@@ -141,12 +142,12 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
             if (Objects.isNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()))) {
                 errorMsgList.add("上架仓位不存在");
             }
-            pcViewDTO.setOutWarehouseLocation(StringUtils.isBlank(moveInfoExcelDTO.getOutWarehouseLocationName()) ? ""
+            pcViewDTO.setOutWarehouseLocation(CharSequenceUtil.isBlank(moveInfoExcelDTO.getOutWarehouseLocationName()) ? ""
                     : (Objects.nonNull(locationMap) && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()))
                     && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0))
                     && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0).getId())
                     ? locationMap.get(moveInfoExcelDTO.getOutWarehouseLocationName()).get(0).getCode() : ""));
-            pcViewDTO.setInWarehouseLocation(StringUtils.isBlank(moveInfoExcelDTO.getInWarehouseLocationName()) ? ""
+            pcViewDTO.setInWarehouseLocation(CharSequenceUtil.isBlank(moveInfoExcelDTO.getInWarehouseLocationName()) ? ""
                     : (Objects.nonNull(locationMap) && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()))
                     && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0))
                     && Objects.nonNull(locationMap.get(moveInfoExcelDTO.getInWarehouseLocationName()).get(0).getId())
@@ -163,7 +164,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
         pcViewDTO.setWarehouseId((CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getId());
         pcViewDTO.setWarehouseName((CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getName());
         //设置库存
-        if (StringUtils.isNotBlank(moveInfoExcelDTO.getSkuNo()) && StringUtils.isNotBlank(pcViewDTO.getSkuId())
+        if (CharSequenceUtil.isNotBlank(moveInfoExcelDTO.getSkuNo()) && CharSequenceUtil.isNotBlank(pcViewDTO.getSkuId())
                 && !(CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0)))) {
             InventoryDTO.InventoryBySkuIdAndWarehouseDTO inventoryBySkuIdAndWarehouseDTO = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
             inventoryBySkuIdAndWarehouseDTO.setWarehouseId(warehouseList.get(0).getId());

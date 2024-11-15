@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -178,7 +179,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
 
         //如果上游单据未发送成功则无需发送
-        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
             purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
             /*DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
@@ -220,7 +221,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //采购员
         String purchaseUserId = entity.getPurchaseUserId();
-        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getPurchaseUserId())) {
             //获取用户部门id
             SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
             //采购部门
@@ -353,7 +354,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
                 jsonObject.set("subKingdeeDetailId", subKingdeeDetailId);
             }
 
-            if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
+            if (CharSequenceUtil.isNotBlank(entity.getPurchaseOrderCode())) {
                 List<Map<String,Object>> mapList = new ArrayList<>();
                 Map<String,Object> entityMap = new HashMap<>();
                 entityMap.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());

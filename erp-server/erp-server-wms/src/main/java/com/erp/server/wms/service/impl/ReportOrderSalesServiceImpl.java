@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -32,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,19 +53,19 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
 @Slf4j
 @Service
 public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSalesMapper, ReportOrderSalesEntity> implements ReportOrderSalesService {
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
 
-    @Autowired
+    @Resource
     private CfgSettingVirtualService cfgSettingVirtualService;
 
     @Transactional(rollbackFor = Exception.class)
@@ -165,7 +167,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
      * @param list
      */
     private void handlePage (List<ReportOrderSalesDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //sku
@@ -325,7 +327,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
     * 新增修改处理数据
     */
     private void handleData(List<ReportOrderSalesEntity> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //SKU

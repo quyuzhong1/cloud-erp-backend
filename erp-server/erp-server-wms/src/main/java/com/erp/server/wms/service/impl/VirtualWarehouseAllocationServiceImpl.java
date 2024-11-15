@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -147,7 +148,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单", virtualWarehouseAllocationEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单", virtualWarehouseAllocationEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), virtualWarehouseAllocationEntity.getId(), "新增操作");
         // 新增明细
         virtualWarehouseAllocationDetailService.batchAdd(addDTO, virtualWarehouseAllocationEntity.getId());
@@ -174,7 +175,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         }
         // 记录主单操作日志
         log.info("编辑 开始记录分货单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "分货单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), old.getId(), "编辑操作");
 
         // 新增明细
@@ -320,7 +321,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
         // 记录操作日志
         log.info("提交 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
-        String msg = StrUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
+        String msg = CharSequenceUtil.format("用户【{}】提交了单号【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), allocationEntity.getCode(), "分货单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "提交操作");
         //进行合单并创建中台任务数据进行同步
 //        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -354,7 +355,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
      */
     @Override
     public VirtualWarehouseAllocationDTO.DetailViewDto importFile(String type, MultipartFile excelFile, HttpServletResponse response) {
-        if (StringUtils.isBlank(type) || Objects.isNull(VirtualWarehouseAllocationTypeEnum.getEnum(type))) {
+        if (CharSequenceUtil.isBlank(type) || Objects.isNull(VirtualWarehouseAllocationTypeEnum.getEnum(type))) {
             throw new ServiceException(ApiError.ERROR_99999);
         }
         VirtualWarehouseAllocationDTO.DetailViewDto importDTO = new VirtualWarehouseAllocationDTO.DetailViewDto();
@@ -529,7 +530,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO saveAndSubmit(VirtualWarehouseAllocationDTO.UpdateDTO dto) {
         String id = dto.getId();
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             VirtualWarehouseAllocationDTO.AddDTO addDTO = new VirtualWarehouseAllocationDTO.AddDTO();
             BeanUtils.copyProperties(dto, addDTO);
             BaseResultDTO.AddDTO add = service.add(addDTO);
@@ -587,7 +588,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         allocationEntity.setInvalidDescription(invalidDescription);
         this.updateById(allocationEntity);
         log.info("作废 开始记录分货单主单日志数据，id：【{}】", allocationEntity.getId());
-        String msg = StrUtil.format("用户【{}】作废了【{}】单据【{}】，作废说明（{}）", UserContext.getDefaultLoginUser().getUserName(), "分货单", allocationEntity.getCode(), invalidDescription);
+        String msg = CharSequenceUtil.format("用户【{}】作废了【{}】单据【{}】，作废说明（{}）", UserContext.getDefaultLoginUser().getUserName(), "分货单", allocationEntity.getCode(), invalidDescription);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), allocationEntity.getId(), "作废操作");
 
         return BatchResultDTO.success(allocationEntity.getId(), allocationEntity.getCode(), OperationTypeEnum.INVALID);
@@ -727,13 +728,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 if (v > 1) {
                     switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
                         case ALLOCATION:
-                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR.msg, split[0], split[1], split[3]));
+                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR.msg, split[0], split[1], split[3]));
                             break;
                         case TRANSFER:
-                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2], split[3]));
+                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_TRANSFER_UNIQUE_ERROR.msg, split[0], split[1], split[2], split[3]));
                             break;
                         case CANCEL:
-                            msg.append(StrUtil.format(ApiError.ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
+                            msg.append(CharSequenceUtil.format(ApiError.ERROR_ALLOCATION_CANCEL_UNIQUE_ERROR.msg, split[0], split[1], split[2]));
                             break;
                         default:
                             throw new ServiceException(ApiError.ERROR_ALLOCATION_UNIQUE_ERROR);
@@ -741,7 +742,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 }
             }
         });
-        if (StringUtils.isNotBlank(msg.toString())) {
+        if (CharSequenceUtil.isNotBlank(msg.toString())) {
             throw new ServiceException(msg.toString());
         }
 
@@ -773,15 +774,15 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
 
         detailDto.setWarehouseName(updateDTO.getName());
-        if (StringUtils.isBlank(detailDto.getToVirtualWarehouseId()) && StringUtils.isBlank(detailDto.getFromVirtualWarehouseId())) {
+        if (CharSequenceUtil.isBlank(detailDto.getToVirtualWarehouseId()) && CharSequenceUtil.isBlank(detailDto.getFromVirtualWarehouseId())) {
             throw new ServiceException(ApiError.ERROR_FROM_TO_VM_BOTHEMPTY);
         }
 
-        if (StringUtils.isNotBlank(detailDto.getToVirtualWarehouseId()) && StringUtils.isNotBlank(detailDto.getFromVirtualWarehouseId()) &&
+        if (CharSequenceUtil.isNotBlank(detailDto.getToVirtualWarehouseId()) && CharSequenceUtil.isNotBlank(detailDto.getFromVirtualWarehouseId()) &&
                 Objects.equals(detailDto.getToVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())) {
             throw new ServiceException(ApiError.ERROR_FROM_TO_VM_SAME);
         }
-        if (StringUtils.isNotBlank(detailDto.getToVirtualWarehouseId())) {
+        if (CharSequenceUtil.isNotBlank(detailDto.getToVirtualWarehouseId())) {
             VirtualWarehouseEntity toVmWarehouse = virtualWarehouseList.stream().filter(item -> Objects.equals(item.getId(), detailDto.getToVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.isNull(toVmWarehouse)) {
                 throw new ServiceException(ApiError.ERROR_TOVM_NOTFOUND, detailDto.getToVirtualWarehouseId());
@@ -791,7 +792,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 }
             }
 
-            if (StringUtils.isNotBlank(detailDto.getToVirtualWarehouseId())) {
+            if (CharSequenceUtil.isNotBlank(detailDto.getToVirtualWarehouseId())) {
                 VirtualWarehouseRelationEntity toVmRelation = vwRelationList.stream().filter(item ->
                         Objects.equals(item.getVirtualWarehouseId(), detailDto.getToVirtualWarehouseId()) && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId())).findFirst().orElse(null);
                 if (Objects.isNull(toVmRelation)) {
@@ -800,7 +801,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 detailDto.setToVirtualWarehouseName(toVmWarehouse.getName());
                 detailDto.setToVirtualWarehouseCode(toVmWarehouse.getCode());
             }
-            if (StringUtils.isNotBlank(detailDto.getFromVirtualWarehouseId())) {
+            if (CharSequenceUtil.isNotBlank(detailDto.getFromVirtualWarehouseId())) {
                 VirtualWarehouseRelationEntity fromVmRelation = vwRelationList.stream().filter(item ->
                         Objects.equals(item.getVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId()) && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId())).findFirst().orElse(null);
                 if (Objects.isNull(fromVmRelation)) {
@@ -811,7 +812,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             }
 
         }
-        if (StringUtils.isNotBlank(detailDto.getFromVirtualWarehouseId())) {
+        if (CharSequenceUtil.isNotBlank(detailDto.getFromVirtualWarehouseId())) {
             VirtualWarehouseEntity fromVmWarehouse = virtualWarehouseList.stream().filter(item -> Objects.equals(item.getId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);
             if (Objects.isNull(fromVmWarehouse)) {
                 throw new ServiceException(ApiError.ERROR_FROMVM_NOTFOUND, detailDto.getFromVirtualWarehouseId());

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -117,7 +118,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
             //填充仓库ID
             String warehouseId = warehouseMap.get(importExcelDto.getWarehouseName());
-            if(StringUtils.isBlank(warehouseId)){
+            if(CharSequenceUtil.isBlank(warehouseId)){
                 importExcelDto.setErrorInfo(importExcelDto.getErrorInfo() + ", 仓库不存在");
                 errorList.add(importExcelDto);
                 continue;

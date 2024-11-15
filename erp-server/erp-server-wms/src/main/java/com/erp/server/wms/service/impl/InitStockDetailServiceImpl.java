@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -38,10 +40,10 @@ import java.util.stream.Collectors;
 @Service
 public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetailMapper, InitStockDetailEntity> implements InitStockDetailService {
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Override
@@ -121,7 +123,7 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
 
     public void handleDetails(List<InitStockDetailEntity> list, String mainId, Boolean isUpdate) {
         //添加操作日志
-        List<InitStockDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<InitStockDetailEntity> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
         List<String> skuIds = list.stream().map(InitStockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuInfos = plmTaskFeign.listSkuProductByIds(skuIds);
         // 此处修复，返回的记录按sku id不是唯一的了
@@ -129,13 +131,13 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
         for(int i = 0, length = list.size();i < length;i++) {
             InitStockDetailEntity data = list.get(i);
             if(!skuMap.containsKey(data.getSkuId()) || CollUtil.isEmpty(skuMap.get(data.getSkuId()))) {
-                throw new ServiceException(StrUtil.format("SKU【{}】错误", data.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("SKU【{}】错误", data.getSkuNo()));
             }
             SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
             // 验证产品是否审核通过
             Integer skuStatus = skuVO.getStatus();
             if(!Objects.equals(skuStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode())) {
-                throw new ServiceException(StrUtil.format("SKU【{}】未审核通过", data.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("SKU【{}】未审核通过", data.getSkuNo()));
             }
             data.setMainId(mainId);
             data.setSkuNo(skuVO.getSkuNo());// 填充真实的sku no

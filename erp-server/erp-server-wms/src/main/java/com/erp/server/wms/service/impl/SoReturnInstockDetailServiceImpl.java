@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SubcontractTypeEnum;
@@ -70,7 +71,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnInstockDTO.Add dto, String id) {
-        if (StringUtils.isNotBlank(dto.getSoReturnId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getSoReturnId())) {
             //获取退货单详情表id
             List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSoReturnDetailId).collect(Collectors.toList());
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSkuId).collect(Collectors.toList());
@@ -104,8 +105,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
                 //封装仓库，如果没有明细仓库，取主记录的仓库
-                if(StringUtils.isBlank(detailDto.getWarehouseId())){
-                    if(StringUtils.isNotBlank(dto.getWarehouseId())){
+                if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
+                    if(CharSequenceUtil.isNotBlank(dto.getWarehouseId())){
                         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(v->v.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                         detailEntity.setWarehouseId(dto.getWarehouseId());
                         detailEntity.setWarehouseName(updateDTO.getName());
@@ -136,10 +137,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     String returnTypeDict = soReturnDetailEntity.getReturnTypeDict();
                     //原因
                     String returnReasonDict = soReturnDetailEntity.getReturnReasonDict();
-                    if (StringUtils.isBlank(returnTypeDict)) {
+                    if (CharSequenceUtil.isBlank(returnTypeDict)) {
                         returnTypeDict = detailDto.getReturnTypeDict();
                     }
-                    if (StringUtils.isBlank(returnReasonDict)) {
+                    if (CharSequenceUtil.isBlank(returnReasonDict)) {
                         returnReasonDict = detailDto.getReturnReasonDict();
                     }
                     detailEntity.setReturnTypeDict(returnTypeDict);
@@ -223,8 +224,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnInstockDTO.Update dto) {
-        List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
-        if (StringUtils.isNotBlank(dto.getSoReturnId())) {
+        List<String> addList = dto.getDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
+        if (CharSequenceUtil.isNotBlank(dto.getSoReturnId())) {
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
             //获取退货单详情表id
@@ -264,7 +265,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 //签收单数量
                 Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (StringUtils.isNotBlank(detailDto.getId())) {
+                if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                     detailEntity.setId(detailDto.getId());
                     realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
@@ -282,8 +283,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
 
                 //封装仓库，如果没有明细仓库，取主记录的仓库
-                if(StringUtils.isBlank(detailDto.getWarehouseId())){
-                    if(StringUtils.isNotBlank(dto.getWarehouseId())){
+                if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
+                    if(CharSequenceUtil.isNotBlank(dto.getWarehouseId())){
                         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(v->v.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                         detailEntity.setWarehouseId(dto.getWarehouseId());
                         detailEntity.setWarehouseName(updateDTO.getName());
@@ -296,7 +297,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
                 list.add(detailEntity);
                 //修改操作日志
-                if (StringUtils.isNotBlank(detailEntity.getId())) {
+                if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                     SoReturnInstockDetailEntity old = this.getById(detailEntity.getId());
                     operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
                 }
@@ -326,7 +327,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         //获取退货签收单详情表id
         List<String> sourceDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
 
-        List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
+        List<String> addList = dto.getDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
 
@@ -359,7 +360,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             //签收单数量
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (StringUtils.isNotBlank(detailDto.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 detailEntity.setId(detailDto.getId());
                 realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             }
@@ -376,8 +377,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             //封装仓库，如果没有明细仓库，取主记录的仓库
-            if(StringUtils.isBlank(detailDto.getWarehouseId())){
-                if(StringUtils.isNotBlank(dto.getWarehouseId())){
+            if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
+                if(CharSequenceUtil.isNotBlank(dto.getWarehouseId())){
                     WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(v->v.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                     detailEntity.setWarehouseId(dto.getWarehouseId());
                     detailEntity.setWarehouseName(updateDTO.getName());
@@ -389,7 +390,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             }
             list.add(detailEntity);
             //修改操作日志
-            if (StringUtils.isNotBlank(detailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 SoReturnInstockDetailEntity old = this.getById(detailEntity.getId());
                 operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
             }
@@ -407,7 +408,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     }
 
     private List<String> getDeleteIds(List<SoReturnInstockDetailDTO.Update> newList, List<SoReturnInstockDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(SoReturnInstockDetailEntity
                 ::getId).collect(Collectors.toList());

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -34,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,25 +57,25 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
 @Slf4j
 @Service
 public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDemandMapper, ReportOrderDemandEntity> implements ReportOrderDemandService {
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
 
-    @Autowired
+    @Resource
     private VirtualInventoryService virtualInventoryService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseAllocationService virtualWarehouseAllocationService;
 
-    @Autowired
+    @Resource
     private ReportOrderSalesService reportOrderSalesService;
 
 
@@ -138,7 +140,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
         //虚拟仓调拨
         List<VirtualWarehouseRelationEntity> list = virtualWarehouseRelationService.getByWarehouseId(Arrays.asList(resultDTO.getWarehouseId()));
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return resultDTO;
         }
         //虚拟仓
@@ -186,7 +188,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     public Boolean addAllocation(ReportOrderDemandDTO.AddVirtualAllocationDTO dto) {
         ReportOrderDemandDTO.AddAllocationDTO addAllocationDTO = dto.getAddAllocationDTO();
 
-        if (ObjectUtil.isEmpty(addAllocationDTO) && CollectionUtil.isEmpty(dto.getVirtualTransferList())) {
+        if (ObjectUtil.isEmpty(addAllocationDTO) && CollUtil.isEmpty(dto.getVirtualTransferList())) {
             throw new ServiceException("新增分货和虚拟仓调拨未填写数据不支持分货");
         }
         //新增分货
@@ -205,7 +207,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
     @Override
     public List<ReportOrderDemandDTO.BatchViewVirtualAllocationDTO> batchViewAllocation(ValidList<ReportOrderDemandDTO.ViewVirtualAllocationParamDTO> list) {
-        if (CollectionUtil.isEmpty(list) || CollectionUtil.isEmpty(list.getList())) {
+        if (CollUtil.isEmpty(list) || CollUtil.isEmpty(list.getList())) {
             throw new ServiceException("选择数据不能为空");
         }
         List<ReportOrderDemandDTO.ViewVirtualAllocationParamDTO> paramList = list.getList();
@@ -231,7 +233,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         List<VirtualWarehouseRelationEntity> relationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
         List<String> newVirtualWarehouseIdList = relationList.stream().map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
 
-        if (CollectionUtil.isEmpty(newVirtualWarehouseIdList)) {
+        if (CollUtil.isEmpty(newVirtualWarehouseIdList)) {
             return Collections.EMPTY_LIST;
         }
         //虚拟仓
@@ -277,7 +279,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     private void batchViewVirtualTransfer (ReportOrderDemandDTO.ViewDTO oldDTO,List<VirtualWarehouseRelationEntity> relationList,
                                              List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,List<ReportOrderDemandDTO.BatchViewVirtualAllocationDTO> resultList,
                                            List<VirtualWarehouseEntity> virtualWarehouseList) {
-        if (CollectionUtil.isEmpty(relationList)) {
+        if (CollUtil.isEmpty(relationList)) {
             return;
         }
         for (VirtualWarehouseRelationEntity relationEntity : relationList) {
@@ -350,7 +352,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAddAllocation(ValidList<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> list) {
-        if (CollectionUtil.isEmpty(list) || CollectionUtil.isEmpty(list.getList())) {
+        if (CollUtil.isEmpty(list) || CollUtil.isEmpty(list.getList())) {
             throw new ServiceException("选择数据不能为空");
         }
         List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> addVirtualAllocationList = list.getList();
@@ -475,7 +477,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         List<ReportOrderDemandDTO.ViewDTO> resultList = new ArrayList<>();
         if (VirtualReportTypeEnum.SALES_DASHBOARD.getCode().equals(type)) {
             List<ReportOrderSalesEntity> list = reportOrderSalesService.listByUnique(skuIdList, warehouseIdList, virtualWarehouseIdList);
-            if (CollectionUtil.isEmpty(list)) {
+            if (CollUtil.isEmpty(list)) {
                 throw new ServiceException("未找到销售看板数据");
             }
             resultList = BeanMapperUtils.copyList(ReportOrderDemandDTO.ViewDTO.class, list);
@@ -484,7 +486,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
                     .in(ReportOrderDemandEntity::getWarehouseId, warehouseIdList)
                     .in(ReportOrderDemandEntity::getVirtualWarehouseId, virtualWarehouseIdList)
                     .list();
-            if (CollectionUtil.isEmpty(list)) {
+            if (CollUtil.isEmpty(list)) {
                 throw new ServiceException("未找到缺货统计数据");
             }
             resultList = BeanMapperUtils.copyList(ReportOrderDemandDTO.ViewDTO.class, list);
@@ -548,7 +550,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
      * @param list
      */
     private void fillPageData (List<ReportOrderDemandDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         for (ReportOrderDemandDTO.ListDTO listDTO : list) {

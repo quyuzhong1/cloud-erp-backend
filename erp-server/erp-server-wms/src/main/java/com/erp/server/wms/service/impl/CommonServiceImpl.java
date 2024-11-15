@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.interceptor.CommonInterceptor;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,7 +52,7 @@ public class CommonServiceImpl  implements CommonService {
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
+        List<String> businessIds = listApiResult.getData().stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
         return  businessIds;
     }
     

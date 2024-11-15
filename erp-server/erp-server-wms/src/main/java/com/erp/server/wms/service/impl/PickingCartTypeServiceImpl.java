@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
@@ -51,7 +52,7 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
         Map<String, List<PickingCartTypeDTO.BatchUpdateDTO>> map = list.stream().collect(Collectors.groupingBy(PickingCartTypeDTO.BatchUpdateDTO::getName));
         for (Map.Entry<String, List<PickingCartTypeDTO.BatchUpdateDTO>> entry : map.entrySet()) {
             if (entry.getValue().size() > 1) {
-                throw new ServiceException(StrUtil.format("拣货车名称【{}】不能重复",entry.getKey()));
+                throw new ServiceException(CharSequenceUtil.format("拣货车名称【{}】不能重复",entry.getKey()));
             }
         }
 
@@ -81,7 +82,7 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
         //拣货车被使用不支持删除
         List<PickingCartEntity> list = pickingCartService.listByTypeId(entity.getId());
         if (CollectionUtils.isNotEmpty(list)) {
-            throw  new ServiceException(StrUtil.format("拣货车类型【{}】已被使用不支持删除",entity.getName()));
+            throw  new ServiceException(CharSequenceUtil.format("拣货车类型【{}】已被使用不支持删除",entity.getName()));
         }
         // 删除主单数据
         log.info("删除 开始删除委外发料单主单数据，id：【{}】", id);

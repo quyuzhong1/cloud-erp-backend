@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -122,7 +123,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
         String id = soOutstockService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -193,7 +194,7 @@ public class SoOutstockController extends BaseController {
     )
     public ApiResult update(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
         String id = soOutstockService.updateSoOutstock(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

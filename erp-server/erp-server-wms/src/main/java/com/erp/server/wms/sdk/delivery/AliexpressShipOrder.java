@@ -2,6 +2,7 @@ package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
@@ -90,9 +91,9 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略
             currentDetailEntityList = currentDetailEntityList.stream()
-                    .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
-//            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
+//            if (detailEntityList.stream().anyMatch(e -> CharSequenceUtil.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
             List<SoB2cDetailEntity> detailEntityList = super.handleSplit(currentDetailEntityList, dto.isFalseDeliveryFlag());
@@ -105,7 +106,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();
             String logisticsNo = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(), standardOrderType)
                     ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
-            if (StrUtil.isBlank(logisticsNo)) {
+            if (CharSequenceUtil.isBlank(logisticsNo)) {
                 throw new ServiceException("【速卖通标记发货】操作失败，渠道标发单号为空");
             }
             // 查询订单详情(获取子声明下标)
@@ -224,7 +225,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         if (matcher.find()) {
             secondContent = matcher.group(1); // 获取第二个方括号内部的内容
         }
-        if (!firstContent.equals(request.getLogisticsNo()) || StrUtil.isBlank(firstContent) || StrUtil.isBlank(secondContent)){
+        if (!firstContent.equals(request.getLogisticsNo()) || CharSequenceUtil.isBlank(firstContent) || CharSequenceUtil.isBlank(secondContent)){
             //整合不符合格式则抛出异常
             log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API更新物流单异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), message);
             throw new ServiceException("速卖通API标记发货失败:" + serviceException.getMessage());
@@ -281,7 +282,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             return "part";
         }
         Map<String, Integer> shipMap = detailEntityList.stream()
-                .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                 .collect(Collectors.toMap(SoB2cDetailEntity::getSourceDetailId, SoB2cDetailEntity::getQty));
 
         // 声明发货类型，all表示全部发货，part表示部分声明发货

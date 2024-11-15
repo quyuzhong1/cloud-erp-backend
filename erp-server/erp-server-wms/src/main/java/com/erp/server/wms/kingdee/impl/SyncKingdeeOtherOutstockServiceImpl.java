@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -157,7 +158,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         resultMap.put("type", entity.getType());
         resultMap.put("outType", entity.getOutType());
         // 主表备注
-        if (StringUtils.isNotBlank(entity.getRemark())){
+        if (CharSequenceUtil.isNotBlank(entity.getRemark())){
             resultMap.put("remark", entity.getRemark());
         }
 
@@ -177,7 +178,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         }
 
         //仓管员编码
-        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
                 resultMap.put("warehouseKeeperCode", findUserDTO.getCode());
@@ -201,7 +202,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         }
 
         //部门
-        if  (StringUtils.isNotBlank(entity.getDeptId())) {
+        if  (CharSequenceUtil.isNotBlank(entity.getDeptId())) {
             DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
             dto.setDeptId(entity.getDeptId());
             dto.setOrgId(entity.getReceiveOrgId());

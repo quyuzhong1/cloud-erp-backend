@@ -1,6 +1,8 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -46,7 +48,7 @@ public class DataRecoveryJob {
     @XxlJob("soOutStockDataRecovery")
     public void SoOutStockDataRecovery() {
         String jobParam = XxlJobHelper.getJobParam();
-        if (StrUtil.isBlank(jobParam)) {
+        if (CharSequenceUtil.isBlank(jobParam)) {
             XxlJobHelper.log("参数错误= {}",jobParam);
             return;
         }
@@ -55,7 +57,7 @@ public class DataRecoveryJob {
         String type = param.get("type", String.class);
         Boolean isManual = param.get("isManual", Boolean.class);
         Boolean isPushKingdee = param.getBool("isPushKingdee", Boolean.FALSE);
-        if(CollectionUtil.isEmpty(ids)){
+        if(CollUtil.isEmpty(ids)){
             if("soReturnInstockService".equals(type)){
                 ids = soOutstockService.getIdsByTemp("so_return_instock");
             }else if("transferInfoService".equals(type)){

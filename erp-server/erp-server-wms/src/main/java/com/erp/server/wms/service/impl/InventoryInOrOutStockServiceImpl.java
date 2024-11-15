@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -40,10 +42,10 @@ import java.util.stream.Collectors;
 @InventoryHandler(InventoryBizTypeEnum.IN_OUT_STOCK)
 public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceImpl {
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private WarehouseLocationService warehouseLocationService;
 
     @Override
@@ -70,12 +72,12 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
                 }
 
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(), v -> warehouseService.detailWithCache(v));
-                if (Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
                     ServiceException.runError(ApiError.ERROR_99002);
                 }
                 if (StrUtils.isNotEmpty(param.getWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(), v -> warehouseLocationService.findByWarehouseIdAndCode(param.getWarehouseId(), v));
-                    if (Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                    if (Objects.isNull(warehouseLocation) || CharSequenceUtil.isEmpty(warehouseLocation.getId())) {
                         ServiceException.runError("仓位信息不存在");
                     }
                 }
@@ -109,7 +111,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
         // 通过对sku id顺序执行, 避免多线程死锁
         Comparator<InventoryStockBaseDTO> comparing = Comparator.comparing(InventoryStockBaseDTO::getSkuId)
                 .thenComparing(InventoryStockBaseDTO::getWarehouseId)
-                .thenComparing(x -> StrUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "");
+                .thenComparing(x -> CharSequenceUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "");
         paramList = paramList.stream().sorted(comparing).collect(Collectors.toList());
         for(InventoryStockBaseDTO baseParam : paramList) {
             InOutStockDTO param = (InOutStockDTO)baseParam;
@@ -128,7 +130,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
     public <T extends InventoryStockBaseDTO> void singleHandler(T baseParam, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
         InOutStockDTO param = (InOutStockDTO)baseParam;
         if(CollUtil.isEmpty(transactionRuleParams)) {
-            ServiceException.runError(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+            ServiceException.runError(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
         }
         log.warn("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
         // 交易规则安装状态排序

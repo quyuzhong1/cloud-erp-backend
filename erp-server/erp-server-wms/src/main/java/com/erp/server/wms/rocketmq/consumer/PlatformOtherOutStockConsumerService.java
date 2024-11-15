@@ -1,6 +1,7 @@
 
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.DictKindgeeConstant;
@@ -101,10 +102,10 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
     private String getTableName(String platform){
         // 亚马逊多渠道订单和B2C订单来源一致
         if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(platform)){
-            return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+            return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                     platform, BusinessTypeEnum.ORDER.getCode());
         } else {
-            return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+            return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                     platform, BusinessTypeEnum.SO_MULTI_CHANNEL.getCode());
         }
     }
@@ -174,7 +175,7 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
         OtherOutstockDTO.AddDTO generateDTO = generateAddDTO(dto, mainEntity, shopInfo, deptDTO);
 
         // 校验sku映射关系
-        if (generateDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
+        if (generateDTO.getDetailList().stream().anyMatch(e-> CharSequenceUtil.isBlank(e.getSkuId()))){
             log.warn("[其他出库单物消费服务]:SKU映射不存在：单号={}", dto.getPlatformCode());
             // 恢复待清洗
             MongoDBUpdateDTO mongoDBUpdateDTO = MongoDBUpdateDTO.builder()

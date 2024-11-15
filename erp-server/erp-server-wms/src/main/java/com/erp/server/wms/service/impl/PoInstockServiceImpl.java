@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -128,19 +129,19 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Resource
     private QcInfoService qcInfoService;
 
-    @Autowired
+    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
-    @Autowired
+    @Resource
     private PoReturnDetailService poReturnDetailService;
 
-    @Autowired
+    @Resource
     private WarehouseLocationService warehouseLocationService;
 
-    @Autowired
+    @Resource
     private CfgSettingService cfgSettingService;
 
-    @Autowired
+    @Resource
     private SubcontractIssueService subcontractIssueService;
 
     @Resource
@@ -270,7 +271,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     public String addAndSubmit(PoInstockDTO.AddDTO dto) {
         //新增
         String id = this.add(dto, Boolean.FALSE);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
@@ -420,7 +421,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             if (Objects.nonNull(poInstockEntity)){
                 //收货单已收数量（已审核）
                 List<WarehouseReceiveDetailEntity> receiveList = receiveDetailList.stream()
-                        .filter(req -> StringUtils.isNotBlank(req.getPurchaseOrderDetailId()) &&  StringUtils.isNotBlank(req.getMainId()) && StringUtils.isNotBlank(req.getId())
+                        .filter(req -> CharSequenceUtil.isNotBlank(req.getPurchaseOrderDetailId()) &&  CharSequenceUtil.isNotBlank(req.getMainId()) && CharSequenceUtil.isNotBlank(req.getId())
                                 && req.getPurchaseOrderDetailId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())
                                 && req.getMainId().equals(poInstockEntity.getSourceId())
                                 && req.getId().equalsIgnoreCase(poInstockDetailEntity.getSourceDetailId())
@@ -428,8 +429,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 if (CollectionUtils.isNotEmpty(receiveList)){
                     Integer receiveQty = receiveList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     //已退货数量 根据收货单获取对应退货明细
-                    Integer returnQty = returnDetailDTOS.stream().filter(e -> StringUtils.isNotBlank(poInstockDetailEntity.getSourceDetailId()) && StringUtils.isNotBlank(poInstockDetailEntity.getPurchaseOrderDetailId())
-                                    && StringUtils.isNotBlank(poInstockDetailEntity.getSkuId())
+                    Integer returnQty = returnDetailDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(poInstockDetailEntity.getSourceDetailId()) && CharSequenceUtil.isNotBlank(poInstockDetailEntity.getPurchaseOrderDetailId())
+                                    && CharSequenceUtil.isNotBlank(poInstockDetailEntity.getSkuId())
                                     && poInstockDetailEntity.getSourceDetailId().equals(e.getReceiveDetailId())
                                     && poInstockDetailEntity.getPurchaseOrderDetailId().equals(e.getPurchaseOrderDetailId())
                                     && poInstockDetailEntity.getSkuId().equals(e.getSkuId())
@@ -574,7 +575,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         supplierDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
         supplierDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
         supplierDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
-        if (StringUtils.isNotBlank(purchaseOrderSupplierEntity.getSupplierContactId())) {
+        if (CharSequenceUtil.isNotBlank(purchaseOrderSupplierEntity.getSupplierContactId())) {
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(purchaseOrderSupplierEntity.getSupplierContactId());
             supplierDTO.setSupplierContactName(supplierContactById.getPerson());
         }
@@ -605,7 +606,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //删除明细数据
         poInstockDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的采购入库单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(PoInstockEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的采购入库单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(PoInstockEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.PO_INSTOCK.getCode(), pairList, "删除操作");
         //删除发送金蝶
@@ -684,7 +685,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购入库单【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购入库单【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -765,7 +766,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //匹配对应采购订单明细记录
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = childPurchaseOrderDetailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSourceDetailId()) && e.getSourceDetailId().equals(subcontractOrderDetailEntity.getId())).findFirst().orElse(null);
                 if (Objects.isNull(purchaseOrderDetailEntity)){
-                    log.error(StrUtil.format("未找到入库单【{}】中SKU【{}】对应的采购订单明细记录"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo());
+                    log.error(CharSequenceUtil.format("未找到入库单【{}】中SKU【{}】对应的采购订单明细记录"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo());
 
                     continue;
                 }
@@ -776,17 +777,17 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                         && e.getStockInQty() == stockInQty).findFirst().orElse(null);
                 //记录要入库的委外订单
                 if (Objects.isNull(poInstockDetailEntity)){
-                    log.error(StrUtil.format("未找到入库单【{}】中SKU【{}】数量【{}】的采购入库单明细"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo(),stockInQty);
+                    log.error(CharSequenceUtil.format("未找到入库单【{}】中SKU【{}】数量【{}】的采购入库单明细"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo(),stockInQty);
                     continue;
                 }
                 //入库单状态检查
                 PoInstockEntity poInstockEntity1 = childPoInstockList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(poInstockDetailEntity.getMainId())).findFirst().orElse(null);
                 if (Objects.isNull(poInstockEntity1)){
-                    log.error(StrUtil.format("未找到入库单【{}】中SKU【{}】数量【{}】的采购入库单"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo(),stockInQty);
+                    log.error(CharSequenceUtil.format("未找到入库单【{}】中SKU【{}】数量【{}】的采购入库单"), poInstockEntity.getCode(), subcontractOrderDetailEntity.getSkuNo(),stockInQty);
                     continue;
                 }
                 if (ApproveStatusEnum.APPROVE.getStatus().equals(poInstockEntity1.getApproveStatus()) || poInstockEntity1.getInvalidStatus()){
-                    log.error(StrUtil.format("已审核或已作废的采购入库单【{}】不能进行委外自动入库"), poInstockEntity1.getCode());
+                    log.error(CharSequenceUtil.format("已审核或已作废的采购入库单【{}】不能进行委外自动入库"), poInstockEntity1.getCode());
                     continue;
                 }
                 needApproveDetailList.add(poInstockDetailEntity);
@@ -805,7 +806,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 List<PoInstockDetailEntity> notExistDetailList = detailEntityList.stream().filter(e -> Objects.nonNull(e) && !poInstockDetailIds.contains(e.getId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(notExistDetailList)){
                     List<String> skuNoList = notExistDetailList.stream().map(PoInstockDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
-                    log.error(StrUtil.format("采购入库单【{}】中SKU【{}】没有可入库记录",entity.getCode(), String.join(",",skuNoList)));
+                    log.error(CharSequenceUtil.format("采购入库单【{}】中SKU【{}】没有可入库记录",entity.getCode(), String.join(",",skuNoList)));
                     continue;
                 }
                 needInstockList.add(entity);
@@ -1153,7 +1154,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(PoInstockEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeId), PoInstockEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId), PoInstockEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -1237,7 +1238,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private void doOpHandleDataId(String stockInDeptId, String stockInUserId, String deliveryWarehouseId, PoInstockEntity entity) {
 
         //入库员
-        if (StringUtils.isNotBlank(stockInUserId)) {
+        if (CharSequenceUtil.isNotBlank(stockInUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(stockInUserId);
             if (ObjectUtils.isEmpty(userDTO)) {
                 throw new ServiceException(ApiError.USER_NOT_EXIST);
@@ -1245,7 +1246,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             entity.setStockInUserName(userDTO.getUserName());
         }
         //入库部门
-        if (StringUtils.isNotBlank(stockInDeptId)) {
+        if (CharSequenceUtil.isNotBlank(stockInDeptId)) {
             SysDepartmentDTO depart = sysUserFeign.getUserDeptById(stockInDeptId);
             if (ObjectUtils.isEmpty(depart)) {
                 throw new ServiceException(ApiError.ERROR_9029);
@@ -1253,7 +1254,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             entity.setStockInDeptName(depart.getName());
         }
         //仓库
-        if (StringUtils.isNotBlank(deliveryWarehouseId)) {
+        if (CharSequenceUtil.isNotBlank(deliveryWarehouseId)) {
             //仓库信息
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(deliveryWarehouseId));
             if (CollectionUtils.isEmpty(warehouseList)) {
@@ -1332,7 +1333,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
 
 
-        List<String> stockInUserIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getStockInUserId())).map(PurchaseOrderDTO.GenerateStockInDTO::getStockInUserId).collect(Collectors.toList());
+        List<String> stockInUserIds = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getStockInUserId())).map(PurchaseOrderDTO.GenerateStockInDTO::getStockInUserId).collect(Collectors.toList());
         List<SysDepartmentUserNumberDTO> sysDepartmentUserNumberList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(stockInUserIds)) {
             sysDepartmentUserNumberList = sysUserFeign.listDeptUserByUserIdList(stockInUserIds);
@@ -1884,7 +1885,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     public String pdaAddAndSubmit(PoInstockDTO.AddDTO dto) {
         //新增
         String id = this.pdaAdd(dto, Boolean.FALSE);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
