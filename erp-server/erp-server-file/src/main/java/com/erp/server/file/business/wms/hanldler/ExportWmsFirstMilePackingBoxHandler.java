@@ -16,7 +16,6 @@ import javax.annotation.Resource;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FIRST_MILE_PACKING_BOX;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FIRST_MILE_PACKING_TASK_DETAIL;
 
 @Component
 @Slf4j

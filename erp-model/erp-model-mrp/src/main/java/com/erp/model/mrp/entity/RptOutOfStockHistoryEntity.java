@@ -3,6 +3,7 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -23,8 +24,10 @@ import java.util.Date;
 @Setter
 @Accessors(chain = true)
 @TableName("rpt_out_of_stock_history")
+@EqualsAndHashCode(callSuper = true)
 public class RptOutOfStockHistoryEntity extends BaseEntity<RptOutOfStockHistoryEntity> {
 
+    private static final long serialVersionUID = -2833531605488047335L;
     /**
      * 补货建议id
      */

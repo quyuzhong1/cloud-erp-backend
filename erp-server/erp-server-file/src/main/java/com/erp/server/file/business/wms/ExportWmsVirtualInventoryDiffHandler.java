@@ -1,6 +1,6 @@
 package com.erp.server.file.business.wms;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
@@ -35,7 +35,7 @@ public class ExportWmsVirtualInventoryDiffHandler extends AbstractPageFileEventH
         List<String> flagList = new ArrayList<>();
         for (VirtualInventoryDiffDTO.ListDiffExportDataDTO listDTO : list) {
             //标识
-            String flag = StrUtil.format("{}_{}", listDTO.getSkuId(), listDTO.getWarehouseId());
+            String flag = CharSequenceUtil.format("{}_{}", listDTO.getSkuId(), listDTO.getWarehouseId());
             if (flagList.contains(flag)) {
                 listDTO.setSkuNo("");
                 listDTO.setProductName("");

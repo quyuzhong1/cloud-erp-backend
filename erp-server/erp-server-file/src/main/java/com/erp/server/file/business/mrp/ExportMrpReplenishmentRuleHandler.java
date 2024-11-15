@@ -72,7 +72,7 @@ public class ExportMrpReplenishmentRuleHandler extends  AbstractPageFileEventHan
         List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> defaultSalesQtyExportList = new ArrayList<>();
         List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> dynamicSalesQtyExportList = new ArrayList<>();
         List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> fixedSalesQtyExportList = new ArrayList<>();
-        List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> salesDenoisingExportList = new ArrayList<>();
+        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> salesDenoisingExportList = new ArrayList<>();
         PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto = new PagingDTO<>();
         dto.setPageSize(getPageSize());
         dto.setCurrPage(1);
