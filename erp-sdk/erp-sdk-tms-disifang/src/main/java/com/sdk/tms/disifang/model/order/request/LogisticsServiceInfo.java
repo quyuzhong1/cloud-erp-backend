@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName LogisticsServiceInfo
- * @description: TODO
+
  * @date 2023年11月07日
  * @version: 1.0
  */
