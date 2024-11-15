@@ -3623,7 +3623,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
         wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_OFFLINE_ORDER.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
         wmsPushMsgEntity.setSourceId(entity.getId());
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSyncOperate(operateEnum);
