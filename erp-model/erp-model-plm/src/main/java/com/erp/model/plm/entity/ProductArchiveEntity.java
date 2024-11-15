@@ -18,7 +18,7 @@ import java.util.Date;
 @TableName(value ="product_archive")
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class ProductArchiveEntity extends BaseEntity implements Serializable {
+public class ProductArchiveEntity extends BaseEntity<ProductArchiveEntity> implements Serializable {
     /**
      * 归档时间
      */

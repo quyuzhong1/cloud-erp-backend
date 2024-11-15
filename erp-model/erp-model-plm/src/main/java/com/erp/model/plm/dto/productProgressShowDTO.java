@@ -13,7 +13,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class productProgressShowDTO {
+public class ProductProgressShowDTO {
 
     /**
      * 任务进度集合

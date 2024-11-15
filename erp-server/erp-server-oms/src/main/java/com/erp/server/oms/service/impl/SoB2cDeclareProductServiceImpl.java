@@ -35,7 +35,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,15 +60,15 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_DECL
 @Slf4j
 @Service
 public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclareProductMapper, SoB2cDeclareProductEntity> implements SoB2cDeclareProductService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     @Lazy
     private SoB2cReceiverService soB2cReceiverService;
-    @Autowired
+    @Resource
     @Lazy
     private SoB2cService soB2cService;
-    @Autowired
+    @Resource
     @Lazy
     private PlmTaskFeign plmTaskFeign;
     @Resource

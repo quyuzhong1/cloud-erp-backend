@@ -44,7 +44,7 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,13 +63,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrderHandleMapper, CfgRuleOrderHandleEntity> implements CfgRuleOrderHandleService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
 
-    @Autowired
+    @Resource
     private SpElServer spElServer;
 
     @Transactional(rollbackFor = Exception.class)

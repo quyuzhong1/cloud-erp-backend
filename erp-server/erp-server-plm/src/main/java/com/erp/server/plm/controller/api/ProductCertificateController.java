@@ -69,7 +69,7 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "上传证书")
     @PostMapping("/add")
-    public ApiResult add(@ModelAttribute @Validated ProductCertificateDTO.AddDTO dto) {
+    public ApiResult<Object> add(@ModelAttribute @Validated ProductCertificateDTO.AddDTO dto) {
         productCertificateService.add(dto);
         return  success();
     }
@@ -88,7 +88,7 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:update",
             serviceClass = ProductCertificateService.class,
             keyIdName = "id")
-    public ApiResult update(@ModelAttribute @Validated ProductCertificateDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@ModelAttribute @Validated ProductCertificateDTO.UpdateDTO dto) {
         Boolean flag = productCertificateService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -127,7 +127,7 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:delete",
             serviceClass = ProductCertificateService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = productCertificateService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
@@ -142,7 +142,7 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载产品认证信息模板")
     @GetMapping("/exportExcelTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productCertificateTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -174,7 +174,7 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品证书信息批量导入")
     @PostMapping("/import")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = productCertificateService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -193,7 +193,7 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc"
     )
-    public ApiResult exportExcel(@RequestBody ProductCertificateDTO.ExportParamDTO dto) {
+    public ApiResult<Object> exportExcel(@RequestBody ProductCertificateDTO.ExportParamDTO dto) {
         Boolean flag = productCertificateService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

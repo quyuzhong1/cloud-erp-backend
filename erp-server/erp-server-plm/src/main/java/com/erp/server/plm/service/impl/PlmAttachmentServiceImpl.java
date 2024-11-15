@@ -1,7 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -10,7 +9,6 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.server.plm.mapper.PlmAttachmentMapper;
 import com.erp.server.plm.service.PlmAttachmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -59,10 +57,8 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
             for (int i = 0; i < attachUrlList.size(); i++) {
                 PlmAttachmentEntity entity = new PlmAttachmentEntity();
                 entity.setAttachUrl(attachUrlList.get(i));
-                if (CollectionUtils.isNotEmpty(attachNameList)) {
-                    if (nameSize > i) {
-                        entity.setAttachName(attachNameList.get(i));
-                    }
+                if (CollectionUtils.isNotEmpty(attachNameList) && nameSize > i) {
+                   entity.setAttachName(attachNameList.get(i));
                 }
                 entity.setType(type);
                 entity.setBusinessId(businessId);
@@ -97,7 +93,10 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         if (fileSize > 300) {
             throw new ServiceException(ApiError.ERROR_95160, 300);
         }
-        String fileName = multipartFile.getOriginalFilename().toLowerCase();
+        String fileName = multipartFile.getOriginalFilename();
+        if (org.springframework.util.StringUtils.isEmpty(fileName)) {
+            throw new ServiceException(ApiError.ERROR_1018);
+        }
         if (fileName.length() > 200) {
             throw new ServiceException(ApiError.ERROR_1018);
         }
@@ -108,8 +107,8 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
         }
         PlmAttachmentEntity attachmentEntity = new PlmAttachmentEntity();
         attachmentEntity.setAttachUrl(fileUrl);
-        attachmentEntity.setAttachName(fileName);
-        attachmentEntity.setAttachSize(new BigDecimal(fileSize));
+        attachmentEntity.setAttachName(fileName.toLowerCase());
+        attachmentEntity.setAttachSize(BigDecimal.valueOf(fileSize));
         attachmentEntity.setType(type);
         this.save(attachmentEntity);
         return attachmentEntity;

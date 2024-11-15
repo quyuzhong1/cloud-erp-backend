@@ -63,13 +63,13 @@ public class PilotApplicationEntity extends BaseEntity<PilotApplicationEntity> {
     @TableField("bill_date")
     private LocalDate billDate;
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String ORDER_STATUS = "order_status";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String APPROVE_USER_ID = "approve_user_id";
 

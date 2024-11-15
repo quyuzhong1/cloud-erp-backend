@@ -483,17 +483,6 @@ public class ProductSkuFeignController {
     }
 
     /**
-     * 缓存sku信息接口（基础信息+产品信息+包装信息+销售信息+物流信息+采购信息+成本信息+产品分类）
-     * @param skuIds
-     * @return
-     */
-    @PostMapping("/listSkuAllAttributeByIds")
-    List<SkuVO> listSkuAllAttributeByIds(@RequestBody List<String> skuIds){
-        List<SkuVO> skuList = productDetailService.listSkuAllAttributeByIds(skuIds);
-        return skuList;
-    }
-
-    /**
      * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息）
      *
      * @param skuIds

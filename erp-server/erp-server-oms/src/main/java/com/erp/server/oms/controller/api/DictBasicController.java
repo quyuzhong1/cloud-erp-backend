@@ -35,9 +35,9 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
-    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.AddOrUpdateDTO> dto) {
+    public ApiResult<Object> saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.AddOrUpdateDTO> dto) {
         Boolean result = dictBasicService.saveOrUpdateDict(dto);
-        return result == true ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
 

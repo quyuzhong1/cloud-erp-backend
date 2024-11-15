@@ -52,7 +52,7 @@ public class RefundOrderController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery
-    public ApiResult export(@RequestBody @Validated RefundOrderDTO.PagingParamDTO dto) {
+    public ApiResult<Object> export(@RequestBody @Validated RefundOrderDTO.PagingParamDTO dto) {
         refundOrderService.exportExcel(dto);
         return success();
     }

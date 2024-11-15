@@ -32,11 +32,6 @@ public class KingdeeSubExcelListener extends AnalysisEventListener<KingdeeSubImp
      */
     private List<KingdeeSubImportExcelDTO> successList = new ArrayList<>();
 
-
-    public KingdeeSubExcelListener() {
-
-    }
-
     @Override
     public void invoke(KingdeeSubImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
         //添加数据用于判断是否为空
@@ -59,7 +54,7 @@ public class KingdeeSubExcelListener extends AnalysisEventListener<KingdeeSubImp
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 
     public List<KingdeeSubImportExcelDTO> getAllList(){

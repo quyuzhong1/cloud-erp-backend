@@ -1,32 +1,33 @@
 package com.erp.server.plm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.erp.model.plm.dto.*;
-import com.erp.server.plm.query.PilotApplicationQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.plm.service.PilotApplicationService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.plm.dto.PilotApplicationDTO;
+import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
+import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.entity.PilotApplicationEntity;
+import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.erp.server.plm.service.PilotApplicationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 试产/量产申请
@@ -70,7 +71,7 @@ public class PilotApplicationController extends BaseController {
         menuCode = "plm:pilotApplication:update",
         serviceClass = PilotApplicationService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated PilotApplicationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated PilotApplicationDTO.UpdateDTO dto) {
         pilotApplicationService.update(dto);
         return success();
     }
@@ -368,7 +369,7 @@ public class PilotApplicationController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "试产申请导出Excel数据")
     @WebAdvanceQuery(handler = PilotApplicationQueryHandler.class)
-    public ApiResult<?> exportList(@RequestBody @Validated PilotApplicationDTO.ExportDTO dto) {
+    public ApiResult<Object> exportList(@RequestBody @Validated PilotApplicationDTO.ExportDTO dto) {
         pilotApplicationService.exportList(dto);
         return success();
     }

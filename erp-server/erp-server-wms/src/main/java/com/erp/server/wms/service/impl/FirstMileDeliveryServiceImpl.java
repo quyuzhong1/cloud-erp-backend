@@ -1388,7 +1388,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> warehouseIds = viewList.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(warehouseIds);
         //查询sku对应的bom版本记录
-        List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = plmTaskFeign.listBomVersionBySkuNos(skuNos);
+        List<ProductBomInfoDTO.SkuBomVersion> skuBomVersionList = plmTaskFeign.listBomVersionBySkuNos(skuNos);
 
         List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         //查询历史子件信息
@@ -1409,7 +1409,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             view.setWarehouseLocationName(warehouseLocationEntity.getName());
 
             //获取到最新的版本
-            ProductBomInfoDTO.skuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).distinct().findFirst().orElse(null);
+            ProductBomInfoDTO.SkuBomVersion bomVersionObj = skuBomVersionList.stream().filter(req -> req.getSkuNo().equals(view.getSkuNo())).distinct().findFirst().orElse(null);
             if (ObjectUtil.isEmpty(bomVersionObj)) {
                 continue;
             }

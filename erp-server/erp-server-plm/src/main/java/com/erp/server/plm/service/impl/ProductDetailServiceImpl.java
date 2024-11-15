@@ -5079,44 +5079,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return skuList;
     }
 
-    @Override
-    public void initProductSizeAndBoxSize() {
-        // 查询出所有需要进行初始化的产品尺寸或箱规
-        List<ProductPackEntity> productPacks = productPackService.list();
-        List<List<ProductPackEntity>> partition = Lists.partition(productPacks, 500);
-        partition.parallelStream()
-                .forEach(packs ->{
-                    try {
-                        packs.forEach(this::convertSize);
-                    } catch (Exception e) {
-                        log.error("数据异常{}", e.getMessage(), e);
-                    }
-                    productPackService.updateBatchById(packs);
-                });
-    }
-
-    private void convertSize(ProductPackEntity pack) {
-        List<BigDecimal> productSizeList = Arrays.stream(Optional.ofNullable(pack.getProductSize()).orElse("").split("X"))
-                .filter(StrUtil::isNotBlank)
-                .map(BigDecimal::new)
-                .collect(Collectors.toList());
-        //产品尺寸-长
-        pack.setProductLength(LengthConverterUtil.cmToMm(productSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
-        //产品尺寸-宽
-        pack.setProductWidth(LengthConverterUtil.cmToMm(productSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
-        //产品尺寸-高
-        pack.setProductHeight(LengthConverterUtil.cmToMm(productSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
-        List<BigDecimal> boxSizeList = Arrays.stream(Optional.ofNullable(pack.getBoxSize()).orElse("").split("X"))
-                .filter(StrUtil::isNotBlank)
-                .map(BigDecimal::new)
-                .collect(Collectors.toList());
-        //箱规-长
-        pack.setBoxLength(LengthConverterUtil.cmToMm(boxSizeList.stream().findFirst().orElse(BigDecimal.ZERO)));
-        //箱规-宽
-        pack.setBoxWidth(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(1).findFirst().orElse(BigDecimal.ZERO)));
-        //箱规-高
-        pack.setBoxHeight(LengthConverterUtil.cmToMm(boxSizeList.stream().skip(2).findFirst().orElse(BigDecimal.ZERO)));
-    }
 
     @Override
     public List<SkuVO> accessoriesSku(String searchKeyword) {

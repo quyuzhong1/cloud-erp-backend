@@ -20,7 +20,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
-import com.erp.model.plm.vo.migrateTempVO;
+import com.erp.model.plm.vo.MigrateTempVO;
 import com.erp.server.plm.mapper.ProjectTemplateMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -304,7 +304,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         List<TemplatePhaseEntity> saveTemplatePhaseList = new ArrayList<>(10);
         //模板分组
         Map<String, List<ProjectTaskSysEntity>> map = sysTaskList.stream().collect(Collectors.groupingBy(ProjectTaskSysEntity::getTemplateId));
-        List<migrateTempVO> migrateTempList = new ArrayList<>(20);
+        List<MigrateTempVO> migrateTempList = new ArrayList<>(20);
         for (Map.Entry<String, List<ProjectTaskSysEntity>> entry : map.entrySet()) {
             //模板id
             String templateId = entry.getKey();
@@ -319,7 +319,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                     if (sysTaskPhase != null) {
                         //获取到阶段名
                         String name = sysTaskPhase.getName();
-                        migrateTempVO vo = new migrateTempVO();
+                        MigrateTempVO vo = new MigrateTempVO();
                         //根据阶段名查询数据库是否存在
                         TemplatePhaseEntity dbTemplatePhase = dbTemplatePhaseList.stream().filter(d -> d.getName().equals(name) &&
                                 d.getTemplateId().equals(templateId)).findFirst().orElse(null);
@@ -357,10 +357,10 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             result = templatePhaseService.saveBatch(saveTemplatePhaseList);
         }
 
-        List<String> taskIdList = migrateTempList.stream().map(migrateTempVO::getTaskId).collect(Collectors.toList());
+        List<String> taskIdList = migrateTempList.stream().map(MigrateTempVO::getTaskId).collect(Collectors.toList());
         List<TemplateTaskEntity> templateTaskList = templateTaskService.listByIds(taskIdList);
         for (TemplateTaskEntity item : templateTaskList) {
-            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTaskId().equals(item.getId())).findFirst().orElse(null);
+            MigrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTaskId().equals(item.getId())).findFirst().orElse(null);
             if (tempVO != null) {
                 item.setPhaseId(tempVO.getNewCreateId());
             }
@@ -392,7 +392,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
 
         List<TemplateTaskDocsNameEntity> addList = new ArrayList<>(10);
 
-        List<migrateTempVO> migrateTempList = new ArrayList<>(20);
+        List<MigrateTempVO> migrateTempList = new ArrayList<>(20);
         boolean result = true;
         //模板分组
         Map<String, List<ProjectTaskSysEntity>> map = sysTaskList.stream().collect(Collectors.groupingBy(ProjectTaskSysEntity::getTemplateId));
@@ -406,7 +406,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
                 if (CollectionUtils.isNotEmpty(deliveryList)) {
                     for(TaskDeliveryDocsEntity delivery:deliveryList){
                         String docsName = delivery.getDocsName();
-                        migrateTempVO vo = new migrateTempVO();
+                        MigrateTempVO vo = new MigrateTempVO();
                         //看数据库有没有
                         TemplateTaskDocsNameEntity templateDocsEntity = dbTemplateDocsNameList.stream().filter(db -> db.getTemplateId().equals(templateId) &&
                                 db.getName().equals(docsName)).findFirst().orElse(null);
@@ -443,7 +443,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         }
         List<TemplateDeliveryDocsEntity> dbTemplateDeliveryList = templateDeliveryDocsService.getByTemplateIds(templateIds);
         for (TemplateDeliveryDocsEntity item : dbTemplateDeliveryList) {
-            migrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTemplateId().equals(item.getTemplateId()) && item.getDocsName().equals(t.getName())).findFirst().orElse(null);
+            MigrateTempVO tempVO = migrateTempList.stream().filter(t -> t.getTemplateId().equals(item.getTemplateId()) && item.getDocsName().equals(t.getName())).findFirst().orElse(null);
             if (tempVO != null) {
                 item.setDocsNameId(tempVO.getNewCreateId());
             } else {

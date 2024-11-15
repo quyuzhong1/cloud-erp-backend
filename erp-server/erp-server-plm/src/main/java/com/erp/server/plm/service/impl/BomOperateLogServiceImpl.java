@@ -73,10 +73,10 @@ public class BomOperateLogServiceImpl extends ServiceImpl<BomOperateLogMapper, B
     }
 
     @Override
-    public PagingVO<List<BomOperateVO>> paging(PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<BomOperateVO> paging(PagingDTO<BaseIdDTO> dto) {
         BaseIdDTO params = dto.getParams();
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params.getId());
+        Page<BaseIdDTO> query = new Page<BaseIdDTO>(dto.getCurrPage(), dto.getPageSize());
+        IPage<BomOperateVO> pageData = baseMapper.paging(query, params.getId());
         List<FindUserDTO> userList = commonService.getAllUser();
         List<BomOperateVO> resultList = pageData.getRecords();
         for (BomOperateVO item : resultList) {
@@ -88,7 +88,7 @@ public class BomOperateLogServiceImpl extends ServiceImpl<BomOperateLogMapper, B
                 item.setCreateUserName(findUserDTO.getUserName());
             }
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
 

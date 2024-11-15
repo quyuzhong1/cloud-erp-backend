@@ -67,8 +67,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
-
 /**
  * <p>
  * 产品信息表 服务实现类
@@ -2383,7 +2381,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProductMilepostShowDTO milepostShow = projectTaskProgressService.getMilepostTaskListByProductId(productId);
         info.setProductMilepostShow(milepostShow);
         //任务进度
-        productProgressShowDTO progress = projectTaskProgressService.getFinishProgressList(productId);
+        ProductProgressShowDTO progress = projectTaskProgressService.getFinishProgressList(productId);
         info.setProductProgressShow(progress);
 
         return info;

@@ -38,9 +38,9 @@ public class CustomerGroupController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量保存客户分组:分组名称={name}")
     @PostMapping("/saveOrUpdate")
-    public ApiResult saveOrUpdate(@RequestBody @Valid ValidList<CustomerGroupDTO.AddOrUpdateDTO> groupList) {
+    public ApiResult<Object> saveOrUpdate(@RequestBody @Valid ValidList<CustomerGroupDTO.AddOrUpdateDTO> groupList) {
         Boolean result = customerGroupService.saveOrUpdateBatchGroup(groupList);
-        return result == true ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**

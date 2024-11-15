@@ -19,14 +19,6 @@ import java.util.List;
 @FeignClient(name = "erp-sys", contextId = "dictBasic")
 public interface SysDictFeign {
 
-    /**
-     * 获取字典数据 根据属性
-     * @param type
-     * @return
-     */
-//    @GetMapping("/feign/dictBasic/getByType")
-//    List<DictBasicDTO.ViewDTO> getByType(@RequestParam(value = "type") String type);
-
 
     /**
      * 根据国家id 集合 获取到国家列表

@@ -15,7 +15,7 @@ import java.util.Date;
  */
 @Data
 @TableName(value = "template_task_docs_name")
-public class TemplateTaskDocsNameEntity extends BaseEntity implements Serializable {
+public class TemplateTaskDocsNameEntity extends BaseEntity<TemplateTaskDocsNameEntity> implements Serializable {
 
     /**
      * 文件名
