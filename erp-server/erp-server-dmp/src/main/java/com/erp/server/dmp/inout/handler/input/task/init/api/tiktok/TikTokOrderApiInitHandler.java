@@ -74,7 +74,7 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
         //平台接口地址
         String url = TikTokConstant.URL;
         //服务密钥
-        String secret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
+        String toktikInfo = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
 
 
         while (true) {
@@ -105,9 +105,9 @@ public class TikTokOrderApiInitHandler implements DmpInputApiInitHandler {
             bodyMap.put("update_time_ge", dmpInputApiInitRequest.getStartTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
             bodyMap.put("update_time_lt", dmpInputApiInitRequest.getEndTime().toInstant(ZoneOffset.ofHours(8)).toEpochMilli() / 1000);
 
-            String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
+            String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
-            String sign = EncryptionUtils.generateSHA256(input, secret);
+            String sign = EncryptionUtils.generateSHA256(input, toktikInfo);
             //加入sign签名入参
             params.put("sign", sign);
 

@@ -71,7 +71,7 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private volatile List<DmpCfgInputConvertEntity> dmpCfgInputConvertCache;
 	
 	private volatile List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingCache;
-	private volatile Map<String, Map<String, List<String>>> convertMappingCache;
+	private Map<String, Map<String, List<String>>> convertMappingCache;
 
 	private volatile List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertValueCache;
 	private volatile Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache;
@@ -200,7 +200,9 @@ public class DmpHandlerCache implements CommandLineRunner{
 			} catch (Exception e) {
 				Throwable cause = e.getCause();
 				if(cause instanceof ClientException && i < 3) {
-					try {Thread.sleep(10000);} catch (InterruptedException e1) {}
+					try {Thread.sleep(10000);} catch (InterruptedException e1) {
+						Thread.currentThread().interrupt();
+					}
 				}else {
 					throw e;
 				}

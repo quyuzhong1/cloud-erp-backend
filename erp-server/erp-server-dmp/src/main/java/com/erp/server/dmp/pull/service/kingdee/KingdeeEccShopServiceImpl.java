@@ -77,8 +77,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccS
             List<KingdeeEccShopEntity> kingdeeSkuEntities = shopService.pullDate(requestDTO);
             System.out.println(kingdeeSkuEntities);
         }catch (Exception e) {
-            e.printStackTrace();
-
+        	log.error("" , e);
         }
 
     }
