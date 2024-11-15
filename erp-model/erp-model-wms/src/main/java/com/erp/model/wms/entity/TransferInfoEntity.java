@@ -169,6 +169,11 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
      */
     @TableField("batch_no")
     private String batchNo;
+    /**
+     * 中转排序（反审使用）
+     */
+    @TableField("index")
+    private Integer index;
 
     public static final String CODE = "code";
 
