@@ -3,13 +3,12 @@ package com.sdk.tms.track123.model.request;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
  * @author zdy
  * @ClassName RegisterRequest
- * @description: TODO
+
  * @date 2023年11月21日
  * @version: 1.0
  */

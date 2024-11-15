@@ -5,14 +5,17 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.sdk.tms.track123.model.response.*;
-import lombok.*;
+import com.sdk.tms.track123.model.response.Rejected;
+import com.sdk.tms.track123.model.response.ResponseData;
+import com.sdk.tms.track123.model.response.TrackInfo;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +29,7 @@ import java.util.UUID;
 @Setter
 @Getter
 @NoArgsConstructor
+@EqualsAndHashCode
 public class PlatformTrack123TrackDTO extends CleanBaseDTO {
 
 

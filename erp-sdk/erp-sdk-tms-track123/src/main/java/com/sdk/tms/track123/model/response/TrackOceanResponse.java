@@ -10,7 +10,7 @@ import java.io.Serializable;
  * @date: 2024/4/9 15:54
  */
 @Data
-public class TrackOceanResponse<T> implements Serializable {
+public class TrackOceanResponse implements Serializable {
     private String code;
     private OceanResponseData data;
     private String msg;

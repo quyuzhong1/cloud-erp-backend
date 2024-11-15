@@ -3,7 +3,6 @@ package com.sdk.tms.track123.model.response;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
