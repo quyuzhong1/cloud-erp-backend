@@ -740,21 +740,32 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        //补货计划
+        //发货建议
         List<String> codeList = successList.stream().map(DeliverySuggestImportExcelDTO::getCode).distinct().collect(Collectors.toList());
         List<DeliverySuggestEntity> deliverySuggestList = this.listByCodeList(codeList);
 
         //记录错误数据
         List<DeliverySuggestImportExcelDTO>  wrongList = new ArrayList<>();
+        //已存在的数据
+        List<String> hasList = new ArrayList<>();
         for (DeliverySuggestImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
-            //补货计划
+            //发货建议
             DeliverySuggestEntity deliverySuggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(deliverySuggestEntity)) {
-                errorMsgList.add("未找到补货计划");
+                errorMsgList.add("未找到发货建议");
             } else {
                 if (!StrUtil.equals(platformType,deliverySuggestEntity.getPlatformType())) {
-                    errorMsgList.add("补货建议数据不支持跨平台类型导入");
+                    errorMsgList.add("发货建议数据不支持跨平台类型导入");
+                }
+                if (!StrUtil.equals(deliverySuggestEntity.getStatus(),SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+                    errorMsgList.add("仅待确认数据支持导入");
+                }
+                if (deliverySuggestEntity.getInvalidStatus()) {
+                    errorMsgList.add("已作废数据不支持导入");
+                }
+                if (hasList.contains(deliverySuggestEntity.getId())) {
+                    errorMsgList.add("建议编码已导入，请勿重复导入");
                 }
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -783,6 +794,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 errorList.add(excelDTO);
                 continue;
             }
+            hasList.add(updateDTO.getId());
         }
         successList.removeAll(wrongList);
     }

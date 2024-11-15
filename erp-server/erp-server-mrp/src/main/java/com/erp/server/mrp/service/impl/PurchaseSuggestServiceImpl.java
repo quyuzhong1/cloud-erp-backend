@@ -442,18 +442,29 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        //发货计划
+        //采购建议
         List<String> codeList = successList.stream().map(PurchaseSuggestImportExcelDTO::getCode).distinct().collect(Collectors.toList());
         List<PurchaseSuggestEntity> purchaseSuggestList = this.listByCodeList(codeList);
 
         //记录错误数据
         List<PurchaseSuggestImportExcelDTO>  wrongList = new ArrayList<>();
+        //已存在的数据
+        List<String> hasList = new ArrayList<>();
         for (PurchaseSuggestImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
-            //发货计划
+            //采购建议
             PurchaseSuggestEntity purchaseSuggestEntity = purchaseSuggestList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseSuggestEntity)) {
-                errorMsgList.add("未找到采购计划");
+                errorMsgList.add("未找到采购建议");
+            }
+            if (!StrUtil.equals(purchaseSuggestEntity.getStatus(),SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+                errorMsgList.add("仅待确认数据支持导入");
+            }
+            if (purchaseSuggestEntity.getInvalidStatus()) {
+                errorMsgList.add("已作废数据不支持导入");
+            }
+            if (hasList.contains(purchaseSuggestEntity.getId())) {
+                errorMsgList.add("建议编码已导入，请勿重复导入");
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 //错误数据
@@ -467,6 +478,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             updateDTO.setPlanPurchaseQty(Integer.valueOf(excelDTO.getPlanPurchaseQty()));
             updateDTO.setPurchaseStockUpQty(Integer.valueOf(excelDTO.getPurchaseStockUpQty()));
             updateDTO.setRemark(excelDTO.getRemark());
+            hasList.add(updateDTO.getId());
             this.importUpdate(updateDTO);
         }
         successList.removeAll(wrongList);

@@ -587,12 +587,23 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
         //记录错误数据
         List<PurchaseSuggestMergeImportExcelDTO>  wrongList = new ArrayList<>();
+        //已存在的数据
+        List<String> hasList = new ArrayList<>();
         for (PurchaseSuggestMergeImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
             //发货计划
             PurchaseSuggestMergeEntity purchaseSuggestMergeEntity = purchaseSuggestMergeList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseSuggestMergeEntity)) {
                 errorMsgList.add("未找到采购建议（合并）");
+            }
+            if (!StrUtil.equals(purchaseSuggestMergeEntity.getStatus(),SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+                errorMsgList.add("仅待确认数据支持导入");
+            }
+            if (purchaseSuggestMergeEntity.getInvalidStatus()) {
+                errorMsgList.add("已作废数据不支持导入");
+            }
+            if (hasList.contains(purchaseSuggestMergeEntity.getId())) {
+                errorMsgList.add("建议编码已导入，请勿重复导入");
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 //错误数据
@@ -606,6 +617,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             updateDTO.setPlanPurchaseQty(Integer.valueOf(excelDTO.getPlanPurchaseQty()));
             updateDTO.setPurchaseStockUpQty(Integer.valueOf(excelDTO.getPurchaseStockUpQty()));
             updateDTO.setRemark(excelDTO.getRemark());
+            hasList.add(updateDTO.getId());
             this.importUpdate(updateDTO);
         }
         successList.removeAll(wrongList);
