@@ -47,8 +47,8 @@ public class GatewayPluginConfig<T> {
     @ConditionalOnBean(GatewayPluginProperties.class)
     @ConditionalOnMissingBean(GatewayRequestContextFilter.class)
     @ConditionalOnProperty(prefix = GatewayPluginProperties.GATEWAY_PLUGIN_PROPERTIES_PREFIX, value = { "enable" },havingValue = "true")
-    public GatewayRequestContextFilter<?> gatewayContextFilter(@Autowired GatewayPluginProperties gatewayPluginProperties , @Autowired(required = false) ContextExtraDataGenerator<?> contextExtraDataGenerator){
-        GatewayRequestContextFilter<?> gatewayContextFilter = new GatewayRequestContextFilter<>(gatewayPluginProperties, contextExtraDataGenerator);
+    public GatewayRequestContextFilter<T> gatewayContextFilter(@Autowired GatewayPluginProperties gatewayPluginProperties , @Autowired(required = false) ContextExtraDataGenerator<T> contextExtraDataGenerator){
+        GatewayRequestContextFilter<T> gatewayContextFilter = new GatewayRequestContextFilter<>(gatewayPluginProperties, contextExtraDataGenerator);
         log.debug("Load GatewayContextFilter Config Bean");
         return gatewayContextFilter;
     }
