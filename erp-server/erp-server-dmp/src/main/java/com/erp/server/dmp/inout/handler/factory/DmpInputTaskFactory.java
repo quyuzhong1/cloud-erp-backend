@@ -118,7 +118,7 @@ public class DmpInputTaskFactory{
 				dmpInputTaskEntity = dmpInputTaskService.getById(inputTaskId);
 			}
 			Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
-			boolean errorFlag = errorCount == maxRetryCount;
+			boolean errorFlag = errorCount.equals(maxRetryCount);
 			if(maxRetryCount < 0) {
 				errorFlag = false;
 			}

@@ -3,12 +3,11 @@ package com.sdk.tms.express.model.order.response;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * @author zdy
  * @ClassName RouteLabelInfo
- * @description: TODO
+
  * @date 2023年11月10日
  * @version: 1.0
  */
