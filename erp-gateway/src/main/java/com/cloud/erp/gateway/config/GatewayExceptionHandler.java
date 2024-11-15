@@ -1,6 +1,6 @@
 package com.cloud.erp.gateway.config;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 		String errorMessage = defaultError.msg;
 		Map<String, Object> map = new HashMap<>(4);
 		Throwable error = super.getError(request);
-		log.error(StrUtil.format("网关异常，请求地址：{}",request.exchange().getRequest().getURI()),error);
+		log.error(CharSequenceUtil.format("网关异常，请求地址：{}",request.exchange().getRequest().getURI()),error);
 		// 1023服务暂时不可用
 		if (error instanceof org.springframework.cloud.gateway.support.NotFoundException) {
 			ApiError apiError503 = ApiError.ERROR_1023;
