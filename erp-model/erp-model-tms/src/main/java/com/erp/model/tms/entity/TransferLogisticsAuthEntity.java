@@ -1,13 +1,13 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -45,7 +45,7 @@ public class TransferLogisticsAuthEntity extends BaseEntity<TransferLogisticsAut
 
     public static final String MAIN_ID = "main_id";
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
     @Override
     public Serializable pkVal() {

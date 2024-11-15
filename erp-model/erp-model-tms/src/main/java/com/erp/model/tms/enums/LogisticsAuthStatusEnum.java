@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * @author Lambda
  * @Classname LogisticsAuthStatusEnums
- * @Description TODO
  * @Date 2023-11-09 14:46
  * @Created by yl
  */
