@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.lingxing;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
@@ -26,7 +27,6 @@ import com.erp.model.dmp.lingxing.ShopEntity;
 import com.erp.server.dmp.convert.DmpShopInfoConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.CfgSettingService;
-import com.erp.server.dmp.service.DmpPushTaskService;
 import com.erp.server.dmp.service.ShopInfoMappingService;
 import com.erp.server.dmp.utils.DataCompareUtil;
 import com.sdk.third.lingxing.dto.ShopInfoDTO;
@@ -35,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -104,7 +103,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_LX_SHOP_LIST, ShopEntity.class);
         }
-        if(CollectionUtil.isNotEmpty(insertList)){
+        if(CollUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_LX_SHOP_LIST);
         }
         if (CollectionUtil.isEmpty(entityToMqlist)){

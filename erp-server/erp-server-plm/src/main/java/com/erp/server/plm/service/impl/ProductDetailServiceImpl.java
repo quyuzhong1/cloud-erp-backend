@@ -2461,10 +2461,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         });
         //批量操作
-        if (CollectionUtil.isNotEmpty(addCustomsList)){
+        if (CollUtil.isNotEmpty(addCustomsList)){
             productCustomsService.saveBatch(addCustomsList);
         }
-        if (CollectionUtil.isNotEmpty(updateCustomsList)){
+        if (CollUtil.isNotEmpty(updateCustomsList)){
             productCustomsService.updateBatchById(updateCustomsList);
         }
     }
@@ -2475,7 +2475,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         int pageSize = 50;
         int pageCount = count / pageSize + 1;
         for (int i = 0; i < pageCount; i++) {
-            Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollectionUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
+            Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
             List<ProductInfoEntity> records = page.getRecords();
             if (CollectionUtils.isEmpty(records)) {
                 return;

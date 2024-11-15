@@ -26,14 +26,7 @@ import java.util.List;
  */
 public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
 
-    /**
-     * 获取到分组的id 集合
-     * @author yl
-     * @date 2023-05-11 18:10
-     * @param
-     * @return java.util.List<java.lang.String>
-     */
-//    List<String> listGroup();
+
 
     
     /**
@@ -219,17 +212,6 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      */
     Boolean quoteCustomer(List<String> ids);
 
-    /**
-     * 修改金蝶同步信息
-     * @Author Luo_WG
-     * @Date 2023/5/25 10:43
-     * @param id
-     * @param syncKingdeeStatus
-     * @param syncKingdeeId
-     * @param syncOperate
-     * @return java.lang.Boolean
-     **/
-//    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 
     
     /**
@@ -247,21 +229,9 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      */
     void importCustomer(MultipartFile file) throws IOException;
 
-    /**
-     * 根据金蝶id获取客户信息
-     * @author yl
-     * @date 2023-07-06 15:04
-     * @param kingdeeCustomerIds
-     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
-     */
-//    List<CustomerB2cEntity> listByKingdeeIdList(List<String> kingdeeCustomerIds);
 
 
-    /**
-     * 导入客户金蝶信息（系统上线临时使用，后续移除）
-     * @param file
-     */
-//    void importCustomerKingdee(MultipartFile file) throws IOException;
+
     /**
      * @description: 根据国家ids查询客户信息
      * @author Will

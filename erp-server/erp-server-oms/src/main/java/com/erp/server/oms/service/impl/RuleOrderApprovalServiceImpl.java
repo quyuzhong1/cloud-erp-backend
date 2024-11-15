@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,16 +52,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderApprovalMapper, RuleOrderApprovalEntity> implements RuleOrderApprovalService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
 
-    @Autowired
+    @Resource
     private SpElServer spElServer;
 
-    @Autowired
+    @Resource
     private CfgConditionService cfgConditionService;
 
     @Transactional(rollbackFor = Exception.class)

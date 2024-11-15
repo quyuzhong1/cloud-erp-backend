@@ -12,6 +12,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -292,7 +293,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 .eq(SoMultiChannelEntity::getDictPlatform, dictPlatform)
                 .eq(SoMultiChannelEntity::getShopId, shopId)
                 .eq(SoMultiChannelEntity::getSourceType, sourceType)
-                .last("LIMIT 1")
+                .last( SqlConstants.LIMIT_1)
                 .one();
     }
 

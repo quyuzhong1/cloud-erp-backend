@@ -146,7 +146,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         List<SoB2cReceiverEntity> listByMainId = getListByMainId(mainEntity.getId());
         //转map 比较是否存在记录 不存在则删除 存在则更新
         Map<String, SoB2cReceiverEntity> map = listByMainId.stream()
-//                .filter(e -> StrUtil.isNotBlank(e.getCustomerId()))
+//                .filter(e -> CharSequenceUtil.isNotBlank(e.getCustomerId()))
                 .collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, Function.identity()));
             SoB2cReceiverEntity entity = map.get(mainEntity.getId());
             if (Objects.isNull(entity)){

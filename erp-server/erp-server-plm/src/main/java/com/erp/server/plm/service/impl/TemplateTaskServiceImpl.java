@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -345,7 +346,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         List<PreTaskVO> preTaskList = templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId());
         List<String> pretaskIdList = Collections.emptyList();
-        if (CollectionUtil.isNotEmpty(preTaskList)) {
+        if (CollUtil.isNotEmpty(preTaskList)) {
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
         }
         resultVO.setPreTaskIdList(pretaskIdList);

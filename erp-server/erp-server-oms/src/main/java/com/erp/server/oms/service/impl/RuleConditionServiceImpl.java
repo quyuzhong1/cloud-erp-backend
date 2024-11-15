@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,13 +46,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapper, RuleConditionEntity> implements RuleConditionService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private DictRuleConditionService dictRuleConditionService;
 
-    @Autowired
+    @Resource
     private CfgConditionService cfgConditionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
