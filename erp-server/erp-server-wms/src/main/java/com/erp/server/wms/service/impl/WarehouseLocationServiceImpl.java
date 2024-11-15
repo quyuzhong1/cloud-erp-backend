@@ -725,7 +725,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Transactional(rollbackFor = Exception.class)
     @Override
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
-    public void updateDisabled(WarehouseLocationDTO.updateStatusDto dto) {
+    public void updateDisabled(WarehouseLocationDTO.UpdateStatusDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
         WarehouseLocationEntity entity = new WarehouseLocationEntity();
         entity.setId(dto.getId());
@@ -789,7 +789,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Transactional(rollbackFor = Exception.class)
     @Override
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
-    public void update(WarehouseLocationDTO.updateDto dto) {
+    public void update(WarehouseLocationDTO.UpdateDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
         if(dto.getCode().length() > 32){
             throw new ServiceException("仓位编码过长");
@@ -859,22 +859,22 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
-    public List<WarehouseLocationDTO.tabDto> tabList() {
-        List<WarehouseLocationDTO.tabDto> list = new ArrayList<>(4);
+    public List<WarehouseLocationDTO.TabDto> tabList() {
+        List<WarehouseLocationDTO.TabDto> list = new ArrayList<>(4);
         Integer occupiedCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.OCCUPIED.getCode());
-        WarehouseLocationDTO.tabDto occupied = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.OCCUPIED.getCode(), occupiedCount);
+        WarehouseLocationDTO.TabDto occupied = new WarehouseLocationDTO.TabDto(WarehouseLocationStatusEnum.OCCUPIED.getCode(), occupiedCount);
         list.add(occupied);
 
         Integer recyclableCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.RECYCLABLE.getCode());
-        WarehouseLocationDTO.tabDto recyclable = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.RECYCLABLE.getCode(), recyclableCount);
+        WarehouseLocationDTO.TabDto recyclable = new WarehouseLocationDTO.TabDto(WarehouseLocationStatusEnum.RECYCLABLE.getCode(), recyclableCount);
         list.add(recyclable);
 
         Integer idleCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.IDLE.getCode());
-        WarehouseLocationDTO.tabDto idle = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.IDLE.getCode(), idleCount);
+        WarehouseLocationDTO.TabDto idle = new WarehouseLocationDTO.TabDto(WarehouseLocationStatusEnum.IDLE.getCode(), idleCount);
         list.add(idle);
 
         Integer allCount = warehouseLocationMapper.countByStatus(null);
-        WarehouseLocationDTO.tabDto all = new WarehouseLocationDTO.tabDto("all", allCount);
+        WarehouseLocationDTO.TabDto all = new WarehouseLocationDTO.TabDto("all", allCount);
         list.add(all);
 
         return list;

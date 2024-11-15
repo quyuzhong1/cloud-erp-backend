@@ -1,11 +1,12 @@
 package com.erp.model.wms.dto.third;
 
 import com.alibaba.fastjson.annotation.JSONField;
-import com.common.business.dto.CleanBaseDTO;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -40,8 +41,8 @@ public class ThirdWarehouseSkuResp implements Serializable {
 
     @Data
     @ToString
-    public static class ImportCountry {
-
+    public static class ImportCountry implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         //国家/地区简称
         @JSONField(name = "country_code")
         private String countryCode;

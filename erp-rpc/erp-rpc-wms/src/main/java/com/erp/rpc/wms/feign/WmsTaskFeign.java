@@ -74,7 +74,7 @@ public interface WmsTaskFeign {
      * 根据来采购订单明细ids查询入库明细
      */
     @PostMapping("feign/purchaseStockIn/listDetailByPodIds")
-    List<PoInstockDetailEntity> listPurchaseStockInDetailByPodIds(List<String> PodIds);
+    List<PoInstockDetailEntity> listPurchaseStockInDetailByPodIds(List<String> podIds);
 
     /**
      * 批量新增入库单

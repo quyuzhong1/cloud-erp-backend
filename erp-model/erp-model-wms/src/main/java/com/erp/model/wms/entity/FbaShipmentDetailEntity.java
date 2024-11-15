@@ -91,7 +91,6 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
 
     public static final String MAIN_ID = "main_id";
 
-    public static final String ASIN = "asin";
 
     public static final String FN_SKU = "fn_sku";
 

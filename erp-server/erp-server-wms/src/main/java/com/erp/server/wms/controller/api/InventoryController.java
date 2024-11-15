@@ -267,16 +267,16 @@ public class InventoryController extends BaseController {
      * 查询Tab
      */
     @GetMapping("/tabList")
-    public ApiResult<List<InventoryDTO.tabDto>> tabList(){
-        List<InventoryDTO.tabDto> list = new ArrayList<>(3);
+    public ApiResult<List<InventoryDTO.TabDto>> tabList(){
+        List<InventoryDTO.TabDto> list = new ArrayList<>(3);
 
         long countWarehouse = inventoryService.countByWarehouse();
         long countArea = inventoryService.countByArea();
         long countLocation = inventoryService.countByLocation();
 
-        list.add(new InventoryDTO.tabDto("warehouse", countWarehouse));
-        list.add(new InventoryDTO.tabDto("warehouseArea", countArea));
-        list.add(new InventoryDTO.tabDto("warehouseLocation", countLocation));
+        list.add(new InventoryDTO.TabDto("warehouse", countWarehouse));
+        list.add(new InventoryDTO.TabDto("warehouseArea", countArea));
+        list.add(new InventoryDTO.TabDto("warehouseLocation", countLocation));
 
         return ApiResult.success(list);
     }

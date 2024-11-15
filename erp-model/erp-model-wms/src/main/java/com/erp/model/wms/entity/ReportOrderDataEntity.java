@@ -126,11 +126,11 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
 
     public static final String SKU_ID = "sku_id";
 
-    public static final String QTY = "qty";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String STATUS = "status";
+    
 
     public static final String INVALID_STATUS = "invalid_status";
 
@@ -142,7 +142,7 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
 
     public static final String SOURCE_TYPE = "source_type";
 
-    public static final String DATE = "date";
+    
 
     @Override
     public Serializable pkVal() {

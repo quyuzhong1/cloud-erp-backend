@@ -60,13 +60,6 @@ public enum WmsRedisKeyEnum {
         return keyPrefix + ":" + module + ":" + func + ":" + key;
     }
 
-    WmsRedisKeyEnum(String keyPrefix, String module, String func, String remark) {
-        this.keyPrefix = keyPrefix;
-        this.module = module;
-        this.func = func;
-        this.remark = remark;
-    }
-
     WmsRedisKeyEnum(String keyPrefix, String module, String func, String key, String remark) {
         this.keyPrefix = keyPrefix;
         this.module = module;

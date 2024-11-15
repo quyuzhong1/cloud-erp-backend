@@ -2,7 +2,6 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

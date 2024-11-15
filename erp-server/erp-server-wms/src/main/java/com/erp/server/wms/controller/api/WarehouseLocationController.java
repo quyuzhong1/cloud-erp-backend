@@ -1039,7 +1039,7 @@ public class WarehouseLocationController extends BaseController {
      * 启用/禁用仓位
      */
     @PostMapping("/updateStatus")
-    public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationDTO.updateStatusDto dto){
+    public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationDTO.UpdateStatusDto dto){
         warehouseLocationService.updateDisabled(dto);
         return ApiResult.success();
     }
@@ -1058,7 +1058,7 @@ public class WarehouseLocationController extends BaseController {
      * 编辑更新仓位
      */
     @PostMapping("/edit")
-    public ApiResult<Void> edit(@RequestBody @Validated WarehouseLocationDTO.updateDto dto){
+    public ApiResult<Void> edit(@RequestBody @Validated WarehouseLocationDTO.UpdateDto dto){
         warehouseLocationService.update(dto);
         return ApiResult.success();
     }
@@ -1067,7 +1067,7 @@ public class WarehouseLocationController extends BaseController {
      * 仓位管理tab接口
      */
     @GetMapping("/tabList")
-    public ApiResult<List<WarehouseLocationDTO.tabDto>> tabList(){
+    public ApiResult<List<WarehouseLocationDTO.TabDto>> tabList(){
         return ApiResult.success(warehouseLocationService.tabList());
     }
 

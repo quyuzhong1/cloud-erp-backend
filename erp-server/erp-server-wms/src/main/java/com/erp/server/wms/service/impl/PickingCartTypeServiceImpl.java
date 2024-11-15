@@ -43,13 +43,13 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean batchUpdate(List<PickingCartTypeDTO.batchUpdateDTO> list) {
+    public Boolean batchUpdate(List<PickingCartTypeDTO.BatchUpdateDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.TIME_NOT_NULL,"拣货车类型");
         }
 
-        Map<String, List<PickingCartTypeDTO.batchUpdateDTO>> map = list.stream().collect(Collectors.groupingBy(PickingCartTypeDTO.batchUpdateDTO::getName));
-        for (Map.Entry<String, List<PickingCartTypeDTO.batchUpdateDTO>> entry : map.entrySet()) {
+        Map<String, List<PickingCartTypeDTO.BatchUpdateDTO>> map = list.stream().collect(Collectors.groupingBy(PickingCartTypeDTO.BatchUpdateDTO::getName));
+        for (Map.Entry<String, List<PickingCartTypeDTO.BatchUpdateDTO>> entry : map.entrySet()) {
             if (entry.getValue().size() > 1) {
                 throw new ServiceException(StrUtil.format("拣货车名称【{}】不能重复",entry.getKey()));
             }
@@ -63,7 +63,7 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
             index++;
         }
         //删除非修改的数据
-        List<String> updateIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(PickingCartTypeDTO.batchUpdateDTO::getId).distinct().collect(Collectors.toList());
+        List<String> updateIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(PickingCartTypeDTO.BatchUpdateDTO::getId).distinct().collect(Collectors.toList());
         deleteByUpdateIdList(updateIdList);
 
         return this.saveOrUpdateBatch(pickingCartTypeList);

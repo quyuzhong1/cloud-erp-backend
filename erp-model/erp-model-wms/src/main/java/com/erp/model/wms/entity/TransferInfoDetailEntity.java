@@ -114,11 +114,11 @@ public class TransferInfoDetailEntity extends BaseEntity<TransferInfoDetailEntit
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
+    
 
-    public static final String UNIT = "unit";
+    
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

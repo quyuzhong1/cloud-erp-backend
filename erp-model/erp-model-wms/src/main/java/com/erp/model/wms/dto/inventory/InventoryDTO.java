@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.poi.ss.formula.functions.T;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -139,7 +138,8 @@ public class InventoryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportInvParamDTO {
+    public static class ExportInvParamDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
         /**
          * 仓库id（勾选导出必传参数）
@@ -235,17 +235,6 @@ public class InventoryDTO implements Serializable {
          * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位
          */
         private String dimension;
-
-        /**
-         * 仓位编码
-         */
-//        private String warehouseLocationCode;
-
-        /**
-         * 库区编码
-         */
-//        private String warehouseAreaCode;
-
         /**
          * 库区编码集合
          */
@@ -1049,13 +1038,6 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UsableInventoryParamDTO {
-        /**
-         * 组织id
-         */
-        /*
-        @NotBlank(message = "仓库组织不能为空")
-        private String orgId;
-         */
 
         /**
          * 仓库id
@@ -1600,9 +1582,10 @@ public class InventoryDTO implements Serializable {
     /**
      * PDA:库存查询（SKU）
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    public static class PdaInventoryWarehousePageDTO<T> extends PagingVO implements Serializable{
+    public static class PdaInventoryWarehousePageDTO<T> extends PagingVO<T> implements Serializable{
         /**
          * 库位
          */
@@ -1799,7 +1782,7 @@ public class InventoryDTO implements Serializable {
 
     @AllArgsConstructor
     @Data
-    public static class tabDto{
+    public static class TabDto {
         /**
          * 类型：warehouse仓库，warehouseArea库区，warehouseLocation仓位
          */

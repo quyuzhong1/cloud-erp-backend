@@ -293,7 +293,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 //        });
         // 修改明细数据（包含增删改）
         updateDto.setDetailList(detailList);
-//        updateDto.setWarehouseId(detail.getWarehouseId());
+//        UpdateDto.setWarehouseId(detail.getWarehouseId());
         updateDto.setPcShow(true);
         warehouseLocationMoveDetailService.update(updateDto, warehouseLocationMoveEntity);
 
