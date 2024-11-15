@@ -1809,7 +1809,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         transferDto.setOutOrgId(fromWarehouseEntity.getOrgId());
         transferDto.setSourceId(dto.getSourceId());
         transferDto.setSourceCode(dto.getSourceCode());
-        transferDto.setSourceType(dto.getSourceType());
+        if (Objects.equals(SourceTypeEnum.SO_INFO.getCode(), dto.getSourceType())){
+            if (isFirst){
+                transferDto.setSourceType(dto.getSourceType());
+            }else {
+                transferDto.setSourceType(SourceTypeEnum.SO_INFO_TRANSFER_INFP.getCode());
+            }
+        }else {
+            transferDto.setSourceType(dto.getSourceType());
+        }
         transferDto.setBatchNo(batchNo);
         transferDto.setIndex(i);
         List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(generateInfoList, fromWarehouseId, toWarehouseId,isFirst);
