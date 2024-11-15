@@ -12,7 +12,7 @@ import java.io.Serializable;
  * @Created by yl
  */
 @Data
-public class migrateTempVO implements Serializable {
+public class MigrateTempVO implements Serializable {
 
 
     /**
