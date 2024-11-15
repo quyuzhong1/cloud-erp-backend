@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoReturnReceiveDTO {
+    private SoReturnReceiveDTO() {
+        throw new IllegalStateException("Utility SoReturnReceiveDTO class");
+    }
     /**
      * 分页参数
      */

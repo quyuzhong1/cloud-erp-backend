@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoReturnNoticeDTO {
+    private SoReturnNoticeDTO() {
+        throw new IllegalStateException("Utility SoReturnNoticeDTO class");
+    }
     /**
      * 分页参数
      */

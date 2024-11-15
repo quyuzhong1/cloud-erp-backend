@@ -45,7 +45,7 @@ public class YanWenQueryOrder {
     //下单时间
     private Date createTime;
 
-    //运单状态:0 已制单 1 已确认发货 2 已收货3 运输途中 4 已妥投 5 已取消 6 已截留 7派送异常 8 异常 9 退件;
+    /**运单状态:0 已制单 1 已确认发货 2 已收货3 运输途中 4 已妥投 5 已取消 6 已截留 7派送异常 8 异常 9 退件;**/
     private Integer status;
 
     //是否打印 1:是 0:否
@@ -152,7 +152,6 @@ public class YanWenQueryOrder {
         //是否带电 1:是 0:否
         private Integer hasBattery;
 
-        //币种代码传 USD,EUR,GBP,CNY,AUD,CAD;
         private String currency;
 
         //申报总价值
