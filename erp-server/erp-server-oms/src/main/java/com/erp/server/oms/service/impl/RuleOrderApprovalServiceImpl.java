@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -102,7 +103,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单审核规则", ruleOrderApprovalEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单审核规则", ruleOrderApprovalEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), id, "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -154,7 +155,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
 
         ruleConditionService.updateRuleCondition(id, conditionList);
 
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleOrderApprovalEntity.getId(), "订单审核规则");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleOrderApprovalEntity.getId(), "订单审核规则");
         operateLogService.addModuleOperateLogByObj(old, ruleOrderApprovalEntity, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), ruleOrderApprovalEntity.getId(), msg);
         return Boolean.TRUE;
     }

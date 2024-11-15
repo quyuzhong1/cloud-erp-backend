@@ -1,5 +1,6 @@
 package com.erp.server.oms.sdk.authorize;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -136,7 +137,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         String resultState = "GSA_" + state.substring(4);
 
         // 缓存state
-        String key = StrUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, resultState);
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, resultState);
         Object obj = redisUtil.get(key);
         if (null != obj) {
             throw new ServiceException("该店铺真正申请授权中");
@@ -171,7 +172,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException("信息state不存在");
         }
         // 校验是否是本系统发起
-        String key = StrUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, dto.getState());
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, dto.getState());
         Object shopIdObj = redisUtil.get(key);
         if (null == shopIdObj) {
             throw new ServiceException("信息已失效, 请重新发起授权");
@@ -252,7 +253,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             }
 
             // platform-token:平台名称:店铺ID
-            String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.AMAZON.getCode(), shopId);
+            String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.AMAZON.getCode(), shopId);
             redisShopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
             redisShopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
             redisUtil.set(tokenKey, redisShopInfoDTO, tokenDTO.getExpiresIn());

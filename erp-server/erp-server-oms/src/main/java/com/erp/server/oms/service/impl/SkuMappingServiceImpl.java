@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -432,9 +433,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
 
         // 操作日志
-//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMaping.getId());
+//        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMaping.getId());
 //        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
-        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
+        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(),  CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
         return addSkuMaping.getId();
     }
 
@@ -527,7 +528,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
             // 操作日志
-            String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getId());
+            String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingId, "新增操作");
             return skuMappingEntity.getId();
         }
@@ -640,7 +641,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("[SkuMapping] 数据新增失败");
         }
         // 操作日志
-//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMapping.getId());
+//        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMapping.getId());
 //        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "新增操作");
         operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMapping.getListingId(), "编辑sku映射表");
         return addSkuMapping.getId();
@@ -1363,7 +1364,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         listingInfoEntityList.forEach(v->{
             v.setMatchResult(ListingMatchResultEnum.NOT.getCode());
             v.setRemark(dto.getRemark());
-            String msg = StrUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
+            String msg =  CharSequenceUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), v.getId(), "状态变更");
         });
         listingInfoService.updateBatchById(listingInfoEntityList);

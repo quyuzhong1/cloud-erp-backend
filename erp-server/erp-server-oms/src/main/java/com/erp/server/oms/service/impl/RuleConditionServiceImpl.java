@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -70,7 +71,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "规则条件单", ruleConditionEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "规则条件单", ruleConditionEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, ruleConditionEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -97,7 +98,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
 
         // 记录主单操作日志
         log.info("编辑 开始记录规则条件单日志数据，id：【{}】", ruleConditionEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleConditionEntity.getId(), "规则条件单");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleConditionEntity.getId(), "规则条件单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, ruleConditionEntity, null, ruleConditionEntity.getId(), msg);
         return Boolean.TRUE;
@@ -224,7 +225,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         for (RuleConditionEntity updateItem : updateRuleConditionList) {
             RuleConditionEntity old = dbList.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
             if (Objects.nonNull(old)) {
-                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, StrUtil.format("修改了第【{}】条订单规则",updateItem.getIndex()));
+                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId,  CharSequenceUtil.format("修改了第【{}】条订单规则",updateItem.getIndex()));
             }
         }
         handleDataList(saveOrUpdateList);
