@@ -35,7 +35,7 @@ public class ImportAndExportController extends BaseController {
      * @return
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletRequest request, HttpServletResponse response, @RequestParam(value = "type") String type) {
+    public ApiResult<Object> downloadTemplate(HttpServletRequest request, HttpServletResponse response, @RequestParam(value = "type") String type) {
         commonService.downloadTemplate(request,response,type);
         return success();
     }

@@ -5024,7 +5024,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //sku 创建时间
-        List skuCreateTimeList = params.getSkuCreateTimeList();
+        List<LocalDateTime> skuCreateTimeList = params.getSkuCreateTimeList();
         List<String> skuIdList = Lists.newArrayList();
         if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
             List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
@@ -7238,7 +7238,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
         //sku 创建时间
-        List skuCreateTimeList = dto.getParams().getSkuCreateTimeList();
+        List<LocalDateTime> skuCreateTimeList = dto.getParams().getSkuCreateTimeList();
         List<String> skuIdList = Lists.newArrayList();
         if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
             List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);

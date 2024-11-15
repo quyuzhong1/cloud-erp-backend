@@ -515,11 +515,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveOneDTO.setId(dto.getId());
                 approveOneDTO.setComment(dto.getComment());
                 approveOneDTO.setType(dto.getType());
-                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-                    plmTaskFeign.pilotApprovalPass(approveOneDTO);
-                } else {
-                    plmTaskFeign.pilotApprovalNoPass(approveOneDTO);
-                }
+                plmTaskFeign.pilotApprovalPass(approveOneDTO);
                 break;
             case PRODUCT_BOM_INFO:
                 AuditParamDTO auditParamDTO = new AuditParamDTO();

@@ -14,7 +14,7 @@ import java.util.Date;
  */
 @TableName(value ="product_variant_property")
 @Data
-public class ProductVariantPropertyEntity extends BaseEntity implements Serializable {
+public class ProductVariantPropertyEntity extends BaseEntity<ProductVariantPropertyEntity> implements Serializable {
 
     /**
      * 属性值

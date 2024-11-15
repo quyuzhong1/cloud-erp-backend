@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_accessories")
-public class ProductAccessoriesEntity extends BaseEntity {
+public class ProductAccessoriesEntity extends BaseEntity<ProductAccessoriesEntity> {
     private static final long serialVersionUID = 203604435236054219L;
 
     /**

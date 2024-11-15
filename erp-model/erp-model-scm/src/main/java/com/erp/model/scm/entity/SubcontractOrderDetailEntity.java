@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -237,17 +236,17 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
 
     public static final String SUPPLIER_ID = "supplier_id";
 
-    public static final String QTY = "qty";
+    public static final String FIELD_QTY = "qty";
 
     public static final String DELIVERY_QTY = "delivery_qty";
 
-    public static final String PRICE = "price";
+    public static final String FIELD_PRICE = "price";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String CURRENCY_SYMBOL = "currency_symbol";
 
-    public static final String AMOUNT = "amount";
+    public static final String FIELD_AMOUNT = "amount";
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 

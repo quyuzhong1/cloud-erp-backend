@@ -198,7 +198,7 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
 
     public static final String IS_CREATE_PO = "is_create_po";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String VARIANT_PROPERTY = "variant_property";
 

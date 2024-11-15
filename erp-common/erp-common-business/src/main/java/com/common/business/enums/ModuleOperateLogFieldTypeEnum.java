@@ -47,4 +47,12 @@ public enum ModuleOperateLogFieldTypeEnum {
         }
         return "";
     }
+    public static ModuleOperateLogFieldTypeEnum getEnumByCode(Integer code) {
+        for (ModuleOperateLogFieldTypeEnum item : ModuleOperateLogFieldTypeEnum.values()) {
+            if (item.getCode().equals(code)) {
+               return item;
+            }
+        }
+        return null;
+    }
 }

@@ -1,7 +1,6 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -48,6 +47,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.alibaba.excel.EasyExcelFactory.read;
+
 /**
  * @author Will
  * @version 1.0
@@ -86,11 +87,11 @@ public class BomCombinationServiceImpl implements BomCombinationService {
     public PagingVO<BomCombinationDTO.ListDTO> paging(PagingDTO<BomCombinationDTO.SearchParamDTO> dto) {
         BomCombinationDTO.SearchParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<BomCombinationDTO.SearchParamDTO> query = new Page<BomCombinationDTO.SearchParamDTO>(dto.getCurrPage(), dto.getPageSize());
         IPage<BomCombinationDTO.ListDTO> pageData = bomInfoMapper.combinationPaging(query, params);
         //处理分页数据
         handlePaging(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<BomCombinationDTO.ListDTO>(pageData);
     }
 
 
@@ -156,7 +157,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         BomCombinationExcelListener excelListenerUtil = new BomCombinationExcelListener();
 
         try {
-            EasyExcel.read(excelFile.getInputStream(), BomCombinationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), BomCombinationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -178,7 +179,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
 
 
         if (CollectionUtils.isNotEmpty(errorList)) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             String excelPath = "excel/bomCombination.xlsx";
             String name = "bomCombination";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -270,7 +271,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         for (Map.Entry<String, List<BomDTO.BomSku>> entry : map.entrySet()) {
             List<BomDTO.BomSku> value = entry.getValue();
             //父级SKU相同无需校验
-            if (StrUtil.equals(entry.getKey(),dto.getSkuNo())) {
+            if (CharSequenceUtil.equals(entry.getKey(),dto.getSkuNo())) {
                 continue;
             }
             //子级数量不一致无需校验
@@ -281,7 +282,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             Boolean isMatch = Boolean.TRUE;
             for (BomDTO.BomSku bomSku : value) {
                 long count = dto.getChildSkuList().stream()
-                        .filter(obj -> StrUtil.equals(obj.getSkuId(), bomSku.getSkuId())
+                        .filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), bomSku.getSkuId())
                                 && MathUtil.compareTo(obj.getQty(), bomSku.getQty()) == MathUtil.ZERO)
                         .count();
                 if (count == MathUtil.ZERO) {
@@ -317,12 +318,12 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             BomCombinationDetailDTO.UpdateDTO updateDTO = new BomCombinationDetailDTO.UpdateDTO();
             //产品信息SKU
             ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(productDetailEntity)) {
+            if (productDetailEntity == null) {
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,importExcelDTO.getSkuNo());
             }
             //bom信息
             BomSkuEntity bomSkuEntity = bomSkuList.stream().filter(obj -> obj.getSkuId().equals(productDetailEntity.getId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(bomSkuEntity)) {
+            if (bomSkuEntity != null) {
                 updateDTO.setId(bomSkuEntity.getId());
             }
             updateDTO.setSkuId(productDetailEntity.getId());
@@ -336,8 +337,8 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         List<BomCombinationDTO.CheckBomChildSkuDTO> childSkuList = updateList.stream().map(obj -> new BomCombinationDTO.CheckBomChildSkuDTO(obj.getSkuId(), obj.getQty())).collect(Collectors.toList());
         dto.setChildSkuList(childSkuList);
         String parentSkuNos = checkBomChildSku(dto);
-        if (StrUtil.isNotBlank(parentSkuNos)) {
-            throw new ServiceException(StrUtil.format("子产品明细与已存在捆绑商品【{}】的子件一致，如需继续创建，请手动单个创建",parentSkuNos));
+        if (CharSequenceUtil.isNotBlank(parentSkuNos)) {
+            throw new ServiceException(CharSequenceUtil.format("子产品明细与已存在捆绑商品【{}】的子件一致，如需继续创建，请手动单个创建",parentSkuNos));
         }
         return updateList;
     }
@@ -576,7 +577,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         for (BomCombinationDetailDTO.AddDTO addDetail : dto.getDetailList()) {
             BomChildrenSkuDTO childrenSkuDTO = new BomChildrenSkuDTO();
             ProductDetailEntity child = childList.stream().filter(obj -> obj.getId().equals(addDetail.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(child)) {
+            if (child == null) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             childrenSkuDTO.setSkuId(addDetail.getSkuId());
@@ -637,7 +638,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         for (BomCombinationDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
             BomChildrenSkuDTO childrenSkuDTO = new BomChildrenSkuDTO();
             ProductDetailEntity child = childList.stream().filter(obj -> obj.getId().equals(updateDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(child)) {
+            if (child == null) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(child.getStatus())) {
@@ -705,10 +706,11 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             }
             for (BomCombinationDTO.ChildDTO childDTO : dto.getChildList()) {
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(childDTO.getMainSupplierId()) && req.getSkuId().equals(childDTO.getChildSkuId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
-                    //含税价
-                    childDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+                if (supplierSkuPrice == null) {
+                    continue;
                 }
+                //含税价
+                childDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
             }
             //子级sku编号
             String childSkoNos = dto.getChildList().stream().map(BomCombinationDTO.ChildDTO::getChildSkuNo).collect(Collectors.joining(","));

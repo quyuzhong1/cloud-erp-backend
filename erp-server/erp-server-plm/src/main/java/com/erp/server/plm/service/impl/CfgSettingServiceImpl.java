@@ -2,15 +2,12 @@ package com.erp.server.plm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.entity.PlmCfgSettingEntity;
 import com.erp.model.plm.enums.PlmCfgSettingEnum;
 import com.erp.model.sys.dto.PlmCfgSettingDTO;
-import com.erp.model.wms.dto.CfgRuleOutDTO;
 import com.erp.server.plm.mapper.CfgSettingMapper;
 import com.erp.server.plm.service.CfgSettingService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static cn.hutool.core.collection.CollUtil.isEmpty;
 
 /**
  * <p>
@@ -60,7 +59,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Pl
             return;
         }
         List<PlmCfgSettingDTO.MaterialAttributeControlDetail> detailList = materialAttributeControl.getDetailList();
-        if(CollectionUtil.isEmpty(detailList)){
+        if(isEmpty(detailList)){
             return;
         }
         List<String> valueList = detailList.stream().flatMap(v->v.getMaterialAttributeList().stream()).collect(Collectors.toList());

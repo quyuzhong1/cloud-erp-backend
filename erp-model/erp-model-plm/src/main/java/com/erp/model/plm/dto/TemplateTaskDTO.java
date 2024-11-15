@@ -107,11 +107,6 @@ public class TemplateTaskDTO implements Serializable {
         @Valid
         private List<DocsDTO> deliveryDocsList;
 
-//        /**
-//         * 前置任务id
-//         */
-//        private List<String> preTaskIdList;
-
         /**
          * 前置任务id
          */

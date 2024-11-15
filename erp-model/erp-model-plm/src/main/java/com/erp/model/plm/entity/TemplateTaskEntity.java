@@ -19,7 +19,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("template_task")
-public class TemplateTaskEntity extends BaseEntity implements Serializable {
+public class TemplateTaskEntity extends BaseEntity<TemplateTaskEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

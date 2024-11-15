@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
  **/
 @TableName(value ="product_sale")
 @Data
-public class ProductSaleEntity extends BaseEntity implements Serializable {
+public class ProductSaleEntity extends BaseEntity<ProductSaleEntity> implements Serializable {
     /**
      * 产品sku表id
      */

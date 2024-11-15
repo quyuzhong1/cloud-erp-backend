@@ -23,7 +23,7 @@ import java.util.List;
  */
 public interface NoticeMessageService extends IService<NoticeMessageEntity> {
 
-    PagingVO<List<NoticeMessageDTO>> paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<NoticeMessageDTO> paging(PagingDTO<BaseSearchDTO> dto);
 
     Boolean add(NoticeMessageDTO dto);
 

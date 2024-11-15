@@ -1,9 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -73,6 +72,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.text.CharSequenceUtil.*;
+import static com.alibaba.excel.EasyExcelFactory.read;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_LOGISTICS_PRODUCT;
 
 /**
@@ -133,14 +134,14 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
         LogisticsProductDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<LogisticsProductDTO.PagingParamDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         //列表Tab查询状态处理
         Boolean isFlag = doOpHandleTableParam(params);
         if (!isFlag) {
-            return new PagingVO(new Page());
+            return new PagingVO<>();
         }
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
-        IPage pageData = baseMapper.logisticsProductPaging(query, params, approvalStatus);
+        IPage<LogisticsProductDTO.PagingVO> pageData = baseMapper.logisticsProductPaging(query, params, approvalStatus);
         List<LogisticsProductDTO.PagingVO> list = pageData.getRecords();
         fillPagingDb(list);
         return new PagingVO<>(pageData);
@@ -200,6 +201,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         result.setProductBaseInfo(productBaseInfo);
         LogisticsProductDTO.DeclareInfoDTO declareInfo = new LogisticsProductDTO.DeclareInfoDTO();
         ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(skuId);
+        if (ObjectUtil.isEmpty(productLogistics)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"产品物流信息");
+        }
 
         String usdCode = CurrencyEnum.USD.getCurrencyCode();
         //汇率
@@ -212,24 +216,16 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         result.setExchangeRate(rate);
 
         String sourceCountryName = "";
-//        BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
-        if (Objects.nonNull(productLogistics)) {
-            //目的国申报价
-//            BigDecimal destDeclarePrice = productLogistics.getDestDeclarePrice();
-//            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-//                BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
-//                productLogistics.setDestDeclarePrice(resultDestDeclarePrice);
-//            }
-            //原产国
-            String sourceCountry = productLogistics.getSourceCountry();
-            if (StringUtils.isNotBlank(sourceCountry)) {
-                DictCountryEntity countryEntity = sysUserFeign.getCountryById(sourceCountry);
-                if (Objects.nonNull(countryEntity)) {
-                    sourceCountryName = countryEntity.getNameCn();
-                }
+        //原产国
+        String sourceCountry = productLogistics.getSourceCountry();
+        if (StringUtils.isNotBlank(sourceCountry)) {
+            DictCountryEntity countryEntity = sysUserFeign.getCountryById(sourceCountry);
+            if (Objects.nonNull(countryEntity)) {
+                sourceCountryName = countryEntity.getNameCn();
             }
-            BeanMapper.copy(productLogistics, declareInfo);
         }
+        BeanMapper.copy(productLogistics, declareInfo);
+
         //这个是属性id 可能多个逗号分割
         String propertyId = productLogistics.getProductPropertyId();
         String propertyName = "";
@@ -347,7 +343,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
         LogisticsProductExcelListener excelListenerUtil = new LogisticsProductExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), LogisticsProductExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), LogisticsProductExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入物流场频错误！{}", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -365,7 +361,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         handleImportSuccessList(successList, errorList);
 
         if (errorList.size() > 0) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             String excelPath = "excel/logisticsProductError.xlsx";
             String name = "productLogistics";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -447,10 +443,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public PagingVO<LogisticsProductDTO.UpdatePagingDTO> updatePaging(PagingDTO<LogisticsProductDTO.UpdatePagingParamDTO> dto) {
         LogisticsProductDTO.UpdatePagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<LogisticsProductDTO.UpdatePagingParamDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         List<String> fieldList = listField();
-        IPage pageData = baseMapper.logisticsProductUpdatePaging(query, params, approvalStatus, fieldList);
+        IPage<LogisticsProductDTO.UpdatePagingDTO> pageData = baseMapper.logisticsProductUpdatePaging(query, params, approvalStatus, fieldList);
         return new PagingVO<>(pageData);
     }
 
@@ -490,7 +486,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public BatchResultDTO submit(String id, Boolean aTrue) {
         ProductLogisticsEntity entity = productLogisticsService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到物流产品数据");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))) {
@@ -511,7 +507,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public BatchResultDTO cancelProcess(String id) {
         ProductLogisticsEntity entity = productLogisticsService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到物流产品数据");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
         }
         // 只有审核中的单据允许撤销
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -538,7 +534,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         ProductLogisticsEntity entity = productLogisticsService.getById(dto.getId());
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到物流产品数据");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
         }
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
@@ -555,7 +551,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public BatchResultDTO disApprove(String id) {
         ProductLogisticsEntity entity = productLogisticsService.getEntityById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到物流产品数据");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
         }
         // 已审核支持反审核
         if (!Objects.equals(ApproveStatusEnum.APPROVE, entity.getApproveStatus())) {
@@ -564,10 +560,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         //校验下推是否备案
         List<ProductRegistrationEntity> productRegistrationList = forecastFeign.listBySkuId(entity.getSkuId());
         if (CollectionUtils.isNotEmpty(productRegistrationList)) {
-            long count = productRegistrationList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.DRAFT.getCode())
-                    && !StrUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.CANCEL.getCode())).count();
+            long count = productRegistrationList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.DRAFT.getCode())
+                    && !CharSequenceUtil.equals(obj.getStatus(), ProductRegistrationEnum.StatusEnum.CANCEL.getCode())).count();
             if (count > 0) {
-                throw new ServiceException(StrUtil.format("已下推备案信息(非备案不通过、已取消)不支持反审核",entity.getSkuNo()));
+                throw new ServiceException(format("已下推备案信息(非备案不通过、已取消)不支持反审核",entity.getSkuNo()));
             }
         }
         // 更新审核信息
@@ -584,8 +580,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         //更新状态
-        updateForApprove(entity.getId(), approveStatus.getStatus());
-        return Boolean.TRUE;
+        return updateForApprove(entity.getId(), approveStatus.getStatus());
     }
 
     @Override
@@ -594,16 +589,16 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     public List<BatchResultDTO> pushRegistration(LogisticsProductDTO.PushRegistrationDTO dto) {
         List<ProductLogisticsEntity> productLogisticsList = productLogisticsService.listByIds(dto.getLogisticsProductIdList());
         if (CollectionUtils.isEmpty(productLogisticsList)) {
-            throw new ServiceException("未找到物流产品信息");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流产品");
         }
         List<String> skuIdList = productLogisticsList.stream().map(ProductLogisticsEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(skuIdList);
 
         String skuNos = productLogisticsList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus()))
-                .map(obj -> productDetailEntityList.stream().filter(e-> StrUtil.equals(obj.getSkuId(),e.getId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuNo())).orElse(""))
+                .map(obj -> productDetailEntityList.stream().filter(e-> CharSequenceUtil.equals(obj.getSkuId(),e.getId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuNo())).orElse(""))
                 .collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(skuNos)) {
-            throw new ServiceException(StrUtil.format("物流产品信息SKU【{}】备案未审核完成，不支持推送备案",skuNos));
+        if (isNotBlank(skuNos)) {
+            throw new ServiceException(format("物流产品信息SKU【{}】备案未审核完成，不支持推送备案",skuNos));
         }
         ProductRegistrationDTO.AddDTO addDTO = new ProductRegistrationDTO.AddDTO();
         addDTO.setDeclareSupplierId(dto.getDeclareSupplierId());
@@ -644,10 +639,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
      * @param id
      * @param approveStatus
      */
-    public void updateForApprove(String id, String approveStatus) {
+    public Boolean updateForApprove(String id, String approveStatus) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        productLogisticsService.lambdaUpdate().eq(ProductLogisticsEntity::getId, id)
+       return productLogisticsService.lambdaUpdate().eq(ProductLogisticsEntity::getId, id)
                 .set(ProductLogisticsEntity::getApproveUserId, userInfo.getUid())
                 .set(ProductLogisticsEntity::getApproveUserName, userInfo.getUserName())
                 .set(ProductLogisticsEntity::getApproveStatus, approveStatus)
@@ -789,12 +784,12 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                     customs.setToCurrency(usd.getCurrencyCode());
                     customs.setToCurrencySymbol(usd.getCurrencySymbol());
                 }
-                logistics.setFirstQty(StrUtil.isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
-                logistics.setSecondQty(StrUtil.isBlank(item.getSecondQtyStr()) ? null : new BigDecimal(item.getSecondQtyStr()));
+                logistics.setFirstQty(isBlank(item.getFirstQtyStr()) ? null : new BigDecimal(item.getFirstQtyStr()));
+                logistics.setSecondQty(isBlank(item.getSecondQtyStr()) ? null : new BigDecimal(item.getSecondQtyStr()));
                 if (StringUtils.isBlank(skuId)) {
                     errorMsgList.add("sku不存在或者sku未审核通过");
                 }
-                if (!StrUtil.equals(logistics.getApproveStatus().getCode(),ApproveStatusEnum.WAIT_SUBMIT.getCode())) {
+                if (!CharSequenceUtil.equals(logistics.getApproveStatus().getCode(),ApproveStatusEnum.WAIT_SUBMIT.getCode())) {
                     errorMsgList.add("只有待提交物流产品支持导入");
                 }
                 String combinationDeclareTypeStr = item.getCombinationDeclareType();
@@ -840,7 +835,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             }
 
            productLogisticsService.saveOrUpdate(logistics);
-//            productCustomsService.removeBySkuId(Arrays.asList(skuId));
             productCustomsService.saveOrUpdateBatch(customsList);
             productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
         }
@@ -919,7 +913,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         List<BomChildrenSkuDTO> bomChildrenList = bomSkuService.listBomChildBySkuIds(skuIdList);
         String bomType = BomTypeEnum.COMBINATION.getType();
         for (LogisticsProductDTO.PagingVO item : list) {
-            String skuNo = item.getSkuNo();
             Integer salesStatus = item.getSalesStatus();
             String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
             item.setSalesStatusName(salesStatusName);
@@ -965,14 +958,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         List<BasicDictEntity> dictList = basicDictService.listByIds(dictIdList);
         BigDecimal zero = BigDecimal.ZERO;
 
-        String usdCode = CurrencyEnum.USD.getCurrencyCode();
-        String nowDay = LocalDate.now().toString();
-        //汇率
-        BigDecimal rate = dmpTaskFeign.getRate(nowDay, usdCode);
-        if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) == 0) {
-            rate = new BigDecimal("7.13");
-        }
-
         List<DmpSkuCostEntity>  skuCostList= dmpTaskFeign.listRedisBySkuNoList(skuNoList);
 
         for (LogisticsProductDTO.ExportInfoDTO item : list) {
@@ -986,14 +971,6 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 item.setActualTaxCost(actualTaxCost);
                 item.setActualNoTaxCost(map.get("actualNoTaxCost"));
             }
-            BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, rate);
-            //目的国申报价  20240223这里改成审核后重新计算
-//            BigDecimal destDeclarePrice = item.getDestDeclarePrice();
-//            if (Objects.isNull(destDeclarePrice) || destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
-//                BigDecimal resultDestDeclarePrice = getDestDeclarePrice(actualTaxCostUsd);
-//                item.setDestDeclarePrice(resultDestDeclarePrice);
-//            }
-
             Integer salesStatus = item.getSalesStatus();
             String salesStatusName = SaleStateEnum.getNameByCode(salesStatus);
             item.setSalesStatusName(salesStatusName);
