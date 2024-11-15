@@ -972,10 +972,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
         //检查是否存在流程
-        ApproveOneDTO dto = new ApproveOneDTO(entity.getId(),ApproveTypeEnum.PASS.getStatus(),"", Boolean.FALSE);
-        if (!checkProcess(entity,dto) && isProcess){
-            ruleProcess(entity,dto);
-        }
+//        ApproveOneDTO dto = new ApproveOneDTO(entity.getId(),ApproveTypeEnum.PASS.getStatus(),"", Boolean.FALSE);
+//        if (!checkProcess(entity,dto) && isProcess){
+//            ruleProcess(entity,dto);
+//        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
     @Transactional(rollbackFor = Exception.class)

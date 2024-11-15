@@ -775,6 +775,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (ObjectUtil.isEmpty(SoB2cDetailEntity)) {
                 throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到销售订单对应明细",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
             }
+            if (StrUtil.isBlank(SoB2cDetailEntity.getVirtualWarehouseId())){
+                continue;
+            }
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setSourceId(transferInfoEntity.getId());
@@ -822,6 +825,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity = soB2cDeliveryDetailEntities.stream().filter(e -> Objects.equals(e.getSkuNo(), transferInfoDetailEntity.getSkuNo())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soB2cDeliveryDetailEntity)) {
                 throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到发货单对应明细",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
+            }
+            if (StrUtil.isBlank(soB2cDeliveryDetailEntity.getVirtualWarehouseId())){
+                continue;
             }
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setBillDate(LocalDate.now());
