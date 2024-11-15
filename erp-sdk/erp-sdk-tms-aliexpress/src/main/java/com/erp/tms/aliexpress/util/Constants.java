@@ -3,11 +3,12 @@ package com.erp.tms.aliexpress.util;
 /**
  * @author zdy
  * @ClassName Constants
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
 public abstract class Constants {
+    private Constants() {
+    }
     public static final String APP_KEY = "app_key";
 
     public static final String TIMESTAMP = "timestamp";

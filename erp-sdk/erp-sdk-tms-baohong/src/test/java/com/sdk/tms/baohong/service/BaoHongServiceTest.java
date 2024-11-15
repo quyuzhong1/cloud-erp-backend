@@ -134,23 +134,6 @@ public class BaoHongServiceTest {
                 "}";
         CreateOrderInfo createOrderInfo = JSONObject.parseObject(json,new TypeReference<CreateOrderInfo>() {}.getType());
         System.out.println(json);
-//        CreateOrderInfo createOrderInfo = CreateOrderInfo.builder()
-//                .oabCountry("CN")
-//                .smCode("TY-DHL")
-//                .orderProduct(Arrays.asList(
-//                        ProductDeatil.builder()
-//                                .productSku("484654-6")
-//                                .opQuantity(1)
-//                                .purposeDeclaredValue("8.14")
-//                                .build()
-//                ))
-//                .orderStatus("2")
-//                .trackingNumber("314r131122")
-//                .oabName("wj")
-//                .referenceNo("wj2022432121")
-//                .deliveryAddress("深圳龙岗坂田")
-//                .oabStreetAddress1("深圳龙岗坂田")
-//                .build();
         BaoHongResponse<String> response = baoHongService.createOrder(createOrderInfo);
         System.out.println(response);
         System.out.println(response.getData());

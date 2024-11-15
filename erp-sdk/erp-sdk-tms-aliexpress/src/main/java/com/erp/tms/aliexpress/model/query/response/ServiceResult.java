@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName ServiceResult
- * @description: TODO
+ 
  * @date 2023年12月29日
  * @version: 1.0
  */

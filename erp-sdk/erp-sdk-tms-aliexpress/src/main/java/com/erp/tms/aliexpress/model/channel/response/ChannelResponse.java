@@ -3,15 +3,16 @@ package com.erp.tms.aliexpress.model.channel.response;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @author zdy
  * @ClassName ChannelResponse
- * @description: TODO
  * @date 2023年11月17日
  * @version: 1.0
  */
 @Data
-public class ChannelResponse {
+public class ChannelResponse implements Serializable {
     /**
      * 推荐显示排序
      */

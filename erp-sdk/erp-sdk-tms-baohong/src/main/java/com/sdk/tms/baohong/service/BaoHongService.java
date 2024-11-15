@@ -1,5 +1,6 @@
 package com.sdk.tms.baohong.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.threadlocal.TransferLogisticsContext;
@@ -74,10 +75,9 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> createOrder(CreateOrderInfo createOrderInfo){
-//        createOrderInfo.getOrderProduct().forEach(v->v.setCurrencyCode("USD"));
         createOrderInfo.getOrderProduct().forEach(v->v.setPurposeDeclaredValue(null));
         log.warn("==========BaoHongService.createOrder==========createOrderInfo:{}",createOrderInfo);
-        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(createOrderInfo));
+        TransferLogisticsContext.setRequestJson(JSON.toJSONString(createOrderInfo));
         HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
         ServiceForOrder service = BaoHongUtils.getOrderService();
         Holder<String> askHolder = new Holder<>();
@@ -94,7 +94,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> cancelOrder(String orderCode,String reason){
-        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(orderCode));
+        TransferLogisticsContext.setRequestJson(JSON.toJSONString(orderCode));
         HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
         ServiceForOrder service = BaoHongUtils.getOrderService();
         Holder<String> askHolder = new Holder<>();
@@ -109,7 +109,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<OrderDataArr> getOrderByCode(String orderCode){
-        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(orderCode));
+        TransferLogisticsContext.setRequestJson(JSON.toJSONString(orderCode));
         HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
         ServiceForOrder service = BaoHongUtils.getOrderService();
         Holder<String> askHolder = new Holder<>();
@@ -197,7 +197,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> createReceiving(ReceivingInfo receivingInfo){
-        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(receivingInfo));
+        TransferLogisticsContext.setRequestJson(JSON.toJSONString(receivingInfo));
         com.sdk.tms.baohong.api.asn.HeaderRequest headerRequest = BaoHongUtils.getAsnHeader();
         ServiceForAsn service = BaoHongUtils.getAsnService();
         Holder<String> askHolder = new Holder<>();
@@ -212,7 +212,7 @@ public class BaoHongService {
      * @return
 //     */
     public BaoHongResponse<ASNData> getReceiving(String code){
-        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(code));
+        TransferLogisticsContext.setRequestJson(JSON.toJSONString(code));
         com.sdk.tms.baohong.api.asn.HeaderRequest headerRequest = BaoHongUtils.getAsnHeader();
         ServiceForAsn service = BaoHongUtils.getAsnService();
         Holder<String> askHolder = new Holder<>();
@@ -228,7 +228,7 @@ public class BaoHongService {
      * @return
      */
     public BaoHongResponse<String> printLabel(String orderCode){
-        TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(orderCode));
+        TransferLogisticsContext.setRequestJson(JSON.toJSONString(orderCode));
         BaoHongResponse<String> result = BaoHongUtils.getPrintLabelBase64(orderCode);
         String base64 = result.getData();
         // 解码Base64
@@ -236,7 +236,7 @@ public class BaoHongService {
         String jsonString = new String(decodedBytes, StandardCharsets.UTF_8);
         // 尝试解析为JSON
         try {
-            JSONObject jsonObject = JSONObject.parseObject(jsonString);
+            JSONObject jsonObject = JSON.parseObject(jsonString);
             //解析成功，说明接口失败，封装失败信息
             result.setAsk("0");
             result.setMessage(jsonObject.get("message").toString());

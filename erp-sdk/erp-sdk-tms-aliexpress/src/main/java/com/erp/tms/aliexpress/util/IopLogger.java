@@ -8,14 +8,16 @@ import org.apache.commons.logging.LogFactory;
 /**
  * @author zdy
  * @ClassName IopLogger
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
 public class IopLogger {
-    private static final Log log = LogFactory.getLog(IopLogger.class);
 
-    private static final String LOG_SPLIT = "^_^";
+    private IopLogger() {
+
+    }
+
+    private static final Log log = LogFactory.getLog(IopLogger.class);
 
     private static String osName = System.getProperties().getProperty("os.name");
 
@@ -52,7 +54,10 @@ public class IopLogger {
         try {
             sb.append("^_^");
             sb.append(WebUtils.buildQuery(params, "utf-8"));
-        } catch (IOException e) {}
+        } catch (IOException e) {
+            sb.append("^_^");
+            sb.append("Error building query: ").append(e.getMessage());
+        }
         sb.append("^_^");
         sb.append(errorMessage);
         return sb;
