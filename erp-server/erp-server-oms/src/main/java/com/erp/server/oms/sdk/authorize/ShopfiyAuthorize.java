@@ -1,6 +1,7 @@
 package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.PlatformAnnotate;
@@ -88,7 +89,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         // 全域名：SHOP_NAME.myshopify.com
         String fullDomain = shopInfo.getDomain().concat(ShopifyConstant.DOMAIN);
         // 添加到缓存
-        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, fullDomain);
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, fullDomain);
         Object obj = redisUtil.get(key);
         if (null != obj) {
             throw new ServiceException("正在申请授权中");
@@ -192,11 +193,11 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         ShopifyShopInfoDTO shopInfoDTO = initShopInfoDTO(shopInfo, accessToken);
 
         // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO);
 
         // 删除授权缓存
-        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, dto.getShop());
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_SHOPIFY_SHOP, dto.getShop());
         Object obj = redisUtil.get(key);
         if (null != obj) {
             redisUtil.del(key);
@@ -237,7 +238,7 @@ public class ShopfiyAuthorize implements IShopAuthorizeService<T> {
         }
         // 移除缓存
         // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopInfo.getId());
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopInfo.getId());
         Object shopInfoObj = redisUtil.get(tokenKey);
         if (null != shopInfoObj) {
             redisUtil.del(tokenKey);

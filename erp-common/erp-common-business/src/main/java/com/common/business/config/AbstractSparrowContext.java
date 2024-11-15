@@ -1,5 +1,6 @@
 package com.common.business.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -8,6 +9,7 @@ import org.springframework.context.ApplicationContextAware;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
+@Slf4j
 public abstract  class AbstractSparrowContext implements ApplicationContextAware, InitializingBean {
     protected ApplicationContext applicationContext;
 
@@ -34,7 +36,7 @@ public abstract  class AbstractSparrowContext implements ApplicationContextAware
         try {
             beanInstance = applicationContext.getBean(targetClz);
         } catch (Exception ignored) {
-
+            log.warn("AbstractSparrowContext:首次获取失败:{}", targetClz);
         }
         //byName
         if (beanInstance == null) {

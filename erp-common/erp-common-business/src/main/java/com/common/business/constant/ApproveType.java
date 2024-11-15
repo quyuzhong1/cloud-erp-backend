@@ -7,15 +7,19 @@ package com.common.business.constant;
  * @Date 2023-05-15 14:22
  * @Created by yl
  */
-public interface ApproveType {
+public class ApproveType {
+
+    private ApproveType(){
+
+    }
 
     /**
      * 驳回类型
      */
-    String REJECT = "reject";
+    public static final String REJECT = "reject";
 
     /**
      * 通过类型
      */
-    String PASS = "pass";
+    public static final String PASS = "pass";
 }

@@ -3,7 +3,6 @@ package com.erp.model.mrp.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +16,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class OperateLogDTO implements Serializable {
+
+    private static final long serialVersionUID = 3732558657330796327L;
 
     @Data
     @NoArgsConstructor

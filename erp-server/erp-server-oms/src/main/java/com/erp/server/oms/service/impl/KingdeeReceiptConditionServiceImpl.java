@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -55,7 +56,7 @@ public class KingdeeReceiptConditionServiceImpl extends SuperServiceImpl<Kingdee
 
         // 记录主单操作日志
             log.info("编辑 开始记录金蝶收款条件日志数据，单号：【{}】", kingdeeReceiptConditionEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kingdeeReceiptConditionEntity.getCode(), "金蝶收款条件");
+            String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kingdeeReceiptConditionEntity.getCode(), "金蝶收款条件");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, kingdeeReceiptConditionEntity, null, kingdeeReceiptConditionEntity.getId(), msg);
         return Boolean.TRUE;

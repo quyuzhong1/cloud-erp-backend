@@ -2,7 +2,7 @@ package com.common.core.utils;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
@@ -73,7 +73,7 @@ public class BeanMapUtil {
     public static <T> List<Map<String, Object>> beanToMapList(List<T> objects) {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object object : objects) {
-            Map<String, Object> map = JSONObject.parseObject(JSONObject.toJSONString(object), new TypeReference<Map<String, Object>>(){});
+            Map<String, Object> map = JSON.parseObject(JSON.toJSONString(object), new TypeReference<Map<String, Object>>(){});
             result.add(map);
         }
         return result;
@@ -185,11 +185,11 @@ public class BeanMapUtil {
         Map<String, String> map = new HashMap<>();
         for (PropertyDescriptor target : properties) {
             String name = target.getName();
-            String camel = StrUtil.toCamelCase(name);
+            String camel = CharSequenceUtil.toCamelCase(name);
             if (!name.equalsIgnoreCase(camel)) {
                 map.put(name, camel);
             }
-            String under = StrUtil.toUnderlineCase(name);
+            String under = CharSequenceUtil.toUnderlineCase(name);
             if (!name.equalsIgnoreCase(under)) {
                 map.put(name, under);
             }

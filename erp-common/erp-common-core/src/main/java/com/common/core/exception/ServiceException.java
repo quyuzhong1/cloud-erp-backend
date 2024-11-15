@@ -1,6 +1,6 @@
 package com.common.core.exception;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import lombok.Data;
@@ -57,9 +57,9 @@ public class ServiceException extends RuntimeException {
 
     public ServiceException(String formatErrMsg,Object... args) {
         // 加上super，否则会显示null
-        super(StrUtil.format(formatErrMsg,args) );
+        super(CharSequenceUtil.format(formatErrMsg,args) );
         this.code = ApiError.Default.code;
-        this.msg = StrUtil.format(formatErrMsg,args) ;
+        this.msg = CharSequenceUtil.format(formatErrMsg,args) ;
         log.error(msg);
     }
 
@@ -71,9 +71,9 @@ public class ServiceException extends RuntimeException {
      */
     public ServiceException(ApiError apiError,Object... args) {
         // 加上super，否则会显示null
-        super(StrUtil.format(apiError.msg,args) );
+        super(CharSequenceUtil.format(apiError.msg,args) );
         this.code = apiError.code;
-        this.msg = StrUtil.format(apiError.msg,args) ;
+        this.msg = CharSequenceUtil.format(apiError.msg,args) ;
         log.error(msg);
     }
 
@@ -142,7 +142,7 @@ public class ServiceException extends RuntimeException {
      * @param params            错误信息 参数
      */
     public static void runError(Integer code, String formatedErrMsg,Object... params) {
-        throw new ServiceException(code,StrUtil.format(formatedErrMsg,params));
+        throw new ServiceException(code,CharSequenceUtil.format(formatedErrMsg,params));
     }
 
     /**
@@ -151,7 +151,7 @@ public class ServiceException extends RuntimeException {
      * @param params            错误信息 参数
      */
     public static void runWarn(String formatedErrMsg,Object... params) {
-        String msg = StrUtil.format(formatedErrMsg,params);
+        String msg = CharSequenceUtil.format(formatedErrMsg,params);
         Integer code = ApiError.WARNING.code;
         throw new ServiceException(code,msg);
     }

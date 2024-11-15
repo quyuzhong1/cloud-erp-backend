@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.entity.RefundOrderDetailEntity;
@@ -51,7 +52,7 @@ public class RefundOrderDetailServiceImpl extends SuperServiceImpl<RefundOrderDe
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "退款订单明细" , refundOrderDetailEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "退款订单明细" , refundOrderDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, refundOrderDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -80,7 +81,7 @@ public class RefundOrderDetailServiceImpl extends SuperServiceImpl<RefundOrderDe
 
         // 记录主单操作日志
             log.info("编辑 开始记录退款订单明细日志数据，id：【{}】", refundOrderDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), refundOrderDetailEntity.getId(), "退款订单明细");
+            String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), refundOrderDetailEntity.getId(), "退款订单明细");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, refundOrderDetailEntity, null, refundOrderDetailEntity.getId(), msg);
         return Boolean.TRUE;

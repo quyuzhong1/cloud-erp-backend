@@ -904,9 +904,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        ReplenishmentSuggestionDetailEntity entity = ReplenishmentResultDTO.DetailDTO.buildReplenishmentSuggestionDetail(replenishmentResult.getReplenishmentDetail(), cfgRuleStrategy,
-                replenishmentResult.getTimePeriodSalesEstimates(), replenishmentResult.getAvgTimePeriodSalesEstimates(), replenishmentResult.getTimePeriodSales(),
-                replenishmentResult.getAvgTimePeriodSales(), replenishmentResult.getPurchasePrice(), replenishmentResult.getSalesPrice());
+        ReplenishmentSuggestionDetailEntity entity = new ReplenishmentSuggestionDetailEntity();
+        ReplenishmentResultDTO.DetailDTO.setBasicAttributes(entity, replenishmentResult.getReplenishmentDetail());
+        ReplenishmentResultDTO.DetailDTO.setJsonAttributes(entity, replenishmentResult.getReplenishmentDetail(), replenishmentResult.getTimePeriodSalesEstimates(), replenishmentResult.getAvgTimePeriodSalesEstimates(), replenishmentResult.getTimePeriodSales(),
+                replenishmentResult.getAvgTimePeriodSales());
+        ReplenishmentResultDTO.DetailDTO.setOtherAttributes(entity, replenishmentResult.getReplenishmentDetail(), cfgRuleStrategy,replenishmentResult.getPurchasePrice(), replenishmentResult.getSalesPrice());
         if (CollectionUtils.isNotEmpty(replenishmentResult.getFbaInTransitDetails())) {
             List<FbaInTransitDetailEntity> fbaInTransitDetailEntities = replenishmentResult.getFbaInTransitDetails().stream()
                     .map(v -> ReplenishmentResultDTO.FbaInTransitDetailDTO.buildFbaInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
@@ -1589,7 +1591,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             exportDTO.setDynamicSalesQtyExportList(dynamicSalesQtyExportList);
             List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> fixedSalesQtyExportList = formatFixedSalesQty(pagingView,thisSalesQtyList, salesFormulaList, shopName, platformName);
             exportDTO.setFixedSalesQtyExportList(fixedSalesQtyExportList);
-            List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> salesDenoisingExportList = formatSalesDenoising(pagingView,thisSalesQtyList,  cfgRuleSalesDenoisingList, shopName, platformName);
+            List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> salesDenoisingExportList = formatSalesDenoising(pagingView,thisSalesQtyList,  cfgRuleSalesDenoisingList, shopName, platformName);
             exportDTO.setSalesDenoisingExportList(salesDenoisingExportList);
             exportList.add(exportDTO);
         }
@@ -1765,8 +1767,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     /**
      * 销量去噪
      */
-    private List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> formatSalesDenoising (ReplenishmentSuggestionVO.PagingView pagingView,List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList,List<CfgRuleSalesDenoisingEntity> cfgRuleSalesDenoisingList, String shopName, String platformName) {
-        List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> resultList = new ArrayList<>();
+    private List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> formatSalesDenoising (ReplenishmentSuggestionVO.PagingView pagingView, List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList, List<CfgRuleSalesDenoisingEntity> cfgRuleSalesDenoisingList, String shopName, String platformName) {
+        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(cfgRuleSalesDenoisingList)) {
             return resultList;
         }
@@ -1776,7 +1778,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             return resultList;
         }
         for (CfgRuleSalesDenoisingEntity salesDenoisingEntity : salesDenoisingList) {
-            CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO  exportDTO = new CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO();
+            CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO exportDTO = new CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO();
             exportDTO.setPlatform(platformName);
             exportDTO.setSkuNo(pagingView.getSkuNo());
             exportDTO.setShopName(shopName);

@@ -1,6 +1,6 @@
 package com.common.business.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -90,7 +90,7 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
                 .set(T.UPDATE_TIME, LocalDateTime.now())
                 .set(T.UPDATE_USER_ID, loginUser.getUid())
                 .set(T.UPDATE_USER_NAME, loginUser.getUserName())
-                .setSql(version != null, StrUtil.format("{}={}+1", T.VERSION, T.VERSION))
+                .setSql(version != null, CharSequenceUtil.format("{}={}+1", T.VERSION, T.VERSION))
                 .eq(T.ID, id)
                 .eq(version != null, T.VERSION, version)
                 .update();
