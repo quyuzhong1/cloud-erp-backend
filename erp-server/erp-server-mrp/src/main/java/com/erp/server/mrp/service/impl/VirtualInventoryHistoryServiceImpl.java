@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.VirtualInventoryHistoryEntity;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.server.mrp.mapper.VirtualInventoryHistoryMapper;
@@ -42,6 +43,6 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
                     inventory.setId(inventory.getId());
                     return inventory;
                 }).collect(Collectors.toList());
-        saveOrUpdateBatch(entities);
+        ApplicationContextUtils.getBean(VirtualInventoryHistoryServiceImpl.class).saveOrUpdateBatch(entities);
     }
 }

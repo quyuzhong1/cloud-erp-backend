@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.OverseasHistoryInventoryEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.server.mrp.mapper.OverseasHistoryInventoryMapper;
@@ -41,6 +42,6 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
                     inventory.setId(inventory.getId());
                     return inventory;
                 }).collect(Collectors.toList());
-        saveOrUpdateBatch(entities);
+        ApplicationContextUtils.getBean(OverseasHistoryInventoryServiceImpl.class).saveOrUpdateBatch(entities);
     }
 }
