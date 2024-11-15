@@ -12,16 +12,15 @@ import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfgConditionMapper;
 import com.erp.server.oms.service.CfgConditionService;
-import com.erp.server.oms.service.CommonService;
 import com.erp.server.oms.service.DictRuleConditionService;
 import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 
 /**
@@ -35,10 +34,10 @@ import java.util.*;
 @Slf4j
 @Service
 public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper, CfgConditionEntity> implements CfgConditionService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private DictRuleConditionService dictRuleConditionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -47,9 +46,6 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     public String add(CfgConditionDTO.AddDTO addDTO) {
         CfgConditionEntity cfConditionEntity = new CfgConditionEntity();
         BeanMapperUtils.copy(addDTO, cfConditionEntity);
-
-        // 数据处理
-        handleData(cfConditionEntity);
 
         log.info("开始新增条件配置单");
         boolean save = super.save(cfConditionEntity);
@@ -70,7 +66,6 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
         CfgConditionEntity cfConditionEntity = BeanMapperUtils.map(CfgConditionEntity.class, updateDTO);
 
         // 数据处理
-        handleData(cfConditionEntity);
         log.info("编辑 开始修改条件配置单数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfConditionEntity);
         if (!save) {
@@ -170,13 +165,5 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
            return Collections.emptyList();
         }
         return this.lambdaQuery().in(CfgConditionEntity::getConditionField,fieldList).list();
-    }
-
-
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(CfgConditionEntity cfConditionEntity) {
-        // TODO 验证数据 & 数据赋值
     }
 }

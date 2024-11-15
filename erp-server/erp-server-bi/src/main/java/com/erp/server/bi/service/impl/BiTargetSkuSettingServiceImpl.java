@@ -1,7 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -497,7 +497,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params, multiplyNum);
+        IPage<BiTargetSkuSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params, multiplyNum);
         List<BiTargetSkuSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -569,7 +569,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         List<String> metricsNameList = MetricsEnum.listName();
         BiTargetSkuSettingExcelListener excelListenerUtil = new BiTargetSkuSettingExcelListener(metricsNameList, biProductDetailService);
         try {
-            EasyExcel.read(excelFile.getInputStream(), TargetSkuSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), TargetSkuSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("单品目标设置 导入错误>>>{}", e);
         }

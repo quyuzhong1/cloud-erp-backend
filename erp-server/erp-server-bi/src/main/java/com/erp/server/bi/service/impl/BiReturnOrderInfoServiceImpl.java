@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -81,29 +81,7 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
 
     @Override
     public BigDecimal sumRefundAmount(List<String> orderIds, BiFilterDTO dto) {
-// 没有sku情况
-        BigDecimal amount = BigDecimal.ZERO;
-//        QueryWrapper<DmpReturnOrderInfoEntity> query = new QueryWrapper<>();
-
-//        if(CollectionUtils.isEmpty(dto.getSku())){
-//            if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
-//                if (BiFilterDTO.validOriginalCurrency(dto)){
-//                    query.select("sum(order_fee/currency_rate) as order_fee");
-//                }else {
-//                    return BigDecimal.ZERO;
-//                }
-//            }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
-//                query.select("sum(order_fee/cny_settle_rate) as order_fee");
-//            }else{
-//                query.select("sum(order_fee) as order_fee");
-//            }
-//            DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = baseMapper.selectOne(query);
-//            amount = dmpReturnOrderInfoEntity.getOrderFee();
-//        }else {
-            // 根据订单号获取订单详情，筛选sku
-            amount = biReturnOrderItemService.sumReturnAmountBySKu(dto);
-//        }
-        return amount;
+        return biReturnOrderItemService.sumReturnAmountBySKu(dto);
     }
 
     @Override
@@ -118,7 +96,6 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
         List<DmpReturnOrderInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpReturnOrderInfoExcelDTO.class, list);
         String fileName = biOrderInfoService.getFileName("退货数据导出");
         ExcelUtil.export(fileName, "退货数据导出", excelList, DmpReturnOrderInfoExcelDTO.class, response);
-        return;
     }
 
     @Override
@@ -134,12 +111,12 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
         //系统中已存在的退货订单
         List<BiReturnOrderInfoEntity> returnOrderList = this.list();
 
-        DmpReturnOrderInfoExcelListener excelListenerUtil = new DmpReturnOrderInfoExcelListener(importType,returnOrderList, biOrderInfoService, biReturnOrderInfoService, biShopInfoService, biReturnOrderItemService,plmTaskFeign);
+        DmpReturnOrderInfoExcelListener excelListenerUtil = new DmpReturnOrderInfoExcelListener(returnOrderList, biOrderInfoService, biReturnOrderInfoService, biShopInfoService, biReturnOrderItemService,plmTaskFeign);
         try {
-            EasyExcel.read(excelFile.getInputStream(), DmpReturnOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), DmpReturnOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<DmpReturnOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
             if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/dmpReturnOrderInfo.xlsx";
                 String name = "dmpRefundInfo";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);

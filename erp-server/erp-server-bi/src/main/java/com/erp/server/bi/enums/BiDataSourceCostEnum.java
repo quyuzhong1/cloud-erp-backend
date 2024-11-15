@@ -54,4 +54,13 @@ public enum BiDataSourceCostEnum {
         }
         return null;
     }
+
+    public static BiDataSourceCostEnum getEnum(String desc) {
+        for (BiDataSourceCostEnum settingEnum : BiDataSourceCostEnum.values()) {
+            if (desc.equals(settingEnum.getDesc())) {
+                return settingEnum;
+            }
+        }
+        return null;
+    }
 }

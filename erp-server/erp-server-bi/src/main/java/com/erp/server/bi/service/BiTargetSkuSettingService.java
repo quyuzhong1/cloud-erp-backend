@@ -3,7 +3,6 @@ package com.erp.server.bi.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.bi.dto.BiTargetShopSettingDTO;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;

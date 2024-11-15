@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.lingxing;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -26,10 +27,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.lingxing.FbaReceiveDetailEntity;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
-import com.erp.model.dmp.lingxing.ShopEntity;
-import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.convert.DmpFbaShipmentReceiveConverter;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -39,12 +37,10 @@ import com.erp.server.dmp.utils.DataCompareUtil;
 import com.sdk.third.lingxing.dto.FbaShipmentReceiveDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -129,7 +125,7 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getUniqueId());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
         }
-        if(CollectionUtil.isNotEmpty(insertList)){
+        if(CollUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE);
         }
         if (CollectionUtil.isEmpty(pushToMqList)){

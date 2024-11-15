@@ -443,7 +443,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 continue;
             }
             List<String> skus = soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList,entity.getWaveType());
-            if (CollectionUtil.isNotEmpty(skus)) {
+            if (CollUtil.isNotEmpty(skus)) {
                 //生成缺货补货数据
                 generateReplenish(detailList, deliveryEntity, skus);
                 //添加波次生成的缺货异常
@@ -481,16 +481,16 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         }
         //添加波次生成的缺货异常
-        if (CollectionUtil.isNotEmpty(updateDeliveryList)) {
+        if (CollUtil.isNotEmpty(updateDeliveryList)) {
             soB2cDeliveryService.updateAbnormal(updateDeliveryList, AbnormalCauseEnum.GENERATION_WAVE);
         }
 
         //添加最后一个波次
-        if (CollectionUtil.isNotEmpty(deliveryIdList) && deliveryIdList.size() >= entity.getMinOrderQty() && MathUtil.compareTo(totalQty,entity.getMinQty()) >= MathUtil.ZERO) {
+        if (CollUtil.isNotEmpty(deliveryIdList) && deliveryIdList.size() >= entity.getMinOrderQty() && MathUtil.compareTo(totalQty,entity.getMinQty()) >= MathUtil.ZERO) {
             addDTO.setDeliveryIdList(deliveryIdList);
             resultList.add(addDTO);
         } else {
-            if (CollectionUtil.isNotEmpty(deliveryIdList)) {
+            if (CollUtil.isNotEmpty(deliveryIdList)) {
                 //回滚库存
                 soB2cDeliveryService.rollbackPickingInventory(deliveryIdList);
             }
@@ -517,7 +517,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
      * @param sameMap
      */
     private void handleSameMap ( List<SoB2cDeliveryDetailEntity> detailList, TreeMap<String, Integer> sameMap) {
-        if (CollectionUtil.isEmpty(detailList) || CollectionUtil.isNotEmpty(sameMap)) {
+        if (CollectionUtil.isEmpty(detailList) || CollUtil.isNotEmpty(sameMap)) {
             return;
         }
         //标记同类波次

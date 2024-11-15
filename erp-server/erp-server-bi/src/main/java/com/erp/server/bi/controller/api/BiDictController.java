@@ -54,9 +54,9 @@ public class BiDictController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "bi系统字典新增数据")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody BiDictEntity biDict) {
-        Boolean flag = this.biDictService.insert(biDict);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> add(@RequestBody BiDictEntity biDict) {
+        boolean flag = this.biDictService.insert(biDict);
+        return flag ? success() : failure();
     }
 
     /**
@@ -67,9 +67,9 @@ public class BiDictController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "bi系统字典编辑数据")
     @PostMapping("/update")
-    public ApiResult edit(@RequestBody BiDictEntity biDict) {
-        Boolean flag = this.biDictService.update(biDict);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> edit(@RequestBody BiDictEntity biDict) {
+        boolean flag = this.biDictService.update(biDict);
+        return flag ? success() : failure();
     }
 
     /**
@@ -81,9 +81,9 @@ public class BiDictController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "bi系统字典删除数据")
     @PostMapping("/delete")
-    public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = this.biDictService.deleteById(dto.getId());
-        return flag == true ? success() : failure();
+    public ApiResult<Void> deleteById(@RequestBody @Validated BaseIdDTO dto) {
+        boolean flag = this.biDictService.deleteById(dto.getId());
+        return flag ? success() : failure();
     }
 
 
@@ -94,7 +94,7 @@ public class BiDictController extends BaseController {
      * @return 删除是否成功
      */
     @GetMapping("/list")
-    public ApiResult list(String type) {
+    public ApiResult<List<Map<String, Object>>> list(String type) {
         List<Map<String, Object>> list = this.biDictService.listByType(type);
         return success(list);
     }
@@ -118,7 +118,7 @@ public class BiDictController extends BaseController {
      * @date: 2023/9/18 16:43
      */
     @GetMapping("/listValue")
-    public ApiResult listValue(String type) {
+    public ApiResult<List<Map<String, Object>>> listValue(String type) {
         List<Map<String, Object>> list = this.biDictService.listValueByType(type);
         return success(list);
     }
@@ -132,8 +132,8 @@ public class BiDictController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "bi系统字典批量新增:字典名称={name}")
     @PostMapping("/batchAdd")
-    public ApiResult batchAdd(@RequestBody @Validated List<DictDTO> dictEntities) {
-        Boolean flag = this.biDictService.batchAdd(dictEntities);
+    public ApiResult<Void> batchAdd(@RequestBody @Validated List<DictDTO> dictEntities) {
+        boolean flag = this.biDictService.batchAdd(dictEntities);
         return flag ? success() : failure();
     }
 }

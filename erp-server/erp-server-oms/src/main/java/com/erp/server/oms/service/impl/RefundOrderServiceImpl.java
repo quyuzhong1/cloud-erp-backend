@@ -4,22 +4,19 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.SqlConstants;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.RefundOrderDTO;
 import com.erp.model.oms.entity.RefundOrderDetailEntity;
 import com.erp.model.oms.entity.RefundOrderEntity;
-import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -28,7 +25,6 @@ import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RefundOrderDetailService;
 import com.erp.server.oms.service.RefundOrderService;
-import com.common.business.service.impl.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -39,7 +35,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_BI_RETURN_INFO;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REQUISITION_APPLICATION;
 
 /**
  * <p>
@@ -136,7 +131,7 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
         if(StringUtils.isBlank(platformRefundNo)){
             return null;
         }
-        return lambdaQuery().eq(RefundOrderEntity::getPlatformRefundNo,platformRefundNo).last("limit 1").one();
+        return lambdaQuery().eq(RefundOrderEntity::getPlatformRefundNo,platformRefundNo).last( SqlConstants.LIMIT_1).one();
     }
 
     /**

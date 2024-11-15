@@ -8,10 +8,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.server.oms.service.CfgConditionService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -25,7 +25,7 @@ import java.util.List;
 @RequestMapping("/cfCondition")
 public class CfgConditionController extends BaseController {
 
-    @Autowired
+    @Resource
     private CfgConditionService cfConditionService;
 
     /**
@@ -55,7 +55,7 @@ public class CfgConditionController extends BaseController {
             menuCode = "oms:cfCondition:update",
             serviceClass = CfgConditionService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated CfgConditionDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated CfgConditionDTO.UpdateDTO dto) {
         cfConditionService.update(dto);
         return success();
     }

@@ -138,40 +138,26 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         SeriesVO seriesVO = new SeriesVO<>();
         BiSalesMonitoringEntity  entity= list.stream().filter(obj -> obj.getType().equals(dto.getSearchType()) && obj.getMetrics().equals(dto.getMetrics())).findFirst().orElse(null);
 
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.SKU.getCode())) {
-            if (ObjectUtils.isNotEmpty(entity)) {
-                this.listSalesMonitoring(resultList,entity,seriesVO,dto.getMetrics(),null);
-            }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.SKU.getCode()) && ObjectUtils.isNotEmpty(entity)) {
+            this.listSalesMonitoring(resultList, entity, seriesVO, dto.getMetrics());
         }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.DEPT.getCode())) {
-            if (ObjectUtils.isNotEmpty(entity)) {
-                this.listDeptNameMonitoring(resultList, entity, seriesVO,dto.getMetrics());
-            }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.DEPT.getCode()) && ObjectUtils.isNotEmpty(entity)) {
+            this.listDeptNameMonitoring(resultList, entity, seriesVO, dto.getMetrics());
         }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode())) {
-            if (ObjectUtils.isNotEmpty(entity)) {
-                this.listCategoryMonitoring(resultList, entity, seriesVO,dto.getMetrics());
-            }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.CATEGORY.getCode()) && ObjectUtils.isNotEmpty(entity)) {
+            this.listCategoryMonitoring(resultList, entity, seriesVO, dto.getMetrics());
         }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.USER.getCode())) {
-            if (ObjectUtils.isNotEmpty(entity)) {
-                this.listChargeNameMonitoring( resultList, entity, seriesVO,dto.getMetrics());
-            }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.USER.getCode()) && ObjectUtils.isNotEmpty(entity)) {
+            this.listChargeNameMonitoring(resultList, entity, seriesVO, dto.getMetrics());
         }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.SHOP.getCode())) {
-            if (ObjectUtils.isNotEmpty(entity)) {
-                this.listShopMonitoring(resultList, entity, seriesVO,dto.getMetrics());
-            }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.SHOP.getCode()) && ObjectUtils.isNotEmpty(entity)) {
+            this.listShopMonitoring(resultList, entity, seriesVO, dto.getMetrics());
         }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.PLATFORM.getCode())) {
-            if (ObjectUtils.isNotEmpty(entity)) {
-                this.listPlatformMonitoring(resultList, entity, seriesVO,dto.getMetrics());
-            }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.PLATFORM.getCode()) && ObjectUtils.isNotEmpty(entity)) {
+            this.listPlatformMonitoring(resultList, entity, seriesVO, dto.getMetrics());
         }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.COUNTRY.getCode())) {
-            if (ObjectUtils.isNotEmpty(entity)) {
-                this.listCountryMonitoring(resultList, entity, seriesVO,dto.getMetrics());
-            }
+        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.COUNTRY.getCode()) && ObjectUtils.isNotEmpty(entity)) {
+            this.listCountryMonitoring(resultList, entity, seriesVO, dto.getMetrics());
         }
         LinkedHashMap<String,Object> head = handleHand(dto);
         map.put("head",head);
@@ -179,57 +165,10 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
         return map;
     }
 
-
-    /**
-     * @description: 分组获得实际数据
-     * @author Will
-     * @date: 2023/9/18 11:36
-     * @param dto
-     * @return List<ViewDTO>
-     */
-    private BiSalesMonitoringTableDTO.GroupViewDTO handleGroupData (BiSalesMonitoringSearchDTO.ParamDTO dto) {
-
-        String timeGroupStr = "to_char(doi.platform_create_time,'MM')";
-        String timeViewStr =  "to_char(doi.platform_create_time,'MM') as month";
-        String viewStr = "";
-        String groupStr = "";
-
-        if (SalesMonitoringTypeEnum.DEPT.getCode().equals(dto.getSearchType())) {
-            viewStr = "doi.dept_id as typeId,doi.dept_name as typeName,".concat(timeViewStr);
-            groupStr = "doi.dept_id,doi.dept_name,".concat(timeGroupStr);
-        }
-        if (SalesMonitoringTypeEnum.USER.getCode().equals(dto.getSearchType())) {
-            viewStr = "doi.charge_name as typeName,".concat(timeViewStr);
-            groupStr = "doi.charge_name,".concat(timeGroupStr);
-        }
-        if (SalesMonitoringTypeEnum.SHOP.getCode().equals(dto.getSearchType())) {
-            viewStr = "doi.shop_name as typeName,".concat(timeViewStr);
-            groupStr = "doi.shop_name,".concat(timeGroupStr);
-        }
-        //根据指标查询品类目标值
-        if (SalesMonitoringTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
-            viewStr = "pi.category as typeName,".concat(timeViewStr);
-            groupStr = "pi.category,".concat(timeGroupStr);
-        }
-        if (SalesMonitoringTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
-            viewStr = "doit.sku_no as typeName,".concat(timeViewStr);
-            groupStr = "doit.sku_no,".concat(timeGroupStr);
-        }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.PLATFORM.getCode())) {
-            viewStr = "doi.source_platform as typeName,".concat(timeViewStr);
-            groupStr = "doi.source_platform,".concat(timeGroupStr);
-        }
-        if (dto.getSearchType().equals(SalesMonitoringTypeEnum.COUNTRY.getCode())) {
-            viewStr = "doi.country_name_cn as typeName,".concat(timeViewStr);
-            groupStr = "doi.country_name_cn,".concat(timeGroupStr);
-        }
-        return new BiSalesMonitoringTableDTO.GroupViewDTO(groupStr,viewStr);
-    }
-
     /**
      * 销量或销售额监控设置数据查询
      */
-    private void listSalesMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics,Integer isNewProduct) {
+    private void listSalesMonitoring(List<BiSalesMonitoringTableDTO.ViewDTO> list,BiSalesMonitoringEntity entity,SeriesVO seriesVO,String metrics) {
         //type:1代表销量,2代表销售额
         Map<String, List<BiSalesMonitoringTableDTO.ViewDTO>> listMap = list.stream()
                 .filter(obj ->StringUtils.isNotBlank(obj.getTypeName()))
@@ -240,7 +179,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.SkuDTO vo = new BiSalesMonitoringTableVO.SkuDTO();
             //获取结果集
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -268,7 +207,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             List<BiSalesMonitoringTableDTO.ViewDTO> value = entry.getValue();
             BiSalesMonitoringTableVO.DeptDTO vo = new BiSalesMonitoringTableVO.DeptDTO();
             //获取结果集
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -297,7 +236,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             BiSalesMonitoringTableVO.CategoryDTO vo = new BiSalesMonitoringTableVO.CategoryDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity);
 
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
@@ -327,7 +266,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             BiSalesMonitoringTableVO.ChargeDTO vo = new BiSalesMonitoringTableVO.ChargeDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -356,7 +295,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             BiSalesMonitoringTableVO.ShopDTO vo = new BiSalesMonitoringTableVO.ShopDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -385,7 +324,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             BiSalesMonitoringTableVO.PlatformDTO vo = new BiSalesMonitoringTableVO.PlatformDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -415,7 +354,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
             BiSalesMonitoringTableVO.CountryDTO vo = new BiSalesMonitoringTableVO.CountryDTO();
             BeanUtils.copyProperties(value.get(0),vo);
             //获取结果集
-            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity, metrics);
+            Pair<String, BiSalesMonitoringTableVO.CommonDTO> pair = handleMonitoring(value, entity);
             if (ObjectUtils.isNotEmpty(pair)) {
                 BiSalesMonitoringTableVO.CommonDTO biSalesMonitoringTableVO = pair.getValue();
                 if (StringUtils.isBlank(name)) {
@@ -439,7 +378,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
      * @param metrics
      * @return Pair<CommonDTO>
      */
-    private Pair<String, BiSalesMonitoringTableVO.CommonDTO> handleMonitoring (List<BiSalesMonitoringTableDTO.ViewDTO> value,BiSalesMonitoringEntity entity,String metrics) {
+    private Pair<String, BiSalesMonitoringTableVO.CommonDTO> handleMonitoring (List<BiSalesMonitoringTableDTO.ViewDTO> value,BiSalesMonitoringEntity entity) {
 
         LocalDate now = LocalDate.now();
         //当前时间年月
@@ -487,47 +426,51 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
      */
     private Pair<String,BiSalesMonitoringTableVO.CommonDTO> setBiSalesMonitoringTableVO(BiSalesMonitoringEntity entity,BigDecimal sumSecondMonthSale,BigDecimal sumFirstMonthSale,BigDecimal sumLastMonthSale) {
         String name = "";
+        String baseExceed = "(最新月基础值超过";
+        String baseNotExceed = "(最新月基础值不超过";
+        String qoqNotExceed = "(，环比不超过";
+        String qoqNotExceedT = "，环比不超过";
         BiSalesMonitoringTableVO.CommonDTO vo = new BiSalesMonitoringTableVO.CommonDTO();
         //比较最新月基础值
         if (MathUtil.compareTo(entity.getLatestMonthValue(), BigDecimal.ZERO) > 0) {
             //大于等于
             if (BiCompareEnum.GREATER_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                name = name.concat(baseExceed + entity.getLatestMonthValue().setScale(2,2));
                 if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= 0)) {
                     return null;
                 }
             }
             //小于等于
             if (BiCompareEnum.LESS_THAN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                name = name.concat(baseNotExceed + entity.getLatestMonthValue().setScale(2,2));
                 if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) <= 0)) {
                     return null;
                 }
             }
             //大于
             if (BiCompareEnum.GREATER_THAN.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                name = name.concat(baseExceed + entity.getLatestMonthValue().setScale(2,2));
                 if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) > 0)) {
                     return null;
                 }
             }
             //小于
             if (BiCompareEnum.LESS_THAN.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                name = name.concat(baseNotExceed + entity.getLatestMonthValue().setScale(2,2));
                 if (!(MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) < 0)) {
                     return null;
                 }
             }
             //连续两个月大于等于
             if (BiCompareEnum.TOW_MONTH_GREATER_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值超过" + entity.getLatestMonthValue().setScale(2,2));
+                name = name.concat(baseExceed + entity.getLatestMonthValue().setScale(2,2));
                 if (!(MathUtil.compareTo(sumFirstMonthSale,entity.getLatestMonthValue()) >= MathUtil.ZERO && MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) >= MathUtil.ZERO)) {
                     return null;
                 }
             }
             //连续两个月小于等于
             if (BiCompareEnum.TOW_MONTH_LESS_THEN_EQUAL.getCode().equals(entity.getLatestMonthCompare())) {
-                name = name.concat("(最新月基础值不超过" + entity.getLatestMonthValue().setScale(2,2));
+                name = name.concat(baseNotExceed + entity.getLatestMonthValue().setScale(2,2));
                 if (!(MathUtil.compareTo(sumFirstMonthSale,entity.getLatestMonthValue()) <= MathUtil.ZERO && MathUtil.compareTo(sumSecondMonthSale,entity.getLatestMonthValue()) <= MathUtil.ZERO)) {
                     return null;
                 }
@@ -556,7 +499,7 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                         return null;
                     }
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceedT + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
                         name = name.concat("(环比超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
@@ -567,9 +510,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                         return null;
                     }
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceedT + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceed + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
                 }
                 //大于
@@ -589,9 +532,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                         return null;
                     }
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceedT + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceed + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
                 }
                 //连续两个月大于等于
@@ -600,9 +543,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                         return null;
                     }
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceedT + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceed + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
                 }
                 //连续两个月小于等于
@@ -611,9 +554,9 @@ public class BiSalesMonitoringServiceImpl extends ServiceImpl<BiSalesMonitoringM
                         return null;
                     }
                     if (StringUtils.isNotBlank(name)) {
-                        name = name.concat("，环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceedT + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     } else {
-                        name = name.concat("(环比不超过" + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
+                        name = name.concat(qoqNotExceed + entity.getRelativeRatio().setScale(2,2).toString().concat("%"));
                     }
                 }
             }

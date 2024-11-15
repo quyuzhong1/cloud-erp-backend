@@ -567,7 +567,7 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
                 disabledWarehouseList.add(updateDTO.getName());
             }
         });
-        if (CollectionUtil.isNotEmpty(disabledWarehouseList)){
+        if (CollUtil.isNotEmpty(disabledWarehouseList)){
             throw new ServiceException(ApiError.WAREHOUSE_DISABLED, JSONUtil.toJsonStr(disabledWarehouseList));
         }
     }

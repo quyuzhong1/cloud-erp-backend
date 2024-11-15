@@ -1,6 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -11,10 +12,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
-import com.erp.model.bi.enums.MetricsEnum;
-import com.erp.model.bi.enums.MonthEnum;
-import com.erp.model.bi.enums.TargetFinishViewTypeEnum;
-import com.erp.model.bi.enums.TargetSearchTypeEnum;
+import com.erp.model.bi.enums.*;
 import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.entity.BiRefundInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -73,9 +71,6 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     @Resource
     private RedisService redisService;
 
-    public BiTargetReportServiceImpl() {
-    }
-
     @Override
     @Cacheable(cacheNames = "cache:bi:targetFinish",keyGenerator = "myKeyGenerator")
     public LinkedHashMap<String, Object> targetFinish(TargetFinishDTO.ParamDTO dto) {
@@ -104,7 +99,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         headMap.put("totalName","累计年度目标/完成率");
         MonthEnum[] values = MonthEnum.values();
         for (MonthEnum monthEnum : values) {
-            headMap.put(monthEnum.getCode(), StrUtil.format("{}年{}月",start.getYear(),monthEnum.getValue()));
+            headMap.put(monthEnum.getCode(), CharSequenceUtil.format("{}年{}月",start.getYear(),monthEnum.getValue()));
         }
         resultMap.put("head",headMap);
 
@@ -156,9 +151,9 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                     BigDecimal targetValue = value.stream().filter(obj -> Objects.equals(obj.getMonth(), monthEnum.getValue())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     slotDTO.setTargetValue(targetValue);
                     //实际值
-                    BigDecimal realValue = realList.stream().filter(obj -> Objects.equals(obj.getMonth(), monthEnum.getValue()) && StrUtil.equals(obj.getTypeName(),entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal realValue = realList.stream().filter(obj -> Objects.equals(obj.getMonth(), monthEnum.getValue()) && CharSequenceUtil.equals(obj.getTypeName(),entry.getKey())).map(TargetFinishDTO.ViewDTO::getValue).reduce(BigDecimal.ZERO, BigDecimal::add);
                     slotDTO.setValue(realValue);
-                    BigDecimal rate = BigDecimal.ZERO;
+                    BigDecimal rate;
                     if (TargetFinishViewTypeEnum.FINISH_RATE.getCode().equals(dto.getViewType())) {
                         //完成率
                         rate = MathUtil.divide(realValue, targetValue).multiply(MathUtil.BigDecimal_100);
@@ -171,7 +166,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 }
                 resultList.add(result);
             }
-        };
+        }
         resultMap.put("data",resultList);
         return resultMap;
     }
@@ -192,7 +187,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             year = Integer.valueOf(dto.getYear());
         }
         for (MonthEnum monthEnum : values) {
-            headList.add(StrUtil.format("{}年{}月",year,monthEnum.getValue()));
+            headList.add(CharSequenceUtil.format("{}年{}月",year,monthEnum.getValue()));
         }
         //表格数据
         List<LinkedHashMap<String, Object>> list = (List<LinkedHashMap<String, Object>>)resultMap.get("data");
@@ -245,7 +240,6 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         String head = "业绩目标完成";
         String fileName = redisService.getFileName("业绩目标完成导出")+ ".xlsx";
         ExcelUtil.easyUtilStr(headList,head,exportList,fileName, response);
-        return;
     }
 
 
@@ -295,11 +289,6 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
     private List<TargetFinishDTO.ViewDTO> listReal(TargetFinishDTO.ParamDTO dto) {
 
         List<TargetFinishDTO.ViewDTO> resultList = new ArrayList<>();
-
-//        TargetFinishDTO.GroupViewDTO groupViewDTO = handleGroupData(dto);
-//        if (org.apache.commons.lang.StringUtils.isBlank(dto.getDateType())){
-//            dto.setDateType(DateTypeEnum.MONTH.getType());
-//        }
 
         Map<String, String> dataMap = new HashMap<>();
         //部门和负责人 填充名称
@@ -378,67 +367,6 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
         return resultList;
     }
 
-   /**
-    * @description: 查询退货数据
-    * @author Will
-    * @date: 2023/9/19 10:00
-    * @param mainList
-    * @return List<DmpReturnInfoEntity>
-    */
-    private List<BiRefundInfoEntity> listReturnOrderInfo (List<BiOrderInfoEntity> mainList) {
-        if (CollectionUtils.isEmpty(mainList)) {
-            return Collections.EMPTY_LIST;
-        }
-        List<String> platformOrderIdList = mainList.stream().map(BiOrderInfoEntity::getPlatformOrderId).collect(Collectors.toList());
-        //根据订单id查询退货数据
-        QueryWrapper<BiRefundInfoEntity> qw = new QueryWrapper<>();
-        qw.select("platform_order_id","COALESCE(refund_amount, 0) * currency_rate as refund_amount")
-          .in("platform_order_id",platformOrderIdList);
-        List<BiRefundInfoEntity> entityList = biRefundInfoMapper.selectList(qw);
-        return entityList;
-    }
-
-    /**
-     * @description: 分组获得实际数据
-     * @author Will
-     * @date: 2023/9/18 11:36
-     * @param dto
-     * @return List<ViewDTO>
-     */
-    private TargetFinishDTO.GroupViewDTO handleGroupData (TargetFinishDTO.ParamDTO dto) {
-
-        boolean flag = TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType();
-
-        String timeGroupStr =  flag ? "to_char(doi.platform_create_time,'MM')" : "to_char(doi.delivery_time,'MM')";
-        String timeViewStr =  flag ? "to_char(doi.platform_create_time,'MM') as month" : "to_char(doi.delivery_time,'MM') as month";
-
-        String viewStr = "";
-        String groupStr = "";
-
-        if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
-            viewStr = "doi.dept_id as typeId,doi.dept_name as typeName,".concat(timeViewStr);
-            groupStr = "doi.dept_id,doi.dept_name,".concat(timeGroupStr);
-        }
-        if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
-            viewStr = "doi.charge_name as typeName,".concat(timeViewStr);
-            groupStr = "doi.charge_name,".concat(timeGroupStr);
-        }
-        if (TargetSearchTypeEnum.SHOP.getCode().equals(dto.getSearchType())) {
-            viewStr = "doi.shop_name as typeName,".concat(timeViewStr);
-            groupStr = "doi.shop_name,".concat(timeGroupStr);
-        }
-        //根据指标查询品类目标值
-        if (TargetSearchTypeEnum.CATEGORY.getCode().equals(dto.getSearchType())) {
-            viewStr = "pi.category as typeName,".concat(timeViewStr);
-            groupStr = "pi.category,".concat(timeGroupStr);
-        }
-        if (TargetSearchTypeEnum.SKU.getCode().equals(dto.getSearchType())) {
-            viewStr = "doit.sku_no as typeName,".concat(timeViewStr);
-            groupStr = "doit.sku_no,".concat(timeGroupStr);
-        }
-        return new TargetFinishDTO.GroupViewDTO(groupStr,viewStr);
-    }
-
     /**
      * @description: 退款分组获得实际数据
      * @author Will
@@ -479,18 +407,18 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         BiDataSourceCostDTO.GroupDTO groupDTO = BeanMapperUtils.map(BiDataSourceCostDTO.GroupDTO.class, dto);
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
-        List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome"));
+        List<String> dictValues = new ArrayList<>(Arrays.asList(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode()));
         groupDTO.setCostTypeList(dictValues);
         List<BiDataSourceCostDTO.ListDTO> list = biDataSourceCostService.listBiDataSourceCost(groupDTO);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getDeptName().concat(",").concat(String.valueOf(x.getMonth().getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO), BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO), BigDecimal::add))
             );
         }
         if (TargetSearchTypeEnum.USER.getCode().equals(dto.getSearchType())) {
@@ -526,18 +454,18 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         BiDataSourceCostDTO.GroupDTO groupDTO = BeanMapperUtils.map(BiDataSourceCostDTO.GroupDTO.class, dto);
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
-        List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost"));
+        List<String> dictValues = new ArrayList<>(Arrays.asList(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), DataSourceCostEnum.COST_TOTALCOST.getCode()));
         groupDTO.setCostTypeList(dictValues);
         List<BiDataSourceCostDTO.ListDTO> list = biDataSourceCostService.listBiDataSourceCost(groupDTO);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getDeptName().concat(",").concat(String.valueOf(x.getMonth().getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO),e.getMap().getOrDefault("cost_totalCost",BigDecimal.ZERO)) , BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO),e.getMap().getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(),BigDecimal.ZERO)) , BigDecimal::add))
 
             );
         }
@@ -546,7 +474,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getChargeName().concat(",").concat(String.valueOf(x.getMonth().getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO),e.getMap().getOrDefault("cost_totalCost",BigDecimal.ZERO)) , BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO),e.getMap().getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(),BigDecimal.ZERO)) , BigDecimal::add))
             );
 
         }
@@ -555,7 +483,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getShopName().concat(",").concat(String.valueOf(x.getMonth().getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO),e.getMap().getOrDefault("cost_totalCost",BigDecimal.ZERO)) , BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.subtract(e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO),e.getMap().getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(),BigDecimal.ZERO)) , BigDecimal::add))
             );
         }
         return mapToResultList(map);
@@ -574,18 +502,18 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
         BiDataSourceCostDTO.GroupDTO groupDTO = BeanMapperUtils.map(BiDataSourceCostDTO.GroupDTO.class, dto);
         // 数据字典获取主营收入  成本合计  销售费用小计 的value
-        List<String> dictValues = new ArrayList<>(Arrays.asList("cost_mainBusinessIncome", "cost_totalCost"));
+        List<String> dictValues = new ArrayList<>(Arrays.asList(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), DataSourceCostEnum.COST_TOTALCOST.getCode()));
         groupDTO.setCostTypeList(dictValues);
         List<BiDataSourceCostDTO.ListDTO> list = biDataSourceCostService.listBiDataSourceCost(groupDTO);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         if (TargetSearchTypeEnum.FIRST_LEVEL_DEPT.getCode().equals(dto.getSearchType()) || TargetSearchTypeEnum.SECOND_LEVEL_DEPT.getCode().equals(dto.getSearchType())) {
             //根据指标查询部门目标值
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getDeptName().concat(",").concat(String.valueOf(x.getMonth().getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.divide(MathUtil.subtract(e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO),e.getMap().getOrDefault("cost_totalCost",BigDecimal.ZERO)),e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO))  , BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.divide(MathUtil.subtract(e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO),e.getMap().getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(),BigDecimal.ZERO)),e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO))  , BigDecimal::add))
 
             );
         }
@@ -594,7 +522,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getChargeName().concat(",").concat(String.valueOf(x.getMonth().getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.divide(MathUtil.subtract(e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO),e.getMap().getOrDefault("cost_totalCost",BigDecimal.ZERO)),e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO))  , BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.divide(MathUtil.subtract(e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO),e.getMap().getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(),BigDecimal.ZERO)),e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO))  , BigDecimal::add))
             );
 
         }
@@ -603,7 +531,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             map = list.stream().collect(Collectors.groupingBy(x ->
                             // 按照月分组
                             x.getShopName().concat(",").concat(String.valueOf(x.getMonth().getMonthValue())),
-                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.divide(MathUtil.subtract(e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO),e.getMap().getOrDefault("cost_totalCost",BigDecimal.ZERO)),e.getMap().getOrDefault("cost_mainBusinessIncome",BigDecimal.ZERO))  , BigDecimal::add))
+                    Collectors.reducing(BigDecimal.ZERO, e -> MathUtil.divide(MathUtil.subtract(e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO),e.getMap().getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(),BigDecimal.ZERO)),e.getMap().getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(),BigDecimal.ZERO))  , BigDecimal::add))
             );
         }
         return mapToResultList(map);
@@ -618,7 +546,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
      */
     private List<TargetFinishDTO.ViewDTO> mapToResultList (Map<String, BigDecimal> map) {
         if (ObjectUtils.isEmpty(map)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<TargetFinishDTO.ViewDTO> resultList = new ArrayList<>();
         map.entrySet().stream().forEach(obj -> {

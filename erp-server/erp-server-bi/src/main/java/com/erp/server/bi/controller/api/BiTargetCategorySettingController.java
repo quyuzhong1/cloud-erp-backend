@@ -8,11 +8,8 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
-import com.erp.model.bi.dto.BiTargetShopSettingDTO;
-import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.excel.TargetCategorySettingExportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetShopSettingExportExcelDTO;
 import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetCategorySettingService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.bi.dto.BiTargetCategorySettingDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -145,7 +140,7 @@ public class BiTargetCategorySettingController extends BaseController {
 //        menuCode = "dmp:biTargetCategorySetting:update",
 //        serviceClass = BiTargetCategorySettingService.class,
 //        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated BiTargetCategorySettingDTO.UpdateDTO dto) {
+    public ApiResult<Void> update(@RequestBody @Validated BiTargetCategorySettingDTO.UpdateDTO dto) {
         biTargetCategorySettingService.update(dto);
         return success();
     }
@@ -157,7 +152,7 @@ public class BiTargetCategorySettingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Void> downloadTemplate(HttpServletResponse response) {
         biTargetCategorySettingService.downloadTemplate(response);
         return success();
     }
@@ -181,8 +176,8 @@ public class BiTargetCategorySettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "品类目标设置删除")
-    public ApiResult remove(@RequestBody @Validated BiTargetCategorySettingDTO.RemoveDTO dto) {
-        Boolean result = biTargetCategorySettingService.delete(dto);
+    public ApiResult<Void> remove(@RequestBody @Validated BiTargetCategorySettingDTO.RemoveDTO dto) {
+        boolean result = biTargetCategorySettingService.delete(dto);
         return result ? success() : failure();
     }
 

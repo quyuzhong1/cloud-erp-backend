@@ -49,9 +49,9 @@ public class WorkflowBusinessController extends BaseController {
      * @return
      */
     @PostMapping("/save")
-    public ApiResult saveProcess(@RequestBody WorkflowBusinessDTO dto) {
+    public ApiResult<Object> saveProcess(@RequestBody WorkflowBusinessDTO dto) {
         Boolean flag = workflowBusinessService.saveBusiness(dto);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
 

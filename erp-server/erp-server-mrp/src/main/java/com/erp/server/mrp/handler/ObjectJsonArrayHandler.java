@@ -36,7 +36,7 @@ public class ObjectJsonArrayHandler extends BaseTypeHandler<JSONArray> {
         if (null != sqlJson) {
             return JSONUtil.parseArray(sqlJson);
         }
-        return null;
+        return new JSONArray();
     }
 
     //根据列索引，获取可以为空的结果
@@ -46,7 +46,7 @@ public class ObjectJsonArrayHandler extends BaseTypeHandler<JSONArray> {
         if (null != sqlJson) {
             return JSONUtil.parseArray(sqlJson);
         }
-        return null;
+        return new JSONArray();
     }
 
     @Override
@@ -55,6 +55,6 @@ public class ObjectJsonArrayHandler extends BaseTypeHandler<JSONArray> {
         if (null != sqlJson) {
             return JSONUtil.parseArray(sqlJson);
         }
-        return null;
+        return new JSONArray();
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.DictBasicDTO;
@@ -26,22 +27,20 @@ public class WorkMenuServiceImpl extends SuperServiceImpl<WorkMenuMapper, WorkMe
     @Override
     public List<DictBasicDTO.DropDownDTO> listByCode(String code) {
         List<WorkMenuEntity> list = lambdaQuery()
-                .eq(StrUtil.isNotBlank(code), WorkMenuEntity::getModuleCode, code)
+                .eq(CharSequenceUtil.isNotBlank(code), WorkMenuEntity::getModuleCode, code)
                 .list();
-        List<DictBasicDTO.DropDownDTO> result = list.stream().map(DictBasicDTO.DropDownDTO::new).collect(java.util.stream.Collectors.toList());
-        return result;
+        return list.stream().map(DictBasicDTO.DropDownDTO::new).collect(java.util.stream.Collectors.toList());
     }
 
     @Override
     public String getSysClassifyByCode(String code) {
         List<WorkMenuEntity> list = lambdaQuery().eq(WorkMenuEntity::getModuleCode, code).list();
-        String result = list.stream().map(WorkMenuEntity::getSysClassify).distinct().findFirst().orElse("");
-        return result;
+        return list.stream().map(WorkMenuEntity::getSysClassify).distinct().findFirst().orElse("");
     }
 
     @Override
     public WorkMenuEntity getByModuleCode(String code) {
         return lambdaQuery().eq(WorkMenuEntity::getModuleCode, code)
-                .last("limit 1").oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_WORK_MENU_NOT_EXIST));
+                .last(SqlConstants.LIMIT_1).oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_WORK_MENU_NOT_EXIST));
     }
 }

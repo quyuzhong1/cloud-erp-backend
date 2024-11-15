@@ -220,7 +220,7 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      *
      * @param dto
      */
-    void sameApproverAutoPass(ProcessManagementDTO.ApproveDTO dto, String processDefinitionId,String ProcessInstanceId);
+    void sameApproverAutoPass(ProcessManagementDTO.ApproveDTO dto, String processDefinitionId,String processInstanceId);
 
     PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(PagingDTO<ProcessManagementDTO.ExportDTO> dto);
 }

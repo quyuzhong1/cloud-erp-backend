@@ -1,11 +1,12 @@
 package com.erp.server.bi.listener;/**
  * @author Lambda
  * @Classname BiTargetStaffSettingExcelListener
- * @Description TODO
+ * @Description
  * @Date 2023-09-15 15:27
  * @Created by yl
  */
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-15 15:27
  */
@@ -62,7 +63,7 @@ public class BiTargetStaffSettingExcelListener extends AnalysisEventListener<Tar
         FindUserDTO user = userList.stream().
                 filter(u -> u.getUserName().equals(staffName)).
                 findFirst().orElse(null);
-        if (Objects.isNull(user)) {
+        if (ObjectUtil.isEmpty(user)) {
             errorMsgList.add("人员不存在");
         }
         //添加错误数据

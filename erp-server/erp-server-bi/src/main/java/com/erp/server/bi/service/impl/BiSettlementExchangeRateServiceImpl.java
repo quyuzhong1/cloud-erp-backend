@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -163,11 +164,11 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
      * 添加redis缓存
      */
     private void setRedisExchangeRate (BiSettlementExchangeRateEntity entity) {
-        String existKey = StrUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE, entity.getTargetCurrencyCode(),entity.getSourceCurrencyCode());
+        String existKey = CharSequenceUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE, entity.getTargetCurrencyCode(),entity.getSourceCurrencyCode());
 
         List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCode(entity.getTargetCurrencyCode(), entity.getSourceCurrencyCode());
         if (CollectionUtils.isEmpty(rateList)) {
-            throw new ServiceException(StrUtil.format("目标币别【{}】、原币别【{}】未查询到汇率",entity.getTargetCurrencyCode(),entity.getSourceCurrencyCode()));
+            throw new ServiceException(CharSequenceUtil.format("目标币别【{}】、原币别【{}】未查询到汇率",entity.getTargetCurrencyCode(),entity.getSourceCurrencyCode()));
         }
         boolean isHas = redisUtil.hasKey(existKey);
         if (isHas) {
@@ -273,7 +274,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             return BigDecimal.ONE;
         }
         //查询redis中存储的成本信息
-        String existKey = StrUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE,CurrencyEnum.CNY.getCurrencyCode(),sourceCurrencyCode);
+        String existKey = CharSequenceUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE,CurrencyEnum.CNY.getCurrencyCode(),sourceCurrencyCode);
         List<BiSettlementExchangeRateEntity> rateList = (List<BiSettlementExchangeRateEntity>) redisUtil.get(existKey);
         if (CollectionUtils.isEmpty(rateList)) {
             //查询库中数据添加缓存
@@ -360,13 +361,13 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
      * @param sourceCurrencyCode
      */
     private void checkNotBlank (String date, String targetCurrencyCode, String sourceCurrencyCode) {
-        if (StrUtil.isBlank(date)) {
+        if (CharSequenceUtil.isBlank(date)) {
             throw new ServiceException("汇率查询时间不能为空");
         }
-        if (StrUtil.isBlank(targetCurrencyCode)) {
+        if (CharSequenceUtil.isBlank(targetCurrencyCode)) {
             throw new ServiceException("汇率查询目标币别不能为空");
         }
-        if (StrUtil.isBlank(sourceCurrencyCode)) {
+        if (CharSequenceUtil.isBlank(sourceCurrencyCode)) {
             throw new ServiceException("汇率查询来源币别不能为空");
         }
     }

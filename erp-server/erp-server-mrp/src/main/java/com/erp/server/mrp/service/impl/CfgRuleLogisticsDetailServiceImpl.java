@@ -1,8 +1,8 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -13,11 +13,9 @@ import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsDetailMapper;
 import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
-import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,8 +35,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgRuleLogisticsDetailServiceImpl extends SuperServiceImpl<CfgRuleLogisticsDetailMapper, CfgRuleLogisticsDetailEntity> implements CfgRuleLogisticsDetailService {
-    @Autowired
-    private OperateLogService operateLogService;
 
     /**
     * 修改
@@ -47,7 +43,7 @@ public class CfgRuleLogisticsDetailServiceImpl extends SuperServiceImpl<CfgRuleL
     @Override
     public Boolean update(List<CfgRuleLogisticsDetailDTO.UpdateDTO> detailList,String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
-            detailList = Collections.EMPTY_LIST;
+            detailList = Collections.emptyList();
         }
         List<CfgRuleLogisticsDetailEntity> list = BeanMapperUtils.copyList(CfgRuleLogisticsDetailEntity.class, detailList);
         //原物流信息
@@ -98,7 +94,7 @@ public class CfgRuleLogisticsDetailServiceImpl extends SuperServiceImpl<CfgRuleL
     @Override
     public List<CfgRuleLogisticsDetailEntity> listByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
        return lambdaQuery().in(CfgRuleLogisticsDetailEntity::getMainId,mainIdList).list();
     }
@@ -112,7 +108,7 @@ public class CfgRuleLogisticsDetailServiceImpl extends SuperServiceImpl<CfgRuleL
         }
         for (CfgRuleLogisticsDetailEntity detailEntity : list) {
 
-            if (StrUtil.equals(detailEntity.getType(), ShopAuthTypeEnum.ENUM_PART.getCode()) && ObjectUtil.isEmpty(detailEntity.getShopIdList())) {
+            if (CharSequenceUtil.equals(detailEntity.getType(), ShopAuthTypeEnum.ENUM_PART.getCode()) && ObjectUtil.isEmpty(detailEntity.getShopIdList())) {
                 throw new ServiceException("指定店铺时店铺不能为空");
             }
             //主表id

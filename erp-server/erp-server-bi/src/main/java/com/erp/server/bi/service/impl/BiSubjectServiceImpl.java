@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -271,7 +272,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //检查名字是否重复
         checkName(null, name);
         BiDictEntity dict;
-        if (StrUtil.isNotBlank(dto.getCategoryId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getCategoryId())) {
             dict = dictService.getById(categoryId);
         } else {
             dict = dictService.getByTypeName("subjectCategory", "销售专题");
@@ -530,7 +531,6 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String type = DictEnum.DASHBOARD.getType();
         List<BiDictEntity> dictList = dictService.getByType(type);
         //查询到用户可见的专题
-//        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
         List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         List<String> subjectIdList = subjectShareService.findSubjectId(userId, roleIdList);
         // 查询自己创建
@@ -541,7 +541,6 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (CollectionUtils.isNotEmpty(mySubjectList)){
             List<String> mySubjectIds = mySubjectList.stream().map(BiSubjectEntity::getId).collect(Collectors.toList());
             subjectIdList.addAll(mySubjectIds);
-//            subjectIdList = subjectIdList.stream().distinct().collect(Collectors.toList());
         }
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
 

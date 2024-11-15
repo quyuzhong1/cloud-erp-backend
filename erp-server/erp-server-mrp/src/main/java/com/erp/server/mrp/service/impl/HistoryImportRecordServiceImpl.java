@@ -1,8 +1,8 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -103,12 +103,12 @@ public class HistoryImportRecordServiceImpl extends SuperServiceImpl<HistoryImpo
             //sheet对象
             FileExcelDTO.ExportFileSheetDTO customSheet = exportFileDTO.getCustomSheet();
             File file = ExcelUtil.exportFile(exportFileDTO.getFileName(), customSheet.getSheetName(), customSheet.getDataResult(), customSheet.getHeads());
-            if (file == null || file.isDirectory()) {
+            if (file.isDirectory()) {
                 throw new ServiceException("成功文件记录上传失败");
             }
             String url = FastDFSClientUtil.uploadFile(file, exportFileDTO.getFileName());
             //url不能为空
-            if (StrUtil.isBlank(url)) {
+            if (CharSequenceUtil.isBlank(url)) {
                 throw new ServiceException("导入失败！");
             }
             entity.setFileUrl(url);
