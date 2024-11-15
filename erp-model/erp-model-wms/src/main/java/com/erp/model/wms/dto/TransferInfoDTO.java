@@ -61,6 +61,10 @@ public class TransferInfoDTO implements Serializable {
          * 来源单据【可排序】
          */
         private String sourceCode;
+        /**
+         * 批次号
+         */
+        private String batchNo;
 
         /**
          * 调拨方向
@@ -318,6 +322,10 @@ public class TransferInfoDTO implements Serializable {
          * 批次号，发货单下推时生成
          */
         private String batchNo;
+        /**
+         * 排序
+         */
+        private Integer index;
     }
 
     @Data

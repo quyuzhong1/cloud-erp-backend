@@ -645,4 +645,11 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/pilotApprovalNoPass")
     void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
+
+    /**
+     * 查询bom (可以查询全部)
+     * @return
+     */
+    @PostMapping("feign/bom/listAllBom")
+    List<BomDTO.BomSku> listAllBom(@RequestBody List<String> childSkuIdList);
 }

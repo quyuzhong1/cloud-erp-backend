@@ -65,7 +65,7 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
         /**
          * 虚拟仓是否缺货
          */
-        if("isVirtualScarce".equals(field)){
+        if("isVirtualScarce".equals(field) ||"isVirtualOutStock".equals(field)){
             String sql = "COALESCE(sdnd.deliveryQty,0) - COALESCE(vi.virtualQty,0)";
             if ((Boolean) value) {
                 return sql + "< 0";
@@ -73,7 +73,6 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
                 return sql + ">= 0";
             }
         }
-
 
         if("tab".equals(field)){
             switch (value.toString()) {

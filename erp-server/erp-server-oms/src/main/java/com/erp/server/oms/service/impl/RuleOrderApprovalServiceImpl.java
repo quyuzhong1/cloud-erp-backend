@@ -18,11 +18,14 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.RuleConditionDTO;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
+import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.entity.RuleOrderApprovalEntity;
+import com.erp.model.oms.enums.CfgConditionRuleEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.RuleOrderApprovalMapper;
+import com.erp.server.oms.service.CfgConditionService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import com.erp.server.oms.service.RuleOrderApprovalService;
@@ -56,14 +59,22 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Autowired
     private SpElServer spElServer;
 
+    @Autowired
+    private CfgConditionService cfgConditionService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(RuleOrderApprovalDTO.AddDTO addDTO) {
         RuleOrderApprovalEntity ruleOrderApprovalEntity = new RuleOrderApprovalEntity();
         List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        List<String> fieldList = conditionList.stream().map(RuleConditionDTO.AddDTO::getField).distinct().collect(Collectors.toList());
+        List<CfgConditionEntity> cfgConditionEntities = cfgConditionService.listByFields(fieldList);
         //去除空格
         conditionList.forEach(v->{
-            if(StringUtils.isNotBlank(v.getValue())){
+            CfgConditionEntity cfgConditionEntity = cfgConditionEntities.stream().filter(e -> Objects.nonNull(e) && e.getConditionField().equals(v.getField()) && e.getRemark().contains(CfgConditionRuleEnum.REMOVE_SPACE.getCode())).findFirst().orElse(null);
+            if (Objects.nonNull(cfgConditionEntity)){
+                v.setValue(removeSpace(v.getValue()));
+            }else if(StringUtils.isNotBlank(v.getValue())){
                 v.setValue(v.getValue().replaceAll(" ",""));
             }
         });
@@ -108,8 +119,13 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         RuleOrderApprovalEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
+        List<String> fieldList = conditionList.stream().map(RuleConditionDTO.UpdateDTO::getField).distinct().collect(Collectors.toList());
+        List<CfgConditionEntity> cfgConditionEntities = cfgConditionService.listByFields(fieldList);
         conditionList.forEach(v->{
-            if(StringUtils.isNotBlank(v.getValue())){
+            CfgConditionEntity cfgConditionEntity = cfgConditionEntities.stream().filter(e -> Objects.nonNull(e) && e.getConditionField().equals(v.getField()) && e.getRemark().contains(CfgConditionRuleEnum.REMOVE_SPACE.getCode())).findFirst().orElse(null);
+            if (Objects.nonNull(cfgConditionEntity)){
+                v.setValue(removeSpace(v.getValue()));
+            }else if(StringUtils.isNotBlank(v.getValue())){
                 v.setValue(v.getValue().replaceAll(" ",""));
             }
         });
@@ -143,6 +159,24 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         return Boolean.TRUE;
     }
 
+    /**
+     * 去掉前后空格 以及逗号前后空格
+     * @param value
+     * @return
+     */
+    private static String removeSpace(String value) {
+        if (StrUtil.isBlank(value)){
+            return value;
+        }
+        //去掉前后空格
+        value = value.trim();
+        // 使用正则表达式去掉逗号前后的空格
+        // 英文逗号前后的空格
+        value = value.replaceAll("\\s*,\\s*", ",");
+        // 中文逗号前后的空格
+        value = value.replaceAll("\\s*，\\s*", "，");
+        return value;
+    }
 
     /**
      * 分页查询

@@ -70,16 +70,6 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
      **/
     List<ListingInfoDTO.BaseDropDownDTO> listByTypeWithFieldName(ListingInfoDTO.BaseDropDownParamDTO dto);
 
-    /**
-     * 查询listing 信息
-     * @author yl
-     * @date 2023-12-08 10:04
-     * @param platformSkuNo
-     * @return 
-     */
-    ListingInfoEntity getByPlatformSkuNoAndSpu(String platformSkuNo, String platformSpuNo, String typeCode);
-
-    void updateMatchResult(String listingId, Boolean matchResult);
 
     PagingVO<ListingInfoDTO.PageDTO> paging(PagingDTO<ListingInfoDTO.PagingParamDTO> dto);
 

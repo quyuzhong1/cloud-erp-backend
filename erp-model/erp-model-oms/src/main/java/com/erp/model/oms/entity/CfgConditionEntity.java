@@ -83,7 +83,13 @@ public class CfgConditionEntity extends BaseEntity<CfgConditionEntity> {
      */
     @TableField("value_type")
     private String valueType;
-
+    /**
+     *规则备注（removeSpace 去空格）多个以逗号分割
+     * CfgConditionRuleEnum
+     *
+     */
+    @TableField("remark")
+    private String remark;
 
 
     public static final String CONDITION_FIELD = "condition_field";

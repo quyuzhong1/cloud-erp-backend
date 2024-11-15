@@ -18,6 +18,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -46,8 +47,11 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysPostEntity;
+import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
+import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
@@ -65,10 +69,12 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.listener.RequisitionApplicationDetailExcelListener;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
+import com.erp.server.wms.pull.mapper.ProductDetailMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -466,49 +472,73 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return flag;
     }
 
-    public void sendRequisitionMsg(RequisitionApplicationEntity requisitionApplication){
+    @Override
+    public void sendRequisitionMsg(Map<String,String> map, CfgSettingEnum type){
         LoginUser loginUser = UserContext.getNonLoginUser();
-        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.FS_REQUISITION_NOTICE.getCode());
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(type.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
             log.info("未设置飞书要货申请通知配置，无需发送通知");
-        }else{
-            List<String> noticeUserIdList = new ArrayList<>();
-            CfgSettingValueDTO.FsRequisitionNoticeDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
-            if (CollectionUtils.isNotEmpty(dto.getRoleIdList())) {
-                List<String> collect = sysPostFeign.listById(dto.getRoleIdList()).stream().map(SysPostEntity::getPostName).collect(Collectors.toList());
-                for (String s : collect) {
-                    if(s.equals("创建人")){
-                        noticeUserIdList.add(requisitionApplication.getCreateUserId());
-                    }
-                    if(s.equals("处理人")){
-                        noticeUserIdList.add(loginUser.getUid());
-                    }
+            return;
+        }
+        String requistionCode = map.get("code");
+        String createUserId = map.get("createUserId");
+        String createUserName = map.get("createUserName");
+        String packingCode = map.get("packingCode");
+        //消息头
+        String title = null;
+        //消息体
+        String msgContent = null;
+        switch (type){
+            case FS_REQUISITION_NOTICE:
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前已处理完成，请即时下推发货单出库" , createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
+            case FS_REQUISITION_WAITHANDLE_NOTICE:
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前状态待处理，请即时处理"  ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
+            case FS_REQUISITION_HANDLEING_NOTICE:
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】当前状态处理中，请即时处理" ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
+            case FS_REQUISITION_PACKING_NOTICE:
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】关联装箱任务【"+packingCode+"】已装箱完成，请即时处理" ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
+            default:
+                return;
+        }
+
+        //目前都是创建人，处理人，抄送人员，因此统一处理
+        List<String> noticeUserIdList = new ArrayList<>();
+        CfgSettingValueDTO.FsRequisitionNoticeDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+        if (CollectionUtils.isNotEmpty(dto.getRoleIdList())) {
+            List<String> collect = sysPostFeign.listById(dto.getRoleIdList()).stream().map(SysPostEntity::getPostName).collect(Collectors.toList());
+            for (String s : collect) {
+                if (s.equals("创建人")) {
+                    noticeUserIdList.add(createUserId);
+                }
+                if (s.equals("处理人")) {
+                    noticeUserIdList.add(loginUser.getUid());
                 }
             }
-            //抄送人员
-            if (CollectionUtils.isNotEmpty(dto.getUserIdList())) {
-                noticeUserIdList.addAll(dto.getUserIdList());
-            }
-            noticeUserIdList = noticeUserIdList.stream().distinct().collect(Collectors.toList());
+        }
+        //抄送人员
+        if (CollectionUtils.isNotEmpty(dto.getUserIdList())) {
+            noticeUserIdList.addAll(dto.getUserIdList());
+        }
+        noticeUserIdList = noticeUserIdList.stream().distinct().collect(Collectors.toList());
 
-            NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
-            noticeMsgInfoDTO.setReceiverUserIds(noticeUserIdList);
-            String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
-
-            //消息头
-            String title = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
-            noticeMsgInfoDTO.setTitle(title);
-            //消息体
-            String msgContent = StrUtil.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT,"数大臣","要货申请",requisitionApplication.getCode(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            noticeMsgInfoDTO.setContent(msgContent);
-            noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
-                    noticeMsgInfoDTO, IdUtil.simpleUUID());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
-            }else{
-                log.info("消息发送结果成功：{}", JSONObject.toJSONString(result));
-            }
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(noticeUserIdList);
+        String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
+        noticeMsgInfoDTO.setTitle(title);
+        noticeMsgInfoDTO.setContent(msgContent);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                noticeMsgInfoDTO, IdUtil.simpleUUID());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
         }
     }
 

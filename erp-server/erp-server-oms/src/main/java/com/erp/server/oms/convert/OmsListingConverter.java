@@ -38,19 +38,11 @@ public interface OmsListingConverter {
             @Mapping(target = "platformSpuName", source = "platformProductName"),
             @Mapping(target = "platformSkuName", source = "platformSkuName"),
             @Mapping(target = "platformUpdateTime", source = "platformUpdateTime"),
-            @Mapping(target = "matchResult", source = "matchResult",defaultValue = "false"),
+            @Mapping(target = "matchResult", source = "matchResultStr",defaultValue = "false"),
             @Mapping(target = "platformStatus", source = "platformStatus",defaultValue = ""),
             @Mapping(target = "authId", source = "authId",defaultValue = ""),
     })
     ListingInfoEntity listingDtoToEntity(PlatformProductDTO platformProductDTO);
-
-
-    @Mappings({
-            @Mapping(target = "matchResult", source = "listingInfoEntity.matchResult"),
-            @Mapping(target = "type", source = "listingInfoEntity.type"),
-    })
-    ListingInfoWithSkuMappingDTO listingAndSKuMappingToDTO(ListingInfoEntity listingInfoEntity, SkuMappingEntity skuMappingEntity);
-
 
     ListingInfoEntity copyListingInfo(ListingInfoEntity entity);
 }

@@ -14,7 +14,6 @@ import com.common.core.enums.LogActionEnum;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -26,10 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -515,6 +511,42 @@ public class SoB2cDeliveryController extends BaseController {
                 receiverResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(receiverResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 批量修改中转仓库
+     * @author zdy
+     * @date:  2024-10-24
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateTransferWarehouse")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改中转仓库")
+    public ApiResult<List<BatchResultDTO>> updateTransferWarehouse(@RequestBody @Validated BaseIdsDTO.ChangeDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoB2cDeliveryEntity> entityList = soB2cDeliveryService.listByIds(ids);
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            SoB2cDeliveryEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"B2C发货单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTO = soB2cDeliveryService.updateTransferWarehouse(entity, dto.getChangeIds());
+            }catch (Exception e){
+                log.error("B2C发货单修改中转仓库失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "B2C发货单不存在, 修改中转仓库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

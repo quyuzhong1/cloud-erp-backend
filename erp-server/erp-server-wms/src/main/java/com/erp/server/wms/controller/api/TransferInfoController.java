@@ -22,11 +22,11 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 直接调拨单主表
@@ -343,4 +343,32 @@ public class TransferInfoController extends BaseController {
         return success( "", msg);
     }
 
+    /**
+     * 批量修改调拨日期
+     * @author zdy
+     * @date: 2024/10/24 20:12
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改调拨日期")
+    @PostMapping("/updateBillDate")
+    public ApiResult<List<BatchResultDTO>> updateBillDate(@RequestBody @Validated BaseIdsDTO.DateDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<TransferInfoEntity> entityList = transferInfoService.listByIds(ids);
+        for (String id : ids) {
+            TransferInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"直接调拨单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInfoService.updateBillDate(entity,dto.getBillDate()));
+            }catch (Exception e){
+                log.error("直接调拨单修改调拨日期失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

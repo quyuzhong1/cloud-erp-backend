@@ -85,6 +85,23 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
+     * 采购单号分页查询
+     * @author will
+     * @date 2024/11/11 11:46
+     * @param dto
+     * @return ApiResult<PagingVO<SourceCodeDTO>>
+     */
+    @PostMapping("/purchaseCodePaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    public ApiResult<PagingVO<PurchaseOrderDTO.SourceCodeDTO>> purchaseCodePaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.SourceCodeDTO> pagingVO = purchaseOrderService.purchaseCodePaging(dto);
+        return success(pagingVO);
+    }
+
+    /**
      * 列表查询合计
      *
      * @param dto

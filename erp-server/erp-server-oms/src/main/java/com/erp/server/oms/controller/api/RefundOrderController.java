@@ -25,7 +25,7 @@ import javax.annotation.Resource;
  * @since 2024-09-12
  */
 @RestController
-@RequestMapping("/refund-order-entity")
+@RequestMapping("/refundOrder")
 public class RefundOrderController extends BaseController {
 
 

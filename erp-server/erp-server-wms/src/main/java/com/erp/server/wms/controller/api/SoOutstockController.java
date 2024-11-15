@@ -355,8 +355,12 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soOutstockService.delete(dto.getIds());
-        return result ? success() : failure();
+        try {
+            Boolean result = soOutstockService.delete(dto.getIds());
+            return result ? success() : failure();
+        }catch (Exception e){
+            return failure(e.getMessage());
+        }
     }
 
     /**

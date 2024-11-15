@@ -996,7 +996,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
         log.info("删除B2C销售订单数据，ids = {}", targetIdList);
         //删除拆分后的数据
-        soB2cService.deleteById(targetIdList);
+        soB2cService.deleteById(targetIdList,entity.getCode());
         //反作废合并前的数据
         log.info("反作废原B2C销售订单数据，id = {}", entity.getId());
         soB2cService.unInvalid(soB2cRefList.get(0).getSourceId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
