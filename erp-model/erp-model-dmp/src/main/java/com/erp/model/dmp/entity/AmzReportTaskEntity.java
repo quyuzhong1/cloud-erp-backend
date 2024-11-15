@@ -1,16 +1,17 @@
 package com.erp.model.dmp.entity;
 
-import cn.hutool.core.util.StrUtil;
+import java.time.LocalDateTime;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import org.apache.commons.lang3.StringUtils;
-
-import java.time.LocalDateTime;
 
 
 /**
