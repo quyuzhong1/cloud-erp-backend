@@ -8,7 +8,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -120,8 +119,6 @@ public class OverseasInventoryEntity extends BaseEntity<OverseasInventoryEntity>
     public static final String WAREHOUSE_CODE = "warehouse_code";
 
     public static final String DICT_PLATFORM = "dict_platform";
-
-    public static final String NAME = "name";
 
     public static final String PLATFORM_SKU = "platform_sku";
 

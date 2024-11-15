@@ -347,7 +347,7 @@ public class WarehouseLocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @EqualsAndHashCode(callSuper = true)
-    public static class updateDto extends AddDTO{
+    public static class UpdateDto extends AddDTO{
 
         /**
          * 仓位ID
@@ -502,7 +502,7 @@ public class WarehouseLocationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class updateStatusDto{
+    public static class UpdateStatusDto {
         /**
          * 仓位ID
          */
@@ -516,7 +516,7 @@ public class WarehouseLocationDTO implements Serializable {
 
     @Data
     @AllArgsConstructor
-    public static class tabDto{
+    public static class TabDto {
         /**
          * 类型：idle可分配，occupied被占用，recyclable可回收，all全部
          */

@@ -105,7 +105,7 @@ public class VirtualWarehousePushHandleDetailEntity extends BaseEntity<VirtualWa
     private String mainId;
 
 
-    public static final String STATUS = "status";
+    
 
     public static final String ALLOCATION_ID = "allocation_id";
 
@@ -119,13 +119,13 @@ public class VirtualWarehousePushHandleDetailEntity extends BaseEntity<VirtualWa
 
     public static final String THIRD_TO_VIRTUAL_WAREHOUSE_ID = "third_to_virtual_warehouse_id";
 
-    public static final String QTY = "qty";
+    
 
-    public static final String TYPE = "type";
+    
 
-    public static final String DIRECTION = "direction";
+    
 
-    public static final String CODE = "code";
+    
 
     public static final String SYS_TYPE = "sys_type";
 

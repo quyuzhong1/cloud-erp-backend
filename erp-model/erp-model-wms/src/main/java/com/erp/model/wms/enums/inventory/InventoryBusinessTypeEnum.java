@@ -1,5 +1,7 @@
 package com.erp.model.wms.enums.inventory;
 
+import lombok.Setter;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -49,7 +51,6 @@ public enum InventoryBusinessTypeEnum {
 
     INSTOCK_FORCAST("instock_forcast", "21", "入库预报"),
 
-    // TODO 暂不确定是否需要该业务，无法确定状态
     INVENTORY_ADJUST("inventory_adjust", "22", "库存调整单"),
 
     ASSEMBLE_IN_CHILDD("assemble_in_child", "23", "加工单组装（子SKU减少）"),
@@ -97,6 +98,7 @@ public enum InventoryBusinessTypeEnum {
 
     private String code;
 
+    @Setter
     private String type;
 
     private String name;
@@ -117,10 +119,6 @@ public enum InventoryBusinessTypeEnum {
 
     public String getType() {
         return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     /**

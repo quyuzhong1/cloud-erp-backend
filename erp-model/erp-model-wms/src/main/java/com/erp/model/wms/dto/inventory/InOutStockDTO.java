@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.inventory;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.validator.ValidGroup;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -97,7 +98,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 stockDTO.setSourceDetailId(sourceDetailId);
                 stockDTO.setSkuId(skuId);
                 stockDTO.setSkuNo(skuNo);
-                stockDTO.setWarehouseLocation(StrUtil.isNotBlank(entity.getBatchNo()) ? "" : warehouseLocation);
+                stockDTO.setWarehouseLocation(CharSequenceUtil.isNotBlank(entity.getBatchNo()) ? "" : warehouseLocation);
                 stockDTO.setQty(qty);
                 stockDTO.setBillDate(entity.getBillDate());
                 return stockDTO;

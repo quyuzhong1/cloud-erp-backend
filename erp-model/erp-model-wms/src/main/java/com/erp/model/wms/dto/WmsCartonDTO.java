@@ -1,7 +1,6 @@
 package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

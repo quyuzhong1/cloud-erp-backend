@@ -35,11 +35,6 @@ public class WmsCartonDetailDTO implements Serializable {
         private String  id;
 
         /**
-        * first_mile_carton表id
-        */
-//        private String cartonId;
-
-        /**
         * 产品id
         */
         private String skuId;

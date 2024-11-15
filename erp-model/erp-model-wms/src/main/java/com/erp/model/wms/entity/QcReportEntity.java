@@ -41,13 +41,6 @@ public class QcReportEntity extends BaseEntity<QcReportEntity> {
     @TableField("qc_rule_id")
     private String qcRuleId;
 
-
-    public static final String NAME = "name";
-
-    public static final String CONTENT = "content";
-
-    public static final String QCRULEID = "qcRuleId";
-
     @Override
     public Serializable pkVal() {
         return null;
