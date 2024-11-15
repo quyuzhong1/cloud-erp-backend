@@ -3,15 +3,16 @@ package com.sdk.tms.yuntu.utils;
 import com.common.business.constant.ThirdConstants;
 import com.common.core.security.SBase64;
 import com.common.core.utils.OkHttpUtils;
-import com.sdk.tms.yuntu.constants.YunTuConstants;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class YunTuUtils {
+    private YunTuUtils() {
+    }
 
-    public static String getToken(String customerCode,String apiSecret){
+    public static String getToken(String customerCode, String apiSecret){
         return SBase64.stringToBase64(customerCode+"&"+apiSecret);
     }
 

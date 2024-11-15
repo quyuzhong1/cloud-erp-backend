@@ -27,15 +27,15 @@ public class WeiShiResponse<T> implements Serializable {
 
     private T data;
 
-    public static WeiShiResponse error(String code, String error) {
-        WeiShiResponse apiResult = new WeiShiResponse();
+    public static WeiShiResponse<String> error(String code, String error) {
+        WeiShiResponse<String> apiResult = new WeiShiResponse<>();
         apiResult.setAsk("Failure");
         apiResult.setMessage(error);
         return apiResult;
     }
 
     @Data
-    public static class Error {
+    public static class Error implements Serializable{
 
         private String errMessage;
 
@@ -43,7 +43,7 @@ public class WeiShiResponse<T> implements Serializable {
     }
 
     @Data
-    public static class Result {
+    public static class Result implements Serializable{
 
         private String ask;
 

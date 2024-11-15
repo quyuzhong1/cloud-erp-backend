@@ -12,6 +12,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 处理WebFlux响应
@@ -19,6 +20,9 @@ import java.nio.charset.Charset;
  * @Date 2023/12/6 14:25
  **/
 public class WebfluxResponseUtils {
+
+    private WebfluxResponseUtils(){
+    }
     
     public static Mono<Void> responseWrite(ServerWebExchange exchange, String message) {
         ServerHttpResponse response = exchange.getResponse();
@@ -27,9 +31,7 @@ public class WebfluxResponseUtils {
         response.getHeaders().set("Access-Control-Allow-Origin", "*");
         response.getHeaders().set("Cache-Control", "no-cache");
         String body= JSONUtil.toJsonStr(message);
-        DataBuffer buffer =  response.bufferFactory().wrap(body.getBytes(Charset.forName("UTF-8")));
-        return response.writeWith(Mono.just(buffer)).doFinally(s -> {
-            DataBufferUtils.release(buffer);
-        });
+        DataBuffer buffer =  response.bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
+        return response.writeWith(Mono.just(buffer)).doFinally(s -> DataBufferUtils.release(buffer));
     }
 }
