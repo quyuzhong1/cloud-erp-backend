@@ -33,6 +33,7 @@ import com.erp.server.plm.constant.NoticeMessageConstant;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -319,12 +320,12 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             if (StrUtil.isNotBlank(userName)) {
                 titleContent = StrUtil.format(titleContent, userName);
             }
-            LarkResultDTO larkResult = fsService.sendMessage(unionId, titleContent, textContent, msgType);
+            LarkResultDTO<T> larkResult = fsService.sendMessage(unionId, titleContent, textContent, msgType);
             // 催办
             if (isPress) {
                 SingleResultDTO resultDTO = JSONObject.parseObject(larkResult.getData().toString(), SingleResultDTO.class);
                 String messageId = resultDTO.getMessage_id();
-                LarkResultDTO larkResultDTO = fsService.pressMessage(messageId, Collections.singletonList(unionId));
+                fsService.pressMessage(messageId, Collections.singletonList(unionId));
             }
         }
 
