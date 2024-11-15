@@ -10,7 +10,6 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName QueryLogisticsRequest
- * @description: TODO
  * @date 2023年12月26日
  * @version: 1.0
  */

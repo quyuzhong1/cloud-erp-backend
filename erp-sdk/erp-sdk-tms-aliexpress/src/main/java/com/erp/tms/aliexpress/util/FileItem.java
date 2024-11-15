@@ -5,11 +5,13 @@ import java.io.*;
 /**
  * @author zdy
  * @ClassName FileItem
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
 public class FileItem {
+    
+    private static String OCTET = "application/octet-stream";
+    
     private Contract contract;
 
     public FileItem(File file) {
@@ -84,7 +86,7 @@ public class FileItem {
         }
 
         public String getMimeType() {
-            return "application/octet-stream";
+            return OCTET;
         }
 
         public long getFileLength() {
@@ -92,16 +94,11 @@ public class FileItem {
         }
 
         public void write(OutputStream output) throws IOException {
-            InputStream input = null;
-            try {
-                input = new FileInputStream(this.file);
+            try (InputStream input = new FileInputStream(this.file)) {
                 byte[] buffer = new byte[4096];
                 int n = 0;
                 while (-1 != (n = input.read(buffer)))
                     output.write(buffer, 0, n);
-            } finally {
-                if (input != null)
-                    input.close();
             }
         }
     }
@@ -129,7 +126,7 @@ public class FileItem {
 
         public String getMimeType() {
             if (this.mimeType == null)
-                return "application/octet-stream";
+                return OCTET;
             return this.mimeType;
         }
 
@@ -165,7 +162,7 @@ public class FileItem {
 
         public String getMimeType() {
             if (this.mimeType == null)
-                return "application/octet-stream";
+                return OCTET;
             return this.mimeType;
         }
 
@@ -180,8 +177,7 @@ public class FileItem {
                 while (-1 != (n = this.stream.read(buffer)))
                     output.write(buffer, 0, n);
             } finally {
-                if (this.stream != null)
-                    this.stream.close();
+                this.stream.close();
             }
         }
     }

@@ -7,7 +7,6 @@ import java.util.Map;
 /**
  * @author zdy
  * @ClassName IopHashMap
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
@@ -44,6 +43,7 @@ public class IopHashMap extends HashMap<String, String> {
         return put(key, strValue);
     }
 
+    @Override
     public String put(String key, String value) {
         if (IopUtils.areNotEmpty(new String[] { key, value }))
             return super.put(key, value);

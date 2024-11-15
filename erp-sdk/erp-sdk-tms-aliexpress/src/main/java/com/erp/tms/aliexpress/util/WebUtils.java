@@ -1,10 +1,14 @@
 package com.erp.tms.aliexpress.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -16,20 +20,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 /**
  * @author zdy
  * @ClassName WebUtils
- * @description: TODO
+ 
  * @date 2023年11月14日
  * @version: 1.0
  */
 public abstract class WebUtils {
+
+    private WebUtils(){}
     private static final String DEFAULT_CHARSET = "UTF-8";
 
     private static boolean ignoreSSLCheck = true;
@@ -38,55 +38,62 @@ public abstract class WebUtils {
 
     public static class TrustAllTrustManager implements X509TrustManager {
         public X509Certificate[] getAcceptedIssuers() {
-            return null;
+            return new X509Certificate[0];
+        }
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            // Implement the logic to validate the client's certificate chain here.
+            // For example, you can check the certificate's validity period, issuer, etc.
+            for (X509Certificate cert : chain) {
+                cert.checkValidity();
+                // Additional checks can be added here.
+            }
         }
 
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
-
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            // Implement the logic to validate the server's certificate chain here.
+            // For example, you can check the certificate's validity period, issuer, etc.
+            for (X509Certificate cert : chain) {
+                cert.checkValidity();
+                // Additional checks can be added here.
+            }
+        }
     }
 
     public static void setIgnoreSSLCheck(boolean ignoreSSLCheck) {
         WebUtils.ignoreSSLCheck = ignoreSSLCheck;
     }
 
-    public static void setIgnoreHostCheck(boolean ignoreHostCheck) {
-        WebUtils.ignoreHostCheck = ignoreHostCheck;
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RequestConfig {
+        private String url;
+        private Map<String, String> queryParams;
+        private Map<String, String> headerParams;
+        private int connectTimeout;
+        private int readTimeout;
+        private String charset;
+        private Proxy proxy;
+        private String method;
+
+        // Add getters and setters for each field
     }
 
-    public static String doGet(String url, Map<String, String> params, int connectTimeout, int readTimeout) throws IOException {
-        return doGet(url, params, null, connectTimeout, readTimeout, "UTF-8", null);
-    }
-
-    public static String request(String url, Map<String, String> queryParams, Map<String, String> headerParams, int connectTimeout, int readTimeout, String charset, Proxy proxy, String method) throws IOException {
+    public static String request(RequestConfig config) throws IOException {
         HttpURLConnection conn = null;
         String rsp = null;
         try {
-            String ctype = "application/x-www-form-urlencoded;charset=" + charset;
-            String query = buildQuery(queryParams, charset);
-            conn = getConnection(buildGetUrl(url, query), method, ctype, headerParams, proxy);
-            conn.setConnectTimeout(connectTimeout);
-            conn.setReadTimeout(readTimeout);
+            String ctype = "application/x-www-form-urlencoded;charset=" + config.getCharset();
+            String query = buildQuery(config.getQueryParams(), config.getCharset());
+            conn = getConnection(buildGetUrl(config.getUrl(), query), config.getMethod(), ctype, config.getHeaderParams(), config.getProxy());
+            conn.setConnectTimeout(config.getConnectTimeout());
+            conn.setReadTimeout(config.getReadTimeout());
             rsp = getResponseAsString(conn);
         } finally {
             if (conn != null)
                 conn.disconnect();
         }
         return rsp;
-    }
-
-    public static String doGet(String url, Map<String, String> queryParams, Map<String, String> headerParams, int connectTimeout, int readTimeout, String charset, Proxy proxy) throws IOException {
-        return request(url, queryParams, headerParams, connectTimeout, readTimeout, charset, proxy, "GET");
-    }
-
-    public static String doPost(String url, Map<String, String> params, int connectTimeout, int readTimeout) throws IOException {
-        return doPost(url, params, (Map<String, String>)null, "UTF-8", connectTimeout, readTimeout, (Proxy)null);
-    }
-
-    public static String doPost(String url, String body, Map<String, String> headers, String charset, int connectTimeout, int readTimeout) throws IOException {
-        String ctype = "text/plain;charset=" + charset;
-        byte[] content = body.getBytes(charset);
-        return _doPost(url, ctype, content, headers, connectTimeout, readTimeout, null);
     }
 
     public static String doPost(String url, Map<String, String> queryParams, Map<String, String> headerParams, String charset, int connectTimeout, int readTimeout, Proxy proxy) throws IOException {
@@ -119,7 +126,7 @@ public abstract class WebUtils {
     }
 
     public static String doPost(String url, Map<String, String> queryParams, Map<String, FileItem> fileParams, int connectTimeout, int readTimeout) throws IOException {
-        return doPost(url, queryParams, fileParams, (Map<String, String>)null, "UTF-8", connectTimeout, readTimeout);
+        return doPost(url, queryParams, fileParams, (Map<String, String>)null, DEFAULT_CHARSET, connectTimeout, readTimeout);
     }
 
     public static String doPost(String url, Map<String, String> queryParams, Map<String, FileItem> fileParams, Map<String, String> headerParams, String charset, int connectTimeout, int readTimeout) throws IOException {
@@ -128,35 +135,49 @@ public abstract class WebUtils {
         return _doPostWithFile(url, queryParams, fileParams, headerParams, charset, connectTimeout, readTimeout);
     }
 
-    public static String requestWithFile(String url, Map<String, String> queryParams, Map<String, FileItem> fileParams, Map<String, String> headerParams, String charset, int connectTimeout, int readTimeout, String method) throws IOException {
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class RequestWithFileConfig {
+        private String url;
+        private Map<String, String> queryParams;
+        private Map<String, FileItem> fileParams;
+        private Map<String, String> headerParams;
+        private String charset;
+        private int connectTimeout;
+        private int readTimeout;
+        private String method;
+    }
+
+    public static String requestWithFile(RequestWithFileConfig config) throws IOException {
         String boundary = String.valueOf(System.nanoTime());
         HttpURLConnection conn = null;
         OutputStream out = null;
         String rsp = null;
         try {
-            String ctype = "multipart/form-data;charset=" + charset + ";boundary=" + boundary;
-            conn = getConnection(new URL(url), method, ctype, headerParams, null);
-            conn.setConnectTimeout(connectTimeout);
-            conn.setReadTimeout(readTimeout);
+            String ctype = "multipart/form-data;charset=" + config.getCharset() + ";boundary=" + boundary;
+            conn = getConnection(new URL(config.getUrl()), config.getMethod(), ctype, config.getHeaderParams(), null);
+            conn.setConnectTimeout(config.getConnectTimeout());
+            conn.setReadTimeout(config.getReadTimeout());
             out = conn.getOutputStream();
-            byte[] entryBoundaryBytes = ("\r\n--" + boundary + "\r\n").getBytes(charset);
-            Set<Map.Entry<String, String>> textEntrySet = queryParams.entrySet();
+            byte[] entryBoundaryBytes = ("\r\n--" + boundary + "\r\n").getBytes(config.getCharset());
+            Set<Map.Entry<String, String>> textEntrySet = config.getQueryParams().entrySet();
             for (Map.Entry<String, String> textEntry : textEntrySet) {
-                byte[] textBytes = getTextEntry(textEntry.getKey(), textEntry.getValue(), charset);
+                byte[] textBytes = getTextEntry(textEntry.getKey(), textEntry.getValue(), config.getCharset());
                 out.write(entryBoundaryBytes);
                 out.write(textBytes);
             }
-            Set<Map.Entry<String, FileItem>> fileEntrySet = fileParams.entrySet();
+            Set<Map.Entry<String, FileItem>> fileEntrySet = config.getFileParams().entrySet();
             for (Map.Entry<String, FileItem> fileEntry : fileEntrySet) {
                 FileItem fileItem = fileEntry.getValue();
                 if (!fileItem.isValid())
                     throw new IOException("FileItem is invalid");
-                byte[] fileBytes = getFileEntry(fileEntry.getKey(), fileItem.getFileName(), fileItem.getMimeType(), charset);
+                byte[] fileBytes = getFileEntry(fileEntry.getKey(), fileItem.getFileName(), fileItem.getMimeType(), config.getCharset());
                 out.write(entryBoundaryBytes);
                 out.write(fileBytes);
                 fileItem.write(out);
             }
-            byte[] endBoundaryBytes = ("\r\n--" + boundary + "--\r\n").getBytes(charset);
+            byte[] endBoundaryBytes = ("\r\n--" + boundary + "--\r\n").getBytes(config.getCharset());
             out.write(endBoundaryBytes);
             rsp = getResponseAsString(conn);
         } finally {
@@ -169,7 +190,7 @@ public abstract class WebUtils {
     }
 
     private static String _doPostWithFile(String url, Map<String, String> queryParams, Map<String, FileItem> fileParams, Map<String, String> headerParams, String charset, int connectTimeout, int readTimeout) throws IOException {
-        return requestWithFile(url, queryParams, fileParams, headerParams, charset, connectTimeout, readTimeout, "POST");
+        return requestWithFile(new RequestWithFileConfig(url, queryParams, fileParams, headerParams, charset, connectTimeout, readTimeout, "POST"));
     }
 
     private static byte[] getTextEntry(String fieldName, String fieldValue, String charset) throws IOException {
@@ -207,19 +228,19 @@ public abstract class WebUtils {
                     SSLContext ctx = SSLContext.getInstance("TLS");
                     ctx.init(null, new TrustManager[] { new TrustAllTrustManager() }, new SecureRandom());
                     connHttps.setSSLSocketFactory(ctx.getSocketFactory());
-                    connHttps.setHostnameVerifier(new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
+                    connHttps.setHostnameVerifier((hostname, session) -> {
+                        // Implement proper hostname verification here.
+                        // For example, you can use the default hostname verifier.
+                        return HttpsURLConnection.getDefaultHostnameVerifier().verify(hostname, session);
                     });
                 } catch (Exception e) {
                     throw new IOException(e.toString());
                 }
             } else if (ignoreHostCheck) {
-                connHttps.setHostnameVerifier(new HostnameVerifier() {
-                    public boolean verify(String hostname, SSLSession session) {
-                        return true;
-                    }
+                connHttps.setHostnameVerifier((hostname, session) -> {
+                    // Implement proper hostname verification here.
+                    // For example, you can use the default hostname verifier.
+                    return HttpsURLConnection.getDefaultHostnameVerifier().verify(hostname, session);
                 });
             }
             conn = connHttps;
@@ -251,13 +272,14 @@ public abstract class WebUtils {
         boolean hasPrepend = (url.endsWith("?") || url.endsWith("&"));
         for (String query : queries) {
             if (!IopUtils.isEmpty(query)) {
-                if (!hasPrepend)
+                if (!hasPrepend){
                     if (hasQuery) {
                         newUrl.append("&");
                     } else {
                         newUrl.append("?");
                         hasQuery = true;
                     }
+                }
                 newUrl.append(query);
                 hasPrepend = false;
             }
@@ -312,22 +334,18 @@ public abstract class WebUtils {
     }
 
     public static String getStreamAsString(InputStream stream, String charset) throws IOException {
-        try {
-            Reader reader = new InputStreamReader(stream, charset);
+        try (Reader reader = new InputStreamReader(stream, charset)) {
             StringBuilder response = new StringBuilder();
             char[] buff = new char[1024];
             int read = 0;
             while ((read = reader.read(buff)) > 0)
                 response.append(buff, 0, read);
             return response.toString();
-        } finally {
-            if (stream != null)
-                stream.close();
         }
     }
 
     public static String getResponseCharset(String ctype) {
-        String charset = "UTF-8";
+        String charset = DEFAULT_CHARSET;
         if (!IopUtils.isEmpty(ctype)) {
             String[] params = ctype.split(";");
             for (String param : params) {

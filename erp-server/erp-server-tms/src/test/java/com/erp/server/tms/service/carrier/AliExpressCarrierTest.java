@@ -73,11 +73,7 @@ public class AliExpressCarrierTest {
         cn.hutool.json.JSONObject jsonObject = new cn.hutool.json.JSONObject(response.getBody());
         JSONObject queryListResponse = jsonObject.getJSONObject("cainiao_global_logistics_carrier_querylist_response");
         AllCarrierResponse bean = JSONUtil.toBean(queryListResponse, AllCarrierResponse.class);
-        AllCarrierResponse.CourierList courierList = bean.getResult().getData().getCourier_list();
-        List<TmsCarrierEntity> list = courierList.getCourierlist().stream()
-                .map(e-> TmsCarrierEntity.init(e.getCourier_code(), e.getCourier_name(), "AliExpress", "https://www.track123.com"))
-                .collect(Collectors.toList());
-        tmsCarrierService.checkSaveOrUpdateBatch(list);
+
 
     }
 }

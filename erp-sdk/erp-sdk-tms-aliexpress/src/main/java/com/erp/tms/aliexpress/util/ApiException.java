@@ -1,11 +1,8 @@
 package com.erp.tms.aliexpress.util;
 
-import lombok.Data;
-
 /**
  * @author zdy
  * @ClassName ApiException
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */

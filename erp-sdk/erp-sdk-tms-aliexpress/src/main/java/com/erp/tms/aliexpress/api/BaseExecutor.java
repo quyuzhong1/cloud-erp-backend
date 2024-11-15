@@ -15,7 +15,6 @@ import java.util.Map;
 /**
  * @author zdy
  * @ClassName BaseExecutor
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
@@ -41,8 +40,10 @@ public abstract class BaseExecutor {
     protected String logLevel = "ERROR";
 
     protected String format = "json";
+    
+    protected String UTF = "UTF-8";
 
-    public BaseExecutor(String serverUrl, String appKey, String appSecret) {
+    protected BaseExecutor(String serverUrl, String appKey, String appSecret) {
         this.serverUrl = serverUrl.endsWith("/") ? serverUrl.substring(0, serverUrl.length() - 1) : serverUrl;
         this.appKey = appKey;
         this.appSecret = appSecret;
@@ -56,15 +57,15 @@ public abstract class BaseExecutor {
         RequestContext requestContext = getRequestContext(request, accessToken, bizParams);
         try {
             String rpcUrl = requestContext.getRequestUrl();
-            String urlQuery = WebUtils.buildQuery(requestContext.getAllParams(), "UTF-8");
+            String urlQuery = WebUtils.buildQuery(requestContext.getAllParams(), UTF);
             String fullUrl = WebUtils.buildRequestUrl(rpcUrl, new String[] { urlQuery });
             String rsp = null;
             if (this.useGzipEncoding)
                 request.addHeaderParameter("Accept-Encoding", "gzip");
             if (request.getFileParams() != null) {
-                rsp = WebUtils.requestWithFile(fullUrl, (Map)bizParams, request.getFileParams(), request.getHeaderParams(), "UTF-8", this.connectTimeout, this.readTimeout, request.getHttpMethod());
+                rsp = WebUtils.requestWithFile(new WebUtils.RequestWithFileConfig(fullUrl, (Map)bizParams, request.getFileParams(), request.getHeaderParams(), UTF, this.connectTimeout, this.readTimeout, request.getHttpMethod()));
             } else {
-                rsp = WebUtils.request(fullUrl, null, request.getHeaderParams(), this.connectTimeout, this.readTimeout, "UTF-8", this.proxy, request.getHttpMethod());
+                rsp = WebUtils.request(new WebUtils.RequestConfig(fullUrl, null, request.getHeaderParams(), this.connectTimeout, this.readTimeout, UTF, this.proxy, request.getHttpMethod()));
             }
             requestContext.setResponseBody(rsp);
         } catch (IOException e) {

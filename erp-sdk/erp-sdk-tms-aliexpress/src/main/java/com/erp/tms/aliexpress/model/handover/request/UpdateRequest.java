@@ -2,8 +2,6 @@ package com.erp.tms.aliexpress.model.handover.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
 import com.erp.tms.aliexpress.model.handover.AddressInfo;
-import com.erp.tms.aliexpress.model.handover.Features;
-import com.erp.tms.aliexpress.model.handover.SellerParcelOrder;
 import com.erp.tms.aliexpress.model.handover.UserInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +17,7 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName CommitRequest
- * @description: TODO
+ 
  * @date 2024年02月01日
  * @version: 1.0
  */
