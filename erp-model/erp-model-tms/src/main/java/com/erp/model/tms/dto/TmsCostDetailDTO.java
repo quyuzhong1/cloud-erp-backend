@@ -143,7 +143,7 @@ public class TmsCostDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @EqualsAndHashCode(callSuper = true)
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO extends CommonDTO implements Serializable{
 
         /**
         * 主键id

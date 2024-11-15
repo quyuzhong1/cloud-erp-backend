@@ -3,13 +3,9 @@ package com.erp.model.tms.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>

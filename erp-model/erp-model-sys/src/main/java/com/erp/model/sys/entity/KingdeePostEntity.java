@@ -1,13 +1,13 @@
 package com.erp.model.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -74,9 +74,9 @@ public class KingdeePostEntity extends BaseEntity<KingdeePostEntity> {
 
 
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String KINGDEE_DEPT_ID = "kingdee_dept_id";
 
@@ -86,7 +86,7 @@ public class KingdeePostEntity extends BaseEntity<KingdeePostEntity> {
 
     public static final String KINGDEE_ID = "kingdee_id";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
     @Override
     public Serializable pkVal() {

@@ -1,13 +1,13 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -117,7 +117,7 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
 
     public static final String EN_NAME = "en_name";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String CHANNEL_STATUS = "channel_status";
 
@@ -133,7 +133,7 @@ public class LogisticsSaleChannelEntity extends BaseEntity<LogisticsSaleChannelE
 
     public static final String IS_TRACK = "is_track";
 
-    public static final String AGING = "aging";
+    public static final String FIELD_AGING = "aging";
 
     public static final String ORIGIN_COUNTRY = "origin_country";
 
