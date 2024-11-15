@@ -10,6 +10,7 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.server.oms.service.ISoB2cHandleService;
 import com.erp.server.oms.service.PlatformOrderConsumerHandleService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +25,7 @@ import javax.annotation.Resource;
 @Slf4j
 @Component
 @PlatformSoB2cAnnotate(method = PlatformDictEnum.AMAZON)
-public class AmazonSoB2cHandle implements ISoB2cHandleService {
+public class AmazonSoB2cHandle implements ISoB2cHandleService<T> {
 
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
@@ -34,7 +35,7 @@ public class AmazonSoB2cHandle implements ISoB2cHandleService {
     @Override
     public Boolean handleRule(SoB2cEntity mainEntity) {
         //平台仓订单不走任何规则
-        if (mainEntity.hasPlatformWarehouseOrder()) {
+        if (Boolean.TRUE.equals(mainEntity.hasPlatformWarehouseOrder())) {
             return false;
         }
         try {
@@ -49,10 +50,10 @@ public class AmazonSoB2cHandle implements ISoB2cHandleService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean handleSoOutStock(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
         // 新的亚马逊FBA订单检查历史配送记录
-        if (resultDTO.isNewInsertOrder() && mainEntity.hasPlatformWarehouseOrder()) {
+        if (resultDTO.isNewInsertOrder() && Boolean.TRUE.equals(mainEntity.hasPlatformWarehouseOrder())) {
             try {
                 Boolean result = dmpMongoDbFeign.checkSoOutStock(new DmpPullSoOutStockDTO(mainEntity.getShopId(), mainEntity.getPlatformCode(), mainEntity.getId()));
-                if (!result){
+                if (Boolean.FALSE.equals(result)){
                     log.warn("处理检查历史销售出库记录失败:platformOrderId={}", dto.getPlatformCode());
                 }
             } catch (Exception e) {

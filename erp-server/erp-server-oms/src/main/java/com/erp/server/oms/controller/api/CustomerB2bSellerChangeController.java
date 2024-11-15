@@ -26,7 +26,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +80,7 @@ public class CustomerB2bSellerChangeController extends BaseController {
         menuCode = "oms:customerB2bSellerChange:update",
         serviceClass = CustomerB2bSellerChangeService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CustomerB2bSellerChangeDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated CustomerB2bSellerChangeDTO.UpdateDTO dto) {
         customerB2bSellerChangeService.update(dto);
         return success();
     }
@@ -100,7 +99,7 @@ public class CustomerB2bSellerChangeController extends BaseController {
             menuCode = "oms:customerB2bSellerChange:update",
             serviceClass = CustomerB2bSellerChangeService.class,
             keyIdName = "id")
-    public ApiResult<?> updateAndSubmit(@RequestBody @Validated CustomerB2bSellerChangeDTO.UpdateDTO dto) {
+    public ApiResult<Object> updateAndSubmit(@RequestBody @Validated CustomerB2bSellerChangeDTO.UpdateDTO dto) {
         customerB2bSellerChangeService.updateAndSubmit(dto);
         return success();
     }
@@ -211,7 +210,7 @@ public class CustomerB2bSellerChangeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/export")
-    public ApiResult export(@RequestBody @Validated CustomerB2bSellerChangeDTO.ParamDTO dto) {
+    public ApiResult<Object> export(@RequestBody @Validated CustomerB2bSellerChangeDTO.ParamDTO dto) {
          customerB2bSellerChangeService.export(dto);
         return success();
     }
