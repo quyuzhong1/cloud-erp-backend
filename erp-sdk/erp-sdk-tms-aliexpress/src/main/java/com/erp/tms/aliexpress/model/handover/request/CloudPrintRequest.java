@@ -8,14 +8,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @author zdy
  * @ClassName CloudPrintRequest
- * @description: TODO
  * @date 2024年02月01日
  * @version: 1.0
  */

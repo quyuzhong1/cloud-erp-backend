@@ -5,7 +5,6 @@ import com.erp.tms.aliexpress.util.ApiException;
 /**
  * @author zdy
  * @ClassName IopClient
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */

@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 /**
  * @author zdy
  * @ClassName InsuranceCoverage
- * @description: TODO
  * @date 2023年11月17日
  * @version: 1.0
  */

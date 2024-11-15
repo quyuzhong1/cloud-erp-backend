@@ -9,7 +9,6 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName ChannelResult
- * @description: TODO
  * @date 2023年11月21日
  * @version: 1.0
  */

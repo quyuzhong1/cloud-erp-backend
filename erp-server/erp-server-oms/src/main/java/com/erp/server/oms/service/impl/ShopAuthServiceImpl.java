@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -76,7 +77,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "店铺授权单", shopAuthEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "店铺授权单", shopAuthEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, shopAuthEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -104,7 +105,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
         // 记录主单操作日志
         log.info("编辑 开始记录店铺授权单日志数据，id：【{}】", shopAuthEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), shopAuthEntity.getId(), "店铺授权单");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), shopAuthEntity.getId(), "店铺授权单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, shopAuthEntity, null, shopAuthEntity.getId(), msg);
         return Boolean.TRUE;

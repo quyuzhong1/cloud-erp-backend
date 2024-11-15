@@ -1,6 +1,6 @@
 package com.common.business.dto;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -274,7 +274,7 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
-                .filter(StrUtil::isNotBlank)
+                .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }
@@ -285,7 +285,7 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuId)
-                .filter(StrUtil::isNotBlank)
+                .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }
@@ -297,7 +297,7 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSpuNo)
-                .filter(StrUtil::isNotBlank)
+                .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }

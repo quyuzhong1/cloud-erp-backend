@@ -11,7 +11,6 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName AddressInfo
- * @description: TODO
  * @date 2024年02月01日
  * @version: 1.0
  */

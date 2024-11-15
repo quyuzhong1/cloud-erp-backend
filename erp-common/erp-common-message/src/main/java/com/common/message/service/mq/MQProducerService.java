@@ -1,7 +1,7 @@
 package com.common.message.service.mq;
 
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.IdUtils;
@@ -44,7 +44,7 @@ public class MQProducerService<T> {
 
 
 	private void sendMsg(MSG_TYPE msgType,String msgKey, String destination, Object payload, String msgSource){
-        if(StrUtil.isBlank(msgKey)){
+        if(CharSequenceUtil.isBlank(msgKey)){
             msgKey = IdUtils.simpleUUID();
         }
         MessageBody msgBody = new MessageBody(msgKey, payload , msgSource);
@@ -63,7 +63,7 @@ public class MQProducerService<T> {
                     @Override
                     public void onException(Throwable throwable) {
                         log.error("MQService:" + ExceptionUtils.getStackTrace(throwable));
-                        throw new RuntimeException(StrUtil.format("消息发送失败 topic_tag={}", destination ));
+                        throw new RuntimeException(CharSequenceUtil.format("消息发送失败 topic_tag={}", destination ));
                     }
                 });
                 break;
@@ -93,7 +93,7 @@ public class MQProducerService<T> {
     public void syncSendMsg(String msgKey, String topic,String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
+        String destination = CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
         syncSendMsg(msgKey, destination, payload, msgSource);
     }
     /**
@@ -122,7 +122,7 @@ public class MQProducerService<T> {
     public void oneWaySendMsg(String msgKey,String topic, String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
+        String destination = CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
         oneWaySendMsg(msgKey, destination, payload,msgSource);
     }
 
@@ -140,7 +140,7 @@ public class MQProducerService<T> {
                         .setHeader(RocketMQHeaders.KEYS, IdUtil.getSnowflake())
                         .build())
                 .collect(Collectors.toList());
-        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), messageList);
+        return rocketMQTemplate.syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), messageList);
     }
 
     /**
@@ -155,7 +155,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg);
+        return rocketMQTemplate.syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg);
     }
 
     /**
@@ -171,7 +171,7 @@ public class MQProducerService<T> {
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
 
-        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, 6);
+        return rocketMQTemplate.syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, 6);
     }
 
     /**
@@ -187,7 +187,7 @@ public class MQProducerService<T> {
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
 
-        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, delayLevel);
+        return rocketMQTemplate.syncSend(CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg,3000, delayLevel);
     }
 
 
@@ -202,7 +202,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        String destination = StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
+        String destination = CharSequenceUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
         rocketMQTemplate.asyncSend(destination, msg, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
@@ -230,7 +230,7 @@ public class MQProducerService<T> {
 
         NoticeTypeEnum noticeTypeEnum = msgInfoDTO.getNoticeTypeEnum();
         String topic = RocketMqTopic.NOTICE_MSG_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
-        String destination = StrUtil.format("{}:{}", topic , noticeTypeEnum.getMqTag());
+        String destination = CharSequenceUtil.format("{}:{}", topic , noticeTypeEnum.getMqTag());
 
         if(Objects.equals(Boolean.TRUE, isSync)) {
             return rocketMQTemplate.syncSend(destination, msgInfoDTO);

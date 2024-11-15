@@ -1,5 +1,6 @@
 package com.erp.server.oms.sdk.authorize;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformAnnotate;
@@ -110,7 +111,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         // 进行 Base64 编码
         String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         // 缓存state
-        String key = StrUtil.format(RedisCacheConstants.AUTH_TIKTOK_STATE, PlatformDictEnum.TIK_TOK.getCode() + state);
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_TIKTOK_STATE, PlatformDictEnum.TIK_TOK.getCode() + state);
 
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
 
@@ -126,7 +127,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
     @Override
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
 // 校验是否是本系统发起
-        String stateKey = StrUtil.format(RedisCacheConstants.AUTH_TIKTOK_STATE, dto.getState());
+        String stateKey =  CharSequenceUtil.format(RedisCacheConstants.AUTH_TIKTOK_STATE, dto.getState());
         log.error("stateKey:：{}", stateKey);
         Object shopIdObj = redisUtil.get(stateKey);
         if (null == shopIdObj) {
@@ -213,7 +214,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         }
 
         shopInfoDTO.setShopCipher(tokenDTO.getShopCipher());
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopId);
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO, 7L*3600L*24L);
 
         redisUtil.del(stateKey);
@@ -244,7 +245,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         }
         // 移除缓存
         // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopInfo.getId());
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopInfo.getId());
         Object shopInfoObj = redisUtil.get(tokenKey);
         if (null != shopInfoObj) {
             redisUtil.del(tokenKey);
@@ -299,7 +300,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         //提前10分钟设置token失效，以免失效了以后才刷新容易出错
         LocalDateTime tokenExpireTime = localDateTime.minusMinutes(10);
 
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), dto.getShopId());
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), dto.getShopId());
         redisUtil.del(tokenKey);
 
         //更新店铺token
@@ -309,7 +310,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
 
     private void refreshErrorWarn(ShopAuthEntity shopAuthEntity, Exception e) {
         //记录错误次数
-        String refreshTokenKey = StrUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopAuthEntity.getShopId());
+        String refreshTokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.TIK_TOK.getCode(), shopAuthEntity.getShopId());
         redisUtil.incr(refreshTokenKey, 1);
 
         //获取错误次数
@@ -324,7 +325,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
                 WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
                 warnMsgInfo.setBizName(PlatformDictEnum.TIK_TOK.getName());
                 warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-                warnMsgInfo.setTitle(StrUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.TIK_TOK.getName(),shopAuthEntity.getShopId()));
+                warnMsgInfo.setTitle( CharSequenceUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.TIK_TOK.getName(),shopAuthEntity.getShopId()));
                 warnMsgInfo.setTableName("shop_auth");
                 warnMsgInfo.setTableId(shopAuthEntity.getId());
                 warnMsgInfo.setKeyInfo(e.getMessage());

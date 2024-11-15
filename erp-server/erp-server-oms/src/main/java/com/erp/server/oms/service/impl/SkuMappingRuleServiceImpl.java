@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
@@ -84,7 +85,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku对照表匹配规则" , skuMappingRuleEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku对照表匹配规则" , skuMappingRuleEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), skuMappingRuleEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(skuMappingRuleEntity.getId(), skuMappingRuleEntity.getId());
@@ -112,7 +113,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
         // 记录主单操作日志
         log.info("编辑 开始记录sku对照表匹配规则日志数据，id：【{}】", skuMappingRuleEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), skuMappingRuleEntity.getId(), "sku对照表匹配规则");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), skuMappingRuleEntity.getId(), "sku对照表匹配规则");
         SkuMappingRuleDTO.LogDTO oldView = this.buildLogDTO(old);
         skuMappingRuleEntity.setDisabled(old.getDisabled());
         SkuMappingRuleDTO.LogDTO newView = this.buildLogDTO(skuMappingRuleEntity);
@@ -137,7 +138,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             throw new ServiceException("sku对照表匹配规则保存失败");
         }
         SkuMappingRuleDTO.LogDTO newView = this.buildLogDTO(old);
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), "sku对照表匹配规则");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), "sku对照表匹配规则");
         operateLogService.addModuleOperateLogByObj(oldView, newView, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), old.getId(), msg);
         return Boolean.TRUE;
     }
@@ -464,7 +465,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 oldLogEntity.setProductSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
                 oldLogEntity.setProductSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
                 oldLogEntity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
-                String msg = StrUtil.format("用户【{}】执行自动匹配规则，匹配前sku【{}】,匹配后sku【{}】", UserContext.getDefaultLoginUser().getUserName(),oldLogEntity.getProductSkuNo() , skuMappingEntitity.getProductSkuNo());
+                String msg =  CharSequenceUtil.format("用户【{}】执行自动匹配规则，匹配前sku【{}】,匹配后sku【{}】", UserContext.getDefaultLoginUser().getUserName(),oldLogEntity.getProductSkuNo() , skuMappingEntitity.getProductSkuNo());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntitity.getListingId(), "自动匹配");
              }
         }

@@ -17,21 +17,21 @@ public class AlgorithmUtil<T> {
      **/
     public void descartes(List<List<T>> dimensionValue, List<List<T>> result, int layer, List<T> currentList) {
         if (layer < dimensionValue.size() - 1) {
-            if (dimensionValue.get(layer).size() == 0) {
+            if (dimensionValue.get(layer).isEmpty()) {
                 descartes(dimensionValue, result, layer + 1, currentList);
             } else {
                 for (int i = 0; i < dimensionValue.get(layer).size(); i++) {
-                    List<T> list = new ArrayList<T>(currentList);
+                    List<T> list = new ArrayList<>(currentList);
                     list.add(dimensionValue.get(layer).get(i));
                     descartes(dimensionValue, result, layer + 1, list);
                 }
             }
         } else if (layer == dimensionValue.size() - 1) {
-            if (dimensionValue.get(layer).size() == 0) {
+            if (dimensionValue.get(layer).isEmpty()) {
                 result.add(currentList);
             } else {
                 for (int i = 0; i < dimensionValue.get(layer).size(); i++) {
-                    List<T> list = new ArrayList<T>(currentList);
+                    List<T> list = new ArrayList<>(currentList);
                     list.add(dimensionValue.get(layer).get(i));
                     result.add(list);
                 }

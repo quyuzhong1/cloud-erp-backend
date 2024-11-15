@@ -1,6 +1,5 @@
 package com.common.business.query;
 
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;

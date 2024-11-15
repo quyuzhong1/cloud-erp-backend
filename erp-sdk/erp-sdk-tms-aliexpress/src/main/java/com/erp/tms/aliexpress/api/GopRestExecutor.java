@@ -8,7 +8,6 @@ import java.util.Map;
 /**
  * @author zdy
  * @ClassName GopRestExecutor
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
@@ -17,6 +16,7 @@ public class GopRestExecutor extends GopExecutor{
         super(serverUrl, appKey, appSecret);
     }
 
+    @Override
     protected String getUrl(IopRequest request, RequestContext requestContext) {
         String path = request.getApiName();
         IopHashMap pathParams = new IopHashMap();
@@ -24,7 +24,7 @@ public class GopRestExecutor extends GopExecutor{
         IopHashMap apiParams = request.getApiParams();
         String[] arr = path.split("/");
         for (String s : arr) {
-            if (s != null && s.length() != 0)
+            if (s != null && !s.isEmpty()){
                 if (s.startsWith("{") && s.endsWith("}")) {
                     String k = s.substring(1, s.length() - 1);
                     String v = (String)apiParams.get(k);
@@ -33,6 +33,7 @@ public class GopRestExecutor extends GopExecutor{
                 } else {
                     sb.append("/").append(s);
                 }
+            }
         }
         requestContext.setPathParams(pathParams);
         String realPath = sb.toString();
@@ -40,6 +41,7 @@ public class GopRestExecutor extends GopExecutor{
         return WebUtils.buildRestUrl(this.serverUrl + "/rest/2.0", realPath);
     }
 
+    @Override
     protected IopHashMap getBizParams(IopRequest request, RequestContext requestContext) {
         IopHashMap pathParams = requestContext.getPathParams();
         IopHashMap bizParams = new IopHashMap((request.getApiParams() != null) ? (Map)request.getApiParams() : new HashMap<String, String>());

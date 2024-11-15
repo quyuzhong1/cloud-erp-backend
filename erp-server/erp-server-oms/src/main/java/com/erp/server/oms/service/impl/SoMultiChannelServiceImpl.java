@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.config.DocNoGenHelper;
@@ -140,7 +141,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
                 if (null == approveStatusEnum) {
-                    String msg = StrUtil.format("[{}]审核状态类型存在:{}", dto.getUniqueId(), dto.getApproveStatusStr());
+                    String msg =  CharSequenceUtil.format("[{}]审核状态类型存在:{}", dto.getUniqueId(), dto.getApproveStatusStr());
                     throw new ServiceException(msg);
                 }
                 entity.setApproveStatus(approveStatusEnum);
@@ -162,7 +163,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
                 throw new ServiceException("soB2c订单保存失败");
             }
             // 新增日志
-            String msg = StrUtil.format("从【{}】平台下载订单成功", dto.getDictPlatform());
+            String msg =  CharSequenceUtil.format("从【{}】平台下载订单成功", dto.getDictPlatform());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_MULTI_CHANNEL.getCode(), entity.getId(), "新增操作");
             return entity;
         } else {
@@ -187,7 +188,7 @@ public class SoMultiChannelServiceImpl extends SuperServiceImpl<SoMultiChannelMa
             if (StringUtils.isNotBlank(dto.getApproveStatusStr())) {
                 ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(dto.getApproveStatusStr());
                 if (null == approveStatusEnum) {
-                    String msg = StrUtil.format("[{}]审核状态类型存在:{}", dto.getUniqueId(), dto.getApproveStatusStr());
+                    String msg =  CharSequenceUtil.format("[{}]审核状态类型存在:{}", dto.getUniqueId(), dto.getApproveStatusStr());
                     throw new ServiceException(msg);
                 }
                 oldEntity.setApproveStatus(approveStatusEnum);

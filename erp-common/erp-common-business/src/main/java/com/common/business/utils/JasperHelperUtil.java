@@ -19,7 +19,6 @@ import net.sf.jasperreports.export.SimpleExporterInput;
 import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
 import net.sf.jasperreports.j2ee.servlets.ImageServlet;
-import org.apache.regexp.RE;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -143,8 +142,8 @@ public class JasperHelperUtil {
             } else if (docType == FileTypeEnum.HTML) {
                 docType = FileTypeEnum.PDF;
             }
-            HttpServletRequest request = WebUtils.getRequest();
-            HttpServletResponse response = WebUtils.getResponse();
+            HttpServletRequest request = ErpWebUtils.getRequest();
+            HttpServletResponse response = ErpWebUtils.getResponse();
 
             JasperReport jasperReport = (JasperReport) JRLoader.loadObject(is);
             prepareReport(jasperReport, type);
@@ -259,7 +258,7 @@ public class JasperHelperUtil {
             } else if (docType == FileTypeEnum.HTML) {
                 docType = FileTypeEnum.PDF;
             }
-            HttpServletResponse response = WebUtils.getResponse();
+            HttpServletResponse response = ErpWebUtils.getResponse();
             Map<String, List<ReportDTO>> sysReportMap = reportDTOList.stream().collect(Collectors.groupingBy(e -> e.getReportName().substring(e.getReportName().lastIndexOf("_") + 1)));
             for (int i = 0; i < reportDTOList.size(); i++) {
                 ReportDTO reportDTO = reportDTOList.get(i);

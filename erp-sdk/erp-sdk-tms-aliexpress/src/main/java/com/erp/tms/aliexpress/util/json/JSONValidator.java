@@ -6,7 +6,6 @@ import java.text.StringCharacterIterator;
 /**
  * @author zdy
  * @ClassName JSONValidator
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
@@ -15,6 +14,7 @@ public class JSONValidator {
 
     private CharacterIterator it;
 
+    private static String NUMBER = "number";
     private char c;
 
     private int col;
@@ -27,7 +27,6 @@ public class JSONValidator {
         input = input.trim();
         this.listener.start(input);
         boolean ret = valid(input);
-        this.listener.end();
         return ret;
     }
 
@@ -89,32 +88,43 @@ public class JSONValidator {
             return true;
         }
         while (true) {
-            if (prefix) {
-                int start = this.col;
-                if (!string())
-                    return error("string", start);
-                skipWhiteSpace();
-                if (this.c != ':')
-                    return error("colon", this.col);
+            if (prefix && !handlePrefix())
+                return false;
+            if (!handleValue())
+                return false;
+            skipWhiteSpace();
+            if (this.c == ',') {
                 nextCharacter();
-                skipWhiteSpace();
-            }
-            if (value()) {
-                skipWhiteSpace();
-                if (this.c == ',') {
-                    nextCharacter();
-                } else {
-                    if (this.c == exitCharacter)
-                        break;
-                    return error("comma or " + exitCharacter, this.col);
-                }
             } else {
-                return error("value", this.col);
+                if (this.c == exitCharacter)
+                    break;
+                return error("comma or " + exitCharacter, this.col);
             }
             skipWhiteSpace();
         }
         nextCharacter();
         return true;
+    }
+
+    private boolean handlePrefix() {
+        int start = this.col;
+        if (!string())
+            return error("string", start);
+        skipWhiteSpace();
+        if (this.c != ':')
+            return error("colon", this.col);
+        nextCharacter();
+        skipWhiteSpace();
+        return true;
+    }
+
+    private boolean handleValue() {
+        if (value()) {
+            skipWhiteSpace();
+            return true;
+        } else {
+            return error("value", this.col);
+        }
     }
 
     private boolean number() {
@@ -123,30 +133,48 @@ public class JSONValidator {
         int start = this.col;
         if (this.c == '-')
             nextCharacter();
+        if (!handleIntegerPart())
+            return error(NUMBER, start);
+        if (this.c == '.') {
+            nextCharacter();
+            if (!handleFractionalPart())
+                return error(NUMBER, start);
+        }
+        if (this.c == 'e' || this.c == 'E') {
+            nextCharacter();
+            if (!handleExponentPart())
+                return error(NUMBER, start);
+        }
+        return true;
+    }
+
+    private boolean handleIntegerPart() {
         if (this.c == '0') {
             nextCharacter();
         } else if (Character.isDigit(this.c)) {
             for (; Character.isDigit(this.c); nextCharacter());
         } else {
-            return error("number", start);
+            return false;
         }
-        if (this.c == '.') {
-            nextCharacter();
-            if (Character.isDigit(this.c)) {
-                for (; Character.isDigit(this.c); nextCharacter());
-            } else {
-                return error("number", start);
-            }
+        return true;
+    }
+
+    private boolean handleFractionalPart() {
+        if (Character.isDigit(this.c)) {
+            for (; Character.isDigit(this.c); nextCharacter());
+        } else {
+            return false;
         }
-        if (this.c == 'e' || this.c == 'E') {
+        return true;
+    }
+
+    private boolean handleExponentPart() {
+        if (this.c == '+' || this.c == '-')
             nextCharacter();
-            if (this.c == '+' || this.c == '-')
-                nextCharacter();
-            if (Character.isDigit(this.c)) {
-                for (; Character.isDigit(this.c); nextCharacter());
-            } else {
-                return error("number", start);
-            }
+        if (Character.isDigit(this.c)) {
+            for (; Character.isDigit(this.c); nextCharacter());
+        } else {
+            return false;
         }
         return true;
     }

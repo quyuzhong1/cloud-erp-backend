@@ -3,6 +3,7 @@ package com.erp.server.oms.schedule;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -71,7 +72,7 @@ public class SoB2cRetryJob {
      **/
     @XxlJob("SoB2cRetryJob")
     public ReturnT<String> soB2cRetryJob() {
-        String redisKey = StrUtil.format(RedisKeyConstant.SOB2C_RETRY_JOB, namespace);
+        String redisKey =  CharSequenceUtil.format(RedisKeyConstant.SOB2C_RETRY_JOB, namespace);
         Boolean setSignResult = redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 600, TimeUnit.SECONDS);
         if (Boolean.FALSE.equals(setSignResult)) {
             XxlJobHelper.log("SoB2cRetryJob 执行中,当前跳过");
