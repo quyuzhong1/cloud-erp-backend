@@ -8117,7 +8117,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<BomChildrenSkuDTO> childList = bomChildrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), exportDTO.getSkuId())
                             && StrUtil.equals(BomTypeEnum.COMBINATION.getType(), obj.getType()))
                     .collect(Collectors.toList());
-            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSourceId(), exportDTO.getId())).findFirst().orElse(null);
             //发货单--提交发货时间、面单打印时间
             List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream()
                     .filter(e -> Objects.nonNull(e) && Objects.equals(e.getSourceId(), exportDTO.getId()))
@@ -8125,8 +8124,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .sorted(Comparator.comparing(SoB2cDeliveryEntity::getCreateTime).reversed())//降序
                     .collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(collect)){
-                exportDTO.setFinishPrintTime(soB2cDeliveryEntities.get(0).getFinishPrintTime());
-                exportDTO.setCreateDeliveryTime(soB2cDeliveryEntities.get(0).getCreateTime());
+                exportDTO.setFinishPrintTime(collect.get(0).getFinishPrintTime());
+                exportDTO.setCreateDeliveryTime(collect.get(0).getCreateTime());
             }
             //销售套装bom
             if (CollectionUtils.isNotEmpty(childList)) {

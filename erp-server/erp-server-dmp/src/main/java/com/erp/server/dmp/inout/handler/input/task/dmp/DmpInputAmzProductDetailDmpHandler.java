@@ -29,16 +29,14 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
         List<Map<String, Object>> dmpInputMongoChildEntityList = new ArrayList<>();
-        List<ParamData> paramDataList = new ArrayList<>();
-        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).list();
-        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
-        if (CollUtil.isNotEmpty(dmpInputMongoChildList)) {
-            for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
-
-                dmpInputMongoChildEntityList.addAll(null);
-            }
-        }
+//        List<ParamData> paramDataList = new ArrayList<>();
+//        List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).list();
+//        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
+//        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
+//        if (CollUtil.isNotEmpty(dmpInputMongoChildList)) {
+//            for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
+//            }
+//        }
         return dmpInputMongoChildEntityList;
     }
 

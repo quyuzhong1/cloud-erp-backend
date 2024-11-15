@@ -2399,18 +2399,6 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }else {
                 distinctMap.put(pagingViewDTO.getId(),1);
             }
-            if(distinctMap.containsKey(pagingViewDTO.getId())){
-                pagingViewDTO.setDeliveryCode("");
-                pagingViewDTO.setBusinessCode("");
-                pagingViewDTO.setTaskCode("");
-                pagingViewDTO.setSourceCode("");
-                pagingViewDTO.setSourceTypeName("");
-                pagingViewDTO.setFbaBoxNo("");
-                pagingViewDTO.setBoxNo("");
-                pagingViewDTO.setPackingTotalStatusName("");
-            }else {
-                distinctMap.put(pagingViewDTO.getId(),1);
-            }
         });
         return listPackingDetailDTOS;
     }
