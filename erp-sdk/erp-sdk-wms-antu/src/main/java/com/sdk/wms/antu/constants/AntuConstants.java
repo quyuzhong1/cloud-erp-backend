@@ -1,7 +1,9 @@
 package com.sdk.wms.antu.constants;
 
 public class AntuConstants {
-
+    private AntuConstants() {
+        throw new IllegalStateException("Utility AntuConstants class");
+    }
     public static final String METHOD_GET_PRODUCT_LIST = "getProductList";
 
     public static final String METHOD_GET_WAREHOUSE = "getWarehouse";

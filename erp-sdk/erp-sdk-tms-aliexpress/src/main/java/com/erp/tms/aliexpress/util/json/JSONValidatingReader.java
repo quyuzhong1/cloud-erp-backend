@@ -3,7 +3,6 @@ package com.erp.tms.aliexpress.util.json;
 /**
  * @author zdy
  * @ClassName JSONValidatingReader
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
@@ -24,6 +23,7 @@ public class JSONValidatingReader extends JSONReader{
         this(new StdoutStreamErrorListener());
     }
 
+    @Override
     public Object read(String string) {
         if (!this.validator.validate(string))
             return INVALID;

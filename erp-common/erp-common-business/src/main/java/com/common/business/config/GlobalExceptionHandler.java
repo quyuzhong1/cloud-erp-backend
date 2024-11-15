@@ -1,6 +1,6 @@
 package com.common.business.config;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.util.StringUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -192,7 +192,7 @@ public class GlobalExceptionHandler {
         if (!StringUtils.isEmpty(e.getMessage()) && e.getMessage().contains("Duplicate entry")
                 && e.getMessage().contains("for key")) {
             String duplicateKey = e.getMessage().substring(e.getMessage().indexOf("Duplicate entry") + 15, e.getMessage().indexOf("for key"));
-            return ApiResult.error(ApiError.ERROR_1024.code, StrUtil.format("数据【{}】重复，请修改后再提交", duplicateKey));
+            return ApiResult.error(ApiError.ERROR_1024.code, CharSequenceUtil.format("数据【{}】重复，请修改后再提交", duplicateKey));
         } else {
             return ApiResult.error(ApiError.ERROR_1024);
         }

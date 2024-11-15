@@ -1,5 +1,13 @@
 package com.erp.server.auth.server;
 
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.impl.RedisService;
@@ -8,12 +16,8 @@ import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.utils.JwtUtils;
 import com.erp.server.auth.config.AuthJwtProperties;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
-import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @Classname TokenService
@@ -21,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  * @Date 2022-07-11 12:00
  * @Created by yl
  */
+@Slf4j
 @Component
 public class AuthTokenService {
 
@@ -30,8 +35,6 @@ public class AuthTokenService {
 
     @Autowired
     private RedisService redisService;
-
-    private final static long expireTime = RedisCacheConstants.EXPIRATION;
 
 
     /**
@@ -54,12 +57,10 @@ public class AuthTokenService {
 
     public String createToken(SysUserDTO info) {
         //先生成一个token
-//        String token = IdUtils.fastUUID();
         String token = info.getUid();
         info.setToken(token);
         refreshToken(info, authJwtProperties.getExpire());
-        String accessToken = JwtUtils.generateToken(info, authJwtProperties.getSecret(), authJwtProperties.getExpire());
-        return accessToken;
+        return JwtUtils.generateToken(info, authJwtProperties.getSecret(), authJwtProperties.getExpire());
 
     }
 
@@ -82,7 +83,7 @@ public class AuthTokenService {
                 user = JSONObject.parseObject(userJson, LoginUser.class);
             }
         } catch (Exception e) {
-
+        	log.error("获取登录用户错误");
         }
         return user;
     }

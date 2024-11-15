@@ -1,18 +1,18 @@
 package com.common.core.entity;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * @description: 实体类基类
+ * 实体类基类
  * @author Will
  * @date: 2023/2/21 9:18
  */
@@ -98,7 +98,7 @@ public class BaseEntity<T extends BaseEntity<T>> extends Model<T> {
 
     public BaseEntity(String id) {
         super();
-        if(StrUtil.isNotBlank(id)){
+        if(StringUtils.isNotBlank(id)){
             this.id = id;
         }
     }

@@ -31,7 +31,6 @@ public class ExportPlmProductCollectHandler extends AbstractPageFileEventHandler
 
     @Override
     protected PagingVO<BomExportExcelVO> getPageData(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
-//        return exportPlmFeign.exportProductCollect(dto);
         return null;
     }
 

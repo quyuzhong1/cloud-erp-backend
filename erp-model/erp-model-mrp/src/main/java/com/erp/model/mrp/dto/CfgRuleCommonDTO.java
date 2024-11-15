@@ -121,8 +121,9 @@ public class CfgRuleCommonDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO extends CommonDTO implements Serializable{
 
+        private static final long serialVersionUID = -1194747493662470448L;
         /**
         * 主键id
         */

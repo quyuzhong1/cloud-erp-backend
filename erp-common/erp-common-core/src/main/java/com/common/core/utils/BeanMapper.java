@@ -23,7 +23,7 @@ public class BeanMapper {
 
 
     public static <T> List<T> copyList(Iterable<?> sourceList, Class<T> destinationClass) {
-        List<T> destinationList = new ArrayList();
+        List<T> destinationList = new ArrayList<>();
         for (Object sourceObject : sourceList) {
             T destinationObject = dozerBeanMapper.map(sourceObject, destinationClass);
             destinationList.add(destinationObject);

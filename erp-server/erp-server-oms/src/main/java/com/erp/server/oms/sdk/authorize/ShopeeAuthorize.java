@@ -1,5 +1,6 @@
 package com.erp.server.oms.sdk.authorize;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformAnnotate;
@@ -75,7 +76,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         String url = shopAuthService.getShopeeCodeUrl(dto);
         // 设置缓存
-        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPEE_ID, dto.getShop());
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_SHOPEE_ID, dto.getShop());
         Object obj = redisUtil.get(key);
         if (null != obj){
             throw new ServiceException("正在申请授权中");
@@ -103,7 +104,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
         }
         Boolean result = shopInfoService.getShopeeReturn(returnDTO);
         // 删除授权缓存
-        String key = StrUtil.format(RedisCacheConstants.AUTH_SHOPEE_ID, dto.getShop_id());
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_SHOPEE_ID, dto.getShop_id());
         Object obj = redisUtil.get(key);
         if (null != obj){
             redisUtil.del(key);
@@ -145,7 +146,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
         }
         // 移除缓存
         // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPEE.getCode(), shopInfo.getId());
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPEE.getCode(), shopInfo.getId());
         Object shopInfoObj = redisUtil.get(tokenKey);
         if (null != shopInfoObj) {
             redisUtil.del(tokenKey);
@@ -239,7 +240,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
 
     private void refreshErrorWarn(ShopAuthEntity authEntity, ShopeeTokenAuth shopeeResponse) {
         //记录错误次数
-        String refreshTokenKey = StrUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.SHOPEE.getCode(), authEntity.getShopId());
+        String refreshTokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.SHOPEE.getCode(), authEntity.getShopId());
         redisUtil.incr(refreshTokenKey, 1);
 
         //获取错误次数
@@ -254,7 +255,7 @@ public class ShopeeAuthorize implements IShopAuthorizeService<T> {
                 WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
                 warnMsgInfo.setBizName(PlatformDictEnum.MERCADOLIBRE.getName());
                 warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-                warnMsgInfo.setTitle(StrUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.SHOPEE.getName(),authEntity.getShopId()));
+                warnMsgInfo.setTitle( CharSequenceUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.SHOPEE.getName(),authEntity.getShopId()));
                 warnMsgInfo.setTableName("shop_auth");
                 warnMsgInfo.setTableId(authEntity.getId());
                 warnMsgInfo.setKeyInfo(shopeeResponse.toString());

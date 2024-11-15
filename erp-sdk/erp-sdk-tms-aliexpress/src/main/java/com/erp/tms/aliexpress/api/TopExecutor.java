@@ -10,11 +10,14 @@ import java.util.Objects;
 /**
  * @author zdy
  * @ClassName TopExecutor
- * @description: TODO
+ 
  * @date 2023年11月14日
  * @version: 1.0
  */
 public class TopExecutor extends BaseExecutor{
+    
+    private static String SIMPLIFY = "simplify";
+    
     public TopExecutor(String serverUrl, String appKey, String appSecret) {
         super(serverUrl, appKey, appSecret);
     }
@@ -37,11 +40,11 @@ public class TopExecutor extends BaseExecutor{
         commonParams.put("partner_id", this.sdkVersion);
         commonParams.put("sign_method", this.signMethod);
         if (Objects.nonNull(params)){
-            String simplify = (String)params.get("simplify");
+            String simplify = (String)params.get(SIMPLIFY);
             if (Boolean.TRUE.toString().equals(simplify))
-                commonParams.put("simplify", Boolean.TRUE.toString());
+                commonParams.put(SIMPLIFY, Boolean.TRUE.toString());
         }else {
-            commonParams.put("simplify", Boolean.TRUE.toString());
+            commonParams.put(SIMPLIFY, Boolean.TRUE.toString());
         }
         if (isDebugEnabled())
             commonParams.put("debug", Boolean.valueOf(true));

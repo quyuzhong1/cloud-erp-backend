@@ -1,13 +1,13 @@
 package com.erp.model.mrp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -24,6 +24,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("replenishment_ref_label")
 public class ReplenishmentRefLabelEntity extends BaseEntity<ReplenishmentRefLabelEntity> {
 
+    private static final long serialVersionUID = -2436494540475240918L;
     /**
     * 补货建议id
     */

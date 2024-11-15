@@ -1,5 +1,6 @@
 package com.erp.server.oms.shopify;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -144,7 +145,7 @@ public class ErpServerOmsShopifyApplicationTests {
             return;
         }
         // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
 
         ShopifyShopInfoDTO dto = new ShopifyShopInfoDTO()
                 // 店铺ID

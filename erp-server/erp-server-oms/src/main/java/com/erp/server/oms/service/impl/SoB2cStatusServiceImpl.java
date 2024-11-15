@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -89,7 +90,7 @@ public class SoB2cStatusServiceImpl implements SoB2cStatusService {
         soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
         soB2cService.updateById(soB2cEntity);
 
-        String msg = StrUtil.format("用户【{}】冻结订单 ", UserContext.getDefaultLoginUser().getUserName());
+        String msg =  CharSequenceUtil.format("用户【{}】冻结订单 ", UserContext.getDefaultLoginUser().getUserName());
         operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "冻结订单");
         return BatchResultDTO.success(id,soB2cEntity.getCode(),"操作成功");
     }
@@ -120,7 +121,7 @@ public class SoB2cStatusServiceImpl implements SoB2cStatusService {
         }
         soB2cService.updateById(soB2cEntity);
 
-        String msg = StrUtil.format("用户【{}】取消冻结订单 ", UserContext.getDefaultLoginUser().getUserName());
+        String msg =  CharSequenceUtil.format("用户【{}】取消冻结订单 ", UserContext.getDefaultLoginUser().getUserName());
         operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "取消冻结");
         return BatchResultDTO.success(id,soB2cEntity.getCode(),"操作成功");
     }

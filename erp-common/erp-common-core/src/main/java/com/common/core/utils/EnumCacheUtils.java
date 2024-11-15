@@ -1,7 +1,7 @@
 package com.common.core.utils;
 
 import cn.hutool.core.util.ClassUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.enums.ApiError;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -93,7 +93,7 @@ public class EnumCacheUtils {
                 log.info("扫描包{}下面的所有枚举类", enumPackagePath);
                 searchClazzSets.addAll(ClassUtil.scanPackage(enumPackagePath,(clazz)-> clazz.isEnum()));
             });
-            if(StrUtil.isNotBlank(SERVICE_ENUM_PACKAGE_PATH)) {
+            if(CharSequenceUtil.isNotBlank(SERVICE_ENUM_PACKAGE_PATH)) {
                 log.info("扫描包{}下面的所有枚举类", SERVICE_ENUM_PACKAGE_PATH);
                 searchClazzSets.addAll(ClassUtil.scanPackage(SERVICE_ENUM_PACKAGE_PATH,(clazz)-> clazz.isEnum()));
             }
