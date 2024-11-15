@@ -41,7 +41,6 @@ import com.erp.rpc.sys.feign.MessageUserReadFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.QcResultService;
 import com.erp.server.wms.service.WmsAttachmentService;
@@ -51,7 +50,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -598,7 +596,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     private void addPdaMessage(List<String> userIdList, QcResultDTO.QcNoticeDTO item) {
         MessageEntity messageEntity = new MessageEntity();
-        messageEntity.setType(MessageTypeEnum.qc.getCode());
+        messageEntity.setType(MessageTypeEnum.QC.getCode());
         LinkedHashMap<String, Object> map = new LinkedHashMap();
         map.put("code", item.getCode());
         map.put("status", item.getQcStatus());

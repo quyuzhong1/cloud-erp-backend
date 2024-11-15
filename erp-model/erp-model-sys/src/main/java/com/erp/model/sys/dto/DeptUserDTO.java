@@ -34,7 +34,7 @@ public class DeptUserDTO implements Serializable {
 
     private String parentName;
 
-    List<SysDepartmentUserNumberDTO> userList;
+    private List<SysDepartmentUserNumberDTO> userList;
 
 
     @JsonInclude(value = JsonInclude.Include.NON_NULL)

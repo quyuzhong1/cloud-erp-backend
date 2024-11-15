@@ -1,14 +1,14 @@
 package com.erp.model.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -62,7 +62,7 @@ public class SysUserWechatEntity extends BaseEntity<SysUserWechatEntity> {
     private LocalDateTime lastLoginTime;
 
 
-    public static final String UID = "uid";
+    public static final String FIELD_UID = "uid";
 
     public static final String UNION_ID = "union_id";
 
@@ -72,7 +72,7 @@ public class SysUserWechatEntity extends BaseEntity<SysUserWechatEntity> {
 
     public static final String AVATAR_URL = "avatar_url";
 
-    public static final String GENDER = "gender";
+    public static final String FIELD_GENDER = "gender";
 
     public static final String LAST_LOGIN_TIME = "last_login_time";
 
