@@ -12,7 +12,6 @@ import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,17 +33,17 @@ import java.util.List;
 @Slf4j
 public class ProcessFeignController extends BaseController {
 
-    @Autowired
+    @Resource
     public WorkflowService workflowService;
 
 
-    @Autowired
+    @Resource
     private ProcessTaskService processTaskService;
 
-    @Autowired
+    @Resource
     private WorkflowBusinessService businessService;
 
-    @Autowired
+    @Resource
     private WorkflowBusinessProcessService businessProcessService;
     @Resource
     private ProcessManagementService processManagementService;
@@ -54,7 +53,10 @@ public class ProcessFeignController extends BaseController {
     @Resource
     private ProcessBusinessService processBusinessService;
 
-    //启动流程
+    /**
+     * 启动流程(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("/startProcess")
     public ProcessNodeDTO startProcess(@RequestBody StartProcessDTO dto) {
@@ -77,7 +79,10 @@ public class ProcessFeignController extends BaseController {
         return list;
     }
 
-    //审核通过任务
+    /**
+     * 审核通过任务(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("/taskPass")
     public ProcessNodeDTO taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
@@ -85,22 +90,31 @@ public class ProcessFeignController extends BaseController {
         return node;
     }
 
-    //审核不通过任务
+
+    /**
+     * 审核不通过任务(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("/taskNoPass")
     public ProcessNodeDTO taskNoPass(@RequestBody @Validated ApproveProcessDTO dto) {
-        ProcessNodeDTO node = processTaskService.taskNoPass(dto);
-        return node;
+        return processTaskService.taskNoPass(dto);
     }
 
-    //回退至初始状态
+    /**
+     * 回退至初始状态(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("/rejectOriginProcess")
     public void rejectOriginProcess(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectOriginProcess(dto);
     }
 
-    //撤销流程
+    /**
+     * 撤销流程(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("/withDraw")
     public void withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
@@ -110,7 +124,7 @@ public class ProcessFeignController extends BaseController {
     /**
      * 批量撤销流程 就是删除流程
      *
-     * @param processIdList
+     * @deprecated
      */
     @Deprecated
     @PostMapping("/batchCancelProcess")
@@ -118,20 +132,29 @@ public class ProcessFeignController extends BaseController {
         return workflowService.batchCancelProcess(processIdList);
     }
 
-    //取回流程
+    /**
+     * 取回流程(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("/fetchBack")
     public void fetchBack(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.fetchBackProcess(dto);
     }
 
-    //终止流程
+    /**
+     * 终止流程(弃用)
+     * @deprecated
+     */
     @PostMapping("/terminate")
     public void terminate(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.terminateProcess(dto.getProcessInstanceId());
     }
 
-    //取消流程
+    /**
+     * 取消流程(弃用)
+     * @deprecated
+     */
     @PostMapping("/cancelProcess")
     public void cancelProcess(@RequestBody List<String> ids) {
         workflowService.cancelProcess(ids);
@@ -154,8 +177,7 @@ public class ProcessFeignController extends BaseController {
     //查看流程审批情况
     @PostMapping("/getHistoryTaskByProcessId")
     public List<AuditorHandleDTO> getHistoryTaskByProcessId(String processId) {
-        List<AuditorHandleDTO> resultList = processTaskService.getHistoryTaskByProcessId(processId);
-        return resultList;
+        return processTaskService.getHistoryTaskByProcessId(processId);
     }
 
     /**
@@ -169,8 +191,7 @@ public class ProcessFeignController extends BaseController {
     //查看流程审批情况
     @PostMapping("/getHistoryTaskByBusinessTableId")
     public List<ApproveNodeRecordVO> getHistoryTaskByBusinessTableId(@RequestBody String businessTableId) {
-        List<ApproveNodeRecordVO> list = processTaskService.getHistoryTaskByBusinessTableId(businessTableId);
-        return list;
+        return processTaskService.getHistoryTaskByBusinessTableId(businessTableId);
     }
 
 
@@ -236,8 +257,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/getProcessCurrentAudit")
     public List<ProcessCurrentAuditorVO> getProcessCurrentAudit(@RequestBody List<String> businessTableIds) {
-        List<ProcessCurrentAuditorVO> list = businessProcessService.getProcessCurrentAuditor(businessTableIds);
-        return list;
+        return businessProcessService.getProcessCurrentAuditor(businessTableIds);
     }
 
 
@@ -251,8 +271,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/getProcessNextAudit")
     public ProcessCurrentAuditorVO getProcessNextAudit(@RequestBody String businessTableId) {
-        ProcessCurrentAuditorVO result = businessProcessService.getProcessNextAudit(businessTableId);
-        return result;
+        return businessProcessService.getProcessNextAudit(businessTableId);
     }
 
 
@@ -367,8 +386,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/listHistoryTaskByProcessId")
     public List<ApproveNodeRecordVO> listHistoryTaskByProcessId(@RequestBody String processId) {
-        List<ApproveNodeRecordVO> resultList = businessService.auditInfo(processId);
-        return resultList;
+        return businessService.auditInfo(processId);
     }
 
 
@@ -377,8 +395,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/listProcessByProcessId")
     public List<ProcessTaskManagementEntity> listProcessByBusinessId(@RequestBody List<String> businessIds) {
-        List<ProcessTaskManagementEntity> resultList = processManagementTaskService.listProcessByBusinessId(businessIds);
-        return resultList;
+        return processManagementTaskService.listProcessByBusinessId(businessIds);
     }
 
 

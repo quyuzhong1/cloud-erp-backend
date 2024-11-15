@@ -3,7 +3,7 @@ package com.erp.server.workflow.listeners;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 /**
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductDetailResultListener implements ExecutionListener {
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Override
