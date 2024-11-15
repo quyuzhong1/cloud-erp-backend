@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -65,23 +66,23 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
-    @Autowired
+    @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
 
-    @Autowired
+    @Resource
     private VirtualInventoryService virtualInventoryService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
 
-    @Autowired
+    @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
 
@@ -136,7 +137,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
-        List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoDeliveryNoticeDetailDTO.Update::getId).collect(Collectors.toList());
+        List<String> addList = dto.getDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(SoDeliveryNoticeDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(detailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
@@ -169,7 +170,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             Integer deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (StringUtils.isNotBlank(detailDto.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 soDeliveryNoticeDetailEntity.setId(detailDto.getId());
                 deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             } else {
@@ -207,7 +208,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             //保存附件
             wmsAttachmentService.batchSaveNotDel(detailDto.getAttachUrlList(), detailDto.getAttachNameList(), type, soDeliveryNoticeDetailEntity.getId());
             //修改操作日志
-            if (StringUtils.isNotBlank(detailDto.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 SoDeliveryNoticeDetailEntity old = this.getById(soDeliveryNoticeDetailEntity.getId());
                 if (ObjectUtils.isNotEmpty(old)) {
                     operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeDetailEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
@@ -277,7 +278,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             }
 
             //无虚拟仓不扣库存
-            if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
+            if (CharSequenceUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
                 continue;
             }
             //销售订单参数
@@ -417,7 +418,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
 
     private List<String> getDeleteIds(List<SoDeliveryNoticeDetailDTO.Update> newList, List<SoDeliveryNoticeDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(SoDeliveryNoticeDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(SoDeliveryNoticeDetailEntity
                 ::getId).collect(Collectors.toList());

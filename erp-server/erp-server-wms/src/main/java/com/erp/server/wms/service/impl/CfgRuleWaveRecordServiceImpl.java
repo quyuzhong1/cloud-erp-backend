@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Optional;
 /**
  * <p>
@@ -29,7 +30,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class CfgRuleWaveRecordServiceImpl extends SuperServiceImpl<CfgRuleWaveRecordMapper, CfgRuleWaveRecordEntity> implements CfgRuleWaveRecordService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)

@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -58,10 +59,10 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     public boolean updateQtyById(String id, Integer qty) {
 //        LoginUser loginUser = UserContext.getDefaultLoginUser();
         boolean flag = lambdaUpdate()
-                .setSql(StrUtil.format("{}={}+{}", "qty","qty", qty))
-//                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
-//                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
-//                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
+                .setSql(CharSequenceUtil.format("{}={}+{}", "qty","qty", qty))
+//                .setSql(CharSequenceUtil.format("{}={}+{}", "version","version", 1))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), CharSequenceUtil.format("update_user_id='{}'", loginUser.getUid()))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), CharSequenceUtil.format("update_user_name='{}'", loginUser.getUserName()))
                 .eq(InventoryDetailEntity::getId, id)
                 .update(new InventoryDetailEntity());
 
@@ -121,7 +122,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
         }
         // 查询所有大于 0 的明细
         List<InventoryDetailEntity> listGreatZero = findListQtyGreatZero(infoId);
-        if(CollectionUtil.isEmpty(listGreatZero)){
+        if(CollUtil.isEmpty(listGreatZero)){
             return Collections.emptyList();
         }
         if(CollectionUtil.isNotEmpty(filterDetailIdList)){

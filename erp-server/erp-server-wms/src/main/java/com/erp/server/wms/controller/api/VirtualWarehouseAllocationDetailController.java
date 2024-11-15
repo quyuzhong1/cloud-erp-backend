@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.enums.ApiError;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -169,7 +170,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                         submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_SYNC_ERROR.msg);
                     } else {
                         String thirdCode = vmAllocationDetailEntity.getThirdCode();
-                        if (StringUtils.isBlank(thirdCode)){
+                        if (CharSequenceUtil.isBlank(thirdCode)){
                             flagCode = vmAllocationEntity.getCode();
                             submit = virtualWarehouseAllocationDetailService.sync(vmAllocationDetailEntity, vmAllocationEntity);
                         }else {

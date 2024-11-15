@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -123,7 +124,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
     @Override
     public void updateVirtualInventory(List<VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
 
@@ -249,7 +250,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
      * @param list
      */
     private void fillPageData (List<VirtualInventoryDiffDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         for (VirtualInventoryDiffDTO.ListDTO listDTO : list) {
@@ -278,7 +279,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
      * @param list
      */
     private void fillDetailPageData (List<VirtualInventoryDiffDTO.ListDetailQtyDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //虚拟仓库
@@ -300,7 +301,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
      * @param list
      */
     private void fillExportData (List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //虚拟仓库

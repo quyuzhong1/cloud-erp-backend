@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -165,7 +166,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             //来源id
             String sourceId = entry.getKey();
             List<TransferInDTO.ViewGenerateTransferInDTO> generateInfoList = entry.getValue();
-            TransferInDTO.ViewGenerateTransferInDTO viewGenerate = generateInfoList.stream().filter(g -> StringUtils.isNotBlank(g.getSourceCode())).findFirst().orElse(null);
+            TransferInDTO.ViewGenerateTransferInDTO viewGenerate = generateInfoList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getSourceCode())).findFirst().orElse(null);
             if (viewGenerate != null) {
                 TransferInDTO.AddDTO addDTO = new TransferInDTO.AddDTO();
                 String inWarehouseId = viewGenerate.getInWarehouseId();
@@ -582,9 +583,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> paramList = Stream.concat(paramList1.stream(), paramList2.stream()).collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         detailList.forEach(viewDTO1 -> {
-            WarehouseLocationEntity inWarehouseLocation = warehouseLocationEntityList.stream().filter(e -> StringUtils.isNotBlank(inWarehouseId) && inWarehouseId.equals(e.getWarehouseId()) && viewDTO1.getInWarehouseLocation().equals(e.getCode())).findFirst().orElse(new WarehouseLocationEntity());
+            WarehouseLocationEntity inWarehouseLocation = warehouseLocationEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(inWarehouseId) && inWarehouseId.equals(e.getWarehouseId()) && viewDTO1.getInWarehouseLocation().equals(e.getCode())).findFirst().orElse(new WarehouseLocationEntity());
             viewDTO1.setInWarehouseLocationName(inWarehouseLocation.getName());
-            WarehouseLocationEntity outWarehouseLocation = warehouseLocationEntityList.stream().filter(e -> StringUtils.isNotBlank(outWarehouseId) && outWarehouseId.equals(e.getWarehouseId()) && viewDTO1.getOutWarehouseLocation().equals(e.getCode())).findFirst().orElse(new WarehouseLocationEntity());
+            WarehouseLocationEntity outWarehouseLocation = warehouseLocationEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(outWarehouseId) && outWarehouseId.equals(e.getWarehouseId()) && viewDTO1.getOutWarehouseLocation().equals(e.getCode())).findFirst().orElse(new WarehouseLocationEntity());
             viewDTO1.setOutWarehouseLocationName(outWarehouseLocation.getName());
         });
         viewDTO.setDetailList(detailList);
@@ -624,7 +625,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         String inWarehouseId = dto.getInWarehouseId();
         WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(inWarehouseId);
         String warehouseKeeperId = dto.getWarehouseKeeperId();
-        if (StringUtils.isNotBlank(warehouseKeeperId)) {
+        if (CharSequenceUtil.isNotBlank(warehouseKeeperId)) {
             //用户信息
             FindUserDTO userInfo = sysUserFeign.getUserByUserId(warehouseKeeperId);
             if (userInfo != null) {
@@ -654,7 +655,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(TransferInDTO.UpdateDTO dto) {
         String id = this.updateTransferIn(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(id));
@@ -727,7 +728,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         TransferInEntity transferIn = new TransferInEntity();
         BeanMapper.copy(dto, transferIn);
         String warehouseKeeperId = dto.getWarehouseKeeperId();
-        if (StringUtils.isNotBlank(warehouseKeeperId)) {
+        if (CharSequenceUtil.isNotBlank(warehouseKeeperId)) {
             //用户信息
             FindUserDTO userInfo = sysUserFeign.getUserByUserId(warehouseKeeperId);
             if (userInfo != null) {

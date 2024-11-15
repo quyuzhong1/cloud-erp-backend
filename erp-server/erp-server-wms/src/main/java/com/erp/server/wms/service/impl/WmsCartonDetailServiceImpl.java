@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.common.business.enums.UnitEnum;
@@ -25,6 +26,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,9 +41,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetailMapper, WmsCartonDetailEntity> implements WmsCartonDetailService {
-    @Autowired
+    @Resource
     private WmsCartonService wmsCartonService;
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Override
@@ -78,7 +80,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     public void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonEntity wmsCartonEntity, WmsCartonSpecEntity wmsCartonSpecEntity) {
         //校验必填
         for (WmsCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
-            if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {
+            if (CharSequenceUtil.isBlank(detail.getSkuId()) || CharSequenceUtil.isBlank(detail.getSkuNo())) {
                 throw new ServiceException(ApiError.PACKING_SKU_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo());
             }
             if (detail.getPackQty() == null || detail.getPackQty() <= 0) {
@@ -120,7 +122,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         List<WmsCartonDetailEntity> detailEntityList1 = listByMainIds(Collections.singletonList(mainId));
         for (WmsCartonDetailEntity wmsCartonDetailEntity : detailEntityList) {
             wmsCartonDetailEntity.setMainId(mainId);
-            if (StringUtils.isBlank(wmsCartonDetailEntity.getWeightUnit())){
+            if (CharSequenceUtil.isBlank(wmsCartonDetailEntity.getWeightUnit())){
                 wmsCartonDetailEntity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
             }
             if (CollectionUtils.isNotEmpty(detailEntityList1)){

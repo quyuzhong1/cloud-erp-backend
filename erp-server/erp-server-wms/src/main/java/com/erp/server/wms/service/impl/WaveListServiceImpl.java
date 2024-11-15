@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -174,7 +176,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PrintStatusEnum.getName(record.getPrintStatus()));
-            if(StringUtils.isBlank(record.getPickingCartCode())){
+            if(CharSequenceUtil.isBlank(record.getPickingCartCode())){
                 List<WaveListCartTypeEntity> entityList = cartTypeMap.get(record.getId());
                 if(entityList != null && !entityList.isEmpty()){
                     List<String> typeIds = entityList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());
@@ -309,7 +311,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(ids);
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = deliveryService.printPickingView(deliveryIds);
-        if (CollectionUtil.isEmpty(printPickingViewList)) {
+        if (CollUtil.isEmpty(printPickingViewList)) {
             return Collections.EMPTY_LIST;
         }
         Map<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> map = printPickingViewList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.PrintPickingViewDTO::getWaveCode));
@@ -334,7 +336,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Override
     public List<WaveListEntity> listByPickingCartCodeList(List<String> pickingCartCodeList) {
-        if (CollectionUtil.isEmpty(pickingCartCodeList)) {
+        if (CollUtil.isEmpty(pickingCartCodeList)) {
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery().in(WaveListEntity::getPickingCartCode,pickingCartCodeList)

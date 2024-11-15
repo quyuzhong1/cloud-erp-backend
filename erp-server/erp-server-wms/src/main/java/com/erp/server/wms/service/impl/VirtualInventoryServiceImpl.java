@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -133,7 +135,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     @Override
     public boolean updateQtyById(String id, Integer qty) {
         boolean flag = lambdaUpdate()
-                .setSql(StrUtil.format("{}={}+{}", "qty", "qty", qty))
+                .setSql(CharSequenceUtil.format("{}={}+{}", "qty", "qty", qty))
                 .eq(VirtualInventoryEntity::getId, id)
                 .update(new VirtualInventoryEntity());
         if (!flag) {
@@ -157,7 +159,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             return BeanMapperUtils.copyList(VirtualInventoryDTO.ViewQtyDTO.class, qtySearchList);
         }
         List<VirtualInventoryDTO.QtySearchDTO> qtySearchDTOS = qtySearchList.stream().filter(qtySearchDTO ->
-                StringUtils.isNotBlank(qtySearchDTO.getWarehouseId()) && StringUtils.isNotBlank(qtySearchDTO.getSkuId())).collect(Collectors.toList());
+                CharSequenceUtil.isNotBlank(qtySearchDTO.getWarehouseId()) && CharSequenceUtil.isNotBlank(qtySearchDTO.getSkuId())).collect(Collectors.toList());
         List<VirtualInventoryDTO.ViewQtyDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(qtySearchDTOS)) {
             return BeanMapperUtils.copyList(VirtualInventoryDTO.ViewQtyDTO.class, qtySearchList);
@@ -440,7 +442,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             skuReturnDTO.setUsableQty(usableQty);
 
             //无虚拟仓则直接返回
-            if (StrUtil.isBlank(bomParamDTO.getVirtualWarehouseId())) {
+            if (CharSequenceUtil.isBlank(bomParamDTO.getVirtualWarehouseId())) {
                 resultList.add(skuReturnDTO);
                 continue;
             }
@@ -487,7 +489,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
      * @date 2024/6/3 15:24
      */
     private void fillPageData(List<VirtualInventoryDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //产品信息
@@ -522,7 +524,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                             && StrUtil.equals(obj.getVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
             ).collect(Collectors.toList());
             //无明细则直接返回
-            if (CollectionUtil.isEmpty(virtualInventoryDetailList)) {
+            if (CollUtil.isEmpty(virtualInventoryDetailList)) {
                 continue;
             }
             //虚拟可用库存
@@ -549,7 +551,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                         .map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
 
                 String indexId = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getId).collect(Collectors.joining(","));
-                listDetailDTO.setIndexId(StrUtil.format("{}_{}", indexId, warehouseId));
+                listDetailDTO.setIndexId(CharSequenceUtil.format("{}_{}", indexId, warehouseId));
                 listDetailDTO.setSkuNo(listDTO.getSkuNo());
                 listDetailDTO.setWarehouseId(warehouseId);
                 listDetailDTO.setWarehouseName(warehouseName);

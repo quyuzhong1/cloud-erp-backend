@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -225,7 +226,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSoCode(soInfoEntity.getCode());
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //获取用户信息
-        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperId(userDTO.getUserId());
             entity.setWarehouseKeeperName(userDTO.getUserName());
@@ -236,7 +237,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
-        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+        if (CharSequenceUtil.isNotBlank(soInfoEntity.getSalesDeptId())) {
             SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
             if (dept != null) {
                 entity.setSalesDeptName(dept.getName());
@@ -265,7 +266,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (ObjectUtils.isNotEmpty(sysAccountingCompanyEntity)) {
             entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
         }
-        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getWarehouseKeeperId())) {
             //获取用户信息
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
@@ -323,7 +324,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 entity.setCustomerName(customerInfo.getName());
             }
         }
-        if (StringUtils.isNotBlank(entity.getSalesDeptId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getSalesDeptId())) {
             SysDepartmentDTO dept = sysUserFeign.getUserDeptById(entity.getSalesDeptId());
             if (dept != null) {
                 entity.setSalesDeptName(dept.getName());
@@ -331,7 +332,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //获取用户信息
-        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             if(Objects.nonNull(userDTO)){
                 entity.setWarehouseKeeperId(userDTO.getUserId());
@@ -367,7 +368,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取核算公司
         SoReturnNoticeEntity entity = this.getById(dto.getId());
         if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
         }
         BeanUtil.copyProperties(dto,entity);
         //操作日志
@@ -447,10 +448,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 detailView.setSalesQty(soDetailEntity.getQty());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setDeliveryQty(actualQty);
-                if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                     detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
                 }
-                if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
                     detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
                 }
             }
@@ -495,7 +496,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Override
     public Boolean addAndSubmit(SoReturnNoticeDTO.Add dto) {
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         return this.submit(Arrays.asList(id));
@@ -535,7 +536,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                     .update();
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -680,7 +681,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             }
             dto.setDetailList(detailList);
             String noticeId = this.add(dto);
-            if (StringUtils.isBlank(noticeId)) {
+            if (CharSequenceUtil.isBlank(noticeId)) {
                 flag = Boolean.FALSE;
             }
         }
@@ -730,10 +731,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 //销售单信息
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 view.setSalesQty(soDetailEntity.getQty());
-                if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                     view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
                 }
-                if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
                     view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
                 }
             }

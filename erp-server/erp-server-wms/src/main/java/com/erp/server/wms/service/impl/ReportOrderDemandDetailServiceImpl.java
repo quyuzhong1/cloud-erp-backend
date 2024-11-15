@@ -2,7 +2,9 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -33,6 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,16 +53,16 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
 @Slf4j
 @Service
 public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportOrderDemandDetailMapper, ReportOrderDemandDetailEntity> implements ReportOrderDemandDetailService {
-    @Autowired
+    @Resource
     private ReportOrderDemandDetailMapper baseMapper;
 
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
     @Override
@@ -70,7 +73,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
         deleteAll();
         List<ReportOrderDemandDetailEntity> resultList = handleData(list);
         //无数据则返回
-        if (CollectionUtil.isEmpty(resultList)) {
+        if (CollUtil.isEmpty(resultList)) {
             return Boolean.TRUE;
         }
         //新增或修改有变更数据
@@ -113,7 +116,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
             throw new ServiceException("订单需求明细未找到");
         }
         List<ReportOrderDemandDetailEntity> reportOrderDemandDetailList = listBySourceDetailId(entity.getSourceDetailId());
-        if (CollectionUtil.isEmpty(reportOrderDemandDetailList)) {
+        if (CollUtil.isEmpty(reportOrderDemandDetailList)) {
             throw new ServiceException("订单需求明细未找到");
         }
 
@@ -128,7 +131,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
 
                ReportOrderDemandDetailEntity reportOrderDemandDetailEntity = reportOrderDemandDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomJsonDTO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(reportOrderDemandDetailEntity)) {
-                    throw new ServiceException(StrUtil.format("销售订单【{}】、SKU【{}】未找到",entity.getSourceCode(),bomJsonDTO.getSkuNo()));
+                    throw new ServiceException(CharSequenceUtil.format("销售订单【{}】、SKU【{}】未找到",entity.getSourceCode(),bomJsonDTO.getSkuNo()));
                 }
                 ReportOrderDemandDetailDTO.BomDTO bomDTO = new ReportOrderDemandDetailDTO.BomDTO();
                 bomDTO.setChildSkuId(bomJsonDTO.getSkuId());
@@ -182,7 +185,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
      */
     private List<ReportOrderDemandDetailEntity>  handleData(List<ReportOrderDemandDetailEntity> list) {
         List<ReportOrderDemandDetailEntity> resultList = new ArrayList<>();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return resultList;
         }
         //SKU
@@ -228,7 +231,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
      * @param list
      */
     private void fillPageData (List<ReportOrderDemandDetailDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         for (ReportOrderDemandDetailDTO.ListDTO listDTO : list) {
@@ -242,7 +245,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
             if (StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode(), listDTO.getSourceType())) {
                 listDTO.setStatusName(statusName);
             } else {
-                listDTO.setStatusName(StrUtil.format("{}-{}", ApproveStatusEnum.getName(listDTO.getApproveStatus()),statusName));
+                listDTO.setStatusName(CharSequenceUtil.format("{}-{}", ApproveStatusEnum.getName(listDTO.getApproveStatus()),statusName));
             }
         }
     }

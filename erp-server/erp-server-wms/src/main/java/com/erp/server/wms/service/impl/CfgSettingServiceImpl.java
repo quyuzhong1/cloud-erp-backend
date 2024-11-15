@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +46,7 @@ import java.util.Optional;
 @Service
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
 
@@ -84,7 +86,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
     @Override
     public CfgSettingEntity getByKey(String key) {
-        if (StringUtils.isBlank(key)) {
+        if (CharSequenceUtil.isBlank(key)) {
             return null;
         }
         CfgSettingEntity entity = baseMapper.getByKey(key);
@@ -103,7 +105,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
     @Override
     public Boolean getPackageSupplierSetting(String logisticsSupplierId) {
-        if (StringUtils.isBlank(logisticsSupplierId)){
+        if (CharSequenceUtil.isBlank(logisticsSupplierId)){
             return Boolean.FALSE;
         }
         CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.PACKAGE_SETTING.getCode());
@@ -147,7 +149,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             return "semiAuto";
         }
         CfgSettingValueDTO.SubcontractInStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
-        if(Objects.isNull(dto) || StrUtil.isBlank(dto.getAutoInStockSetting())){
+        if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAutoInStockSetting())){
             return "semiAuto";
         }
         return dto.getAutoInStockSetting();

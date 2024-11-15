@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller.pda;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
@@ -119,7 +121,7 @@ public class PdaPackingTaskController extends BaseController {
     @GetMapping("/packingViewBySourceCode")
     public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingViewBySourceCode(@RequestParam("sourceCode") String sourceCode) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
-        if (CollectionUtil.isEmpty(taskEntityList)){
+        if (CollUtil.isEmpty(taskEntityList)){
             throw new ServiceException(ApiError.ERROR_92141);
         }
         WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = packingTaskService.packingView(taskEntityList.get(0).getId());
@@ -162,7 +164,7 @@ public class PdaPackingTaskController extends BaseController {
     public ApiResult<WmsCartonDTO.PrintDTO> stagingPacking(@RequestBody @Validated WmsCartonSpecDTO.AddDTO dto) {
         dto.setOperation("装箱操作");
         dto.setContent("暂存本箱");
-        if (StringUtils.isBlank(dto.getPackingStatus())){
+        if (CharSequenceUtil.isBlank(dto.getPackingStatus())){
             dto.setPackingStatus(PackingTaskStatusEnum.INCOMPLETE.getCode());
         }
         return success(packingTaskService.stagingPacking(dto));

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -44,11 +45,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<WarehouseLocationMoveDetailMapper, WarehouseLocationMoveDetailEntity> implements WarehouseLocationMoveDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
@@ -156,7 +157,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
             detailEntity.setInInventoryStatus(Optional.ofNullable(detailEntity.getInInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             detailEntity.setOutInventoryStatus(Optional.ofNullable(detailEntity.getOutInventoryStatus()).orElse(InventoryStatusEnum.USABLE.getCode()));
             detailEntity.setMainId(warehouseLocationMoveEntity.getId());
-            if (StringUtils.isNotBlank(warehouseId)){
+            if (CharSequenceUtil.isNotBlank(warehouseId)){
                 detailEntity.setWarehouseId(warehouseId);
                 detailEntity.setWarehouseName(warehouseEntity.getName());
             }
@@ -222,7 +223,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
         }
 
         //添加操作日志
-        List<String> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).map(WarehouseLocationMoveDetailEntity::getId).collect(Collectors.toList());
+        List<String> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(WarehouseLocationMoveDetailEntity::getId).collect(Collectors.toList());
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList)) {
             List<WarehouseLocationMoveDetailEntity> receiveDetailEntityList = this.listByIds(addList);
@@ -235,7 +236,7 @@ public class WarehouseLocationMoveDetailServiceImpl extends SuperServiceImpl<War
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<WarehouseLocationMoveDetailDTO.UpdateDTO> newList, List<WarehouseLocationMoveDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(WarehouseLocationMoveDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(WarehouseLocationMoveDetailEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());

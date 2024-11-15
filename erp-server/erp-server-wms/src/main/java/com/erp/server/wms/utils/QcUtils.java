@@ -1,6 +1,7 @@
 package com.erp.server.wms.utils;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.PicFormatEnum;
 import com.common.core.utils.FastDFSClientUtil;
@@ -274,7 +275,7 @@ public class QcUtils {
 
             cell = rowContent.createCell(19);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("{}*{}*{}", Objects.isNull(data.getProductLength()) ? "0" : data.getProductLength(),
+            cell.setCellValue(CharSequenceUtil.format("{}*{}*{}", Objects.isNull(data.getProductLength()) ? "0" : data.getProductLength(),
                     Objects.isNull(data.getProductWidth()) ? "0" : data.getProductWidth(),
                     Objects.isNull(data.getProductHeight()) ? "0" : data.getProductHeight()));
 
@@ -284,7 +285,7 @@ public class QcUtils {
 
             cell = rowContent.createCell(21);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("{}*{}*{}", Objects.isNull(data.getBoxLength()) ? "0" : data.getBoxLength(),
+            cell.setCellValue(CharSequenceUtil.format("{}*{}*{}", Objects.isNull(data.getBoxLength()) ? "0" : data.getBoxLength(),
                     Objects.isNull(data.getBoxWidth()) ? "0" : data.getBoxWidth(),
                     Objects.isNull(data.getBoxHeight()) ? "0" : data.getBoxHeight()));
 

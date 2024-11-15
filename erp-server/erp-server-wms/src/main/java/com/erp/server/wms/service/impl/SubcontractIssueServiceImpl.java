@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -82,40 +83,40 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SUBCONTRACT
 @Service
 public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIssueMapper, SubcontractIssueEntity> implements SubcontractIssueService {
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private SubcontractIssueDetailService subcontractIssueDetailService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private WarehouseLocationService warehouseLocationService;
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
 
-    @Autowired
+    @Resource
     private SubcontractIssueQueryHandler subcontractIssueQueryHandler;
 
-    @Autowired
+    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
-    @Autowired
+    @Resource
     private PoInstockService poInstockService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -128,7 +129,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         BeanMapperUtils.copy(addDTO, subcontractIssueEntity);
 
         //来源为空时（界面新增），验证供应商是否一致
-        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(addDTO.getSourceType()) ||  StrUtil.isBlank(addDTO.getSourceType())) {
+        if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(addDTO.getSourceType()) ||  CharSequenceUtil.isBlank(addDTO.getSourceType())) {
             List<SubcontractIssueDetailDTO.AddDTO> detailList = addDTO.getDetailList();
             List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
             checkSupplier(subcontractIssueEntity,sourceDetailIdList);
@@ -149,7 +150,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         subcontractIssueDetailService.add(addDTO.getDetailList(),subcontractIssueEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外发料单" , subcontractIssueEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外发料单" , subcontractIssueEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), subcontractIssueEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(subcontractIssueEntity.getId(), code);
     }
@@ -170,7 +171,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueEntity subcontractIssueEntity =  BeanMapperUtils.map(SubcontractIssueEntity.class, updateDTO);
 
         //来源为委外时，验证供应商是否一致
-        if (StrUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),old.getSourceType()) ||  StrUtil.isBlank(old.getSourceType())) {
+        if (StrUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),old.getSourceType()) ||  CharSequenceUtil.isBlank(old.getSourceType())) {
             List<SubcontractIssueDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
             List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
             checkSupplier(subcontractIssueEntity,sourceDetailIdList);
@@ -188,7 +189,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         // 记录主单操作日志
         log.info("编辑 开始记录委外发料单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "委外发料单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "委外发料单");
         operateLogService.addModuleOperateLogByObj(old, subcontractIssueEntity, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), subcontractIssueEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -255,7 +256,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         // 记录操作日志
         log.info("提交 开始记录委外发料单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -277,7 +278,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单", approveType.getName(), dto.getComment());
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -322,7 +323,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 //        autoOutStockInventory(entity,Boolean.FALSE);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -346,7 +347,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         // 删除日志数据
         log.info("删除 开始删除委外发料单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getCode(), "删除委外发料单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -369,7 +370,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单", remark);
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
@@ -392,7 +393,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委外发料单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
@@ -425,17 +426,17 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         //委外订单id
         String sourceId = dto.getSourceId();
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(sourceId));
-        if (CollectionUtil.isEmpty(subcontractOrderList)) {
+        if (CollUtil.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
         //委外明细
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(sourceId));
-        if (CollectionUtil.isEmpty(subcontractOrderDetailList)) {
+        if (CollUtil.isEmpty(subcontractOrderDetailList)) {
             throw  new ServiceException(ApiError.ERROR_98070);
         }
         //委外父级SKU明细
-        List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isBlank(obj.getParentId()) && (CollectionUtil.isEmpty(dto.getSkuNoList()) ? Boolean.TRUE : dto.getSkuNoList().contains(obj.getSkuNo()))).collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(parentList)) {
+        List<SubcontractOrderDetailEntity> parentList = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getParentId()) && (CollUtil.isEmpty(dto.getSkuNoList()) ? Boolean.TRUE : dto.getSkuNoList().contains(obj.getSkuNo()))).collect(Collectors.toList());
+        if (CollUtil.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98071);
         }
 
@@ -445,7 +446,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         //委外子级SKU明细
         List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(parentList)) {
+        if (CollUtil.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98072);
         }
 
@@ -513,7 +514,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
                 //即时库存
                 Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(detailDTO.getSkuId())
                                 && s.getWarehouseId().equals(detailDTO.getWarehouseId())
-                                && (StrUtil.isBlank(childDetailEntity.getWarehouseLocation()) ? Boolean.TRUE : childDetailEntity.getWarehouseLocation().equals(s.getWarehouseLocationId())))
+                                && (CharSequenceUtil.isBlank(childDetailEntity.getWarehouseLocation()) ? Boolean.TRUE : childDetailEntity.getWarehouseLocation().equals(s.getWarehouseLocationId())))
                         .mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
                 detailDTO.setCurInventoryQty(curInventoryQty);
 
@@ -531,7 +532,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
     @Override
     public List<SubcontractIssueEntity> listBySourceIdList(List<String> sourceIdList) {
-        if (CollectionUtil.isEmpty(sourceIdList)) {
+        if (CollUtil.isEmpty(sourceIdList)) {
             return Collections.EMPTY_LIST;
         }
         List<SubcontractIssueEntity> list = lambdaQuery()
@@ -572,7 +573,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(SubcontractIssueEntity::getId, businessId)
-                .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractIssueEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId), SubcontractIssueEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -638,7 +639,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
 
         //委外发料明细
         List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Arrays.asList(data.getId()));
-        if (CollectionUtil.isEmpty(subcontractIssueDetailList)) {
+        if (CollUtil.isEmpty(subcontractIssueDetailList)) {
             throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
         }
 
@@ -676,7 +677,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(viewDTO.getSkuId())
                             && s.getWarehouseId().equals(viewDTO.getWarehouseId())
-                            && (StrUtil.isBlank(viewDTO.getWarehouseLocation()) ? Boolean.TRUE : viewDTO.getWarehouseLocation().equals(s.getWarehouseLocationId())))
+                            && (CharSequenceUtil.isBlank(viewDTO.getWarehouseLocation()) ? Boolean.TRUE : viewDTO.getWarehouseLocation().equals(s.getWarehouseLocationId())))
                     .mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             viewDTO.setCurInventoryQty(curInventoryQty);
             //已发料数量
@@ -763,14 +764,14 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     * 新增修改处理数据
     */
     private void handleData(SubcontractIssueEntity subcontractIssueEntity) {
-        if (StrUtil.isBlank(subcontractIssueEntity.getSourceType())) {
+        if (CharSequenceUtil.isBlank(subcontractIssueEntity.getSourceType())) {
             //页面新增时默认来源类型
             subcontractIssueEntity.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
             subcontractIssueEntity.setSourceId(subcontractIssueEntity.getSubcontractOrderId());
         }
         //委外订单
         List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(subcontractIssueEntity.getSubcontractOrderId()));
-        if (CollectionUtil.isEmpty(subcontractOrderList)) {
+        if (CollUtil.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
         subcontractIssueEntity.setSubcontractOrderCode(subcontractOrderList.get(0).getCode());
@@ -868,7 +869,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         List<String> parentIdList = subcontractOrderDetailList.stream().filter(obj -> sourceDetailIdList.contains(obj.getId())).map(SubcontractOrderDetailEntity::getParentId).collect(Collectors.toList());
         //所有父级数据
         List<SubcontractOrderDetailEntity> parentDetailList = subcontractOrderDetailList.stream().filter(obj -> parentIdList.contains(obj.getId())).collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(parentDetailList)) {
+        if (CollUtil.isEmpty(parentDetailList)) {
             throw new ServiceException(ApiError.ERROR_98071);
         }
         //录入单据父级SKU供应商需要一致
@@ -891,7 +892,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     private void autoOutStockInventory (SubcontractIssueEntity entity,Boolean isDelivery) {
         //委外发料明细
         List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        if (CollectionUtil.isEmpty(subcontractIssueDetailList)) {
+        if (CollUtil.isEmpty(subcontractIssueDetailList)) {
             throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
         }
         List<InOutStockDTO> inOutStockList = new ArrayList<>();

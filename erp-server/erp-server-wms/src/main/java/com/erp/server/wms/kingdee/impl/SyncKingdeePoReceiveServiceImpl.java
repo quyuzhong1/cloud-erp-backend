@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -168,7 +169,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         //更新同步状态为待同步
 //        warehouseReceiveService.updateSyncKingdeeStatus(entity.getId(), SyncStatusEnum.TO_BE_SYNC.getCode(), "", operate);
         //如果上游单据未发送成功则无需发送
-        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
             purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
            /* DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
@@ -206,7 +207,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         resultMap.put("supplierCode", supplierEntity.getCode());
         //收料员
         String receiveUserId = entity.getReceiveUserId();
-        if (StringUtils.isNotBlank(receiveUserId)) {
+        if (CharSequenceUtil.isNotBlank(receiveUserId)) {
             //获取用户部门id
             SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(receiveUserId);
             //收料部门
@@ -228,7 +229,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
 
         //采购员
         String purchaseUserId = entity.getPurchaseUserId();
-        if (StringUtils.isNotBlank(purchaseUserId)) {
+        if (CharSequenceUtil.isNotBlank(purchaseUserId)) {
             //获取用户部门id
             SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(purchaseUserId);
             //采购部门
@@ -241,7 +242,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
 
 /*        //收料员
         String receiveUserId = entity.getReceiveUserId();
-        if (StringUtils.isNotBlank(receiveUserId)) {
+        if (CharSequenceUtil.isNotBlank(receiveUserId)) {
             //获取用户部门id
             SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(receiveUserId);
             //采购部门
@@ -275,7 +276,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         resultMap.put("purchaseOrderCode", entity.getPurchaseOrderCode());
 
         String billDate = purchaseOrderEntity.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String currency = StringUtils.isNotBlank(purchaseOrderSupplierEntity.getPayCurrency()) ? purchaseOrderSupplierEntity.getPayCurrency() : "CNY";
+        String currency = CharSequenceUtil.isNotBlank(purchaseOrderSupplierEntity.getPayCurrency()) ? purchaseOrderSupplierEntity.getPayCurrency() : "CNY";
         //汇率
         BigDecimal exchangeRate = dmpTaskFeign.getRate(billDate, currency);
         if (Objects.isNull(exchangeRate)) {
@@ -348,7 +349,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
             }
             //采购单号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
-            if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
+            if (CharSequenceUtil.isNotBlank(entity.getPurchaseOrderCode())) {
                 List<Map<String, Object>> mapList = new ArrayList<>();
                 Map<String, Object> entityMap = new HashMap<>();
                 entityMap.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());

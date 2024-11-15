@@ -1,6 +1,7 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -142,10 +143,10 @@ public class CfgSettingJob {
         String rate = MathUtil.divide(new BigDecimal(hasQcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString() + "%";
 
         //消息头
-        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,rate,notQcCount,notQcTotalCount,timeOutTotalCount);
+        String title = CharSequenceUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,rate,notQcCount,notQcTotalCount,timeOutTotalCount);
         noticeMsgInfoDTO.setTitle(title);
         //消息体
-        String msgContent = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_CONTENT,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        String msgContent = CharSequenceUtil.format(NoticeMsgConstant.FS_QC_SETTING_CONTENT,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         noticeMsgInfoDTO.setContent(msgContent);
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
@@ -125,7 +126,7 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
             LocalDate date = closedParamDTO.getBillDate();
             if (date.isBefore(localDate) || localDate.isEqual(date)) {
                 String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), closedParamDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
-                throw new ServiceException(StrUtil.format("组织【{}】已于{}关账",orgName,localDate));
+                throw new ServiceException(CharSequenceUtil.format("组织【{}】已于{}关账",orgName,localDate));
             }
         }
     }

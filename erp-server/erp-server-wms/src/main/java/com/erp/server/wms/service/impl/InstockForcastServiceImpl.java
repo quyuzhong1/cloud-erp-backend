@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.ApproveStatusEnum;
@@ -47,25 +48,25 @@ import java.util.stream.Collectors;
 @Service
 public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMapper, InstockForcastEntity> implements InstockForcastService {
 
-    @Autowired
+    @Resource
     private InstockForcastDetailService instockForcastDetailService;
 
-    @Autowired
+    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
-    @Autowired
+    @Resource
     private InstockForcastMapper instockForcastMapper;
 
-    @Autowired
+    @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
-    @Autowired
+    @Resource
     private PoInstockDetailService poInstockDetailService;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private PoReturnDetailService poReturnDetailService;
 
     @Resource
@@ -100,7 +101,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
 
         // 仓库信息
         WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(dto.getWarehouseId());
-        if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+        if(Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
 

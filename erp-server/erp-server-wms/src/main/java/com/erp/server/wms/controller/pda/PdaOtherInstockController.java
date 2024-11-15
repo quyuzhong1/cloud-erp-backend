@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.pda;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -90,7 +91,7 @@ public class PdaOtherInstockController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated OtherInstockDTO.AddDTO dto) {
         String id = otherInstockService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -109,7 +110,7 @@ public class PdaOtherInstockController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated OtherInstockDTO.AddDTO dto) {
         String id = otherInstockService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

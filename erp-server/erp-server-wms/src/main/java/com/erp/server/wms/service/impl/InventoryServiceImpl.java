@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -85,22 +86,22 @@ import static com.common.business.enums.FileTaskEventEnum.*;
 @Service
 public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, InventoryEntity> implements InventoryService {
 
-    @Autowired
+    @Resource
     private InventoryMapper inventoryMapper;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private DmpSyncFeign dmpSyncFeign;
 
-    @Autowired
+    @Resource
     private WarehouseLocationService warehouseLocationService;
 
     @Resource
@@ -371,10 +372,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public boolean updateQtyById(String id, Integer qty) {
 //        LoginUser loginUser = UserContext.getDefaultLoginUser();
         boolean flag = lambdaUpdate()
-                .setSql(StrUtil.format("{}={}+{}", "qty", "qty", qty))
-//                .setSql(StrUtil.format("{}={}+{}", "version","version", 1))
-//                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), StrUtil.format("update_user_id='{}'", loginUser.getUid()))
-//                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), StrUtil.format("update_user_name='{}'", loginUser.getUserName()))
+                .setSql(CharSequenceUtil.format("{}={}+{}", "qty", "qty", qty))
+//                .setSql(CharSequenceUtil.format("{}={}+{}", "version","version", 1))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUid()), CharSequenceUtil.format("update_user_id='{}'", loginUser.getUid()))
+//                .setSql(StrUtils.isNotEmpty(loginUser.getUserName()), CharSequenceUtil.format("update_user_name='{}'", loginUser.getUserName()))
                 .eq(InventoryEntity::getId, id)
                 .update(new InventoryEntity());
 
@@ -473,7 +474,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             pageData = this.baseMapper.pageByArea(query, pagingParamDTO.getParams());
         }
         if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
-            if(StringUtils.isNotBlank(pagingParamDTO.getParams().getWarehouseLocationName())){
+            if(CharSequenceUtil.isNotBlank(pagingParamDTO.getParams().getWarehouseLocationName())){
                 List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(pagingParamDTO.getParams().getWarehouseLocationName());
                 if(!list.isEmpty()){
                     List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());
@@ -499,8 +500,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             List<String> warehouseIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
             List<String> orgIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getOrgId).distinct().collect(Collectors.toList());
             List<String> skuIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getSkuId).distinct().collect(Collectors.toList());
-            List<String> areaNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseAreaCode).filter(item -> !StringUtils.isBlank(item)).distinct().collect(Collectors.toList());
-            List<String> locationNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseLocationCode).filter(item -> !StringUtils.isBlank(item)).distinct().collect(Collectors.toList());
+            List<String> areaNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseAreaCode).filter(item -> !CharSequenceUtil.isBlank(item)).distinct().collect(Collectors.toList());
+            List<String> locationNameList = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseLocationCode).filter(item -> !CharSequenceUtil.isBlank(item)).distinct().collect(Collectors.toList());
             param.setWarehouseIdList(warehouseIds);
             param.setOrgIdList(orgIds);
             param.setSkuIdList(skuIds);
@@ -544,7 +545,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         LocalDateTime endTime = entity.getEndTime();
         if (!ObjectUtil.equals(stocktakingType, StocktakingTypeEnum.BY_SKU)) {
             if (ObjectUtil.isEmpty(startTime) || ObjectUtil.isEmpty(endTime)) {
-                throw new ServiceException(StrUtil.format("盘点计划单 【{}】盘点时间不能为空", entity.getCode()));
+                throw new ServiceException(CharSequenceUtil.format("盘点计划单 【{}】盘点时间不能为空", entity.getCode()));
             }
         }
         return baseMapper.listByStocktakingType(stocktakingType.getCode(), startTime, endTime, detailEntityList);
@@ -629,7 +630,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 cell.setCellStyle(contentCellStyle);
                 // 产品信息处理
                 if (Objects.equals(key, InventoryAgeTitleEnum.SKU_INFO.getCode())) {
-                    cell.setCellValue(StrUtil.format("{}\n{}", StrUtils.null2EmptyWithTrim(dataMap.get("skuNo")),
+                    cell.setCellValue(CharSequenceUtil.format("{}\n{}", StrUtils.null2EmptyWithTrim(dataMap.get("skuNo")),
                             StrUtils.null2EmptyWithTrim(dataMap.get("productName"))));
                 } else {
                     cell.setCellValue(StrUtils.null2EmptyWithTrim(dataMap.get(key)));
@@ -638,7 +639,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
         }
 
-        String fileName = StrUtil.format("库龄计算表数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        String fileName = CharSequenceUtil.format("库龄计算表数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
         try {
             response.setCharacterEncoding("utf-8");
             response.setContentType("application/octet-stream");
@@ -702,7 +703,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
 
             //仓位名称
-            if (org.apache.commons.lang3.StringUtils.isNotBlank(data.getWarehouseLocation())) {
+            if (CharSequenceUtil.isNotBlank(data.getWarehouseLocation())) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
                         .filter(req -> req.getCode().equals(data.getWarehouseLocation())
                                 && req.getWarehouseId().equals(data.getWarehouseId())
@@ -711,7 +712,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             }
 
             //库区名称赋值
-            if (org.apache.commons.lang3.StringUtils.isNotBlank(data.getWarehouseArea())) {
+            if (CharSequenceUtil.isNotBlank(data.getWarehouseArea())) {
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntities.stream()
                         .filter(req -> req.getCode().equals(data.getWarehouseArea()) && req.getWarehouseId().equals(data.getWarehouseId()) && "area".equals(req.getType()))
                         .findFirst().orElse(new WarehouseLocationEntity());
@@ -737,9 +738,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         paramDTO.setFormId("STK_Inventory");
         paramDTO.setFieldKeys("FMaterialId.FNumber,FStockId.FNumber,FStockOrgId.FNumber,FBASEQTY,FMaterialid.FSTOREURNOM,FMaterialid.FSTOREURNUM");
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(StrUtil.format(" FMaterialId.FNumber in ({})", skuNoList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
-        queryFilters.add(StrUtil.format(" FStockId.FNumber in ({})", warehouseCodeList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
-        queryFilters.add(StrUtil.format(" FStockOrgId.FNumber in ({})", orgCodeList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
+        queryFilters.add(CharSequenceUtil.format(" FMaterialId.FNumber in ({})", skuNoList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
+        queryFilters.add(CharSequenceUtil.format(" FStockId.FNumber in ({})", warehouseCodeList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
+        queryFilters.add(CharSequenceUtil.format(" FStockOrgId.FNumber in ({})", orgCodeList.stream().map(obj -> "'" + obj + "'").collect(Collectors.joining(","))));
         String filterStr = String.join(" and ", queryFilters);
         paramDTO.setFilterString(filterStr);
 
@@ -759,7 +760,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             if (result.size() < pageSize) {
                 dataSign = false;
             }
-            if (CollectionUtil.isEmpty(result)) {
+            if (CollUtil.isEmpty(result)) {
                 break;
             }
             resultAll.addAll(result);
@@ -819,7 +820,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                     // 仓库名称
                     if (Objects.equals(fieldKey, FieldConstant.WAREHOUSE_ID) && Objects.nonNull(fieldVal)) {
                         WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(StrUtils.null2EmptyWithTrim(fieldVal), warehouseId -> warehouseService.detailWithCache(warehouseId));
-                        if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                        if (Objects.nonNull(warehouseDetail) && CharSequenceUtil.isNotEmpty(warehouseDetail.getId())) {
                             convertMap.put("warehouseName", warehouseDetail.getName());
                         }
                     }
@@ -845,7 +846,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public InventoryDTO.PdaHomeInventoryBalanceDTO getInventoryByWarehouseId(String warehouseId) {
         InventoryDTO.PdaHomeInventoryBalanceDTO pdaHomeInventoryBalanceDTO = new InventoryDTO.PdaHomeInventoryBalanceDTO();
         List<InventoryDTO.PdaHomeInventoryBalanceDTO> inventory = baseMapper.getInventoryByWarehouseId(warehouseId, InventoryStatusEnum.USABLE.getCode());
-        if (StringUtils.isBlank(warehouseId)) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
             long usableQty = 0L;
             long todayDeliveryQty = 0L;
             long todayStockInQty = 0L;
@@ -913,7 +914,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<InventoryDTO.InventoryViewQtyDTO> list = new ArrayList<>();
         dtos.forEach(dto -> {
             InventoryDTO.InventoryViewQtyDTO inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
-            if (StringUtils.isNotBlank(dto.getWarehouseId()) && StringUtils.isNotBlank(dto.getSkuId())) {
+            if (CharSequenceUtil.isNotBlank(dto.getWarehouseId()) && CharSequenceUtil.isNotBlank(dto.getSkuId())) {
                 inventoryQtyDTO = baseMapper.getInventoryInfoByParam(dto);
                 if (Objects.isNull(inventoryQtyDTO)) {
                     inventoryQtyDTO = new InventoryDTO.InventoryViewQtyDTO();
@@ -934,7 +935,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryDTO.PdaInventorySearch getInventoryBySkuNo(PagingDTO<InventoryDTO.PdaSearchParamDTO> searchDTO) {
         InventoryDTO.PdaSearchParamDTO params = searchDTO.getParams();
-        if(StringUtils.isBlank(params.getSkuNo())){
+        if(CharSequenceUtil.isBlank(params.getSkuNo())){
             return new InventoryDTO.PdaInventorySearch();
         }
 
@@ -949,7 +950,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         pdaInventorySearch.setSkuName(skuVO.getSkuName());
         pdaInventorySearch.setSpuNo(skuVO.getSpuNo());
         pdaInventorySearch.setSpuName(skuVO.getSpuName());
-        if (StringUtils.isBlank(skuVO.getSpuNo())) {
+        if (CharSequenceUtil.isBlank(skuVO.getSpuNo())) {
             pdaInventorySearch.setSpuNo("");
             pdaInventorySearch.setSpuName("");
         }
@@ -1017,9 +1018,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public InventoryDTO.InventoryQtyDTO getInventoryQty(InventoryDTO.InventoryBySkuNoDTO dto) {
         InventoryDTO.InventoryQtyDTO result = new InventoryDTO.InventoryQtyDTO();
         List<InventoryEntity> list = this.lambdaQuery()
-                .eq(StringUtils.isNotBlank(dto.getWarehouseId()),InventoryEntity::getSkuId, dto.getSkuId())
-                .eq(StringUtils.isNotBlank(dto.getOrgId()),InventoryEntity::getOrgId, dto.getOrgId())
-                .eq(StringUtils.isNotBlank(dto.getWarehouseId()),InventoryEntity::getWarehouseId, dto.getWarehouseId())
+                .eq(CharSequenceUtil.isNotBlank(dto.getWarehouseId()),InventoryEntity::getSkuId, dto.getSkuId())
+                .eq(CharSequenceUtil.isNotBlank(dto.getOrgId()),InventoryEntity::getOrgId, dto.getOrgId())
+                .eq(CharSequenceUtil.isNotBlank(dto.getWarehouseId()),InventoryEntity::getWarehouseId, dto.getWarehouseId())
                 .eq(InventoryEntity::getWarehouseLocation, dto.getWarehouseLocation())
                 .list();
         result.setOrgId(dto.getOrgId());
@@ -1183,11 +1184,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         InventoryDTO.PdaSearchParamDTO params = searchDTO.getParams();
         //库存信息
         InventoryDTO.InventoryBySkuNoDTO paramDTO = new InventoryDTO.InventoryBySkuNoDTO();
-        if(StringUtils.isBlank(params.getWarehouseLocation())){
+        if(CharSequenceUtil.isBlank(params.getWarehouseLocation())){
             throw new ServiceException("仓位不存在");
         }
         WarehouseLocationEntity entity = warehouseLocationService.findByWarehouseCode(params.getWarehouseLocation());
-        if (Objects.nonNull(entity) && StringUtils.isNotBlank(entity.getCode())){
+        if (Objects.nonNull(entity) && CharSequenceUtil.isNotBlank(entity.getCode())){
             paramDTO.setWarehouseLocation(entity.getCode());
         }else {
             throw new ServiceException("仓位不存在");
@@ -1248,11 +1249,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         //仓库信息整理
         warehouseDTOList.forEach(pdaInventoryWarehouseDTO -> {
-            WarehouseEntity warehouseEntity = warehouseList.stream().filter(e -> StringUtils.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId()) && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getId()))
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(e -> CharSequenceUtil.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId()) && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getId()))
                     .findFirst().orElse(new WarehouseEntity());
             pdaInventoryWarehouseDTO.setOrgId(warehouseEntity.getOrgId());
             pdaInventoryWarehouseDTO.setWarehouseName(warehouseEntity.getName());
-            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> StringUtils.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId())
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId())
                             && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getWarehouseId()) && StrUtil.isNotBlank(warehouseLocation) && warehouseLocation.equals(e.getCode()))
                     .findFirst().orElse(new WarehouseLocationEntity());
             pdaInventoryWarehouseDTO.setWarehouseLocation(warehouseLocationEntity.getCode());
@@ -1261,13 +1262,13 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         //结果汇总
         records.forEach(pdaInventoryWarehouseDTO -> {
             String skuId = pdaInventoryWarehouseDTO.getSkuId();
-            SkuVO skuVO = skuVOList.stream().filter(e -> StringUtils.isNotBlank(skuId) && skuId.equals(e.getSkuId()))
+            SkuVO skuVO = skuVOList.stream().filter(e -> CharSequenceUtil.isNotBlank(skuId) && skuId.equals(e.getSkuId()))
                     .findFirst().orElse(new SkuVO());
             pdaInventoryWarehouseDTO.setSkuName(skuVO.getSkuName());
             pdaInventoryWarehouseDTO.setSkuNo(skuVO.getSkuNo());
             pdaInventoryWarehouseDTO.setSkuImagesUrl(skuVO.getSkuImagesUrl());
-            List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOS = warehouseDTOList.stream().filter(e -> StringUtils.isNotBlank(e.getWarehouseLocation())
-                    && StringUtils.isNotBlank(e.getWarehouseLocationName()) && StringUtils.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuId)).collect(Collectors.toList());
+            List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseDTOS = warehouseDTOList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getWarehouseLocation())
+                    && CharSequenceUtil.isNotBlank(e.getWarehouseLocationName()) && CharSequenceUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuId)).collect(Collectors.toList());
             pdaInventoryWarehouseDTO.setWarehouseLocationDTOList(warehouseDTOS);
         });
     }
@@ -1313,7 +1314,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             dataList = inventoryMapper.exportByArea( dataList, searchParamDTO, dto.getParams().getWarehouseAreaCodeList(), dto.getLastId());
         }
         if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
-            if(StringUtils.isNotBlank(dto.getParams().getWarehouseLocationName())){
+            if(CharSequenceUtil.isNotBlank(dto.getParams().getWarehouseLocationName())){
                 List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(dto.getParams().getWarehouseLocationName());
                 if(! list.isEmpty()){
                     List<String> codeList = list.stream().map(WarehouseLocationEntity::getCode).distinct().collect(Collectors.toList());

@@ -145,7 +145,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                 old.setFieldName(cfgConditionMap.get(old.getField()));
                 updateItem.setFieldName(cfgConditionMap.get(updateItem.getField()));
                 //值没有的时候名称置空
-                if (StrUtil.isBlank(updateItem.getValue())) {
+                if (CharSequenceUtil.isBlank(updateItem.getValue())) {
                     updateItem.setName("");
                 }
                 operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));

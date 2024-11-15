@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -177,7 +178,7 @@ public class QcReportServiceImpl extends SuperServiceImpl<QcReportMapper, QcRepo
      * @date 2023-04-13 14:59
      */
     private List<String> getDeleteIds(List<QcReportDTO.UpdateDTO> list, List<QcReportEntity> dbList) {
-        List<String> ids = list.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> ids = list.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(QcReportDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> dbIds = dbList.stream().map(QcReportEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());

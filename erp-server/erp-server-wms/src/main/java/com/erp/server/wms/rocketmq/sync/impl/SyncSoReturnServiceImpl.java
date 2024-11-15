@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -109,14 +110,14 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     @DataIdempotent(keyIdName = "kingdeeReturnOrderEntity.fBillNo", leaseTime = 30, waitTime = 20)
     public void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity kingdeeReturnOrderEntity) {
         //跳过优质胜和小隼科技的单
-        if (StrUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
+        if (CharSequenceUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
             return;
         }
 /*        //如果不是B2C类型的单跳过
         if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
             return;
         }*/
-        if (StringUtils.isNotBlank(kingdeeReturnOrderEntity.getFULZDataSources())) {
+        if (CharSequenceUtil.isNotBlank(kingdeeReturnOrderEntity.getFULZDataSources())) {
             //不同步MWS同步到金蝶的数据
             if (CommonConstants.SYSTEM.equals(kingdeeReturnOrderEntity.getFULZDataSources().trim())) {
                 return;
@@ -223,7 +224,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         OtherInstockEntity dbOtherInstockEntity = otherInstockService.getByThirdCode(dto.getThirdCode(), InventoryDirectionEnum.ORDINARY);
         LocalDateTime approveTime = Objects.nonNull(dbOtherInstockEntity)?dto.getModified():dto.getApproveTime();
         if(Objects.isNull(approveTime)){
-            throw new ServiceException(StrUtil.format("{}旺店通退货入库单审核时间为空",dto.getThirdCode()));
+            throw new ServiceException(CharSequenceUtil.format("{}旺店通退货入库单审核时间为空",dto.getThirdCode()));
         }
         SoReturnInstockEntity entity = soReturnInstockService.getOne(Wrappers.<SoReturnInstockEntity>lambdaQuery()
                 .eq(SoReturnInstockEntity::getThirdCode, dto.getThirdCode()));

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -63,7 +64,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         WaveListEntity old = waveListService.getById(hangUpDTO.getWaveId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "波次列表"));
         if (!StrUtil.equals(old.getStatus(),WaveStatusEnum.PICK_ING.getCode())) {
-            throw new ServiceException(StrUtil.format("波次【{}】非拣货中，不支持挂起。",old.getCode()));
+            throw new ServiceException(CharSequenceUtil.format("波次【{}】非拣货中，不支持挂起。",old.getCode()));
         }
         List<PickingDetailEntity> updateList = getPickingDetailEntities(hangUpDTO);
         pickingDetailService.updateBatchById(updateList);
@@ -275,10 +276,10 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     @Override
     public ApiResult<?> scanSkuOrEanCode(String skuId, String code) {
         ProductDetailDTO.ServiceToWavePickingDTO productInfo = productDetailFeign.getProductInfoBySkuId(skuId);
-        if(StringUtils.isNotBlank(productInfo.getSkuNo()) && productInfo.getSkuNo().equals(code)){
+        if(CharSequenceUtil.isNotBlank(productInfo.getSkuNo()) && productInfo.getSkuNo().equals(code)){
             return ApiResult.success();
         }
-        if(StringUtils.isNotBlank(productInfo.getEanNo()) && productInfo.getEanNo().equals(code)){
+        if(CharSequenceUtil.isNotBlank(productInfo.getEanNo()) && productInfo.getEanNo().equals(code)){
             return ApiResult.success();
         }
         return ApiResult.error("SKU不一致");

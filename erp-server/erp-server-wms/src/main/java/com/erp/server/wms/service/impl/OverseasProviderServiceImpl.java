@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -55,7 +56,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProviderMapper, OverseasProviderEntity> implements OverseasProviderService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -78,7 +79,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         overseasProviderWarehouseService.update(updateDTO, old.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录海外物流商日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "海外物流商");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "海外物流商");
         operateLogService.addModuleOperateLogByObj(old, old, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), old.getId(), msg);
         return Boolean.TRUE;
     }
@@ -207,7 +208,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         }
         OverseasProviderEntity add = BeanUtil.copyProperties(dto,OverseasProviderEntity.class);
         this.save(add);
-        String msg = StrUtil.format("用户【{}】新增三方仓信息 ", UserContext.getDefaultLoginUser().getUserName());
+        String msg = CharSequenceUtil.format("用户【{}】新增三方仓信息 ", UserContext.getDefaultLoginUser().getUserName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), add.getId(), "新增");
     }
 
@@ -238,7 +239,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         }
         boolean result = this.updateById(entity);
         if(result){
-            String msg = StrUtil.format("用户【{}】编辑平台账号修改为【{}】,仓库简称修改为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), entity.getPlatformAccount(),entity.getShortName());
+            String msg = CharSequenceUtil.format("用户【{}】编辑平台账号修改为【{}】,仓库简称修改为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), entity.getPlatformAccount(),entity.getShortName());
             operateLogService.addModuleOperateLog(msg,  ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), entity.getId(), "编辑操作");
         }
     }
@@ -253,7 +254,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             throw new ServiceException("已授权不能删除");
         }
         this.removeById(id);
-        String msg = StrUtil.format("用户【{}】删除海外仓信息 ", UserContext.getDefaultLoginUser().getUserName());
+        String msg = CharSequenceUtil.format("用户【{}】删除海外仓信息 ", UserContext.getDefaultLoginUser().getUserName());
         operateLogService.addModuleOperateLog(msg,  ModuleTypeEnum.OVERSEAS_PROVIDER.getCode(), entity.getId(), "删除");
     }
 

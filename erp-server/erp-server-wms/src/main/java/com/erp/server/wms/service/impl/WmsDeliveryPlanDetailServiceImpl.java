@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -35,6 +36,9 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 发货计划详情表 服务实现类
@@ -46,15 +50,15 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDeliveryPlanDetailMapper, WmsDeliveryPlanDetailEntity> implements WmsDeliveryPlanDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
-    @Autowired
+    @Resource
     private OmsListingInfoFeign omsListingInfoFeign;
-    @Autowired
+    @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
-    @Autowired
+    @Resource
     private SkuMappingFeign skuMappingFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -121,7 +125,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
     */
     private void handleData(List<WmsDeliveryPlanDetailEntity> list, String mainId, Boolean isUpdate, String toWarehouseId) {
         //需要新增的数据
-        List<WmsDeliveryPlanDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<WmsDeliveryPlanDetailEntity> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
 
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -145,7 +149,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
             detailEntity.setSkuNo(skuVO.getSkuNo());
 
             //校验是否是修改，如果是就新增修改日志
-            if (StringUtils.isNotBlank(detailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 WmsDeliveryPlanDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_OVERSEAS_DELIVERY_PLAN);
@@ -165,7 +169,7 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<WmsDeliveryPlanDetailDTO.UpdateDTO> newList, List<WmsDeliveryPlanDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(WmsDeliveryPlanDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(WmsDeliveryPlanDetailEntity
                 ::getId).collect(Collectors.toList());
