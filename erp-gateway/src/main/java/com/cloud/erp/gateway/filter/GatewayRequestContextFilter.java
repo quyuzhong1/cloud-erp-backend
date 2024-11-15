@@ -51,11 +51,11 @@ import java.util.Objects;
  **/
 @Slf4j
 @AllArgsConstructor
-public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
+public class GatewayRequestContextFilter<T> implements GlobalFilter, Ordered {
 
     private GatewayPluginProperties gatewayPluginProperties;
 
-    private ContextExtraDataGenerator contextExtraDataGenerator;
+    private ContextExtraDataGenerator<T> contextExtraDataGenerator;
 
     private static final AntPathMatcher ANT_PATH_MATCHER = new AntPathMatcher();
 
@@ -67,16 +67,16 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
-        GatewayContext gatewayContext = new GatewayContext();
+        GatewayContext<T> gatewayContext = new GatewayContext<>();
         gatewayContext.setReadRequestData(shouldReadRequestData(exchange) || shouldReadRequestInjectionData(exchange));
         gatewayContext.setReadResponseData(gatewayPluginProperties.getLogRequest().getResponseLog());
         HttpHeaders headers = request.getHeaders();
         gatewayContext.setRequestHeaders(headers);
         if(Objects.nonNull(contextExtraDataGenerator)){
-            GatewayContextExtraData gatewayContextExtraData = contextExtraDataGenerator.generateContextExtraData(exchange);
+            GatewayContextExtraData<T> gatewayContextExtraData = contextExtraDataGenerator.generateContextExtraData(exchange);
             gatewayContext.setGatewayContextExtraData(gatewayContextExtraData);
         }
-        if(!gatewayContext.getReadRequestData()){
+        if(Boolean.FALSE.equals(gatewayContext.getReadRequestData())){
             exchange.getAttributes().put(GatewayContext.CACHE_GATEWAY_CONTEXT, gatewayContext);
             log.debug("[GatewayContext]Properties Set To Not Read Request Data");
             return chain.filter(exchange);
@@ -88,7 +88,7 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
         exchange.getAttributes().put(GatewayContext.CACHE_GATEWAY_CONTEXT, gatewayContext);
         MediaType contentType = headers.getContentType();
         if(headers.getContentLength() > 0){
-            if(MediaType.APPLICATION_JSON.equals(contentType) || MediaType.APPLICATION_JSON_UTF8.equals(contentType)){
+            if(MediaType.APPLICATION_JSON.equals(contentType)){
                 return readBody(exchange, chain,gatewayContext);
             }
             if(MediaType.APPLICATION_FORM_URLENCODED.equals(contentType)){
@@ -111,68 +111,48 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
      * @return boolean
      */
     private boolean shouldReadRequestData(ServerWebExchange exchange){
-        if(gatewayPluginProperties.getLogRequest().getRequestLog()
+        if(Boolean.TRUE.equals(gatewayPluginProperties.getLogRequest().getRequestLog())
                 && GatewayLogTypeEnum.ALL.getType().equals(gatewayPluginProperties.getLogRequest().getLogType())){
             log.debug("[GatewayContext]Properties Set Read All Request Data");
             return true;
         }
-
-        boolean serviceFlag = false;
-        boolean pathFlag = false;
         boolean lbFlag = false;
+        boolean pathFlag = false;
 
         List<String> readRequestDataServiceIdList = gatewayPluginProperties.getLogRequest().getServiceIdList();
 
         List<String> readRequestDataPathList = gatewayPluginProperties.getLogRequest().getPathList();
 
-        if(!CollectionUtils.isEmpty(readRequestDataPathList)
+        pathFlag = isPathFlag(!CollectionUtils.isEmpty(readRequestDataPathList)
                 && (GatewayLogTypeEnum.PATH.getType().equals(gatewayPluginProperties.getLogRequest().getLogType())
-                    || GatewayLogTypeEnum.CONFIGURE.getType().equals(gatewayPluginProperties.getLogRequest().getLogType()))){
-            String requestPath = exchange.getRequest().getPath().pathWithinApplication().value();
-            for(String path : readRequestDataPathList){
-                if(ANT_PATH_MATCHER.match(path,requestPath)){
-                    log.debug("[GatewayContext]Properties Set Read Specific Request Data With Request Path:{},Math Pattern:{}", requestPath, path);
-                    pathFlag =  true;
-                    break;
-                }
-            }
-        }
+                || GatewayLogTypeEnum.CONFIGURE.getType().equals(gatewayPluginProperties.getLogRequest().getLogType())), exchange, readRequestDataPathList, "[GatewayContext]Properties Set Read Specific Request Data With Request Path:{},Math Pattern:{}", pathFlag);
+
 
         Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
-        URI routeUri = route.getUri();
-        if(!"lb".equalsIgnoreCase(routeUri.getScheme())){
+        URI routeUri = null == route ? null : route.getUri();
+        if(null != routeUri && !"lb".equalsIgnoreCase(routeUri.getScheme())){
             lbFlag = true;
         }
 
-        String routeServiceId = routeUri.getHost().toLowerCase();
-        if(!CollectionUtils.isEmpty(readRequestDataServiceIdList)
-                && (GatewayLogTypeEnum.SERVICE.getType().equals(gatewayPluginProperties.getLogRequest().getLogType())
-                || GatewayLogTypeEnum.CONFIGURE.getType().equals(gatewayPluginProperties.getLogRequest().getLogType()))){
-            if(readRequestDataServiceIdList.contains(routeServiceId)){
-                log.debug("[GatewayContext]Properties Set Read Specific Request Data With ServiceId:{}",routeServiceId);
-                serviceFlag =  true;
-            }
-        }
+        String routeServiceId = null == routeUri ? "" : routeUri.getHost().toLowerCase();
+        boolean serviceFlag = isServiceFlag(readRequestDataServiceIdList, routeServiceId);
+
 
         if (GatewayLogTypeEnum.CONFIGURE.getType().equals(gatewayPluginProperties.getLogRequest().getLogType())
-                && serviceFlag && pathFlag && !lbFlag)
-        {
+                && serviceFlag && pathFlag && !lbFlag) {
             return true;
         }
         else if (GatewayLogTypeEnum.SERVICE.getType().equals(gatewayPluginProperties.getLogRequest().getLogType())
-                && serviceFlag && !lbFlag)
-        {
+                && serviceFlag && !lbFlag) {
             return true;
-        }
-        else if (GatewayLogTypeEnum.PATH.getType().equals(gatewayPluginProperties.getLogRequest().getLogType())
-                && pathFlag)
-        {
+        } else if (GatewayLogTypeEnum.PATH.getType().equals(gatewayPluginProperties.getLogRequest().getLogType())
+                && pathFlag) {
             return true;
+        } else {
+            return false;
         }
-
-        return false;
     }
-    
+
     /**
      * 因为加入了SQL注入和XSS注入拦截，这里单独判断
      * @return boolean
@@ -216,34 +196,18 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
         }
         
         // 因为请求的路径太多，防注入采取白名单模式，如果配置了地址，那么就放过，所以不需要进行参数解析
-        if(!CollectionUtils.isEmpty(readRequestDataPathList)){
-            String requestPath = exchange.getRequest().getPath().pathWithinApplication().value();
-            for(String path : readRequestDataPathList){
-                if(ANT_PATH_MATCHER.match(path,requestPath)){
-                    log.debug("[GatewayContext]Properties Set Not Read Specific Request Data With Request Path:{},Math Pattern:{}", requestPath, path);
-                    pathFlag =  true;
-                    break;
-                }
-            }
-        }
-        
+        pathFlag = isPathFlag(!CollectionUtils.isEmpty(readRequestDataPathList), exchange, readRequestDataPathList, "[GatewayContext]Properties Set Not Read Specific Request Data With Request Path:{},Math Pattern:{}", pathFlag);
+
         Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
         URI routeUri = route.getUri();
         
         String routeServiceId = routeUri.getHost().toLowerCase();
-        if(!CollectionUtils.isEmpty(readRequestDataServiceIdList)){
-            if(readRequestDataServiceIdList.contains(routeServiceId)){
+        if(!CollectionUtils.isEmpty(readRequestDataServiceIdList) && readRequestDataServiceIdList.contains(routeServiceId)){
                 log.debug("[GatewayContext]Properties Set Not Read Specific Request Data With ServiceId:{}",routeServiceId);
                 serviceFlag =  true;
-            }
         }
-        
-        if (serviceFlag && pathFlag)
-        {
-            return false;
-        }
-        
-        return true;
+
+        return !serviceFlag || !pathFlag;
     }
 
     /**
@@ -252,7 +216,7 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
      * @param chain
      * @return
      */
-    private Mono<Void> readFormData(ServerWebExchange exchange, GatewayFilterChain chain, GatewayContext gatewayContext){
+    private Mono<Void> readFormData(ServerWebExchange exchange, GatewayFilterChain chain, GatewayContext<T> gatewayContext){
         HttpHeaders headers = exchange.getRequest().getHeaders();
         return exchange.getFormData()
                 .doOnNext(multiValueMap -> {
@@ -261,8 +225,7 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
                     log.debug("[GatewayContext]Read FormData Success");
                 })
                 .then(Mono.defer(() -> {
-                    Charset charset = headers.getContentType().getCharset();
-                    charset = charset == null? StandardCharsets.UTF_8:charset;
+                    Charset charset = checkAndGetCharset(headers);
                     String charsetName = charset.name();
                     MultiValueMap<String, String> formData = gatewayContext.getFormData();
                     /*
@@ -271,32 +234,7 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
                     if(null == formData || formData.isEmpty()){
                         return chain.filter(exchange);
                     }
-                    StringBuilder formDataBodyBuilder = new StringBuilder();
-                    String entryKey;
-                    List<String> entryValue;
-                    try {
-                        /*
-                         * repackage form data
-                         */
-                        for (Map.Entry<String, List<String>> entry : formData.entrySet()) {
-                            entryKey = entry.getKey();
-                            entryValue = entry.getValue();
-                            if (entryValue.size() > 1) {
-                                for(String value : entryValue){
-                                    formDataBodyBuilder.append(entryKey).append("=").append(URLEncoder.encode(value, charsetName)).append("&");
-                                }
-                            } else {
-                                formDataBodyBuilder.append(entryKey).append("=").append(URLEncoder.encode(entryValue.get(0), charsetName)).append("&");
-                            }
-                        }
-                    }catch (UnsupportedEncodingException e){}
-                    /*
-                     * substring with the last char '&'
-                     */
-                    String formDataBodyString = "";
-                    if(formDataBodyBuilder.length()>0){
-                        formDataBodyString = formDataBodyBuilder.substring(0, formDataBodyBuilder.length() - 1);
-                    }
+                    String formDataBodyString = convertFormDataDodyString(formData, charsetName);
                     /*
                      * get data bytes
                      */
@@ -339,13 +277,11 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
      * @param chain
      * @return
      */
-    private Mono<Void> readBody(ServerWebExchange exchange, GatewayFilterChain chain, GatewayContext gatewayContext){
+    private Mono<Void> readBody(ServerWebExchange exchange, GatewayFilterChain chain, GatewayContext<T> gatewayContext){
         return DataBufferUtils.join(exchange.getRequest().getBody())
                 .flatMap(dataBuffer -> {
                     /*
                      * read the body Flux<DataBuffer>, and release the buffer
-                     * //TODO when SpringCloudGateway Version Release To G.SR2,this can be update with the new version's feature
-                     * see PR https://github.com/spring-cloud/spring-cloud-gateway/pull/1095
                      */
                     byte[] bytes = new byte[dataBuffer.readableByteCount()];
                     dataBuffer.read(bytes);
@@ -374,4 +310,76 @@ public class GatewayRequestContextFilter implements GlobalFilter, Ordered {
                 });
     }
 
+    private static Charset checkAndGetCharset(HttpHeaders headers) {
+        Charset charset = StandardCharsets.UTF_8;
+        if (null == headers){
+            return charset;
+        }
+        MediaType contentType = headers.getContentType();
+        if (null == contentType){
+            return charset;
+        }
+        Charset headersCharset = contentType.getCharset();
+        if (null == headersCharset){
+            return charset;
+        } else {
+            return headersCharset;
+        }
+    }
+
+    private static String convertFormDataDodyString(MultiValueMap<String, String> formData, String charsetName) {
+        StringBuilder formDataBodyBuilder = new StringBuilder();
+        String entryKey;
+        List<String> entryValue;
+        try {
+            /*
+             * repackage form data
+             */
+            for (Map.Entry<String, List<String>> entry : formData.entrySet()) {
+                entryKey = entry.getKey();
+                entryValue = entry.getValue();
+                if (entryValue.size() > 1) {
+                    for(String value : entryValue){
+                        formDataBodyBuilder.append(entryKey).append("=").append(URLEncoder.encode(value, charsetName)).append("&");
+                    }
+                } else {
+                    formDataBodyBuilder.append(entryKey).append("=").append(URLEncoder.encode(entryValue.get(0), charsetName)).append("&");
+                }
+            }
+        }catch (UnsupportedEncodingException e){
+            log.error("解析formData异常:{}", e.getMessage());
+        }
+        /*
+         * substring with the last char '&'
+         */
+        String formDataBodyString = "";
+        if(formDataBodyBuilder.length()>0){
+            formDataBodyString = formDataBodyBuilder.substring(0, formDataBodyBuilder.length() - 1);
+        }
+        return formDataBodyString;
+    }
+
+    private boolean isServiceFlag(List<String> readRequestDataServiceIdList, String routeServiceId) {
+        if(!CollectionUtils.isEmpty(readRequestDataServiceIdList)
+                && (GatewayLogTypeEnum.SERVICE.getType().equals(gatewayPluginProperties.getLogRequest().getLogType()) || GatewayLogTypeEnum.CONFIGURE.getType().equals(gatewayPluginProperties.getLogRequest().getLogType()))
+                && readRequestDataServiceIdList.contains(routeServiceId)){
+            log.debug("[GatewayContext]Properties Set Read Specific Request Data With ServiceId:{}", routeServiceId);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isPathFlag(boolean readRequestDataPathList, ServerWebExchange exchange, List<String> readRequestDataPathList1, String s, boolean pathFlag) {
+        if (readRequestDataPathList) {
+            String requestPath = exchange.getRequest().getPath().pathWithinApplication().value();
+            for (String path : readRequestDataPathList1) {
+                if (ANT_PATH_MATCHER.match(path, requestPath)) {
+                    log.debug(s, requestPath, path);
+                    pathFlag = true;
+                    break;
+                }
+            }
+        }
+        return pathFlag;
+    }
 }
