@@ -91,7 +91,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -190,25 +190,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private SyncKingdeeSoService syncKingdeeSoService;
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private BankAccountService bankAccountService;
 
-    @Autowired
+    @Resource
     private OmsAttachmentService omsAttachmentService;
 
-    @Autowired
+    @Resource
     private CustomerInvoiceService customerInvoiceService;
 
-    @Autowired
+    @Resource
     private MachineInfoFeign machineInfoFeign;
 
-    @Autowired
+    @Resource
     private KingdeeReceiptConditionService kingdeeReceiptConditionService;
 
     @Resource
@@ -219,7 +219,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
-    @Autowired
+    @Resource
     private SkuMappingService skuMappingService;
 
     @Resource

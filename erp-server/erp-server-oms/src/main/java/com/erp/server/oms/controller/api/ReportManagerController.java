@@ -5,17 +5,15 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ReportDTO;
-import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 
 /**
  * 报表管理
@@ -29,7 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping("/reportManager")
 public class ReportManagerController extends BaseController {
 
-    @Autowired
+    @Resource
     private SoB2cService soB2cService;
 
     /**
@@ -49,9 +47,9 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesExport")
-    public ApiResult productSalesExport(@RequestBody @Validated ReportDTO.ProductSalesPagingParamDTO dto) {
+    public ApiResult<Object> productSalesExport(@RequestBody @Validated ReportDTO.ProductSalesPagingParamDTO dto) {
         Boolean result = soB2cService.productSalesExport(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
 
     }
 }

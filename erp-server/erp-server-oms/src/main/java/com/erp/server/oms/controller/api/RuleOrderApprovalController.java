@@ -12,7 +12,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.RuleOrderApprovalDTO;
 import com.erp.server.oms.service.RuleOrderApprovalService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +29,7 @@ import java.util.Map;
 @RequestMapping("/ruleOrderApproval")
 public class RuleOrderApprovalController extends BaseController {
 
-    @Autowired
+    @Resource
     private RuleOrderApprovalService ruleOrderApprovalService;
 
 

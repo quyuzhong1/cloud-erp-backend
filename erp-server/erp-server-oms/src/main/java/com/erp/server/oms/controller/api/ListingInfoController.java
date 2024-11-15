@@ -51,9 +51,9 @@ public class ListingInfoController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/skuMapping")
-    public ApiResult skuMapping(@RequestBody @Validated FbaShipmentDTO.SkuMappingParamDTO dto) {
+    public ApiResult<Object> skuMapping(@RequestBody @Validated FbaShipmentDTO.SkuMappingParamDTO dto) {
         Boolean flag = listingInfoService.skuMapping(dto);
-        return flag ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
 
@@ -61,9 +61,9 @@ public class ListingInfoController extends BaseController {
      * 库存sku映射
      **/
     @PostMapping("/warehouseSkuMapping")
-    public ApiResult warehouseSkuMapping(@RequestBody @Validated ListingInfoDTO.WarehouseSkuMappingParamDTO dto) {
+    public ApiResult<Object> warehouseSkuMapping(@RequestBody @Validated ListingInfoDTO.WarehouseSkuMappingParamDTO dto) {
         Boolean flag = listingInfoService.warehouseSkuMapping(dto);
-        return flag ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**

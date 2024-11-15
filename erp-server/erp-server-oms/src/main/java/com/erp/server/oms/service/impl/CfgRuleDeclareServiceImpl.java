@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,15 +57,15 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMapper, CfgRuleDeclareEntity> implements CfgRuleDeclareService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private SpElServer spElServer;
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
     @Resource
     private SoB2cDeclareProductService soB2cDeclareProductService;
-    @Autowired
+    @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
 
     @GlobalTransactional(rollbackFor = Exception.class)

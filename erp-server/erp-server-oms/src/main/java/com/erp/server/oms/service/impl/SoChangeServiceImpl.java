@@ -49,7 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -104,10 +104,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private CustomerAddressService customerAddressService;
 
-    @Autowired
+    @Resource
     private SoChangeQueryHandler soChangeQueryHandler;
 
     @Resource

@@ -41,7 +41,7 @@ public class B2BSoImportExcelListener extends AnalysisEventListener<B2BSoImportE
      */
     private List<B2BSoImportExcelDTO> successList = new ArrayList<>();
 
-    private B2BSoImportExcelListener() {
+    public B2BSoImportExcelListener() {
     }
 
     /**

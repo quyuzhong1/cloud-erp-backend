@@ -28,7 +28,7 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Validated
 public class SoB2cController extends BaseController {
 
-    @Autowired
+    @Resource
     private SoB2cService soB2cService;
     @Resource
     private SoB2cErrorService soB2cErrorService;

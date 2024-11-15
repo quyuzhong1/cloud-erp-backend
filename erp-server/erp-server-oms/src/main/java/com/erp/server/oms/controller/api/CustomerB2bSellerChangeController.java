@@ -180,28 +180,41 @@ public class CustomerB2bSellerChangeController extends BaseController {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<CustomerB2bSellerChangeEntity> entityList = customerB2bSellerChangeService.listByIds(ids);
-        List<String> mainIds =entityList.stream().map(CustomerB2bSellerChangeEntity::getMainId).collect(Collectors.toList());
-        Map<String,CustomerInfoEntity> customerInfoEntityMap = customerInfoService.listByIds(mainIds).stream().collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+        List<String> mainIds = entityList.stream()
+                .map(CustomerB2bSellerChangeEntity::getMainId)
+                .collect(Collectors.toList());
+        Map<String, CustomerInfoEntity> customerInfoEntityMap = customerInfoService.listByIds(mainIds)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
+
         for (String id : ids) {
-            CustomerB2bSellerChangeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"客户变更销售员信息不存在"));
-                continue;
+            CustomerB2bSellerChangeEntity entity = entityList.stream()
+                    .filter(v -> v.getId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+            BatchResultDTO result = null; // To store the result for each id
+
+            if (Objects.isNull(entity)) {
+                result = BatchResultDTO.fail(id, id, "客户变更销售员信息不存在");
+            } else {
+                CustomerInfoEntity customerInfoEntity = customerInfoEntityMap.get(entity.getMainId());
+                if (Objects.isNull(customerInfoEntity)) {
+                    result = BatchResultDTO.fail(id, id, "客户信息不存在");
+                } else {
+                    try {
+                        result = customerB2bSellerChangeService.approve(dto, entity, customerInfoEntity);
+                    } catch (Exception e) {
+                        log.error("B2B客户变更销售员审核失败", e);
+                        result = BatchResultDTO.fail(entity.getId(), customerInfoEntity.getCode(), e.getMessage());
+                    }
+                }
             }
-            CustomerInfoEntity customerInfoEntity = customerInfoEntityMap.get(entity.getMainId());
-            if(Objects.isNull(customerInfoEntity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"客户信息不存在"));
-                continue;
-            }
-            try {
-                resultDTOS.add(customerB2bSellerChangeService.approve(dto, entity,customerInfoEntity));
-            }catch (Exception e){
-                log.error("B2B客户变更销售员审核失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), customerInfoEntity.getCode(), e.getMessage()));
-            }
+
+            resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
     /**
      * 导出
