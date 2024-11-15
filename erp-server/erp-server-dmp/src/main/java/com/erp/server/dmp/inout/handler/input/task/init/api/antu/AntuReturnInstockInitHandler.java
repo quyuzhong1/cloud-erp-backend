@@ -45,10 +45,6 @@ import java.util.List;
 @Scope("prototype")
 public class AntuReturnInstockInitHandler extends DmpInputInitHandler {
 
-
-    @Resource
-    private DmpHandlerCache dmpHandlerCache;
-
     @Resource
     private WmsOverseasWarehouseFeign overseasWarehouseFeign;
 

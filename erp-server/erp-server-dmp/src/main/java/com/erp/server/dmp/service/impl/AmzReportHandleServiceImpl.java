@@ -190,7 +190,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             String platform = PlatformDictEnum.AMAZON.getCode();
             String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
             for (PlatformAmazonFbaShipmentDTO amazonShipmentDTO : amazonFbaShipmentDTOList) {
-                // TODO 封装?
                 amazonShipmentDTO.setDownloadStatus(1);
                 amazonShipmentDTO.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 // 转换
@@ -300,7 +299,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         body.setPeriod(periodEnum);
         // 请求
         ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, true, null);
-        // TODO 兼容已创建
         CreateReportScheduleResponse response = reportsApi.createReportSchedule(body);
 
         // 更新到记录
