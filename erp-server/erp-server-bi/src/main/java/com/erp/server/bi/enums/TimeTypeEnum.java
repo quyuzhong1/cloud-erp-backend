@@ -1,7 +1,5 @@
 package com.erp.server.bi.enums;
 
-import com.erp.model.dmp.enums.SalesSiteEnum;
-
 /**
  * 指标条件时间类型枚举
  *

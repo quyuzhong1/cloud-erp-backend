@@ -79,7 +79,7 @@ public class DmpReturnOrderInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "退货数据导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpReturnOrderInfo:paging", tableAlias = "droi")
-    public ApiResult exportExcel(@RequestBody DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody DmpReturnOrderInfoSearchDTO dto, HttpServletResponse response) {
         biReturnOrderInfoService.exportExcel(dto, response);
         return success();
     }
@@ -94,7 +94,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "退货数据导入")
     @PostMapping("/importReturnOrderFile")
-    public ApiResult importReturnOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+    public ApiResult<Void> importReturnOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         Boolean flag = biReturnOrderInfoService.importOrderFile(excelFile, importType, response);
         return flag == true ? this.success() : this.failure();
     }
@@ -109,7 +109,7 @@ public class DmpReturnOrderInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "退货数据下载模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/dmpReturnOrderInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();

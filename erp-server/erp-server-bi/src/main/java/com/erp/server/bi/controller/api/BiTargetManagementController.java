@@ -1,6 +1,6 @@
 package com.erp.server.bi.controller.api;
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.enums.LogActionEnum;
@@ -84,7 +84,7 @@ public class BiTargetManagementController extends BaseController {
      */
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除目标管理")
-    public ApiResult delete(@RequestParam("id") String id) {
+    public ApiResult<Void> delete(@RequestParam("id") String id) {
         biTargetManagementService.removeById(id);
         return success();
     }
@@ -99,13 +99,13 @@ public class BiTargetManagementController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入目标管理")
     @PostMapping("/importOrderFile")
-    public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        BiTargetManagementExcelListener excelListenerUtil = new BiTargetManagementExcelListener(biTargetManagementService, plmTaskFeign, sysUserFeign);
+    public ApiResult<Void> importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        BiTargetManagementExcelListener excelListenerUtil = new BiTargetManagementExcelListener(biTargetManagementService, plmTaskFeign);
         try {
-            EasyExcel.read(excelFile.getInputStream(), BiTargetManagementImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), BiTargetManagementImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<BiTargetManagementImportExcelDTO> list = excelListenerUtil.getDateList();
             if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/biTargetManagement.xlsx";
                 String name = "biTargetManagement";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -130,7 +130,7 @@ public class BiTargetManagementController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "目标管理下载模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/biTargetManagementTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();

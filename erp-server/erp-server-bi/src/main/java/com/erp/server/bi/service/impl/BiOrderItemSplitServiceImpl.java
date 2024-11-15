@@ -26,15 +26,15 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
 
     @Override
     public BigDecimal sumSales(List<String> orderIds, BiFilterDTO dto) {
-        QueryWrapper query = new QueryWrapper();
+        QueryWrapper<BiOrderItemSplitEntity> query = new QueryWrapper();
 
-        if (SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
+        if (SettleMethodEnum.ORIGINAL_CURRENCY.getCode().equals(dto.getSettleMethod())) {
             if (BiFilterDTO.validOriginalCurrency(dto)){
                 query.select("SUM(amount_after) as sell_price");
             }else {
                 return BigDecimal.ZERO;
             }
-        }else if(SettleMethodEnum.CNY_SETTLE.equals(dto.getSettleMethod())){
+        }else if(SettleMethodEnum.CNY_SETTLE.getCode().equals(dto.getSettleMethod())){
             query.select("SUM(amount_after*cny_settle_rate) as sell_price");
         }else {
             query.select("SUM(amount_after*currency_rate) as sell_price");
@@ -52,7 +52,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
 
     @Override
     public Integer countSalesVolume(List<String> orderIds, List<String> sku) {
-        QueryWrapper query = new QueryWrapper();
+        QueryWrapper<BiOrderItemSplitEntity> query = new QueryWrapper();
         query.select("SUM(COALESCE(quantity, 0)) as quantity")
                 .in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
                 .in(CollectionUtils.isNotEmpty(sku), "sku_no", sku);

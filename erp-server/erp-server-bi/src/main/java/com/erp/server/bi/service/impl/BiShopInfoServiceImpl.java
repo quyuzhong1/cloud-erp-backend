@@ -1,6 +1,9 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -137,12 +140,9 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     @Transactional
     public Boolean changeChargeName(DmpShopInfoChangeDTO dto) {
         BiShopInfoEntity biShopInfoEntity = this.getById(dto.getId());
-
-      /*  if (ObjectUtils.isNotEmpty(dmpShopInfoEntity.getEnableTime()) && ObjectUtils.isNotEmpty(dto.getEnableTime())) {
-            if (dmpShopInfoEntity.getEnableTime().isAfter(dto.getEnableTime())) {
-                throw new ServiceException(ApiError.ERROR_97013);
-            }
-        }*/
+        if (ObjectUtil.isEmpty(biShopInfoEntity)) {
+            return Boolean.FALSE;
+        }
         BiShopChangeLogEntity logEntity = new BiShopChangeLogEntity();
         logEntity.setShopId(dto.getId());
         logEntity.setChargeId(StringUtils.isBlank(biShopInfoEntity.getChargeId()) ? "-" : biShopInfoEntity.getChargeId());
@@ -193,8 +193,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         });
         //更新启用日期后的店铺业务部门
         updateChargeDept(dto.getChargeId(), dto.getEnableTime(), sysDepartmentDTO);
-        biOrderInfoService.updateBatchById(list, 2000);
-        return Boolean.TRUE;
+        return biOrderInfoService.updateBatchById(list, 2000);
     }
 
     @Override
@@ -208,7 +207,6 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         List<DmpShopInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpShopInfoExcelDTO.class, list);
         String fileName = biOrderInfoService.getFileName("店铺数据导出");
         ExcelUtil.export(fileName, "店铺数据导出", excelList, DmpShopInfoExcelDTO.class, response);
-        return;
     }
 
     @Override
@@ -291,7 +289,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
                 .eq(null != status, BiShopInfoEntity::getStatus, status)
                 .orderByAsc(BiShopInfoEntity::getName)
                 .list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
@@ -307,13 +305,13 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         List<BiShopInfoEntity> list = this.lambdaQuery()
                 .eq(BiShopInfoEntity::getStatus, 1)
                 .list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
                 .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getSite()))
                 .distinct()
-                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .filter(x -> CharSequenceUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
         return result;
     }

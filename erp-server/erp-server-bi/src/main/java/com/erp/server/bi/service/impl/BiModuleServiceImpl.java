@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -85,10 +86,10 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
      */
     @Override
     public PagingVO<ModulePagingDTO> paging(PagingDTO<BaseSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<?> query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<ModulePagingDTO> pageData = baseMapper.paging(query, params);
         List<ModulePagingDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<LayoutVO> layoutList = subjectRefLayoutService.getLayoutIds();
@@ -193,7 +194,6 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         }
         ModuleDTO result = new ModuleDTO();
         BeanMapper.copy(module, result);
-//        List<String> permissionUserIdList = modulePermissionService.getByModuleId(moduleId);
         List<BiModulePermissionEntity> permissionEntityList = modulePermissionService.findByModuleId(moduleId);
         //  personal 私人 share 按多用户ID共享 role 按多角色ID
         String shareFlag = "personal";
@@ -266,6 +266,9 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         if (imageObject != null && !imageObject.equals("null")) {
             MultipartFile imageFile = (MultipartFile) imageObject;
             File file = FileUtil.multiToFile(imageFile);
+            if (CharSequenceUtil.isBlank(imageFile.getOriginalFilename())) {
+                throw new ServiceException(ApiError.ERROR_95018);
+            }
             String fileName = imageFile.getOriginalFilename().toLowerCase();
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
             if (StringUtils.isBlank(fileUrl)) {
@@ -363,6 +366,9 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         if (imageObject != null && !imageObject.equals("null") && uploadFlag) {
             MultipartFile imageFile = (MultipartFile) imageObject;
             File file = FileUtil.multiToFile(imageFile);
+            if (CharSequenceUtil.isBlank(imageFile.getOriginalFilename())) {
+                throw new ServiceException(ApiError.ERROR_95018);
+            }
             String fileName = imageFile.getOriginalFilename().toLowerCase();
             String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
             if (StringUtils.isBlank(fileUrl)) {

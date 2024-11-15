@@ -43,7 +43,7 @@ public class BiLayoutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "添加整个专题")
     @PostMapping("/addSubject")
-    public ApiResult addSubjectLayout(@RequestBody @Validated AddTotalSubjectDTO dto) {
+    public ApiResult<String> addSubjectLayout(@RequestBody @Validated AddTotalSubjectDTO dto) {
         String subjectId = layoutService.addSubject(dto);
         if (StringUtils.isBlank(subjectId)) {
             return failure();
@@ -60,9 +60,9 @@ public class BiLayoutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "添加专题布局")
     @PostMapping("/addSubjectLayout")
-    public ApiResult addSubjectLayout(@RequestBody @Validated SubjectLayoutDTO dto) {
-        Boolean flag = layoutService.addSubjectLayout(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> addSubjectLayout(@RequestBody @Validated SubjectLayoutDTO dto) {
+        boolean flag = layoutService.addSubjectLayout(dto);
+        return flag ? success() : failure();
     }
 
 
@@ -74,7 +74,7 @@ public class BiLayoutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改专题布局")
     @PostMapping("/updateSubjectLayout")
-    public ApiResult updateSubjectLayout(@RequestBody @Validated SubjectLayoutDetailsDTO dto) {
+    public ApiResult<String> updateSubjectLayout(@RequestBody @Validated SubjectLayoutDetailsDTO dto) {
         String subjectId = layoutService.updateSubjectLayout(dto);
         if(StringUtils.isBlank(subjectId)){
            return  failure();
@@ -109,9 +109,9 @@ public class BiLayoutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除布局模块")
     @PostMapping("/deleteLayoutModule")
-    public ApiResult deleteLayoutModule(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
-        Boolean flag = layoutService.deleteLayoutModule(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> deleteLayoutModule(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
+        boolean flag = layoutService.deleteLayoutModule(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -124,9 +124,9 @@ public class BiLayoutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除布局")
     @PostMapping("/deleteLayout")
-    public ApiResult deleteLayout(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
-        Boolean flag = layoutService.deleteLayout(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> deleteLayout(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
+        boolean flag = layoutService.deleteLayout(dto);
+        return flag ? success() : failure();
     }
 
 

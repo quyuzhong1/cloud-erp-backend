@@ -1,21 +1,16 @@
 package com.erp.server.oms.schedule;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.entity.BaseEntity;
-import com.common.core.exception.ServiceException;
 import com.common.message.constant.RedisKeyConstant;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -29,14 +24,11 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -118,7 +110,7 @@ public class SoB2cRetryJob {
             // 按 updateTime 正序排列，并限制返回数量
             queryWrapper.orderByAsc(SoB2cErrorEntity::getUpdateTime);
             List<SoB2cErrorEntity> list = soB2cErrorService.list(queryWrapper.last(" LIMIT " + count));
-            if (CollectionUtil.isEmpty(list)) {
+            if (CollUtil.isEmpty(list)) {
                 XxlJobHelper.log("SoB2cRetryJob 需要执行任务列表为空");
                 return ReturnT.SUCCESS;
             }

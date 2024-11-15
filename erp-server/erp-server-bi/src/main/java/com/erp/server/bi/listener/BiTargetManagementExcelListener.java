@@ -30,15 +30,11 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
 
     private PlmTaskFeign plmTaskFeign;
 
-    private SysUserFeign sysUserFeign;
-
     private List<BiTargetManagementImportExcelDTO> list;
 
-    public BiTargetManagementExcelListener(BiTargetManagementService biTargetManagementService, PlmTaskFeign plmTaskFeign
-            , SysUserFeign sysUserFeign) {
+    public BiTargetManagementExcelListener(BiTargetManagementService biTargetManagementService, PlmTaskFeign plmTaskFeign) {
         this.biTargetManagementService = biTargetManagementService;
         this.plmTaskFeign = plmTaskFeign;
-        this.sysUserFeign = sysUserFeign;
         this.list = new ArrayList<>();
     }
 
@@ -102,10 +98,8 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
                 if (ObjectUtils.isEmpty(productInfoDTO)) {
                     errorMsgList.add("系统中未找的此sku编号对应的spu");
                 } else {
-                    if (StringUtils.isNotBlank(dto.getCategory())) {
-                        if (!dto.getCategory().equals(productInfoDTO.getCategory())) {
-                            errorMsgList.add("导入品类与产品品类不一致");
-                        }
+                    if (StringUtils.isNotBlank(dto.getCategory()) && !dto.getCategory().equals(productInfoDTO.getCategory())) {
+                        errorMsgList.add("导入品类与产品品类不一致");
                     }
                     entity.setSpuId(productInfoDTO.getId());
                     entity.setSpuNo(productInfoDTO.getSpuNo());

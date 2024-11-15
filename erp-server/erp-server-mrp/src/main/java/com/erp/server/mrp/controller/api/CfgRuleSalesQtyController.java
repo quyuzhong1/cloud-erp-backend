@@ -36,7 +36,7 @@ public class CfgRuleSalesQtyController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/batchUpdate")
-    public ApiResult<?> batchUpdate(@RequestBody @Validated CfgRuleSalesQtyDTO.UpdateDTO updateDTO) {
+    public ApiResult<String> batchUpdate(@RequestBody @Validated CfgRuleSalesQtyDTO.UpdateDTO updateDTO) {
         cfgRuleSalesQtyService.batchUpdate(updateDTO);
         return success();
     }

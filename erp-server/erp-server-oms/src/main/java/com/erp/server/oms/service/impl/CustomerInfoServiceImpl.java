@@ -2,14 +2,10 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -25,15 +21,14 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
@@ -402,11 +397,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
             //添加日志
-            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format(ApiError.ERROR_92156.msg, ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
             //审核不通过
-            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String rejectContent = String.format(ApiError.ERROR_92156.msg, ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
         }
         return result;
@@ -847,7 +842,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //反审核
         if (result) {
             //添加日志
-            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            String ingContent = String.format(ApiError.ERROR_92156.msg, ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
             //发送金蝶
@@ -1163,7 +1158,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             queryWrapper.ne(CustomerInfoEntity::getId, id);
         }
         queryWrapper.eq(CustomerInfoEntity::getName, name);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last( SqlConstants.LIMIT_1);
         int count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_1028);
@@ -1182,7 +1177,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             queryWrapper.ne(CustomerInfoEntity::getId, id);
         }
         queryWrapper.eq(CustomerInfoEntity::getName, name);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last( SqlConstants.LIMIT_1);
         CustomerInfoEntity one = this.getOne(queryWrapper);
         if (Objects.nonNull(one)) {
             return one;
@@ -1273,7 +1268,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
             LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(CustomerInfoEntity::getCode, code);
-            queryWrapper.last("LIMIT 1");
+            queryWrapper.last( SqlConstants.LIMIT_1);
             CustomerInfoEntity checkCustomerInfoEntity = this.baseMapper.selectOne(queryWrapper);
             if (Objects.nonNull(checkCustomerInfoEntity)) {
                 log.info("已经存在客户编码【{}】，本次不导入", code);
@@ -1395,13 +1390,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setRemark(remark);
             // 审核状态
             customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
-            customerInfoEntity.setApproveUserName("admin");
+            customerInfoEntity.setApproveUserName(ApiError.ADMIN.msg);
             customerInfoEntity.setCreateTime(LocalDateTime.now());
             customerInfoEntity.setUpdateTime(LocalDateTime.now());
             customerInfoEntity.setCreateUserId("");
-            customerInfoEntity.setCreateUserName("admin");
+            customerInfoEntity.setCreateUserName(ApiError.ADMIN.msg);
             customerInfoEntity.setUpdateUserId("");
-            customerInfoEntity.setUpdateUserName("admin");
+            customerInfoEntity.setUpdateUserName(ApiError.ADMIN.msg);
 
             if (!customerBaseMap.containsKey(code)) {
                 super.save(customerInfoEntity);
@@ -1452,7 +1447,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String kingdeeId = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
             LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(CustomerInfoEntity::getName, customerName);
-            queryWrapper.last("LIMIT 1");
+            queryWrapper.last( SqlConstants.LIMIT_1);
             CustomerInfoEntity customerInfoEntity = super.getOne(queryWrapper);
             if (Objects.isNull(customerInfoEntity)) {
                 log.info("未找到客户【{}】", customerName);
@@ -1488,7 +1483,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CustomerInfoEntity::getName, name);
         queryWrapper.eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last( SqlConstants.LIMIT_1);
         return this.getOne(queryWrapper);
     }
 
@@ -1496,7 +1491,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public CustomerInfoEntity getByName(String customerName) {
 
         return this.lambdaQuery().eq(CustomerInfoEntity::getName, customerName).
-                eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).last("LIMIT 1").one();
+                eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE).last( SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -1900,7 +1895,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Override
     public List<CustomerDTO.SellerUserDeptDTO> listSellerUserDepByCodes(List<String> codeList) {
-        if (CollectionUtil.isEmpty(codeList)) {
+        if (CollUtil.isEmpty(codeList)) {
             return Collections.emptyList();
         }
         List<CustomerDTO.SellerUserDeptDTO> resultList = new ArrayList<>();

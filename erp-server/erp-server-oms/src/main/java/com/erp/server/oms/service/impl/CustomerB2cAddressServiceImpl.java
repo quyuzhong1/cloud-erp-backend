@@ -1,23 +1,27 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CustomerAddressDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.CustomerB2cAddressEntity;
+import com.erp.model.oms.entity.CustomerB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerB2cAddressMapper;
 import com.erp.server.oms.service.CustomerB2cAddressService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoInfoService;
+import groovy.lang.Lazy;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +58,9 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Lazy
+    @Resource
+    private CustomerB2cAddressService customerB2cAddressService;
 
     /**
      * 检查默认地址是否存在多个
@@ -97,7 +104,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZC);
             addDTO.setCode(code);
         }
-        this.saveBatch(addList);
+        customerB2cAddressService.saveBatch(addList);
     }
 
 
@@ -115,8 +122,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         if (CollectionUtils.isEmpty(dbList)) {
             return Collections.emptyList();
         }
-        List<CustomerAddressDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, CustomerAddressDTO.ViewDTO.class);
-        return resultList;
+        return BeanMapper.copyList(dbList, CustomerAddressDTO.ViewDTO.class);
     }
 
 
@@ -177,7 +183,7 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
             }
         }
         if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
-            this.saveOrUpdateBatch(saveOrUpdateList);
+            customerB2cAddressService.saveOrUpdateBatch(saveOrUpdateList);
         }
 
     }
@@ -188,63 +194,61 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
         if (ObjectUtils.isEmpty(entity)) {
             return new CustomerAddressDTO.ViewDTO();
         }
-        CustomerAddressDTO.ViewDTO viewDTO = BeanMapperUtils.map(CustomerAddressDTO.ViewDTO.class, entity);
-        return viewDTO;
+        return BeanMapperUtils.map(CustomerAddressDTO.ViewDTO.class, entity);
     }
-
-    public static void main(String[] args) {
-        String concat = StrUtil.concat(true, null, "", "n");
-        System.out.println(concat);
-    }
-
 
         @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
         CustomerB2cAddressEntity entity = this.getByMainId(mainEntity.getId());
         if (null == entity){
-            CustomerB2cAddressEntity newEntity = new CustomerB2cAddressEntity();
-            newEntity.setMainId(mainEntity.getId());
-            String address = StrUtil.concat(true, receiverEntity.getFirstAddress(), receiverEntity.getSecondAddress(), receiverEntity.getFullAddress());
-            newEntity.setAddress(address);
-            newEntity.setPerson(receiverEntity.getName());
-            newEntity.setTelNumber(receiverEntity.getTelNumber());
-            newEntity.setEmail(receiverEntity.getEmail());
-            newEntity.setIsDefault(true);
-            newEntity.setDisabled(false);
-            if (!save(newEntity)){
-                throw new ServiceException("[CustomerB2cAddressEntity] 保存失败");
-            }
+            saveEntity(mainEntity, receiverEntity);
         } else {
-            if (StringUtils.isBlank(entity.getAddress())){
-                String address = StrUtil.concat(true, receiverEntity.getFirstAddress(), receiverEntity.getSecondAddress(), receiverEntity.getFullAddress());
-                entity.setAddress(address);
-            }
-            if (StringUtils.isBlank(entity.getPerson())) {
-                entity.setPerson(receiverEntity.getName());
-            }
-            if (StringUtils.isBlank(entity.getTelNumber())) {
-                entity.setTelNumber(receiverEntity.getTelNumber());
-            }
-            if (!entity.getIsDefault()){
-                entity.setIsDefault(true);
-            }
-            if (entity.getDisabled()){
-                entity.setIsDefault(false);
-            }
-            if (StringUtils.isBlank(entity.getEmail())){
-                entity.setEmail(receiverEntity.getEmail());
-            }
-            updateById(entity);
-//            if (!updateById(entity)){
-//                throw new ServiceException("[CustomerB2cAddressEntity] 更新失败");
-//            }
+            udpateEntity(receiverEntity, entity);
+        }
+    }
+
+    private void udpateEntity(SoB2cReceiverEntity receiverEntity, CustomerB2cAddressEntity entity) {
+        if (StringUtils.isBlank(entity.getAddress())){
+            String address = CharSequenceUtil.concat(true, receiverEntity.getFirstAddress(), receiverEntity.getSecondAddress(), receiverEntity.getFullAddress());
+            entity.setAddress(address);
+        }
+        if (StringUtils.isBlank(entity.getPerson())) {
+            entity.setPerson(receiverEntity.getName());
+        }
+        if (StringUtils.isBlank(entity.getTelNumber())) {
+            entity.setTelNumber(receiverEntity.getTelNumber());
+        }
+        if (Boolean.FALSE.equals(entity.getIsDefault())){
+            entity.setIsDefault(true);
+        }
+        if (Boolean.TRUE.equals(entity.getDisabled())){
+            entity.setIsDefault(false);
+        }
+        if (StringUtils.isBlank(entity.getEmail())){
+            entity.setEmail(receiverEntity.getEmail());
+        }
+        updateById(entity);
+    }
+
+    private void saveEntity(CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
+        CustomerB2cAddressEntity newEntity = new CustomerB2cAddressEntity();
+        newEntity.setMainId(mainEntity.getId());
+        String address = CharSequenceUtil.concat(true, receiverEntity.getFirstAddress(), receiverEntity.getSecondAddress(), receiverEntity.getFullAddress());
+        newEntity.setAddress(address);
+        newEntity.setPerson(receiverEntity.getName());
+        newEntity.setTelNumber(receiverEntity.getTelNumber());
+        newEntity.setEmail(receiverEntity.getEmail());
+        newEntity.setIsDefault(true);
+        newEntity.setDisabled(false);
+        if (!save(newEntity)){
+            throw new ServiceException("[CustomerB2cAddressEntity] 保存失败");
         }
     }
 
     @Override
     public CustomerB2cAddressEntity getByMainId(String mainId) {
-        return lambdaQuery().eq(CustomerB2cAddressEntity::getMainId, mainId).last("LIMIT 1").one();
+        return lambdaQuery().eq(CustomerB2cAddressEntity::getMainId, mainId).last( SqlConstants.LIMIT_1).one();
     }
 
     /**

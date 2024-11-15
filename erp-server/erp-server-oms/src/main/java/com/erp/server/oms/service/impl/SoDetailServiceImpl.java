@@ -125,22 +125,22 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    @Autowired
+    @Resource
     private WmsTaskFeign wmsTaskFeign;
 
-    @Autowired
+    @Resource
     private CustomerInfoService customerInfoService;
 
-    @Autowired
+    @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
 
-    @Autowired
+    @Resource
     private VirtualInventoryFeign virtualInventoryFeign;
 
-    @Autowired
+    @Resource
     private RedisUtil redisUtil;
     /**
      * 根据退货单详情表id查询退货单

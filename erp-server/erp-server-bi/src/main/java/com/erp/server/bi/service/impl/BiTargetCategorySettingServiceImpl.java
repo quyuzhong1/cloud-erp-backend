@@ -1,7 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -423,7 +423,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
         List<BasicCategoryEntity> categoryList = plmTaskFeign.listParentCategory();
         BiTargetCategorySettingExcelListener excelListenerUtil = new BiTargetCategorySettingExcelListener(metricsNameList, categoryList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), TargetCategorySettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), TargetCategorySettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("单品目标设置 导入错误>>>{}", e);
         }
@@ -484,75 +484,6 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
         BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto, multiplyNum);
         return pagingTotal;
     }
-
-
-    private List<BiTargetCategorySettingDTO.CommonDTO> getCommon(List<BiTargetCategorySettingEntity> dbList) {
-        List<BiTargetCategorySettingDTO.CommonDTO> resultList = new ArrayList<>(10);
-        //根据指标分组
-        Map<MetricsEnum, List<BiTargetCategorySettingEntity>> map = dbList.stream().
-                collect(Collectors.groupingBy(BiTargetCategorySettingEntity::getMetrics));
-
-        for (Map.Entry<MetricsEnum, List<BiTargetCategorySettingEntity>> item : map.entrySet()) {
-            MetricsEnum metricsEnum = item.getKey();
-            String metrics = metricsEnum.getCode();
-            List<BiTargetCategorySettingEntity> categorySettingList = item.getValue();
-            //根据sku分组
-            Map<String, List<BiTargetCategorySettingEntity>> categoryMap = categorySettingList.stream().
-                    collect(Collectors.groupingBy(BiTargetCategorySettingEntity::getCategoryId));
-            for (Map.Entry<String, List<BiTargetCategorySettingEntity>> category : categoryMap.entrySet()) {
-                String categoryId = category.getKey();
-                List<BiTargetCategorySettingEntity> categoryDbList = category.getValue();
-                BiTargetCategorySettingDTO.CommonDTO common = new BiTargetCategorySettingDTO.CommonDTO();
-                common.setCategoryId(categoryId);
-                common.setCategoryName(categoryDbList.get(0).getCategoryName());
-                //一月
-                Integer january = MonthEnum.JANUARY.getValue();
-                common.setJanuary(pullView(metrics, january, dbList));
-                //二月
-                Integer february = MonthEnum.FEBRUARY.getValue();
-                common.setFebruary(pullView(metrics, february, dbList));
-                //三月
-                Integer march = MonthEnum.MARCH.getValue();
-                common.setMarch(pullView(metrics, march, dbList));
-                //四月
-                Integer april = MonthEnum.APRIL.getValue();
-                common.setApril(pullView(metrics, april, dbList));
-                //五月
-                Integer may = MonthEnum.MAY.getValue();
-                common.setMay(pullView(metrics, may, dbList));
-                //六月
-                Integer june = MonthEnum.JUNE.getValue();
-                common.setJune(pullView(metrics, june, dbList));
-                //七月
-                Integer july = MonthEnum.JULY.getValue();
-                common.setJuly(pullView(metrics, july, dbList));
-                //八月
-                Integer august = MonthEnum.AUGUST.getValue();
-                common.setAugust(pullView(metrics, august, dbList));
-                //九月
-                Integer september = MonthEnum.SEPTEMBER.getValue();
-                common.setSeptember(pullView(metrics, september, dbList));
-                //十月
-                Integer october = MonthEnum.OCTOBER.getValue();
-                common.setOctober(pullView(metrics, october, dbList));
-
-                //十一月
-                Integer november = MonthEnum.NOVEMBER.getValue();
-                common.setNovember(pullView(metrics, november, dbList));
-
-                //十二月
-                Integer december = MonthEnum.DECEMBER.getValue();
-                common.setDecember(pullView(metrics, december, dbList));
-                common.setMetrics(metricsEnum);
-                common.setMetricsName(metricsEnum.getName());
-                resultList.add(common);
-            }
-
-        }
-
-        return resultList;
-    }
-
 
     /**
      * 填充显示的数据

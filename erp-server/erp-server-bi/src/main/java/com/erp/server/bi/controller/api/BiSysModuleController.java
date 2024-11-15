@@ -11,15 +11,12 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.ModuleSysConfigurationDTO;
 import com.erp.model.bi.dto.ModuleSysDTO;
 import com.erp.model.bi.entity.BiSysModuleEntity;
-import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.service.BiSysModuleService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 
@@ -47,9 +44,9 @@ public class BiSysModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增系统模块")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated ModuleSysDTO dto) {
-        Boolean flag = this.sysModuleService.insert(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> add(@RequestBody @Validated ModuleSysDTO dto) {
+        boolean flag = this.sysModuleService.insert(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -60,9 +57,9 @@ public class BiSysModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新系统模块")
     @PostMapping("/update")
-    public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleSysDTO dto) {
-        Boolean flag = this.sysModuleService.updateSysModule(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleSysDTO dto) {
+        boolean flag = this.sysModuleService.updateSysModule(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -83,7 +80,7 @@ public class BiSysModuleController extends BaseController {
      * @return 新增结果
      */
     @GetMapping("/pidList")
-    public ApiResult pidList() {
+    public ApiResult<List<Map<String, Object>>> pidList() {
         List<Map<String, Object>> list = this.sysModuleService.getPid(BiConstant.PID);
         return success(list);
     }
@@ -96,7 +93,7 @@ public class BiSysModuleController extends BaseController {
      * @return 新增结果
      */
     @GetMapping("/list")
-    public ApiResult list() {
+    public ApiResult<List<Map<String, Object>>> list() {
         List<Map<String, Object>> list = this.sysModuleService.getSysModuleList(0);
         return success(list);
     }
@@ -106,16 +103,16 @@ public class BiSysModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新系统模块配置:id={id},模块名称={name}")
     @PostMapping("/moduleConfiguration")
-    public ApiResult moduleConfiguration(@RequestBody @Validated ModuleSysConfigurationDTO dto) {
-        Boolean flag = this.sysModuleService.moduleConfiguration(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Void> moduleConfiguration(@RequestBody @Validated ModuleSysConfigurationDTO dto) {
+        boolean flag = this.sysModuleService.moduleConfiguration(dto);
+        return flag ? success() : failure();
     }
 
     /**
      * 分析页面编辑配置查询
      */
     @GetMapping("/getBySysModuleId")
-    public ApiResult getBySysModuleId(@RequestParam("sysModuleId") String sysModuleId) {
+    public ApiResult<ModuleSysConfigurationDTO> getBySysModuleId(@RequestParam("sysModuleId") String sysModuleId) {
         ModuleSysConfigurationDTO dto = this.sysModuleService.getBySysModuleId(sysModuleId);
         return success(dto);
     }

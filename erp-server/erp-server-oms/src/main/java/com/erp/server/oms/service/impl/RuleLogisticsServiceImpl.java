@@ -42,6 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,15 +57,15 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapper, RuleLogisticsEntity> implements RuleLogisticsService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
 
-    @Autowired
+    @Resource
     private SpElServer spElServer;
 
-    @Autowired
+    @Resource
     private LogisticsFeign logisticsFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -243,7 +244,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                 }
                 //全部指定直接过，部分指定校验仓库是否一致
                 if (StrUtil.equals(list.get(0).getType(),LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
-                    List<String> warehouseIdList = mapList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("deliveryWarehouseId")) && StrUtil.isNotBlank(obj.get("deliveryWarehouseId").toString())).map(obj -> obj.get("deliveryWarehouseId").toString()).collect(Collectors.toList());
+                    List<String> warehouseIdList = mapList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("deliveryWarehouseId")) && CharSequenceUtil.isNotBlank(obj.get("deliveryWarehouseId").toString())).map(obj -> obj.get("deliveryWarehouseId").toString()).collect(Collectors.toList());
                     if (CollectionUtils.isEmpty(warehouseIdList)) {
                         throw new ServiceException("B2C销售订单仓库不能为空");
                     }

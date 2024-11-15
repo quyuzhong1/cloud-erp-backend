@@ -2,25 +2,25 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.OmsPushMsgDTO;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.server.oms.mapper.OmsPushMsgMapper;
 import com.erp.server.oms.service.OmsPushMsgService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.OmsPushMsgDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.Optional;
+
 /**
  * <p>
  * 本地推送消息表 服务实现类
@@ -32,7 +32,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class OmsPushMsgServiceImpl extends SuperServiceImpl<OmsPushMsgMapper, OmsPushMsgEntity> implements OmsPushMsgService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)

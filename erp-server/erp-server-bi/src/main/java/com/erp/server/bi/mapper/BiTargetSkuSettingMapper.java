@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.bi.dto.BiTargetSkuSettingDTO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
-import com.erp.model.bi.dto.SkuSalesDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.entity.BiTargetSkuSettingEntity;
 import org.apache.ibatis.annotations.Mapper;

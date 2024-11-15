@@ -1,7 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -454,7 +454,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         BiTargetNewProductSettingExcelListener excelListenerUtil = new BiTargetNewProductSettingExcelListener(metricsNameList, userList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), TargetNewProductSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), TargetNewProductSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("新品目标设置 导入错误>>>{}", e);
         }

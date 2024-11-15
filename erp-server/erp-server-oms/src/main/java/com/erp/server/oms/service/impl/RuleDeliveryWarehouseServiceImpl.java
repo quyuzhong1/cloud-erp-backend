@@ -48,6 +48,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,29 +63,29 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliveryWarehouseMapper, RuleDeliveryWarehouseEntity> implements RuleDeliveryWarehouseService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private WmsTaskFeign wmsTaskFeign;
 
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
 
-    @Autowired
+    @Resource
     private SpElServer spElServer;
 
 
-    @Autowired
+    @Resource
     private InventoryFeign inventoryFeign;
 
-    @Autowired
+    @Resource
     private SoB2cDetailService soB2cDetailService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     @Lazy
     private SoB2cService soB2cService;
 
@@ -260,14 +261,14 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                 //未匹配到条件
                  soB2cDetailService.updateIsMatchWarehouseRule(entity.getId(),detailIdList);
             } else {
-                if(StrUtil.isNotBlank(ruleMatchResult.getName())){
+                if(CharSequenceUtil.isNotBlank(ruleMatchResult.getName())){
                     String msg =  CharSequenceUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "配货操作");
                 }
                 //更新明细仓库信息
                 String warehouseId = ruleMatchResult.getWarehouseId();
                 //返回了仓库则更新仓库为空的数据
-                if (StrUtil.isNotBlank(warehouseId)) {
+                if (CharSequenceUtil.isNotBlank(warehouseId)) {
                     updateWarehouseList.add(new Pair<>(soB2cDetail,warehouseId));
                 }
             }

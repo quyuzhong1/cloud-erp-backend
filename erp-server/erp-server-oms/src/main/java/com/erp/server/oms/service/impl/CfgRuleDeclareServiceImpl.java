@@ -1,7 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -229,7 +229,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
             soB2cDeclareProductService.removeBySoId(String.valueOf(map.get("id")));
         }
         //判断是否更新规则 isUpdate
-        if (CollectionUtil.isNotEmpty(addList)){
+        if (CollUtil.isNotEmpty(addList)){
             soB2cDeclareProductService.saveBatch(addList);
             if (Objects.nonNull(isUpdate) && isUpdate){
                 //批量添加操作日志

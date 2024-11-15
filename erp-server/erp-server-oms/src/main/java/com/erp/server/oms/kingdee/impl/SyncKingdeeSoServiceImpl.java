@@ -1,7 +1,7 @@
 package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -301,7 +301,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         if (com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(soInfoEntity.getSalesDeptId())) {
             try {
                 List<SysDepartmentEntity> dept = sysUserFeign.listDeptByIds(Collections.singletonList(soInfoEntity.getSalesDeptId()));
-                if (CollectionUtil.isNotEmpty(dept)) {
+                if (CollUtil.isNotEmpty(dept)) {
                     biOrderInfoEntity.setDeptName(dept.get(0).getName());
                 }
             } catch (Exception e) {
@@ -315,7 +315,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //订单明细
         List<BiOrderItemSplitEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
         //明细字段转换
-        if (CollectionUtil.isNotEmpty(soDetailEntities)) {
+        if (CollUtil.isNotEmpty(soDetailEntities)) {
             soDetailEntities.forEach(soDetailEntity -> {
                 BiOrderItemSplitEntity biOrderItemSplitEntity = SoInfoConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
                 biOrderItemSplitEntity.setOrderId(biOrderInfoEntity.getId());

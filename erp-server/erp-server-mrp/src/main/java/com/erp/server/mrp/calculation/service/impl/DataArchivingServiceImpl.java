@@ -39,7 +39,7 @@ public class DataArchivingServiceImpl implements DataArchivingService {
     @Override
     public void dataArchiving(LocalDate calculationDate) {
     	String redisKey = "mrp:data:archiving";
-		if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 7200, TimeUnit.SECONDS)) {
+		if(Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 7200, TimeUnit.SECONDS))) {
 			try {
 				calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
 				List<CfgDataArchivingEntity> effectiveData = cfgDataArchivingService.getEffectiveData();
