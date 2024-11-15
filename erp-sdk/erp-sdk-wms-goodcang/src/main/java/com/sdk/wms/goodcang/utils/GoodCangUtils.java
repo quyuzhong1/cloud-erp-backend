@@ -1,5 +1,6 @@
 package com.sdk.wms.goodcang.utils;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
@@ -13,19 +14,17 @@ import java.util.Map;
 
 @Component
 public class GoodCangUtils {
-
-    private static String BASE_URL;
-
-    @Value("${warehouse.goodcang.url}")
-    public void setCompany(String url){
-        GoodCangUtils.BASE_URL = url;
+    private GoodCangUtils() {
+        throw new IllegalStateException("Utility GoodCangUtils class");
     }
+    @Value("${warehouse.goodcang.url}")
+    private static String BASE_URL;
 
     public static String sendPost(String apiUrl, Map<String, Object> paramsMap){
         Map<String,String> headerMap = headerMap();
         String url = BASE_URL + apiUrl;
         String response = OkHttpUtils.doPostJson(url, paramsMap, headerMap);
-        ThirdWarehouseContext.setRequestJson(JSONObject.toJSONString(paramsMap));
+        ThirdWarehouseContext.setRequestJson(JSON.toJSONString(paramsMap));
         ThirdWarehouseContext.setResponseJson(response);
         return response;
     }

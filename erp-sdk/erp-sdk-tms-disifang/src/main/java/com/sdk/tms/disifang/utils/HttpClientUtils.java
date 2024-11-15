@@ -14,6 +14,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -28,25 +29,24 @@ import java.util.Map;
 /**
  * @author zdy
  * @ClassName HttpClientUtils
- * @description: TODO
+
  * @date 2023年11月02日
  * @version: 1.0
  */
 public class HttpClientUtils {
+
+    protected HttpClientUtils(){}
+
     public static String get(String url) throws IOException {
-        CloseableHttpResponse response = null;
-        try {
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpGet httpGet = new HttpGet(url);
-            response = HttpClients.createDefault().execute((HttpUriRequest)httpGet);
-            if (response.getStatusLine().getStatusCode() == 200)
-                return EntityUtils.toString(response.getEntity());
-            JSONObject errorObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity()));
-            System.out.println(errorObject);
-            String errorMsg = errorObject.getString("message");
-            throw new IOException("HTTP ERROR: " + response.getStatusLine().getStatusCode() + "," + errorMsg);
-        } finally {
-            if (response != null)
-                response.close();
+            try (CloseableHttpResponse response = client.execute(httpGet)) {
+                if (response.getStatusLine().getStatusCode() == 200)
+                    return EntityUtils.toString(response.getEntity());
+                JSONObject errorObject = JSON.parseObject(EntityUtils.toString(response.getEntity()));
+                String errorMsg = errorObject.getString("message");
+                throw new IOException("HTTP ERROR: " + response.getStatusLine().getStatusCode() + "," + errorMsg);
+            }
         }
     }
 
@@ -56,23 +56,20 @@ public class HttpClientUtils {
     }
 
     public static String post(String url, String jsonData) throws IOException {
-        CloseableHttpResponse response = null;
-        HttpPost post = new HttpPost(url);
-        post.addHeader("Content-Type", "application/json");
-        if (StringUtils.isNotEmpty(jsonData))
-            post.setEntity((HttpEntity)new StringEntity(jsonData, Charset.forName("UTF-8")));
-        try {
-            response = HttpClients.createDefault().execute((HttpUriRequest)post);
-            if (response.getStatusLine().getStatusCode() != 200) {
-                JSONObject errorObject = JSONObject.parseObject(EntityUtils.toString(response.getEntity()));
-                System.out.println(errorObject);
-                String errorMsg = errorObject.getString("message");
-                throw new IOException("HTTP ERROR: " + response.getStatusLine().getStatusCode() + "," + errorMsg);
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpPost post = new HttpPost(url);
+            post.addHeader("Content-Type", "application/json");
+            if (StringUtils.isNotEmpty(jsonData))
+                post.setEntity((HttpEntity)new StringEntity(jsonData, Charset.forName("UTF-8")));
+            try (CloseableHttpResponse response = client.execute(post)) {
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    JSONObject errorObject = JSON.parseObject(EntityUtils.toString(response.getEntity()));
+                    String errorMsg = errorObject.getString("message");
+                    throw new IOException("HTTP ERROR: " + response.getStatusLine().getStatusCode() + "," + errorMsg);
+                }
+                return EntityUtils.toString(response.getEntity());
             }
-        } catch (IOException e) {
-            throw new IOException(e.getMessage(), e);
         }
-        return EntityUtils.toString(response.getEntity());
     }
 
     public static String post(String url, Map<String, Object> params) throws IOException {
@@ -86,7 +83,9 @@ public class HttpClientUtils {
                     nvps.add(new BasicNameValuePair(entry.getKey(), entry.getValue().toString()));
                 post.setEntity((HttpEntity)new UrlEncodedFormEntity(nvps, StandardCharsets.UTF_8));
             }
-            response = HttpClients.createDefault().execute((HttpUriRequest)post);
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                response = client.execute((HttpUriRequest)post);
+            }
             if (response.getStatusLine().getStatusCode() == 200)
                 return EntityUtils.toString(response.getEntity());
             throw new IOException("HTTP Error:" + response.getStatusLine().getStatusCode());

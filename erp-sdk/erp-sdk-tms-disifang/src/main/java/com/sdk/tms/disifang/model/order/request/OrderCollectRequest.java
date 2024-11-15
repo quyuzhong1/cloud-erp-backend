@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName OrderCollectRequest
- * @description: TODO
+
  * @date 2023年11月02日
  * @version: 1.0
  */

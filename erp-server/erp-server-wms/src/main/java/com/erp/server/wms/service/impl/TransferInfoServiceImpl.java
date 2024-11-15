@@ -730,9 +730,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             soB2cDeliveryDetailEntities = soB2cDeliveryDetailService.listByMainIds(sourceIds);
             List<SoB2cDeliveryEntity> finalSoB2cDeliveryEntities = soB2cDeliveryEntities;
             List<SoB2cDeliveryDetailEntity> finalSoB2cDeliveryDetailEntities = soB2cDeliveryDetailEntities;
-            transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseByB2cDelivery(e, detailList, finalSoB2cDeliveryEntities, finalSoB2cDeliveryDetailEntities)).collect(Collectors.toList());
+            b2cDeliveryTransferInfoList = b2cDeliveryTransferInfoList.stream().filter(e -> hasSameWarehouseByB2cDelivery(e, detailList, finalSoB2cDeliveryEntities, finalSoB2cDeliveryDetailEntities)).collect(Collectors.toList());
         }
-        updateB2cDeliveryInventory(transferInfoList,detailList,soB2cDeliveryEntities,soB2cDeliveryDetailEntities);
+        updateB2cDeliveryInventory(b2cDeliveryTransferInfoList,detailList,soB2cDeliveryEntities,soB2cDeliveryDetailEntities);
 
         //来源销售订单
         List<TransferInfoEntity> b2cTransferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C.getCode(), obj.getSourceType()))
@@ -746,9 +746,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(sourceIds);
             List<SoB2cDetailEntity> finalSoB2cDetailEntityList = soB2cDetailEntityList;
             List<SoB2cEntity> finalSoB2cEntityList = soB2cEntityList;
-            transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseBySoB2C(e, detailList, finalSoB2cEntityList, finalSoB2cDetailEntityList)).collect(Collectors.toList());
+            b2cTransferInfoList = b2cTransferInfoList.stream().filter(e -> hasSameWarehouseBySoB2C(e, detailList, finalSoB2cEntityList, finalSoB2cDetailEntityList)).collect(Collectors.toList());
         }
-        updateSoB2CInventory(transferInfoList,detailList,soB2cEntityList,soB2cDetailEntityList);
+        updateSoB2CInventory(b2cTransferInfoList,detailList,soB2cEntityList,soB2cDetailEntityList);
     }
 
     private void updateSoB2CInventory(List<TransferInfoEntity> transferInfoList, List<TransferInfoDetailEntity> detailList, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> soB2cDetailEntityList) {
@@ -774,6 +774,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             SoB2cDetailEntity SoB2cDetailEntity = soB2cDetailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), transferInfoDetailEntity.getSkuNo())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(SoB2cDetailEntity)) {
                 throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到销售订单对应明细",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
+            }
+            if (StrUtil.isBlank(SoB2cDetailEntity.getVirtualWarehouseId())){
+                continue;
             }
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setBillDate(LocalDate.now());
@@ -822,6 +825,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity = soB2cDeliveryDetailEntities.stream().filter(e -> Objects.equals(e.getSkuNo(), transferInfoDetailEntity.getSkuNo())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soB2cDeliveryDetailEntity)) {
                 throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到发货单对应明细",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
+            }
+            if (StrUtil.isBlank(soB2cDeliveryDetailEntity.getVirtualWarehouseId())){
+                continue;
             }
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setBillDate(LocalDate.now());
@@ -1448,6 +1454,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferDTO>  deliveryTransferList = new ArrayList<>();
         List<TransferDTO>  deliveryNoticeTransferList = new ArrayList<>();
         List<TransferDTO>  soInfoTransferList = new ArrayList<>();
+        List<TransferDTO>  soInfoTransferInfoList = new ArrayList<>();
         List<TransferDTO>  requisitionTransferList = new ArrayList<>();
         List<TransferDTO>  firstMileTransferList = new ArrayList<>();
         List<TransferDTO>  TransferToUlanziList = new ArrayList<>();
@@ -1482,6 +1489,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 deliveryNoticeTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_INFO.getCode().equals(transferInfoEntity.getSourceType())){
                 soInfoTransferList.add(transferDTO);
+            }else if (SourceTypeEnum.SO_INFO_TRANSFER_INFP.getCode().equals(transferInfoEntity.getSourceType())){
+                soInfoTransferInfoList.add(transferDTO);
             }else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
                 TransferToUlanziList.add(transferDTO);
             } else if (SourceTypeEnum.FIRST_MILE_DELIVERY_FROM_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
@@ -1530,6 +1539,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
             inventoryTransferDTO.setParamList(soInfoTransferList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.SO_INFO_PUSH_TRANSFER.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        if (CollectionUtils.isNotEmpty(soInfoTransferInfoList)) {
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(soInfoTransferInfoList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.SO_INFO_PUSH_TRANSFER_INFO.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
@@ -1686,6 +1702,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             entity.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             entity.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        }
+        if (Objects.isNull(entity.getIndex())){
+            entity.setIndex(MathUtil.ZERO);
         }
     }
 
@@ -1979,7 +1998,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollectionUtils.isEmpty(batchNoList)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).list();
+        return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).orderByDesc(TransferInfoEntity::getIndex).list();
     }
 
     @Override

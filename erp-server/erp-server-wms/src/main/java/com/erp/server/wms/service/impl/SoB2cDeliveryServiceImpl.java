@@ -2010,14 +2010,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 continue;//跳过第一个仓库 从第二个开始
             }
             if (0 == i || firstWarehouseSame){
-                addTransferOrder(Boolean.TRUE, warehouseId,transferWarehouseIdList.get(i), entity,pickingList,batchNo);
+                addTransferOrder(Boolean.TRUE, warehouseId,transferWarehouseIdList.get(i), entity,pickingList,batchNo, i);
             }else {
-                addTransferOrder(Boolean.FALSE, transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity,pickingList,batchNo);
+                addTransferOrder(Boolean.FALSE, transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity,pickingList,batchNo, i);
             }
         }
     }
 
-    private void addTransferOrder(Boolean isFirst, String fromWarehouseId, String toWarehouseId, SoB2cDeliveryEntity entity,List<PickingListsDTO.SourceView> pickingList, String batchNo) {
+    private void addTransferOrder(Boolean isFirst, String fromWarehouseId, String toWarehouseId, SoB2cDeliveryEntity entity, List<PickingListsDTO.SourceView> pickingList, String batchNo, int index) {
         //发货组织默认取第一条仓库的组织，现阶段单个发货单组织一致
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(fromWarehouseId,toWarehouseId));
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
@@ -2037,7 +2037,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         entity.setBatchNo(batchNo);
-
+        addDTO.setIndex(index);
         addDTO.setBatchNo(batchNo);
         addDTO.setInOrgId(inWarehouseEntity.getOrgId());
         addDTO.setOutOrgId(outWarehouseEntity.getOrgId());

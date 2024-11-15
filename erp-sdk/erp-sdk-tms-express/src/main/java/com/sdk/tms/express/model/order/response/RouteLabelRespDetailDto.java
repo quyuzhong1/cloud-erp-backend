@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName RouteLabelRespDetailDto
- * @description: TODO
+
  * @date 2023年10月31日
  * @version: 1.0
  */

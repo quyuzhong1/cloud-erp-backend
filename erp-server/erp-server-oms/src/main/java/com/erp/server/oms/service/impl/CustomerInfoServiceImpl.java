@@ -7,7 +7,9 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -1014,6 +1016,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         queryWrapper.select(CustomerInfoEntity::getId,
                 CustomerInfoEntity::getCode,
                 CustomerInfoEntity::getName,
+                CustomerInfoEntity::getShortName,
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
         if (StringUtils.isNotBlank(permissionSql)) {
@@ -1086,6 +1089,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             base.setReceiveCondition(receiptConditionId);
             KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(receiptConditionId);
             base.setReceiveConditionName(receiptCondition != null ? receiptCondition.getName() : "");
+        }
+        if(StringUtils.isNotBlank(customer.getSellerId())){
+            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(customer.getSellerId());
+            base.setSalesDeptId(deptByUserId.getDepartmentId());
+            base.setSalesDeptName(deptByUserId.getDepartmentName());
         }
         return base;
     }
@@ -2002,5 +2010,31 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             item.setCountryName(countryMap.get(item.getCountryId()));
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<CustomerDTO.InfoDTO> listSimpleName(CustomerDTO.PageSelectDTO dto) {
+        LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(CustomerInfoEntity::getId,
+                CustomerInfoEntity::getCode,
+                CustomerInfoEntity::getName,
+                CustomerInfoEntity::getShortName,
+                CustomerInfoEntity::getApproveStatus,
+                CustomerInfoEntity::getDisabled);
+        queryWrapper.last(" ORDER BY create_time DESC");
+        if(Objects.nonNull(dto) && StringUtils.isNotBlank(dto.getName())){
+            queryWrapper.like(CustomerInfoEntity::getName, dto.getName()).or().like(CustomerInfoEntity::getShortName, dto.getName());
+        }
+        List<CustomerInfoEntity> list = this.list(queryWrapper);
+        List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+        List<ApproveStatusEnum> statusList = new ArrayList<>(1);
+        statusList.add(ApproveStatusEnum.APPROVE);
+        for (CustomerDTO.InfoDTO item : resultList) {
+            if (!statusList.contains(item.getApproveStatus())) {
+                item.setDisabled(true);
+            }
+        }
+        resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
+        return resultList;
     }
 }

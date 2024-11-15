@@ -1,8 +1,5 @@
 package com.sdk.tms.express.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -15,12 +12,11 @@ import java.util.regex.Pattern;
 /**
  * @author zdy
  * @ClassName FileUtil
- * @description: TODO
+
  * @date 2023年11月13日
  * @version: 1.0
  */
 public class FileUtil {
-    private static Logger logger = LoggerFactory.getLogger(FileUtil.class);
 
     public static void main(String[] args) {
         String urlString = "";
@@ -41,7 +37,6 @@ public class FileUtil {
             }
 
             connection.disconnect();
-            System.out.println("File downloaded successfully!");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -80,25 +75,20 @@ public class FileUtil {
                 e.printStackTrace();
             }
         }
-//        String fileHeader = "data:image/png;base64,";
         String fileHeader = "data:application/pdf;base64,";
         return fileHeader + getBase64(file);
     }
 
     public String getBase64(File file) throws IOException {
         String base64Str = null;
-        FileInputStream inputStream = null;
-        try {
+        try (FileInputStream inputStream = new FileInputStream(file)) {
             Base64.Encoder encoder = Base64.getEncoder();
-            inputStream = new FileInputStream(file);
             int available = inputStream.available();
             byte[] bytes = new byte[available];
             inputStream.read(bytes);
             base64Str = encoder.encodeToString(bytes);
         } catch (Exception e) {
             e.printStackTrace();
-        }finally {
-            inputStream.close();
         }
         return replaceEnter(base64Str);
     }

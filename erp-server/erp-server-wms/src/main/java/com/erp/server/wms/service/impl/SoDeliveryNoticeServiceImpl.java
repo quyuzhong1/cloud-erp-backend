@@ -864,9 +864,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 continue;//跳过第一个仓库 从第二个开始
             }
             if (0 == i || firstWarehouseSame){
-                addTransferOrder(Boolean.TRUE,entity.getWarehouseId(),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo);
+                addTransferOrder(Boolean.TRUE,entity.getWarehouseId(),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo, i);
             }else {
-                addTransferOrder(Boolean.FALSE,transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo);
+                addTransferOrder(Boolean.FALSE,transferWarehouseIdList.get(i - 1),transferWarehouseIdList.get(i), entity, entityList,warehouseStagingList, noInventorySkuIds,batchNo, i);
             }
         }
     }
@@ -881,8 +881,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @param warehouseStagingList
      * @param noInventorySkuIds
      * @param batchNo
+     * @param i
      */
-    private void addTransferOrder(Boolean isFirst,String fromWarehouseId, String toWarehouseId, SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> detailEntityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, String batchNo) {
+    private void addTransferOrder(Boolean isFirst, String fromWarehouseId, String toWarehouseId, SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> detailEntityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, String batchNo, int i) {
         List<WarehouseEntity> warehouseEntityList = warehouseService.listByIds(Arrays.asList(fromWarehouseId, toWarehouseId));
         WarehouseEntity toWarehouse = warehouseEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(toWarehouseId)).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(toWarehouse)) {
@@ -901,7 +902,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         transferDto.setOutOrgId(fromWarehouse.getOrgId());
         transferDto.setSourceId(entity.getId());
         transferDto.setSourceCode(entity.getCode());
-
+        transferDto.setIndex(i);
         transferDto.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
         transferDto.setBatchNo(batchNo);
         List<TransferInfoDetailDTO.AddDTO> detailList = getAddDTOS(entity, detailEntityList, fromWarehouseId,toWarehouseId, warehouseStagingList, noInventorySkuIds, isFirst);
