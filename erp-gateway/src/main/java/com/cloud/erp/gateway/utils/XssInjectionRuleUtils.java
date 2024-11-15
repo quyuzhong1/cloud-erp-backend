@@ -18,6 +18,9 @@ import java.util.regex.Pattern;
  * @Date 2023/12/6 14:25
  **/
 public class XssInjectionRuleUtils {
+
+    private XssInjectionRuleUtils(){
+    }
     
     private static final Pattern[] PATTERNS = {
             

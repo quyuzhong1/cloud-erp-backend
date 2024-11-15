@@ -108,7 +108,7 @@ public class WarehouseLocationMoveDetailEntity extends BaseEntity<WarehouseLocat
 
     public static final String IN_WAREHOUSE_LOCATION = "in_warehouse_location";
 
-    public static final String QTY = "qty";
+    
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
@@ -118,7 +118,7 @@ public class WarehouseLocationMoveDetailEntity extends BaseEntity<WarehouseLocat
 
     public static final String INVENTORY_ORG_NAME = "inventory_org_name";
 
-    public static final String REMARK = "remark";
+    
     @Override
     public Serializable pkVal() {
         return null;

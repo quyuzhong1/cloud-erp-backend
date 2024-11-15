@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName Rejected
- * @description: TODO
+
  * @date 2023年11月14日
  * @version: 1.0
  */

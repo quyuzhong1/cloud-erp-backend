@@ -2,6 +2,7 @@ package com.sdk.tms.track123.model.response;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -10,7 +11,7 @@ import java.util.List;
  * @date 2024/4/9 16:47
  */
 @Data
-public class OceanContainerInfo {
+public class OceanContainerInfo implements Serializable {
     /**
      * 箱号
      */

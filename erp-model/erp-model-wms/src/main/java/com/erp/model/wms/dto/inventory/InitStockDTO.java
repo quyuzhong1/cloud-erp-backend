@@ -268,8 +268,8 @@ public class InitStockDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class SearchParamDTO extends SortDTO {
-
+    public static class SearchParamDTO extends SortDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 页面高级查询
          */
@@ -287,8 +287,8 @@ public class InitStockDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportSearchParamDTO extends SortDTO {
-
+    public static class ExportSearchParamDTO extends SortDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 页面高级查询
          */

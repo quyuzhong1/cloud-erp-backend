@@ -1,6 +1,5 @@
 package com.sdk.tms.track123.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -9,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * @author zdy
  * @ClassName PlatformTrackDetail
- * @description: TODO
+
  * @date 2023年11月23日
  * @version: 1.0
  */

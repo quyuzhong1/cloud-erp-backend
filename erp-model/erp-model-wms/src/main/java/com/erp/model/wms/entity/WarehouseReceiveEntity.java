@@ -188,12 +188,6 @@ public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
     @TableField("source_type")
     private String sourceType;
 
-//    /**
-//     * 入库状态（0未入库，1部分入库，2已入库）
-//     */
-//    @TableField("in_stock_status")
-//    private String inStockStatus;
-
     @Override
     public Serializable pkVal() {
         return null;

@@ -71,9 +71,6 @@ public class PickingListsEntity extends BaseEntity<PickingListsEntity> {
     @TableField("location_total")
     private Integer locationTotal;
 
-
-    public static final String CODE = "code";
-
     public static final String WAREHOUSE_ID = "warehouse_id";
 
     public static final String WAREHOUSE_NAME = "warehouse_name";

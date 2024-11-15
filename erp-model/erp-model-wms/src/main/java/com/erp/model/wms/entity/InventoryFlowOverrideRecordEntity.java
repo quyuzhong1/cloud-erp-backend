@@ -12,7 +12,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -65,8 +64,6 @@ public class InventoryFlowOverrideRecordEntity extends BaseEntity<InventoryFlowO
     public static final String INVENTORY_ORG_ID = "inventory_org_id";
 
     public static final String INVENTORY_ORG_NAME = "inventory_org_name";
-
-    public static final String TYPE = "type";
 
     @Override
     public Serializable pkVal() {

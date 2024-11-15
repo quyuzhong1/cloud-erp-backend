@@ -52,7 +52,7 @@ public class QcReportDetailEntity extends BaseEntity<QcReportDetailEntity> {
 
     public static final String QC_REPORT_ID = "qc_report_id";
 
-    public static final String DESCRIPTION = "description";
+    
 
     public static final String RESULT_KEY = "result_dict";
 

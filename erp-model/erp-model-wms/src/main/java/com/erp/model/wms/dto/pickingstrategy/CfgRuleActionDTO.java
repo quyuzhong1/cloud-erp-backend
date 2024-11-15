@@ -10,6 +10,9 @@ import javax.validation.constraints.NotBlank;
 @Getter
 @Setter
 public class CfgRuleActionDTO {
+    private CfgRuleActionDTO() {
+        throw new IllegalStateException("Utility CfgRuleActionDTO class");
+    }
     @Getter
     @Setter
     public static class View {

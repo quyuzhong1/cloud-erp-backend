@@ -27,36 +27,12 @@ import java.util.*;
 @Slf4j
 @Component
 public class TrackShipperOceanService {
+    public static final String CONTENT_TYPE = "Content-Type";
+    public static final String TRACK_123_API_SECRET = "Track123-Api-Secret";
+    public static final String CHARSET_UTF_8 = "application/json;charset=utf-8";
+    public static final String TIMESTAMP = "timestamp";
     static String url = "https://api.track123.com/gateway/open-api/tk/v2/track/query";
     static String token = "9fa500686633410a84ff0b00daed555e";
-
-    public static void main(String[] args) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
-        TrackShipperOceanService trackShipperService = new TrackShipperOceanService();
-//        trackShipperService.getCourierList(token);
-
-//        String message = "Hello, World!";
-//        String secretKey = "mySecretKey";
-//
-//        try {
-//            byte[] hmacSha256Bytes = calculateHmacSHA256(message, secretKey);
-//            String hmacSha256Hex = bytesToHex(hmacSha256Bytes);
-//            System.out.println("HmacSHA256: " + hmacSha256Hex);
-//        } catch (NoSuchAlgorithmException | InvalidKeyException | UnsupportedEncodingException e) {
-//            e.printStackTrace();
-//        }
-
-        List<String> trackNos = new ArrayList<>();
-        trackNos.add("304071414818");
-        trackNos.add("620372231752");
-
-        LogisticsTrackBaseDTO.OceanTrackRequestDTO orderRequest = LogisticsTrackBaseDTO.OceanTrackRequestDTO.builder()
-                .trackingNo("MATS5217756000")
-                .type(3)
-                .orderNo("matson")
-                .build();
-        TrackOceanResponse track = trackShipperService.getTrack(token, Arrays.asList(orderRequest));
-        System.out.println(track);
-    }
 
     /**
      * 获取快递物流商列表
@@ -64,9 +40,9 @@ public class TrackShipperOceanService {
     public TrackResponse getCourierList(String token) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
-        headers.put("Content-Type", "application/json;charset=utf-8");
-        headers.put("Track123-Api-Secret", token);
-        headers.put("timestamp", String.valueOf(timestamp));
+        headers.put(CONTENT_TYPE, CHARSET_UTF_8);
+        headers.put(TRACK_123_API_SECRET, token);
+        headers.put(TIMESTAMP, String.valueOf(timestamp));
 
         String result = OkHttpUtils.doGet(PathConstants.BASE_URL + PathConstants.OCEAN_GET_COURIER_URL, new LinkedHashMap<>(), headers);
         return JSONUtil.toBean(result, TrackResponse.class);
@@ -75,9 +51,9 @@ public class TrackShipperOceanService {
     public TrackOceanResponse getTrack(String token, List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> oceanTrackRequestList) {
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
-        headers.put("Content-Type", "application/json;charset=utf-8");
-        headers.put("Track123-Api-Secret", token);
-        headers.put("timestamp", String.valueOf(timestamp));
+        headers.put(CONTENT_TYPE, CHARSET_UTF_8);
+        headers.put(TRACK_123_API_SECRET, token);
+        headers.put(TIMESTAMP, String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.OCEAN_GET_TRACK_URL, oceanTrackRequestList, headers);
         return JSONUtil.toBean(result, TrackOceanResponse.class);
     }
@@ -85,12 +61,11 @@ public class TrackShipperOceanService {
     public OceanRegisterResult registerLogisticsNumber(String token, List<OceanRegisterRequest> registerRequests){
         long timestamp = System.currentTimeMillis();
         Map<String, String> headers = new LinkedHashMap<>();
-        headers.put("Content-Type", "application/json;charset=utf-8");
-        headers.put("Track123-Api-Secret", token);
-        headers.put("timestamp", String.valueOf(timestamp));
+        headers.put(CONTENT_TYPE, CHARSET_UTF_8);
+        headers.put(TRACK_123_API_SECRET, token);
+        headers.put(TIMESTAMP, String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.OCEAN_REGISTER_LOGISTICS_NUMBER, registerRequests, headers);
-        System.out.println("注册结果");
-        System.out.println(result);
+
         return JSONUtil.toBean(result, OceanRegisterResult.class);
     }
 }
