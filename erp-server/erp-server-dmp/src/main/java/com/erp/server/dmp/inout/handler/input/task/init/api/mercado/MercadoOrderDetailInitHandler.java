@@ -115,7 +115,9 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 					}
 					try {
 						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
 					sleepTime = sleepTime + 1000;
 					count = count + 1;
 				}
