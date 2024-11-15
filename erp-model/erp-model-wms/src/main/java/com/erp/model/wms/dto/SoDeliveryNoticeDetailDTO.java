@@ -10,6 +10,9 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 public class SoDeliveryNoticeDetailDTO {
+    private SoDeliveryNoticeDetailDTO() {
+        throw new IllegalStateException("Utility SoDeliveryNoticeDetailDTO class");
+    }
     /**
      * 添加
      */

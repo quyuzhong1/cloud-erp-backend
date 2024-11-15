@@ -13,7 +13,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class SoReturnInstockDetailDTO {
-
+    private SoReturnInstockDetailDTO() {
+        throw new IllegalStateException("Utility SoReturnInstockDetailDTO class");
+    }
     /**
      * 添加
      */
