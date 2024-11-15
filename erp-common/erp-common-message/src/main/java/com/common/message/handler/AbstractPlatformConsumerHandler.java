@@ -65,11 +65,6 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
                 updateMongodbData(platform, uniqueId, 0);
                 return;
             }
-            String msg = SyncStatusEnum.SUCCESS_SYNC.getName();
-            if (Objects.nonNull(handle.getData())){
-                //记录正确响应数据返回-留痕
-                msg = JSONUtil.toJsonStr(handle.getData());
-            }
             updateSyncTaskStatus(new DmpSyncMqDTO.ParamDTO(dmpSyncTaskId,version, SyncStatusEnum.SUCCESS_SYNC.getCode(), handle.getMsg()));
             updateMongodbData(platform, uniqueId, 2);
         }catch (Throwable e) {

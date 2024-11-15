@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -85,37 +86,42 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 				if(invokeMethod == null) {
 					throw new ServiceException("调用远程"+ className + "#" + methodName +"方法不存在");
 				}
-				Object [] paramVarArgs = new Object[param.size()];
-				Class<?>[] parameterTypes = invokeMethod.getParameterTypes();
-				for(int i = 0; i < parameterTypes.length; i++) {
-					String s = "{}";
-					Object p = param.get(i);
-					if(p != null) {
-						s = p.toString();
-					}
-					paramVarArgs[i] = JSON.parseObject(s, parameterTypes[i]);
-				}
+				Object[] paramVarArgs = parseParamVarArgs(param, invokeMethod);
 				result = invokeMethod.invoke(bean , paramVarArgs);
 			}else {
 				Method method = clazz.getMethod(methodName);
 				result = method.invoke(bean);
 			}
 		} catch (ClassNotFoundException e) {
-			log.error("调用远程类不存在{}" , e);
+			log.error("调用远程类不存在{}" , ExceptionUtil.stacktraceToString(e));
 			throw new ServiceException("调用"+ className +"远程类不存在");
 		} catch (NoSuchMethodException e) {
-			log.error("调用远程类方法不存在{}" , e);
+			log.error("调用远程类方法不存在{}" , ExceptionUtil.stacktraceToString(e));
 			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法不存在");
 		} catch (IllegalArgumentException e) {
-			log.error("调用远程方法参数错误{}" , e);
+			log.error("调用远程方法参数错误{}" , ExceptionUtil.stacktraceToString(e));
 			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法参数错误");
 		} catch (ServiceException e) {
 			throw e;
 		} catch (Exception e) {
-			log.error("调用远程方法错误{}" , e);
+			log.error("调用远程方法错误{}" , ExceptionUtil.stacktraceToString(e));
 			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法错误");
 		} 
 		return JSON.toJSONString(success(result));
 	}
-	
+
+	private static Object[] parseParamVarArgs(List<Object> param, Method invokeMethod) {
+		Object [] paramVarArgs = new Object[param.size()];
+		Class<?>[] parameterTypes = invokeMethod.getParameterTypes();
+		for(int i = 0; i < parameterTypes.length; i++) {
+			String s = "{}";
+			Object p = param.get(i);
+			if(p != null) {
+				s = p.toString();
+			}
+			paramVarArgs[i] = JSON.parseObject(s, parameterTypes[i]);
+		}
+		return paramVarArgs;
+	}
+
 }

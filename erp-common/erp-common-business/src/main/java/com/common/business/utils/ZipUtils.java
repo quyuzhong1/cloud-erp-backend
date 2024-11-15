@@ -2,6 +2,7 @@ package com.common.business.utils;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -12,6 +13,9 @@ import java.util.zip.ZipOutputStream;
  * ZIP工具类
  */
 public class ZipUtils {
+
+    public static final String GBK = "gbk";
+
     /**
      * 压缩多个文件
      *
@@ -29,7 +33,7 @@ public class ZipUtils {
                 }
             } else {//不存在则新建
                 // 创建zip输出流
-                ZipOutputStream zipOutStream = new ZipOutputStream(new FileOutputStream(zipFile), Charset.forName("UTF-8"));
+                ZipOutputStream zipOutStream = new ZipOutputStream(new FileOutputStream(zipFile), StandardCharsets.UTF_8);
                 // 创建缓冲输出流
                 BufferedOutputStream bufferOutStream = new BufferedOutputStream(zipOutStream);
                 for (File file : fileList) {
@@ -74,7 +78,7 @@ public class ZipUtils {
         if (zipFile.exists()) {
             File tempFile = new File(zipFile.getAbsolutePath() + ".tmp");
             // 创建zip输出流
-            ZipOutputStream zipOutStream = new ZipOutputStream(new FileOutputStream(tempFile), Charset.forName("UTF-8"));
+            ZipOutputStream zipOutStream = new ZipOutputStream(new FileOutputStream(tempFile), StandardCharsets.UTF_8);
             // 创建缓冲输出流
             BufferedOutputStream bufferOutStream = new BufferedOutputStream(zipOutStream);
             ZipFile zipOutFile = new ZipFile(zipFile);
@@ -215,7 +219,7 @@ public class ZipUtils {
      * @throws IOException
      */
     public static void unzip(File zipFile, File destDir) throws IOException {
-        ZipFile zipOutFile = new ZipFile(zipFile, Charset.forName("gbk"));
+        ZipFile zipOutFile = new ZipFile(zipFile, Charset.forName(GBK));
         Enumeration<? extends ZipEntry> entries = zipOutFile.entries();
         while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();

@@ -1,17 +1,13 @@
 package com.common.business.utils;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.json.JSONUtil;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.liveobject.misc.ClassUtils;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.method.HandlerMethod;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,7 +20,7 @@ import java.util.Objects;
  */
 @Slf4j
 @UtilityClass
-public class WebUtils extends org.springframework.web.util.WebUtils {
+public class ErpWebUtils extends org.springframework.web.util.WebUtils {
 
     /**
      * 获取 HttpServletRequest

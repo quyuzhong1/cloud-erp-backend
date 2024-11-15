@@ -1,6 +1,6 @@
 package com.common.business.utils;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.RedisService;
 import com.common.core.utils.date.DateUtil;
 
@@ -20,7 +20,7 @@ public class ExportUtil {
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(fileName);
         sb.append(date);
-        String redisKey = StrUtil.format( "file:name:{}-{}", fileName, date);
+        String redisKey = CharSequenceUtil.format( "file:name:{}-{}", fileName, date);
         Integer last = redisService.getCacheObject(redisKey);
         Integer lastNo = 1;
         if (last != null) {

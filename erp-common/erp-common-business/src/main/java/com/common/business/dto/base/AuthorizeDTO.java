@@ -2,15 +2,12 @@ package com.common.business.dto.base;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
  * @author Lambda
  * @Classname AuthorizeDTO
- * @Description TODO
  * @Date 2023-08-29 9:23
  * @Created by yl
  */
@@ -19,7 +16,7 @@ public class AuthorizeDTO  implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class FindShopAuthorizeDTO{
+    public static class FindShopAuthorizeDTO implements Serializable{
 
         /**
          * code

@@ -3,12 +3,13 @@ package com.common.business.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
 @Setter
-public class WdtSoOutStockDetailDTO {
+public class WdtSoOutStockDetailDTO implements Serializable {
 
     /**
      * 主表id
@@ -123,7 +124,7 @@ public class WdtSoOutStockDetailDTO {
 
     @Getter
     @Setter
-    public static class PositionDetailsList {
+    public static class PositionDetailsList implements Serializable {
         private String recId;
         private String stockoutDetailId;
         private String positionId;

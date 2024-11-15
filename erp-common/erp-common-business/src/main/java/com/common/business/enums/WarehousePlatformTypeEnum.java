@@ -1,8 +1,11 @@
 package com.common.business.enums;
 
+import lombok.Getter;
+
 /**
  * 第三方仓库平台类型
  */
+@Getter
 public enum WarehousePlatformTypeEnum {
 
     OVERSEAS_WAREHOUSE("overseasWarehouse","海外仓"),
@@ -17,14 +20,6 @@ public enum WarehousePlatformTypeEnum {
     WarehousePlatformTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public static String getNameByCode(String code) {

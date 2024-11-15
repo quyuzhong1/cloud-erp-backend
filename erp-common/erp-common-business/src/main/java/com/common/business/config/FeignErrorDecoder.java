@@ -1,6 +1,6 @@
 package com.common.business.config;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -31,14 +31,14 @@ public class FeignErrorDecoder implements ErrorDecoder {
             if (jsonObject.containsKey("trace")) {
                 String trace = StrUtils.null2EmptyWithTrim(jsonObject.getString("trace"));
                 if (trace.contains("ServiceException")) {
-                    String codeStr = StrUtil.subBetween(trace, "ServiceException(code=", ", msg");
+                    String codeStr = CharSequenceUtil.subBetween(trace, "ServiceException(code=", ", msg");
                     Integer code = Integer.valueOf(codeStr);
                     String msg = "";
                     // 有些异常会返回data
                     if (!trace.contains(", data=")) {
-                        msg = StrUtil.subBetween(trace, "msg=", ")");
+                        msg = CharSequenceUtil.subBetween(trace, "msg=", ")");
                     } else {
-                        msg = StrUtil.subBetween(trace, "msg=", ", data");
+                        msg = CharSequenceUtil.subBetween(trace, "msg=", ", data");
                     }
                     return  new ServiceException(code, msg);
                 }else{
