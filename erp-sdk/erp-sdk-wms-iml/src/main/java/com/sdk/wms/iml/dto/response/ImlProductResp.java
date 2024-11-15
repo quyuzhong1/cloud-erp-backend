@@ -123,8 +123,8 @@ public class ImlProductResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class WarehouseAttribute {
-
+    public static class WarehouseAttribute implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         //长
         @JSONField(name = "product_length")
         private String productLength;

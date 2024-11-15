@@ -64,7 +64,9 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
 
     @Override
     public void invoke(Map<Integer,String> map, AnalysisContext analysisContext) {
-
+        if (map.isEmpty()) {
+            return;
+        }
         List<String> errorMsgList = new ArrayList<>();
         //遍历map下的数据
         Iterator<Map.Entry<Integer, String>> iterator = map.size() == 0 ? null : map.entrySet().iterator();

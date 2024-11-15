@@ -23,6 +23,7 @@ import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -45,23 +46,14 @@ public class GoodCangProductHandler extends AbstractPullThirdWarehouseHandler<Go
     private GoodCangService goodCangService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     private final String failureMsgHead = "调用谷仓获取产品数据接口异常";
 
     @Override
     public List<GoodCangSkuResp> download(JobTaskDTO data) {
-        LocalDateTime lastTime = data.getLastTime();
-        LocalDateTime nextTime = data.getNextTime();
-        if (lastTime.isEqual(nextTime)){
-            //nextTime +30分钟
-            nextTime = lastTime.plusMinutes(30);
-        }
-
         //查询数据
         GoodCangGetSkuReq goodCangGetSkuReq = new GoodCangGetSkuReq();
-//        goodCangGetSkuReq.setProductUpdateTimeFrom(lastTime.format(formatter));
-//        goodCangGetSkuReq.setProductUpdateTimeTo(nextTime.format(formatter));
         //最大页码100，从第一页开始查询
         goodCangGetSkuReq.setPageSize(100);
 

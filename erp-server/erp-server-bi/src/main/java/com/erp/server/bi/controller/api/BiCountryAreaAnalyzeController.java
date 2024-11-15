@@ -54,8 +54,8 @@ public class BiCountryAreaAnalyzeController extends BaseController {
      * 导出区域/国家销售额
      */
     @PostMapping("/exportCountrySales")
-    public ApiResult<?> exportCountrySales(@RequestBody @Valid BiCountryRegionFilterDTO dto, HttpServletResponse response) {
-        Boolean result = biComprehensiveAnalyseService.exportCountryExcel(dto, response);
+    public ApiResult<Void> exportCountrySales(@RequestBody @Valid BiCountryRegionFilterDTO dto, HttpServletResponse response) {
+        boolean result = biComprehensiveAnalyseService.exportCountryExcel(dto, response);
         return result ? success() : failure();
     }
 
