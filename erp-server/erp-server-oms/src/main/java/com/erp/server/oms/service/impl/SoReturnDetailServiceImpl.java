@@ -11,7 +11,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -21,7 +20,6 @@ import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -40,7 +38,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -87,10 +88,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
     @Resource
     private SysUserFeign sysUserFeign;
-    @Resource
-    private SkuMappingService skuMappingService;
-    @Resource
-    private BomSkuFeign bomSkuFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -367,34 +364,5 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     @Override
     public List<SoReturnDetailEntity> listDetailByReturnType(List<String> returnType) {
         return lambdaQuery().in(SoReturnDetailEntity::getReturnTypeDict, returnType).list();
-    }
-
-    @Override
-    public SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto) {
-        return generateAddDetailBySoReturn(dto);
-    }
-
-
-    //快粘贴 -- 根据销售退货单id生成
-    private SoDetailDTO.ListAddDetailNoBomViewDTO generateAddDetailBySoReturn (SoReturnDTO.PlatformSkuDTO dto){
-        SoDetailDTO.ListAddDetailNoBomViewDTO view = new  SoDetailDTO.ListAddDetailNoBomViewDTO();
-        List<SoDetailDTO.AddDetailView> bomList = new ArrayList<>();
-        List<SoDetailDTO.AddDetailView> noBomList = new ArrayList<>();
-        List<String> parentSkuNoList = new ArrayList<>();
-        //获取sku产品明细
-        listAddDetailViewDTO viewDTO = new listAddDetailViewDTO();
-        viewDTO.setId(dto.getId());
-        List<SoDetailDTO.AddDetailView> addDetailViews = listAddDetailView(viewDTO);
-        //过滤对应的平台sku
-        addDetailViews.stream().forEach(r ->{
-            boolean isPresent = dto.getPlatformSkuNoList().stream().anyMatch(v -> v.equals(r.getPlatformSkuNo()));
-            if(isPresent){
-                noBomList.add(r);
-            }
-        });
-        view.setNobomList(noBomList);
-        view.setBomList(bomList);
-        view.setParentSkuNoList(parentSkuNoList);
-        return view;
     }
 }

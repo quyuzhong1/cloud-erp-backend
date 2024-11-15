@@ -630,10 +630,6 @@ public class SkuMappingDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuName;
-        /**
-         * 客户id
-         */
-        private String customerId;
 
 
     }
@@ -1079,26 +1075,5 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotBlank(message = "备注不能为空")
         private String remark;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class SkuParamDTO {
-        /**
-         * 平台sku
-         */
-        private List<String> platformSkuNoList;
-        /**
-         * sku编号
-         */
-        private List<String> skuNoList;
-        /**
-         * skuid
-         */
-        private List<String> skuIdList;
-        /**
-         * 客户id
-         */
-        private String cutomerId;
     }
 }

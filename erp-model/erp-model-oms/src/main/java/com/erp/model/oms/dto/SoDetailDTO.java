@@ -828,33 +828,6 @@ public class SoDetailDTO implements Serializable {
     }
 
     /**
-     *
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListAddDetailNoBomViewDTO {
-
-        /**
-         *
-         */
-        private List<String> parentSkuNoList;
-        /**
-         *
-         */
-        private List<AddDetailView> nobomList;
-
-        /**
-         *
-         */
-        private List<AddDetailView> bomList;
-
-        /**
-         * 存在套装BOM
-         */
-        private Boolean existBom = false;
-    }
-
-    /**
      * 添加详情按钮-列表查询
      */
     @Data
@@ -981,18 +954,6 @@ public class SoDetailDTO implements Serializable {
          * 退货原因名称
          */
         private String returnReasonDictName;
-        /**
-         * 退货客户id
-         */
-        private String customerId;
-        /**
-         * 平台sku
-         */
-        private String platformSkuNo;
-        /**
-         * 是否子sku
-         */
-        private Boolean isChildSkuNo = false;
     }
 
 
