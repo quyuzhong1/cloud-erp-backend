@@ -316,7 +316,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             if (isNotBlank(userName)) {
                 titleContent = format(titleContent, userName);
             }
-            LarkResultDTO<Object> larkResult = fsService.sendMessage(unionId, titleContent, textContent, msgType);
+            LarkResultDTO<T> larkResult = fsService.sendMessage(unionId, titleContent, textContent, msgType);
             // 催办
             if (isPress) {
                 SingleResultDTO resultDTO = parseObject(larkResult.getData().toString(), SingleResultDTO.class);

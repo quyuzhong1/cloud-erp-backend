@@ -120,9 +120,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_COST;
-import static com.erp.server.plm.constant.ProductConstant.PRODUCT_PROPERTY_SERVICE;
-
 /**
  * @Description: 产品明细信息服务类
  * @Author: Luo_WG
@@ -2497,18 +2494,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
     }
 
-    private int getGoodsType(String saleMethod, String property){
-        SaleMethodEnum saleMethodEnum = SaleMethodEnum.getEnumByType(saleMethod);
-        if (org.springframework.util.ObjectUtils.isEmpty(saleMethodEnum)){
-            return 0;
-        }
-        switch (saleMethodEnum){
-            case GOODS:return (PRODUCT_PROPERTY_COST.equals(property) || PRODUCT_PROPERTY_SERVICE.equals(property)) ? 5 : 1;
-            case PACKAGING_MATERIALS: return 3;
-            case SEMI_FINISHED:return 2;
-            default: return 0;
-        }
-    }
     @Override
     @Transactional
     public Boolean approvalReject(ProductDetailOperateDTO dto) {
