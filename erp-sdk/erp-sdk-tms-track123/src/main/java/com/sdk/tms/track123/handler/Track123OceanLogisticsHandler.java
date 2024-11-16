@@ -1,12 +1,14 @@
 package com.sdk.tms.track123.handler;
 
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractLogisticsTrackHandler;
+import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -14,6 +16,7 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -106,10 +109,10 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
         if (CollectionUtils.isNotEmpty(records)) {
             List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> list = new ArrayList<>();
             String token = cfgAppClient.getClientSecret();
-            for (LogisticsTrackDTO.UpdateTrackDTO trackRecord : records) {
+            for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
               LogisticsTrackBaseDTO.OceanTrackRequestDTO oceanTrackRequestDTO = LogisticsTrackBaseDTO.OceanTrackRequestDTO.builder()
-                      .trackingNo(trackRecord.getTrackNo())
-                      .orderNo(trackRecord.getPlatformOrderNo())
+                      .trackingNo(record.getTrackNo())
+                      .orderNo(record.getPlatformOrderNo())
                       .type(MathUtil.THREE)
                       .build();
                 list.add(oceanTrackRequestDTO);
@@ -128,90 +131,70 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
 
     @Override
     public List<PlatformTrackDTO> convert(List<PlatformTrack123OceanTrackDTO> sourceDataList) {
-        List<PlatformTrackDTO> resultList = new ArrayList<>();
+        List<PlatformTrackDTO> resultList = new LinkedList<>();
         for (PlatformTrack123OceanTrackDTO sourceDto : sourceDataList) {
-            processAcceptedTracks(resultList, sourceDto);
-            processRejectedTracks(resultList, sourceDto);
+            //将成功和失败的数据返回
+            List<OceanTrackInfo> accepted = sourceDto.getAccepted();
+            if (Objects.nonNull(accepted)) {
+                for (OceanTrackInfo oceanTrackInfo : accepted) {
+                    List<OceanContainerInfo> containerInfoList = oceanTrackInfo.getContainerInfo();
+                    if (CollectionUtils.isNotEmpty(containerInfoList)){
+                        containerInfoList.forEach(containerInfo -> {
+                            PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                            acceptedToSaveDto.setTrackNo(oceanTrackInfo.getTrackingNo());
+                            acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
+                            acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
+                            if (ObjectUtil.isNotEmpty(containerInfo)) {
+                                List<OceanTrackingDetail> trackingDetails = containerInfo.getTrackingDetails();
+                                if (CollectionUtils.isNotEmpty(trackingDetails)) {
+                                    List<PlatformTrackDetail> details = new ArrayList<>();
+                                    for (OceanTrackingDetail trackingDetail : trackingDetails) {
+                                        PlatformTrackDetail detail = new PlatformTrackDetail();
+                                        detail.setTrackNo(oceanTrackInfo.getTrackingNo());
+                                        //转换类型
+                                        detail.setStatus(convertOceanTrackStatus(trackingDetail.getEventStatus()));
+                                        LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                        detail.setTrackTime(eventTime);
+                                        detail.setContent(trackingDetail.getEventDetails());
+                                        details.add(detail);
+                                    }
+                                    acceptedToSaveDto.setDetails(details);
+                                    resultList.add(acceptedToSaveDto);
+                                }
+//                                else {
+//                                    List<PlatformTrackDetail> details = new ArrayList<>();
+//                                    PlatformTrackDetail detail = new PlatformTrackDetail();
+//                                    detail.setTrackNo(oceanTrackInfo.getTrackingNo());
+//                                    //转换类型
+//                                    detail.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());
+//                                    LocalDateTime eventTime = LocalDateTime.parse(oceanTrackInfo.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                                    detail.setTrackTime(eventTime);
+//                                    detail.setContent("暂无信息");
+//                                    details.add(detail);
+//                                    acceptedToSaveDto.setDetails(details);
+//                                    resultList.add(acceptedToSaveDto);
+//                                }
+                            }
+                        });
+                    }
+                }
+            }
+            if (CollectionUtils.isNotEmpty(sourceDto.getRejected())) {
+                for (Rejected rejected : sourceDto.getRejected()) {
+                    PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                    acceptedToSaveDto.setTrackNo(rejected.getTrackNo());
+                    PlatformTrackDetail detail = new PlatformTrackDetail();
+                    detail.setTrackNo(rejected.getTrackNo());
+                    detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                    detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
+                    detail.setTrackTime(LocalDateTime.now());
+                    acceptedToSaveDto.setDetails(Collections.singletonList(detail));
+                    resultList.add(acceptedToSaveDto);
+                }
+            }
+
         }
         return resultList;
-    }
-
-    private void processAcceptedTracks(List<PlatformTrackDTO> resultList, PlatformTrack123OceanTrackDTO sourceDto) {
-        List<OceanTrackInfo> accepted = sourceDto.getAccepted();
-        if (Objects.isNull(accepted)) {
-            return;
-        }
-
-        accepted.stream()
-                .filter(Objects::nonNull)
-                .forEach(oceanTrackInfo -> processContainerInfo(resultList, oceanTrackInfo, sourceDto));
-    }
-
-    private void processContainerInfo(List<PlatformTrackDTO> resultList, OceanTrackInfo oceanTrackInfo, PlatformTrack123OceanTrackDTO sourceDto) {
-        List<OceanContainerInfo> containerInfoList = oceanTrackInfo.getContainerInfo();
-        if (CollectionUtils.isEmpty(containerInfoList)) {
-            return;
-        }
-
-        containerInfoList.stream()
-                .filter(Objects::nonNull)
-                .forEach(containerInfo -> {
-                    List<PlatformTrackDetail> details = createDetails(oceanTrackInfo, containerInfo);
-                    if (!details.isEmpty()) {
-                        PlatformTrackDTO acceptedToSaveDto = createAcceptedTrackDTO(oceanTrackInfo, sourceDto);
-                        acceptedToSaveDto.setDetails(details);
-                        resultList.add(acceptedToSaveDto);
-                    }
-                });
-    }
-
-    private void processRejectedTracks(List<PlatformTrackDTO> resultList, PlatformTrack123OceanTrackDTO sourceDto) {
-        List<Rejected> rejectedList = sourceDto.getRejected();
-        if (CollectionUtils.isNotEmpty(rejectedList)) {
-            for (Rejected rejected : rejectedList) {
-                PlatformTrackDTO rejectedToSaveDto = createRejectedTrackDTO(rejected, sourceDto);
-                resultList.add(rejectedToSaveDto);
-            }
-        }
-    }
-
-    private PlatformTrackDTO createAcceptedTrackDTO(OceanTrackInfo oceanTrackInfo, PlatformTrack123OceanTrackDTO sourceDto) {
-        PlatformTrackDTO dto = new PlatformTrackDTO();
-        dto.setTrackNo(oceanTrackInfo.getTrackingNo());
-        dto.setUniqueId(sourceDto.getUniqueId());
-        dto.setPlatform(sourceDto.getPlatform());
-        return dto;
-    }
-
-    private List<PlatformTrackDetail> createDetails(OceanTrackInfo oceanTrackInfo, OceanContainerInfo containerInfo) {
-        List<PlatformTrackDetail> details = new ArrayList<>();
-        List<OceanTrackingDetail> trackingDetails = containerInfo.getTrackingDetails();
-        if (CollectionUtils.isNotEmpty(trackingDetails)) {
-            for (OceanTrackingDetail trackingDetail : trackingDetails) {
-                PlatformTrackDetail detail = new PlatformTrackDetail();
-                detail.setTrackNo(oceanTrackInfo.getTrackingNo());
-                detail.setStatus(convertOceanTrackStatus(trackingDetail.getEventStatus()));
-                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                detail.setTrackTime(eventTime);
-                detail.setContent(trackingDetail.getEventDetails());
-                details.add(detail);
-            }
-        }
-        return details;
-    }
-
-    private PlatformTrackDTO createRejectedTrackDTO(Rejected rejected, PlatformTrack123OceanTrackDTO sourceDto) {
-        PlatformTrackDTO dto = new PlatformTrackDTO();
-        dto.setTrackNo(rejected.getTrackNo());
-        dto.setUniqueId(sourceDto.getUniqueId());
-        dto.setPlatform(sourceDto.getPlatform());
-        PlatformTrackDetail detail = new PlatformTrackDetail();
-        detail.setTrackNo(rejected.getTrackNo());
-        detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
-        detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
-        detail.setTrackTime(LocalDateTime.now());
-        dto.setDetails(Collections.singletonList(detail));
-        return dto;
     }
 
 
@@ -229,6 +212,12 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
             return FmLogisticTrackStatusEnum.INSPECTING.getCode();
         }
         return FmLogisticTrackStatusEnum.TRACK_ING.getCode();
+    }
+
+    public static void main(String[] args) {
+//        String json = "{\"shipmentInfo\":{\"shipmentId\":\"FBA17FKD1MPZ\",\"shipmentName\":\"FBA STA (10/07/2023 07:09)-CMH2\",\"shipFromAddress\":{\"name\":\"LC108092（Ling）\",\"addressLine1\":\"14939 Summit Drive\",\"city\":\"Eastvale\",\"stateOrProvinceCode\":\"CA\",\"countryCode\":\"US\",\"postalCode\":\"92880\"},\"destinationFulfillmentCenterId\":\"CMH2\",\"shipmentStatus\":\"RECEIVING\",\"labelPrepType\":\"SELLER_LABEL\",\"boxContentsSource\":\"INTERACTIVE\"},\"shopId\":\"1720261566995107842\",\"shopName\":\"亚马逊测试店铺美国\",\"platformUpdateTime\":1698995263691,\"downloadStatus\":0,\"downloadTime\":\"\",\"detailList\":[]}";
+//        PlatformTrackDTO shipmentDTO = TrackDataConverter.INSTANCE.downloadDtoToSaveDto(JSONUtil.toBean(json, PlatformTrack123TrackDTO.class));
+//        System.out.println(JSONUtil.toJsonStr(shipmentDTO));
     }
 
     @Override

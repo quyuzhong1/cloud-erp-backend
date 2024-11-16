@@ -3,8 +3,6 @@ package com.sdk.tms.track123.model.response;
 import lombok.Builder;
 import lombok.Data;
 
-import java.io.Serializable;
-
 /**
  * @author Will
  * @version 1.0
@@ -12,7 +10,7 @@ import java.io.Serializable;
  */
 @Data
 @Builder
-public class OceanCarrierInfo implements Serializable {
+public class OceanCarrierInfo {
 
 
     /**

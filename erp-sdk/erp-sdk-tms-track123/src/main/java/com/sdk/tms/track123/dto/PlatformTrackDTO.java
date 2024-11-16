@@ -1,12 +1,15 @@
 package com.sdk.tms.track123.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.UniqueDto;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,7 +21,6 @@ import java.util.List;
 @Slf4j
 @Setter
 @Getter
-@EqualsAndHashCode
 @NoArgsConstructor
 public class PlatformTrackDTO extends UniqueDto {
     /**
