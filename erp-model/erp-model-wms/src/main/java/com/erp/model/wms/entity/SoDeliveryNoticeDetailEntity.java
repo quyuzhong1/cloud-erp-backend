@@ -40,6 +40,17 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
      */
     @TableField("sku_no")
     private String skuNo;
+    /**
+     * bom版本
+     */
+    @TableField("bom_version")
+    private String bomVersion;
+
+    /**
+     * 客户sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
 
     /**
      * 发货数量

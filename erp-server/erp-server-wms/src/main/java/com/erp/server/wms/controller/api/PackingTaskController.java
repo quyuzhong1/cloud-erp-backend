@@ -21,9 +21,14 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,10 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 装箱任务表
@@ -50,6 +52,9 @@ public class PackingTaskController extends BaseController {
 
     @Resource
     private PackingTaskService packingTaskService;
+
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
     /**
      * 获取状态统计
      *
@@ -136,7 +141,7 @@ public class PackingTaskController extends BaseController {
     public ApiResult packingSave(@RequestBody @Validated WmsCartonSpecDTO.WmsCartonAdd dto) {
         dto.setOperation("装箱操作");
         dto.setContent("新增装箱");
-        Boolean flag = packingTaskService.packingSave(dto, Boolean.TRUE);
+        Boolean flag = packingTaskService.packingSave(dto, Boolean.FALSE);
         return flag ? success() : failure();
     }
 

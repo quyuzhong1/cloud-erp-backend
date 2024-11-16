@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -1456,5 +1457,96 @@ public class RequisitionApplicationDTO implements Serializable {
          * 标记
          */
         private Boolean isFlag;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExcelImportDTO {
+        /**
+         * 导入文件
+         */
+        @NotNull(message = "导入文件不能为空")
+        private MultipartFile excelFile;
+        /**
+         * 明细
+         */
+        @Valid
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
+
+    /**
+     * 打印fnsku的详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintFnskuDetailDTO {
+
+        /**
+         * 要货申请id
+         */
+        private String id;
+        /**
+         *
+         */
+        private String skuId;
+        /**
+         *
+         */
+        private String skuNo;
+        /**
+         * fnsku
+         */
+        private String platformFnSku;
+        /**
+         * 平台skun/msku
+         */
+        private String platformSku;
+
+        /**
+         * 平台产品id/ASIN
+         */
+        private String platformSpu;
+        /**
+         * sku对照表id
+         */
+        private String skuMappingId;
+        /**
+         * 对应平台sku表id
+         */
+        private String listingId;
+        /**
+         * 产品物流信息表id
+         */
+        private String productLogisticsId;
+        /**
+         * 产品属性
+         */
+        private String productProperty;
+        /**
+         * 报关中文名
+         */
+        private String declareChineseName;
+        /**
+         * 报关英文名
+         */
+        private String declareEnglishName;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty = 0;
     }
 }

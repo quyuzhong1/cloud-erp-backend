@@ -40,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -80,6 +81,23 @@ public class PurchaseOrderController extends BaseController {
     @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 采购单号分页查询
+     * @author will
+     * @date 2024/11/11 11:46
+     * @param dto
+     * @return ApiResult<PagingVO<SourceCodeDTO>>
+     */
+    @PostMapping("/purchaseCodePaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    public ApiResult<PagingVO<PurchaseOrderDTO.SourceCodeDTO>> purchaseCodePaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.SourceCodeDTO> pagingVO = purchaseOrderService.purchaseCodePaging(dto);
         return success(pagingVO);
     }
 
@@ -439,22 +457,41 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
-     * 导出采购合同PDF
+     * 查询采购合同PDF数据
      * @author Will
      * @date: 2023/3/15 17:59
      * @param id
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购合同PDF")
-    @GetMapping("/exportPurchaseContractPdf")
+    @GetMapping("/listPurchaseContractPdf")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:exportPurchaseContractPdf",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "id")
-    public ApiResult<PurchaseOrderDTO.ExportPdfDTO> exportPurchaseContractPdf(@RequestParam("id") String id) {
-        PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.exportPurchaseContractPdf(id);
+    public ApiResult<PurchaseOrderDTO.ExportPdfDTO> listPurchaseContractPdf(@RequestParam("id") String id) {
+        PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.listPurchaseContractPdf(id);
         return success(exportPdfDTO);
+    }
+
+    /**
+     * 导出采购合同PDF
+     * @author Will
+     * @date: 2023/3/15 17:59
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购合同PDF")
+    @PostMapping("/exportPurchaseContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:exportPurchaseContractPdf",
+            serviceClass = PurchaseOrderService.class,
+            keyIdName = "id")
+    public void exportPurchaseContractPdf(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+        purchaseOrderService.exportPurchaseContractPdf(dto.getId(),response);
     }
 
     /**
@@ -714,7 +751,7 @@ public class PurchaseOrderController extends BaseController {
         if (StringUtils.isEmpty(orderSupplier.getSupplierId()) || !orderSupplier.getSupplierId().equals(info.getSupplierId())){
             throw new ServiceException(ApiError.ERROR_98120, info.getSupplierName());
         }
-        PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.exportPurchaseContractPdf(id);
+        PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.listPurchaseContractPdf(id);
         return success(exportPdfDTO);
     }
 }

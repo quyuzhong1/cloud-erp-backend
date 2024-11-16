@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -546,6 +547,8 @@ public class WmsDeliveryPlanDTO implements Serializable {
         /**
          * 要货数量
          */
+        @NotNull(message = "要货数量不能为空")
+        @Min(value = 1, message = "要货数量不能小于1")
         private Integer requisitionQty;
 
         /**

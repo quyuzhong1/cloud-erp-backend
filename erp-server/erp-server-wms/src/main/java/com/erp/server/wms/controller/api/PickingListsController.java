@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -87,7 +88,7 @@ public class PickingListsController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印拣货单")
     @PostMapping("/print")
     public ApiResult<List<PickingListsDTO.PrintView>> print(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<PickingListsDTO.PrintView> views = pickingListsService.print(idsDTO.getIds());
+        List<PickingListsDTO.PrintView> views = pickingListsService.print(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
         return success(views);
     }
 

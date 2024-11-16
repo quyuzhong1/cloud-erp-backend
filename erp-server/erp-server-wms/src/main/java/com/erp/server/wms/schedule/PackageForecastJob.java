@@ -1,12 +1,11 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.core.exception.ServiceException;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.wms.dto.PackageForecastDTO;
-import com.erp.model.wms.entity.PackageForecastDetailEntity;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
@@ -17,11 +16,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -47,7 +45,18 @@ public class PackageForecastJob {
         XxlJobHelper.log("syncPackageForecastInfo start : {}", LocalDateTime.now());
         DateTime dateTime = DateUtil.offsetMonth(DateUtil.date(), -3);
         //根据订单查询组包明细  默认查询 3月内的组包数据
-        List<PackageForecastEntity> orders = packageForecastService.getAliExpressHandoverList(dateTime);
+        List<String> handoverStatusList = new ArrayList<>();
+        String jobParam = XxlJobHelper.getJobParam();
+        String handoverStatusStr = StrUtils.null2EmptyWithTrim(jobParam);
+        if (CharSequenceUtil.isNotBlank(handoverStatusStr)){
+            handoverStatusList = Arrays.stream(handoverStatusStr.split(",")).distinct().collect(Collectors.toList());
+        }
+        handoverStatusList.add(CharSequenceUtil.EMPTY);
+        List<PackageForecastEntity> orders = packageForecastService.lambdaQuery()
+                .ne(PackageForecastEntity::getHandoverNo, StrUtil.EMPTY)
+                .in(PackageForecastEntity::getHandoverStatus,handoverStatusList)
+                .gt(PackageForecastEntity::getBillDate, dateTime)
+                .list();
         if (CollectionUtils.isEmpty(orders)){
             XxlJobHelper.log("syncPackageForecastInfo end : {}", LocalDateTime.now());
             return;

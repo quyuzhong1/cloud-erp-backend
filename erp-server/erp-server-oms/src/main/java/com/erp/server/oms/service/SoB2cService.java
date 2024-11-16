@@ -229,7 +229,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO cancelMerge(String id);
 
-    void deleteById(List<String> ids);
+    /**
+     * 删除订单关联信息
+     * @param ids 需要删除的销售订单数据
+     * @param code 关联销售订单编码
+     */
+    void deleteById(List<String> ids, String code);
 
     void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow, Boolean checkPayTime);
 

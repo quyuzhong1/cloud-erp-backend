@@ -32,6 +32,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -240,16 +241,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         SkuMappingDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String tabFlag = params.getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
         params.setType(RuleTypeEnum.PLATFORM.getCode());
-        IPage pageData = baseMapper.paging(query, params, matchResult);
+        IPage pageData = baseMapper.paging(query, params);
         List<SkuMappingDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -289,23 +282,36 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         SkuMappingDTO.TabListDTO all = new SkuMappingDTO.TabListDTO();
         int allCount = matchCountList.stream().mapToInt(SkuMappingDTO.MatchCountDTO::getCount).sum();
         all.setCount(allCount);
-        all.setTabFlag(SearchType.ALL);
+        all.setTabFlag("");
+        all.setTabFlagName("全部");
         resultList.add(all);
         //未匹配
         SkuMappingDTO.TabListDTO not = new SkuMappingDTO.TabListDTO();
-        int notCount = matchCountList.stream().filter(m -> !m.getMatchResult()).findFirst().
+        int notCount = matchCountList.stream().filter(m -> ListingMatchResultEnum.FALSE.getCode().equals(m.getMatchResult())).findFirst().
                 map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
         not.setCount(notCount);
-        not.setTabFlag(OmsConstant.NOT);
+        not.setTabFlag(ListingMatchResultEnum.FALSE.getCode());
+        not.setTabFlagName(ListingMatchResultEnum.FALSE.getName());
         resultList.add(not);
 
         //已匹配
         SkuMappingDTO.TabListDTO already = new SkuMappingDTO.TabListDTO();
-        int alreadyCount = matchCountList.stream().filter(m -> m.getMatchResult()).findFirst().
+        int alreadyCount = matchCountList.stream().filter(m -> ListingMatchResultEnum.TRUE.getCode().equals(m.getMatchResult())).findFirst().
                 map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
         already.setCount(alreadyCount);
-        already.setTabFlag(OmsConstant.ALREADY);
+        already.setTabFlag(ListingMatchResultEnum.TRUE.getCode());
+        already.setTabFlagName(ListingMatchResultEnum.TRUE.getName());
         resultList.add(already);
+
+        //无需匹配
+        SkuMappingDTO.TabListDTO notNeed = new SkuMappingDTO.TabListDTO();
+        int notNeedCount = matchCountList.stream().filter(m -> ListingMatchResultEnum.NOT.getCode().equals(m.getMatchResult())).findFirst().
+                map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
+        notNeed.setCount(notNeedCount);
+        notNeed.setTabFlag(ListingMatchResultEnum.NOT.getCode());
+        notNeed.setTabFlagName(ListingMatchResultEnum.NOT.getName());
+        resultList.add(notNeed);
+
         return resultList;
     }
 
@@ -365,7 +371,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listing.setPlatformSkuName(dto.getPlatformProductName());
         }
         // listing 更新匹配关系
-        listing.setMatchResult(true);
+        listing.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        listing.setRemark("");
         if (!listingInfoService.updateById(listing)) {
             throw new ServiceException("[listing] 更新失败");
         }
@@ -585,7 +592,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.nonNull(listingInfo)) {
             listingId = listingInfo.getId();
             // listing 更新匹配关系
-            listingInfo.setMatchResult(true);
+            listingInfo.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+            listingInfo.setRemark("");
             if (!listingInfoService.updateById(listingInfo)) {
                 throw new ServiceException("[listing] 更新失败");
             }
@@ -838,16 +846,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         SkuMappingDTO.WarehousePagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String tabFlag = params.getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
         params.setType(RuleTypeEnum.WAREHOUSE.getCode());
-        IPage pageData = baseMapper.warehousePaging(query, params, matchResult);
+        IPage pageData = baseMapper.warehousePaging(query, params);
         List<SkuMappingDTO.WarehousePagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -869,12 +869,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<String> skuIdList = list.stream().map(SkuMappingDTO.WarehousePagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (SkuMappingDTO.WarehousePagingViewDTO item : list) {
-            boolean matchResult = item.getMatchResult() != null && item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
-            item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
+            item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             item.setHasMappingAllStr(item.getHasMappingAll() ? "是" : "否");
         }
 
@@ -945,12 +944,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
         for (SkuMappingDTO.PagingViewDTO item : list) {
-            Boolean matchResult = item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
-            item.setMatchResultStr(Boolean.TRUE.equals(matchResult) ? "已匹配" : "未匹配");
+            item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(item.getProductSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
@@ -1214,31 +1212,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(platformSkuList) && !PlatformDictEnum.SHOPEE.getCode().equals(dictPlatform)) {
             return Collections.emptyMap();
         }
-        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-        paramDTO.setPlatform(dictPlatform);
-        paramDTO.setShopIdList(Collections.singletonList(shopId));
-        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)){
-            // 速卖通订单SKU为空的情况只根据PlatformSkuNo匹配
-            if (CollectionUtils.isNotEmpty(platformSkuList) && platformSkuList.stream().allMatch(StringUtils::isNotBlank)){
-                paramDTO.setPlatformSkuNoList(platformSkuList);
-            }
-            // 存在空SKU忽略PlatformSkuNo查询
-        } else {
-            // 其他平台正常通过平台SKU查询
-            paramDTO.setPlatformSkuNoList(platformSkuList);
-        }
-
-        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
-                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
-                || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dictPlatform)
-                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)){
-            paramDTO.setPlatformSpuNoList(platformSpuList);
-        }
-        paramDTO.setMatchResult(true);
-        paramDTO.setLastExpireDate(platformOrderCreateTime);
-        paramDTO.setIsExpire(isExpire);
+        // 构建请求参数
+        ListingInfoParamDTO paramDTO = constructDto(platformSkuList, platformSpuList, dictPlatform, Collections.singletonList(shopId), platformOrderCreateTime, isExpire);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> listDto = this.findListDto(paramDTO);
         if (CollectionUtils.isEmpty(listDto)){
@@ -1247,6 +1222,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return listDto.stream()
                 .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
     }
+
 
     /**
      * 检查或获取映射关系
@@ -1301,16 +1277,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto) {
-        String tabFlag = dto.getParams().getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
         dto.getParams().setType(RuleTypeEnum.PLATFORM.getCode());
-        Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), matchResult);
+        Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
 
         fillDb(page.getRecords());
         return new PagingVO<>(page);
@@ -1318,17 +1286,86 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
-        String tabFlag =  dto.getParams().getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
         dto.getParams().setType(RuleTypeEnum.WAREHOUSE.getCode());
-        Page<SkuMappingDTO.WarehousePagingViewDTO> page = baseMapper.listWarehouseExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), matchResult);
+        Page<SkuMappingDTO.WarehousePagingViewDTO> page = baseMapper.listWarehouseExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         fillWarehouseDb(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+
+    @Override
+    public ListingInfoParamDTO constructDto(List<String> platformSkuList,
+                                            List<String> platformSpuList,
+                                            String dictPlatform,
+                                            List<String> shopIdList,
+                                            LocalDateTime platformOrderCreateTime,
+                                            Boolean isExpire
+    ) {
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(dictPlatform);
+        paramDTO.setShopIdList(shopIdList);
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+
+        // 亚马逊订单来源spu为空
+        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dictPlatform)){
+            // 过滤空spu
+            platformSpuList = platformSpuList.stream()
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
+        // 校验平台sku和平台spu必须其一不为空
+        if (CollectionUtils.isEmpty(platformSkuList) && CollectionUtils.isEmpty(platformSpuList)){
+            ServiceException.runError("参数异常:平台sku和平台spu都为空");
+        }
+
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+                && PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                && PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
+                && PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
+        ){
+            // 速卖通/Shopify/Tiktok订单SKU为空的情况只根据PlatformSkuNo匹配
+            if (CollectionUtils.isNotEmpty(platformSkuList) && platformSkuList.stream().allMatch(StringUtils::isNotBlank)){
+                paramDTO.setPlatformSkuNoList(platformSkuList);
+            }
+            // 存在空SKU忽略PlatformSkuNo查询
+        } else {
+            // 其他平台正常通过平台SKU查询
+            paramDTO.setPlatformSkuNoList(platformSkuList);
+        }
+
+        // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
+        ){
+            paramDTO.setPlatformSpuNoList(platformSpuList);
+        }
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        paramDTO.setLastExpireDate(platformOrderCreateTime);
+        paramDTO.setIsExpire(isExpire);
+        return paramDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto) {
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(dto.getListingIds());
+        if (CollectionUtils.isEmpty(listingInfoEntityList)){
+            throw new ServiceException("listing不存在");
+        }
+        if(listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.TRUE.getCode().equals(v.getMatchResult()))
+        || listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.NOT.getCode().equals(v.getMatchResult()))){
+            throw new ServiceException("只有未匹配的数据可以操作无需匹配");
+        }
+        listingInfoEntityList.forEach(v->{
+            v.setMatchResult(ListingMatchResultEnum.NOT.getCode());
+            v.setRemark(dto.getRemark());
+            String msg = StrUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), v.getId(), "状态变更");
+        });
+        listingInfoService.updateBatchById(listingInfoEntityList);
     }
 }

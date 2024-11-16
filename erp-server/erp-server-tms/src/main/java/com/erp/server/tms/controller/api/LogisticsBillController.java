@@ -121,10 +121,10 @@ public class LogisticsBillController extends BaseController {
         if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(transportNo)){
             return failure("运单号和跟踪号不能同时为空");
         }
-        if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(logisticsChannelId)){
+        if (StringUtils.isBlank(trackNo) && StringUtils.isNotBlank(transportNo)){
             trackNo = transportNo;
         }
-        if (StringUtils.isNotBlank(logisticsChannelId)){
+        if (StringUtils.isNotBlank(logisticsChannelId) && StringUtils.isNotBlank(transportNo)){
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsChannelId);
             if (Objects.isNull(channelEntity) || StringUtils.isBlank(channelEntity.getTrackQueryType())
                     || !TrackQueryTypeEnum.TRACK_NO.getCode().equals(channelEntity.getTrackQueryType())){
@@ -167,14 +167,12 @@ public class LogisticsBillController extends BaseController {
     }
 
     /**
-     * 初始化历史物流单手机号数据
-     *
+     * 初始化头程发货单业务单号
      * @return
      */
-    @PostMapping("/initLogisticsBillPhone")
-    public ApiResult<LogisticsTrackDTO.ViewDTO> initLogisticsBillPhone(@RequestBody LogisticsBillDTO.BillPhoneDTO dto) {
-        logisticsBillService.initLogisticsBillPhone(dto);
+    @PostMapping("/initLogisticsBillBusinessCode")
+    public ApiResult initLogisticsBillBusinessCode(){
+        logisticsBillService.initLogisticsBillBusinessCode();
         return success();
-
     }
 }

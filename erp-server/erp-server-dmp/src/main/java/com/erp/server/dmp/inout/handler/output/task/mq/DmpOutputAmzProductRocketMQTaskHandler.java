@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformProductDTO;
 import com.common.core.entity.BaseEntity;
@@ -12,6 +13,8 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.*;
 
+
+@Slf4j
 @Service
 @Scope("prototype")
 public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
@@ -41,13 +46,13 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
                     }
                 }else if("dmp_sku_info".equals(storageName)) {
                     for(BaseEntity v : value) {
-                        DmpSkuInfoEntity dmpSoReturnDetailEntity = (DmpSkuInfoEntity) v;
-                        String mainId = dmpSoReturnDetailEntity.getMainId();
+                        DmpSkuInfoEntity skuEntity = (DmpSkuInfoEntity) v;
+                        String mainId = skuEntity.getMainId();
                         List<DmpSkuInfoEntity> list = dmpSkuInfoEntityMap.get(mainId);
                         if(CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
                         }
-                        list.add(dmpSoReturnDetailEntity);
+                        list.add(skuEntity);
                         dmpSkuInfoEntityMap.put(mainId, list);
                     }
                 }
@@ -66,8 +71,8 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
                     }
                 }else if("dmp_sku_info".equals(storageName)) {
                     for(BaseEntity v : value) {
-                        DmpSkuInfoEntity dmpSoReturnDetailEntity = (DmpSkuInfoEntity) v;
-                        changeIds.add(dmpSoReturnDetailEntity.getMainId());
+                        DmpSkuInfoEntity detailEntity = (DmpSkuInfoEntity) v;
+                        changeIds.add(detailEntity.getMainId());
                     }
                 }
             }
@@ -77,6 +82,10 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
         for(String changId : changeIds) {
             DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
             List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
+            if (CollectionUtils.isEmpty(dmpSkuInfoEntityList)){
+                log.warn("亚马逊中台Listing数据解析异常: dmpProductInfoEntity={}, skuEntityList={}", JSONUtil.toJsonStr(dmpProductInfoEntity), JSONUtil.toJsonStr(dmpSkuInfoEntityList));
+                continue;
+            }
             for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
                 PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
                 if(product != null) {

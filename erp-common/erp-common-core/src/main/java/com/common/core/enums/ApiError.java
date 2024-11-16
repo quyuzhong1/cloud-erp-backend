@@ -965,6 +965,7 @@ public enum ApiError implements Serializable {
     NOT_APPROVE_NOT_UPDATE_LOGISTICS(99114,"只有待审核和审核通过的发货单可以更新物流信息"),
     DELIVERY_QTY_EXCEED_DECLAREQTY(99115,"sku【{}】发货数量超过申报数量不允许下推"),
     ERROR_NOT_REQUISITION_APPLICATION(99116,"未找到要货申请单"),
+    ERROR_NOT_DELIVERY_NOTICE(99116,"未找到发货通知单"),
     ERROR_NOT_WAREHOUSE(99117,"请匹配系统仓库后启用"),
     ERROR_ONWAY_WAREHOUSE_NOT_EXIST(99118,"在途归属仓库不存在"),
     IS_SUBMIT_IN_SUBMIT(99119,"只有待提交的状态可以提交"),
@@ -1041,7 +1042,11 @@ public enum ApiError implements Serializable {
     ERROR_UPLOAD_SUCCES_CAN_ORDER_FORCAST(92137,"仅支持订单预报为【待上传/上传失败】，可操作【订单预报】"),
     THIRD_WAREHOUSE_NAME_EXIST(92132,"平台【{}】第三方仓【{}】不能重复绑定多个仓库"),
     ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED(92133,"已有盘盈盘亏单【{}】不允许操作【{}】之前单据"),
-
+    ERROR_92134(92134,"中转仓库不能为空，请检查出库配置"),
+    ERROR_92135(92135,"头程发货单【{}】配置的发货仓库不能为空"),
+    ERROR_92136(92136,"发货通知单【{}】配置的发货仓库不能为空"),
+    ERROR_92137(92137,"B2C发货单【{}】配置的发货仓库不能为空"),
+    ERROR_92138(92138,"存在已审核调拨单【{}】不能修改中转仓"),
     ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 自发货费用单据已确认状态下,不允许反审核"),
     ERROR_DELIVERY_INTERCEPT_READY_PACKAGED(92139,"销售订单号【{}】已组包不支持拦截操作"),
     ERROR_92140(92140,"关联单号【{}】已审核不能修改装箱"),
@@ -1051,12 +1056,13 @@ public enum ApiError implements Serializable {
     ERROR_92144(92144,"发货通知到记录不存在"),
     ERROR_92145(92145,"箱规记录不存在"),
     ERROR_92146(92146,"装箱记录不存在"),
-    ERROR_92147(92147,"SKU【{}】不可超过未装箱数量【{}】"),
+    ERROR_92147(92147,"SKU【{}】FnSKU【{}】不可超过未装箱数量【{}】"),
     ERROR_92148(92148,"SKU【{}】不可超过本箱已装箱数量【{}】"),
     ERROR_92149(92149,"SKU【{}】在关联单中没有记录"),
     ERROR_92150(92150,"SKU【{}】在装箱中没有记录不能移出"),
     ERROR_92251(92251,"关联单号已审核，不支持编辑修改删除"),
-    ERROR_92252(92252,"装箱中SKU【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
+    ERROR_92252(92252,"装箱中SKU【{}】FnSku【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
+    ERROR_92266(92266,"装箱中SKU【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
     ERROR_92253(92253,"装箱中SKU累计装箱数量不可大于拣货数量"),
     ERROR_92254(92254,"本箱已完成称重，不支持调整装箱"),
     ERROR_92255(92255,"调整装箱后，装箱数量不能为0"),
@@ -1067,7 +1073,7 @@ public enum ApiError implements Serializable {
     ERROR_92260(92260,"同一个单【{}】同一个月份【{}】仅可生成一次对账单"),
     ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
     ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
-
+    ERROR_92263(92263,"未找到【{}】仓库"),
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
@@ -1140,7 +1146,8 @@ public enum ApiError implements Serializable {
     UNPICKED_QUANTITY_SHORTAGE(92151, "未拣货数量不足，无法生成拣货单，请重新操作"),
     CFG_RULE_WAVE_ORDER_QTY_COMPARE(92152, "最小单数不能大于最大单数"),
     CFG_RULE_WAVE_QTY_COMPARE(92153, "最少商品数量不能大于最大商品数量"),
-
+    ERROR_92164(92164,"请先审核通过关联的中转调拨单【{}】后审核出库单"),
+    ERROR_92165(92165,"出库日期不能早于最后一个调拨单的调拨日期【{}】"),
 
     ERROR_VW_CHANNEL_ERROR(92234,"当前{}【{}】已经被虚拟仓【{}】绑定\n"),
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
@@ -1164,6 +1171,7 @@ public enum ApiError implements Serializable {
     ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
     ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
 
+    ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1491,6 +1499,31 @@ public enum ApiError implements Serializable {
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
+
+
+
+    /**
+     * MRP 错误
+     * 从97000 开始
+     */
+    ERROR_NOT_RESTOCKING_REPLENISHMENT(97001,"只有正常补货数据支持暂不补货"),
+    ERROR_RESTORE_REPLENISHMENT(97002,"只有暂不补货数据支持恢复补货"),
+    ERROR_CFG_RULE_STOCK_UP_NOT_EXIST(97003,"备货（规则配置）不存在"),
+    ERROR_CFG_RULE_SALES_NOT_EXIST(97004,"销量（{}规则配置）不存在"),
+    ERROR_CFG_RULE_NEWS_NOT_EXIST(97010,"新品系统规则配置不存在"),
+    ERROR_CFG_RULE_REPLENISHMENT_NOT_EXIST(97011,"补货天数规则配置不存在"),
+    ERROR_DETAIL_NOT_EXIST(97012,"明细数据不存在"),
+    ERROR_LOGISTICS_NOT_EXIST(97013,"物流配置不存在"),
+    ERROR_TABLE_NOT_EXIST(97014,"表{}不存在"),
+    ERROR_TIME_FRAME_NOT_EXIST(97015,"*建议时间范围规则配置不存在"),
+
+
+
+
+
+
+
+
 
     //旺店通异常
     ERROR_3000(3000, "请求旺店通接口异常"),

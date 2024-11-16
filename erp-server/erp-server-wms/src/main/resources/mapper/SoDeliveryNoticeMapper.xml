@@ -230,6 +230,7 @@
     <select id="pagingPicking" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PickingViewDTO">
         select sdnd.id AS detailId,
         sdnd.sku_no AS skuNo,
+        sdnd.platform_sku_no AS platformSkuNo,
         sdnd.sku_id AS skuId,
         sdnd.delivery_qty AS planQty,
         sdnd.picking_qty AS pickedQuantity,

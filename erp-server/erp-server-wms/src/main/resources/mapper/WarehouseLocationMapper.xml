@@ -414,4 +414,37 @@
           and wl.is_deleted = false
           and wa.warehouse_id = #{warehouseId}
     </select>
+    <select id="getOneWareInventoryQty"  resultType="com.erp.model.wms.dto.WarehouseLocationDTO$WareInventoryQtyDTO">
+        SELECT
+        DISTINCT
+        wl.ID,
+        wl.warehouse_id,
+        wl.code AS warehouseCode,
+        wl.NAME AS warehouseName,
+        wa.code as warehouseLocationCode,
+        wa.name as warehouseLocationName,
+        i.qty,
+        i.sku_id,
+        i.sku_no
+        FROM
+        warehouse_location AS wl
+        INNER JOIN inventory AS i ON wl.warehouse_id = i.warehouse_id
+        AND i.is_deleted =FALSE
+        INNER join warehouse_location as wa on wa.parent_id = wl.id
+        and i.warehouse_location = wa.code
+        and wa.is_deleted =FALSE
+        WHERE
+        wl.is_deleted = FALSE
+        AND wl.area_type != 'pickingArea'
+        AND i.qty > 0
+        AND i.dict_inventory_status = 'usable'
+        <if test="skuNo != null and skuNo != ''">
+            AND i.sku_no = #{skuNo}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            AND wl.warehouse_id = #{warehouseId}
+        </if>
+        ORDER BY i.qty DESC
+            limit 1
+    </select>
 </mapper>

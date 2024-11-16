@@ -90,7 +90,9 @@
         sb2cl.weight,
         sb2cl.name as sellerLogisticName,
         sb2cl.code as logisticsCode,
-        sb2cl.track_no as trackCode
+        sb2cl.track_no as trackCode,
+        sbd.create_time as createDeliveryTime,
+		sbd.finish_print_time as finishPrintTime
     </sql>
 
     <!-- 通用查询结果列 -->
@@ -108,7 +110,7 @@
         end
         as shippingCostCurrency,
         sb2c.seller_order_code as sellerOrderCode,
-        sb2c.platform_code as platformCode,
+        sb2c.platform_code AS platformCode,
         sb2c.approve_status as approveStatus,
         sb2c.bill_status as billStatus,
         sb2c.amount as amount,
@@ -166,7 +168,9 @@
         sb2cr.post_code as postCode,
         sb2cr.receiver_tax_no as receiverTaxNo,
         si.country_name as countryName,
-        sbrc.categoryNames
+        sbrc.categoryNames,
+        sbd.create_time as createDeliveryTime,
+		sbd.finish_print_time as finishPrintTime
     </sql>
     <update id="updateBatchApproveById">
         <foreach collection="updateList" item="item" index="index" separator=";">
@@ -189,12 +193,13 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         where
         ${params.sqlMap.default}
         and sb2c.is_deleted = false
         and EXISTS (SELECT 1 from so_b2c_detail sbd where  sbd.is_deleted = false and sbd.main_id = sb2c.id) 
         <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-            and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            and sb2c.shop_id in (select id from shop_info where is_deleted = false )
         </if>
         <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
             and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
@@ -218,9 +223,6 @@
             ${params.sqlMap.default}
             and sb2c.is_deleted = false
             and EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id)
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -280,9 +282,6 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -335,9 +334,6 @@
                 <foreach collection="params.countryIdList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
-            </if>
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
             </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
@@ -445,9 +441,6 @@
                 <foreach collection="params.logisticsChannelIdList" item="item" open="(" separator="," close=")">
                     #{item}
                 </foreach>
-            </if>
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
             </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
@@ -836,12 +829,10 @@
         left join (
             select so_b2c_id,array_to_string(array_agg(category_name), ',') as categoryNames from so_b2c_ref_category where is_deleted = false group by so_b2c_id
         ) sbrc on sb2c.id = sbrc.so_b2c_id
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -880,9 +871,6 @@
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.sign_order_error != '' and sb2c.invalid_status = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -917,9 +905,6 @@
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.sign_order_error != '' and sb2c.invalid_status = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -992,9 +977,6 @@
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>

@@ -4,6 +4,7 @@ import com.common.business.validator.ValidGroup;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 
@@ -19,13 +20,15 @@ public class InventoryStockBaseDTO implements Serializable {
     /**
      * sku id
      */
-    @NotEmpty(message = "sku id不能为空")
+    @NotBlank(message = "sku id不能为空")
+    @NotBlank(message = "sku id不能为空", groups = {ValidGroup.Update.class})
     private String skuId;
 
     /**
      * sku编码
      */
-    @NotEmpty(message = "sku编码不能为空")
+    @NotBlank(message = "sku编码不能为空")
+    @NotBlank(message = "sku编码不能为空", groups = {ValidGroup.Update.class})
     private String skuNo;
 
     /**
@@ -37,7 +40,7 @@ public class InventoryStockBaseDTO implements Serializable {
     /**
      * 仓库id
      */
-    @NotEmpty(message = "仓库id 不能为空", groups = {ValidGroup.Update.class})
+    @NotBlank(message = "仓库id 不能为空", groups = {ValidGroup.Update.class})
     private String warehouseId;
 
     /**

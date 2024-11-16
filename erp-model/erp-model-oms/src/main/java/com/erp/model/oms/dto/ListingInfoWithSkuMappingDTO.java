@@ -123,7 +123,7 @@ public class ListingInfoWithSkuMappingDTO {
     /**
      * 匹配结果吧true 已匹配 false 未匹配
      */
-    private Boolean matchResult;
+    private String matchResult;
 
     /**
      * 产品图片 url

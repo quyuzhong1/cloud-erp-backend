@@ -253,9 +253,9 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     /**
      * 更新任务状态
      * @param groupSkuDTOS
-     * @param taskId
+     * @param packingTaskEntity
      */
-    void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOS, String taskId);
+    void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOS, PackingTaskEntity packingTaskEntity);
 
     void updateWeightStatus(PackingTaskEntity packingTaskEntity);
 
@@ -282,6 +282,13 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     void updatePackingStatusByTaskId(String taskId);
+
+    /**
+     * 根据外部箱号查询装箱的基础信息和产品明细
+     * @param outBoxNo
+     * @return
+     */
+    WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(String outBoxNo);
 
     void syncByDeliveryNoticeChange(SoDeliveryNoticeEntity soDeliveryNotice, List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
 }

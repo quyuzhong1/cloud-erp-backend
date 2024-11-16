@@ -10,6 +10,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
+import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.mapper.BomRefSkuMapper;
 import com.erp.server.plm.service.BomSkuService;
@@ -333,5 +334,12 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
             skuBomVersionList.add(bomVersion);
         }
         return skuBomVersionList;
+    }
+
+    @Override
+    public List<BomDTO.BomSku> listAllBom(List<String> childSkuIdList) {
+        List<BomDTO.BomSku> list = baseMapper.listAllBomByChildSkuIdList(childSkuIdList);
+        list = list.stream().filter(v-> BomStateEnum.AUDIT_PASS.getState().equals(v.getState())).collect(Collectors.toList());
+        return list;
     }
 }

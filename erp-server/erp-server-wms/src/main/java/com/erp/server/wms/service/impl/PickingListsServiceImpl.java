@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -141,18 +142,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
         Map<String, String> warehouseMap = dto.getDetails().stream().collect(Collectors.toMap(PickingDetailDTO.AddDTO::getWarehouseId, PickingDetailDTO.AddDTO::getWarehouseName, (o1, o2) -> o1));
-        // 拣货明细转换为规则执行数据明细
-        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> details = dto.getDetails().stream()
-                .map(v -> new CfgRulePickingDTO.CfgExecutionDataDetailDTO(v.getWarehouseId(), v.getSkuId(), v.getSkuNo(), v.getQty(), v.getSourceDetailId())).collect(Collectors.toList());
-        CfgRulePickingDTO.CfgExecutionDataDTO executionData = new CfgRulePickingDTO.CfgExecutionDataDTO();
-        executionData.setBillType(dto.getBillType());
-        executionData.setCustomerId(dto.getCustomerId());
-        executionData.setDeliveryWarehouseId(dto.getDeliveryWarehouseId());
-        executionData.setSourceCode(dto.getSourceCode());
-        executionData.setCountryCode(dto.getCountryCode());
-        executionData.setDetails(details);
-        // 执行拣货规则
-        List<LocationInventoryResultDTO> results = cfgRulePickingService.getRuleOrderMatchResult(executionData);
+        // 拣货规则
+        List<LocationInventoryResultDTO> results = dto.getRuleOrderMatchResult();
         // 根据仓库分组，生成不同的拣货单
         Map<String, List<LocationInventoryResultDTO>> warehouseResultMap = results.stream().collect(Collectors.groupingBy(LocationInventoryResultDTO::getWarehouseId));
         for (Map.Entry<String, List<LocationInventoryResultDTO>> result : warehouseResultMap.entrySet()) {
@@ -186,6 +177,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setMainId(entity.getId());
                 detail.setSkuId(resultDTO.getSkuId());
                 detail.setSkuNo(resultDTO.getSkuNo());
+                detail.setPlatformSkuNo(resultDTO.getPlatformSkuNo());
                 detail.setQty(resultDTO.getQuantity());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setWarehouseLocation(resultDTO.getWarehouseLocation());
@@ -209,7 +201,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     /**
      * 处理组合sku
      */
-    private void generatePicking(PickingListsDTO.AddDTO dto) {
+    @Override
+    public void generatePicking(PickingListsDTO.AddDTO dto) {
         List<PickingDetailDTO.AddDTO> detailList = new ArrayList<>();
         List<String> skuIds = dto.getDetails().stream().map(PickingDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         //获取子SKU集合
@@ -364,10 +357,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<RequisitionApplicationEntity> applicationEntities = requisitionApplicationService.listByIds(sourceIds);
         List<RequisitionApplicationDetailEntity> applicationDetails = requisitionApplicationDetailService.listByIds(sourceDetailIds);
         List<String> applicationDetailSkuIds = applicationDetails.stream().map(RequisitionApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        //获取子SKU集合
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(applicationDetailSkuIds);
-
+        //发货通知
         List<SoDeliveryNoticeEntity> noticeEntities = soDeliveryNoticeService.listByIds(sourceIds);
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listByIds(sourceDetailIds);
+        List<String> noticeDetailSkuIds = noticeDetailEntities.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> allSkuIds = Stream.concat(applicationDetailSkuIds.stream(), noticeDetailSkuIds.stream()).distinct().collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(allSkuIds);
+
         List<String> soIds = noticeEntities.stream().map(SoDeliveryNoticeEntity::getSourceId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfos = new ArrayList<>();
         if (!CollectionUtils.isEmpty(soIds)) {
@@ -415,16 +412,28 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 }
                 return view;
             }).collect(Collectors.toList());
-            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getThirdSku() + ":"+  v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
                     Collectors.collectingAndThen(Collectors.toList(), v -> {
                         PickingListsDTO.PrintDetailView view = v.get(0);
                         int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintDetailView::getPickingQty).sum();
                         view.setPickingQty(totalQuantity);
                         return view;
-                    }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getWarehouseId)
-                    .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)
-                    .thenComparing(PickingListsDTO.PrintDetailView::getSkuNo)).collect(Collectors.toList());
-
+                    }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getSkuNo)
+                    .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)).collect(Collectors.toList());
+            //相同sku去空格
+            String currentSku = "";
+            for (PickingListsDTO.PrintDetailView printDetailView : viewList){
+                if(StringUtils.isBlank(currentSku)){
+                    currentSku = printDetailView.getSkuNo();
+                    continue;
+                }
+                if(printDetailView.getSkuNo().equals(currentSku)){
+                    printDetailView.setSkuNo("");
+                    printDetailView.setProductName("");
+                }else{
+                    currentSku = printDetailView.getSkuNo();
+                }
+            }
             printView.setPrintDetailViews(viewList);
             //封装组合品明细
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
@@ -442,6 +451,17 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                                     && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                             ).collect(Collectors.toList());
                     if(CollectionUtils.isEmpty(sonSkuList)){
+                        PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                        combinationPrintDetailView.setThirdSku("");
+                        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
+                            combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
+                        }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(application.getType())){
+                            combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformSku()));
+                        }
+                        combinationPrintDetailView.setIsCombination(Boolean.FALSE);
+                        combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo());
+                        combinationPrintDetailView.setParentSkuQty(requisitionApplicationDetail.getPickingQty());
+                        combinationPrintDetailViewList.add(combinationPrintDetailView);
                         continue;
                     }
                     for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
@@ -449,8 +469,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         combinationPrintDetailView.setThirdSku("");
                         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                             combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
+                        }else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(application.getType())){
+                            combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformSku()));
                         }
-                        combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo());
+                        combinationPrintDetailView.setIsCombination(Boolean.TRUE);
+                        combinationPrintDetailView.setParentSku(requisitionApplicationDetail.getSkuNo() + "【组】");
                         combinationPrintDetailView.setParentSkuQty(requisitionApplicationDetail.getPickingQty());
                         combinationPrintDetailView.setChildSku(bomChildrenSkuDTO.getSkuNo());
                         combinationPrintDetailView.setChildSkuQty(requisitionApplicationDetail.getPickingQty() * bomChildrenSkuDTO.getQuantity());
@@ -462,11 +485,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             PickingListsDTO.CombinationPrintDetailView view = v.get(0);
                             Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
                             view.setParentSkuQty(totalParentQty);
-                            int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
-                            view.setChildSkuQty(totalChildQty);
+                            if (StrUtil.isNotBlank(view.getChildSku())){
+                                int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
+                                view.setChildSkuQty(totalChildQty);
+                            }
                             return view;
-                        }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)
-                        .thenComparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)).collect(Collectors.toList());
+                        }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)
+                        .thenComparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)).collect(Collectors.toList());
                 //清空上层相同父sku
                 String currentParentSku = "";
                 Integer parentQty = 0;
@@ -476,9 +501,86 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         parentQty = combinationPrintDetailView.getParentSkuQty();
                         continue;
                     }
-                    if(combinationPrintDetailView.getParentSku().equals(currentParentSku) && parentQty.equals(combinationPrintDetailView.getParentSkuQty())){
+                    if(combinationPrintDetailView.getParentSku().equals(currentParentSku) && parentQty.equals(combinationPrintDetailView.getParentSkuQty()) && combinationPrintDetailView.getIsCombination()){
                         combinationPrintDetailView.setParentSku("");
                         combinationPrintDetailView.setParentSkuQty(null);
+                        combinationPrintDetailView.setThirdSku("");
+                    }else{
+                        currentParentSku = combinationPrintDetailView.getParentSku();
+                        parentQty = combinationPrintDetailView.getParentSkuQty();
+                    }
+                }
+                printView.setCombinationPrintDetailView(combinationList);
+            }else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(picking.getSourceType())){
+                List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailViewList = new ArrayList<>();
+                List<String> noticeDetailIds = details.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
+                List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = noticeDetailEntities.stream().filter(v -> noticeDetailIds.contains(v.getId())).collect(Collectors.toList());
+                for (SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity : soDeliveryNoticeDetailEntityList) {
+                    //查询sku是否存在子SKU
+                    List<BomChildrenSkuDTO> sonSkuList = null;
+                    if (StrUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
+                        sonSkuList = bomChildrenSkuDTOS.stream()
+                                .filter(req -> req.getParentSkuId().equals(soDeliveryNoticeDetailEntity.getSkuId())
+                                    && req.getBomVersion().equals(soDeliveryNoticeDetailEntity.getBomVersion())
+                                                && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                                ).collect(Collectors.toList());
+                    }else {
+                        sonSkuList = bomChildrenSkuDTOS.stream()
+                                .filter(req -> req.getParentSkuId().equals(soDeliveryNoticeDetailEntity.getSkuId())
+                                                && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                                ).collect(Collectors.toList());
+                        //如果记录不为空 则 取最大bom版本
+                        if (!CollectionUtils.isEmpty(sonSkuList)){
+                            BomChildrenSkuDTO bomChildrenSkuDTO = sonSkuList.stream().max(Comparator.comparing(BomChildrenSkuDTO::getBomVersion)).orElse(null);
+                            String bomVersion = Objects.nonNull(bomChildrenSkuDTO) ? bomChildrenSkuDTO.getBomVersion(): "";
+                            sonSkuList = sonSkuList.stream().filter(e -> Objects.equals(bomVersion,e.getBomVersion())).collect(Collectors.toList());
+                        }
+                    }
+                    if(CollectionUtils.isEmpty(sonSkuList)){
+                        PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                        combinationPrintDetailView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
+                        combinationPrintDetailView.setIsCombination(Boolean.FALSE);
+                        combinationPrintDetailView.setParentSku(soDeliveryNoticeDetailEntity.getSkuNo());
+                        combinationPrintDetailView.setParentSkuQty(soDeliveryNoticeDetailEntity.getPickingQty());
+                        combinationPrintDetailViewList.add(combinationPrintDetailView);
+                        continue;
+                    }
+                    for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
+                        PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                        combinationPrintDetailView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
+                        combinationPrintDetailView.setIsCombination(Boolean.TRUE);
+                        combinationPrintDetailView.setParentSku(soDeliveryNoticeDetailEntity.getSkuNo() + "【组】");
+                        combinationPrintDetailView.setParentSkuQty(soDeliveryNoticeDetailEntity.getPickingQty());
+                        combinationPrintDetailView.setChildSku(bomChildrenSkuDTO.getSkuNo());
+                        combinationPrintDetailView.setChildSkuQty(soDeliveryNoticeDetailEntity.getPickingQty() * bomChildrenSkuDTO.getQuantity());
+                        combinationPrintDetailViewList.add(combinationPrintDetailView);
+                    }
+                }
+                List<PickingListsDTO.CombinationPrintDetailView> combinationList = new ArrayList<>(combinationPrintDetailViewList.stream().collect(Collectors.groupingBy(v -> v.getThirdSku() + ":"+  v.getParentSku() + ":" + v.getChildSku(),
+                        Collectors.collectingAndThen(Collectors.toList(), v -> {
+                            PickingListsDTO.CombinationPrintDetailView view = v.get(0);
+                            Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
+                            view.setParentSkuQty(totalParentQty);
+                            if (StrUtil.isNotBlank(view.getChildSku())){
+                                int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
+                                view.setChildSkuQty(totalChildQty);
+                            }
+                            return view;
+                        }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)
+                        .thenComparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)).collect(Collectors.toList());
+                //清空上层相同父sku
+                String currentParentSku = "";
+                Integer parentQty = 0;
+                for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
+                    if(StringUtils.isBlank(currentParentSku)){
+                        currentParentSku = combinationPrintDetailView.getParentSku();
+                        parentQty = combinationPrintDetailView.getParentSkuQty();
+                        continue;
+                    }
+                    if(combinationPrintDetailView.getParentSku().equals(currentParentSku) && parentQty.equals(combinationPrintDetailView.getParentSkuQty()) && combinationPrintDetailView.getIsCombination()){
+                        combinationPrintDetailView.setParentSku("");
+                        combinationPrintDetailView.setParentSkuQty(null);
+                        combinationPrintDetailView.setThirdSku("");
                     }else{
                         currentParentSku = combinationPrintDetailView.getParentSku();
                         parentQty = combinationPrintDetailView.getParentSkuQty();

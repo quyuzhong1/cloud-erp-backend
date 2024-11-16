@@ -16,6 +16,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerAddressService;
@@ -480,6 +481,25 @@ public class CustomerInfoController extends BaseController {
     public ApiResult<List<BatchResultDTO>> addAndSubmitSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) throws IOException {
         List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchAddAndSubmit(addDTOList);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
+    }
+
+    /**
+     * 启用的客户列表(简称)
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
+     * @Author jack
+     * @Date 2024-11-06
+     **/
+    @PostMapping("/listSimpleName")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customer:paging",
+            tableAlias = "customer_info"
+    )
+    public ApiResult<List<CustomerDTO.InfoDTO>> listSimpleName(@RequestBody CustomerDTO.PageSelectDTO dto) {
+        List<CustomerDTO.InfoDTO> list = customerInfoService.listSimpleName(dto);
+        return success(list);
     }
 
 }

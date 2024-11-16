@@ -2029,6 +2029,10 @@ public class SoInfoDTO implements Serializable {
          * sku编号
          */
         private String skuNo;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
 
         /**
          * 产品名称

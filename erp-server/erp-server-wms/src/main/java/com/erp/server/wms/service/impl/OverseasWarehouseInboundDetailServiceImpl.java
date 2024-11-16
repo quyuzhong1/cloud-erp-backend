@@ -13,12 +13,10 @@ import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundReceivedEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.server.wms.convert.WmsOverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundDetailMapper;
 import com.erp.server.wms.service.*;
@@ -52,6 +50,8 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     private OverseasWarehouseInboundReceivedService overseasWarehouseInboundReceivedService;
     @Resource
     private OverseasWarehouseInboundService overseasWarehouseInboundService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
     private TransferInfoService transferInfoService;
 
@@ -248,8 +248,11 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             Optional.ofNullable(mainEntity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
             // 非手动单
             if (StringUtils.isNotBlank(mainEntity.getDictPlatform())){
-                String msg = StrUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
-                throw new ServiceException(msg);
+                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseIdWithNotDisabled(mainEntity.getToWarehouseId());
+                if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                    String msg = StrUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
+                    throw new ServiceException(msg);
+                }
             }
             if (!OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus()) &&
                     !OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
@@ -263,7 +266,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
             entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
             entity.setDiffQty(entity.getDiffQty() + dto.getReceivedQty());
-            entity.setReceiveTime(LocalDateTime.now(ZoneId.systemDefault()));
+            entity.setReceiveTime(dto.getReceiveDate().atStartOfDay());
             // 计算在途数量
             int newTransportQty = entity.getPackQty() - entity.getReceiveQty();
             entity.setTransportQty(newTransportQty);
@@ -323,7 +326,11 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 //审核
                 TransferInfoEntity entity = transferInfoService.getById(transferOutId);
                 if (Objects.nonNull(entity)){
-                    transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+                    try {
+                        transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+                    }catch (Exception e){
+                        throw new ServiceException(e.getMessage());
+                    }
                 }
             } else {
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);

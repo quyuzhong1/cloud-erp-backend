@@ -68,6 +68,11 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @TableField("outstock_code")
     private String outstockCode;
     /**
+     * 业务编号
+     */
+    @TableField("business_code")
+    private String businessCode;
+    /**
     * 渠道id
     */
     @TableField("channel_id")

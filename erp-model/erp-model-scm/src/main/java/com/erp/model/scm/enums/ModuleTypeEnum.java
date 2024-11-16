@@ -108,6 +108,10 @@ public enum ModuleTypeEnum {
     INVENTORY_SKU_COST("95", "SKU成本"),
     COST_ALLOCATION("96", "费用分摊"),
     PILOT_APPLICATION("97", "试产量产单"),
+
+    CFG_RULE_COMMON("97", "规则设置"),
+    REPLENISHMENT_SUGGESTION("98", "补货建议"),
+    LABEL_INFO("99", "智能补货标签管理"),
     DELIVERY_NOTICE_CHANGE("98", "发货通知变更单"),
     SO_B2C_RETURN("98", "b2c退货单"),
     REFUND_ORDER("99", "退款单"),

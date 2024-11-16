@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -34,7 +35,7 @@ public class ShopifyReturnOrderDetailDmpHandler extends DmpInputDoNextDmpHandler
             return Collections.emptyList();
         }
         // 退货/退款信息
-        List<ShopifyRefund> shopifyRefunds = JSON.parseArray(JSON.toJSONString(refundsObj), ShopifyRefund.class);
+        List<ShopifyRefund> shopifyRefunds = JSONUtil.toList(JSONUtil.toJsonStr(refundsObj), ShopifyRefund.class);
         if (CollectionUtils.isEmpty(shopifyRefunds)) {
             return Collections.emptyList();
         }

@@ -215,7 +215,7 @@ public class PickingListsDTO {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime printTime;
         /**
-         * 打印人
+         * 打单人
          */
         private String printUserName;
         /**
@@ -223,12 +223,12 @@ public class PickingListsDTO {
          */
         private String handlingUserName;
         /**
-         * 打印明细
+         * 拣货清单
          */
         private List<PrintDetailView> printDetailViews;
 
         /**
-         * 组合品打印明细
+         * 发货清单
          */
         private List<CombinationPrintDetailView> combinationPrintDetailView;
     }
@@ -238,12 +238,16 @@ public class PickingListsDTO {
     public static class CombinationPrintDetailView {
 
         /**
-         * 父级sku
+         * 是否是捆绑商品:true=是，false=否
+         */
+        private Boolean isCombination;
+        /**
+         * sku
          */
         private String parentSku;
 
         /**
-         * 父级sku数量
+         * 发货数量
          */
         private Integer parentSkuQty;
 
@@ -359,6 +363,12 @@ public class PickingListsDTO {
          * 来源单据号
          */
         private String sourceCode;
+
+        /**
+         * 生成拣货单--拣货规则
+         * 其余情况为空
+         */
+        private List<LocationInventoryResultDTO> ruleOrderMatchResult;
         /**
          * 明细
          */
@@ -430,6 +440,7 @@ public class PickingListsDTO {
     public static class DetailPickDTO{
         private String skuId;
         private String skuNo;
+        private String fnSku;
         /**
          * 数量
          */

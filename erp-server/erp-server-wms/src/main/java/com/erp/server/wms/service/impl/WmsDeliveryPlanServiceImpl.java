@@ -96,6 +96,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     private FirstMileDeliveryService firstMileDeliveryService;
     @Autowired
     private RequisitionApplicationService requisitionApplicationService;
+    @Resource
+    private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Autowired
     private SkuMappingFeign skuMappingFeign;
     @Autowired
@@ -565,15 +567,17 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     }
 
     @Override
-    public List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
-        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
+    public List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> detailIds) {
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(detailIds);
 
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
-
+        //已下推的要货申请， 已审核的要货申请，sku数量超过或等于未下推计划数量就不展示
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listBySourceDetailIds(detailIds);
+        list = list.stream().filter(e -> hasQtyCanPush(e,requisitionApplicationDetailEntities)).collect(Collectors.toList());
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
@@ -624,8 +628,29 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         return list;
     }
 
+    /**
+     * 校验是否存在可以下推的数量
+     * @param dto
+     * @param requisitionApplicationDetailEntities
+     * @return
+     */
+    private boolean hasQtyCanPush(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto, List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities) {
+        if (CollectionUtils.isEmpty(requisitionApplicationDetailEntities)){
+            return Boolean.TRUE;
+        }
+        //已下推要货数量
+        int requisitionQty = requisitionApplicationDetailEntities.stream().filter(e -> Objects.equals(dto.getSourceDetailId(), e.getSourceDetailId())).mapToInt(RequisitionApplicationDetailEntity::getRequisitionQty).reduce(MathUtil.ZERO, Integer::sum);
+        if (dto.getPlanQty() > requisitionQty){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
     @Override
     public Boolean generateRequisitionApplicationSave(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list) {
+        if (CollectionUtils.isEmpty(list)){
+            throw new ServiceException("明细数据不能为空");
+        }
         return generateRequisitionApplication(list, Boolean.FALSE);
     }
 
@@ -895,6 +920,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         //根据来源id查询发货单
         List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listBySourceIds(ids);
         List<String> requisitionIds = requisitionApplicationEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(requisitionIds);
         List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(new ArrayList<>(CollectionUtil.union(ids,requisitionIds)));
         List<String> allDeliveryIds = firstMileDeliveryEntities.stream().map(v->v.getId()).collect(Collectors.toList());
         //根据来源详情id查询发货详情
@@ -922,7 +948,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).collect(Collectors.toList());
                 List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->requisitionIdList.contains(v.getSourceId()) || v.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
-                List<String> deliveryIds = deliveryEntities.stream().map(v->v.getId()).collect(Collectors.toList());
+                List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(BaseEntity::getId).collect(Collectors.toList());
                 List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = fbaDeliveryDetailEntities.stream().filter(req -> deliveryIds.contains(req.getMainId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deliveryEntities)) {
                     data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
@@ -933,14 +959,17 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 }
             }else{
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).collect(Collectors.toList());
-                List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
-
+                List<String> requisitionIdList = requisitionApplicationList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailEntities.stream()
+                        .filter(e -> requisitionIdList.contains(e.getMainId()) && Objects.equals(data.getDetailId(), e.getSourceDetailId())).collect(Collectors.toList());
+                List<String> requisitionDetailIds = requisitionApplicationDetailEntityList.stream().map(RequisitionApplicationDetailEntity::getId).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> req.getSourceId().equals(data.getId()) || requisitionIdList.contains(req.getSourceId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deliveryEntities)) {
                     data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
                 }
+                List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(FirstMileDeliveryEntity::getId).collect(Collectors.toList());
                 //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
-                Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(data.getDetailId())).mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
+                Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> requisitionDetailIds.contains(req.getSourceDetailId()) && CollectionUtils.isNotEmpty(deliveryIds) && deliveryIds.contains(req.getMainId())).mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
                 data.setDeliveryQty(deliveryQty);
 
             }

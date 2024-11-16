@@ -103,7 +103,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         if (CollectionUtils.isEmpty(cartonIds)) {
             return Boolean.TRUE;
         }
-        return lambdaUpdate().in(WmsCartonEntity::getSpecId, cartonIds).remove();
+        return lambdaUpdate().in(WmsCartonEntity::getId, cartonIds).remove();
     }
 
     @Override
@@ -244,7 +244,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         //装箱人员填充
         wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
         wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
-        if (Objects.isNull(wmsCartonEntity.getId())){
+        if (Objects.isNull(wmsCartonEntity.getId()) && Objects.isNull(wmsCartonEntity.getBoxNo())){
             Integer boxNo = baseMapper.getBoxNoByTaskId(addDTO.getTaskId());
             if (Objects.isNull(boxNo)){
                 wmsCartonEntity.setBoxNo(MathUtil.ONE);

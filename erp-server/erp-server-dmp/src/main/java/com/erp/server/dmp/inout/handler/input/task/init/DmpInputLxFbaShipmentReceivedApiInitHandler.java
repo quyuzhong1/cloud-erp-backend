@@ -44,11 +44,11 @@ public class DmpInputLxFbaShipmentReceivedApiInitHandler extends DmpInputInitHan
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String shopId = dmpCfgInputDetailEntity.getNextLevelId();
+        String shopId = dmpInputTaskEntity.getNextLevelId();
         if (StringUtils.isBlank(shopId)) {
             ServiceException.runError("拉取领星货件签收明细异常:shopId为空");
         }
-        LocalDate requestTime = dmpCfgInputDetailEntity.getLastTime().toLocalDate();
+        LocalDate requestTime = dmpInputTaskEntity.getStartTime().toLocalDate();
         // 查询映射关系
         ShopInfoMappingEntity mappingEntity = shopInfoMappingService.getByShopIdAndType(shopId, PlatformEnum.LINGXING.getName());
         if (null == mappingEntity) {

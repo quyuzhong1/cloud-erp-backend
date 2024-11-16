@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.EstimatedDeliveryDetailMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.EstimatedDeliveryDetailEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="replenishment_detail_id" property="replenishmentDetailId" />
+        <result column="status" property="status" />
+        <result column="qty" property="qty" />
+        <result column="estimate_sales_date" property="estimateSalesDate" />
+        <result column="type" property="type" />
+        <result column="source_id" property="sourceId" />
+        <result column="source_code" property="sourceCode" />
+        <result column="source_type" property="sourceType" />
+        <result column="calc_version" property="calcVersion" />
+    </resultMap>
+    <select id="estimatedDelivery" resultType="com.erp.model.mrp.vo.EstimatedDeliveryVO">
+        select status, qty, estimate_sales_date, type, source_id, source_code, source_type
+        from estimated_delivery_detail
+        where replenishment_detail_id = #{params.detailId}
+          and type = #{params.type}
+          and source_type = #{params.sourceType}
+          and is_deleted = false
+        <if test="params.estimateSalesDate != null" >
+            and estimate_sales_date = #{params.estimateSalesDate}
+        </if>
+    </select>
+
+</mapper>

@@ -1,11 +1,9 @@
 package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.common.business.service.SuperService;
-import com.erp.model.wms.dto.FbaShipmentPackingDTO;
 
 import java.util.List;
 
@@ -40,4 +38,11 @@ public interface FbaShipmentPackingService extends SuperService<FbaShipmentPacki
     void removeByFbaCodeList(List<String> fbaCodeList);
 
     List<FbaShipmentPackingEntity> listByPackingTaskId(String taskId);
+
+    /**
+     * 根据装箱获取货件记录
+     * @param cartonIds
+     * @return
+     */
+    List<FbaShipmentPackingEntity> listByCartonIds(List<String> cartonIds);
 }

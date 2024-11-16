@@ -3,7 +3,6 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -113,7 +112,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param id
      * @return PurchaseOrderDTO.ExportPdfDTO
      */
-    PurchaseOrderDTO.ExportPdfDTO exportPurchaseContractPdf(String id);
+    PurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id);
     /**
      * @description: 导入
      * @author Will
@@ -466,4 +465,20 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PagingVO<BomExportExcelVO> exportPurchaseOrderContract(PagingDTO<String> dto);
 
     PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
+    /**
+     * 导出采购合同pdf
+     * @author will
+     * @date 2024/11/5 10:33
+     * @param id
+     * @param response
+     */
+    void exportPurchaseContractPdf(String id, HttpServletResponse response);
+    /**
+     * 采购编码分页查询
+     * @author will
+     * @date 2024/11/11 11:39
+     * @param dto
+     * @return PagingVO<SourceCodeDTO>
+     */
+    PagingVO<PurchaseOrderDTO.SourceCodeDTO> purchaseCodePaging(PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> dto);
 }

@@ -247,6 +247,12 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     @TableField("packing_status")
     private String packingStatus;
 
+    /**
+     * 中转仓库 以,分割记录
+     */
+    @TableField("transfer_warehouse_ids")
+    private String transferWarehouseIds;
+
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";

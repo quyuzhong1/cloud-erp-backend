@@ -350,6 +350,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String receiveAddress;
         /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
+        /**
          * 明细信息
          */
         private List<SoDeliveryNoticeDetailDTO.Update> detailList;
@@ -516,6 +520,11 @@ public class SoDeliveryNoticeDTO {
          */
         private String invalidRemark;
         /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
+
+        /**
          * 明细信息
          */
         private List<SoDeliveryNoticeDetailDTO.View> detailList;
@@ -601,6 +610,10 @@ public class SoDeliveryNoticeDTO {
          * skuNo
          */
         private String skuNo;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
         /**
          * skuId
          */

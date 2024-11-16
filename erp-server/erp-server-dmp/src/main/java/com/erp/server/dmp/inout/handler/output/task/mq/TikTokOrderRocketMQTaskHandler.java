@@ -242,7 +242,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         Map<String, List<DmpSoDetailEntity>> collect = dmpSoDetailEntities.stream().collect(Collectors.groupingBy(req -> req.getPlatformSku() + req.getPlatformPackageId()));
 
         return collect.entrySet().stream()
-                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e.getValue()))
+                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e.getValue(), e.getKey()))
                 .collect(Collectors.toList());
     }
 
@@ -250,7 +250,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList, String sourceDetailId) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
         if (CollectionUtil.isEmpty(soDetailEntityList)) {
             return detailDTO;
@@ -294,13 +294,8 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
 
-        List<String> thirdDetailIdList = soDetailEntityList.stream()
-                .map(DmpSoDetailEntity::getThirdDetailId)
-                .sorted()
-                .collect(Collectors.toList());
-
         // 来源明细id
-        detailDTO.setSourceDetailId(String.join(",", thirdDetailIdList));
+        detailDTO.setSourceDetailId(sourceDetailId);
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
@@ -416,6 +411,6 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     
     @Override
     protected List<String> getSourceCodeKeys() {
-    	return Arrays.asList("platformCode");
+    	return Arrays.asList("trackNo");
     }
 }

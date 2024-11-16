@@ -223,6 +223,18 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case FS_REQUISITION_NOTICE:
                 jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionNoticeDTO());
                 break;
+            case FS_REQUISITION_WAITHANDLE_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionWaitHandleDTO());
+                break;
+            case FS_REQUISITION_HANDLEING_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionHandleIngNoticeDTO());
+                break;
+            case FS_REQUISITION_PACKING_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionPackingNoticeDTO());
+                break;
+            case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsFirstMileDeliveryWaitHandleNoticeDTO());
+                break;
             default:
                 break;
         }
@@ -302,6 +314,22 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case SUBCONTRACT_IN_STOCK:
                 CfgSettingValueDTO.SubcontractInStock subcontractInStock = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
                 viewDTO.setSubcontractInStock(subcontractInStock);
+                break;
+            case FS_REQUISITION_WAITHANDLE_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionWaitHandle = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionWaitHandleDTO(fsRequisitionWaitHandle);
+                break;
+            case FS_REQUISITION_HANDLEING_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionHandleIngNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionHandleIngNoticeDTO(fsRequisitionHandleIngNotice);
+                break;
+            case FS_REQUISITION_PACKING_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionPackingNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionPackingNoticeDTO(fsRequisitionPackingNotice);
+                break;
+            case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsFirstMileDeliveryWaitHandleNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsFirstMileDeliveryWaitHandleNoticeDTO(fsFirstMileDeliveryWaitHandleNotice);
                 break;
             default:
                 break;

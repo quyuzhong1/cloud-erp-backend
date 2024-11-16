@@ -62,11 +62,21 @@ public interface NoticeMsgConstant {
     String PILOT_APPROVE_END_CONTENT=" 通知类型：试产量产完成通知\n 产品经理：{%s}\n SKU：{%s}";
 
     /**
-     * 要货申请完成通知消息头
+     * 要货申请通知消息头
      */
-    String FS_REQUISITION_SETTING_HEAD="要货申请完成通知";
+    String FS_REQUISITION_SETTING_HEAD="要货申请通知";
     /**
      * 要货申请完成通知消息体
      */
-    String FS_REQUISITION_SETTING_CONTENT="所属项目：{}\n业务名称：{}\n详细信息：要货申请单单据【{}】当前已处理完成，请即时下推发货单出库\n发送时间：{}";
+    String FS_REQUISITION_SETTING_CONTENT="所属项目：%s\n业务名称：%s\n详细信息：%s\n创建人：%s\n发送时间：%s";
+//    要货申请单单据【%s】当前已处理完成，请即时下推发货单出库
+
+    /**
+     * 头程发货通知消息头
+     */
+    String FS_FIRSTMILEDELIVERY_SETTING_HEAD="头程发货单通知";
+    /**
+     * 头程发货通知消息体
+     */
+    String FS_FIRSTMILEDELIVERY_SETTING_CONTENT="所属项目：%s\n业务名称：%s\n详细信息：%s\n创建人：%s\n发送时间：%s";
 }

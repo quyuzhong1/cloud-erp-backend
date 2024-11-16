@@ -15,11 +15,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
 import com.erp.server.wms.service.FbaInventoryService;
 import com.erp.server.wms.service.PackingTaskService;
@@ -27,16 +30,16 @@ import com.erp.server.wms.service.PickingListsService;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -170,12 +173,20 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
+            RequisitionApplicationEntity entity = requisitionApplicationService.getById(id);
             BatchResultDTO submit;
             try {
                 submit = requisitionApplicationService.submit(id);
+                //发送飞书通知 要货申请待处理 CfgSettingEnum.FS_REQUISITION_WAITHANDLE_NOTICE
+                if(null != entity){
+                    Map<String,String> map = new HashMap<>();
+                    map.put("code",entity.getCode());
+                    map.put("createUserId",entity.getCreateUserId());
+                    map.put("createUserName",entity.getCreateUserName());
+                    requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_WAITHANDLE_NOTICE);
+                }
             }catch (Exception e){
                 log.error("要货申请 提交审核失败",e);
-                RequisitionApplicationEntity entity = requisitionApplicationService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "要货申请不存在, 提交失败");
                     resultDTOS.add(submit);
@@ -202,7 +213,8 @@ public class RequisitionApplicationController extends BaseController {
             serviceClass = RequisitionApplicationService.class,
             keyIdName = "ids")
     public ApiResult<List<RequisitionApplicationDTO.HandleListDTO>> handleList(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(requisitionApplicationService.handleList(dto.getIds()));
+        List<RequisitionApplicationDTO.HandleListDTO> handleListDTOS = requisitionApplicationService.handleList(dto.getIds());
+        return success(handleListDTOS);
     }
 
 
@@ -217,6 +229,18 @@ public class RequisitionApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "处理保存:ids={ids}")
     public ApiResult handleSave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.HandleListDTO> dto) {
         Boolean flag = requisitionApplicationService.handleSave(dto.getList());
+        List<String> raIds = dto.getList().stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        //发送飞书通知 要货申请处理中 CfgSettingEnum.FS_REQUISITION_HANDLEING_NOTICE
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listByIds(raIds);
+        if(CollectionUtils.isNotEmpty(requisitionApplicationEntities)){
+            for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
+                Map<String, String> map = new HashMap<>();
+                map.put("code", entity.getCode());
+                map.put("createUserId", entity.getCreateUserId());
+                map.put("createUserName", entity.getCreateUserName());
+                requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_HANDLEING_NOTICE);
+            }
+        }
         return flag ? success() : failure();
     }
 
@@ -250,8 +274,17 @@ public class RequisitionApplicationController extends BaseController {
         Boolean flag = requisitionApplicationService.finishSave(dto.getList());
         //发送飞书通知
         if(flag){
-            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(dto.get(0).getSourceId());
-            requisitionApplicationService.sendRequisitionMsg(requisitionApplication);
+            List<String> raIds = dto.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+            List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listByIds(raIds);
+            if(CollectionUtils.isNotEmpty(requisitionApplicationEntities)){
+                for (RequisitionApplicationEntity entity : requisitionApplicationEntities) {
+                    Map<String, String> map = new HashMap<>();
+                    map.put("code", entity.getCode());
+                    map.put("createUserId", entity.getCreateUserId());
+                    map.put("createUserName", entity.getCreateUserName());
+                    requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_NOTICE);
+                }
+            }
         }
         return flag ? success() : failure();
     }
@@ -357,9 +390,9 @@ public class RequisitionApplicationController extends BaseController {
      * @param picking 参数
      */
     @PostMapping("/generatePickingList")
-    public ApiResult<String> generatePickingList(@RequestBody @Validated RequisitionApplicationDTO.GeneratePickingDTO picking) {
-        requisitionApplicationService.generatePickingList(picking);
-        return success();
+    public ApiResult<List<WarehouseLocationMoveDTO.GenPickToSkuMove>> generatePickingList(@RequestBody @Validated RequisitionApplicationDTO.GeneratePickingDTO picking) {
+        List<WarehouseLocationMoveDTO.GenPickToSkuMove> moves = requisitionApplicationService.generatePickingList(picking);
+        return success(moves);
     }
 
     /**
@@ -545,6 +578,32 @@ public class RequisitionApplicationController extends BaseController {
         requisitionApplicationService.generateDeliveryWithFba(dto);
         return success();
     }
+
+    /**
+     * 下载货件装箱信息模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载货件装箱信息模板数据")
+    @PostMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(@RequestBody @Validated List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> detailDTOS, HttpServletResponse response) {
+        requisitionApplicationService.downloadPackingTemplate(response,detailDTOS);
+        return success();
+    }
+    /**
+     * 批量导入Excel
+     * @author zdy
+     * @date: 2024/8/14 9:39
+     * @param excelImportDTO
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "批量导入Excel")
+    @PostMapping("/importFile")
+    public ApiResult<RequisitionApplicationDTO.ImportDTO> importFile(@ModelAttribute @Validated RequisitionApplicationDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        RequisitionApplicationDTO.ImportDTO dto = requisitionApplicationService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getFbaBindShipmentViewDTOS(),response);
+        return success(dto);
+    }
     /**
      * 查询发货记录
      **/
@@ -561,5 +620,17 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult assembleDownload(@RequestBody @Validated BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
         requisitionApplicationService.assembleDownload(dto.getIds(), response);
         return success();
+    }
+
+    /**
+     * 打印fnsku预览
+     * @param dto
+     * @Author jack
+     * @Date 2024/10/16
+     * @return void
+     **/
+    @PostMapping("/printFnskuPreview")
+    public ApiResult<List<RequisitionApplicationDTO.PrintFnskuDetailDTO>> printFnskuPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(requisitionApplicationService.printFnskuPreview(dto));
     }
 }
