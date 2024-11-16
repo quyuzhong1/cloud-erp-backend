@@ -261,7 +261,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请单"));
         RequisitionApplicationEntity requisitionApplicationEntity =  BeanMapperUtils.map(RequisitionApplicationEntity.class, updateDTO);
 
         // 数据处理

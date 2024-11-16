@@ -157,7 +157,6 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则");
         }
-//        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则"));
         CfgRuleWaveEntity cfgRuleWaveEntity = BeanMapperUtils.map(CfgRuleWaveEntity.class, updateDTO);
 
         long deliveryWarehouseCount = updateDTO.getConditionList().stream().filter(obj -> StrUtil.equals(obj.getField(), "deliveryWarehouseId")).count();

@@ -125,7 +125,6 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "FBA库存");
         }
-//        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "FBA库存"));
         FbaInventoryEntity fbaInventoryEntity = BeanMapperUtils.map(FbaInventoryEntity.class, updateDTO);
 
         // 数据处理

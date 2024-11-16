@@ -111,7 +111,6 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单合单明细单");
         }
-//        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "分货单合单明细单"));
         VirtualWarehousePushHandleDetailEntity virtualWarehousePushHandleDetailEntity = BeanMapperUtils.map(VirtualWarehousePushHandleDetailEntity.class, updateDTO);
 
         // 数据处理

@@ -333,7 +333,6 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单");
         }
-//        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单"));
         OverseasWarehouseInboundEntity mainEntity = new OverseasWarehouseInboundEntity();
         BeanUtils.copyProperties(old, mainEntity);
         BeanUtils.copyProperties(updateDTO, mainEntity);

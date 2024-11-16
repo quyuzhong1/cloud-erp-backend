@@ -77,7 +77,6 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单"));
         WmsDataCompareTempEntity wmsDataCompareTempEntity =  BeanMapperUtils.map(WmsDataCompareTempEntity.class, updateDTO);
 
         // 数据处理

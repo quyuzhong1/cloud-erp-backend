@@ -91,7 +91,6 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单详情");
         }
-//        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓入库单详情"));
         OverseasWarehouseInboundDetailEntity overseasWarehouseInboundDetailEntity = BeanMapperUtils.map(OverseasWarehouseInboundDetailEntity.class, updateDTO);
 
         // 数据处理

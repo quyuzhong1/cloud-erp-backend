@@ -75,7 +75,6 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "装箱任务明细单");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "装箱任务明细单"));
         PackingTaskDetailEntity packingTaskDetailEntity =  BeanMapperUtils.map(PackingTaskDetailEntity.class, updateDTO);
 
         // 数据处理

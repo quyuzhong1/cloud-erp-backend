@@ -81,7 +81,6 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比映射方案");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比映射方案"));
         WmsDataComparePlanEntity wmsDataComparePlanEntity =  BeanMapperUtils.map(WmsDataComparePlanEntity.class, updateDTO);
 
         // 数据处理

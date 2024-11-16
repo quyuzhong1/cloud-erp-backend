@@ -58,7 +58,6 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "FBA拣货明细单");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA拣货明细单"));
         FbaShipmentDetailEntity fbaShipmentDetailEntity =  BeanMapperUtils.map(FbaShipmentDetailEntity.class, updateDTO);
 
         // 数据处理

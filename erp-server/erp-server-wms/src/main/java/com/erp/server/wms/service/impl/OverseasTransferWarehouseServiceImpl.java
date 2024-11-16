@@ -86,7 +86,6 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录"));
         OverseasTransferWarehouseEntity overseasTransferWarehouseEntity =  BeanMapperUtils.map(OverseasTransferWarehouseEntity.class, updateDTO);
 
         // 数据处理

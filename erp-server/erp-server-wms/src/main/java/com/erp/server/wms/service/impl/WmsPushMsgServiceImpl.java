@@ -73,7 +73,6 @@ public class WmsPushMsgServiceImpl extends SuperServiceImpl<WmsPushMsgMapper, Wm
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "本地推送消息单");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "本地推送消息单"));
         WmsPushMsgEntity wmsPushMsgEntity =  BeanMapperUtils.map(WmsPushMsgEntity.class, updateDTO);
 
         // 数据处理

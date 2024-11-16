@@ -95,7 +95,6 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "拣货车管理");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拣货车管理"));
         PickingCartEntity pickingCartEntity =  BeanMapperUtils.map(PickingCartEntity.class, updateDTO);
 
         // 数据处理

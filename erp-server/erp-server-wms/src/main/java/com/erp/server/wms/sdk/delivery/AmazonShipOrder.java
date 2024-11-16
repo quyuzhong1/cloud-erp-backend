@@ -265,7 +265,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 .stream().
                 collect(Collectors.groupingBy(ShopInfoEntity::getPlatformShopCode));
         // 异常按亚马逊账号查询
-        List<Map.Entry<String, List<ShopInfoEntity>>> collect = platformGroup.entrySet().parallelStream().peek(e -> {
+        platformGroup.entrySet().parallelStream().peek(e -> {
             // 当前账号的所有
             List<PlatformOrderQueryDTO> curDtoList = dtoList.stream()
                     .filter(dto -> shopIds.contains(dto.getShopId()))
@@ -319,7 +319,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 }
 
             }
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toList())
         return true;
     }
 

@@ -71,7 +71,6 @@ public class CfgVirtualTransRulesServiceImpl extends SuperServiceImpl<CfgVirtual
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟库存交易规则单");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟库存交易规则单"));
         CfgVirtualTransRulesEntity cfgVirtualTransRulesEntity =  BeanMapperUtils.map(CfgVirtualTransRulesEntity.class, updateDTO);
 
         // 数据处理

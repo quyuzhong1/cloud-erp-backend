@@ -72,7 +72,6 @@ public class WmsDataCompareImportServiceImpl extends SuperServiceImpl<WmsDataCom
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比导入文件信息");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比导入文件信息"));
         WmsDataCompareImportEntity wmsDataCompareImportEntity =  BeanMapperUtils.map(WmsDataCompareImportEntity.class, updateDTO);
 
         // 数据处理

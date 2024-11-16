@@ -68,6 +68,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -344,16 +345,18 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                     entity.setShippingFee(BigDecimal.ZERO);
 //                }
 
-                    BigDecimal itemTotalCost = BigDecimal.ZERO;
-                    BigDecimal orderTotalCost = BigDecimal.ZERO;
+                    AtomicReference<BigDecimal> itemTotalCost = new AtomicReference<>(BigDecimal.ZERO);
+                    AtomicReference<BigDecimal> orderTotalCost = new AtomicReference<>(BigDecimal.ZERO);
                     soDetailEntities.stream().forEach(
                             soDetailEntity -> {
-                                itemTotalCost.add(Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO));
-                                orderTotalCost.add(Optional.ofNullable(soDetailEntity.getAmount()).orElse(BigDecimal.ZERO));
+                                BigDecimal saleCost = Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO);
+                                itemTotalCost.set(MathUtil.add(saleCost, itemTotalCost.get()));
+                                BigDecimal amount = Optional.ofNullable(soDetailEntity.getAmount()).orElse(BigDecimal.ZERO);
+                                orderTotalCost.set(MathUtil.add(amount, orderTotalCost.get()));
                             }
                     );
-                    entity.setItemTotalCost(itemTotalCost);
-                    entity.setOrderTotalCost(orderTotalCost);
+                    entity.setItemTotalCost(itemTotalCost.get());
+                    entity.setOrderTotalCost(orderTotalCost.get());
                 }
             }
         } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {

@@ -72,7 +72,6 @@ public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceI
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单关联关系单");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单关联关系单"));
         VirtualWarehousePushHandleRelationEntity virtualWarehousePushHandleRelationEntity =  BeanMapperUtils.map(VirtualWarehousePushHandleRelationEntity.class, updateDTO);
 
         // 数据处理

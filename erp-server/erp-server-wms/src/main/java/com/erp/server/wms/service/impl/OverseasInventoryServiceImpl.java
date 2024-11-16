@@ -99,7 +99,6 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         if (Objects.isNull(old)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓库存");
         }
-//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓库存"));
         OverseasInventoryEntity overseasInventoryEntity =  BeanMapperUtils.map(OverseasInventoryEntity.class, updateDTO);
 
         // 数据处理
