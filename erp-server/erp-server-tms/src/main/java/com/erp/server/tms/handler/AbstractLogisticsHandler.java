@@ -92,9 +92,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
                 map.put("logisticsPlatform", logisticsAuthEntity.getLogisticsPlatform());
                 fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(logisticsAuthEntity.getId());
                 if (CollectionUtils.isNotEmpty(fieldEntities)) {
-                    fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                        map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-                    });
+                    fieldEntities.forEach(logisticsAuthFieldEntity -> map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue()));
                     mapList.add(map);
                 }
             });

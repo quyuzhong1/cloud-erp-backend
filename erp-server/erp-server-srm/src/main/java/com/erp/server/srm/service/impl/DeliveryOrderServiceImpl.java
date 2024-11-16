@@ -3,8 +3,7 @@ package com.erp.server.srm.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,6 +19,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.entity.BaseEntity;
@@ -68,6 +68,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,7 +123,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
-        Page<DeliveryOrderDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<DeliveryOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
         this.fillData(pageData.getRecords());
         return new PagingVO<>(pageData);
@@ -386,9 +387,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         receiveListDTOList = receiveListDTOList.stream().filter(v->StringUtils.isEmpty(v.getDetailReceiptStatus())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(receiveListDTOList)){
             Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(receiveListDTOList.stream().map(DeliveryOrderDTO.GenerateReceiveListDTO::getSupplierId).distinct().collect(Collectors.toList()));
-            receiveListDTOList.forEach(v->{
-                v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
-            });
+            receiveListDTOList.forEach(v-> v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():""));
         }
         return receiveListDTOList;
     }
@@ -538,8 +537,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if (Objects.isNull(detailEntity)){
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        //已收货数量
-        Integer receiveQty;
         //已送货数量
         Integer deliveryQty = MathUtil.ZERO;
         //有送货单的收货数量
@@ -554,21 +551,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         Integer returnQty = MathUtil.ZERO;
         //订单总数
         Integer orderQty = detailEntity.getPurchaseQty();
-        //收货数量
-        if (CollectionUtils.isNotEmpty(receiveList)) {
-            receiveQty = receiveList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()) )
-                    .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            hasDeliveryReceiveQty = receiveList.stream().filter(e ->
-                            org.apache.commons.lang3.StringUtils.isNotEmpty(e.getSourceType())
-                                    && e.getSourceType().equalsIgnoreCase(SourceTypeEnum.DELIVERY_ORDER.getCode())
-                                    && e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()))
-                    .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            unDeliveryReceiveQty = receiveList.stream().filter(e -> StringUtils.isEmpty(e.getSourceId())
-                            && e.getPurchaseOrderDetailId().equals(addDeliveryDTO.getPurchaseDetailId()))
-                    .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-        } else {
-            receiveQty = MathUtil.ZERO;
-        }
         //无收货单的入库数量
         if (CollectionUtils.isNotEmpty(stockInDetailList)){
             // 采购入库单（无收货单），只有审核通过的才占用库存数量
@@ -590,11 +572,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
             deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(addDeliveryDTO.getPurchaseDetailId()) )
                     .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            //收发差异
-//            diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(addDeliveryDTO.getPurchaseDetailId())
-//                            && StrUtils.isNotEmpty(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
-//                    .map(deliveryOrderDetailEntity -> deliveryOrderDetailEntity.getDeliveryQty() - receiveQty)
-//                    .reduce(MathUtil.ZERO, Integer::sum);
             //发货数量 - 已审核收货数量
             Integer srmDeliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(addDeliveryDTO.getPurchaseDetailId())
                             && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getReceiptStatus()) && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
@@ -697,7 +674,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
         DeliveryExcelListener excelListenerUtil = new DeliveryExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), DeliveryOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcelFactory.read(excelFile.getInputStream(), DeliveryOrderImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("SRM送货单导入错误！>>>>{}", e);
             return Boolean.FALSE;
@@ -804,7 +781,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * 新增修改处理数据
      */
     private void handleData(DeliveryOrderEntity deliveryOrderEntity,Boolean isUpdate) {
-        if(!isUpdate){
+        if(Boolean.FALSE.equals(isUpdate)){
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryOrderEntity.getToWarehouseId()));
             if(CollectionUtils.isEmpty(warehouseList)){
                 throw new ServiceException("仓库信息为空");
@@ -843,7 +820,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         for (DeliveryOrderDetailEntity detailEntity :deliveryOrderDetailList) {
             PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
             //送货单主表
-            DeliveryOrderEntity deliveryOrderEntity = deliveryOrderList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            DeliveryOrderEntity deliveryOrderEntity = deliveryOrderList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(deliveryOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_DELIVERY_ORDER_NOT_EXIST);
             }
@@ -863,7 +840,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             addDTO.setBusinessStatus(PoReturnConfirmStatusEnum.CONFIRM.getCode());
 
             //采购订单
-            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> StrUtil.equals(deliveryOrderEntity.getSourceId(), obj.getId())).findFirst().orElse(null);
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> CharSequenceUtil.equals(deliveryOrderEntity.getSourceId(), obj.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseOrderEntity)) {
                 throw new ServiceException(ApiError.ERROR_98025);
             }
@@ -930,7 +907,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
             v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
             v.setDetailReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getDetailReceiptStatus()));
-            v.setPrintStatus(v.getIsPrint()?"已打印":"未打印");
+            v.setPrintStatus(Boolean.TRUE.equals(v.getIsPrint())?"已打印":"未打印");
             v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
             WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveEntityList.stream().filter(t->t.getSourceId().equals(v.getId())).findFirst().orElse(new WarehouseReceiveEntity());
             v.setReceiveUserName(warehouseReceiveEntity.getReceiveUserName());
@@ -979,6 +956,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         if(CollectionUtils.isNotEmpty(confirmIds)){
             this.addPoReconciliationDetail(confirmIds);
         }
-        return this.updateBatchById(deliveryOrderEntityList);
+        DeliveryOrderServiceImpl bean = ApplicationContextUtils.getBean(DeliveryOrderServiceImpl.class);
+        return bean.updateBatchById(deliveryOrderEntityList);
     }
 }

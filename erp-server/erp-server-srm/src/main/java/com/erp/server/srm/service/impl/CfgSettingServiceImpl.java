@@ -76,13 +76,13 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private List<CfgSettingEntity> buildSettingData(OrderAcceptDTO orderAcceptDTO, ReturnConfirmDTO returnConfirmDTO) {
         List<CfgSettingEntity> cfgSettingEntities = new ArrayList<>();
         if (Objects.nonNull(orderAcceptDTO)) {
-            CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.ConfigToOrderAcceptEntity(orderAcceptDTO);
+            CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.configToOrderAcceptEntity(orderAcceptDTO);
             handleData(cfgSettingEntity);
             cfgSettingEntity.setDataJson(JSONUtil.parseObj(orderAcceptDTO, true));
             cfgSettingEntities.add(cfgSettingEntity);
         }
         if (Objects.nonNull(returnConfirmDTO)) {
-            CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.ConfigToReturnConfigEntity(returnConfirmDTO);
+            CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.configToReturnConfigEntity(returnConfirmDTO);
             handleData(cfgSettingEntity);
             cfgSettingEntity.setDataJson(JSONUtil.parseObj(returnConfirmDTO, true));
             cfgSettingEntities.add(cfgSettingEntity);

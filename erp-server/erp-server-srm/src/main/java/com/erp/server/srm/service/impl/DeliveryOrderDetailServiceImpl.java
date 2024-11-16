@@ -4,11 +4,11 @@ package com.erp.server.srm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -35,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,7 +54,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrderDetailMapper, DeliveryOrderDetailEntity> implements DeliveryOrderDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -76,8 +75,8 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
 
         //处理明细数据
         handleData(list,mainId);
-
-        this.saveBatch(list);
+        DeliveryOrderDetailServiceImpl bean = ApplicationContextUtils.getBean(DeliveryOrderDetailServiceImpl.class);
+        bean.saveBatch(list);
     }
 
     @Override
@@ -126,7 +125,8 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             operateLogService.addModuleOperateLogByObj(old, deliveryOrderDetailEntity, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderDetailEntity.getMainId(), msg);
         }
         if(CollectionUtils.isNotEmpty(needUpdateDetailList)){
-            if(!this.updateBatchById(needUpdateDetailList)){
+            DeliveryOrderDetailServiceImpl bean = ApplicationContextUtils.getBean(DeliveryOrderDetailServiceImpl.class);
+            if(!bean.updateBatchById(needUpdateDetailList)){
                 throw new ServiceException("送货单明细更新失败");
             }
         }
@@ -268,25 +268,6 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
     }
 
     /**
-     * 校验送货数量是否超过可送货数量
-     * @return true:通过
-     */
-    private void checkDelivery(String sourceDetailId,String detailId,Integer deliveryQty,Integer orderQty){
-        List<DeliveryOrderDetailEntity> sameSourceDetailList = this.listDetailByDetailSourceIds(Collections.singletonList(sourceDetailId));
-        if(CollectionUtils.isEmpty(sameSourceDetailList)){
-            if(orderQty < deliveryQty){
-                throw new ServiceException("送货数量不可超过【采购数量-累计已送货数量】");
-            }
-        }
-        if(StringUtils.isNotBlank(detailId)){
-            sameSourceDetailList = sameSourceDetailList.stream().filter(v->!v.getId().equals(detailId)).collect(Collectors.toList());
-        }
-        Integer nowDeliveryQty = sameSourceDetailList.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
-        if(orderQty < deliveryQty + nowDeliveryQty){
-            throw new ServiceException("送货数量不可超过【采购数量-累计已送货数量】");
-        }
-    }
-    /**
      * 数据校验
      * @author will
      * @date 2024/9/19 11:13
@@ -355,7 +336,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             }
             //已送货数量
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                deliveryQty = deliveryOrderDetailList.stream().filter(e -> !StrUtil.equals(updateDTO.getDetailId(),e.getDetailId()) && e.getSourceDetailId().equals(updateDTO.getSourceDetailId()))
+                deliveryQty = deliveryOrderDetailList.stream().filter(e -> !CharSequenceUtil.equals(updateDTO.getDetailId(),e.getDetailId()) && e.getSourceDetailId().equals(updateDTO.getSourceDetailId()))
                         .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //收发差异
                 //发货数量 - 已审核收货数量

@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -111,7 +110,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         queryWrapper.eq(AttachmentEntity::getBusinessId, businessId);
         List<AttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return new ArrayList<>();
         }
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }

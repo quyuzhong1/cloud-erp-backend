@@ -142,11 +142,7 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        String names = list.stream().collect(Collectors.groupingBy(CfgRuleSalesDenoisingEntity::getName)).entrySet().stream()
-                .filter(obj -> obj.getValue().size() > MathUtil.ONE).map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
-        if (CharSequenceUtil.isNotBlank(names)) {
-            throw new ServiceException("销量去噪名称【{}】唯一不能添加重复数据",names);
-        }
+        validateUniqueNames(list);
         //排序
         int maxIndex = MathUtil.ZERO;
         if (Boolean.TRUE.equals(isCustom)) {
@@ -165,25 +161,53 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
                 denoisingEntity.setIndex(Boolean.TRUE.equals(isCustom) ? entity.getIndex() : denoisingEntity.getIndex());
             }
 
-            boolean isCompare = (CharSequenceUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode())
-                    || CharSequenceUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode()))
-                    && MathUtil.compareTo(denoisingEntity.getEffectiveValue(), MathUtil.ZERO) <= MathUtil.ZERO;
+            boolean isCompare = checkNumericValue(denoisingEntity);
             if (isCompare) {
                 throw new ServiceException("百分比去噪、固定值去噪数值不能小于1");
             }
             //时间
             List<LocalDate> dateList = denoisingEntity.getDateList();
-            if (CollectionUtils.isNotEmpty(dateList)) {
-                if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
-                    throw new ServiceException("时间区间不能为空");
-                }
-                if (dateList.get(0).isAfter(dateList.get(1))) {
-                    throw new ServiceException("开始时间不能大于结束时间");
-                }
-            }
+            checkDate(dateList);
             denoisingEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
             denoisingEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
             maxIndex ++;
+        }
+    }
+
+    /**
+     * 校验时间
+     * @param dateList 时间
+     */
+    private void checkDate(List<LocalDate> dateList) {
+        if (CollectionUtils.isNotEmpty(dateList)) {
+            if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
+                throw new ServiceException("时间区间不能为空");
+            }
+            if (dateList.get(0).isAfter(dateList.get(1))) {
+                throw new ServiceException("开始时间不能大于结束时间");
+            }
+        }
+    }
+
+    /**
+     * 校验百分比去噪、固定值去噪数值不能小于1
+     * @param denoisingEntity 参数
+     */
+    private boolean checkNumericValue(CfgRuleSalesDenoisingEntity denoisingEntity) {
+        return (CharSequenceUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode())
+                || CharSequenceUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode()))
+                && MathUtil.compareTo(denoisingEntity.getEffectiveValue(), MathUtil.ZERO) <= MathUtil.ZERO;
+    }
+
+    /**
+     * 获取销量去噪名字
+     * @param list 参数
+     */
+    private void validateUniqueNames(List<CfgRuleSalesDenoisingEntity> list) {
+        String names = list.stream().collect(Collectors.groupingBy(CfgRuleSalesDenoisingEntity::getName)).entrySet().stream()
+                .filter(obj -> obj.getValue().size() > MathUtil.ONE).map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(names)) {
+            throw new ServiceException("销量去噪名称【{}】唯一不能添加重复数据",names);
         }
     }
 }

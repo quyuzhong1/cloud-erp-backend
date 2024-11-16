@@ -538,8 +538,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
-        ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
-        return label;
+        return this.getLabel(logisticsQueryVO);
     }
 
     /**

@@ -228,6 +228,6 @@ public class DeliveryOrderController extends BaseController {
     @PostMapping("/import")
     public ApiResult<Object> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = deliveryOrderService.importExcel(excelFile, response);
-        return result?success():failure();
+        return Boolean.TRUE.equals(result)?success():failure();
     }
 }
