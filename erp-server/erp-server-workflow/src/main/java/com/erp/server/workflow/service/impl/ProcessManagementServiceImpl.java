@@ -314,7 +314,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
 
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public void sameApproveHandler(ProcessManagementDTO.ApproveDTO dto, ProcessManagementDTO.ManagementTaskDTO managementTask, DictBasicEnum reviewSetting) {
         String userId = dto.getUserId();
@@ -957,7 +956,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public void completeTaskHandle(DelegateTask taskDelegate) {
-        log.debug("completeTaskHandle finish :{}", JSONUtil.toJsonStr(taskDelegate));
+        log.debug("completeTaskHandle finish ");
     }
 
     /**
