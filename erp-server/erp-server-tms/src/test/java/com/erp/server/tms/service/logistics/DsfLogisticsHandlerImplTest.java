@@ -22,7 +22,6 @@ import java.util.*;
 /**
  * @author zdy
  * @ClassName DsfLogisticsHandlerImplTest
- * @description: TODO
  * @date 2023年11月09日
  * @version: 1.0
  */
@@ -186,7 +185,7 @@ public class DsfLogisticsHandlerImplTest {
     }
     @Test
     public void authorization() {
-        ApiResult apiResult = dsfLogisticsHandler.authorization(authMap);
+        ApiResult<Object>ApiResult<Object>= dsfLogisticsHandler.authorization(authMap);
         System.out.println(apiResult);
     }
 }

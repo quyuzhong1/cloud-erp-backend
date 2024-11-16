@@ -139,7 +139,7 @@ public class YunTuLogisticsHandlerImplTest {
         labelVO2.setAuthMap(authMap);
         labelVO2.setDeliveryNo("XSDD24052300936");
         labelVO2.setTransportNo("YT2414421901000237");
-        ApiResult<List<LogisticsOrderResponseVO>> apiResult = yunTuLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
+        ApiResult<List<LogisticsOrderResponseVO>> ApiResult<Object>= yunTuLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
 
@@ -151,7 +151,7 @@ public class YunTuLogisticsHandlerImplTest {
         labelVO.setAuthMap(authMap);
         labelVO2.setDeliveryNo("WEIJI2023110901003");
         labelVO2.setAuthMap(authMap);
-        ApiResult<List<InterceptResponseVO>> apiResult = yunTuLogisticsHandler.interceptOrder(Arrays.asList(labelVO,labelVO2));
+        ApiResult<List<InterceptResponseVO>> ApiResult<Object>= yunTuLogisticsHandler.interceptOrder(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
 
@@ -163,13 +163,13 @@ public class YunTuLogisticsHandlerImplTest {
         labelVO.setAuthMap(authMap);
         labelVO2.setDeliveryNo("WEIJI2023110901003");
         labelVO2.setAuthMap(authMap);
-        ApiResult<List<CancelResponseVO>> apiResult = yunTuLogisticsHandler.cancelOrder(Arrays.asList(labelVO,labelVO2));
+        ApiResult<List<CancelResponseVO>> ApiResult<Object>= yunTuLogisticsHandler.cancelOrder(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
 
     @Test
     public void authorization() {
-        ApiResult apiResult = yunTuLogisticsHandler.authorization(authMap);
+        ApiResult<Object>ApiResult<Object>= yunTuLogisticsHandler.authorization(authMap);
         System.out.println(apiResult);
     }
 }

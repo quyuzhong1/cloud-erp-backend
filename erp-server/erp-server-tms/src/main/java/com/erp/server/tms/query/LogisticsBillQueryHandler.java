@@ -6,9 +6,9 @@ import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.server.tms.service.DictBasicService;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  */
 @Component
 public class LogisticsBillQueryHandler extends AbstractQueryHandler {
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {

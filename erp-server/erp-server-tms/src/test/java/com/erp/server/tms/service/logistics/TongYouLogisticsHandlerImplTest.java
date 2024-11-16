@@ -143,12 +143,12 @@ public class TongYouLogisticsHandlerImplTest {
         labelVO.setAuthMap(authMap);
         labelVO2.setDeliveryNo("WJ20231102002");
         labelVO2.setAuthMap(authMap);
-        ApiResult<List<LogisticsOrderResponseVO>> apiResult = tongYouLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
+        ApiResult<List<LogisticsOrderResponseVO>> ApiResult<Object>= tongYouLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
         System.out.println(apiResult);
     }
     @Test
     public void authorization() {
-        ApiResult apiResult = tongYouLogisticsHandler.authorization(authMap);
+        ApiResult<Object>ApiResult<Object>= tongYouLogisticsHandler.authorization(authMap);
         System.out.println(apiResult);
     }
 }

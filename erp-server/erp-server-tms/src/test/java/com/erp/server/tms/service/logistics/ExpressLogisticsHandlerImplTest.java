@@ -22,7 +22,6 @@ import java.util.*;
 /**
  * @author zdy
  * @ClassName UBILogisticsHandlerImplTest
- * @description: TODO
  * @date 2023年11月16日
  * @version: 1.0
  */
@@ -209,7 +208,7 @@ public class ExpressLogisticsHandlerImplTest {
 
     @Test
     public void authorization() {
-        ApiResult apiResult = expressLogisticsHandler.authorization(authMap);
+        ApiResult<Object>ApiResult<Object>= expressLogisticsHandler.authorization(authMap);
         System.out.println(apiResult);
     }
 }

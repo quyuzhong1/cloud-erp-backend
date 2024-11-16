@@ -25,7 +25,6 @@ import java.util.*;
 /**
  * @author zdy
  * @ClassName UBILogisticsHandlerImplTest
- * @description: TODO
  * @date 2023年11月16日
  * @version: 1.0
  */
@@ -82,7 +81,7 @@ public class AliExpressOrderHandlerImplTest {
         List<AliExpressOrder > orderList = new ArrayList<>();
         aliExpressOrderService.listOrder(orderRequest, orderList);
         System.out.println("订单列表");
-        System.out.println(JSONObject.toJSONString(orderList));
+        System.out.println(JSON.toJSONString(orderList));
     }
 
     /**

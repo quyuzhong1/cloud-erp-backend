@@ -33,7 +33,6 @@ import java.util.*;
 /**
  * @author zdy
  * @ClassName UBILogisticsHandlerImplTest
- * @description: TODO
  * @date 2023年11月16日
  * @version: 1.0
  */
@@ -97,7 +96,7 @@ public class AliExpressOrderHandlerImplTest {
         List<AliExpressOrder > orderList = new ArrayList<>();
         aliExpressOrderService.listOrder(orderRequest, orderList);
         System.out.println("订单列表");
-        System.out.println(JSONObject.toJSONString(orderList));
+        System.out.println(JSON.toJSONString(orderList));
     }
 
     /**
@@ -157,25 +156,25 @@ public class AliExpressOrderHandlerImplTest {
                 .domesticLogisticsCompanyId("505")
                 .build();
         IopResponse response = aliExpressHandoverService.commit(authMap, commitRequest);
-        BaseResult baseResult = JSONObject.parseObject(response.getBody(),BaseResult.class);
+        BaseResult baseResult = JSON.parseObject(response.getBody(),BaseResult.class);
         if (Objects.nonNull(baseResult.getErrorResponse())){
-            System.out.println(JSONObject.toJSONString(baseResult.getErrorResponse()));
+            System.out.println(JSON.toJSONString(baseResult.getErrorResponse()));
         }
-        HandoverCommitResponse handoverCommitResponse = JSONObject.parseObject(baseResult.getData(), HandoverCommitResponse.class);
+        HandoverCommitResponse handoverCommitResponse = JSON.parseObject(baseResult.getData(), HandoverCommitResponse.class);
         System.out.println("结果输出");
-        System.out.println(JSONObject.toJSONString(handoverCommitResponse));
+        System.out.println(JSON.toJSONString(handoverCommitResponse));
     }
 
     @Test
     public void testCommit(){
         String body = "{\"result\":{\"data\":{\"handover_order_id\":10071881812,\"handover_content_code\":\"LP00631998284401\",\"handover_content_id\":10084152400},\"success\":true},\"request_id\":\"213bd16f17084991518705952\"}";
-        BaseResult baseResult = JSONObject.parseObject(body, BaseResult.class);
+        BaseResult baseResult = JSON.parseObject(body, BaseResult.class);
         if (Objects.nonNull(baseResult.getErrorResponse())) {
             throw new ServiceException(baseResult.getErrorResponse().getSubMsg());
         }
-        HandoverCommitResult handoverCommitResult = JSONObject.parseObject(baseResult.getResult(), HandoverCommitResult.class);
+        HandoverCommitResult handoverCommitResult = JSON.parseObject(baseResult.getResult(), HandoverCommitResult.class);
         System.out.println("结果输出");
-        System.out.println(JSONObject.toJSONString(handoverCommitResult));
+        System.out.println(JSON.toJSONString(handoverCommitResult));
     }
     /**
      * 返回直接解决方案的指定物流服务的可用资源列表
@@ -190,10 +189,10 @@ public class AliExpressOrderHandlerImplTest {
                 .build();
         IopResponse response = aliExpressHandoverService.queryService(authMap, serviceRequest);
         System.out.println("结果输出");
-        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        System.out.println(JSONObject.toJSONString(baseResponse));
-        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResponse(),BaseResult.class);
-        System.out.println(JSONObject.toJSONString(baseResult));
+        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        System.out.println(JSON.toJSONString(baseResponse));
+        BaseResult baseResult = JSON.parseObject(baseResponse.getResponse(),BaseResult.class);
+        System.out.println(JSON.toJSONString(baseResult));
     }
 
     /**
@@ -208,7 +207,7 @@ public class AliExpressOrderHandlerImplTest {
                 .build();
         BaseResult baseResult = aliExpressShipperService.queryLogisticsOrder(authMap, queryOrderRequest);
         System.out.println("结果输出");
-        System.out.println(JSONObject.toJSONString(baseResult));
+        System.out.println(JSON.toJSONString(baseResult));
     }
 
     /**
@@ -224,10 +223,10 @@ public class AliExpressOrderHandlerImplTest {
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.queryContent(authMap, handoverQueryRequest);
-        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSON.parseObject(baseResponse.getResult(), BaseResult.class);
         if (baseResult.getSuccess() && StringUtils.isNotEmpty(baseResult.getData())){
-            HandoverQueryResponse queryResponse = JSONObject.parseObject(baseResult.getData(), HandoverQueryResponse.class);
+            HandoverQueryResponse queryResponse = JSON.parseObject(baseResult.getData(), HandoverQueryResponse.class);
             System.out.println(queryResponse);
         }
         System.out.println(baseResult);
@@ -246,8 +245,8 @@ public class AliExpressOrderHandlerImplTest {
                 .locale("zh_CN")
                 .build();
         IopResponse response = aliExpressHandoverService.subbagAdd(authMap, subbagRequest);
-//        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+//        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSON.parseObject(response.getBody(), BaseResult.class);
         System.out.println(baseResult);
     }
 
@@ -265,8 +264,8 @@ public class AliExpressOrderHandlerImplTest {
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.queryParcel(authMap, handoverQueryRequest);
-        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSON.parseObject(baseResponse.getResult(), BaseResult.class);
         System.out.println(baseResult);
     }
 
@@ -315,7 +314,7 @@ public class AliExpressOrderHandlerImplTest {
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.update(authMap, updateRequest);
-        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+        BaseResult baseResult = JSON.parseObject(response.getBody(), BaseResult.class);
         System.out.println(baseResult);
     }
 
@@ -334,8 +333,8 @@ public class AliExpressOrderHandlerImplTest {
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.cancel(authMap, cancelRequest);
-//        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+//        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSON.parseObject(response.getBody(), BaseResult.class);
         System.out.println(baseResult);
     }
     /**
@@ -352,8 +351,8 @@ public class AliExpressOrderHandlerImplTest {
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.cloudPrint(authMap, cloudPrintRequest);
-        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSON.parseObject(baseResponse.getResult(), BaseResult.class);
         System.out.println(baseResult);
     }
     /**
@@ -370,13 +369,13 @@ public class AliExpressOrderHandlerImplTest {
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.getPdf(authMap, pdfRequest);
-        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        BaseResult baseResult = JSONObject.parseObject(baseResponse.getResult(), BaseResult.class);
+        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSON.parseObject(baseResponse.getResult(), BaseResult.class);
         if (StringUtils.isNotEmpty(baseResult.getErrorMsg()) || StringUtils.isEmpty(baseResult.getData())){
             //接口异常
         }
         System.out.println(baseResult);
-        PdfResponse pdfResponse = JSONObject.parseObject(baseResult.getData(), PdfResponse.class);
+        PdfResponse pdfResponse = JSON.parseObject(baseResult.getData(), PdfResponse.class);
         System.out.println(pdfResponse);
         String prefix = "data:application/pdf;base64,";
         String base64Str = prefix + pdfResponse.getBody();
@@ -413,8 +412,8 @@ public class AliExpressOrderHandlerImplTest {
                 .userInfo(UserInfo.builder().topUserKey(PathConstants.TOP_USER_KEY).build())
                 .build();
         IopResponse response = aliExpressHandoverService.resourceRecommend(authMap, resourceRecommendRequest);
-//        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+//        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSON.parseObject(response.getBody(), BaseResult.class);
         System.out.println(baseResult);
     }
     /**
@@ -425,12 +424,12 @@ public class AliExpressOrderHandlerImplTest {
     public void queryCarrierList() throws com.erp.tms.aliexpress.util.ApiException {
         String locale ="zh_CN";
         IopResponse response = aliExpressHandoverService.queryCarrierList(authMap, locale);
-//        BaseResponse baseResponse = JSONObject.parseObject(response.getBody(), BaseResponse.class);
-        BaseResult baseResult = JSONObject.parseObject(response.getBody(), BaseResult.class);
+//        BaseResponse baseResponse = JSON.parseObject(response.getBody(), BaseResponse.class);
+        BaseResult baseResult = JSON.parseObject(response.getBody(), BaseResult.class);
         System.out.println(baseResult);
-        JSONObject jsonObject1 = JSONObject.parseObject(baseResult.getResult());
-        JSONObject jsonObject2 = JSONObject.parseObject(jsonObject1.getString("data"));
-        List<CarrierResponse> carrierResponses = JSONObject.parseArray(jsonObject2.getString("courier_list"), CarrierResponse.class);
+        JSONObject jsonObject1 = JSON.parseObject(baseResult.getResult());
+        JSONObject jsonObject2 = JSON.parseObject(jsonObject1.getString("data"));
+        List<CarrierResponse> carrierResponses = JSON.parseArray(jsonObject2.getString("courier_list"), CarrierResponse.class);
         System.out.println(carrierResponses);
     }
 }

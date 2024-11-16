@@ -9,17 +9,15 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelBlacklistDTO;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
-import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.tms.mapper.LogisticsChannelBlacklistMapper;
 import com.erp.server.tms.service.LogisticsChannelBlacklistService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,7 +34,7 @@ import java.util.stream.Collectors;
 public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<LogisticsChannelBlacklistMapper, LogisticsChannelBlacklistEntity> implements LogisticsChannelBlacklistService {
 
 
-    @Autowired
+    @Resource
     private SysDictFeign sysDictFeign;
 
     @Transactional(rollbackFor = Exception.class)

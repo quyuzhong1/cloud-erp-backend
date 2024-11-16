@@ -6,10 +6,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.server.tms.query.*;
 import com.erp.server.tms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 @RestController
@@ -76,24 +73,6 @@ public class ExportTmsFeignController {
         dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         return tmsDeclareBillService.export(dto);
     }
-    /*@PostMapping("/b2BDeclareBill")
-    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportB2BDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
-        dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-        return tmsDeclareBillService.exportDeclare(dto);
-    }
-    @PostMapping("/fmDeclareBillDeclare")
-    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportFmDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
-        dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        return tmsDeclareBillService.exportDeclareBillDeclare(dto);
-    }
-    @PostMapping("/fmDeclareBill")
-    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
-        dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        return tmsDeclareBillService.exportDeclareBill(dto);
-    }*/
 
     @PostMapping("/b2cDeclareReconciliationDetail")
     public PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {

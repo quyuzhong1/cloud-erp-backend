@@ -1,41 +1,29 @@
 package com.erp.server.tms.service.logistics;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
-import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
-import com.erp.model.tms.vo.request.LogisticsCancelOrderVO;
-import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
-import com.erp.model.tms.vo.response.*;
+import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.erp.tms.aliexpress.model.channel.response.ChannelResponse;
-import com.erp.tms.aliexpress.model.channel.response.ChannelResult;
 import com.sdk.oms.walmart.api.WalmartStaticKey;
-import com.sdk.oms.walmart.dto.WalmartShopInfoDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartCarriersDTO;
 import com.sdk.oms.walmart.dto.walmart.WalmartTokenDTO;
 import com.sdk.oms.walmart.service.WalmartSdkClientService;
-import com.sdk.tms.shopee.model.base.BaseResponse;
-import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -58,10 +46,7 @@ public class WalmartLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private LogisticsOperateService logisticsOperateService;
 
 
-    @Override
-    public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
-        return null;
-    }
+
 
     /**
      * 根据平台获取授权列表

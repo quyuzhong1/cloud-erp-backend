@@ -3,8 +3,8 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -13,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -23,13 +24,16 @@ import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.server.tms.mapper.TmsCfgCostMapper;
-import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.CfgReconciliationFieldService;
+import com.erp.server.tms.service.DictBasicService;
+import com.erp.server.tms.service.TmsCfgCostService;
+import com.erp.server.tms.service.TmsCostDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -48,13 +52,13 @@ import java.util.stream.Collectors;
 @Service
 public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, TmsCfgCostEntity> implements TmsCfgCostService {
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private CfgReconciliationFieldService cfgReconciliationFieldService;
 
-    @Autowired
+    @Resource
     private TmsCostDetailService tmsCostDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -129,12 +133,12 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
 
         //校验对账字段是否引用
         List<CfgReconciliationFieldEntity> cfgReconciliationFieldList = cfgReconciliationFieldService.listByCfgCostIdList(Arrays.asList(id));
-        if (CollectionUtil.isNotEmpty(cfgReconciliationFieldList)) {
+        if (CollUtil.isNotEmpty(cfgReconciliationFieldList)) {
             throw new ServiceException("费用已被对账单字段配置使用不支持删除");
         }
         //校验物流费用是否引用
         List<TmsCostDetailEntity> tmsCostDetailList = tmsCostDetailService.listByCfgCostIdList(Arrays.asList(id));
-        if (CollectionUtil.isNotEmpty(tmsCostDetailList)) {
+        if (CollUtil.isNotEmpty(tmsCostDetailList)) {
             throw new ServiceException("费用已被物流单使用不支持删除");
         }
 
@@ -146,7 +150,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
 
     @Override
     public List<TmsCfgCostDTO.DropDownDTO> listDropDown(TmsCfgCostDTO.DropDownParamDTO dto) {
-        List<TmsCfgCostEntity> list = lambdaQuery().eq(StrUtil.isNotBlank(dto.getDictCostAttribution()), TmsCfgCostEntity::getDictCostAttribution, dto.getDictCostAttribution())
+        List<TmsCfgCostEntity> list = lambdaQuery().eq(CharSequenceUtil.isNotBlank(dto.getDictCostAttribution()), TmsCfgCostEntity::getDictCostAttribution, dto.getDictCostAttribution())
                 .list();
         if (CollectionUtil.isEmpty(list)) {
             return Collections.EMPTY_LIST;
@@ -164,7 +168,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     @Override
     public List<TmsCfgCostEntity> listCostAttributionAndCategory(String dictCostAttribution ,String dictCostCategory) {
         return lambdaQuery().eq(TmsCfgCostEntity::getDictCostAttribution, dictCostAttribution)
-                .eq(StrUtil.isNotBlank(dictCostCategory), TmsCfgCostEntity::getDictCostCategory, dictCostCategory)
+                .eq(CharSequenceUtil.isNotBlank(dictCostCategory), TmsCfgCostEntity::getDictCostCategory, dictCostCategory)
                 .orderByDesc(TmsCfgCostEntity::getIsDefault)
                 .list();
     }
@@ -188,7 +192,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
      */
     private void checkData(TmsCfgCostEntity tmsCfgCostEntity) {
         TmsCfgCostEntity old = getByCostName(tmsCfgCostEntity);
-        if (ObjUtil.isNotEmpty(old) && !StrUtil.equals(tmsCfgCostEntity.getId(),old.getId())) {
+        if (ObjUtil.isNotEmpty(old) && !CharSequenceUtil.equals(tmsCfgCostEntity.getId(),old.getId())) {
             throw new ServiceException(ApiError.ERROR_CFG_COST_EXIST,tmsCfgCostEntity.getCostName());
         }
     }
@@ -197,7 +201,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     * 新增修改处理数据
     */
     private void handleData(TmsCfgCostEntity tmsCfgCostEntity) {
-    // TODO 验证数据 & 数据赋值
+    
     }
 
     /**
@@ -216,13 +220,13 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         for (TmsCfgCostDTO.ListDTO listDTO : list) {
 
             //费用归属
-            String dictCostAttributionName = basicList.stream().filter(obj -> StrUtil.equals(obj.getType(), DictBasicEnum.DICT_COST_ATTRIBUTION.getType())
-                    && StrUtil.equals(obj.getCode(), listDTO.getDictCostAttribution())).findFirst()
+            String dictCostAttributionName = basicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), DictBasicEnum.DICT_COST_ATTRIBUTION.getType())
+                    && CharSequenceUtil.equals(obj.getCode(), listDTO.getDictCostAttribution())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setDictCostAttributionName(dictCostAttributionName);
             //费用分类
-            String dictCostCategoryName = basicList.stream().filter(obj -> StrUtil.equals(obj.getType(), DictBasicEnum.DICT_COST_CATEGORY.getType())
-                            && StrUtil.equals(obj.getCode(), listDTO.getDictCostCategory())).findFirst()
+            String dictCostCategoryName = basicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), DictBasicEnum.DICT_COST_CATEGORY.getType())
+                            && CharSequenceUtil.equals(obj.getCode(), listDTO.getDictCostCategory())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setDictCostCategoryName(dictCostCategoryName);
         }
@@ -241,7 +245,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         }
         //查询已存在数据
         List<TmsCfgCostEntity> oldList = listCostAttributionAndCategory(tmsCfgCostEntity.getDictCostAttribution(),tmsCfgCostEntity.getDictCostCategory());
-        List<TmsCfgCostEntity> tmsCfgCostEntityList = oldList.stream().filter(obj -> !StrUtil.equals(tmsCfgCostEntity.getId(), obj.getId()) && obj.getIsDefault())
+        List<TmsCfgCostEntity> tmsCfgCostEntityList = oldList.stream().filter(obj -> !CharSequenceUtil.equals(tmsCfgCostEntity.getId(), obj.getId()) && obj.getIsDefault())
                 .collect(Collectors.toList());
         if (CollectionUtil.isEmpty(tmsCfgCostEntityList)) {
             return;
@@ -260,7 +264,7 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
     private TmsCfgCostEntity getByCostName(TmsCfgCostEntity tmsCfgCostEntity) {
         return lambdaQuery()
                 .eq(TmsCfgCostEntity::getCostName,tmsCfgCostEntity.getCostName())
-                .last("limit 1")
+                .last(SqlConstants.LIMIT_1)
                 .one();
     }
 }

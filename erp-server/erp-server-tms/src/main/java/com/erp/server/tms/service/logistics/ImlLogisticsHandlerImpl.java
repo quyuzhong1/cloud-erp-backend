@@ -91,7 +91,7 @@ public class ImlLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             Map<String, Object> authObjMap = authMap.entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

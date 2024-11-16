@@ -4,8 +4,8 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,13 +18,13 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
+import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -57,7 +57,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.internal.StringUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,42 +82,42 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TRANSFER_DE
 @Slf4j
 @Service
 public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclareMapper, TransferDeclareEntity> implements TransferDeclareService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private TransferDeclareDetailService transferDeclareDetailService;
-    @Autowired
+    @Resource
     private MultipleOptionService multipleOptionService;
-    @Autowired
+    @Resource
     private TransferDeclareGenerationSettingService transferDeclareGenerationSettingService;
-    @Autowired
+    @Resource
     private TransferDeclareDeadlineSettingService transferDeclareDeadlineSettingService;
-    @Autowired
+    @Resource
     private LogisticsSupplierService logisticsSupplierService;
-    @Autowired
+    @Resource
     private LogisticsAuthService logisticsAuthService;
-    @Autowired
+    @Resource
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
-    @Autowired
+    @Resource
     private TransferLogisticsChannelService transferLogisticsChannelService;
-    @Autowired
+    @Resource
     private SoB2cFeign soB2cFeign;
-    @Autowired
+    @Resource
     private TransferLogisticsRegistry transferLogisticsRegistry;
-    @Autowired
+    @Resource
     private TransferLogisticsAuthService transferLogisticsAuthService;
-    @Autowired
+    @Resource
     private LogisticsChannelService logisticsChannelService;
-    @Autowired
+    @Resource
     private PackageForecastFeign packageForecastFeign;
-    @Autowired
+    @Resource
     private TransferDeclareProductService transferDeclareProductService;
-    @Autowired
+    @Resource
     private SoOutstockFeign soOutstockFeign;
 
-    @Autowired
+    @Resource
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -214,7 +213,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         transferDeclareDetailService.add(addDTO, transferDeclareEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "中转报关单" , transferDeclareEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "中转报关单" , transferDeclareEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_DECLARE.getCode(), transferDeclareEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(transferDeclareEntity.getId(), code);
@@ -255,14 +254,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
         // 记录主单操作日志
         log.info("编辑 开始记录中转报关单日志数据，单号：【{}】", transferDeclareEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), transferDeclareEntity.getCode(), "中转报关单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), transferDeclareEntity.getCode(), "中转报关单");
         operateLogService.addModuleOperateLogByObj(old, transferDeclareEntity, ModuleTypeEnum.TRANSFER_DECLARE.getCode(), transferDeclareEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
     @Override
     public TransferDeclareEntity checkExistByChannelIds(List<String> ids) {
-        return lambdaQuery().in(TransferDeclareEntity::getTransferChannelId, ids).last("LIMIT 1").one();
+        return lambdaQuery().in(TransferDeclareEntity::getTransferChannelId, ids).last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -581,7 +580,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         if (StringUtils.isBlank(supplierId)) {
             return Boolean.FALSE;
         }
-        TransferDeclareEntity entity = lambdaQuery().eq(TransferDeclareEntity::getTransferLogisticsSupplierId, supplierId).last("LIMIT 1").one();
+        TransferDeclareEntity entity = lambdaQuery().eq(TransferDeclareEntity::getTransferLogisticsSupplierId, supplierId).last(SqlConstants.LIMIT_1).one();
         if (ObjectUtil.isNotEmpty(entity)) {
             return Boolean.TRUE;
         }
@@ -648,7 +647,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             String trackingNumber = logisticsChannelEntity.getDeclareCodeType().equals(DeclareCodeTypeEnum.TRANSPORT_NO.getCode())?soB2cLogisticsEntity.getCode():soB2cLogisticsEntity.getTrackNo();
             if(StringUtil.isBlank(trackingNumber)){
                 String codeType = EnumMessage.getNameByCode(DeclareCodeTypeEnum.class,logisticsChannelEntity.getDeclareCodeType());
-                return TransferDeclareDTO.ShippingOrderDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),StrUtil.format("{}为空",codeType),SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+                return TransferDeclareDTO.ShippingOrderDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),CharSequenceUtil.format("{}为空",codeType),SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
             }
             List<TransferLogisticsCreateOrderReq.ProductDetail> productDetails = TransferDeclareConverter.INSTANCE.transferDeclareProductConvert(transferDeclareProductDTOList);
             //组装SDK需要的下报关单单信息
@@ -702,7 +701,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
         TransferLogisticsService service = transferLogisticsRegistry.getHandler(authEntity.getLogisticsPlatform());
         if (Objects.isNull(service)){
-            return ApiResult.error(StrUtil.format("{}平台不支持API取消",authEntity.getLogisticsPlatform()));
+            return ApiResult.error(CharSequenceUtil.format("{}平台不支持API取消",authEntity.getLogisticsPlatform()));
         }
         return service.cancelOrder(cancelOrderForecastDTO.getTransferCancelOrderReq(),authEntity.getId());
     }
@@ -779,12 +778,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
 
         //入库预报状态
-        if (CollectionUtil.isNotEmpty(instockForecastStatusList)) {
+        if (CollUtil.isNotEmpty(instockForecastStatusList)) {
             params.setInstockForecastStatusList(instockForecastStatusList);
         }
 
         //中转状态
-        if (CollectionUtil.isNotEmpty(transferStatusList)) {
+        if (CollUtil.isNotEmpty(transferStatusList)) {
             params.setTransferStatusList(transferStatusList);
         }
     }
