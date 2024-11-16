@@ -79,7 +79,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
-        if (!checkResult) {
+        if (Boolean.FALSE.equals(checkResult)) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
@@ -107,7 +107,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     public Boolean update(RuleLogisticsDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         RuleLogisticsEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
+        isExist(old);
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
@@ -116,7 +116,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
-        if (!checkResult) {
+        if (Boolean.FALSE.equals(checkResult)) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
@@ -129,9 +129,14 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
         String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleLogisticsEntity.getId(), "物流规则单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, ruleLogisticsEntity, ModuleTypeEnum.RULE_LOGISTICS.getCode(), ruleLogisticsEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private static void isExist(RuleLogisticsEntity old) {
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单");
+        }
     }
 
 
@@ -148,7 +153,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<RuleLogisticsDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO<>(pageData);
 
     }
@@ -163,7 +168,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     @Override
     public RuleLogisticsDTO.ViewDTO view(String id) {
         RuleLogisticsEntity ruleLogistics = this.getById(id);
-        Optional.ofNullable(ruleLogistics).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
+        isExist(ruleLogistics);
         RuleLogisticsDTO.ViewDTO view = new RuleLogisticsDTO.ViewDTO();
         BeanMapper.copy(ruleLogistics, view);
         String type = DictBasicTypeEnum.FIELD.getType();
@@ -186,12 +191,12 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
     @Override
     public Boolean updateStatus(UpdateStateDTO dto) {
         RuleLogisticsEntity ruleLogistics = this.getById(dto.getId());
-        Optional.ofNullable(ruleLogistics).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
+        isExist(ruleLogistics);
         Boolean disabled = ruleLogistics.getDisabled();
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "启用" : "停用", Boolean.TRUE.equals(disabled) ? "停用" : "启用");
         ruleLogistics.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), dto.getId(), "状态变更");
         return this.updateById(ruleLogistics);
@@ -220,7 +225,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         }
         map.put("detailList",mapList);
         List<RuleLogisticsEntity> ruleLogisticsList = this.listOrderByPriority();
-        handleDataList(ruleLogisticsList);
         List<String> ruleIdList = ruleLogisticsList.stream().map(RuleLogisticsEntity::getId).collect(Collectors.toList());
         //规则条件
         List<RuleConditionEntity> allRuleConditionList = ruleConditionService.listDbRuleIds(ruleIdList);
@@ -233,7 +237,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式,判断表达式是否匹配
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
-            if (matchResult) {
+            if (Boolean.TRUE.equals(matchResult)) {
                 //验证渠道下是否设置了仓库
                 List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
                         .eq(LogisticsChannelWarehouseEntity::getLogisticsChannelId, item.getLogisticsChannelId())
@@ -256,7 +260,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                        }
                    }
                     //如果仓库没匹配上则进行下一条规则的匹配
-                   if (!isMatch) {
+                   if (Boolean.FALSE.equals(isMatch)) {
                        continue;
                    }
                 }
@@ -272,21 +276,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         }
         return null;
     }
-
-
-    /**
-     * 处理集合
-     *
-     * @param ruleLogisticsList
-     */
-    private void handleDataList(List<RuleLogisticsEntity> ruleLogisticsList) {
-        if (CollectionUtils.isEmpty(ruleLogisticsList)) {
-            return;
-        }
-
-    }
-
-
     /**
      * 根据优先级 获取到对应物流的信息
      *
@@ -305,7 +294,6 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
      * 新增修改处理数据
      */
     private void handleData(RuleLogisticsEntity ruleLogisticsEntity) {
-        // TODO 验证数据 & 数据赋值
         String logisticsChannelId = ruleLogisticsEntity.getLogisticsChannelId();
         if (StringUtils.isNotBlank(logisticsChannelId)) {
             LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);

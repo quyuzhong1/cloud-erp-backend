@@ -100,7 +100,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     @Override
     public Boolean update(SkuMappingRuleDTO.UpdateDTO updateDTO) {
         SkuMappingRuleEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则"));
+        isExist(old);
         if(!old.getRuleType().equals(updateDTO.getRuleType())){
             throw new ServiceException("不能更改规则类型");
         }
@@ -123,6 +123,12 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         return Boolean.TRUE;
     }
 
+    private static void isExist(SkuMappingRuleEntity old) {
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则");
+        }
+    }
+
     @Override
     public List<SkuMappingRuleEntity> listOrderByPriorityAndUpdateTime() {
         return lambdaQuery().orderByAsc(SkuMappingRuleEntity::getPriority).orderByDesc(SkuMappingRuleEntity::getUpdateTime).list();
@@ -133,7 +139,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         SkuMappingRuleEntity old = super.getById(dto.getId());
         SkuMappingRuleDTO.LogDTO oldView = this.buildLogDTO(old);
         oldView.setDisabled(old.getDisabled());
-        Optional.of(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则"));
+        isExist(old);
         old.setDisabled(dto.getDisabled());
         boolean save = super.updateById(old);
         if(!save) {

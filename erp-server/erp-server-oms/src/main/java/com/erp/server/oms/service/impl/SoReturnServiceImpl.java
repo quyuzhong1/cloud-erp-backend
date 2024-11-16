@@ -953,7 +953,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
         //获取未全部到货的退货单详情id
         List<String> soReturnDetailIds = new ArrayList<>();
-        soReturnReceiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        soReturnReceiveDetailEntities.stream().collect(Collectors.groupingBy(SoReturnReceiveDetailEntity::getSourceDetailId, Collectors.collectingAndThen(Collectors.toList(), m -> {
             SoReturnDetailEntity detailEntity = soReturnDetailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             int receiveQty = m.stream().mapToInt(SoReturnReceiveDetailEntity::getReceiveQty).sum();
             if (receiveQty < detailEntity.getReturnQty()) {

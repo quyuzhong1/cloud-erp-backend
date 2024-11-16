@@ -129,7 +129,9 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     public Boolean update(RuleDeliveryWarehouseDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         RuleDeliveryWarehouseEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+        }
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
@@ -185,7 +187,9 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     @Override
     public RuleDeliveryWarehouseDTO.ViewDTO view(String id) {
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
-        Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
+        if(null == ruleDeliveryWarehouse){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+        }
         RuleDeliveryWarehouseDTO.ViewDTO view = new RuleDeliveryWarehouseDTO.ViewDTO();
         BeanMapper.copy(ruleDeliveryWarehouse, view);
         String type = DictBasicTypeEnum.FIELD.getType();
@@ -206,7 +210,9 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     public Boolean updateStatus(UpdateStateDTO dto) {
         String id = dto.getId();
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
-        Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
+        if(null == ruleDeliveryWarehouse){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+        }
         Boolean disabled = ruleDeliveryWarehouse.getDisabled();
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
