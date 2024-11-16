@@ -250,7 +250,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
             mapEntity.setRefundQty(mapEntity.getRefundQty() + deductAmountQty);
             Integer replenishQty = poReturnDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PoReturnDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setReplenishQty(mapEntity.getReplenishQty() + replenishQty);
-            mapEntity.setReturnAmount(mapEntity.getReturnAmount().add(record.getAvgPrice().multiply(BigDecimal.valueOf(deductAmountQty + replenishQty))));
+            mapEntity.setReturnAmount(mapEntity.getReturnAmount().add(MathUtil.multiply(record.getAvgPrice(),MathUtil.add(deductAmountQty,replenishQty))));
         }
     }
 }

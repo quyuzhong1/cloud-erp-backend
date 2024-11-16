@@ -942,8 +942,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (projectTaskCount != 0) {
                     projectProgress = ((double) projectFinishTaskCount / projectTaskCount) * 100;
                 }
-                approvalProgress = Math.round(approvalProgress * 100) / 100;
-                projectProgress = Math.round(projectProgress * 100) / 100;
+                approvalProgress = (double)  Math.round(approvalProgress * 100) / 100;
+                projectProgress = (double)  Math.round(projectProgress * 100) / 100;
                 item.setApprovalProgress(approvalProgress);
                 item.setProjectProgress(projectProgress);
             }
