@@ -1,7 +1,5 @@
-package com.erp.model.plm.dto.excel;
+package com.erp.model.plm.dto;
 
-import com.erp.model.plm.dto.ProductProgressPhaseDTO;
-import com.erp.model.plm.dto.ProductProgressSkuDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

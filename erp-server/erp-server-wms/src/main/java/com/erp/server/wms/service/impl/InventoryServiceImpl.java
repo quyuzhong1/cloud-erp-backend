@@ -188,7 +188,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         } else {
             // 查询仓库下面仓位的SKU可用库存
             WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-            Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+            if (Objects.isNull(warehouseEntity)){
+                throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+            }
             return this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseId, skuId, warehouseLocationId, InventoryStatusEnum.USABLE.getCode());
         }
     }
@@ -197,7 +199,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public Integer getUsableInventoryTotal(String warehouseId, String skuId) {
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-        Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+        if (Objects.isNull(warehouseEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+        }
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())
                 .eq(InventoryEntity::getSkuId, skuId)
@@ -211,7 +215,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public Integer getRealInventoryTotal(String warehouseId, String skuId) {
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-        Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+        if (Objects.isNull(warehouseEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+        }
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())
                 .eq(InventoryEntity::getSkuId, skuId)
@@ -1059,8 +1065,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 view.setFrozenQty(this.getFrozenInventoryTotal(usableInventoryParamDTO.getWarehouseId(), usableInventoryParamDTO.getSkuId()));
                 viewList.add(view);
             } else {
-                WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(usableInventoryParamDTO.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
-                Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+                WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getId().equals(usableInventoryParamDTO.getWarehouseId())).findFirst().orElse(null);
+                if (Objects.isNull(warehouseEntity)){
+                    throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+                }
                 Integer inventoryUsableTotal = this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), usableInventoryParamDTO.getSkuId(), usableInventoryParamDTO.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
                 view.setSkuId(usableInventoryParamDTO.getSkuId());
                 view.setWarehouseId(usableInventoryParamDTO.getWarehouseId());
@@ -1277,7 +1285,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public Integer getFrozenInventoryTotal(String warehouseId, String skuId) {
         // 查询仓库组织
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-        Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException("仓库信息不存在"));
+        if (Objects.isNull(warehouseEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
+        }
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, warehouseEntity.getOrgId())
                 .eq(InventoryEntity::getSkuId, skuId)

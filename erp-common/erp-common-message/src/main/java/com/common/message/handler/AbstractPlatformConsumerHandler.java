@@ -106,6 +106,6 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
      * 处理平台数据
      * @param ext
      */
-    public abstract ApiResult<?> handle(Object ext);
+    public abstract ApiResult handle(Object ext);
 
 }

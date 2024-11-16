@@ -1,6 +1,7 @@
 package com.common.core.file;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -15,6 +16,7 @@ import java.util.List;
  * @author
  * @reviewer
  */
+@Slf4j
 public class CsvUtils {
 
 	public static Object resetNull(Object obj) {
@@ -135,7 +137,7 @@ public class CsvUtils {
 				writeRow(row, bufferedWriter);
 			}
 			bufferedWriter.flush();
-			System.out.println("BufferedWriter 执行耗时: " + (System.currentTimeMillis() - begin));
+			log.info("BufferedWriter 执行耗时: " + (System.currentTimeMillis() - begin));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} finally {

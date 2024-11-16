@@ -161,7 +161,6 @@ public class TikTokShipOrder extends AbstractShipOrder {
                     sourceDetailIds.addAll(Arrays.asList(split));
                 }
             }
-            detailEntityList.stream().map(SoB2cDetailEntity::getSourceDetailId).collect(Collectors.toList());
             List<String> detailIdList = detailEntityList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
 
             TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());

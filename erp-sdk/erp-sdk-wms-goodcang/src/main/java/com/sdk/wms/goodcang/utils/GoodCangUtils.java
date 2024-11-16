@@ -15,7 +15,6 @@ import java.util.Map;
 @Component
 public class GoodCangUtils {
     private GoodCangUtils() {
-        throw new IllegalStateException("Utility GoodCangUtils class");
     }
     @Value("${warehouse.goodcang.url}")
     private static String BASE_URL;

@@ -1,5 +1,7 @@
 package com.common.business.utils;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -12,7 +14,11 @@ import java.util.zip.ZipOutputStream;
 /**
  * ZIP工具类
  */
+@Slf4j
 public class ZipUtils {
+
+    private ZipUtils() {
+    }
 
     public static final String GBK = "gbk";
 
@@ -24,7 +30,7 @@ public class ZipUtils {
      * @throws Exception
      */
     public static void zipFiles(List<File> fileList, File zipFile) throws Exception {
-        System.out.println("zipFiles待压缩文件：" + zipFile.getAbsolutePath());
+        log.info("zipFiles待压缩文件：" + zipFile.getAbsolutePath());
         if (fileList != null) {
             //压缩文件已经存在，则只能单个添加
             if (zipFile.exists()) {
@@ -73,7 +79,7 @@ public class ZipUtils {
      * @throws Exception
      */
     public static void zip(File zipFile, File sourceFile) throws Exception {
-        System.out.println("待压缩文件：" + zipFile.getAbsolutePath());
+        log.info("待压缩文件：" + zipFile.getAbsolutePath());
         // 添加到已经存在的压缩文件中
         if (zipFile.exists()) {
             File tempFile = new File(zipFile.getAbsolutePath() + ".tmp");
@@ -86,7 +92,7 @@ public class ZipUtils {
             Enumeration<? extends ZipEntry> entries = zipOutFile.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
-                System.out.println("copy: " + entry.getName());
+                log.info("copy: " + entry.getName());
                 zipOutStream.putNextEntry(entry);
                 if (!entry.isDirectory()) {
                     write(zipOutFile.getInputStream(entry), bufferOutStream);
@@ -106,11 +112,11 @@ public class ZipUtils {
             if (flag) {
                 tempFile.renameTo(zipFile);
             } else {
-                System.out.println("删除文件失败。");
+                log.info("删除文件失败。");
             }
         } else {// 新创建压缩文件
             // 创建zip输出流
-            ZipOutputStream zipOutStream = new ZipOutputStream(new FileOutputStream(zipFile), Charset.forName("UTF-8"));
+            ZipOutputStream zipOutStream = new ZipOutputStream(new FileOutputStream(zipFile), StandardCharsets.UTF_8);
             // 创建缓冲输出流
             BufferedOutputStream bufferOutStream = new BufferedOutputStream(zipOutStream);
             // 创建压缩文件实体
@@ -166,7 +172,7 @@ public class ZipUtils {
             bufferOutStream.close();
             zipOutStream.close();
         } else {
-            System.out.println("[" + dirFile.getName() + "]不是一个文件夹,或者不存在。");
+            log.info("[" + dirFile.getName() + "]不是一个文件夹,或者不存在。");
         }
     }
 

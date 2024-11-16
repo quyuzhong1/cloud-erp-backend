@@ -114,6 +114,8 @@ public enum ModuleTypeEnum {
     LABEL_INFO("99", "智能补货标签管理"),
     SO_B2C_RETURN("98", "b2c退货单"),
     REFUND_ORDER("99", "退款单"),
+    DICT_RULE_CONDITION("110", "条件字典单"),
+    RULE_CONDITION("111", "规则条件单"),
     ;
 
 

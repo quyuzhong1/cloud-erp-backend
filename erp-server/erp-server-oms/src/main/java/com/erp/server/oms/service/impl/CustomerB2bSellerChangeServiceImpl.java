@@ -18,6 +18,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -253,8 +254,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }else{
             dto.setChangeSellerName(businessOperator.getUserName());
         }
-
-        this.update(dto);
+        CustomerB2bSellerChangeServiceImpl bean = ApplicationContextUtils.getBean(CustomerB2bSellerChangeServiceImpl.class);
+        bean.update(dto);
         //提交流程
         CustomerB2bSellerChangeEntity entity = this.getById(dto.getId());
         BatchResultDTO batchResultDTO = this.startProcess(entity);
@@ -299,7 +300,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 continue;
             }
             batchResultDTO = this.startProcess(entity);
-            if(!batchResultDTO.getSuccess()){
+            if(Boolean.FALSE.equals(batchResultDTO.getSuccess())){
                 resultDTOList.add(batchResultDTO);
                 continue;
             }
@@ -343,7 +344,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
                 batchResultDTO.setSuccess(false);
                 continue;
             }
-            boolean result = this.removeById(id);
+            CustomerB2bSellerChangeServiceImpl bean = ApplicationContextUtils.getBean(CustomerB2bSellerChangeServiceImpl.class);
+            boolean result = bean.removeById(id);
             if (result) {
                 batchResultDTO.setSuccess(true);
                 batchResultDTO.setMsg("删除成功");
@@ -421,8 +423,9 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
     @Transactional(rollbackFor = Exception.class)
     public void approveProcess(CustomerB2bSellerChangeEntity entity, BaseApproveParamDTO dto,BatchResultDTO batchResultDTO,CustomerInfoEntity customerInfoEntity ) {
         //无需流程则直接更新状态
-        if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && !dto.getIsNeedProcess()) {
-            this.approveEnd(dto, entity,batchResultDTO,customerInfoEntity);
+        if (ObjectUtil.isNotEmpty(dto.getIsNeedProcess()) && Boolean.TRUE.equals(!dto.getIsNeedProcess())) {
+            CustomerB2bSellerChangeServiceImpl bean = ApplicationContextUtils.getBean(CustomerB2bSellerChangeServiceImpl.class);
+            bean.approveEnd(dto, entity,batchResultDTO,customerInfoEntity);
             return;
         }
 
@@ -443,12 +446,13 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             return;
         }
         ProcessManagementDTO.ApproveResultDTO approveResult = approveResultApi.getData();
-        if(ObjectUtils.isEmpty(approveResult.getIsExistProcess()) || !approveResult.getIsExistProcess()){
-            this.approveEnd(dto, entity,batchResultDTO,customerInfoEntity);
+        CustomerB2bSellerChangeServiceImpl bean = ApplicationContextUtils.getBean(CustomerB2bSellerChangeServiceImpl.class);
+        if(ObjectUtils.isEmpty(approveResult.getIsExistProcess()) || Boolean.TRUE.equals(!approveResult.getIsExistProcess())){
+            bean.approveEnd(dto, entity,batchResultDTO,customerInfoEntity);
         }
         CustomerB2bSellerChangeEntity againEntity = this.getById(entity.getId());
         if(againEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)){
-            this.updateApproveInfo(againEntity,dto.getComment(),LocalDateTime.now());
+            bean.updateApproveInfo(againEntity,dto.getComment(),LocalDateTime.now());
         }
     }
 
@@ -494,7 +498,7 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         entity.setApproveUserId(user.getUid());
         entity.setApproveUserName(user.getUserName());
         Boolean result = this.updateById(entity);
-        if (!result) {
+        if (Boolean.FALSE.equals(result)) {
             batchResultDTO.setSuccess(false);
             batchResultDTO.setMsg("更新状态失败");
             return false;
