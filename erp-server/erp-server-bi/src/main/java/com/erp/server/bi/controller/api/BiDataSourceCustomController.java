@@ -204,7 +204,7 @@ public class BiDataSourceCustomController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "自助数据-导入")
     @PostMapping("/importBiDataSourceCustomFile")
-    public ApiResult<Void> importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, @RequestParam(value = "dataType") Integer dataType, HttpServletResponse response) {
+    public ApiResult<Object> importBiDataSourceCustomFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, @RequestParam(value = "dataType") Integer dataType, HttpServletResponse response) {
         boolean flag = biDataSourceCustomService.importExcel(excelFile, response, importType,dataType);
         return flag ? this.success() : this.failure();
     }

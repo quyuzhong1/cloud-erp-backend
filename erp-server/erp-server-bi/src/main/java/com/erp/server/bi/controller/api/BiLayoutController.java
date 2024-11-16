@@ -60,7 +60,7 @@ public class BiLayoutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "添加专题布局")
     @PostMapping("/addSubjectLayout")
-    public ApiResult<Void> addSubjectLayout(@RequestBody @Validated SubjectLayoutDTO dto) {
+    public ApiResult<Object> addSubjectLayout(@RequestBody @Validated SubjectLayoutDTO dto) {
         boolean flag = layoutService.addSubjectLayout(dto);
         return flag ? success() : failure();
     }
@@ -109,7 +109,7 @@ public class BiLayoutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除布局模块")
     @PostMapping("/deleteLayoutModule")
-    public ApiResult<Void> deleteLayoutModule(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
+    public ApiResult<Object> deleteLayoutModule(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
         boolean flag = layoutService.deleteLayoutModule(dto);
         return flag ? success() : failure();
     }
@@ -124,7 +124,7 @@ public class BiLayoutController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除布局")
     @PostMapping("/deleteLayout")
-    public ApiResult<Void> deleteLayout(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
+    public ApiResult<Object> deleteLayout(@RequestBody @Validated DeleteLayoutModuleDTO dto) {
         boolean flag = layoutService.deleteLayout(dto);
         return flag ? success() : failure();
     }

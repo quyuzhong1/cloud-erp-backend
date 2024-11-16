@@ -65,7 +65,7 @@ public class BiModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增模块")
     @PostMapping("/add")
-    public ApiResult<Void> add(@Validated @ModelAttribute  ModuleDTO dto) {
+    public ApiResult<Object> add(@Validated @ModelAttribute  ModuleDTO dto) {
         boolean flag = this.biModuleService.insert(dto);
         return flag ? success() : failure();
     }
@@ -92,7 +92,7 @@ public class BiModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新模块")
     @PostMapping("/update")
-    public ApiResult<Void> edit(@ModelAttribute @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
+    public ApiResult<Object> edit(@ModelAttribute @Validated(value = {UpdateGroup.class}) ModuleDTO dto) {
         boolean flag = this.biModuleService.update(dto);
         return flag ? success() : failure();
     }
@@ -104,7 +104,7 @@ public class BiModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除模块")
     @PostMapping("/delete")
-    public ApiResult<Void> deleteById(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> deleteById(@RequestBody @Validated BaseIdDTO dto) {
         boolean flag = this.biModuleService.deleteById(dto.getId());
         return flag ? success() : failure();
     }
@@ -117,7 +117,7 @@ public class BiModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置模板状态:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateState")
-    public ApiResult<Void> updateState(@RequestBody @Validated UpdateStateDTO dto) {
+    public ApiResult<Object> updateState(@RequestBody @Validated UpdateStateDTO dto) {
         boolean flag = this.biModuleService.updateState(dto);
         return flag ? success() : failure();
     }

@@ -83,7 +83,7 @@ public class BiDataSourceCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "成本数据-导入")
     @PostMapping("/importBiDataSourceCostFile")
-    public ApiResult<Void> importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object> importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         boolean flag = biDataSourceCostService.importExcel(excelFile, response);
         return flag ? this.success() : this.failure();
     }

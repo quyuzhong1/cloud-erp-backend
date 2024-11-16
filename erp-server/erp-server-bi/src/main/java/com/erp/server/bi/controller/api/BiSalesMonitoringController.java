@@ -41,7 +41,7 @@ public class BiSalesMonitoringController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量新增销售监控:监控维度={type}")
     @PostMapping("/batchAdd")
-    public ApiResult<Void> batchAdd (@RequestBody @Validated List<BiSalesMonitoringDTO> list) {
+    public ApiResult<Object> batchAdd (@RequestBody @Validated List<BiSalesMonitoringDTO> list) {
         boolean flag = biSalesMonitoringService.batchAdd(list);
         return flag ? success() : failure();
     }

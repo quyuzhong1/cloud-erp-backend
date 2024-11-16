@@ -77,7 +77,7 @@ public class BiDashboardController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置仪表盘默认,id={id}")
     @PostMapping("/setDefault")
-    public ApiResult<Void> setShare(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> setShare(@RequestBody @Validated BaseIdDTO dto) {
         boolean flag = subjectDefaultService.setDefault(dto.getId());
         return flag ? success() : failure();
     }

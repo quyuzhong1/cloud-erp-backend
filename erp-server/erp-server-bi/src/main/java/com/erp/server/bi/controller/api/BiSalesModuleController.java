@@ -628,7 +628,7 @@ public class BiSalesModuleController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出新老品销售额")
     @PostMapping(value = "/newAndOldSalesExportExcel")
-    public ApiResult<Void> newAndOldSalesExportExcel(@RequestBody NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> newAndOldSalesExportExcel(@RequestBody NewAndOldSalesSearchDTO.SearchDTO dto, HttpServletResponse response) {
         boolean flag = salesOrderService.newAndOldSalesExportExcel(dto, response);
         return flag ? success() : failure();
     }
@@ -680,7 +680,7 @@ public class BiSalesModuleController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出部门完成率排行")
     @PostMapping(value = "/completionRateRankingExportExcel")
-    public ApiResult<Void> completionRateRankingExportExcel(@RequestBody CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> completionRateRankingExportExcel(@RequestBody CompletionRateRankingDTO.SearchDTO dto, HttpServletResponse response) {
         boolean flag = salesOrderService.completionRateRankingExportExcel(dto, response);
         return flag ? success() : failure();
     }

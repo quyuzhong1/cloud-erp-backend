@@ -176,7 +176,7 @@ public class BiTargetCategorySettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "品类目标设置删除")
-    public ApiResult<Void> remove(@RequestBody @Validated BiTargetCategorySettingDTO.RemoveDTO dto) {
+    public ApiResult<Object> remove(@RequestBody @Validated BiTargetCategorySettingDTO.RemoveDTO dto) {
         boolean result = biTargetCategorySettingService.delete(dto);
         return result ? success() : failure();
     }
