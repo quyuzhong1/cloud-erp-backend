@@ -684,8 +684,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<SkuVO> accessoriesSku(String searchKeyword);
 
-    List<ProductDetailExcelDTO> getProductDetailExportData(String metaInfo);
-
     /**
      * 获取已审核sku 未计算目的国申报价数据
      * @return

@@ -94,5 +94,9 @@ public class ProductConstant implements Serializable {
      */
     public static final String PRODUCT_PROPERTY_SERVICE = "服务";
 
+    /**
+     * 换行符
+     */
+    public static final String HTML_BR = "</br>";
 
 }
