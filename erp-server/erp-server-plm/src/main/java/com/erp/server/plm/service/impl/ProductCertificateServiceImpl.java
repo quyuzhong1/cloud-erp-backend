@@ -275,9 +275,9 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     @Override
     public ProductCertificateDTO.ViewDTO view(String id) {
         ProductCertificateEntity old = this.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品认证信息"));
+        ProductCertificateEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品认证信息"));
         ProductCertificateDTO.ViewDTO viewDTO = new ProductCertificateDTO.ViewDTO();
-        BeanMapperUtils.copy(old,viewDTO);
+        BeanMapperUtils.copy(oldEntity,viewDTO);
         //数据处理
         handleView(viewDTO);
         return viewDTO;

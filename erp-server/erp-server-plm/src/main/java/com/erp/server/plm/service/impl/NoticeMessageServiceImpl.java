@@ -1311,8 +1311,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     @Override
     public NoticeMessageEntity view(String id) {
         NoticeMessageEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "未找到通知详情id=" + id));
-        return entity;
+        NoticeMessageEntity oldEntity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "未找到通知详情id=" + id));
+        return oldEntity;
     }
 
 
