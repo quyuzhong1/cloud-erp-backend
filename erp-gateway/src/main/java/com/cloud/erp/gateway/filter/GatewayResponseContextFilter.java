@@ -196,6 +196,8 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
             try {
                 Thread.sleep(30000);
             } catch (InterruptedException e) {
+                log.error( "线程睡眠阻塞: Interrupted!:{}", e.getMessage());
+                Thread.currentThread().interrupt();
             }
         }
         return chain.filter(exchange);

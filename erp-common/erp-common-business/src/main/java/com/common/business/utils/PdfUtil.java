@@ -86,7 +86,10 @@ public class PdfUtil {
             if(StringUtils.isNotBlank(newPdfName)){
                 File file = new File(newPdfName);
                 if (file != null && file.isFile() && file.exists()) {
-                    file.delete();
+                    boolean deleteResult = file.delete();
+                    if (!deleteResult){
+                        log.warn("file.delete 删除失败");
+                    }
                 }
             }
         }
