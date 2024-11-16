@@ -2,6 +2,7 @@ package com.erp.server.msg.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.*;
@@ -31,6 +32,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -215,41 +217,39 @@ public class FeiShuMsgJob {
     public void sendFeiShuWarnMsgReportByChannel() {
         XxlJobHelper.log("飞书预警消息渠道汇总报告:start");
         String jobParam = XxlJobHelper.getJobParam();
-        List<String> statusList = new ArrayList<>();
-        if (StrUtil.isNotBlank(jobParam)){
-            String[] params = jobParam.split(",");
-            statusList.add(params[0]);
-            statusList.add(params[1]);
-        }else {
-            statusList.add(SyncStatusEnum.IN_SYNC.getCode());
-            statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
+        int day;
+        if (CharSequenceUtil.isNotBlank(jobParam)){
+            day = Integer.parseInt(jobParam);
+        } else {
+            day = 3;
         }
+        LocalDateTime trackTime = LocalDateTime.now().minusDays(day);
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .registerStatus(1)
                 .trackEnable(true)
+                .trackTime(trackTime)
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
-        List<LogisticsChannelDTO.WarnReportDTO> warnReportByChannel = logisticsFeign.getWarnReportByChannel(query);
         //获取汇总消息
-        List<DmpTaskMsgDTO> warnTaskReport = dmpTaskFeign.getWarnTaskReport(statusList);
-        if (CollectionUtil.isNotEmpty(warnTaskReport)){
+        List<LogisticsChannelDTO.WarnReportDTO> warnReportByChannel = logisticsFeign.getWarnReportByChannel(query);
+        if (CollectionUtil.isNotEmpty(warnReportByChannel)){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName("预警消息");
             warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-            warnMsgInfo.setTitle("异常预警消息汇总");
-            warnMsgInfo.setTableName("dmp_pull_task/dmp_push_task");
+            warnMsgInfo.setTitle("物流轨迹更新预警汇总");
+            warnMsgInfo.setTableName("logistics_channel/logistics_bill_detail");
             warnMsgInfo.setTableId("");
             warnMsgInfo.setHappenTime(LocalDateTime.now());
             warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-            List<String> keyInfoList = new ArrayList<>(warnTaskReport.size());
-            warnTaskReport.forEach(dmpTaskMsgDTO -> {
-                String format = StrUtil.format("【{}】->【{}】失败,业务【{}】,数量:{}", dmpTaskMsgDTO.getSourcePlatformName(), dmpTaskMsgDTO.getTargetPlatformName(),SourceTypeEnum.getName(dmpTaskMsgDTO.getSourceType()), dmpTaskMsgDTO.getTotal());
+            List<String> keyInfoList = new ArrayList<>(warnReportByChannel.size());
+            warnReportByChannel.forEach(warnReportDTO -> {
+                String format = StrUtil.format("渠道【{}】在【{}】天内未更新轨迹信息,数量:{}", warnReportDTO.getChannelName(),day, warnReportDTO.getTotal());
                 keyInfoList.add(format);
             });
             warnMsgInfo.setKeyInfo(String.join("\n", keyInfoList));
             msgContext.routeSendWarnMsg(warnMsgInfo);
         }
-        XxlJobHelper.log("飞书预警消息渠道汇总报告:end");
+        XxlJobHelper.log("物流轨迹更新预警汇总报告:end");
     }
 }
