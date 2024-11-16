@@ -53,10 +53,10 @@ public class EnumCacheUtils {
     /**
      * 不扫描的枚举类
      */
-    private static final List<String> excludeScan = new ArrayList<String>() {{
-        add(ApiError.class.getSimpleName());
-        add("ThirdPlatformEnums");
-    }};
+    private static final List<String> excludeScan = Arrays.asList(
+            ApiError.class.getSimpleName(),
+            "ThirdPlatformEnums"
+    );
 
     /**
      * 获取单例
