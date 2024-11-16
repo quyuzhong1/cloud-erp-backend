@@ -181,63 +181,107 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         for (Map.Entry<String, List<CfgRuleSalesFormulaEntity>> entry : map.entrySet()) {
             List<CfgRuleSalesFormulaEntity> value = entry.getValue();
             //排序
-            int maxIndex = MathUtil.ZERO;
-            if (Boolean.TRUE.equals(isCustom)) {
-                maxIndex = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),entry.getKey())).max(Comparator.comparingInt(CfgRuleSalesFormulaEntity::getIndex)).map(CfgRuleSalesFormulaEntity::getIndex).orElse(MathUtil.ZERO);
-            }
-            String names = value.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getName()))
-                    .collect(Collectors.groupingBy(CfgRuleSalesFormulaEntity::getName))
-                    .entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
-            if (CharSequenceUtil.isNotBlank(names)) {
-                throw new ServiceException("销量名称【{}】唯一不能添加重复数据",names);
-            }
-
+            int maxIndex = (Boolean.TRUE.equals(isCustom)) ? getMaxIndex(oldList, entry) : MathUtil.ZERO;
+            validateUniqueNames(value);
             for (CfgRuleSalesFormulaEntity salesFormula : value) {
-                salesFormula.setSalesQtyId(salesQtyId);
-                //排序
-                salesFormula.setIndex(maxIndex + 1);
-                //主键id赋值
-                CfgRuleSalesFormulaEntity entity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),salesFormula.getType()) && CharSequenceUtil.equals(obj.getName(), CharSequenceUtil.blankToDefault(salesFormula.getName(),""))).findFirst().orElse(null);
-                if (!ObjectUtils.isEmpty(entity)) {
-                    salesFormula.setId(entity.getId());
-                    //自定义添加的需要保持原有序号
-                    salesFormula.setIndex(Boolean.TRUE.equals(isCustom) ? entity.getIndex() : salesFormula.getIndex());
-                }
-
-                //固定销量
-                if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(salesFormula.getDefaultType())) {
-                    salesFormula.setPercentJson(JSONUtil.parseObj(new CfgRuleSalesFormulaDTO.PercentJsonDTO()));
-                }
-                //动态销量
-                if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(salesFormula.getDefaultType())) {
-                    salesFormula.setFixedValue(MathUtil.ZERO);
-                    //默认配置需要校验百分比之和为100
-                    if (CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(salesFormula.getType())) {
-                        Integer totalRatio = salesFormula.getPercentJsonDTO().getTotalRatio();
-                        if (MathUtil.compareTo(totalRatio,100) != MathUtil.ZERO) {
-                            throw new ServiceException("默认动态销量系数之和必须=100%；");
-                        }
-                    }
-                }
-                //百分比json
-                JSONObject percentJson = JSONUtil.parseObj(salesFormula.getPercentJsonDTO());
-                salesFormula.setPercentJson(percentJson);
-
-                //时间
-                List<LocalDate> dateList = salesFormula.getDateList();
-                if (CollectionUtils.isNotEmpty(dateList)) {
-                    if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
-                        throw new ServiceException("时间区间不能为空");
-                    }
-                    if (dateList.get(0).isAfter(dateList.get(1))) {
-                        throw new ServiceException("开始时间不能大于结束时间");
-                    }
-                }
-                salesFormula.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
-                salesFormula.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
+                updateSalesFormulaAttributes(oldList, salesQtyId, isCustom, salesFormula, maxIndex);
                 maxIndex ++;
             }
         }
 
+    }
+
+    /**
+     * 更新每条记录的属性
+     *
+     * @param oldList      旧销量系数
+     * @param salesQtyId   销量id
+     * @param isCustom     是否自定义
+     * @param salesFormula 销量系数
+     * @param maxIndex     序号
+     */
+    private void updateSalesFormulaAttributes(List<CfgRuleSalesFormulaEntity> oldList, String salesQtyId, Boolean isCustom, CfgRuleSalesFormulaEntity salesFormula, int maxIndex) {
+        salesFormula.setSalesQtyId(salesQtyId);
+        //排序
+        salesFormula.setIndex(maxIndex + 1);
+        //主键id赋值
+        CfgRuleSalesFormulaEntity entity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), salesFormula.getType()) && CharSequenceUtil.equals(obj.getName(), CharSequenceUtil.blankToDefault(salesFormula.getName(),""))).findFirst().orElse(null);
+        if (!ObjectUtils.isEmpty(entity)) {
+            salesFormula.setId(entity.getId());
+            //自定义添加的需要保持原有序号
+            salesFormula.setIndex(Boolean.TRUE.equals(isCustom) ? entity.getIndex() : salesFormula.getIndex());
+        }
+        //固定销量
+        if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(salesFormula.getDefaultType())) {
+            salesFormula.setPercentJson(JSONUtil.parseObj(new CfgRuleSalesFormulaDTO.PercentJsonDTO()));
+        }
+        //动态销量
+        setDynamicFormula(salesFormula);
+        //百分比json
+        JSONObject percentJson = JSONUtil.parseObj(salesFormula.getPercentJsonDTO());
+        salesFormula.setPercentJson(percentJson);
+
+        //时间
+        List<LocalDate> dateList = salesFormula.getDateList();
+        checkDate(dateList, salesFormula);
+    }
+
+
+    /**
+     * 获取最大排序
+     *
+     * @param oldList 原销量系数
+     * @param entry   新销量系数
+     */
+    private Integer getMaxIndex(List<CfgRuleSalesFormulaEntity> oldList, Map.Entry<String, List<CfgRuleSalesFormulaEntity>> entry) {
+        return oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), entry.getKey())).max(Comparator.comparingInt(CfgRuleSalesFormulaEntity::getIndex)).map(CfgRuleSalesFormulaEntity::getIndex).orElse(MathUtil.ZERO);
+    }
+
+
+    /**
+     * 设置动态销量系数
+     * @param salesFormula 销量系数
+     */
+    private void setDynamicFormula(CfgRuleSalesFormulaEntity salesFormula) {
+        if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(salesFormula.getDefaultType())) {
+            salesFormula.setFixedValue(MathUtil.ZERO);
+            //默认配置需要校验百分比之和为100
+            if (CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(salesFormula.getType())) {
+                Integer totalRatio = salesFormula.getPercentJsonDTO().getTotalRatio();
+                if (MathUtil.compareTo(totalRatio,100) != MathUtil.ZERO) {
+                    throw new ServiceException("默认动态销量系数之和必须=100%；");
+                }
+            }
+        }
+    }
+
+    /**
+     * 校验时间
+     * @param dateList 时间
+     */
+    private void checkDate(List<LocalDate> dateList, CfgRuleSalesFormulaEntity salesFormula) {
+        if (CollectionUtils.isNotEmpty(dateList)) {
+            if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
+                throw new ServiceException("时间区间不能为空");
+            }
+            if (dateList.get(0).isAfter(dateList.get(1))) {
+                throw new ServiceException("开始时间不能大于结束时间");
+            }
+            salesFormula.setStartDate(dateList.get(0));
+            salesFormula.setEndDate(dateList.get(1));
+        }
+    }
+
+    /**
+     * 获取销量名称重复数据
+     * @param value 参数
+     */
+    private void validateUniqueNames(List<CfgRuleSalesFormulaEntity> value) {
+        String names = value.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getName()))
+                .collect(Collectors.groupingBy(CfgRuleSalesFormulaEntity::getName))
+                .entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(names)) {
+            throw new ServiceException("销量名称【{}】唯一不能添加重复数据",names);
+        }
     }
 }
