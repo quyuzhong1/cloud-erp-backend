@@ -6,6 +6,8 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
@@ -134,13 +136,14 @@ public class LxFbaShipmentReceiveServiceImpl implements IReportSaveService<FbaRe
         }
 
         // 异步推送到MQ
-        pushToMqList.stream().peek(msgEntity ->{
+        List<FbaReceiveGroupEntity> fbaReceiveGroupEntityList = pushToMqList.stream().peek(msgEntity ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_FBA_SHIPMENT_RECEIVE_TAG.getName(),
                     JSONUtil.toJsonStr(msgEntity), msgEntity.getUniqueId());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送领星FBA货件签收MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送领星FBA货件签收MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+        log.debug("领星FBA数据为：{}" , JSON.toJSONString(fbaReceiveGroupEntityList));
     }
 
     @Override

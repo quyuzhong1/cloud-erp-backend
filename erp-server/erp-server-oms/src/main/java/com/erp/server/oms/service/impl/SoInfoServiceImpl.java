@@ -90,8 +90,8 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import javax.annotation.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -660,7 +660,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             result.setRecords(list);
             return new PagingVO<>(result);
         }else {
-            Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+            Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
             IPage pageData = baseMapper.paging(query, params);
             List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
             if (CollectionUtils.isEmpty(list)) {
