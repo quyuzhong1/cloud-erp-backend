@@ -82,7 +82,7 @@ public class MD5 {
 	public String getkeyBeanofStr(String inbuf) {
 		keyBeanInit();
 		try {
-			keyBeanUpdate(inbuf.getBytes("iso8859-1"), inbuf.length());
+			keyBeanUpdate(inbuf.getBytes(StandardCharsets.ISO_8859_1), inbuf.length());
 		} catch (UnsupportedEncodingException e) {
 			log.error("不支持字符");
 		}

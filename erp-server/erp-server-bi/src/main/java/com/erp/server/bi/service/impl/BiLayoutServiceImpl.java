@@ -356,7 +356,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //专题id
         String subjectId = subjectService.addSubject(subject);
         if (StringUtils.isBlank(subjectId)) {
-            return subjectId;
+            return "";
         }
 
         List<String> LayoutIds = new ArrayList<>();

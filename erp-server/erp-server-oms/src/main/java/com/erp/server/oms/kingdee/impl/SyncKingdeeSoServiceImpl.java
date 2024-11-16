@@ -1,11 +1,9 @@
 package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -17,7 +15,6 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -50,7 +47,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -102,9 +98,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
     @Resource
     private BankAccountService bankAccountService;
-
-    @Resource
-    private MQProducerService mqProducerService;
 
     @Resource
     private KingdeeReceiptConditionService kingdeeReceiptConditionService;
@@ -184,7 +177,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Override
     public void syncOrderToDmp(SoInfoEntity entity, String syncOperate) {
 
-        if (!dmpTaskFeign.needPushMQ(LocalDateTime.now())) {
+        if (Boolean.FALSE.equals(dmpTaskFeign.needPushMQ(LocalDateTime.now()))) {
             return;
         }
         Map<String, Object> resultMap = new HashMap<>();
@@ -232,7 +225,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             exchangeRate = BigDecimal.ONE;
         }
         //订单业务字段设置
-        if (Objects.nonNull(soInfoEntity.getInvalidStatus()) && soInfoEntity.getInvalidStatus()) {
+        if (Objects.nonNull(soInfoEntity.getInvalidStatus()) && Boolean.TRUE.equals(soInfoEntity.getInvalidStatus())) {
             biOrderInfoEntity.setOrderStatus(5);
         } else {
             //默认待配货

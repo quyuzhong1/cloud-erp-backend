@@ -243,7 +243,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                     throw new ServiceException( CharSequenceUtil.format("渠道【{}】未设置仓库，请先设置仓库",item.getLogisticsChannelName()));
                 }
                 //全部指定直接过，部分指定校验仓库是否一致
-                if (StrUtil.equals(list.get(0).getType(),LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
+                if (CharSequenceUtil.equals(list.get(0).getType(),LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {
                     List<String> warehouseIdList = mapList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("deliveryWarehouseId")) && CharSequenceUtil.isNotBlank(obj.get("deliveryWarehouseId").toString())).map(obj -> obj.get("deliveryWarehouseId").toString()).collect(Collectors.toList());
                     if (CollectionUtils.isEmpty(warehouseIdList)) {
                         throw new ServiceException("B2C销售订单仓库不能为空");

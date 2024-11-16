@@ -141,7 +141,7 @@ public class SoB2cRetryJob {
                     List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId());
                     try {
                         Thread.sleep(5000);
-                    } catch (InterruptedException e) {
+                    } catch (Exception e) {
                         XxlJobHelper.log("SoB2cRetryJob 当前任务睡眠失败");
                         continue;
                     }

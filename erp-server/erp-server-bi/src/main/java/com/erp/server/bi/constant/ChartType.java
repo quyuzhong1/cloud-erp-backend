@@ -6,6 +6,10 @@ package com.erp.server.bi.constant;
  * @Created by yl
  */
 public class ChartType {
+    // 私有构造函数，防止实例化
+    private ChartType() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
     /**
      * 饼图
