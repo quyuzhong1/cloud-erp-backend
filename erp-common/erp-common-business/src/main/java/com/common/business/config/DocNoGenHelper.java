@@ -36,7 +36,7 @@ public class DocNoGenHelper implements InitializingBean {
     /**
      * 单位秒
      */
-    public static long ONE_DAY_CACHE_TIME = 24 * 60 * 60;
+    public static long ONE_DAY_CACHE_TIME = 24 * 60 * 60L;
 
     @Resource
     private RedisTemplate<String,Object> redisTemplate;
