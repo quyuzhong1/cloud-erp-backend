@@ -18,6 +18,7 @@ import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.export.SimpleExporterInput;
 import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
+import net.sf.jasperreports.j2ee.servlets.BaseHttpServlet;
 import net.sf.jasperreports.j2ee.servlets.ImageServlet;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.NoSuchFileException;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.*;
@@ -153,7 +156,7 @@ public class JasperHelperUtil {
             } else {
                 jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, conn);
             }
-            request.getSession().setAttribute(ImageServlet.DEFAULT_JASPER_PRINT_SESSION_ATTRIBUTE, jasperPrint);
+            request.getSession().setAttribute(BaseHttpServlet.DEFAULT_JASPER_PRINT_SESSION_ATTRIBUTE, jasperPrint);
 
             response.setContentType(docType.getTypeContent());
             if (FileTypeEnum.HTML.getCode().equals(type)) {
@@ -333,13 +336,21 @@ public class JasperHelperUtil {
             response.flushBuffer();// 不可少
             //删除文件
             for (File file1 : sysFileList) {
-                if (file1.exists()) {
-                    file1.delete();
-                }
+                checkAndDelete(file1);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return returnPath;
+    }
+
+    private static void checkAndDelete(File file1) {
+        if (!file1.exists()) {
+            log.info("file1 not exists() --------------");
+            return;
+        }
+        if(!file1.delete()){
+            log.info("file1.delete() delete --------------");
+        }
     }
 }

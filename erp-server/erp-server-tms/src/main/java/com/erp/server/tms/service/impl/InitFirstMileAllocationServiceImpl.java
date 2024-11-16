@@ -1,13 +1,14 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,8 +17,17 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.TabApproveStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
 import com.erp.model.tms.entity.*;
@@ -29,37 +39,26 @@ import com.erp.server.tms.convert.InitFirstMileAllocationConverter;
 import com.erp.server.tms.listener.InitFirstMileAllocationDetailExcelListener;
 import com.erp.server.tms.mapper.InitFirstMileAllocationMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_INIT_FIRST_MILE_ALLOCATION;
 
@@ -74,9 +73,9 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_INIT_FIRST_
 @Slf4j
 @Service
 public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFirstMileAllocationMapper, InitFirstMileAllocationEntity> implements InitFirstMileAllocationService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private InitFirstMileAllocationDetailService initFirstMileAllocationDetailService;
@@ -107,7 +106,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             throw new ServiceException("期初头程分摊保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "期初头程分摊", initFirstMileAllocationEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "期初头程分摊", initFirstMileAllocationEntity.getCode());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), initFirstMileAllocationEntity.getId(), "新增操作");
         // 新增明细
@@ -145,7 +144,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         }
         // 记录主单操作日志
         log.info("编辑 开始记录期初头程分摊日志数据，单号：【{}】", initFirstMileAllocationEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), initFirstMileAllocationEntity.getCode(), "期初头程分摊");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), initFirstMileAllocationEntity.getCode(), "期初头程分摊");
         operateLogService.addModuleOperateLogByObj(old, initFirstMileAllocationEntity, ModuleTypeEnum.INIT_FIRST_MILE_ALLOCATION.getCode(), initFirstMileAllocationEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -375,26 +374,26 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<InitFirstMileAllocationDetailEntity> detailEntityList = initFirstMileAllocationDetailService.listByIds(detailIds);
         if (CollectionUtils.isEmpty(detailEntityList)) {
-            resultDTOS.add(BatchResultDTO.fail(String.join(",", detailIds), String.join(",", detailIds), StrUtil.format("期初明细【{}】记录不存在", String.join(",", detailIds))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", detailIds), String.join(",", detailIds), CharSequenceUtil.format("期初明细【{}】记录不存在", String.join(",", detailIds))));
             return resultDTOS;
         }
         List<String> sourceIds = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
         if (CollectionUtils.isEmpty(firstMileDeliveryEntityList)) {
-            resultDTOS.add(BatchResultDTO.fail(String.join(",", sourceIds), String.join(",", sourceIds), StrUtil.format("头程发货单【{}】记录不存在", String.join(",", sourceIds))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", sourceIds), String.join(",", sourceIds), CharSequenceUtil.format("头程发货单【{}】记录不存在", String.join(",", sourceIds))));
             return resultDTOS;
         }
         //过滤未审核期初账单
         List<String> ids = detailEntityList.stream().map(InitFirstMileAllocationDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<InitFirstMileAllocationEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
-            resultDTOS.add(BatchResultDTO.fail(String.join(",", ids), String.join(",", ids), StrUtil.format("期初【{}】记录不存在", String.join(",", ids))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", ids), String.join(",", ids), CharSequenceUtil.format("期初【{}】记录不存在", String.join(",", ids))));
             return resultDTOS;
         }
         List<InitFirstMileAllocationEntity> unApproveList = entityList.stream().filter(e -> !ApproveStatusEnum.APPROVE.getStatus().equals(e.getStatus())).collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(unApproveList)) {
             List<String> codeList = unApproveList.stream().map(InitFirstMileAllocationEntity::getCode).distinct().collect(Collectors.toList());
-            resultDTOS.add(BatchResultDTO.fail(String.join(",", codeList), String.join(",", codeList), StrUtil.format("期初编号【{}】未审核单据不能下推对账单", String.join(",", codeList))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", codeList), String.join(",", codeList), CharSequenceUtil.format("期初编号【{}】未审核单据不能下推对账单", String.join(",", codeList))));
             return resultDTOS;
         }
         //整理下推对账单数据
@@ -403,7 +402,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             List<String> existIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).distinct().collect(Collectors.toList());
             List<String> notExistIds = sourceIds.stream().filter(e -> !existIds.contains(e)).distinct().collect(Collectors.toList());
             List<String> notExistCodes = firstMileDeliveryEntityList.stream().filter(e -> !CollectionUtils.isEmpty(notExistIds) && notExistIds.contains(e.getId())).map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
-            resultDTOS.add(BatchResultDTO.fail(String.join(",", notExistIds), String.join(",", notExistCodes), StrUtil.format("头程发货单【{}】无关联物流单，请下推物流单后生成对账单", String.join(",", notExistCodes))));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",", notExistIds), String.join(",", notExistCodes), CharSequenceUtil.format("头程发货单【{}】无关联物流单，请下推物流单后生成对账单", String.join(",", notExistCodes))));
             return resultDTOS;
         }
         // 当前添加的主账单记录
@@ -476,7 +475,7 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
      * 新增修改处理数据
      */
     private void handleData(InitFirstMileAllocationEntity initFirstMileAllocationEntity) {
-        if (StrUtil.isBlank(initFirstMileAllocationEntity.getStatus())) {
+        if (CharSequenceUtil.isBlank(initFirstMileAllocationEntity.getStatus())) {
             initFirstMileAllocationEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
         }
     }

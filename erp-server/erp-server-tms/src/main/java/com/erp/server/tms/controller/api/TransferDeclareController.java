@@ -117,7 +117,7 @@ public class TransferDeclareController extends BaseController {
             menuCode = "tms:transferDeclare:update",
             serviceClass = TransferDeclareService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated TransferDeclareDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated TransferDeclareDTO.UpdateDTO dto) {
         Boolean flag = transferDeclareService.update(dto);
         if (flag) {
             //如果明细有移除需要根据明细上传状态修改主表上传状态
@@ -174,7 +174,7 @@ public class TransferDeclareController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/forcastSetting")
-    public ApiResult forcastSetting(@RequestBody @Validated ValidList<TransferDeclareGenerationSettingDTO.AddDTO> dto) {
+    public ApiResult<Object>forcastSetting(@RequestBody @Validated ValidList<TransferDeclareGenerationSettingDTO.AddDTO> dto) {
         Boolean flag = transferDeclareService.forcastSetting(dto.getList());
         return flag ? success() : failure();
     }
@@ -199,7 +199,7 @@ public class TransferDeclareController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/deadlineSetting")
-    public ApiResult deadlineSetting(@RequestBody @Validated ValidList<TransferDeclareDeadlineSettingDTO.AddDTO> dto) {
+    public ApiResult<Object>deadlineSetting(@RequestBody @Validated ValidList<TransferDeclareDeadlineSettingDTO.AddDTO> dto) {
         Boolean flag = transferDeclareService.deadlineSetting(dto.getList());
         return flag ? success() : failure();
     }
@@ -229,7 +229,7 @@ public class TransferDeclareController extends BaseController {
             menuCode = "tms:transferDeclare:delete",
             serviceClass = TransferDeclareService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object>delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = transferDeclareService.delete(dto.getIds());
         return flag ? success() : failure();
     }
@@ -243,7 +243,7 @@ public class TransferDeclareController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出中转报关单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody @Validated TransferDeclareDTO.PagingParamDTO dto) {
         Boolean flag = transferDeclareService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

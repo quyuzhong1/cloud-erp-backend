@@ -41,7 +41,10 @@ public class DateUtil {
 
             fmt_hms = "HH:mm:ss";
 
-    public final static String FMT_YEAR4 = "yyyy", DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm", DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd", DATE_PATTERN_SHORT_TIME_NO_SP = "yyyyMMddHHmmss";
+    public static final String FMT_YEAR4 = "yyyy";
+    public static final String DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm";
+    public static final String DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd";
+    public static final String DATE_PATTERN_SHORT_TIME_NO_SP = "yyyyMMddHHmmss";
 
 
     public static LocalDateTime nowDay() {
@@ -492,7 +495,7 @@ public class DateUtil {
         LocalDate currentDate = LocalDate.now();
         // 格式化当前日期为字符串，格式为"yyyyMMdd"
 
-        return currentDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return currentDate.format(DateTimeFormatter.ofPattern(DATE_PATTERN_SHORT_YEAR_NO_SP));
     }
     /**
      * 获取某年的全部日子

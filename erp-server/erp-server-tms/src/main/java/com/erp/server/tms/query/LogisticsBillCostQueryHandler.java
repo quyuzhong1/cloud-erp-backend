@@ -1,7 +1,7 @@
 package com.erp.server.tms.query;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
@@ -21,13 +21,13 @@ public class LogisticsBillCostQueryHandler extends AbstractQueryHandler {
         }
         //差异字段查询
         if ("diffOption".equals(field) && ObjectUtil.isNotEmpty(value)) {
-            if (StrUtil.equals(value.toString(),"greater")) {
+            if (CharSequenceUtil.equals(value.toString(),"greater")) {
                 return "lbc.diff_shipping_cost > 0";
             }
-            if (StrUtil.equals(value.toString(),"less")) {
+            if (CharSequenceUtil.equals(value.toString(),"less")) {
                 return "0 > lbc.diff_shipping_cost";
             }
-            if (StrUtil.equals(value.toString(),"equal")) {
+            if (CharSequenceUtil.equals(value.toString(),"equal")) {
                 return "lbc.diff_shipping_cost = 0";
             }
         }

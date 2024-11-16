@@ -66,7 +66,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         return ApiResult.error(-1, "功能未开放");
     }
 

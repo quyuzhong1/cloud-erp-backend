@@ -1,10 +1,11 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -22,10 +23,10 @@ import com.erp.server.mrp.mapper.CfgRuleSalesQtyMapper;
 import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,16 +44,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQtyMapper, CfgRuleSalesQtyEntity> implements CfgRuleSalesQtyService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private CfgRuleSalesFormulaService cfgRuleSalesFormulaService;
 
-    @Autowired
+    @Resource
     private CfgRuleSalesDenoisingService cfgRuleSalesDenoisingService;
 
-    @Autowired
+    @Resource
     private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
 
     @Override
@@ -62,7 +63,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
         //编辑常规品
         updateDTO.getConventionalDetail().setIsCfgSame(isCfgSame).setType(CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode());
-        this.update(updateDTO.getConventionalDetail());
+        ApplicationContextUtils.getBean(CfgRuleSalesQtyServiceImpl.class).update(updateDTO.getConventionalDetail());
 
         //编辑新品
         updateDTO.getNewDetail().setIsCfgSame(isCfgSame).setType(CfgRuleStockingRatioTypeEnum.NEW.getCode());
@@ -70,7 +71,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         updateDTO.getNewDetail().getFixedSalesQtyList().forEach(obj -> obj.setId(null));
         updateDTO.getNewDetail().getSalesDenoisingList().forEach(obj -> obj.setId(null));
         updateDTO.getNewDetail().getDefaultSalesQtyDTO().setId(null);
-        this.update(updateDTO.getNewDetail());
+        ApplicationContextUtils.getBean(CfgRuleSalesQtyServiceImpl.class).update(updateDTO.getNewDetail());
         return Boolean.TRUE;
     }
 
@@ -107,7 +108,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         }
         // 记录主单操作日志
         log.info("编辑 开始记录销量（规则设置）日志数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
-        operateLogService.addModuleOperateLogByObj(oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(cfgRuleSalesQtyEntity.getRefId(),cfgRuleSalesQtyEntity.getId()), "");
+        operateLogService.addModuleOperateLogByObj(oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleSalesQtyEntity.getRefId(),cfgRuleSalesQtyEntity.getId()), "");
         return cfgRuleSalesQtyEntity.getId();
     }
 
@@ -133,7 +134,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
             BeanMapperUtils.copy(cfgRuleSalesQtyEntity,viewDetailDTO);
             //默认日销量
             CfgRuleSalesFormulaEntity defaultSalesFormula = salesFormulaList.stream().filter(obj ->
-                    StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && StrUtil.equals(obj.getSalesQtyId(),cfgRuleSalesQtyEntity.getId())
+                    CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && CharSequenceUtil.equals(obj.getSalesQtyId(),cfgRuleSalesQtyEntity.getId())
             ).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(defaultSalesFormula)) {
                 CfgRuleSalesFormulaDTO.ViewDTO defaultViewDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.ViewDTO.class, defaultSalesFormula);
@@ -141,7 +142,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
             }
             //动态日销量
             List<CfgRuleSalesFormulaEntity> dynamicSalesFormulaList = salesFormulaList.stream().filter(obj ->
-                    StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()) && StrUtil.equals(obj.getSalesQtyId(),cfgRuleSalesQtyEntity.getId())
+                    CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()) && CharSequenceUtil.equals(obj.getSalesQtyId(),cfgRuleSalesQtyEntity.getId())
             ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(dynamicSalesFormulaList)) {
                 List<CfgRuleSalesFormulaDTO.ViewDTO> dynamicViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.ViewDTO.class, dynamicSalesFormulaList);
@@ -149,20 +150,20 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
             }
             //固定日销量
             List<CfgRuleSalesFormulaEntity> fixedSalesFormulaList = salesFormulaList.stream().filter(obj ->
-                    StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) && StrUtil.equals(obj.getSalesQtyId(),cfgRuleSalesQtyEntity.getId())
+                    CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) && CharSequenceUtil.equals(obj.getSalesQtyId(),cfgRuleSalesQtyEntity.getId())
             ).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(fixedSalesFormulaList)) {
                 List<CfgRuleSalesFormulaDTO.ViewDTO> fixedViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.ViewDTO.class, fixedSalesFormulaList);
                 viewDetailDTO.setFixedSalesQtyList(fixedViewList);
             }
             //去噪信息
-            List<CfgRuleSalesDenoisingEntity> denoisingList = salesDenoisingList.stream().filter(obj -> StrUtil.equals(obj.getSalesQtyId(), cfgRuleSalesQtyEntity.getId())).collect(Collectors.toList());
+            List<CfgRuleSalesDenoisingEntity> denoisingList = salesDenoisingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSalesQtyId(), cfgRuleSalesQtyEntity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(denoisingList)) {
                 List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingViewList = BeanMapperUtils.copyList(CfgRuleSalesDenoisingDTO.ViewDTO.class, denoisingList);
                 viewDetailDTO.setSalesDenoisingList(salesDenoisingViewList);
             }
             //明细赋值
-            if (StrUtil.equals(cfgRuleSalesQtyEntity.getType(),CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())) {
+            if (CharSequenceUtil.equals(cfgRuleSalesQtyEntity.getType(),CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())) {
                 viewDTO.setConventionalDetail(viewDetailDTO);
             } else {
                 viewDTO.setNewDetail(viewDetailDTO);
@@ -186,7 +187,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         BeanMapperUtils.copy(entity,viewDetailDTO);
         //默认日销量
         CfgRuleSalesFormulaEntity defaultSalesFormula = salesFormulaList.stream().filter(obj ->
-                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && StrUtil.equals(obj.getSalesQtyId(),entity.getId())
+                CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && CharSequenceUtil.equals(obj.getSalesQtyId(),entity.getId())
         ).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(defaultSalesFormula)) {
             CfgRuleSalesFormulaDTO.ViewDTO defaultViewDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.ViewDTO.class, defaultSalesFormula);
@@ -194,7 +195,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         }
         //动态日销量
         List<CfgRuleSalesFormulaEntity> dynamicSalesFormulaList = salesFormulaList.stream().filter(obj ->
-                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()) && StrUtil.equals(obj.getSalesQtyId(),entity.getId())
+                CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()) && CharSequenceUtil.equals(obj.getSalesQtyId(),entity.getId())
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(dynamicSalesFormulaList)) {
             List<CfgRuleSalesFormulaDTO.ViewDTO> dynamicViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.ViewDTO.class, dynamicSalesFormulaList);
@@ -202,14 +203,14 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         }
         //固定日销量
         List<CfgRuleSalesFormulaEntity> fixedSalesFormulaList = salesFormulaList.stream().filter(obj ->
-                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) && StrUtil.equals(obj.getSalesQtyId(),entity.getId())
+                CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) && CharSequenceUtil.equals(obj.getSalesQtyId(),entity.getId())
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(fixedSalesFormulaList)) {
             List<CfgRuleSalesFormulaDTO.ViewDTO> fixedViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.ViewDTO.class, fixedSalesFormulaList);
             viewDetailDTO.setFixedSalesQtyList(fixedViewList);
         }
         //去噪信息
-        List<CfgRuleSalesDenoisingEntity> denoisingList = salesDenoisingList.stream().filter(obj -> StrUtil.equals(obj.getSalesQtyId(), entity.getId())).collect(Collectors.toList());
+        List<CfgRuleSalesDenoisingEntity> denoisingList = salesDenoisingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSalesQtyId(), entity.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(denoisingList)) {
             List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingViewList = BeanMapperUtils.copyList(CfgRuleSalesDenoisingDTO.ViewDTO.class, denoisingList);
             viewDetailDTO.setSalesDenoisingList(salesDenoisingViewList);
@@ -238,7 +239,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity)) {
             return;
         }
-        this.removeById(cfgRuleSalesQtyEntity.getId());
+        ApplicationContextUtils.getBean(CfgRuleSalesQtyServiceImpl.class).removeById(cfgRuleSalesQtyEntity.getId());
 
         //删除销量信息
         cfgRuleSalesFormulaService.deleteBySalesQtyId(cfgRuleSalesQtyEntity.getId());
@@ -247,15 +248,11 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         cfgRuleSalesDenoisingService.deleteBySalesQtyId(cfgRuleSalesQtyEntity.getId());
     }
 
-    @Override
-    public void customUpdate(CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO) {
-
-    }
 
     @Override
     public List<CfgRuleSalesQtyEntity> listByRefIdList(List<String> refIdList) {
         if (CollectionUtils.isEmpty(refIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(CfgRuleSalesQtyEntity::getRefId,refIdList).list();
     }
@@ -313,9 +310,9 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     private List<CfgRuleSalesQtyEntity> getDefaultByPlatformType(String platformType, String refId, String type) {
        return lambdaQuery()
                .eq(CfgRuleSalesQtyEntity::getPlatformType,platformType)
-               .eq(StrUtil.isNotBlank(refId),CfgRuleSalesQtyEntity::getRefId,refId)
-               .eq(StrUtil.isBlank(refId),CfgRuleSalesQtyEntity::getRefId,"")
-               .eq(StrUtil.isNotBlank(type),CfgRuleSalesQtyEntity::getType,type)
+               .eq(CharSequenceUtil.isNotBlank(refId),CfgRuleSalesQtyEntity::getRefId,refId)
+               .eq(CharSequenceUtil.isBlank(refId),CfgRuleSalesQtyEntity::getRefId,"")
+               .eq(CharSequenceUtil.isNotBlank(type),CfgRuleSalesQtyEntity::getType,type)
                .list();
     }
 
@@ -331,7 +328,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
         List<CfgRuleSalesQtyEntity> refEntityList = getDefaultByPlatformType(platformType, refId,type);
         if (CollectionUtils.isNotEmpty(refEntityList)) {
-            return refEntityList.stream().filter(obj -> StrUtil.equals(obj.getType(),CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())).findFirst().orElse(new CfgRuleSalesQtyEntity());
+            return refEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())).findFirst().orElse(new CfgRuleSalesQtyEntity());
         }
         List<CfgRuleSalesQtyEntity> defaultList = getDefaultByPlatformType(platformType, "", type);
         if (CollectionUtils.isEmpty(defaultList)) {
@@ -342,31 +339,24 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         if (CollectionUtils.isEmpty(replenishmentSuggestionDetailList)) {
             throw new ServiceException("补货建议明细未找到");
         }
-        return defaultList.stream().filter(obj -> StrUtil.equals(obj.getType(),replenishmentSuggestionDetailList.get(0).getSkuType())).findFirst().orElse(new CfgRuleSalesQtyEntity());
+        return defaultList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),replenishmentSuggestionDetailList.get(0).getSkuType())).findFirst().orElse(new CfgRuleSalesQtyEntity());
     }
 
-
-    private CfgRuleSalesQtyEntity getByPlatformTypeAndType(String platformType, String type) {
-        return getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery().eq(CfgRuleSalesQtyEntity::getPlatformType, platformType)
-                .eq(CfgRuleSalesQtyEntity::getType, type)
-                .last("LIMIT 1")
-        );
-    }
     /**
     * 新增修改处理数据
     */
     private void handleData(CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity,CfgRuleSalesQtyEntity oldEntity,Boolean isCustom) {
-        if (isCustom && ObjectUtil.isNotEmpty(oldEntity)) {
+        if (Boolean.TRUE.equals(isCustom) && ObjectUtil.isNotEmpty(oldEntity)) {
             if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsCfgSame())) {
                 cfgRuleSalesQtyEntity.setIsCfgSame(oldEntity.getIsCfgSame());
             }
             if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsIgnoreOutOfStock())) {
                 cfgRuleSalesQtyEntity.setIsIgnoreOutOfStock(oldEntity.getIsIgnoreOutOfStock());
             }
-            if (StrUtil.isBlank(cfgRuleSalesQtyEntity.getSalesQtyType())) {
+            if (CharSequenceUtil.isBlank(cfgRuleSalesQtyEntity.getSalesQtyType())) {
                 cfgRuleSalesQtyEntity.setSalesQtyType(oldEntity.getSalesQtyType());
             }
-            if (StrUtil.isBlank(cfgRuleSalesQtyEntity.getOrderType())) {
+            if (CharSequenceUtil.isBlank(cfgRuleSalesQtyEntity.getOrderType())) {
                 cfgRuleSalesQtyEntity.setOrderType(oldEntity.getOrderType());
             }
         }

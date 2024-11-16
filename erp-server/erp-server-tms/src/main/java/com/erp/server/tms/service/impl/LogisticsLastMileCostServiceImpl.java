@@ -1,8 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -32,7 +32,6 @@ import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,18 +56,18 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_L
 @Service
 public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostService {
 
-    @Autowired
+    @Resource
     private LogisticsBillCostService logisticsBillCostService;
     @Resource
     private LogisticsBillCostMapper logisticsBillCostMapper;
 
-    @Autowired
+    @Resource
     private TmsCfgCostService tmsCfgCostService;
 
-    @Autowired
+    @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
 
-    @Autowired
+    @Resource
     private LogisticsBillService logisticsBillService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -238,12 +237,12 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
                 //字段名称
                 String field = headList.get(Integer.valueOf(entry.getKey()));
-                if (StrUtil.equals(field,"错误信息")) {
+                if (CharSequenceUtil.equals(field,"错误信息")) {
                     continue;
                 }
-                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> StrUtil.equals(obj.getCostName(), field) && StrUtil.equals(obj.getDictCostAttribution(),DictCostAttributionEnum.LAST_MILE.getCode())).findFirst().orElse(null);
+                TmsCfgCostEntity tmsCfgCostEntity = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCostName(), field) && CharSequenceUtil.equals(obj.getDictCostAttribution(),DictCostAttributionEnum.LAST_MILE.getCode())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(tmsCfgCostEntity) && !getHeaderNameList().contains(field)) {
-                    errorMsgList.add(StrUtil.format("费用管理尾程未找到该费用名称【{}】",field));
+                    errorMsgList.add(CharSequenceUtil.format("费用管理尾程未找到该费用名称【{}】",field));
                     continue;
                 }
                 //校验后面数据是否存在重复的
@@ -284,17 +283,17 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             }
             //物流费用单
             LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailList.stream().filter(obj -> obj.getPlatformCode().equals(excelDTO.getPlatformCode())
-                            && StrUtil.equals(obj.getTrackNo(),excelDTO.getTrackNo()))
+                            && CharSequenceUtil.equals(obj.getTrackNo(),excelDTO.getTrackNo()))
                     .findFirst().orElse(null);
             //物流费用单
-            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId()))
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId()))
                     .findFirst().orElse(null);
 
             //数据赋值
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
             updateDataDTO.setBillingWeightLogistics(new BigDecimal(excelDTO.getBillingWeightStr()));
-            updateDataDTO.setCurrency(StrUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
+            updateDataDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
             updateDataDTO.setCostDetailList(updateList);
             this.update(updateDataDTO,Boolean.TRUE);
         }
@@ -314,25 +313,25 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             , List<LogisticsBillCostEntity> logisticsBillCostList, List<LogisticsBillDetailEntity> logisticsBillDetailList , String dictCostAttribution) {
         List<String> errorMsgList = new ArrayList<>();
         //物流单明细
-        LogisticsBillDetailEntity detailEntity = logisticsBillDetailList.stream().filter(obj -> StrUtil.equals(obj.getPlatformCode(), excelDTO.getPlatformCode())
-                && StrUtil.equals(excelDTO.getTrackNo(), obj.getTrackNo())).findFirst().orElse(null);
+        LogisticsBillDetailEntity detailEntity = logisticsBillDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformCode(), excelDTO.getPlatformCode())
+                && CharSequenceUtil.equals(excelDTO.getTrackNo(), obj.getTrackNo())).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(detailEntity)) {
             errorMsgList.add("未找到出库单和物流跟踪单号对应的物流单明细");
             return errorMsgList;
         }
         //物流费用单
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj ->
-                StrUtil.equals(detailEntity.getId(),obj.getLogisticsBillDetailId())).findFirst().orElse(null);
+                CharSequenceUtil.equals(detailEntity.getId(),obj.getLogisticsBillDetailId())).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
             errorMsgList.add("未找到出库单和运输单号对应的尾程费用单");
             return errorMsgList;
         }
-        if (!StrUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
-            errorMsgList.add(StrUtil.format("需要导入【{}】尾程费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
+        if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
+            errorMsgList.add(CharSequenceUtil.format("需要导入【{}】尾程费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
         }
         //币别为空则取费用单币别
-        excelDTO.setCurrency(StrUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());
-        if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !StrUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
+        excelDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());
+        if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !CharSequenceUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
             errorMsgList.add("导入币别与尾程费用单币别不一致");
         }
         if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())

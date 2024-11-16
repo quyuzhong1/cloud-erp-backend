@@ -1,8 +1,8 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -27,10 +27,11 @@ import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,10 +47,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSalesFormulaMapper, CfgRuleSalesFormulaEntity> implements CfgRuleSalesFormulaService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private CfgRuleSalesQtyService cfgRuleSalesQtyService;
 
     /**
@@ -59,14 +60,14 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     @Override
     public Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList,String salesQtyId,Boolean isCustom) {
         if (CollectionUtils.isEmpty(salesFormulaList)) {
-            salesFormulaList = Collections.EMPTY_LIST;
+            salesFormulaList = Collections.emptyList();
         }
         List<CfgRuleSalesFormulaEntity> list = BeanMapperUtils.copyList(CfgRuleSalesFormulaEntity.class, salesFormulaList);
 
         //原物流信息
-        List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Arrays.asList(salesQtyId));
+        List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Collections.singletonList(salesQtyId));
         //自定义更新无需删除
-        if (!isCustom) {
+        if (Boolean.FALSE.equals(isCustom)) {
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -102,37 +103,35 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
      * @param salesQtyEntity
      */
     private void addOperateLog (List<CfgRuleSalesFormulaEntity> list,CfgRuleSalesQtyEntity salesQtyEntity) {
-        Map<String, List<CfgRuleSalesFormulaEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getType().concat(StrUtil.blankToDefault(obj.getDefaultType(),""))));
+        Map<String, List<CfgRuleSalesFormulaEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getType().concat(CharSequenceUtil.blankToDefault(obj.getDefaultType(),""))));
         //日志
         for (Map.Entry<String, List<CfgRuleSalesFormulaEntity>> entry : map.entrySet()) {
             List<CfgRuleSalesFormulaEntity> value = entry.getValue();
-            StringBuffer msg = new StringBuffer();
-            msg.append(StrUtil.format("{}_{}日销量：<br>",CfgRuleStockingRatioTypeEnum.getName(salesQtyEntity.getType()),CfgRuleSalesFormulaTypeEnum.getName(value.get(0).getType())));
+            StringBuilder msg = new StringBuilder();
+            msg.append(CharSequenceUtil.format("{}_{}日销量：<br>",CfgRuleStockingRatioTypeEnum.getName(salesQtyEntity.getType()),CfgRuleSalesFormulaTypeEnum.getName(value.get(0).getType())));
             for (CfgRuleSalesFormulaEntity formulaEntity : value) {
-                if (!StrUtil.equals(formulaEntity.getType(),CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) ) {
-                    msg.append(StrUtil.format("•序号【{}】、名称【{}】、时间段【{}】<br>" ,formulaEntity.getIndex(),formulaEntity.getName(),StrUtil.format("{}~{}",formulaEntity.getStartDate(),formulaEntity.getEndDate())));
+                if (!CharSequenceUtil.equals(formulaEntity.getType(),CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) ) {
+                    msg.append(CharSequenceUtil.format("•序号【{}】、名称【{}】、时间段【{}】<br>" ,formulaEntity.getIndex(),formulaEntity.getName(),CharSequenceUtil.format("{}~{}",formulaEntity.getStartDate(),formulaEntity.getEndDate())));
                 }
-                if (ObjectUtil.isNotEmpty(formulaEntity.getFixedValue()) && (StrUtil.equals(formulaEntity.getType(),CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) || StrUtil.equals(formulaEntity.getDefaultType(),CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode())) ) {
-                    msg.append(StrUtil.format("•固定值：{}<br>", formulaEntity.getFixedValue()));
+                if (ObjectUtil.isNotEmpty(formulaEntity.getFixedValue()) && (CharSequenceUtil.equals(formulaEntity.getType(),CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) || CharSequenceUtil.equals(formulaEntity.getDefaultType(),CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode())) ) {
+                    msg.append(CharSequenceUtil.format("•固定值：{}<br>", formulaEntity.getFixedValue()));
                 } else {
                     JSONObject percentJson = formulaEntity.getPercentJson();
-                    percentJson.entrySet().stream().forEach(obj -> {
-                        msg.append(StrUtil.format("•{}：{}<br>", CfgRulePercentEnum.getName(obj.getKey()),obj.getValue()));
-                    });
+                    percentJson.forEach((key, value1) -> msg.append(CharSequenceUtil.format("•{}：{}<br>", CfgRulePercentEnum.getName(key), value1)));
                 }
             }
-            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(salesQtyEntity.getRefId(),salesQtyEntity.getId()), "销量");
+            operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(salesQtyEntity.getRefId(),salesQtyEntity.getId()), "销量");
         }
     }
 
     @Override
     public List<CfgRuleSalesFormulaEntity> listBySalesQtyIdList(List<String> salesQtyIdList) {
         if (CollectionUtils.isEmpty(salesQtyIdList)) {
-            return  Collections.EMPTY_LIST;
+            return  Collections.emptyList();
         }
         List<CfgRuleSalesFormulaEntity> list = lambdaQuery().in(CfgRuleSalesFormulaEntity::getSalesQtyId, salesQtyIdList).list();
         if (CollectionUtils.isEmpty(list)) {
-            return  Collections.EMPTY_LIST;
+            return  Collections.emptyList();
         }
         for (CfgRuleSalesFormulaEntity formulaEntity : list) {
             //百分比json
@@ -165,8 +164,8 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<CfgRuleSalesFormulaEntity> newList, List<CfgRuleSalesFormulaEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(CfgRuleSalesFormulaEntity::getId).collect(Collectors.toList());
+        List<String> newIds = newList.stream().map(CfgRuleSalesFormulaEntity::getId).
+                filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(CfgRuleSalesFormulaEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
@@ -182,12 +181,14 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         for (Map.Entry<String, List<CfgRuleSalesFormulaEntity>> entry : map.entrySet()) {
             List<CfgRuleSalesFormulaEntity> value = entry.getValue();
             //排序
-            Integer maxIndex = MathUtil.ZERO;
-            if (isCustom) {
-                maxIndex = oldList.stream().filter(obj -> StrUtil.equals(obj.getType(),entry.getKey())).max(Comparator.comparingInt(CfgRuleSalesFormulaEntity::getIndex)).map(CfgRuleSalesFormulaEntity::getIndex).orElse(MathUtil.ZERO);
+            int maxIndex = MathUtil.ZERO;
+            if (Boolean.TRUE.equals(isCustom)) {
+                maxIndex = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),entry.getKey())).max(Comparator.comparingInt(CfgRuleSalesFormulaEntity::getIndex)).map(CfgRuleSalesFormulaEntity::getIndex).orElse(MathUtil.ZERO);
             }
-            String names = value.stream().filter(obj -> StrUtil.isNotBlank(obj.getName())).collect(Collectors.groupingBy(CfgRuleSalesFormulaEntity::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
-            if (StrUtil.isNotBlank(names)) {
+            String names = value.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getName()))
+                    .collect(Collectors.groupingBy(CfgRuleSalesFormulaEntity::getName))
+                    .entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
+            if (CharSequenceUtil.isNotBlank(names)) {
                 throw new ServiceException("销量名称【{}】唯一不能添加重复数据",names);
             }
 
@@ -196,11 +197,11 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
                 //排序
                 salesFormula.setIndex(maxIndex + 1);
                 //主键id赋值
-                CfgRuleSalesFormulaEntity entity = oldList.stream().filter(obj -> StrUtil.equals(obj.getType(),salesFormula.getType()) && StrUtil.equals(obj.getName(), StrUtil.blankToDefault(salesFormula.getName(),""))).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(entity)) {
+                CfgRuleSalesFormulaEntity entity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(),salesFormula.getType()) && CharSequenceUtil.equals(obj.getName(), CharSequenceUtil.blankToDefault(salesFormula.getName(),""))).findFirst().orElse(null);
+                if (!ObjectUtils.isEmpty(entity)) {
                     salesFormula.setId(entity.getId());
                     //自定义添加的需要保持原有序号
-                    salesFormula.setIndex(isCustom ? entity.getIndex() : salesFormula.getIndex());
+                    salesFormula.setIndex(Boolean.TRUE.equals(isCustom) ? entity.getIndex() : salesFormula.getIndex());
                 }
 
                 //固定销量

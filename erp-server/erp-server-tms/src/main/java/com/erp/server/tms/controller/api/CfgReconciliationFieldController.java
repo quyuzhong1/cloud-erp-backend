@@ -65,7 +65,7 @@ public class CfgReconciliationFieldController extends BaseController {
             menuCode = "tms:cfgReconciliationField:update",
             serviceClass = CfgReconciliationFieldService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgReconciliationFieldDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated CfgReconciliationFieldDTO.UpdateDTO dto) {
         cfgReconciliationFieldService.update(dto);
         return success();
     }
@@ -145,13 +145,13 @@ public class CfgReconciliationFieldController extends BaseController {
      * 导出
      *
      * @param dto DTO
-     * @return ApiResult<?>
+     * @return ApiResult<Object>
      * @author Jim
      * {@code @date:} 2024-03-25
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出对账字段配置")
     @PostMapping(value = "/exportExcel")
-    public ApiResult<?> exportExcel(@RequestBody @Validated CfgReconciliationFieldDTO.PagingParamDTO dto) {
+    public ApiResult<String> exportExcel(@RequestBody @Validated CfgReconciliationFieldDTO.PagingParamDTO dto) {
         Boolean flag = cfgReconciliationFieldService.exportExcel(dto);
         return flag ? success() : failure();
     }
@@ -164,7 +164,7 @@ public class CfgReconciliationFieldController extends BaseController {
      * {@code @date:} 2024-03-25
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
         cfgReconciliationFieldService.downloadTemplate(response);
         return success();
     }
@@ -177,7 +177,7 @@ public class CfgReconciliationFieldController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入对账字段配置")
     @PostMapping("/import")
-    public ApiResult<?> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = cfgReconciliationFieldService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -191,7 +191,7 @@ public class CfgReconciliationFieldController extends BaseController {
      * {@code @date:} 2024-03-25
      */
     @PostMapping("/erpFieldList")
-    public ApiResult<?> erpFieldList(@RequestBody List<String> reconciliationTypeList) {
+    public ApiResult<Object> erpFieldList(@RequestBody List<String> reconciliationTypeList) {
         List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> list = cfgReconciliationFieldService.erpFieldList(reconciliationTypeList);
         return success(list);
     }

@@ -2,9 +2,8 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.annotation.format.DateTimeFormat;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -46,7 +45,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -108,10 +106,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "头程对账单", tmsFirstMileReconciliationEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "头程对账单", tmsFirstMileReconciliationEntity.getCode());
+        
         operateLogService.addModuleOperateLog(msg, null, tmsFirstMileReconciliationEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        
 
         return new BaseResultDTO.AddDTO(tmsFirstMileReconciliationEntity.getId(), code);
     }
@@ -153,7 +151,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     .eq(TmsFirstMileReconciliationEntity::getId,updateDTO.getId()).update();
             old.setReconciliationMonth(updateDTO.getReconciliationMonth());
             String msg = "用户【{}】编辑了【{}】对账月份，由【{}】改为【{}】";
-            operateLogService.addModuleOperateLog(StrUtil.format(msg,UserContext.getDefaultLoginUser().getUserName(),old.getCode(),old.getReconciliationMonth(),updateDTO.getReconciliationMonth()),
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg,UserContext.getDefaultLoginUser().getUserName(),old.getCode(),old.getReconciliationMonth(),updateDTO.getReconciliationMonth()),
                     ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(),old.getId(),"修改对账单");
         }
         // 修改明细数据（包含增删改）
@@ -161,7 +159,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
         // 记录主单操作日志
         log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsFirstMileReconciliationEntity, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), tmsFirstMileReconciliationEntity.getId(), msg);
         return Boolean.TRUE;
@@ -224,7 +222,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录头程对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
         // 此处的需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
@@ -267,7 +265,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单", approveType.getName(), dto.getComment());
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单", approveType.getName(), dto.getComment());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
@@ -322,7 +320,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
@@ -367,7 +365,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除头程对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getCode(), "删除头程对账单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -392,7 +390,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -479,7 +477,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         //审核状态名称
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         //对账周期
-        data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
+        data.setCycle(CharSequenceUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
         // 明细数据
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIdsBySort(Collections.singletonList(data.getId()));
 
@@ -567,11 +565,11 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //对账周期
-            data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
+            data.setCycle(CharSequenceUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
             //币别符号
             CurrencyDTO.ViewDTO viewDTO = currencyList
                     .stream()
-                    .filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency()))
+                    .filter(obj -> CharSequenceUtil.equals(obj.getId(), data.getCurrency()))
                     .findFirst()
                     .orElse(null);
             data.setCurrencySymbol(null == viewDTO ? "" : viewDTO.getSymbol());
@@ -615,7 +613,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 .distinct()
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(unConfirmNoList)){
-            String msg = StrUtil.format("运单号{}明细处于待确认，无法提交", unConfirmNoList);
+            String msg = CharSequenceUtil.format("运单号{}明细处于待确认，无法提交", unConfirmNoList);
             throw new ServiceException(msg);
         }
 
@@ -642,7 +640,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                         e.getCode(),
                         e.getStartDate(),
                         e.getEndDate(),
-                        StrUtil.format("{}-{}", e.getStartDate(), e.getEndDate()),
+                        CharSequenceUtil.format("{}-{}", e.getStartDate(), e.getEndDate()),
                         e.getLogisticsSupplierId(),
                         e.getLogisticsSupplierName()
                 )).collect(Collectors.toList());
@@ -719,14 +717,14 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     .eq(TmsFirstMileReconciliationEntity::getId,updateDTO.getId()).update();
             old.setReconciliationMonth(updateDTO.getReconciliationMonth());
             String msg = "用户【{}】编辑了【{}】对账月份，由【{}】改为【{}】";
-            operateLogService.addModuleOperateLog(StrUtil.format(msg,UserContext.getDefaultLoginUser().getUserName(),old.getCode(),old.getReconciliationMonth(),updateDTO.getReconciliationMonth()),
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg,UserContext.getDefaultLoginUser().getUserName(),old.getCode(),old.getReconciliationMonth(),updateDTO.getReconciliationMonth()),
                     ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(),old.getId(),"修改对账单");
         }
         // 修改明细数据（包含增删改）
         tmsFirstMileReconciliationDetailService.updateReconciliationDetail(updateDTO.getDetailList(), old);
         // 记录主单操作日志
         log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsFirstMileReconciliationEntity, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), tmsFirstMileReconciliationEntity.getId(), msg);
     }

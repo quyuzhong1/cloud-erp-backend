@@ -1,14 +1,17 @@
 package com.erp.server.tms.service.logistics;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
-import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.*;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
@@ -20,7 +23,6 @@ import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.address.SellerResponse;
 import com.erp.tms.aliexpress.model.order.request.Address;
 import com.erp.tms.aliexpress.model.query.request.QueryLogisticsRequest;
-import com.erp.tms.aliexpress.model.query.response.LogisticsServiceResponse;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
@@ -32,13 +34,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
  * @author zdy
  * @ClassName UBILogisticsHandlerImplTest
- * @description: TODO
  * @date 2023年11月16日
  * @version: 1.0
  */
@@ -210,7 +210,7 @@ public class AliExpressLogisticsHandlerImplTest {
 //                .build();
 //        String json = "{\"topUserKey\":\"229375667\",\"oaid\":\"keHTpgPCNYGL4H0mr9kBLQ\",\"orderSource\":\"soB2c\",\"orderType\":\"soB2c\",\"iossCode\":\"\",\"deliveryNo\":\"3038918675202664\",\"sourceId\":\"1815520780038172674\",\"trackNo\":\"\",\"receiverInfoVO\":{\"name\":\"Mahmutcem m\",\"contact\":\"Mahmut Cem Yıldırım\",\"email\":\"\",\"telNumber\":\"05423973327\",\"country\":\"TR\",\"province\":\"Mersin\",\"city\":\"Mezitli\",\"district\":\"\",\"streetAddress\":\"\",\"addressFirst\":\"YENİ MAH. 33195 SK. EFE KONUTLARI SİTESİ B BLOK NO: 30B Kat 7 no 14 mezitli/ mersin\",\"addressSecond\":\"\",\"zipCode\":\"34600\",\"actId\":\"1815520780843479042\",\"receiverTaxNo\":\"\"},\"senderInfo\":{\"id\":\"105689752\",\"name\":\"Chen Xuli\",\"type\":\"DELIVER\",\"companyName\":\"深圳市唯迹科技有限公司\",\"contact\":\"Chen Xuli\",\"email\":\"dhphoto@aliyun.com\",\"telNumber\":\"17191087538\",\"country\":\"China\",\"countryName\":\"China\",\"provinceName\":\"guang dong sheng\",\"cityName\":\"dong guan shi\",\"districtName\":\"tang sha zhen\",\"addressFirst\":\"Building 2, 3rd Floor, Huisheng Science and Technology Innovation Park, No. 24 Huanshi South Road\",\"addressSecond\":\"\",\"zipCode\":\"\"},\"returnInfo\":{\"id\":\"78840011\",\"name\":\"Chen Xuli【SMT4】\",\"type\":\"REFUND\",\"companyName\":\"深圳市唯迹科技有限公司\",\"contact\":\"Chen Xuli\",\"email\":\"dhphoto@aliyun.com\",\"telNumber\":\"17191087538\",\"country\":\"中国\",\"countryName\":\"中国\",\"provinceName\":\"广东省\",\"cityName\":\"东莞市\",\"districtName\":\"塘厦镇\",\"addressFirst\":\"Building 2, 3rd Floor, Huisheng Science and Technology Innovation Park, No. 24 Huanshi South Road\",\"addressSecond\":\"\",\"zipCode\":\"\"},\"parceInfoVO\":{\"hasBattery\":true,\"currency\":\"USD\",\"totalPrice\":8.98,\"totalQuantity\":2,\"totalWeight\":301,\"height\":23,\"width\":21,\"length\":22},\"logisticsProductVOList\":[{\"quantity\":1,\"weight\":129,\"grossWeight\":129,\"url\":\"\",\"isElectric\":true,\"onlyBattery\":false,\"isLiquid\":false,\"id\":\"1619182380155670530\",\"skuId\":\"4000262959653\",\"skuNo\":\"1672\",\"productProperty\":\"带电池\",\"productPropertyId\":\"1773576997822271492\",\"declareModel\":\"\",\"declareChineseName\":\"补光灯\",\"declareEnglishName\":\"Fill light\",\"customsCode\":\"9405429000\",\"declareUnit\":\"\",\"declareElement\":\"1|0|用于相机拍照补光照明|品牌:Ulanzi\",\"declareCurrency\":\"USD\",\"declareCurrencySymbol\":\"$\",\"destDeclarePrice\":2.98,\"destCurrency\":\"USD\",\"destCurrencySymbol\":\"$\",\"exemption\":\"\",\"sourceCargo\":\"\",\"sourceCountry\":\"\",\"combinationDeclareType\":\"split\",\"childOrderId\":3038918675222664},{\"quantity\":1,\"weight\":172,\"grossWeight\":172,\"url\":\"\",\"isElectric\":true,\"onlyBattery\":false,\"isLiquid\":false,\"id\":\"1809039744026320897\",\"skuId\":\"1005006924581539\",\"skuNo\":\"L042GBB1+3204\",\"productProperty\":\"带电池\",\"productPropertyId\":\"1773576997822271492\",\"declareModel\":\"\",\"declareChineseName\":\"运动相机兔笼带灯套装\",\"declareEnglishName\":\"Sports camera cage with light set\",\"customsCode\":\"\",\"declareUnit\":\"\",\"declareCurrency\":\"CNY\",\"declareCurrencySymbol\":\"¥\",\"destDeclarePrice\":6,\"destCurrency\":\"USD\",\"destCurrencySymbol\":\"$\",\"exemption\":\"\",\"sourceCargo\":\"\",\"sourceCountry\":\"\",\"combinationDeclareType\":\"split\",\"childOrderId\":3038918675212664}],\"authMap\":{\"clientId\":\"503630\",\"orderId\":\"3031189945277223\",\"childOrderId\":\"3031189945287223\",\"logisticsPlatform\":\"AliExpress\",\"clientSecret\":\"PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ\",\"id\":\"1726867517643149314\",\"shopId\":\"1798236692721700865\",\"url\":\"https://api-sg.aliexpress.com\",\"token\":\"50000700423zHPZZqMly9iku4MQdb7h0hqR18ff9902ExugZffT7nzxEiFwFyWHdZKNC\"},\"logisticsChannelEntity\":{\"sourceId\":\"\",\"sourceType\":\"\",\"mainId\":\"1798534637274796033\",\"name\":\"无忧物流-递四方东莞仓-标准（不带电or带电）\",\"code\":\"CAINIAO_STANDARD_FPXDG\",\"effectiveTime\":\"预计16-21天送达\",\"effectiveTimeUnit\":\"day\",\"trackQueryMode\":\"track123\",\"paperSize\":\"100*100\",\"paperLength\":100,\"paperWidth\":100,\"sortingCode\":\"\",\"feeRule\":\"billingWeight\",\"maxCustomsAmount\":0,\"maxCustomsCurrency\":\"USD\",\"minCustomsAmount\":0,\"minCustomsCurrency\":\"USD\",\"maxWeight\":0,\"weightUnit\":\"g\",\"maxLength\":0,\"sizeUnit\":\"cm\",\"maxWidth\":0,\"maxHeight\":0,\"taxModel\":\"DDP\",\"isIossPrepay\":true,\"isApiSign\":false,\"isApiInsurance\":false,\"disabled\":false,\"syncSourceId\":\"1740637823646679044\",\"declareCodeType\":\"transportNo\",\"deliveryType\":\"DOOR_PICKUP\",\"id\":\"1798579692924571658\",\"createUserId\":\"1649319376794423298\",\"createUserName\":\"祝梦彬\",\"createTime\":1717649789000,\"updateUserId\":\"1549948476757303297\",\"updateUserName\":\"admin\",\"updateTime\":1719918537000,\"version\":2,\"isDeleted\":false},\"logisticsSaleChannel\":{\"platformChannelId\":\"CAINIAO_STANDARD_FPXDG\",\"cnName\":\"递四方东莞仓-标准\",\"enName\":\"\",\"code\":\"CAINIAO_STANDARD_FPXDG\",\"servicePlatform\":\"tms\",\"channelStatus\":0,\"supplierName\":\"菜鸟无忧物流-标准\",\"supplierCode\":\"\",\"shipmentMethod\":\"\",\"logisticsPlatform\":\"AliExpress\",\"sourceData\":\"\",\"isTrack\":true,\"aging\":\"预计16-21天送达\",\"overseasWarehouseId\":\"\",\"id\":\"1740637823646679044\",\"createUserId\":\"0\",\"createUserName\":\"system\",\"createTime\":1703835371000,\"updateUserId\":\"0\",\"updateUserName\":\"system\",\"updateTime\":1719906708000,\"version\":0,\"isDeleted\":false}}";
         String json2 = "{\"topUserKey\":\"229375667\",\"oaid\":\"keHTpgPCNYGL4H0mr9kBLQ\",\"orderSource\":\"soB2c\",\"orderType\":\"soB2c\",\"iossCode\":\"\",\"deliveryNo\":\"3038918675202664\",\"sourceId\":\"1815520780038172674\",\"trackNo\":\"\",\"receiverInfoVO\":{\"name\":\"Mahmutcem m\",\"contact\":\"Mahmut Cem Yıldırım\",\"email\":\"\",\"telNumber\":\"05423973327\",\"country\":\"TR\",\"province\":\"Mersin\",\"city\":\"Mezitli\",\"district\":\"\",\"streetAddress\":\"YENİ MAH. 33195 SK. EFE KONUTLARI SİTESİ B BLOK NO: 30B Kat 7 no 14 mezitli/ mersin\",\"addressFirst\":\"YENİ MAH. 33195 SK. EFE KONUTLARI SİTESİ B BLOK NO: 30B Kat 7 no 14 mezitli/ mersin\",\"addressSecond\":\"\",\"zipCode\":\"34600\",\"actId\":\"1815520780843479042\",\"receiverTaxNo\":\"\"},\"senderInfo\":{\"id\":\"105689752\",\"name\":\"Chen Xuli\",\"type\":\"DELIVER\",\"companyName\":\"深圳市唯迹科技有限公司\",\"contact\":\"Chen Xuli\",\"email\":\"dhphoto@aliyun.com\",\"telNumber\":\"17191087538\",\"country\":\"China\",\"countryName\":\"China\",\"provinceName\":\"guang dong sheng\",\"cityName\":\"dong guan shi\",\"districtName\":\"tang sha zhen\",\"addressFirst\":\"Building 2, 3rd Floor, Huisheng Science and Technology Innovation Park, No. 24 Huanshi South Road\",\"addressSecond\":\"\",\"zipCode\":\"\"},\"returnInfo\":{\"id\":\"78840011\",\"name\":\"Chen Xuli【SMT4】\",\"type\":\"REFUND\",\"companyName\":\"深圳市唯迹科技有限公司\",\"contact\":\"Chen Xuli\",\"email\":\"dhphoto@aliyun.com\",\"telNumber\":\"17191087538\",\"country\":\"中国\",\"countryName\":\"中国\",\"provinceName\":\"广东省\",\"cityName\":\"东莞市\",\"districtName\":\"塘厦镇\",\"addressFirst\":\"Building 2, 3rd Floor, Huisheng Science and Technology Innovation Park, No. 24 Huanshi South Road\",\"addressSecond\":\"\",\"zipCode\":\"\"},\"parceInfoVO\":{\"hasBattery\":true,\"currency\":\"USD\",\"totalPrice\":8.98,\"totalQuantity\":2,\"totalWeight\":301,\"height\":23,\"width\":21,\"length\":22},\"logisticsProductVOList\":[{\"quantity\":1,\"weight\":129,\"grossWeight\":129,\"url\":\"\",\"isElectric\":true,\"onlyBattery\":false,\"isLiquid\":false,\"id\":\"1619182380155670530\",\"skuId\":\"4000262959653\",\"skuNo\":\"1672\",\"productProperty\":\"带电池\",\"productPropertyId\":\"1773576997822271492\",\"declareModel\":\"\",\"declareChineseName\":\"补光灯\",\"declareEnglishName\":\"Fill light\",\"customsCode\":\"9405429000\",\"declareUnit\":\"\",\"declareElement\":\"1|0|用于相机拍照补光照明|品牌:Ulanzi\",\"declareCurrency\":\"USD\",\"declareCurrencySymbol\":\"$\",\"destDeclarePrice\":2.98,\"destCurrency\":\"USD\",\"destCurrencySymbol\":\"$\",\"exemption\":\"\",\"sourceCargo\":\"\",\"sourceCountry\":\"\",\"combinationDeclareType\":\"split\",\"childOrderId\":3038918675222664},{\"quantity\":1,\"weight\":172,\"grossWeight\":172,\"url\":\"\",\"isElectric\":true,\"onlyBattery\":false,\"isLiquid\":false,\"id\":\"1809039744026320897\",\"skuId\":\"1005006924581539\",\"skuNo\":\"L042GBB1+3204\",\"productProperty\":\"带电池\",\"productPropertyId\":\"1773576997822271492\",\"declareModel\":\"\",\"declareChineseName\":\"运动相机兔笼带灯套装\",\"declareEnglishName\":\"Sports camera cage with light set\",\"customsCode\":\"\",\"declareUnit\":\"\",\"declareCurrency\":\"CNY\",\"declareCurrencySymbol\":\"¥\",\"destDeclarePrice\":6,\"destCurrency\":\"USD\",\"destCurrencySymbol\":\"$\",\"exemption\":\"\",\"sourceCargo\":\"\",\"sourceCountry\":\"\",\"combinationDeclareType\":\"split\",\"childOrderId\":3038918675212664}],\"authMap\":{\"clientId\":\"503630\",\"orderId\":\"3031189945277223\",\"childOrderId\":\"3031189945287223\",\"logisticsPlatform\":\"AliExpress\",\"clientSecret\":\"PxkJJ2fLGh5HcwzhUJp267lQSbkuAFRJ\",\"id\":\"1726867517643149314\",\"shopId\":\"1798236692721700865\",\"url\":\"https://api-sg.aliexpress.com\",\"token\":\"50000700423zHPZZqMly9iku4MQdb7h0hqR18ff9902ExugZffT7nzxEiFwFyWHdZKNC\"},\"logisticsChannelEntity\":{\"sourceId\":\"\",\"sourceType\":\"\",\"mainId\":\"1798534637274796033\",\"name\":\"无忧物流-递四方东莞仓-标准（不带电or带电）\",\"code\":\"CAINIAO_STANDARD_FPXDG\",\"effectiveTime\":\"预计16-21天送达\",\"effectiveTimeUnit\":\"day\",\"trackQueryMode\":\"track123\",\"paperSize\":\"100*100\",\"paperLength\":100,\"paperWidth\":100,\"sortingCode\":\"\",\"feeRule\":\"billingWeight\",\"maxCustomsAmount\":0,\"maxCustomsCurrency\":\"USD\",\"minCustomsAmount\":0,\"minCustomsCurrency\":\"USD\",\"maxWeight\":0,\"weightUnit\":\"g\",\"maxLength\":0,\"sizeUnit\":\"cm\",\"maxWidth\":0,\"maxHeight\":0,\"taxModel\":\"DDP\",\"isIossPrepay\":true,\"isApiSign\":false,\"isApiInsurance\":false,\"disabled\":false,\"syncSourceId\":\"1740637823646679044\",\"declareCodeType\":\"transportNo\",\"deliveryType\":\"DOOR_PICKUP\",\"id\":\"1798579692924571658\",\"createUserId\":\"1649319376794423298\",\"createUserName\":\"祝梦彬\",\"createTime\":1717649789000,\"updateUserId\":\"1549948476757303297\",\"updateUserName\":\"admin\",\"updateTime\":1719918537000,\"version\":2,\"isDeleted\":false},\"logisticsSaleChannel\":{\"platformChannelId\":\"CAINIAO_STANDARD_FPXDG\",\"cnName\":\"递四方东莞仓-标准\",\"enName\":\"\",\"code\":\"CAINIAO_STANDARD_FPXDG\",\"servicePlatform\":\"tms\",\"channelStatus\":0,\"supplierName\":\"菜鸟无忧物流-标准\",\"supplierCode\":\"\",\"shipmentMethod\":\"\",\"logisticsPlatform\":\"AliExpress\",\"sourceData\":\"\",\"isTrack\":true,\"aging\":\"预计16-21天送达\",\"overseasWarehouseId\":\"\",\"id\":\"1740637823646679044\",\"createUserId\":\"0\",\"createUserName\":\"system\",\"createTime\":1703835371000,\"updateUserId\":\"0\",\"updateUserName\":\"system\",\"updateTime\":1719906708000,\"version\":0,\"isDeleted\":false}}";
-        LogisticsOrderVO logisticsOrderVO = JSONObject.parseObject(json2, LogisticsOrderVO.class);
+        LogisticsOrderVO logisticsOrderVO = JSON.parseObject(json2, LogisticsOrderVO.class);
         ApiResult<LogisticsOrderResponseVO> order = aliExpressLogisticsHandler.createOrder(logisticsOrderVO);
         System.out.println(order);
     }
@@ -223,7 +223,7 @@ public class AliExpressLogisticsHandlerImplTest {
         logisticsQueryVOList.setAuthMap(authMap);
         ApiResult<List<LogisticsOrderResponseVO>> listApiResult = aliExpressLogisticsHandler.queryOrderList(Collections.singletonList(logisticsQueryVOList));
         System.out.println("结果输出");
-        System.out.println(JSONObject.toJSONString(listApiResult));
+        System.out.println(JSON.toJSONString(listApiResult));
     }
 
     /**
@@ -244,8 +244,6 @@ public class AliExpressLogisticsHandlerImplTest {
     }
     @Test
     public void authorization() {
-        ApiResult apiResult = aliExpressLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 
     /**
@@ -293,7 +291,7 @@ public class AliExpressLogisticsHandlerImplTest {
         List<AliExpressOrder > orderList = new ArrayList<>();
         aliExpressOrderService.listOrder(orderRequest, orderList);
         System.out.println("订单列表");
-        System.out.println(JSONObject.toJSONString(orderList));
+        System.out.println(JSON.toJSONString(orderList));
     }
 
     /**
@@ -311,7 +309,7 @@ public class AliExpressLogisticsHandlerImplTest {
     @Test
     public void getLogisticsAddress() throws ApiException {
         IopResponse sellerInfo = aliExpressShipperService.getLogisticsAddress(authMap);
-        SellerResponse responseMsg = JSONObject.parseObject(sellerInfo.getBody(), SellerResponse.class);
+        SellerResponse responseMsg = JSON.parseObject(sellerInfo.getBody(), SellerResponse.class);
         List<Address> senders = responseMsg.getSenders();
         List<Address> pickups = responseMsg.getPickups();
         List<Address> refunds = responseMsg.getRefunds();

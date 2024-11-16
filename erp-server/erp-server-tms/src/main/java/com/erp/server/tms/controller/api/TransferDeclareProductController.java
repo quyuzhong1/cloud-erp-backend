@@ -69,13 +69,13 @@ public class TransferDeclareProductController extends BaseController {
         menuCode = "tms:transferDeclareProduct:update",
         serviceClass = TransferDeclareProductService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TransferDeclareProductDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TransferDeclareProductDTO.UpdateDTO dto) {
         transferDeclareProductService.update(dto);
         return success();
     }
 
     @GetMapping("/getSkuInfoByTransferDeclare")
-    public ApiResult getSkuInfo(@RequestParam("id") String id){
+    public ApiResult<Object>getSkuInfo(@RequestParam("id") String id){
         List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Collections.singletonList(id));
         Boolean aBoolean = transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
         return success(aBoolean);

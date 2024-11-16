@@ -1,8 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -20,7 +20,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.dto.TmsWarehouseMappingDTO;
 import com.erp.model.tms.dto.excel.TmsWarehouseMappingExcelDTO;
 import com.erp.model.tms.entity.TmsWarehouseMappingEntity;
@@ -34,7 +33,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -64,7 +62,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_WAREHOU
 @Service
 public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehouseMappingMapper, TmsWarehouseMappingEntity> implements TmsWarehouseMappingService {
 
-    @Autowired
+    @Resource
     private WmsTaskFeign wmsTaskFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -233,15 +231,15 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             TmsWarehouseMappingEntity addEntity = new TmsWarehouseMappingEntity();
             List<String> errorMsgList = new ArrayList<>();
             //仓库是否存在
-            String warehouseId = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getName(), excelDTO.getErpWarehouseName())
+            String warehouseId = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getErpWarehouseName())
                             && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatusEnum().getCode())
                             && !obj.getDisabled())
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-            if (StrUtil.isBlank(warehouseId)) {
+            if (CharSequenceUtil.isBlank(warehouseId)) {
                 errorMsgList.add("未找到有效仓库名称");
             }
             //导入数据是否存在重复
-            long count = successList.stream().filter(obj -> StrUtil.equals(excelDTO.getLogisticsWarehouseCode(), obj.getLogisticsWarehouseCode())).count();
+            long count = successList.stream().filter(obj -> CharSequenceUtil.equals(excelDTO.getLogisticsWarehouseCode(), obj.getLogisticsWarehouseCode())).count();
             if (count > 1) {
                 errorMsgList.add("不能导入重复仓库代码（物流商）");
             }
@@ -255,7 +253,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             addEntity.setErpWarehouseName(excelDTO.getErpWarehouseName());
             addEntity.setLogisticsWarehouseCode(excelDTO.getLogisticsWarehouseCode());
             //导入的数据是否存在
-            TmsWarehouseMappingEntity old = tmsWarehouseMappingList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsWarehouseCode(), excelDTO.getLogisticsWarehouseCode()))
+            TmsWarehouseMappingEntity old = tmsWarehouseMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsWarehouseCode(), excelDTO.getLogisticsWarehouseCode()))
                     .findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(old)) {
                 addEntity.setId(old.getId());
@@ -289,7 +287,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
     private void checkData (TmsWarehouseMappingEntity tmsWarehouseMappingEntity) {
         //查询是否存在相同编码数据
         List<TmsWarehouseMappingEntity> oldList = listByLogisticsWarehouseCodeList(Arrays.asList(tmsWarehouseMappingEntity.getLogisticsWarehouseCode()));
-        if (CollectionUtils.isNotEmpty(oldList) && !StrUtil.equals(tmsWarehouseMappingEntity.getId(),oldList.get(0).getId())) {
+        if (CollectionUtils.isNotEmpty(oldList) && !CharSequenceUtil.equals(tmsWarehouseMappingEntity.getId(),oldList.get(0).getId())) {
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_MAPPING_EXIST,tmsWarehouseMappingEntity.getLogisticsWarehouseCode());
         }
     }

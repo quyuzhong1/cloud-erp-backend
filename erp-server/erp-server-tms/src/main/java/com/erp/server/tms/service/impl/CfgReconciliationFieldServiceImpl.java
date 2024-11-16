@@ -2,8 +2,9 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -75,6 +76,9 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private CfgReconciliationFieldServiceImpl cfgReconciliationFieldService;
     /**
      * 修改
      */
@@ -95,7 +99,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
 
         // 记录主单操作日志
         log.info("编辑 开始记录对账字段配置单日志数据，id：【{}】", cfgReconciliationFieldEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgReconciliationFieldEntity.getId(), "对账字段配置单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgReconciliationFieldEntity.getId(), "对账字段配置单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, cfgReconciliationFieldEntity, ModuleTypeEnum.CFG_FIELD_RECONCILIATION.getCode(), cfgReconciliationFieldEntity.getId(), msg);
         return Boolean.TRUE;
@@ -118,12 +122,9 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         if (null == entity) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "对账字段配置");
         }
-        // TODO 检查下游单据
 
-//        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "对账字段配置");
-//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除对账字段配置");
 
-        removeById(id);
+        cfgReconciliationFieldService.removeById(id);
 
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
@@ -165,7 +166,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         CfgReconciliationFieldExcelListener excelListenerUtil = new CfgReconciliationFieldExcelListener();
 
         try {
-            EasyExcel.read(excelFile.getInputStream(), CfgReconciliationFieldImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcelFactory.read(excelFile.getInputStream(), CfgReconciliationFieldImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -300,7 +301,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 .eq(CfgReconciliationFieldEntity::getReconciliationType, reconciliationType)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return new ArrayList<>();
         }
         //费用配置
         List<String> sourceIdList = list.stream().map(CfgReconciliationFieldEntity::getSourceId).distinct().collect(Collectors.toList());
@@ -312,9 +313,9 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         List<CfgReconciliationFieldDTO.ErpFieldViewDTO> resultList = new ArrayList<>();
         for (CfgReconciliationFieldEntity fieldEntity : list) {
             CfgReconciliationFieldDTO.ErpFieldViewDTO erpFieldViewDTO = BeanMapperUtils.map(CfgReconciliationFieldDTO.ErpFieldViewDTO.class, fieldEntity);
-            if (StrUtil.equals(fieldEntity.getSourceType(), SourceTypeEnum.TMS_CFG_COST.getCode())) {
+            if (CharSequenceUtil.equals(fieldEntity.getSourceType(), SourceTypeEnum.TMS_CFG_COST.getCode())) {
                 //费用名称
-                TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId()))
+                TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), fieldEntity.getSourceId()))
                         .findFirst()
                         .orElse(null);
                 if (null != tmsCfgCostEntity) {
@@ -323,7 +324,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 }
             } else {
                 //字段名称
-                DictBasicEntity dictBasicEntity = dictList.stream().filter(obj -> StrUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().orElse(new DictBasicEntity());
+                DictBasicEntity dictBasicEntity = dictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), fieldEntity.getSourceId())).findFirst().orElse(new DictBasicEntity());
                 erpFieldViewDTO.setErpFieldName(dictBasicEntity.getName());
                 erpFieldViewDTO.setErpFieldCode(dictBasicEntity.getCode());
             }
@@ -335,7 +336,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     @Override
     public List<CfgReconciliationFieldEntity> listByCfgCostIdList(List<String> cfgCostIdList) {
         if (CollectionUtils.isEmpty(cfgCostIdList)) {
-            return Collections.EMPTY_LIST;
+            return new ArrayList<>();
         }
         return lambdaQuery().in(CfgReconciliationFieldEntity::getSourceId, cfgCostIdList).list();
     }
@@ -385,7 +386,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
     public List<CfgReconciliationFieldEntity> listByTypeList(List<String> typeList, String supplierId) {
         return lambdaQuery()
                 .in(CollectionUtils.isNotEmpty(typeList), CfgReconciliationFieldEntity::getReconciliationType, typeList)
-                .eq(StrUtil.isNotBlank(supplierId), CfgReconciliationFieldEntity::getThirdCode, supplierId)
+                .eq(CharSequenceUtil.isNotBlank(supplierId), CfgReconciliationFieldEntity::getThirdCode, supplierId)
                 .eq(CfgReconciliationFieldEntity::getStatus, Boolean.TRUE)
                 .list();
     }
@@ -460,7 +461,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
             // 物流商Map
             List<BaseDropDownDTO.SupplierDisabledDTO> supplierEntities = supplierMap.get(importExcelDTO.getThirdName());
             if (CollectionUtils.isEmpty(supplierEntities)) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】物流商不存在", importExcelDTO.getThirdName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】物流商不存在", importExcelDTO.getThirdName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
@@ -469,14 +470,14 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                     .findFirst()
                     .orElse(null);
             if (null == supplierEntity) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】物流商不存在", importExcelDTO.getThirdName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】物流商不存在", importExcelDTO.getThirdName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
             // 数大臣字段配置
             List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO> currentFieldList = allErpFieldNameGroupMap.get(cfgReconciliationTypeEnum.getCode());
             if (CollectionUtils.isEmpty(currentFieldList)) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】 当前对账核对类型数大臣字段不存在", importExcelDTO.getErpFieldName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】 当前对账核对类型数大臣字段不存在", importExcelDTO.getErpFieldName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
@@ -485,12 +486,12 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                     .findFirst()
                     .orElse(null);
             if (null == erpFieldDTO) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】数大臣字段不存在", importExcelDTO.getErpFieldName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】数大臣字段不存在", importExcelDTO.getErpFieldName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
             if (!erpFieldDTO.getReconciliationType().equalsIgnoreCase(cfgReconciliationTypeEnum.getCode())) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】数大臣字段不属于【{}】核对类型", importExcelDTO.getErpFieldName(), cfgReconciliationTypeEnum.getName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】数大臣字段不属于【{}】核对类型", importExcelDTO.getErpFieldName(), cfgReconciliationTypeEnum.getName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
@@ -500,7 +501,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                     erpFieldDTO.getSourceType(),
                     erpFieldDTO.getSourceId()));
             if (null != historyEntity) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】【{}】【{}】历史配置已存在",
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】【{}】【{}】历史配置已存在",
                         importExcelDTO.getReconciliationTypeName(),
                         importExcelDTO.getThirdName(),
                         importExcelDTO.getErpFieldName()
@@ -516,7 +517,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                     throw new ServiceException("保存处理失败");
                 }
             } catch (Exception e) {
-                importExcelDTO.setErrorMsg(StrUtil.format("处理异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("处理异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
                 errorList.add(importExcelDTO);
             }
         }
@@ -532,12 +533,12 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         Map<String, CfgReconciliationTypeEnum> typeEnumMap = Arrays.stream(CfgReconciliationTypeEnum.values())
                 .collect(Collectors.toMap(CfgReconciliationTypeEnum::getCode, Function.identity()));
 
-        for (CfgReconciliationFieldDTO.PagingVO record : records) {
-            CfgReconciliationTypeEnum cfgReconciliationTypeEnum = typeEnumMap.get(record.getReconciliationType());
-            record.setReconciliationTypeName(null == cfgReconciliationTypeEnum ? "" : cfgReconciliationTypeEnum.getName());
+        for (CfgReconciliationFieldDTO.PagingVO pagingVo : records) {
+            CfgReconciliationTypeEnum cfgReconciliationTypeEnum = typeEnumMap.get(pagingVo.getReconciliationType());
+            pagingVo.setReconciliationTypeName(null == cfgReconciliationTypeEnum ? "" : cfgReconciliationTypeEnum.getName());
 
-            CfgReconciliationFieldDTO.ErpFieldDropDownDTO dropDownDTO = erpFieldNameMap.get(CfgReconciliationFieldDTO.ErpFieldDropDownDTO.convertUniqueCode(record.getSourceType(), record.getSourceId()));
-            record.setErpFieldName(null == dropDownDTO ? "" : dropDownDTO.getErpFieldName());
+            CfgReconciliationFieldDTO.ErpFieldDropDownDTO dropDownDTO = erpFieldNameMap.get(CfgReconciliationFieldDTO.ErpFieldDropDownDTO.convertUniqueCode(pagingVo.getSourceType(), pagingVo.getSourceId()));
+            pagingVo.setErpFieldName(null == dropDownDTO ? "" : dropDownDTO.getErpFieldName());
         }
     }
 
@@ -583,7 +584,7 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
                 .ne(CfgReconciliationFieldEntity::getId, entity.getId())
                 .count();
         if (count > 1) {
-            String msg = StrUtil.format("【{}】【{}】【{}】历史配置已存在",
+            String msg = CharSequenceUtil.format("【{}】【{}】【{}】历史配置已存在",
                     typeEnum.getName(),
                     entity.getThirdName(),
                     dropDownDTO.getErpFieldName());
