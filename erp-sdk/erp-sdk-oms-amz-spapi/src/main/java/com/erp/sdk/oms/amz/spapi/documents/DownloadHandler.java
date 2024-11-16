@@ -258,7 +258,7 @@ public class DownloadHandler {
             return "";
         }
         // 使用正则去除零宽断空格（BOM）字符和首尾的双引号
-        return value.replaceAll("^\uFEFF*\"|\"$", "");
+        return value.replaceAll("(^\uFEFF*)|(^\"|\"$)", "");
     }
 
     /**
