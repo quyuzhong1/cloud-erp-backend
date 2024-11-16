@@ -1,7 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -56,7 +56,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     @CacheEvict(cacheNames = "cache:mrp:getCfgRuleCommon", allEntries = true, beforeInvocation = true)
-    public Boolean update(List<CfgRuleCommonDTO.UpdateDTO> updateList) {
+    public void update(List<CfgRuleCommonDTO.UpdateDTO> updateList) {
         //清除缓存
         Set<String> keys = redisTemplate.keys("MRP" + "*");
         if (CollectionUtils.isNotEmpty(keys)) {
@@ -65,7 +65,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         // 数据处理
         List<CfgRuleCommonEntity> list = handleData(updateList);
         if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
+            return;
         }
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -73,7 +73,6 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         }
         //操作日志
         addOperateLog(updateList,list);
-        return Boolean.TRUE;
     }
 
     /**
@@ -87,10 +86,10 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
             return;
         }
         for (CfgRuleCommonDTO.UpdateDTO updateDTO : updateList) {
-            StringBuffer msg = new StringBuffer();
+            StringBuilder msg = new StringBuilder();
             appendOperateLog(updateDTO,msg);
             //最上级id
-            String id = list.stream().filter(obj -> StrUtil.equals(updateDTO.getName(), obj.getName())).findFirst().map(CfgRuleCommonEntity::getId).orElse("");
+            String id = list.stream().filter(obj -> CharSequenceUtil.equals(updateDTO.getName(), obj.getName())).findFirst().map(CfgRuleCommonEntity::getId).orElse("");
             operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), id, CfgRuleCommonTypeEnum.getName(updateDTO.getType()));
         }
     }
@@ -101,14 +100,14 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
      * @param updateDTO
      * @param msg
      */
-    private void appendOperateLog (CfgRuleCommonDTO.UpdateDTO updateDTO,StringBuffer msg) {
+    private void appendOperateLog (CfgRuleCommonDTO.UpdateDTO updateDTO,StringBuilder msg) {
         //循环添加
         if (CollectionUtils.isNotEmpty(updateDTO.getChildrenList())) {
             msg.append(updateDTO.getName().concat("<br>"));
-            updateDTO.getChildrenList().stream().forEach(obj -> appendOperateLog(obj, msg));
+            updateDTO.getChildrenList().forEach(obj -> appendOperateLog(obj, msg));
             msg.append("<br>");
         }  else {
-            if (StrUtil.equals(updateDTO.getValue(),"true")) {
+            if (CharSequenceUtil.equals(updateDTO.getValue(),"true")) {
                 msg.append(updateDTO.getName().concat(","));
             }
         }
@@ -123,11 +122,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
            return this.listDefaultRuleCommonTree(platformType,type);
         }
         //返回新增数据
-        List<CfgRuleCommonDTO.ViewDTO> treeList = viewList.stream().filter(obj -> StrUtil.isBlank(obj.getParentId())).map(item -> {
-            item.setChildrenList(getChildren(item, viewList));
-            return item;
-        }).collect(Collectors.toList());
-        return treeList;
+        return viewList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getParentId())).peek(item -> item.setChildrenList(getChildren(item, viewList))).collect(Collectors.toList());
     }
 
     @Override
@@ -314,14 +309,11 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     private List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommonTree (String platformType,String type) {
         List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listDefaultRuleCommon(platformType,type);
         if (CollectionUtils.isEmpty(viewList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         //返回新增数据
-        List<CfgRuleCommonDTO.ViewDTO> treeList = viewList.stream().filter(obj -> StrUtil.isBlank(obj.getParentId())).map(item -> {
-            item.setChildrenList(getChildren(item, viewList));
-            return item;
-        }).collect(Collectors.toList());
-        return  treeList;
+        return viewList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getParentId()))
+                .peek(item -> item.setChildrenList(getChildren(item, viewList))).collect(Collectors.toList());
     }
     /**
      * 获取子级信息
@@ -333,10 +325,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
      */
     private List<CfgRuleCommonDTO.ViewDTO> getChildren(CfgRuleCommonDTO.ViewDTO viewDTO, List<CfgRuleCommonDTO.ViewDTO> viewList) {
         List<CfgRuleCommonDTO.ViewDTO> list = viewList.stream().filter(obj -> viewDTO.getId().equals(obj.getParentId()))
-                .map(obj -> {
-                    obj.setChildrenList(getChildren(obj, viewList));
-                    return obj;
-                }).collect(Collectors.toList());
+                .peek(obj -> obj.setChildrenList(getChildren(obj, viewList))).collect(Collectors.toList());
         return CollectionUtils.isEmpty(list) ? null : list;
     }
 
@@ -353,7 +342,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
             CfgRuleCommonEntity entity = BeanMapperUtils.map(CfgRuleCommonEntity.class, updateDTO);
             //是否默认，默认保存则清空默认数据
             Boolean isDefault = updateDTO.getIsDefault();
-            if (isDefault) {
+            if (Boolean.TRUE.equals(isDefault)) {
                 entity.setId(IdWorker.getIdStr());
                 entity.setIsDefault(Boolean.FALSE);
             }
@@ -377,7 +366,7 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
         }
         for (CfgRuleCommonDTO.UpdateDTO childUpdateDTO :entity.getChildrenList()) {
             CfgRuleCommonEntity childEntity = BeanMapperUtils.map(CfgRuleCommonEntity.class, childUpdateDTO);
-            if (isDefault) {
+            if (Boolean.TRUE.equals(isDefault)) {
                 childEntity.setId(IdWorker.getIdStr());
                 childEntity.setIsDefault(Boolean.FALSE);
                 //父级Id

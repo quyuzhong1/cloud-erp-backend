@@ -45,6 +45,8 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
     @Resource
     private CustomerFeign customerFeign;
 
+    private static final String DOCUMENTS_NAM = "平台映射单";
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -62,7 +64,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         }
 
         // 操作日志
-        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "平台映射单" , cfgPlatformMappingEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), DOCUMENTS_NAM , cfgPlatformMappingEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, cfgPlatformMappingEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -77,7 +79,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
     @Override
     public Boolean update(CfgPlatformMappingDTO.UpdateDTO updateDTO) {
         CfgPlatformMappingEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "平台映射单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, DOCUMENTS_NAM));
         CfgPlatformMappingEntity cfgPlatformMappingEntity =  BeanMapperUtils.map(CfgPlatformMappingEntity.class, updateDTO);
 
         // 数据处理
@@ -91,7 +93,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
 
         // 记录主单操作日志
             log.info("编辑 开始记录平台映射单日志数据，id：【{}】", cfgPlatformMappingEntity.getId());
-            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgPlatformMappingEntity.getId(), "平台映射单");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgPlatformMappingEntity.getId(), DOCUMENTS_NAM);
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, cfgPlatformMappingEntity, null, cfgPlatformMappingEntity.getId(), msg);
         return Boolean.TRUE;

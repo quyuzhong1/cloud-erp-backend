@@ -145,8 +145,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
     @Resource
     private PurchaseSuggestService purchaseSuggestService;
-    @Resource
-    private CfgRuleWarehouseService cfgRuleWarehouseService;
 
     @Resource
     private SalesEstimateHandler salesEstimateHandler;
@@ -418,7 +416,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO notRestockingReplenishment(String id, String replenishmentRemark) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (!ReplenishmentTypeEnum.NORMAL.getCode().equals(entity.getReplenishmentType())) {
             throw new ServiceException(ApiError.ERROR_NOT_RESTOCKING_REPLENISHMENT);
         }
@@ -450,7 +448,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO restoreReplenishment(String id, String replenishmentRemark) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (!ReplenishmentTypeEnum.NOT_RESTOCKING.getCode().equals(entity.getReplenishmentType())) {
             throw new ServiceException(ApiError.ERROR_RESTORE_REPLENISHMENT);
         }
@@ -467,7 +465,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (ObjectUtil.isEmpty(stockUpUpdateDTO) && ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
             throw new ServiceException("备货、销量设置不能全部为空！");
         }
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"补货建议");
         }
@@ -487,82 +485,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
-    /**
-     * 销量添加默认设置
-     * @author will
-     * @date 2024/9/10 18:23
-     * @param entity
-     * @param updateDetailDTO
-     */
-    private void formatSalesQtyDefaultData (ReplenishmentSuggestionEntity entity,CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
-//        List<ReplenishmentSuggestionDetailEntity> detailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(entity.getId()));
-//        if (CollectionUtils.isEmpty(detailList)) {
-//            return;
-//        }
-//        String skuType = detailList.get(0).getSkuType();
-//        CfgRuleSalesQtyDTO.StrategyResultDTO defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty(entity.getPlatformType(), skuType);
-//        if (ObjectUtil.isEmpty(defaultCfgRuleSalesQty) || CollectionUtils.isEmpty(defaultCfgRuleSalesQty.getFormulaResults())) {
-//            return;
-//        }
-//        CfgRuleSalesQtyDTO.StrategyFormulaResultDTO strategyFormulaResultDTO = defaultCfgRuleSalesQty.getFormulaResults().stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode())).findFirst().orElse(null);
-//        if (ObjectUtil.isEmpty(strategyFormulaResultDTO)) {
-//            return;
-//        }
-//        CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultUpdateDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.DefaultUpdateDTO.class, strategyFormulaResultDTO);
-//        defaultUpdateDTO.setId(null);
-//        CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(strategyFormulaResultDTO.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
-//        defaultUpdateDTO.setPercentJsonDTO(percentJsonDTO);
-//        updateDetailDTO.setDefaultSalesQtyDTO(defaultUpdateDTO);
-    }
 
-
-    /**
-     * 备货设置添加默认信息
-     * @author will
-     * @date 2024/9/10 17:59
-     * @param entity
-     * @param stockUpUpdateDTO
-     */
-    private void formatStockUpDefaultData (ReplenishmentSuggestionEntity entity,CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO) {
-        CfgRuleStockUpEntity defaultCfgRuleStockUp = cfgRuleStockUpService.getDefaultCfgRuleStockUp(entity.getPlatformType());
-        if (ObjectUtil.isEmpty(defaultCfgRuleStockUp)) {
-            return;
-        }
-        //采购审批
-        Integer purchaseApproveDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getPurchaseApproveDays()) ? defaultCfgRuleStockUp.getPurchaseApproveDays() : null;
-        stockUpUpdateDTO.setPurchaseApproveDays(purchaseApproveDays);
-        //生产周期
-        Integer productionDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getProductionDays()) ? defaultCfgRuleStockUp.getProductionDays() : null;
-        stockUpUpdateDTO.setProductionDays(productionDays);
-        //供应商发货
-        Integer supplierDeliveryDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getSupplierDeliveryDays()) ? defaultCfgRuleStockUp.getSupplierDeliveryDays() : null;
-        stockUpUpdateDTO.setSupplierDeliveryDays(supplierDeliveryDays);
-        //质检入库
-        Integer qcDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getQcDays()) ? defaultCfgRuleStockUp.getQcDays() : null;
-        stockUpUpdateDTO.setQcDays(qcDays);
-        //采购频率
-        Integer purchaseCycleDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getPurchaseCycleDays()) ? defaultCfgRuleStockUp.getPurchaseCycleDays() : null;
-        stockUpUpdateDTO.setPurchaseCycleDays(purchaseCycleDays);
-        //FBA安全天数
-        Integer safeDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getSafeDays()) ? defaultCfgRuleStockUp.getSafeDays() : null;
-        stockUpUpdateDTO.setSafeDays(safeDays);
-        //默认备货系数
-        BigDecimal stockingRatio = ObjectUtil.isEmpty(stockUpUpdateDTO.getStockingRatio()) ? defaultCfgRuleStockUp.getStockingRatio() : null;
-        stockUpUpdateDTO.setStockingRatio(stockingRatio);
-
-        //默认物流信息
-        List<CfgRuleLogisticsEntity> cfgRuleLogisticsList = cfgRuleLogisticsService.listByStockUpIdList(Arrays.asList(defaultCfgRuleStockUp.getId()));
-        if (CollectionUtils.isNotEmpty(cfgRuleLogisticsList)) {
-            List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList = BeanMapperUtils.copyList(CfgRuleLogisticsDTO.UpdateDTO.class,cfgRuleLogisticsList);
-            cfgLogisticsList.stream().forEach(obj -> obj.setId(null));
-            stockUpUpdateDTO.setCfgLogisticsList(cfgLogisticsList);
-        }
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO restoreRule(String id, List<String> ruleTypeList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (CollectionUtils.isEmpty(ruleTypeList)) {
             ruleTypeList = Arrays.asList(ReplenishmentRuleTypeEnum.STOCK_UP.getCode(),ReplenishmentRuleTypeEnum.SALES.getCode());
         }
@@ -580,7 +508,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO favorite(String id) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
 
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -603,7 +531,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelFavorite(String id) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         Boolean isFavorite = replenishmentSuggestionFavoriteService.isFavorite(userInfo.getUid(), entity.getId());
@@ -621,7 +549,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateLabel(ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(updateLabelDTO.getId()).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(updateLabelDTO.getId()).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
 
         //原标签
         List<LabelInfoDTO.ViewDTO> oldList = replenishmentRefLabelService.listLabelInfoByRefId(updateLabelDTO.getId());
@@ -634,7 +562,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         replenishmentRefLabelService.update(dto,entity.getId());
 
         //现标签
-        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(updateLabelDTO.getLabelIdList()) ? Collections.EMPTY_LIST : labelInfoService.listByIds(updateLabelDTO.getLabelIdList());
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(updateLabelDTO.getLabelIdList()) ? Collections.emptyList() : labelInfoService.listByIds(updateLabelDTO.getLabelIdList());
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
         // 操作日志
         String msg = CharSequenceUtil.format("设置了标签：从【{}】修改为【{}】",oldLabelNames,labelNames);
@@ -645,7 +573,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchAddLabel(String id, List<String> labelIdList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (CollectionUtils.isEmpty(labelIdList)) {
             return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
         }
@@ -656,7 +584,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         dto.setIsIncrement(Boolean.TRUE);
         replenishmentRefLabelService.update(dto,entity.getId());
         // 操作日志
-        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.EMPTY_LIST : labelInfoService.listByIds(labelIdList);
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.emptyList() : labelInfoService.listByIds(labelIdList);
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
         String msg = CharSequenceUtil.format("添加了标签【{}】",labelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "添加标签");
@@ -666,14 +594,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelLabel(String id, List<String> labelIdList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (CollectionUtils.isEmpty(labelIdList)) {
             return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DELETE);
         }
         //取消标签
         replenishmentRefLabelService.deleteLabel(labelIdList,entity.getId());
 
-        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.EMPTY_LIST : labelInfoService.listByIds(labelIdList);
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.emptyList() : labelInfoService.listByIds(labelIdList);
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
         String msg = CharSequenceUtil.format("删除了标签【{}】",labelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "删除标签");
@@ -708,7 +636,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public List<ReplenishmentSuggestionEntity> listByUnique(List<String> platformCodeList, List<String> shopIdList, List<String> skuIdList) {
         if (CollectionUtils.isEmpty(platformCodeList) || CollectionUtils.isEmpty(shopIdList) || CollectionUtils.isEmpty(skuIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listByUnique(platformCodeList,shopIdList,skuIdList);
     }
@@ -732,7 +660,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     public List<String> listLabelIdById(String id) {
         List<LabelInfoDTO.ViewDTO> list = replenishmentRefLabelService.listLabelInfoByRefId(id);
         if (CollectionUtils.isEmpty(list)) {
-            return  Collections.EMPTY_LIST;
+            return  Collections.emptyList();
         }
         return list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(LabelInfoDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
     }
@@ -740,7 +668,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateRemark(String id, String remark) {
-        ReplenishmentSuggestionEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         //新建对象
         ReplenishmentSuggestionEntity entity = new ReplenishmentSuggestionEntity();
         BeanMapperUtils.copy(old,entity);
@@ -777,6 +705,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    @SuppressWarnings("all")
     public PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(),user.getUid());
@@ -795,7 +724,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         excelDTO.setHeaders(headMap);
         excelDTO.setData(convertDataList);
         excelDTO.setSheetName("销售订单");
-        return new PagingVO(Collections.singletonList(excelDTO), (int) pagingVO.getTotal(),(int) pagingVO.getSize(), (int)pagingVO.getCurrent());
+        return new PagingVO<>(Collections.singletonList(excelDTO), (int) pagingVO.getTotal(),(int) pagingVO.getSize(), (int)pagingVO.getCurrent());
     }
 
     /**
@@ -805,6 +734,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
      * @param list
      * @return List<LinkedHashMap>
      */
+    @SuppressWarnings("all")
     private List<LinkedHashMap> handleHistorySalesQty (List<ReplenishmentSuggestionVO.PagingView> list) {
         List<LinkedHashMap> resultList = Lists.newArrayList();
         LinkedHashMap<String, Object> resultMap = Maps.newLinkedHashMap();
@@ -864,15 +794,15 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             convertMap.put("productName",productName);
             convertMap.put("typeName","FBA");
             //历史销量
-            dyHeadMap.keySet().stream().forEach(obj ->{
+            dyHeadMap.keySet().forEach(obj ->{
                 SalesInfoEntity salesInfoEntity = salesList.stream().filter(e -> CharSequenceUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
-                BigDecimal salesQty = ObjectUtil.isNotEmpty(salesInfoEntity) ? salesInfoEntity.getSalesQty() : BigDecimal.ZERO;
+                BigDecimal salesQty = !ObjectUtils.isEmpty(salesInfoEntity) ? salesInfoEntity.getSalesQty() : BigDecimal.ZERO;
                 convertMap.put(obj.toString(),salesQty);
             });
             convertDataList.add(convertMap);
         }
         if (CollectionUtils.isEmpty(convertDataList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         resultMap.put("head", headMap);
         resultMap.put("data", convertDataList);
@@ -888,12 +818,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             return new PagingVO<>();
         }
         List<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> exportPagingVO = handleExport(pagingVO.getRecords());
-        return new PagingVO(exportPagingVO,(int)pagingVO.getTotal(),(int)pagingVO.getSize(),(int)pagingVO.getCurrent());
-    }
-
-    @Override
-    public List<ReplenishmentSuggestionDTO.SalesDTO> listSalesBySkuId(String skuId) {
-        return null;
+        return new PagingVO<>(exportPagingVO,(int)pagingVO.getTotal(),(int)pagingVO.getSize(),(int)pagingVO.getCurrent());
     }
 
     @Override

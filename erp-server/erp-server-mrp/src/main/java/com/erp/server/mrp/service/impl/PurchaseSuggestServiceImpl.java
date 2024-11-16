@@ -2,7 +2,6 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -154,7 +153,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
 
         //平台信息
         List<String> platformList = list.stream().map(ReplenishmentSuggestionDTO.PurchaseSuggestionDTO::getPlatform).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.emptyList() : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
         for (ReplenishmentSuggestionDTO.PurchaseSuggestionDTO purchaseSuggestionDTO : list) {
 
@@ -165,15 +164,15 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             purchaseSuggestionDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(purchaseSuggestionDTO.getLogisticsMethod()));
 
             //平台名称
-            String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),purchaseSuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            String platformName = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(),purchaseSuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setPlatformName(platformName);
 
             //店铺名称
-            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestionDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            String shopName = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestionDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setShopName(shopName);
 
             //产品名称
-            String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setProductName(productName);
             //创建名称
             purchaseSuggestionDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(purchaseSuggestionDTO.getCreateType()));
