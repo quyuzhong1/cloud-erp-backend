@@ -1,11 +1,9 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -670,8 +668,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         Map<String, Integer> salesVolumeMap = orderInfoEntities.stream().collect(Collectors.groupingBy(x -> x.getSourcePlatform(),
                 Collectors.summingInt(x -> orderQuantityMap.getOrDefault(x.getId(), 0))));
 
-        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
-        return rankResult;
+        return assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
     }
 
     @Override
@@ -724,9 +721,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
                         BigDecimal::add)
         ));
 
-
-        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
-        return rankResult;
+        return assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
     }
 
     @Override
@@ -788,8 +783,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         Map<String, String> skuMap = entityItemList.stream().filter(x -> StringUtils.isNotBlank(x.getSkuNo())).collect(Collectors.groupingBy(BiOrderItemSplitEntity::getSkuNo,
                 Collectors.collectingAndThen(Collectors.toList(), v -> v.get(0).getItemName())));
 
-        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, skuMap, salesVolumeMap, saleAmountMap);
-        return rankResult;
+        return assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, skuMap, salesVolumeMap, saleAmountMap);
     }
 
     @Override
@@ -856,8 +850,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(BiTargetManagementEntity::getProductPosition,
                 MathUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(), BigDecimal.ZERO))));
 
-        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
-        return rankResult;
+        return assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
     }
 
     @Override
@@ -919,15 +912,13 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         Map<String, BigDecimal> saleAmountMap = targetList.stream().collect(Collectors.groupingBy(x -> x.getProductType().toString(),
                 MathUtil.summingBigDecimal(x -> skuSaleAmountMap.getOrDefault(x.getSkuNo(), BigDecimal.ZERO))));
 
-        List<SalesCompletionInfoVO> rankResult = assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
-        return rankResult;
+        return assemblyResult(dto, targetSalesMap, targetSalesVolumeMap, null, salesVolumeMap, saleAmountMap);
     }
 
     @Override
     @Cacheable(cacheNames = "cache:bi:getSalesAndYoy", keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoySumVO getSalesAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-//        dto.setEndTime(dto.getEndTime());
         TargetSaleSumVO currentVo = sumSales(dto);
         BigDecimal currentAmount = currentVo.getValue();
         if (BigDecimal.ZERO.compareTo(currentAmount) == 0) {
@@ -953,7 +944,6 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
     @Cacheable(cacheNames = "cache:bi:countSalesVolumeAndYoy", keyGenerator = "myKeyGenerator")
     public TargetSaleAndYoyCountVO countSalesVolumeAndYoy(BiFilterDTO dto) {
         // 查询当期销售额
-//        dto.setEndTime(dto.getEndTime());
         TargetSaleCountVO currentVo = countSalesVolume(dto);
         Integer currentAmount = currentVo.getValue();
         if (0 == currentAmount) {
@@ -1084,7 +1074,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
         DmpOrderInfoExcelListener excelListenerUtil = new DmpOrderInfoExcelListener(deptList, plmTaskFeign, biShopInfoService, sysUserFeign);
         try {
-            EasyExcel.read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), DmpOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
 
             //验证导入数据是否为空
             List<DmpOrderInfoImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
@@ -1155,41 +1145,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
             //明细信息
             List<BiOrderItemSplitEntity> itemList = new ArrayList<>();
 
-            for (Map.Entry<String, List<DmpOrderInfoImportExcelDTO>> entry : map.entrySet()) {
-                BiOrderInfoEntity info = new BiOrderInfoEntity();
-                List<DmpOrderInfoImportExcelDTO> value = entry.getValue();
-                DmpOrderInfoImportExcelDTO mainEntity = value.get(0);
-                BeanUtils.copyProperties(mainEntity, info);
-                info.setOrderStatus(OrderStateEnum.getCodeByName(mainEntity.getOrderStateName()));
-                BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
-                baseSearchDTO.setSearchKeyword(mainEntity.getChargeName());
-                ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
-                List<FindUserDTO> chargeNameList = listApiResult.getData();
-                info.setChargeId(chargeNameList.get(0).getUserId());
-
-                String platformCreateTimeStr = mainEntity.getPlatformCreateTimeStr();
-                if (StringUtils.isNotBlank(platformCreateTimeStr)) {
-                    info.setPlatformCreateTime(LocalDateUtil.stringToLocalDateTime(platformCreateTimeStr));
-                }
-                String deliveryTimeStr = mainEntity.getDeliveryTimeStr();
-                if (StringUtils.isNotBlank(deliveryTimeStr)) {
-                    info.setDeliveryTime(LocalDateUtil.stringToLocalDateTime(deliveryTimeStr));
-                }
-                BigDecimal orderFee = mainEntity.getOrderFee();
-                mainEntity.setOrderFee(MathUtil.multiply(orderFee, ObjectUtils.isEmpty(mainEntity.getCurrencyRate()) ? MathUtil.BigDecimal_1 : mainEntity.getCurrencyRate()));
-
-                info.setId(IdWorker.getIdStr());
-                infoList.add(info);
-                for (DmpOrderInfoImportExcelDTO excelDTO : value) {
-                    BiOrderItemSplitEntity item = new BiOrderItemSplitEntity();
-                    item.setOrderId(info.getId());
-                    item.setSkuNo(excelDTO.getSkuNo());
-                    item.setItemName(excelDTO.getItemName());
-                    item.setSellPriceOrigin(excelDTO.getSellPriceOrigin());
-                    item.setQuantity(excelDTO.getQuantity());
-                    itemList.add(item);
-                }
-            }
+            orderItemSplitHandler(map, infoList, itemList);
             //新增主表信息
             if (CollectionUtils.isNotEmpty(infoList)) {
                 this.saveBatch(infoList);
@@ -1197,6 +1153,44 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
             //新增明细信息
             if (CollectionUtils.isNotEmpty(itemList)) {
                 biOrderItemSplitService.saveBatch(itemList);
+            }
+        }
+    }
+
+    private void orderItemSplitHandler(Map<String, List<DmpOrderInfoImportExcelDTO>> map, List<BiOrderInfoEntity> infoList, List<BiOrderItemSplitEntity> itemList) {
+        for (Map.Entry<String, List<DmpOrderInfoImportExcelDTO>> entry : map.entrySet()) {
+            BiOrderInfoEntity info = new BiOrderInfoEntity();
+            List<DmpOrderInfoImportExcelDTO> value = entry.getValue();
+            DmpOrderInfoImportExcelDTO mainEntity = value.get(0);
+            BeanUtils.copyProperties(mainEntity, info);
+            info.setOrderStatus(OrderStateEnum.getCodeByName(mainEntity.getOrderStateName()));
+            BaseSearchDTO baseSearchDTO = new BaseSearchDTO();
+            baseSearchDTO.setSearchKeyword(mainEntity.getChargeName());
+            ApiResult<List<FindUserDTO>> listApiResult = sysUserFeign.userList(baseSearchDTO);
+            List<FindUserDTO> chargeNameList = listApiResult.getData();
+            info.setChargeId(chargeNameList.get(0).getUserId());
+
+            String platformCreateTimeStr = mainEntity.getPlatformCreateTimeStr();
+            if (StringUtils.isNotBlank(platformCreateTimeStr)) {
+                info.setPlatformCreateTime(LocalDateUtil.stringToLocalDateTime(platformCreateTimeStr));
+            }
+            String deliveryTimeStr = mainEntity.getDeliveryTimeStr();
+            if (StringUtils.isNotBlank(deliveryTimeStr)) {
+                info.setDeliveryTime(LocalDateUtil.stringToLocalDateTime(deliveryTimeStr));
+            }
+            BigDecimal orderFee = mainEntity.getOrderFee();
+            mainEntity.setOrderFee(MathUtil.multiply(orderFee, ObjectUtils.isEmpty(mainEntity.getCurrencyRate()) ? MathUtil.BigDecimal_1 : mainEntity.getCurrencyRate()));
+
+            info.setId(IdWorker.getIdStr());
+            infoList.add(info);
+            for (DmpOrderInfoImportExcelDTO excelDTO : value) {
+                BiOrderItemSplitEntity item = new BiOrderItemSplitEntity();
+                item.setOrderId(info.getId());
+                item.setSkuNo(excelDTO.getSkuNo());
+                item.setItemName(excelDTO.getItemName());
+                item.setSellPriceOrigin(excelDTO.getSellPriceOrigin());
+                item.setQuantity(excelDTO.getQuantity());
+                itemList.add(item);
             }
         }
     }
@@ -1213,7 +1207,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
                 .ge(2 != type && ObjectUtil.isNotEmpty(dto.getStartTime()), BiOrderInfoEntity::getPlatformCreateTime, dto.getStartTime())
                 .le(2 != type && ObjectUtil.isNotEmpty(dto.getEndTime()), BiOrderInfoEntity::getPlatformCreateTime, dto.getEndTime())
                 .list();
-        Map<Integer, BigDecimal> resultMap = new HashMap<>();
+        Map<Integer, BigDecimal> resultMap;
         if (0 == type) {
             // 月份
             resultMap = list.stream().filter(x -> ObjectUtil.isNotEmpty(x.getPlatformCreateTime())).collect(Collectors.groupingBy(x -> x.getPlatformCreateTime().getMonthValue(),
@@ -1264,11 +1258,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         List<SalesCompletionInfoVO> rankResult = resultList.stream()
                 .sorted(Comparator.comparing(SalesCompletionInfoVO::getSalesAmountCompletionRate).reversed()
                         .thenComparing(SalesCompletionInfoVO::getSalesVolumeCompletionRate).reversed())
-                .map(x -> {
-                    // 显式设置排名
-                    x.setRanking(rankIndex.getAndIncrement());
-                    return x;
-                })
+                .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
                 .filter(x -> x.getRanking() <= dto.getRankNum())
                 .collect(Collectors.toList());
 

@@ -273,9 +273,8 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
                 throw new ServiceException(ApiError.ERROR_95018);
             }
 
-            String fileName = originalFilename.toLowerCase();
+            String fileName = (originalFilename != null) ? originalFilename.toLowerCase() : "";
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-
             if (StringUtils.isBlank(fileUrl)) {
                 throw new ServiceException(ApiError.ERROR_95018);
             }
