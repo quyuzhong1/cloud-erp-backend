@@ -72,7 +72,9 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
     @Override
     public Boolean update(PackingTaskDetailDTO.UpdateDTO updateDTO) {
         PackingTaskDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "装箱任务明细单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "装箱任务明细单");
+        }
         PackingTaskDetailEntity packingTaskDetailEntity =  BeanMapperUtils.map(PackingTaskDetailEntity.class, updateDTO);
 
         // 数据处理

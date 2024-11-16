@@ -96,11 +96,11 @@ public class AsyncServiceImpl implements AsyncService {
         if (orderGroupMap.isEmpty()){
             return;
         }
-        orderGroupMap.entrySet().parallelStream().peek(e->{
+        orderGroupMap.entrySet().parallelStream().forEach(e -> {
             String dictPlatform = e.getKey();
             List<PlatformOrderQueryDTO> curOrderList = e.getValue();
             PlatformSaveHandler.batchQueryAndUpdateOrderStatus(dictPlatform, curOrderList);
-        }).collect(Collectors.toList());
+        });
     }
 
     @Override

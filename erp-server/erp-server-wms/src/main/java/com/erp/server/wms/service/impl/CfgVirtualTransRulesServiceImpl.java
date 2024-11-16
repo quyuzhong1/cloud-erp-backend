@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * 虚拟库存交易规则表 服务实现类
@@ -67,7 +68,9 @@ public class CfgVirtualTransRulesServiceImpl extends SuperServiceImpl<CfgVirtual
     @Override
     public Boolean update(CfgVirtualTransRulesDTO.UpdateDTO updateDTO) {
         CfgVirtualTransRulesEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟库存交易规则单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟库存交易规则单");
+        }
         CfgVirtualTransRulesEntity cfgVirtualTransRulesEntity =  BeanMapperUtils.map(CfgVirtualTransRulesEntity.class, updateDTO);
 
         // 数据处理

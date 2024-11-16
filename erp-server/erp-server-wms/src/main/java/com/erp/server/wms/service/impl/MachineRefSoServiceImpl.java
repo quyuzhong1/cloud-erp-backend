@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -65,7 +66,9 @@ public class MachineRefSoServiceImpl extends SuperServiceImpl<MachineRefSoMapper
     @Override
     public Boolean update(MachineRefSoDTO.UpdateDTO updateDTO) {
         MachineRefSoEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "加工单和销售订单关联单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "加工单和销售订单关联单");
+        }
         MachineRefSoEntity machineRefSoEntity =  BeanMapperUtils.map(MachineRefSoEntity.class, updateDTO);
 
         // 数据处理

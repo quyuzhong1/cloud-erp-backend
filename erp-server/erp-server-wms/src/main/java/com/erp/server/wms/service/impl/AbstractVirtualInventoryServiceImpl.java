@@ -101,6 +101,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             this.stockHandler(paramList, businessType, stockParamList, transactionNo);
         } catch (Exception e) {
             log.error("交易业务：{}，数据：{}，库存操作异常：{}", businessType.getName(), paramList,e );
+            Thread.currentThread().interrupt();
             throw new ServiceException(10000,e.getMessage());
         } finally {
             //释放锁  锁是否存在

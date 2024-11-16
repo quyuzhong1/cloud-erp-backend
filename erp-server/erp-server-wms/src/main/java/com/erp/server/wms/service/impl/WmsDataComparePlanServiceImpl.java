@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -77,7 +78,9 @@ public class WmsDataComparePlanServiceImpl extends SuperServiceImpl<WmsDataCompa
     @Override
     public Boolean update(WmsDataComparePlanDTO.UpdateDTO updateDTO) {
         WmsDataComparePlanEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比映射方案"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比映射方案");
+        }
         WmsDataComparePlanEntity wmsDataComparePlanEntity =  BeanMapperUtils.map(WmsDataComparePlanEntity.class, updateDTO);
 
         // 数据处理

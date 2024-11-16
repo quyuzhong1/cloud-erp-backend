@@ -4,15 +4,7 @@ package com.erp.server.wms.service.impl;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -317,7 +309,9 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
     @Override
     public Boolean update(WmsDataCompareTaskDTO.UpdateDTO updateDTO) {
         WmsDataCompareTaskEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比任务"));
+		if (Objects.isNull(old)){
+			throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比任务");
+		}
         WmsDataCompareTaskEntity wmsDataCompareTaskEntity =  BeanMapperUtils.map(WmsDataCompareTaskEntity.class, updateDTO);
 
         // 数据处理

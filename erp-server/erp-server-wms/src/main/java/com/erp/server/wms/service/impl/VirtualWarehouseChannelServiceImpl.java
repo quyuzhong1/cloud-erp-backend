@@ -208,7 +208,9 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     @Override
     public Boolean update(VirtualWarehouseChannelDTO.UpdateDTO updateDTO) {
         VirtualWarehouseChannelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓渠道"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓渠道");
+        }
         VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = BeanMapperUtils.map(VirtualWarehouseChannelEntity.class, updateDTO);
 
         // 数据处理

@@ -232,6 +232,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             } catch (Exception e) {
                 log.error("反审核》》》，交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存操作异常", businessTypeEnum.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), txnFlow.getSourceId(), txnFlow.getSkuNo(), e);
                 ServiceException.runError(ApiError.Default.code, e.getMessage());
+                Thread.currentThread().interrupt();
             } finally {
                 //释放锁  锁是否存在，是当前执行线程的锁
                 if (rLock.isLocked() && rLock.isHeldByCurrentThread()) {
