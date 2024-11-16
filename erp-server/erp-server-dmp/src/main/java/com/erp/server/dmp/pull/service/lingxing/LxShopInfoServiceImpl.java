@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
@@ -113,12 +115,13 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
         }
 
         // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
+        List<ShopEntity> shopEntityList = entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_SHOP_INFO_TAG.getName(), JSONUtil.toJsonStr(msg),  msg.getSid().toString());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+        log.debug("领星店铺数据为：{}" , JSON.toJSONString(shopEntityList));
     }
 
     @Override
