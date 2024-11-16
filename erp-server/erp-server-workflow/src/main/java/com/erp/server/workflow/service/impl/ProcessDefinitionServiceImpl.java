@@ -98,7 +98,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
         // 已发布的流程不能再次发布
-        if(definitionEntity.getIsDeploy()){
+        if(Boolean.TRUE.equals(definitionEntity.getIsDeploy())){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_ALREADY_DEPLOY);
         }
         Deployment deploy = repositoryService.createDeployment()

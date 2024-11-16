@@ -1,6 +1,5 @@
 package com.erp.server.workflow.service.impl;
 
-import org.apache.commons.collections4.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.message.service.mq.MQProducerService;
@@ -11,8 +10,8 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CcStatusEnum;
 import com.erp.server.workflow.mapper.ProcessTaskCcMapper;
 import com.erp.server.workflow.service.ProcessTaskCcService;
-import com.common.business.service.impl.SuperServiceImpl;
-import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +32,11 @@ import java.util.stream.Collectors;
 public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapper, ProcessTaskCcEntity> implements ProcessTaskCcService {
     @Resource
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
+    @Lazy
+    @Resource
+    private ProcessTaskCcService processTaskCcService;
+
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveCcUser(String taskId, List<FindUserDTO> copyUser, String taskManagementId) {
@@ -95,8 +99,8 @@ public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapp
         noticeMsgInfoDTO.setContent(content);
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.FLW_TASK);
         // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
-        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
+        mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
         // 审批完成后发送抄送消息更新抄送状态
-        updateCcStatus(entity.getTaskId());
+        processTaskCcService.updateCcStatus(entity.getTaskId());
     }
 }
