@@ -8,6 +8,7 @@ import com.lowagie.text.pdf.PdfCopy;
 import com.lowagie.text.pdf.PdfImportedPage;
 import com.lowagie.text.pdf.PdfReader;
 import lombok.Cleanup;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -20,8 +21,12 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+@Slf4j
 public class PdfUtil {
 
+    private PdfUtil() {
+    }
 
     /**
      * pdf 合并操作2
@@ -47,8 +52,10 @@ public class PdfUtil {
             // 如果临时文件存在，则删除临时文件
             if(StringUtils.isNotBlank(newPdfName)){
                 File file = new File(newPdfName);
-                if (file != null && file.isFile() && file.exists()) {
-                    file.delete();
+                if (file.isFile() && file.exists()) {
+                    if(!file.delete()){
+                        log.info("PDFUtil:删除失败 --------------");
+                    }
                 }
             }
         }
