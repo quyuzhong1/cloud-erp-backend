@@ -1212,7 +1212,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             ProjectImportDTO projectImportDTO = taskList.stream().filter(obj -> obj.getTaskName().equals(projectTaskDTO.getName())).findFirst().orElse(null);
             //前置任务
-            String preTask = projectImportDTO.getPreTask();
+            String preTask = null == projectImportDTO ? "" : projectImportDTO.getPreTask();
             projectTaskDTO.setPreTaskIdList(Collections.emptyList());
             if (StringUtils.isNotBlank(preTask)) {
                 List<String> importPreTaskIds = Arrays.stream(preTask.split(",")).collect(Collectors.toList());
@@ -1339,8 +1339,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @return
      */
     private static boolean checkData(Integer type, List<ProjectTaskPlanAutoVO.ScheduleVO> errorList, LinkedList<String> exitList, ProjectPlanTaskDTO.AutoDateDTO autoEntity, PlanTaskNameDTO planTaskNameDTO) {
-        if (null == planTaskNameDTO || null == planTaskNameDTO.getTaskName()) {
-            errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(), "计划数据不存在或项目任务数据不不存在"));
+        if ( null == planTaskNameDTO || null == planTaskNameDTO.getTaskName()) {
+            errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(autoEntity.getId(), "计划数据不存在或项目任务数据不不存在"));
             return true;
         }
         if (exitList.contains(autoEntity.getId())) {

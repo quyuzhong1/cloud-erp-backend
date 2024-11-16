@@ -1408,10 +1408,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95193);
                 }
-            case TERMINATE:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95192);
-                }
         }
     }
 
@@ -1459,10 +1455,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             case ID_DESIGN_ING:
                 if (suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95193);
-                }
-            case TERMINATE:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95192);
                 }
         }
 

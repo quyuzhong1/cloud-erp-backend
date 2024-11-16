@@ -55,12 +55,12 @@ public class ProductPropertiesServiceImpl extends SuperServiceImpl<ProductProper
     @Override
     public Boolean update(ProductPropertiesDTO.UpdateDTO updateDTO) {
         ProductPropertiesEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku与配置字段关系单"));
+        ProductPropertiesEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "sku与配置字段关系单"));
         ProductPropertiesEntity productPropertiesEntity =  BeanMapperUtils.map(ProductPropertiesEntity.class, updateDTO);
 
         // 数据处理
         handleData(productPropertiesEntity);
-        log.info("编辑 开始修改sku与配置字段关系单数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改sku与配置字段关系单数据，id：【{}】", oldEntity.getId());
         boolean save = super.updateById(productPropertiesEntity);
         if(!save) {
             throw new ServiceException("sku与配置字段关系单保存失败");
