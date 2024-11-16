@@ -4,7 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
 import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+
 import java.util.List;
 
 /**
@@ -136,7 +136,7 @@ public interface SoDeliveryNoticeChangeService extends SuperService<SoDeliveryNo
 
     PagingVO<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaging(PagingDTO<SoDeliveryNoticeChangeDTO.ProductAddDTO> dto);
 
-    BatchResultDTO invalid(String id);
+    BatchResultDTO invalid(String id, String remark);
 
     List<SoDeliveryNoticeChangeDTO.ProductDTO> addProductPaste(SoDeliveryNoticeChangeDTO.ProductAddDTO dto);
 

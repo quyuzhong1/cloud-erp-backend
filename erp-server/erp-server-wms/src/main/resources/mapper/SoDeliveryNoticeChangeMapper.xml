@@ -126,7 +126,7 @@
             sd.platform_sku_no as platformSkuNo,
         (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sd.id and a.is_deleted = false) as allNoticeQty,
         COALESCE(sdnd.delivery_qty,0) as currentNoticeQty,
-        (select  COALESCE(sum(a.qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
+        sdnd.picking_qty as pickedQty,
         sd.remark
         from so_info si
         inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false

@@ -157,14 +157,31 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
         }
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listByIds(noticeDetailIds);
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(noticeDetailIds);
-        Set<String> soDetailIdSet = viewDetailList.stream()
-                .map(SoDeliveryNoticeChangeDTO.ViewDetail::getSoDetailId)
+
+        // 收集所有 soDetailId 及其对应的 SKU
+        Map<String, List<String>> soDetailIdToSkuMap = viewDetailList.stream()
+                .collect(Collectors.groupingBy(
+                        SoDeliveryNoticeChangeDTO.ViewDetail::getSoDetailId,
+                        Collectors.mapping(SoDeliveryNoticeChangeDTO.ViewDetail::getSkuNo, Collectors.toList())
+                ));
+
+        // 检查是否存在重复的 soDetailId
+        Set<String> duplicateSoDetailIds = soDetailIdToSkuMap.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
 
-        // 如果 Set 的大小小于 List 的大小，说明存在重复的 soDetailId
-        if(soDetailIdSet.size() < viewDetailList.size()){
-            throw new ServiceException("存在重复的明细");
+        if (!duplicateSoDetailIds.isEmpty()) {
+            // 收集所有重复的 SKU
+            StringBuilder duplicateSkus = new StringBuilder();
+            for (String soDetailId : duplicateSoDetailIds) {
+                List<String> skus = soDetailIdToSkuMap.get(soDetailId).stream().distinct().collect(Collectors.toList());
+                duplicateSkus.append(String.join(", ", skus)).append("; ");
+            }
+
+            throw new ServiceException("存在重复的明细: " + duplicateSkus);
         }
+
         for (SoDeliveryNoticeChangeDTO.ViewDetail viewDetail : viewDetailList) {
             if(Objects.nonNull(viewDetail.getNewNoticeQty()) && viewDetail.getNewNoticeQty() > viewDetail.getMaxCanChangeQty()){
                 throw new ServiceException("{} 变更数量不能大于可变更数量",viewDetail.getSkuNo());
@@ -180,8 +197,7 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
                 if(soDeliveryNoticeDetailEntity.getDeliveryQty().equals(viewDetail.getNewNoticeQty())){
                     throw new ServiceException("{} 发货数量不能等于原发货数量",viewDetail.getSkuNo());
                 }
-                List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getSourceDetailId())).collect(Collectors.toList());
-                Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+                Integer pickedQty = soDeliveryNoticeDetailEntity.getPickingQty();
                 if(viewDetail.getNewNoticeQty() < pickedQty){
                     throw new ServiceException("【{}】发货数量【{}】不能小于已拣货数量【{}】",viewDetail.getSkuNo(),viewDetail.getNewNoticeQty(),pickedQty);
                 }

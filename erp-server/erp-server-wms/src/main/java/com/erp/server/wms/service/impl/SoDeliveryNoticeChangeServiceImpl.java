@@ -164,7 +164,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
         // 记录主单操作日志
         if(!old.getChangeReason().equals(updateDTO.getChangeReason())){
-            String remarkMsg = StrUtil.format("备注由【{}】修改为【{}】", old.getChangeReason(), updateDTO.getChangeReason());
+            String remarkMsg = StrUtil.format("变更原因由【{}】修改为【{}】", old.getChangeReason(), updateDTO.getChangeReason());
             operateLogService.addModuleOperateLog(remarkMsg,  ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), soDeliveryNoticeChangeEntity.getId(), "编辑操作");
         }
         return Boolean.TRUE;
@@ -494,7 +494,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     }
 
     @Override
-    public BatchResultDTO invalid(String id) {
+    public BatchResultDTO invalid(String id, String remark) {
         SoDeliveryNoticeChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货通知变更单数据"));
         // 只有待提交数据允许作废
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
@@ -507,8 +507,8 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         entity.setInvalidStatus(true);
         super.updateById(entity);
         // 删除日志数据
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getId(), "作废发货通知变更单数据");
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ，备注：{}", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货通知变更单",remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_NOTICE_CHANGE.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 

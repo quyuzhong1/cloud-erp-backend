@@ -1,32 +1,32 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.common.business.annotation.WebAdvanceQuery;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.stream.Collectors;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
+import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 发货通知变更单
@@ -302,7 +302,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
             serviceClass = SoDeliveryNoticeChangeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "发货通知变更单作废")
-    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated  BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<SoDeliveryNoticeChangeEntity> list = soDeliveryNoticeChangeService.lambdaQuery().in(SoDeliveryNoticeChangeEntity::getId, ids).list();
@@ -310,7 +310,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = soDeliveryNoticeChangeService.invalid(id);
+                deleteResult = soDeliveryNoticeChangeService.invalid(id,dto.getRemark());
             }catch (Exception e){
                 log.error("发货通知变更单作废失败",e);
                 SoDeliveryNoticeChangeEntity entity = idEntityMap.get(id);
