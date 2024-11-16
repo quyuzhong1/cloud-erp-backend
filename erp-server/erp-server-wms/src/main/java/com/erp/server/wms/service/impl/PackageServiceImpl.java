@@ -305,13 +305,13 @@ public class PackageServiceImpl implements PackageService {
                 if (dto.getIsAutoOut()) {
                     List<String> soIdList = item.getDetailList().stream().filter(v -> !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
                     // 异步推送到MQ
-                    soIdList.stream().peek(soId -> {
+                    soIdList.forEach(soId -> {
                         SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
                                 soId, soId);
                         if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
                             throw new RuntimeException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
                         }
-                    }).collect(Collectors.toList());
+                    });
                 }
             } else {
                 hasDeliveryInterceptMap.forEach((key, val) -> {

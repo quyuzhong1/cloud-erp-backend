@@ -432,11 +432,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 viewDetailDTO.setSpuNo(skuVO.getSpuNo());
                 viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
             }
-            //根据组织、仓库、sku查询可用库存
-            /*
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDetailDTO.getOutWarehouseId(), viewDetailDTO.getSkuId(),viewDetailDTO.getOutWarehouseLocation());
-            viewDetailDTO.setCurInventoryQty(curInventoryQty);
-             */
             //即时库存
             Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), viewDetailDTO.getSkuId())
                     && Objects.equals(r.getWarehouseId(), viewDetailDTO.getOutWarehouseId())

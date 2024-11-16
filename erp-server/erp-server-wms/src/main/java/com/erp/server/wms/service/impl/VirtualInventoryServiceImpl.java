@@ -43,6 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -469,8 +470,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                         .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                         .findFirst().orElse(MathUtil.ZERO);
                 //针对父级可用数量
-                double floor = Math.floor(childVirtualUsableQty / skuDTO.getQuantity());
-                Integer parentUsableQty = Integer.valueOf((int) floor);
+                BigDecimal divide = MathUtil.divide(new BigDecimal(childVirtualUsableQty), new BigDecimal(skuDTO.getQuantity()));
+                Integer parentUsableQty = divide.intValue();
                 parentUsableQtyList.add(parentUsableQty);
             }
             //bom最小可用数

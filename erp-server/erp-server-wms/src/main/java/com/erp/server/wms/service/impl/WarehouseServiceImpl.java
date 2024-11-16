@@ -73,6 +73,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -283,8 +284,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                             ).map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty)
                             .findFirst().orElse(MathUtil.ZERO);
                     //针对父级可用数量
-                    double floor = Math.floor(childVirtualUsableQty / bomChildrenSkuDTO.getQuantity());
-                    Integer parentUsableQty = Integer.valueOf((int) floor);
+                    BigDecimal divide = MathUtil.divide(new BigDecimal(childVirtualUsableQty), new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                    Integer parentUsableQty = divide.intValue();
                     parentUsableQtyList.add(parentUsableQty);
                 }
                 Integer parentUsableQty = parentUsableQtyList.stream().min(Comparator.comparing(obj -> obj)).get();
@@ -1241,14 +1242,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         //获取组织信息
         List<String> orgIdList = list.stream().map(WarehouseDTO.PagingProductViewDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-        list.stream().map(item -> {
+        list.forEach(item -> {
             //组织id
             String orgId = item.getOrgId();
             String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setOrgName(orgName);
-            return item;
-        }).collect(Collectors.toList());
+        });
         return new PagingVO<>(pageData);
     }
 

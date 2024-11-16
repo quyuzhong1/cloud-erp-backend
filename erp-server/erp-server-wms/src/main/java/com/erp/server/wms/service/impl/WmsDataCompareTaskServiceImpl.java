@@ -1058,13 +1058,6 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 			if(CharSequenceUtil.isBlank(resultReportUrl)) {
 				List<WmsDataCompareTempEntity> wmsDataCompareTempEntityList = wmsDataCompareTempService.lambdaQuery().eq(WmsDataCompareTempEntity::getTaskId, id).list();
 				if(CollUtil.isNotEmpty(wmsDataCompareTempEntityList)) {
-//					if(WmsDataCompareTypeEnum.GROUP.getCode().equals(wmsDataCompareTaskEntity.getCompareType())) {
-//						Map<String, List<WmsDataCompareTempEntity>> pkTempMaps = wmsDataCompareTempEntityList.stream().collect(Collectors.groupingBy(WmsDataCompareTempEntity::getPkFieldValue));
-//						wmsDataCompareTempEntityList = new ArrayList<>();
-//						for(Map.Entry<String, List<WmsDataCompareTempEntity>> pkTempMap : pkTempMaps.entrySet()) {
-//							wmsDataCompareTempEntityList.add(pkTempMap.getValue().get(0));
-//						}
-//					}
 					resultSameCount = (int)wmsDataCompareTempEntityList.stream().filter(w -> w.getCompareResult().equals(WmsDataCompareTempCompareResultEnum.SAME.getCode())).count();
 					resultExceedCount = (int)wmsDataCompareTempEntityList.stream().filter(w -> w.getCompareResult().equals(WmsDataCompareTempCompareResultEnum.EXCEED.getCode())).count();
 					resultMissCount = (int)wmsDataCompareTempEntityList.stream().filter(w -> w.getCompareResult().equals(WmsDataCompareTempCompareResultEnum.MISS.getCode())).count();
@@ -1143,7 +1136,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				    
 					File file = new File(fileName);
 					resultReportUrl = FastDFSClientUtil.uploadFile(file, fileName);
-					file.delete();
+					file.deleteOnExit();
 				}
 			}
 				wmsDataCompareTaskService.dealFinishData(id , resultReportUrl , resultSameCount, resultExceedCount, resultMissCount, resultDiffCount);

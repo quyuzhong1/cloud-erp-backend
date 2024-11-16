@@ -838,14 +838,20 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 //获取实体仓可用库存
                 VirtualInventoryDTO.ViewQtyDTO warehouseQty = virtualInventoryQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())
                         && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId())).findFirst().orElse(null);
-                if (Objects.isNull(warehouseQty) || (Objects.nonNull(warehouseQty) && warehouseQty.getWarehouseAllocationQty() < qty)) {
+                if (Objects.isNull(warehouseQty)){
+                    throw new ServiceException(ApiError.ERROR_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getWarehouseName(), MathUtil.ZERO);
+                }
+                if (warehouseQty.getWarehouseAllocationQty() < qty) {
                     throw new ServiceException(ApiError.ERROR_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getWarehouseName(), warehouseQty.getWarehouseAllocationQty());
                 }
                 break;
             default:
                 VirtualInventoryDTO.ViewQtyDTO fromVmQty = virtualInventoryQtyList.stream().filter(item -> Objects.equals(item.getSkuId(), detailDto.getSkuId())
                         && Objects.equals(item.getWarehouseId(), detailDto.getWarehouseId()) && Objects.equals(item.getFromVirtualWarehouseId(), detailDto.getFromVirtualWarehouseId())).findFirst().orElse(null);
-                if (Objects.isNull(fromVmQty) || (Objects.nonNull(fromVmQty) && fromVmQty.getFromVirtualWarehouseUsableQty() < qty)) {
+                if (Objects.isNull(fromVmQty)){
+                    throw new ServiceException(ApiError.ERROR_FROMVM_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getFromVirtualWarehouseName(), MathUtil.ZERO);
+                }
+                if (fromVmQty.getFromVirtualWarehouseUsableQty() < qty) {
                     throw new ServiceException(ApiError.ERROR_FROMVM_INVENTORY_INSUFFICIENT, detailDto.getSkuNo(), detailDto.getFromVirtualWarehouseName(), fromVmQty.getFromVirtualWarehouseUsableQty());
                 }
                 break;

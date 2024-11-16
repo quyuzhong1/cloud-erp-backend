@@ -1584,10 +1584,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         //获取未全部入库的采购收货详情id
         List<String> receiveDetailIds = new ArrayList<>();
-        poInstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        Map<String, List<PoInstockDetailEntity>> collect1 = poInstockDetailEntities.stream().collect(Collectors.groupingBy(PoInstockDetailEntity::getPurchaseOrderDetailId, Collectors.collectingAndThen(Collectors.toList(), m -> {
             int stockInQty = m.stream().mapToInt(PoInstockDetailEntity::getStockInQty).sum();
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = receiveDetailEntitieList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(m.get(MathUtil.ZERO).getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(warehouseReceiveDetailEntity)) {
+            if (Objects.nonNull(warehouseReceiveDetailEntity)) {
                 if (stockInQty < warehouseReceiveDetailEntity.getReceiveQty()) {
                     receiveDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
                 }
@@ -1597,7 +1597,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
 
         //根据未入库采购收货单详情id获取未入库收货单id
-        List<String> collect = poInstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<String> collect = poInstockDetailEntities.stream().map(PoInstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<String> ids = pordIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
         receiveDetailIds.addAll(ids);
 

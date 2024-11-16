@@ -204,8 +204,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Override
     public void update(TransferOutDTO.UpdateDTO updateDTO) {
         TransferOutEntity originTransferOutEntity = super.getById(updateDTO.getId());
-        Optional.ofNullable(originTransferOutEntity).orElseThrow(()->new ServiceException("未找到分步式调出单"));
-
+        if (Objects.isNull(originTransferOutEntity)){
+            throw new ServiceException("未找到分步式调出单");
+        }
         // 调入仓库和调出仓库不能一样
         ValidatorUtil.isTrue(!Objects.equals(updateDTO.getInWarehouseId(), updateDTO.getOutWarehouseId()),()->new ServiceException("分布式调出单调入仓库和调出仓库不能一样"));
         ValidatorUtil.isTrue((Objects.equals(originTransferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originTransferOutEntity.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )

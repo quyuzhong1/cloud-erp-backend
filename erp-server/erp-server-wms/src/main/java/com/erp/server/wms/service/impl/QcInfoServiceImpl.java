@@ -1374,6 +1374,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
+        List<String> poIds = new ArrayList<>();
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
             dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
@@ -1430,12 +1431,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             dto.setReturnQty(badQty);
             //相同采购单号清空后面数据的采购单号和供应商
-            boolean contains = list.contains(dto.getPurchaseOrderId());
+            boolean contains = poIds.contains(dto.getPurchaseOrderId());
             if (contains) {
                 dto.setPurchaseOrderCode(null);
                 dto.setSupplierName(null);
                 continue;
             }
+            poIds.add(dto.getPurchaseOrderId());
         }
 
         return list;
@@ -2406,7 +2408,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Map<String,QcResultEntity> qcResultMap = qcResultlist.stream().collect(Collectors.toMap(QcResultEntity::getMainId, Function.identity()));
         dto.getIds().stream().forEach(id->{
             QcInfoEntity qcInfoEntity = super.getById(id);
-            Optional.ofNullable(qcInfoEntity).orElseThrow(()->new ServiceException("质检单信息不存在"));
+            if (Objects.isNull(qcInfoEntity)){
+                throw new ServiceException(ApiError.NOT_EXIST_BILL,"质检单信息");
+            }
 
             // 只有已质检才允许操作
             QcBillStatusEnum qcBillStatusEnum = qcInfoEntity.getQcStatus();

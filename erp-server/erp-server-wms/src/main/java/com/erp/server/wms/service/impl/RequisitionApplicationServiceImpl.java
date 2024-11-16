@@ -2616,12 +2616,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 rp.setPickingQty(pickingQty + rp.getPickingQty());
                 map.put(skuId,rp);
             }else{
-                String enName = collect.get(skuId);
-                if(CharSequenceUtil.isNotBlank(enName)){
-                    //长度超过则进行截取隐藏操作
-                    enName = enName;
-                }
-                detail.setDeclareEnglishName(enName);
+                detail.setDeclareEnglishName(collect.get(skuId));
                 map.put(skuId,detail);
             }
         }

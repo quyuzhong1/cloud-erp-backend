@@ -1053,14 +1053,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        List<String> dnIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> dnIds = list.stream().map(SoDeliveryNoticeDTO.PdaSoDeliveryNotice::getId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainIds(dnIds);
-        List<String> dndIds = noticeDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> dndIds = noticeDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(dndIds);
         //获取未全部入库的采购收货详情id
         List<String> receiveDetailIds = new ArrayList<>();
-        soOutstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        Map<String, List<SoOutstockDetailEntity>> collect1 = soOutstockDetailEntities.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSourceDetailId, Collectors.collectingAndThen(Collectors.toList(), m -> {
             int stockInQty = m.stream().mapToInt(SoOutstockDetailEntity::getActualQty).sum();
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
             if (stockInQty < soDeliveryNoticeDetailEntity.getDeliveryQty()) {
@@ -1069,8 +1069,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             return m;
         })));
 
-        List<String> collect = soOutstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
-        List<String> ids = dndIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        List<String> collect = soOutstockDetailEntities.stream().map(SoOutstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> ids = dndIds.stream().filter(e -> !collect.contains(e)).collect(Collectors.toList());
         receiveDetailIds.addAll(ids);
 
         if (CollectionUtils.isEmpty(receiveDetailIds)) {
