@@ -269,6 +269,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), skuId) && StrUtil.equals(obj.getShopId(), shopId) && StrUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 errorMsgList.add(StrUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            } else {
+                if (!StrUtil.equals(entity.getPlatformType(),platformType)) {
+                    errorMsgList.add(StrUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 //错误数据
