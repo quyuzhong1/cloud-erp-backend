@@ -14,12 +14,11 @@ import java.util.*;
 /**
  * @author zdy
  * @ClassName IopUtils
+ * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
 public abstract class IopUtils {
-    private IopUtils(){}
-
     private static String intranetIp;
 
     public static String signApiRequest(RequestContext requestContext, String appSecret, String signMethod) throws IOException {
@@ -71,6 +70,18 @@ public abstract class IopUtils {
         return sign.toString();
     }
 
+    public static <V> Map<String, V> cleanupMap(Map<String, V> map) {
+        if (map == null || map.isEmpty())
+            return null;
+        Map<String, V> result = new HashMap<String, V>(map.size());
+        Set<Map.Entry<String, V>> entries = map.entrySet();
+        for (Map.Entry<String, V> entry : entries) {
+            if (entry.getValue() != null)
+                result.put(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
     public static String getIntranetIp() {
         if (intranetIp == null)
             try {
@@ -93,15 +104,15 @@ public abstract class IopUtils {
     }
 
     public static boolean areNotEmpty(String... values) {
+        int i = 0;
+        boolean result = true;
         if (values == null || values.length == 0) {
-            return false;
+            result = false;
+        } else {
+            for (String value : values)
+                i = (result & (!isEmpty(value)) ? 1 : 0);
         }
-        for (String value : values) {
-            if (isEmpty(value)) {
-                return false;
-            }
-        }
-        return true;
+        return i == 1? true:false;
     }
 
     public static String formatDateTime(Date date, String pattern) {

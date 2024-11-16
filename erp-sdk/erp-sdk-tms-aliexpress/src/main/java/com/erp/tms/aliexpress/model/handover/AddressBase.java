@@ -1,6 +1,7 @@
 package com.erp.tms.aliexpress.model.handover;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName AddressBase
+ * @description: TODO
  * @date 2024年02月01日
  * @version: 1.0
  */

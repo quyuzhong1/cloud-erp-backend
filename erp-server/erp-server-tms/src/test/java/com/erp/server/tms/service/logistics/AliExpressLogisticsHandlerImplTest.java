@@ -92,7 +92,7 @@ public class AliExpressLogisticsHandlerImplTest {
 
     @Test
     public void getSaleChannel() throws InterruptedException, ApiException {
-        System.out.println(aliExpressShipperService.getChanelList(authMap));
+        aliExpressShipperService.getChanelList(authMap);
     }
     @Test
     public void createOrder(){

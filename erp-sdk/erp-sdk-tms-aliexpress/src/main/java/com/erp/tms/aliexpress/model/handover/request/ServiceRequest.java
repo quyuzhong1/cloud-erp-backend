@@ -1,12 +1,14 @@
 package com.erp.tms.aliexpress.model.handover.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.erp.tms.aliexpress.model.handover.UserInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**

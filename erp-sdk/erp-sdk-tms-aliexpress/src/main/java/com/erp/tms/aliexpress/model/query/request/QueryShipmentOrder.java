@@ -38,6 +38,12 @@ public class QueryShipmentOrder {
         private String send_type;
 
         /**
+         * ioss
+         * （非必须）
+         */
+//        private String ioss;
+
+        /**
          * 发货列表
          * (必须)
          */
@@ -80,6 +86,11 @@ public class QueryShipmentOrder {
          */
         private String service_name;
 
+        /**
+         * 合单的时候传 consolidation
+         * （非必须）
+         */
+//        private String package_type;
 
     }
 }

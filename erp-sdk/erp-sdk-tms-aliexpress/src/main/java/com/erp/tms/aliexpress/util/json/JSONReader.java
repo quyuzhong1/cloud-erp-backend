@@ -11,6 +11,7 @@ import java.util.Map;
 /**
  * @author zdy
  * @ClassName JSONReader
+ * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
@@ -48,7 +49,7 @@ public abstract class JSONReader {
         escapes.put(Character.valueOf('t'), Character.valueOf('\t'));
     }
 
-    private StringBuilder buf = new StringBuilder();
+    private StringBuffer buf = new StringBuffer();
 
     private char next() {
         this.c = this.it.next();
@@ -72,7 +73,6 @@ public abstract class JSONReader {
             case 2:
                 this.c = this.it.next();
                 break;
-            default:
         }
         return read();
     }
@@ -130,8 +130,6 @@ public abstract class JSONReader {
                 next();
                 this.token = null;
                 return this.token;
-            default:
-                break;
         }
         this.c = this.it.previous();
         if (Character.isDigit(this.c) || this.c == '-')
@@ -154,7 +152,7 @@ public abstract class JSONReader {
     }
 
     private Object array() {
-        List<Object> ret = new ArrayList<>();
+        List<Object> ret = new ArrayList();
         Object value = read();
         while (this.token != ARRAY_END) {
             ret.add(value);
@@ -184,13 +182,7 @@ public abstract class JSONReader {
             isFloatingPoint = true;
         }
         String s = this.buf.toString();
-        Object result;
-        if (isFloatingPoint) {
-            result = (length < 17) ? Double.valueOf(s) : new BigDecimal(s);
-        } else {
-            result = (length < 19) ? Long.valueOf(s) : new BigInteger(s);
-        }
-        return result;
+        return isFloatingPoint ? ((length < 17) ? Double.valueOf(s) : new BigDecimal(s)) : ((length < 19) ? Long.valueOf(s) : new BigInteger(s));
     }
 
     private int addDigits() {
@@ -260,8 +252,6 @@ public abstract class JSONReader {
                 case 'E':
                 case 'F':
                     value = (value << 4) + this.c - 75;
-                    break;
-                default:
                     break;
             }
         }

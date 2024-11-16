@@ -3,15 +3,12 @@ package com.erp.tms.batong.constants;
 /**
  * @author Lambda
  * @Classname BaTongConstant
-
+ * @Description TODO
  * @Date 2024-01-12 18:33
  * @Created by yl
  */
 public class BaTongConstants {
 
-    private BaTongConstants() {
-        
-    }
 
     /**
      * 成功

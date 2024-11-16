@@ -3,13 +3,14 @@ package com.erp.tms.aliexpress.model.handover.response;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author zdy
  * @ClassName SubbagResponse
- 
+ * @description: TODO
  * @date 2024年02月05日
  * @version: 1.0
  */

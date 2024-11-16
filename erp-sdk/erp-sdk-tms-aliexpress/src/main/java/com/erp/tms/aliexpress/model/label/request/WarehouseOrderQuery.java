@@ -4,12 +4,13 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
  * @author zdy
  * @ClassName WarehouseOrderQuery
- 
+ * @description: TODO
  * @date 2023年11月17日
  * @version: 1.0
  */

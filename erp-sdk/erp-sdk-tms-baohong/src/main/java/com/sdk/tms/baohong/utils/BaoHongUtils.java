@@ -2,6 +2,7 @@ package com.sdk.tms.baohong.utils;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.map.MapUtil;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.threadlocal.TransferLogisticsContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
@@ -31,50 +32,41 @@ import java.util.Map;
  */
 public class BaoHongUtils {
 
-    private BaoHongUtils(){
-
-    }
-
     private static final String PRINT_URL = "http://exwms.globex.cn/default/print-order-api/print-order";
-
-    private static final String APP_KEY = "appKey";
-    private static final String APP_TOKEN = "appToken";
-    private static final String CUSTOMER_CODE = "customerCode";
-    private static final String ERROR_MSG = "授权信息为空";
 
     public static HeaderRequest getOrderHeader(){
         Map<String,String> authMap = TransferLogisticsContext.getAuthMap();
         if(MapUtil.isEmpty(authMap)){
-            throw new ServiceException(ERROR_MSG);
+            throw new ServiceException("授权信息为空");
         }
         HeaderRequest headerRequest = new HeaderRequest();
-        headerRequest.setAppKey(authMap.get(APP_KEY));
-        headerRequest.setAppToken(authMap.get(APP_TOKEN));
-        headerRequest.setCustomerCode(authMap.get(CUSTOMER_CODE));
+        headerRequest.setAppKey(authMap.get("appKey"));
+        headerRequest.setAppToken(authMap.get("appToken"));
+        headerRequest.setCustomerCode(authMap.get("customerCode"));
         return headerRequest;
     }
 
     public static com.sdk.tms.baohong.api.product.HeaderRequest getProductHeader(){
         Map<String,String> authMap = TransferLogisticsContext.getAuthMap();
         if(MapUtil.isEmpty(authMap)){
-            throw new ServiceException(ERROR_MSG);
+            throw new ServiceException("授权信息为空");
         }
         com.sdk.tms.baohong.api.product.HeaderRequest headerRequest = new com.sdk.tms.baohong.api.product.HeaderRequest();
-        headerRequest.setAppKey(authMap.get(APP_KEY));
-        headerRequest.setAppToken(authMap.get(APP_TOKEN));
-        headerRequest.setCustomerCode(authMap.get(CUSTOMER_CODE));
+        headerRequest.setAppKey(authMap.get("appKey"));
+        headerRequest.setAppToken(authMap.get("appToken"));
+        headerRequest.setCustomerCode(authMap.get("customerCode"));
         return headerRequest;
     }
 
     public static com.sdk.tms.baohong.api.asn.HeaderRequest getAsnHeader(){
         Map<String,String> authMap = TransferLogisticsContext.getAuthMap();
         if(MapUtil.isEmpty(authMap)){
-            throw new ServiceException(ERROR_MSG);
+            throw new ServiceException("授权信息为空");
         }
         com.sdk.tms.baohong.api.asn.HeaderRequest headerRequest = new com.sdk.tms.baohong.api.asn.HeaderRequest();
-        headerRequest.setAppKey(authMap.get(APP_KEY));
-        headerRequest.setAppToken(authMap.get(APP_TOKEN));
-        headerRequest.setCustomerCode(authMap.get(CUSTOMER_CODE));
+        headerRequest.setAppKey(authMap.get("appKey"));
+        headerRequest.setAppToken(authMap.get("appToken"));
+        headerRequest.setCustomerCode(authMap.get("customerCode"));
         return headerRequest;
     }
 
@@ -120,13 +112,13 @@ public class BaoHongUtils {
     public static BaoHongResponse<String> getPrintLabelBase64(String orderCode) {
         Map<String,String> authMap = TransferLogisticsContext.getAuthMap();
         if(MapUtil.isEmpty(authMap)){
-            throw new ServiceException(ERROR_MSG);
+            throw new ServiceException("授权信息为空");
         }
         BaoHongResponse<String> result = new BaoHongResponse<>();
         Map<String, Object> paramsMap = new HashMap<>();
-        paramsMap.put(CUSTOMER_CODE,authMap.get(CUSTOMER_CODE));
-        paramsMap.put(APP_KEY,authMap.get(APP_KEY));
-        paramsMap.put(APP_TOKEN,authMap.get(APP_TOKEN));
+        paramsMap.put("customerCode",authMap.get("customerCode"));
+        paramsMap.put("appKey",authMap.get("appKey"));
+        paramsMap.put("appToken",authMap.get("appToken"));
         Map<String,String> dataMap = new HashMap<>();
         dataMap.put("orderCode",orderCode);
         paramsMap.put("data",dataMap);

@@ -3,20 +3,21 @@ package com.erp.tms.aliexpress.util.json;
 /**
  * @author zdy
  * @ClassName BufferErrorListener
+ * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
 public class BufferErrorListener implements JSONErrorListener{
-    protected StringBuilder buffer;
+    protected StringBuffer buffer;
 
     private String input;
 
-    public BufferErrorListener(StringBuilder buffer) {
+    public BufferErrorListener(StringBuffer buffer) {
         this.buffer = buffer;
     }
 
     public BufferErrorListener() {
-        this(new StringBuilder());
+        this(new StringBuffer());
     }
 
     public void start(String input) {
@@ -36,9 +37,10 @@ public class BufferErrorListener implements JSONErrorListener{
         this.buffer.append("^");
     }
 
-    private void indent(int n, StringBuilder ret) {
+    private void indent(int n, StringBuffer ret) {
         for (int i = 0; i < n; i++)
             ret.append(' ');
     }
 
+    public void end() {}
 }

@@ -22,10 +22,9 @@ public class ServiceForAsn_Service
     extends Service
 {
 
-    private final static String NAMESPACE_URI = "http://www.example.org/ServiceForAsn/";
     private final static URL SERVICEFORASN_WSDL_LOCATION;
     private final static WebServiceException SERVICEFORASN_EXCEPTION;
-    private final static QName SERVICEFORASN_QNAME = new QName(NAMESPACE_URI, "ServiceForAsn");
+    private final static QName SERVICEFORASN_QNAME = new QName("http://www.example.org/ServiceForAsn/", "ServiceForAsn");
 
     static {
         URL url = null;
@@ -70,7 +69,7 @@ public class ServiceForAsn_Service
      */
     @WebEndpoint(name = "ServiceForAsnSOAP")
     public ServiceForAsn getServiceForAsnSOAP() {
-        return super.getPort(new QName(NAMESPACE_URI, "ServiceForAsnSOAP"), ServiceForAsn.class);
+        return super.getPort(new QName("http://www.example.org/ServiceForAsn/", "ServiceForAsnSOAP"), ServiceForAsn.class);
     }
 
     /**
@@ -82,7 +81,7 @@ public class ServiceForAsn_Service
      */
     @WebEndpoint(name = "ServiceForAsnSOAP")
     public ServiceForAsn getServiceForAsnSOAP(WebServiceFeature... features) {
-        return super.getPort(new QName(NAMESPACE_URI, "ServiceForAsnSOAP"), ServiceForAsn.class, features);
+        return super.getPort(new QName("http://www.example.org/ServiceForAsn/", "ServiceForAsnSOAP"), ServiceForAsn.class, features);
     }
 
     private static URL __getWsdlLocation() {

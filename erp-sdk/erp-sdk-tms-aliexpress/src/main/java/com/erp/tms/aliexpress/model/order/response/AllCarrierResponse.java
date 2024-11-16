@@ -16,7 +16,7 @@ public class AllCarrierResponse implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class Result implements Serializable  {
+    public static class Result {
         private CarrierData data;
         private boolean success;
 
@@ -24,20 +24,20 @@ public class AllCarrierResponse implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CarrierData implements Serializable {
-        private CourierList courierList;
+    public static class CarrierData {
+        private CourierList courier_list;
     }
 
 
     @Data
     @NoArgsConstructor
-    public static class CourierList implements Serializable {
-        private List<Courier> courier_list;
+    public static class CourierList {
+        private List<Courier> courierlist;
     }
 
     @Data
     @NoArgsConstructor
-    public static class Courier implements Serializable {
+    public static class Courier {
         private String courier_name;
         private String courier_code;
 

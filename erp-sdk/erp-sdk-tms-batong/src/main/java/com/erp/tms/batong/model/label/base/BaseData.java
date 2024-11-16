@@ -1,14 +1,18 @@
 package com.erp.tms.batong.model.label.base;
 
 import cn.hutool.core.annotation.Alias;
+import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
+import lombok.ToString;
 
 import java.io.Serializable;
 
 /**
  * @author Lambda
  * @Classname BaseData
-
+ * @Description TODO
  * @Date 2024-01-15 12:07
  * @Created by yl
  */

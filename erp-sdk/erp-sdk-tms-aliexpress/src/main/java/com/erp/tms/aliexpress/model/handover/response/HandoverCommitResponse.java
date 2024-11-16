@@ -8,6 +8,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName HandoverCommitResponse
+ * @description: TODO
  * @date 2024年02月05日
  * @version: 1.0
  */

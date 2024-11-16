@@ -34,10 +34,10 @@ import javax.xml.bind.annotation.XmlType;
     "orderCode"
 })
 @XmlRootElement(name = "getOrderException")
-public class GetOrderException extends Exception {
+public class GetOrderException {
 
     @XmlElement(name = "HeaderRequest", required = true)
-    protected transient HeaderRequest headerRequest;
+    protected HeaderRequest headerRequest;
     @XmlElement(required = true)
     protected String orderCode;
 

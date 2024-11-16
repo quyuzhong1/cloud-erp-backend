@@ -94,6 +94,37 @@ public interface ServiceForProduct {
         @WebParam(name = "errorCodeMsg", targetNamespace = "", mode = WebParam.Mode.OUT)
         Holder<List<ErrorCodeMsgType>> errorCodeMsg);
 
+    /**
+     * 
+     * @param total
+     * @param headerRequest
+     * @param dataList
+     * @param ask
+     * @param pageSize
+     * @param page
+     * @param message
+     * @param warehouseCode
+     */
+    @WebMethod(action = "http://www.example.org/ServiceForProduct/getStockList")
+    @RequestWrapper(localName = "getStockList", targetNamespace = "http://www.example.org/ServiceForProduct/", className = "org.example.serviceforproduct.GetStockList")
+    @ResponseWrapper(localName = "getStockListResponse", targetNamespace = "http://www.example.org/ServiceForProduct/", className = "org.example.serviceforproduct.GetStockListResponse")
+    public void getStockList(
+        @WebParam(name = "HeaderRequest", targetNamespace = "")
+        HeaderRequest headerRequest,
+        @WebParam(name = "warehouse_code", targetNamespace = "")
+        String warehouseCode,
+        @WebParam(name = "page", targetNamespace = "", mode = WebParam.Mode.INOUT)
+        Holder<Integer> page,
+        @WebParam(name = "pageSize", targetNamespace = "", mode = WebParam.Mode.INOUT)
+        Holder<Integer> pageSize,
+        @WebParam(name = "ask", targetNamespace = "", mode = WebParam.Mode.OUT)
+        Holder<String> ask,
+        @WebParam(name = "message", targetNamespace = "", mode = WebParam.Mode.OUT)
+        Holder<String> message,
+        @WebParam(name = "total", targetNamespace = "", mode = WebParam.Mode.OUT)
+        Holder<Integer> total,
+        @WebParam(name = "dataList", targetNamespace = "", mode = WebParam.Mode.OUT)
+        Holder<List<InventoryRow>> dataList);
 
     /**
      * 
