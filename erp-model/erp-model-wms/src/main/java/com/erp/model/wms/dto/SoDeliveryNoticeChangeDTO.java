@@ -1,20 +1,19 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
+
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -300,6 +299,15 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
          * sku编号
          */
         private String skuNo;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
         /**
          * 产品名称
          */
@@ -592,6 +600,16 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
     }
     /**
     * 新增

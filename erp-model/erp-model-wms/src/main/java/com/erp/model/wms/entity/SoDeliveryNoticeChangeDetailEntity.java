@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -69,7 +69,17 @@ public class SoDeliveryNoticeChangeDetailEntity extends BaseEntity<SoDeliveryNot
     */
     @TableField("so_detail_id")
     private String soDetailId;
+    /**
+     * bom版本
+     */
+    @TableField("bom_version")
+    private String bomVersion;
 
+    /**
+     * 客户sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
 
     public static final String MAIN_ID = "main_id";
 

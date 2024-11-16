@@ -141,7 +141,10 @@ public class SoDeliveryNoticeDTO {
          * 是否已完成拣货
          */
         private Boolean isPicked;
-
+        /**
+         * 是否已完成装箱
+         */
+        private Boolean isPacked;
         /**
          * 生成拣货单状态
          */

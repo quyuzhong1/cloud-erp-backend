@@ -444,6 +444,8 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 soDeliveryNoticeDetailEntity.setChangeBeforeSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
                 soDeliveryNoticeDetailEntity.setSkuId(detail.getSkuId());
                 soDeliveryNoticeDetailEntity.setSkuNo(detail.getSkuNo());
+                soDeliveryNoticeDetailEntity.setPlatformSkuNo(detail.getPlatformSkuNo());
+                soDeliveryNoticeDetailEntity.setBomVersion(detail.getBomVersion());
                 soDeliveryNoticeDetailEntity.setChangeBeforeQty(soDeliveryNoticeDetailEntity.getDeliveryQty());
                 soDeliveryNoticeDetailEntity.setDeliveryQty(detail.getNewQty());
                 soDeliveryNoticeDetailEntity.setLastPickingQty(detail.getNewQty());

@@ -2589,6 +2589,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 packingTaskDetailEntity.setSkuNo(v.getSkuNo());
                 packingTaskDetailEntity.setDeliveryQty(v.getDeliveryQty());
                 packingTaskDetailEntity.setSourceDetailId(v.getId());
+                packingTaskDetailEntity.setFnSku(v.getPlatformSkuNo());
                 addTaskDetailList.add(packingTaskDetailEntity);
             });
         }

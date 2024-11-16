@@ -11,7 +11,6 @@ import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.SoDeliveryNoticeChangeTypeEnum;
 import com.erp.server.wms.mapper.SoDeliveryNoticeChangeDetailMapper;
 import com.erp.server.wms.service.*;
@@ -93,6 +92,8 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
             dbEntity.setNewQty(viewDetail.getNewNoticeQty());
             dbEntity.setProductName(viewDetail.getProductName());
             dbEntity.setSoDetailId(viewDetail.getSoDetailId());
+            dbEntity.setPlatformSkuNo(viewDetail.getPlatformSkuNo());
+            dbEntity.setBomVersion(viewDetail.getBomVersion());
             updateList.add(dbEntity);
         }
         addList.forEach(v->{
@@ -211,6 +212,8 @@ public class SoDeliveryNoticeChangeDetailServiceImpl extends SuperServiceImpl<So
             soDeliveryNoticeChangeDetailEntity.setNewQty(viewDetail.getNewNoticeQty());
             soDeliveryNoticeChangeDetailEntity.setProductName(viewDetail.getProductName());
             soDeliveryNoticeChangeDetailEntity.setSoDetailId(viewDetail.getSoDetailId());
+            soDeliveryNoticeChangeDetailEntity.setBomVersion(viewDetail.getBomVersion());
+            soDeliveryNoticeChangeDetailEntity.setPlatformSkuNo(viewDetail.getPlatformSkuNo());
             list.add(soDeliveryNoticeChangeDetailEntity);
         }
         return list;
