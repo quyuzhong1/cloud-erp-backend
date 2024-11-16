@@ -2,6 +2,7 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveStatusEnum;
@@ -107,7 +108,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         List<DeliveryOrderDetailEntity> needDeleteDetailList = oldDetailList.stream().filter(v->!existDetailIds.contains(v.getId())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(needDeleteDetailList)){
             needDeleteDetailList.forEach(v->{
-                String msg = StrUtil.format("用户【{}】删除sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), v.getSkuNo());
+                String msg =  CharSequenceUtil.format("用户【{}】删除sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), v.getSkuNo());
                 operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.DELIVERY_ORDER.getCode(),v.getMainId(),"删除操作");
             });
             if(!this.removeByIds(needDeleteDetailList.stream().map(BaseEntity::getId).collect(Collectors.toList()))){
@@ -121,7 +122,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             DeliveryOrderDetailEntity old =  DeliveryOrderConverter.INSTANCE.detailConvert(deliveryOrderDetailEntity);
             DeliveryOrderDetailDTO.UpdateDTO updateDTO = updateDTOMap.get(deliveryOrderDetailEntity.getId());
             BeanUtil.copyProperties(updateDTO,deliveryOrderDetailEntity);
-            String msg = StrUtil.format("用户【{}】修改sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), deliveryOrderDetailEntity.getSkuNo());
+            String msg =  CharSequenceUtil.format("用户【{}】修改sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), deliveryOrderDetailEntity.getSkuNo());
             operateLogService.addModuleOperateLogByObj(old, deliveryOrderDetailEntity, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderDetailEntity.getMainId(), msg);
         }
         if(CollectionUtils.isNotEmpty(needUpdateDetailList)){
@@ -260,7 +261,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         detailList.forEach(v->v.setMainId(mainId));
         //添加操作日志
         if (CollectionUtils.isNotEmpty(detailList)) {
-            String msg = StrUtil.format("用户【{}】新增sku为【%s】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName());
+            String msg =  CharSequenceUtil.format("用户【{}】新增sku为【%s】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName());
             List<Pair<String, String>> addPairList = detailList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), addPairList, "编辑操作");
         }
@@ -367,7 +368,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             //待送货数量
             Integer unDeliveryQty = updateDTO.getOrderQty() - deliveryQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;
             if (updateDTO.getDeliveryQty() > unDeliveryQty) {
-                throw new ServiceException(StrUtil.format("送货数量不能超过【{}】",unDeliveryQty));
+                throw new ServiceException( CharSequenceUtil.format("送货数量不能超过【{}】",unDeliveryQty));
             }
         }
     }

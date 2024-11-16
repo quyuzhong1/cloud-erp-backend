@@ -2,7 +2,7 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -20,7 +20,10 @@ import com.erp.model.srm.vo.ConfigVO;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.server.srm.convert.CfgSettingConfigConverter;
 import com.erp.server.srm.mapper.CfgSettingMapper;
-import com.erp.server.srm.service.*;
+import com.erp.server.srm.service.CfgSettingService;
+import com.erp.server.srm.service.DictBasicService;
+import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -65,7 +68,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 throw new ServiceException("系统配置管理保存失败");
             }
             // 操作日志
-            String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "系统配置管理", cfgSettingEntity.getId());
+            String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "系统配置管理", cfgSettingEntity.getId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), "新增操作");
         }
 
@@ -109,7 +112,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 // 记录主单操作日志
                 log.info("编辑 开始记录系统配置管理日志数据，id：【{}】", cfgSettingEntity.getId());
-                String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), "系统配置管理");
+                String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), "系统配置管理");
                 operateLogService.addModuleOperateLogByObj(old, cfgSettingEntity, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), msg);
             }
         }

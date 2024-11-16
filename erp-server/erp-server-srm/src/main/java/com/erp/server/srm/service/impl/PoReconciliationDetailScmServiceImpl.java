@@ -2,6 +2,7 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -298,7 +299,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getReturnSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
             listDTO.setTaxRate(MathUtil.multiply(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
-            listDTO.setTaxRateStr(StrUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
+            listDTO.setTaxRateStr( CharSequenceUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
             listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
             //产品名称
             String productName = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
@@ -322,7 +323,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setUnitName("Pcs");
             listDTO.setQty(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? listDTO.getReceiveQty() : listDTO.getDeliveryQty());
             //备注
-            listDTO.setRemark(StrUtil.format("供方备注：{},采方备注：{}",listDTO.getSupplierRemark(),listDTO.getPurchaseRemark()));
+            listDTO.setRemark( CharSequenceUtil.format("供方备注：{},采方备注：{}",listDTO.getSupplierRemark(),listDTO.getPurchaseRemark()));
             listDTO.setIndex(index);
             index++;
         }
@@ -462,7 +463,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             String codes = poReconciliationDetailList.stream().filter(obj -> !StrUtil.equals(obj.getSupplierId(), poReconciliationEntity.getSupplierId())
                             || !StrUtil.equals(obj.getSettleOrgId(), poReconciliationEntity.getSettleOrgId()))
                     .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
-            throw new ServiceException(StrUtil.format("单据单号【{}】与选择对账单供应商或结算组织不一致",codes));
+            throw new ServiceException( CharSequenceUtil.format("单据单号【{}】与选择对账单供应商或结算组织不一致",codes));
         }
         //更新对账明细
         poReconciliationDetailList.stream().forEach(obj ->{

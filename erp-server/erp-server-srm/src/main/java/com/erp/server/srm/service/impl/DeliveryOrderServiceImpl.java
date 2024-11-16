@@ -1,6 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -321,7 +322,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             v.setIsPrint(true);
             v.setPrintDate(LocalDate.now());
             // 操作日志
-            String msg = StrUtil.format("用户【{}】打印【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", v.getCode());
+            String msg =  CharSequenceUtil.format("用户【{}】打印【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", v.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), v.getId(), "打印操作");
         });
 
@@ -516,7 +517,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         DeliveryOrderDetailEntity deliveryOrderDetailEntity = DeliveryOrderConverter.INSTANCE
                 .purchaseOrderDetailToDeliveryOrderDetail(mainId,addDeliveryDTO, detailEntity);
         detailService.save(deliveryOrderDetailEntity);
-        String msg = StrUtil.format("用户【{}】新增sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(),deliveryOrderDetailEntity.getSkuNo());
+        String msg =  CharSequenceUtil.format("用户【{}】新增sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(),deliveryOrderDetailEntity.getSkuNo());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderDetailEntity.getId(), "新增操作");
     }
 
@@ -623,7 +624,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         deliveryOrderEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHD));
         this.handleData(deliveryOrderEntity,false);
         this.save(deliveryOrderEntity);
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", deliveryOrderEntity.getCode());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", deliveryOrderEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderEntity.getId(), "新增操作");
         return deliveryOrderEntity;
     }
@@ -747,7 +748,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         //保存明细
         detailService.add(addDTO.getDetailList(),deliveryOrderEntity.getId());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", deliveryOrderEntity.getCode());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "送货单", deliveryOrderEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(deliveryOrderEntity.getId(), code);
@@ -775,7 +776,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
         // 记录主单操作日志
         log.info("编辑 开始记录送货单日志数据，单号：【{}】", deliveryOrderEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "送货单");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "送货单");
         operateLogService.addModuleOperateLogByObj(old, deliveryOrderEntity, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderEntity.getId(), msg);
         return Boolean.TRUE;
     }

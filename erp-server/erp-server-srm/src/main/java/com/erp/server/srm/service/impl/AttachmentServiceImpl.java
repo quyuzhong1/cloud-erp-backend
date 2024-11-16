@@ -3,6 +3,7 @@ package com.erp.server.srm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.srm.dto.AttachmentDTO;
 import com.erp.model.srm.entity.AttachmentEntity;
@@ -45,7 +46,8 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
                 entity.setBusinessId(businessId);
                 addList.add(entity);
             }
-            this.saveBatch(addList);
+            AttachmentServiceImpl bean = ApplicationContextUtils.getBean(AttachmentServiceImpl.class);
+            bean.saveBatch(addList);
         }
 
     }
