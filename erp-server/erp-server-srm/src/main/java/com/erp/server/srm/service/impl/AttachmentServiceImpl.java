@@ -37,11 +37,10 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
             for (int i = 0; i < attachmentUrlList.size(); i++) {
                 AttachmentEntity entity = new AttachmentEntity();
                 entity.setAttachUrl(attachmentUrlList.get(i));
-                if (CollectionUtils.isNotEmpty(attachmentNameList)) {
-                    if (nameSize > i) {
+                if (CollectionUtils.isNotEmpty(attachmentNameList) && nameSize > i) {
                         entity.setAttachName(attachmentNameList.get(i));
                     }
-                }
+
                 entity.setType(type);
                 entity.setBusinessId(businessId);
                 addList.add(entity);

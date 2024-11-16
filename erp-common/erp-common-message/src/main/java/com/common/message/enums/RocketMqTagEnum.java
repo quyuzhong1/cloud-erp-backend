@@ -634,15 +634,17 @@ public enum RocketMqTagEnum {
     }
 
     public static List<RocketMqTagEnum> listByType(String type) {
-        List<RocketMqTagEnum> collect = Arrays.stream(values()).filter(value -> value.getType().equals(type))
+        return Arrays.stream(values()).filter(value -> value.getType().equals(type))
                 .collect(Collectors.toList());
-        return collect;
     }
 
     public static RocketMqTagEnum getByCode(Integer code) {
-        return Arrays.stream(values()).filter(value -> value.getCode().equals(code))
-                .findFirst().orElseGet(null);
+        return Arrays.stream(values())
+                .filter(value -> value.getCode().equals(code))
+                .findFirst()
+                .orElse(null);
     }
+
     public static String getTagStrByType(String type){
         List<RocketMqTagEnum> tagList = listByType(type);
         if (CollectionUtil.isEmpty(tagList)){

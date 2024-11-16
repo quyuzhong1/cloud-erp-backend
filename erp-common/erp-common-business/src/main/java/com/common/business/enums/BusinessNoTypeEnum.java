@@ -151,7 +151,7 @@ public enum BusinessNoTypeEnum {
     public static BusinessNoTypeEnum getEnumByType(String code) {
         BusinessNoTypeEnum[] businessNoTypeEnums = values();
         for (BusinessNoTypeEnum businessNoTypeEnum : businessNoTypeEnums) {
-            if (businessNoTypeEnum.getCode().equals(code)) {
+            if (businessNoTypeEnum.getCode().toString().equals(code)) {
                 return businessNoTypeEnum;
             }
         }

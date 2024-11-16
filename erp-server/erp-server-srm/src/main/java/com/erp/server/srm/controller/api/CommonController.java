@@ -33,7 +33,7 @@ public class CommonController extends BaseController {
         Map<String,List<Map<String,Object>>> typeMaps = Maps.newHashMap();
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
         if(CollectionUtil.isNotEmpty(types)) {
-            types.stream().forEach(r-> typeMaps.put(r,enumMaps.get(r)));
+            types.forEach(r-> typeMaps.put(r,enumMaps.get(r)));
         }
         return success(typeMaps);
     }
