@@ -885,10 +885,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         List<String> skuIdList = list.stream().map(VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO::getSkuId).distinct().collect(Collectors.toList());
         List<String> virtualWarehouseIdList = new ArrayList<>();
         //虚拟仓Id集合
-        List<String> toVirtualWarehouseIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getToVirtualWarehouseId()))
+        List<String> toVirtualWarehouseIdList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getToVirtualWarehouseId()))
                 .map(VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO::getToVirtualWarehouseId).distinct().collect(Collectors.toList());
         virtualWarehouseIdList.addAll(toVirtualWarehouseIdList);
-        List<String> fromVirtualWarehouseIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getFromVirtualWarehouseId()))
+        List<String> fromVirtualWarehouseIdList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getFromVirtualWarehouseId()))
                 .map(VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO::getFromVirtualWarehouseId).distinct().collect(Collectors.toList());
         virtualWarehouseIdList.addAll(fromVirtualWarehouseIdList);
 

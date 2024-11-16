@@ -118,7 +118,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
             errorMsgList.add("仓库名称不能为空");
         }
 
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Arrays.asList(moveInfoExcelDTO.getWarehouseName()));
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Collections.singletonList(moveInfoExcelDTO.getWarehouseName()));
         if (CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) {
             errorMsgList.add("仓库名称不存在");
         }else {
@@ -170,7 +170,7 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
             inventoryBySkuIdAndWarehouseDTO.setWarehouseId(warehouseList.get(0).getId());
             inventoryBySkuIdAndWarehouseDTO.setSkuId(pcViewDTO.getSkuId());
             inventoryBySkuIdAndWarehouseDTO.setWarehouseLocation(pcViewDTO.getOutWarehouseLocation());
-            List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Arrays.asList(inventoryBySkuIdAndWarehouseDTO));
+            List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Collections.singletonList(inventoryBySkuIdAndWarehouseDTO));
             inventoryQtys.stream().forEach(inventoryQtyDTO -> {
                 pcViewDTO.setUsableQty(inventoryQtyDTO.getUsableQty());
                 pcViewDTO.setFrozenQty(inventoryQtyDTO.getFrozenQty());

@@ -305,7 +305,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getReturnWarehouseId());
 
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getReturnWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getReturnWarehouseId()));
 
         List<JSONObject> list = new ArrayList<>();
         for (PoReturnDetailEntity detail : detailList) {

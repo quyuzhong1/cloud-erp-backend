@@ -142,7 +142,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
      * @return void
      **/
     private void firstMileCartonBillSave(Integer boxQty, List<WmsCartonDetailEntity> detailEntityList, String cartonId, String sourceId) {
-        List<WmsCartonEntity> firstMileCartonBillEntities = wmsCartonService.listByTaskIds(Arrays.asList(sourceId));
+        List<WmsCartonEntity> firstMileCartonBillEntities = wmsCartonService.listByTaskIds(Collections.singletonList(sourceId));
         Integer maxBoxNo = 0;
         if (CollectionUtils.isNotEmpty(firstMileCartonBillEntities)) {
             maxBoxNo = firstMileCartonBillEntities.stream().max(Comparator.comparingInt(WmsCartonEntity::getBoxNo)).map(WmsCartonEntity::getBoxNo).get();

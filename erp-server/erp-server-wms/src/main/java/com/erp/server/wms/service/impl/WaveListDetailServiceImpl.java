@@ -150,7 +150,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ApiResult<?> moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO) {
+    public ApiResult moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO) {
         LoginUser user = UserContext.getNonLoginUser();
 
         WaveListDetailEntity entity = baseMapper.selectOne(new QueryWrapper<WaveListDetailEntity>().eq("id", moveOutDTO.getWaveId()).eq("delivery_id", moveOutDTO.getDeliveryId()));
@@ -194,7 +194,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
      * @param isIntercept
      */
     @Override
-    public ApiResult<?> moveOut(String deliveryId, Boolean isIntercept) {
+    public ApiResult moveOut(String deliveryId, Boolean isIntercept) {
         LoginUser user = UserContext.getNonLoginUser();
         List<WaveListDetailEntity> entityList = baseMapper.selectList(new QueryWrapper<WaveListDetailEntity>()
                 .eq("delivery_id", deliveryId));

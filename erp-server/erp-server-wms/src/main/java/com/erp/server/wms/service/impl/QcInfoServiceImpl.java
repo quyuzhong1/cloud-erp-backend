@@ -243,7 +243,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 throw new ServiceException(ApiError.ERROR_95107);
             }
         } else {
-            List<String> podIds = Arrays.asList(purchaseOrderDetailId);
+            List<String> podIds = Collections.singletonList(purchaseOrderDetailId);
             //获取到对应的 订单明细
             purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
             skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
@@ -275,7 +275,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                                 && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
                                 && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
-                if (StrUtil.isNotBlank(skuNos)) {
+                if (CharSequenceUtil.isNotBlank(skuNos)) {
                     throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
                 }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
@@ -487,7 +487,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 throw new ServiceException(ApiError.ERROR_95107);
             }
         } else {
-            List<String> podIds = Arrays.asList(purchaseOrderDetailId);
+            List<String> podIds = Collections.singletonList(purchaseOrderDetailId);
             //获取到对应的 订单明细
             purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
             skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
@@ -527,7 +527,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                                 && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
                                 && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
-                if (StrUtil.isNotBlank(skuNos)) {
+                if (CharSequenceUtil.isNotBlank(skuNos)) {
                     throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
                 }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
@@ -557,10 +557,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 autoStockInBill(billId, qcInfo, purchaseOrderId, warehouseId);
             }
             //新品首批回填SKU的尺寸信息
-            updateProductPack(Arrays.asList(billId));
+            updateProductPack(Collections.singletonList(billId));
 
             //异步发送通知
-            qcResultService.sendQcResultMsg(Arrays.asList(billId));
+            qcResultService.sendQcResultMsg(Collections.singletonList(billId));
             operateLogService.addModuleOperateLog(String.format("新增了一个质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
         }
         return result;
@@ -862,7 +862,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //当采购订单明细id 不为空的时候
         if (CharSequenceUtil.isNotBlank(purchaseOrderDetailId)) {
-            List<String> podIds = Arrays.asList(purchaseOrderDetailId);
+            List<String> podIds = Collections.singletonList(purchaseOrderDetailId);
             //获取到对应的 订单明细
             List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
             skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
@@ -937,7 +937,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 throw new ServiceException(ApiError.ERROR_95107);
             }
         } else {
-            List<String> podIds = Arrays.asList(purchaseOrderDetailId);
+            List<String> podIds = Collections.singletonList(purchaseOrderDetailId);
             //获取到对应的 订单明细
             purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
             skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
@@ -967,7 +967,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                                 && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
                                 && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
-                if (StrUtil.isNotBlank(skuNos)) {
+                if (CharSequenceUtil.isNotBlank(skuNos)) {
                     throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
                 }
                 PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
@@ -998,7 +998,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }
 
             //异步发送通知
-            qcResultService.sendQcResultMsg(Arrays.asList(id));
+            qcResultService.sendQcResultMsg(Collections.singletonList(id));
             //操作日志
             operateLogService.addModuleOperateLog(String.format("完成一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), id, "新增操作");
         }
@@ -1812,7 +1812,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<QcReportDetailEntity> addQcReportDetailList = new ArrayList<>(receiveIds.size());
 
         //质检类型的集合
-        List<QcReportDTO.ListDTO> list = qcReportService.listByQcType(Arrays.asList(QcTypeEnum.RETURN_QC.getCode()));
+        List<QcReportDTO.ListDTO> list = qcReportService.listByQcType(Collections.singletonList(QcTypeEnum.RETURN_QC.getCode()));
         Map<String, List<QcReportDTO.ListDTO>> qcTypeMap = list.stream().collect(Collectors.groupingBy(QcReportDTO.ListDTO::getQcType));
         String qcUserId = UserContext.getDefaultLoginUser().getUid();
         String qcUserName = UserContext.getDefaultLoginUser().getUserName();
@@ -1978,7 +1978,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             }
             view.setWarehouseId(view.getWarehouseId());
-            List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(view.getWarehouseId()));
+            List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(view.getWarehouseId()));
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 view.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
             }
@@ -2133,7 +2133,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 throw new ServiceException(ApiError.ERROR_99016);
             }
 
-            List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(Arrays.asList(purchaseOrderId));
+            List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(Collections.singletonList(purchaseOrderId));
 
             //当采购订单详情不为空的时候
             if (CollectionUtils.isNotEmpty(purOrderDetailList)) {
@@ -2144,7 +2144,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                  * 根据采访订单id集合
                  * 获取到已质检数量
                  */
-                List<QcResultDTO.QcQtyDTO> qcQtyList = qcResultService.getPurOrderIds(Arrays.asList(purchaseOrderId));
+                List<QcResultDTO.QcQtyDTO> qcQtyList = qcResultService.getPurOrderIds(Collections.singletonList(purchaseOrderId));
                 //已完成的质检
                 Integer finishQcQty = qcQtyList.stream().filter(q ->
                         q.getSkuId().equals(skuId) && !q.getMainId().equals(mainId)

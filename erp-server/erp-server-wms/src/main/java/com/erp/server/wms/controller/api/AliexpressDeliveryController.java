@@ -16,7 +16,6 @@ import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.server.wms.query.AliexpressDeliveryQueryHandler;
 import com.erp.server.wms.service.AliexpressDeliveryService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -66,8 +65,8 @@ public class AliexpressDeliveryController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出速卖通发货单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult<T> exportExcel(@RequestBody @Validated AliexpressDeliveryDTO.SearchParamDTO dto) {
-        Boolean flag = aliexpressDeliveryService.exportExcel(dto);
+    public ApiResult<?> exportExcel(@RequestBody @Validated AliexpressDeliveryDTO.SearchParamDTO dto) {
+        boolean flag = aliexpressDeliveryService.exportExcel(dto);
         return flag ? success() : failure();
     }
 

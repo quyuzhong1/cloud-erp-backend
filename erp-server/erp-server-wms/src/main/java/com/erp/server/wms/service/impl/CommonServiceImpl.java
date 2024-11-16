@@ -1,15 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import com.common.business.interceptor.CommonInterceptor;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -19,12 +10,10 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.service.CommonService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -52,8 +41,7 @@ public class CommonServiceImpl  implements CommonService {
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        List<String> businessIds = listApiResult.getData().stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
-        return  businessIds;
+        return listApiResult.getData().stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
     }
     
     @Override

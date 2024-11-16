@@ -43,10 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -139,11 +136,11 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 machineInfoService.disApprove(machineInfoEntity);
             } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING)) {
                 // 撤销
-                machineInfoService.cancelProcess(Arrays.asList(machineInfoEntity.getId()));
+                machineInfoService.cancelProcess(Collections.singletonList(machineInfoEntity.getId()));
             }
             if(!Objects.equals(machineInfoEntity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
                 // 作废
-                machineInfoService.invalid(Arrays.asList(machineInfoEntity.getId()), CharSequenceUtil.format("FBA发货单{}作废", entity.getDeliveryNo()));
+                machineInfoService.invalid(Collections.singletonList(machineInfoEntity.getId()), CharSequenceUtil.format("FBA发货单{}作废", entity.getDeliveryNo()));
             } else {
                 log.warn("FBA发货单【{}】，ERP加工单【{}】都为作废状态，无需处理", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() );
             }
@@ -236,10 +233,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             member.setReferenceVersion(version);
 
             // 子件明细
-            // List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
-            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(parentSkuId));
-            // List<String> subSkuNos = bomList.stream().map(DmpBomEntity::getSkuNo).distinct().collect(Collectors.toList());
-            // List<SkuVO> subSkuList = plmTaskFeign.listBySkuNoList(subSkuNos);
+            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(parentSkuId));
 
             List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> Objects.equals(obj.getParentSkuId(), parentSkuId)).collect(Collectors.toList());
 
@@ -281,7 +275,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
         addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
         // 仓管员 取不到马帮的员工信息
         addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
-        List<WarehouseEntity> warehouseEntityList = warehouseService.listByKingdeeCodeList(Arrays.asList(entity.getWarehouseCode()));
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByKingdeeCodeList(Collections.singletonList(entity.getWarehouseCode()));
         if(CollUtil.isEmpty(warehouseEntityList)) {
             String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单仓库【{}】在ERP中不存在", entity.getWarehouseCode());
             throw new ServiceException(ApiError.ERROR_99076.code, errmsg);
@@ -321,7 +315,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             // 子件明细
             // List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
             // bom信息
-            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(parentSkuId));
+            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(parentSkuId));
             if(CollUtil.isEmpty(bomChildrenSkuList)) {
                 String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中未查询到BOM信息",parentSkuNo);
                 throw new ServiceException(ApiError.ERROR_95173.code,errmsg);

@@ -285,7 +285,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         //汇率
         resultMap.put("exchangeRate", exchangeRate);
         //获取币别信息
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(purchaseOrderSupplierEntity.getPayCurrency()));
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(purchaseOrderSupplierEntity.getPayCurrency()));
 
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(purchaseOrderSupplierEntity.getPayCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -315,7 +315,7 @@ public class SyncKingdeePoReceiveServiceImpl implements SyncKingdeePoReceiveServ
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getDeliveryWarehouseId());
 
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getDeliveryWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getDeliveryWarehouseId()));
 
         List<JSONObject> list = new ArrayList<>();
         for (WarehouseReceiveDetailEntity detail : detailList) {

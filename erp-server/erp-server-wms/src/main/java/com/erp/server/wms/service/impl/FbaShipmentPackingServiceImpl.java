@@ -78,7 +78,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         String mainId = fbaShipmentEntity.getId();
         List<FbaShipmentPackingEntity> existList = getByMainIdAndBoxNo(mainId, data.getBoxNo());
         //已存在，如果已关联erp装箱明细，不处理，否则删除后新增
-        if(CollectionUtil.isNotEmpty(existList)){
+        if(CollUtil.isNotEmpty(existList)){
             FbaShipmentPackingEntity existEntity = existList.get(0);
             if(CharSequenceUtil.isNotBlank(existEntity.getCartonId())){
                 return;
@@ -107,10 +107,10 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
             FbaShipmentPackingEntity entity = FbaShipmentPackingConverter.INSTANCE.fbaShipmentPackingConvert(data.getBoxNo(),detailDTO,fbaShipmentEntity,listingInfoWithSkuMappingDTOMap.get(detailDTO.getMsku()));
             addList.add(entity);
         });
-        if(CollectionUtil.isNotEmpty(addList)){
+        if(CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
             if(!fbaShipmentEntity.getIsPackingDownload()){
-                fbaShipmentService.updatePackingStatus(Arrays.asList(fbaShipmentEntity.getId()));
+                fbaShipmentService.updatePackingStatus(Collections.singletonList(fbaShipmentEntity.getId()));
             }
         }
     }
@@ -138,7 +138,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         }
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(fbaCodes);
         List<String> fbaIds = fbaShipmentEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
-        if(CollectionUtil.isNotEmpty(fbaIds)){
+        if(CollUtil.isNotEmpty(fbaIds)){
             List<FbaShipmentPackingEntity> list = lambdaQuery().in(FbaShipmentPackingEntity::getMainId,fbaIds).list();
             list.forEach(v->{
                 FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntityList.stream().filter(obj->obj.getId().equals(v.getMainId())).findFirst().orElse(new FbaShipmentEntity());
@@ -154,7 +154,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
     public List<FbaShipmentPackingDTO.ViewDTO> listPacking(List<String> ids) {
         List<FbaShipmentEntity> fbaShipmentEntity = fbaShipmentService.listByIds(ids);
         List<String> errorCodes = fbaShipmentEntity.stream().filter(v->!v.getIsPackingDownload()).map(FbaShipmentEntity::getCode).collect(Collectors.toList());
-        if(CollectionUtil.isNotEmpty(errorCodes)){
+        if(CollUtil.isNotEmpty(errorCodes)){
             throw new ServiceException(CharSequenceUtil.format("{}装箱清单未下载，无法查看",errorCodes));
         }
         return baseMapper.getPacking(ids);
@@ -187,7 +187,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
             fbaShipmentPackingEntity.setCartonId(fbaBindShipmentViewDetailDTO.getCartonId());
             addList.add(fbaShipmentPackingEntity);
         }
-        if(CollectionUtil.isNotEmpty(addList)){
+        if(CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
             List<String> fbaIds = addList.stream().map(FbaShipmentPackingEntity::getMainId).distinct().collect(Collectors.toList());
             fbaShipmentService.updatePackingStatus(fbaIds);
@@ -201,7 +201,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         }
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(fbaCodeList);
         List<String> fbaIds = fbaShipmentEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
-        if(CollectionUtil.isNotEmpty(fbaIds)){
+        if(CollUtil.isNotEmpty(fbaIds)){
             lambdaUpdate().in(FbaShipmentPackingEntity::getMainId,fbaIds).remove();
         }
     }
@@ -211,7 +211,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         if(CharSequenceUtil.isBlank(taskId)){
             return new ArrayList<>();
         }
-        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Arrays.asList(taskId));
+        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(taskId));
         if(CollUtil.isEmpty(wmsCartonEntityList)){
             return new ArrayList<>();
         }

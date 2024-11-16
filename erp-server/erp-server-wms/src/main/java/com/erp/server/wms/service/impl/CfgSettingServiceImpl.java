@@ -89,8 +89,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (CharSequenceUtil.isBlank(key)) {
             return null;
         }
-        CfgSettingEntity entity = baseMapper.getByKey(key);
-        return entity;
+        return baseMapper.getByKey(key);
     }
 
     @Override
@@ -99,8 +98,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
             return new CfgSettingValueDTO.PoReturnSettingDTO();
         }
-        CfgSettingValueDTO.PoReturnSettingDTO dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
-        return dto;
+        return BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
     }
 
     @Override
@@ -347,7 +345,6 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      */
     @Override
     public List<CfgSettingEntity> listCfgSetting () {
-        List<CfgSettingEntity> list = baseMapper.listCfgSetting();
-        return list;
+        return baseMapper.listCfgSetting();
     }
 }

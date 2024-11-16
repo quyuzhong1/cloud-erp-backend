@@ -703,7 +703,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         resultDTO.setDetailList(detailDTOList);
 
         //获取到附件信息
-        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(entity.getId()));
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(entity.getId()));
         //附件地址
         List<String> attachmentUrlList = attachmentList.stream()
                 .map(WmsAttachmentDTO.UpdateDTO::getAttachUrl)
@@ -914,7 +914,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
             //如果配置为空时默认为“FBA在途仓-xgwj-fba”
             if (CharSequenceUtil.isBlank(destWarehouse.getOnwayWarehouseId())) {
-                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
+                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Collections.singletonList("xgwj-fba"));
                 if (CollectionUtils.isEmpty(warehouseEntities)) {
                     throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
                 }

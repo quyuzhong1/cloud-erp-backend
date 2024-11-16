@@ -363,7 +363,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 return;
             }
             // 库区禁用/未审核
-            if (StrUtil.isNotBlank(item.getWarehouseArea())) {
+            if (CharSequenceUtil.isNotBlank(item.getWarehouseArea())) {
                 WarehouseLocationEntity area = warehouseLocationService.findArea(item.getWarehouseId(), item.getWarehouseArea());
                 if (ObjectUtil.isEmpty(area) || area.getDisabled()) {
                     invalidList.add(item);
@@ -371,20 +371,20 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 }
             }
             // 仓位禁用/未审核
-            if (StrUtil.isNotBlank(item.getWarehouseLocation())) {
+            if (CharSequenceUtil.isNotBlank(item.getWarehouseLocation())) {
                 WarehouseLocationEntity location = warehouseLocationService.findByWarehouseIdAndCode(item.getWarehouseId(), item.getWarehouseLocation());
                 if (ObjectUtil.isEmpty(location) || location.getDisabled()) {
                     invalidList.add(item);
                 }
             }
         });
-        if (CollectionUtil.isNotEmpty(invalidList)) {
+        if (CollUtil.isNotEmpty(invalidList)) {
             List<String> warehouseNameList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseName).distinct().collect(Collectors.toList());
             List<String> warehoseAreaList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
             List<String> warehosueLocationList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
-            warehouseNameList = CollectionUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.emptyList();
-            warehoseAreaList = CollectionUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.emptyList();
-            warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.emptyList();
+            warehouseNameList = CollUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.emptyList();
+            warehoseAreaList = CollUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.emptyList();
+            warehosueLocationList = CollUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.emptyList();
             throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList));
         }
     }
@@ -725,7 +725,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CharSequenceUtil.isBlank(warehouseId)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submit(Arrays.asList(warehouseId));
+        Boolean result = this.submit(Collections.singletonList(warehouseId));
         return result;
     }
 
@@ -800,14 +800,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
         if (dto.getState()) {
             //Delete by Edison.qu 2024-07-23 去除不必要的限制:仓库绑定店铺，不允许禁用
-//            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Arrays.asList(dto.getId()));
+//            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(dto.getId()));
 //            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
 //                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE, shopInfoEntities.get(MathUtil.ZERO).getName());
 //            }
             operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
         //审核通过后发送金蝶
-        sendPushTask(Arrays.asList(warehouse),operate);
+        sendPushTask(Collections.singletonList(warehouse),operate);
         return Boolean.TRUE;
     }
 
@@ -857,7 +857,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_99003.msg);
         }
-        List<WarehouseEntity> list = Arrays.asList(entity);
+        List<WarehouseEntity> list = Collections.singletonList(entity);
         //仓库已绑定店铺不允许反审核
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
@@ -1112,7 +1112,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
 
     }
 

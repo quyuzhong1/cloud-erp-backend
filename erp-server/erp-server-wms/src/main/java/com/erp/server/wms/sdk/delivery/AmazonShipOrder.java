@@ -54,6 +54,10 @@ import java.util.stream.Collectors;
 @PlatformShipOrderAnno(method = PlatformDictEnum.AMAZON)
 public class AmazonShipOrder extends AbstractShipOrder {
 
+    public static final String AMAZON_SHIP_ORDER_FAIL = "亚马逊标记发货失败:";
+    public static final String QUERY_AMAZON_RESP_RESULT = "查询亚马逊订单【{}】信息响应结果: error={}";
+    public static final String QUERY_AMAZON_NEW_ORDER_FAIL = "查询亚马逊订单最新信息失败:";
+    public static final String UNFOUND_SHIP_AUTH = "未找到店铺授权:";
     @Resource
     private SoB2cFeign soB2cFeign;
     @Resource
@@ -87,9 +91,6 @@ public class AmazonShipOrder extends AbstractShipOrder {
             detailEntityList =  detailEntityList.stream()
                     .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
-//            if (detailEntityList.stream().anyMatch(e -> CharSequenceUtil.isBlank(e.getSourceDetailId()))) {
-//                throw new ServiceException("平台来源详情ID为空");
-//            }
             detailEntityList = super.handleSplit(detailEntityList, dto.isFalseDeliveryFlag());
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求亚马逊接口", mainEntity.getCode());
@@ -111,7 +112,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
             // 获取店铺授权信息
             AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(mainEntity.getShopId());
             if (null == shopInfoDTO) {
-                throw new ServiceException("未找到店铺授权:" + mainEntity.getShopId());
+                throw new ServiceException(UNFOUND_SHIP_AUTH + mainEntity.getShopId());
             }
             AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
             OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
@@ -124,7 +125,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
                     .shopId(mainEntity.getShopId())
                     .platformCode(mainEntity.getPlatformCode())
                     .build();
-            Boolean isCancel = deliveryIntercept(interceptDTO);
+            boolean isCancel = deliveryIntercept(interceptDTO);
             if (isCancel){
                 throw new ServiceException(CharSequenceUtil.format("销售订单【{}】平台已取消，不支持发货",mainEntity.getCode()));
             }
@@ -191,7 +192,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
             } catch (ApiException e){
                 confirmShipmentApiExceptionHandle(e, mainEntity.getPlatformCode(), api);
             } catch (Exception e) {
-                throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
+                throw new ServiceException(AMAZON_SHIP_ORDER_FAIL + e.getMessage());
             }
         }
         return signShippedDetailList;
@@ -200,12 +201,8 @@ public class AmazonShipOrder extends AbstractShipOrder {
 
     @Override
     public Boolean deliveryIntercept(PlatformDeliveryInterceptDTO dto) {
-        Boolean isCancel = dto.getOldIsCancel();
+        boolean isCancel = dto.getOldIsCancel();
         // 取消实时查询，调整到打印拣货单批量查询
-//        if (!dto.getOldIsCancel()){
-//            isCancel = queryAndUpdateOrderStatus(dto);
-//        }
-
         if (isCancel) {
             //订单拦截
             soB2cFeign.deliveryIntercept(new SoB2cDTO.RemarkDTO(dto.getSoB2cId(), "平台取消或退款"));
@@ -219,16 +216,16 @@ public class AmazonShipOrder extends AbstractShipOrder {
      */
     @Override
     public Boolean queryAndUpdateOrderStatus(PlatformDeliveryInterceptDTO dto) {
-        if (dto.getOldIsCancel()){
+        if (Objects.nonNull(dto.getOldIsCancel()) && dto.getOldIsCancel()){
             return true;
         }
-        Boolean isCancel;
+        boolean isCancel;
         Stopwatch stopwatch = Stopwatch.createStarted();
         // 请求亚马逊接口获取最新状态
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(dto.getShopId());
         if (null == shopInfoDTO) {
-            throw new ServiceException("未找到店铺授权:" + dto.getShopId());
+            throw new ServiceException(UNFOUND_SHIP_AUTH + dto.getShopId());
         }
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
@@ -242,8 +239,8 @@ public class AmazonShipOrder extends AbstractShipOrder {
             log.warn("查询亚马逊订单状态结束，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
             isCancel = response.getPayload().convertCancel();
         } catch (Exception e) {
-            log.warn("查询亚马逊订单【{}】信息响应结果: error={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
-            throw new ServiceException("查询亚马逊订单最新信息失败:" + e.getMessage());
+            log.warn(QUERY_AMAZON_RESP_RESULT, dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+            throw new ServiceException(QUERY_AMAZON_NEW_ORDER_FAIL + e.getMessage());
         }
         // 订单取消:分事务标记到订单
         if (isCancel){
@@ -278,7 +275,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 // 获取店铺授权信息
                 AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
                 if (null == shopInfoDTO) {
-                    throw new ServiceException("未找到店铺授权:" + shopId);
+                    throw new ServiceException(UNFOUND_SHIP_AUTH + shopId);
                 }
                 AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
                 OrdersV0Api api = OrdersV0Api.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
@@ -314,8 +311,8 @@ public class AmazonShipOrder extends AbstractShipOrder {
                     }
                     soB2cFeign.batchUpdateCancelAndLog(soB2cIdList);
                 } catch (Exception error) {
-                    log.warn("查询亚马逊订单【{}】信息响应结果: error={}", platformCodeList, ExceptionUtil.stacktraceToString(error));
-                    throw new ServiceException("查询亚马逊订单最新信息失败:" + error);
+                    log.warn(QUERY_AMAZON_RESP_RESULT, platformCodeList, ExceptionUtil.stacktraceToString(error));
+                    throw new ServiceException(QUERY_AMAZON_NEW_ORDER_FAIL + error);
                 }
 
             }
@@ -329,17 +326,13 @@ public class AmazonShipOrder extends AbstractShipOrder {
     public void confirmShipmentApiExceptionHandle(ApiException e, String platformCode, OrdersV0Api api) {
         if (!CharSequenceUtil.isBlank(e.getMessage())){
             // 其他异常信息
-            throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
+            throw new ServiceException(AMAZON_SHIP_ORDER_FAIL + e.getMessage());
         }
         JSONArray errorJsonArray = new JSONObject(e.getResponseBody()).getJSONArray("errors");
         if (CollectionUtils.isEmpty(errorJsonArray)){
             // 其他异常信息
-            throw new ServiceException("亚马逊标记发货失败:" + JSONUtil.toJsonStr(e));
+            throw new ServiceException(AMAZON_SHIP_ORDER_FAIL + JSONUtil.toJsonStr(e));
         }
-//            { "errors": [{
-//              "code": "InvalidInput",
-//             "message": "Failed to create package due to not finding a matching package or order already fulfilled. ErrorMessage(errorCode\u003dGeneralError, errorDescription\u003dUnable to find package to update for order (250-6220485-3709425), errorMetric\u003dPackageToUpdateNotFound, packageIndex\u003dnull)",
-//             "details": ""}]}
         JSONObject errorObj = errorJsonArray.getJSONObject(0);
         String errorMsg = errorObj.getStr("message");
         if (errorMsg.contains("ErrorCode: NonexistentOrderItem Description: Failed to find order item list by order ID:")){
@@ -357,12 +350,12 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 //平台已发货 跳过
                 log.warn("亚马逊订单【{}】标记发货:亚马逊订单已发货忽略", platformCode);
             } catch (Exception apiError) {
-                log.warn("查询亚马逊订单【{}】信息响应结果: error={}", platformCode, ExceptionUtil.stacktraceToString(e));
-                throw new ServiceException("查询亚马逊订单最新信息失败:" + errorMsg);
+                log.warn(QUERY_AMAZON_RESP_RESULT, platformCode, ExceptionUtil.stacktraceToString(e));
+                throw new ServiceException(QUERY_AMAZON_NEW_ORDER_FAIL + errorMsg);
             }
         } else {
             // 其他异常信息
-            throw new ServiceException("亚马逊标记发货失败:" + errorMsg);
+            throw new ServiceException(AMAZON_SHIP_ORDER_FAIL + errorMsg);
         }
     }
 }

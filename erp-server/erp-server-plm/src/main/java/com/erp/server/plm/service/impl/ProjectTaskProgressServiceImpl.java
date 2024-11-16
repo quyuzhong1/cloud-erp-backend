@@ -125,7 +125,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
 
         if (CollectionUtils.isNotEmpty(taskList)) {
             //立项后的任务
-            List<ProjectTaskEntity> afterList = new ArrayList<>();
+            List<ProjectTaskEntity> afterList;
             if (ObjectUtils.isNotEmpty(productInfoEntity.getApprovalTime())) {
                 afterList = taskList.stream().filter(e -> IsConstant.YES.equals(e.getIsMilepost()) && e.getCreateTime().isAfter(productInfoEntity.getApprovalTime()))
                         .sorted(Comparator.comparing(ProjectTaskEntity::getIsfinish).reversed()
@@ -294,19 +294,19 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         switch (type) {
             case 1:
                 //创建里程碑结束时间
-                dateDTO = this.getStartMilepostDate(dto.getProductId(), dateDTO);
+                dateDTO = this.getStartMilepostDate(dto.getProductId());
                 break;
             case 2:
                 //立项里程碑结束时间
-                dateDTO = this.getApprovalMilepostDate(dto.getProductId(), dateDTO);
+                dateDTO = this.getApprovalMilepostDate(dto.getProductId());
                 break;
             case 3:
                 //任务里程碑结束时间
-                dateDTO = this.getTaskMilepostDate(dto.getTaskId(), dateDTO);
+                dateDTO = this.getTaskMilepostDate(dto.getTaskId());
                 break;
             case 4:
                 //归档里程碑结束时间
-                dateDTO = this.getArchiveMilepostDate(dto.getProductId(), dateDTO);
+                dateDTO = this.getArchiveMilepostDate(dto.getProductId());
                 break;
             default:
                 break;
@@ -316,13 +316,13 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
 
     /**
      * @param productId
-     * @param dateDTO
      * @return ProductMilepostDateDTO
      * @description: 创建里程碑结束时间
      * @author Will
      * @date: 2022/11/18 18:37
      */
-    private ProductMilepostDateDTO getStartMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
+    private ProductMilepostDateDTO getStartMilepostDate(String productId) {
+        ProductMilepostDateDTO dateDTO = new ProductMilepostDateDTO();
         ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
         dateDTO.setRealityEndTime(productInfoEntity.getCreateTime());
         return dateDTO;
@@ -332,13 +332,13 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
 
     /**
      * @param productId
-     * @param dateDTO
      * @return ProductMilepostDateDTO
      * @description: 立项里程碑结束时间
      * @author Will
      * @date: 2022/11/18 18:37
      */
-    private ProductMilepostDateDTO getApprovalMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
+    private ProductMilepostDateDTO getApprovalMilepostDate(String productId) {
+        ProductMilepostDateDTO dateDTO = new ProductMilepostDateDTO();
         ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
         dateDTO.setRealityEndTime(productInfoEntity.getApprovalTime());
         return dateDTO;
@@ -347,13 +347,13 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
 
     /**
      * @param taskId
-     * @param dateDTO
      * @return ProductMilepostDateDTO
      * @description: 任务里程碑结束时间
      * @author Will
      * @date: 2022/11/18 18:37
      */
-    private ProductMilepostDateDTO getTaskMilepostDate(String taskId, ProductMilepostDateDTO dateDTO) {
+    private ProductMilepostDateDTO getTaskMilepostDate(String taskId) {
+        ProductMilepostDateDTO dateDTO = new ProductMilepostDateDTO();
         ProjectTaskEntity projectTaskEntity = projectTaskService.getById(taskId);
         dateDTO.setPlanEndTime(LocalDateTimeUtil.of(projectTaskEntity.getPlanEndTime()));
         dateDTO.setRealityEndTime(projectTaskEntity.getRealityEndTime());
@@ -363,13 +363,13 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
 
     /**
      * @param productId
-     * @param dateDTO
      * @return ProductMilepostDateDTO
      * @description: 归档里程碑结束时间
      * @author Will
      * @date: 2022/11/18 18:37
      */
-    private ProductMilepostDateDTO getArchiveMilepostDate(String productId, ProductMilepostDateDTO dateDTO) {
+    private ProductMilepostDateDTO getArchiveMilepostDate(String productId) {
+        ProductMilepostDateDTO dateDTO = new ProductMilepostDateDTO();
         ProductArchiveEntity productArchiveEntity = productArchiveService.getArchiveByProductId(productId);
         dateDTO.setRealityEndTime(productArchiveEntity.getCreateTime());
         return dateDTO;

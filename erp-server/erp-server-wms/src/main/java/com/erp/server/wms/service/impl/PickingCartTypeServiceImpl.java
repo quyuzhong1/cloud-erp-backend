@@ -64,7 +64,7 @@ public class PickingCartTypeServiceImpl extends SuperServiceImpl<PickingCartType
             index++;
         }
         //删除非修改的数据
-        List<String> updateIdList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(PickingCartTypeDTO.BatchUpdateDTO::getId).distinct().collect(Collectors.toList());
+        List<String> updateIdList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(PickingCartTypeDTO.BatchUpdateDTO::getId).distinct().collect(Collectors.toList());
         deleteByUpdateIdList(updateIdList);
 
         return this.saveOrUpdateBatch(pickingCartTypeList);

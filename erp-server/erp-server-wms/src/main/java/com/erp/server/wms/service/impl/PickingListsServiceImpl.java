@@ -485,7 +485,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             PickingListsDTO.CombinationPrintDetailView view = v.get(0);
                             Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
                             view.setParentSkuQty(totalParentQty);
-                            if (StrUtil.isNotBlank(view.getChildSku())){
+                            if (CharSequenceUtil.isNotBlank(view.getChildSku())){
                                 int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
                                 view.setChildSkuQty(totalChildQty);
                             }
@@ -518,7 +518,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 for (SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity : soDeliveryNoticeDetailEntityList) {
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = null;
-                    if (StrUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
+                    if (CharSequenceUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
                         sonSkuList = bomChildrenSkuDTOS.stream()
                                 .filter(req -> req.getParentSkuId().equals(soDeliveryNoticeDetailEntity.getSkuId())
                                     && req.getBomVersion().equals(soDeliveryNoticeDetailEntity.getBomVersion())
@@ -561,7 +561,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             PickingListsDTO.CombinationPrintDetailView view = v.get(0);
                             Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
                             view.setParentSkuQty(totalParentQty);
-                            if (StrUtil.isNotBlank(view.getChildSku())){
+                            if (CharSequenceUtil.isNotBlank(view.getChildSku())){
                                 int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
                                 view.setChildSkuQty(totalChildQty);
                             }

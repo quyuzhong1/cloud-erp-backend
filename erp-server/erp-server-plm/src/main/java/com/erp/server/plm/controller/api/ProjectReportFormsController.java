@@ -64,7 +64,7 @@ public class ProjectReportFormsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目报表")
     @PostMapping(value = "/exportExcelPurchaseBusiness")
-    public ApiResult exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto) {
+    public ApiResult<Object> exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto) {
         Boolean flag = projectReportFormsService.exportExcelProjectReportForms(dto);
         return flag == true ? success() : failure();
     }
@@ -78,7 +78,7 @@ public class ProjectReportFormsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目任务明细")
     @PostMapping(value = "/exportExcelTaskDetail")
-    public ApiResult exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
+    public ApiResult<Object> exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
         Boolean flag = projectReportFormsService.exportExcelTaskDetail(dto);
         return flag == true ? success() : failure();
     }

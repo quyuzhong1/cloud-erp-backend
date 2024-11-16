@@ -207,7 +207,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
 
         //客户信息
-        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
+        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Collections.singletonList(entity.getCustomerId()));
         //退货单
         SoReturnEntity soReturnEntity = CharSequenceUtil.isNotBlank(entity.getSourceId())?soReturnFeign.getSoReturnById(entity.getSourceId()):null;
 
@@ -215,7 +215,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
 
         String soId = "";
         if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listByIds(Arrays.asList(entity.getSourceId()));
+            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listByIds(Collections.singletonList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
                 soId = soReturnReceiveEntities.get(0).getSoId();
             }
@@ -235,7 +235,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = new ArrayList<>();
         if (CharSequenceUtil.isNotBlank(soId)) {
-            soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soId));
+            soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soId));
         }
         List<String> warehouseIds = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toList());
         //仓库
@@ -293,7 +293,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             resultMap.put("collectionTerms", viewDTO.getRemark());
 
             //获取币别信息
-            List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Arrays.asList(customerInfoEntity.getCurrency()));
+            List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Collections.singletonList(customerInfoEntity.getCurrency()));
             CurrencyDTO.ViewDTO currencyDTO = currencyListt.stream().filter(req -> req.getId().equals(customerInfoEntity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
             resultMap.put("currencyCode", currencyDTO.getKingdeeCode());
         }

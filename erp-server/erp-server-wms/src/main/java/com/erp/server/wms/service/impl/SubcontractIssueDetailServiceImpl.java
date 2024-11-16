@@ -111,7 +111,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<SubcontractIssueDetailEntity> list = BeanMapperUtils.copyList(SubcontractIssueDetailEntity.class, details);
 
         //原明细数据
-        List<SubcontractIssueDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<SubcontractIssueDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> deleteIds = getDeleteIds(list, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SubcontractIssueDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());

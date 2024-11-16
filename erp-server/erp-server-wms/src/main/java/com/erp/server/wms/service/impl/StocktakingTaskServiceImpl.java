@@ -150,7 +150,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //仓库id
         String warehouseId = params.getWarehouseId();
         if (CharSequenceUtil.isNotBlank(warehouseId)) {
-            List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listByWarehouseIds(Arrays.asList(warehouseId));
+            List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listByWarehouseIds(Collections.singletonList(warehouseId));
             List<String> mainIds = taskDetailList.stream().map(StocktakingTaskDetailEntity::getMainId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(mainIds)) {
                 return new PagingVO<>(new Page<>());
@@ -243,7 +243,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
-        List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Arrays.asList(id));
+        List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Collections.singletonList(id));
         long zeroCount = taskDetailList.stream().filter(d -> d.getQty() < 0).count();
         if (zeroCount > 0) {
             throw new ServiceException("盘点数量不能为负数");
@@ -344,7 +344,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         view.setStocktakingStatusName(stocktakingStatus.getName());
 
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(id));
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Collections.singletonList(id));
         //盘点人
         String stocktakingUserName = taskUserList.stream().filter(t -> id.equals(t.getSourceId())).
                 map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
@@ -487,7 +487,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         String taskCode = taskEntity.getCode();
         //任务id
         String taskId = taskEntity.getId();
-        List<StocktakingTaskDetailEntity> stocktakingTaskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Arrays.asList(taskId));
+        List<StocktakingTaskDetailEntity> stocktakingTaskDetailList = stocktakingTaskDetailService.listBaseByMainIds(Collections.singletonList(taskId));
         List<String> warehouseIdList = stocktakingTaskDetailList.stream().map(StocktakingTaskDetailEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = CollectionUtils.isNotEmpty(warehouseIdList) ? warehouseService.listByIds(warehouseIdList) : Collections.emptyList();
         //以仓库分组
@@ -698,7 +698,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             taskEntity.setStatus(StocktakingStatusEnum.NOT_STARTED);
             Boolean result = this.updateById(taskEntity);
             if (result) {
-                List<Pair<String, String>> pairList = Arrays.asList(taskEntity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+                List<Pair<String, String>> pairList = Collections.singletonList(taskEntity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
 
                 operateLogService.batchAddModuleOperateLog("盘点任务单【%s】取消流程", ModuleTypeEnum.STOCKTAKING_TASK.getCode(), pairList, "取消流程操作");
             }
@@ -731,7 +731,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //仓库id
         String warehouseId = params.getWarehouseId();
         if (CharSequenceUtil.isNotBlank(warehouseId)) {
-            List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listByWarehouseIds(Arrays.asList(warehouseId));
+            List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listByWarehouseIds(Collections.singletonList(warehouseId));
             List<String> mainIds = taskDetailList.stream().map(StocktakingTaskDetailEntity::getMainId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(mainIds)) {
                 throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);

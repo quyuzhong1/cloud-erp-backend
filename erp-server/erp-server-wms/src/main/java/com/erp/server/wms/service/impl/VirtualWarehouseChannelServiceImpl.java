@@ -274,7 +274,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if (ObjectUtil.isEmpty(channelEntity)) {
             return Collections.emptyList();
         }
-        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(), Arrays.asList(channelEntity.getVirtualWarehouseId()));
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(), Collections.singletonList(channelEntity.getVirtualWarehouseId()));
         if (ObjectUtil.isEmpty(warehouseEntityList)) {
             return Collections.emptyList();
         }
@@ -300,7 +300,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             String dictPlatform = channelEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
                     .map(VirtualWarehouseChannelEntity::getDictPlatform).findFirst().orElse("");
             platformDTO.setDictPlatform(dictPlatform);
-            List<String> relationIdList = channelEntityList.stream().filter(obj -> StrUtil.isNotBlank(obj.getRelationId()) && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
+            List<String> relationIdList = channelEntityList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getRelationId()) && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
                     .map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
             platformDTO.setRelationIdList(relationIdList);
             resultList.add(platformDTO);

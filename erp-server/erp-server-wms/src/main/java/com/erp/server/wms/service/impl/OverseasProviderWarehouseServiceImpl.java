@@ -179,7 +179,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public OverseasProviderEntity findPlatformByWarehouseId(String warehouseId) {
-        List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Arrays.asList(warehouseId));
+        List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Collections.singletonList(warehouseId));
         if (CollectionUtils.isEmpty(entityList)) {
             return null;
         }
@@ -203,7 +203,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
      * 新增修改处理数据
      */
     private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId) {
-        List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
 

@@ -69,10 +69,10 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         WmsCartonSpecEntity wmsCartonSpecEntity = new WmsCartonSpecEntity();
         BeanMapperUtils.copy(addDTO, wmsCartonSpecEntity);
         //检查数据是否存在
-        if (StrUtil.isNotBlank(addDTO.getSpecId())){
+        if (CharSequenceUtil.isNotBlank(addDTO.getSpecId())){
             WmsCartonSpecEntity old = this.getById(addDTO.getSpecId());
             wmsCartonSpecEntity.setId(Objects.isNull(old)? null: old.getId());
-        }else if (StrUtil.isNotBlank(addDTO.getCartonId())){
+        }else if (CharSequenceUtil.isNotBlank(addDTO.getCartonId())){
             WmsCartonEntity wmsCarton = wmsCartonService.getById(addDTO.getCartonId());
             wmsCartonSpecEntity.setId(Objects.nonNull(wmsCarton) ? wmsCarton.getSpecId() : null);
         }
@@ -146,7 +146,6 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         for (WmsCartonSpecDTO.ViewDTO viewDTO : wmsCartonSpecList) {
             WmsCartonEntity cartonEntity = cartonEntityList.stream().filter(e -> e.getSpecId().equals(viewDTO.getId())).findFirst().orElse(new WmsCartonEntity());
             List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonEntity.getId()));
-//            List<WmsCartonSpecDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(viewDTO.getBoxSpecNo())).collect(Collectors.toList());
             List<WmsCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(detailEntityList, WmsCartonDetailDTO.ViewDTO.class);
             for (WmsCartonDetailDTO.ViewDTO dto : detailList) {
                 int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId()) && dto.getFnSku().equals(req.getFnSku())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -225,7 +224,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         Set<String> propertyIds = new HashSet<>();
         skuVOList.forEach(skuVO -> {
             String productPropertyId = skuVO.getProductPropertyId();
-            if (StrUtil.isNotBlank(productPropertyId)){
+            if (CharSequenceUtil.isNotBlank(productPropertyId)){
                 String[] split = productPropertyId.split(",");
                 propertyIds.addAll(Arrays.asList(split));
             }
@@ -247,14 +246,14 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 List<String> canPackList = new ArrayList<>();
                 containIds2.forEach(propertyId -> {
                     String name = dictMap.get(propertyId);
-                    if (StrUtil.isNotBlank(name)){
+                    if (CharSequenceUtil.isNotBlank(name)){
                         canPackList.add(name);
                     }
                 });
                 List<String> cannotPackList = new ArrayList<>();
                 containIds1.forEach(propertyId -> {
                     String name = dictMap.get(propertyId);
-                    if (StrUtil.isNotBlank(name)){
+                    if (CharSequenceUtil.isNotBlank(name)){
                         cannotPackList.add(name);
                     }
                 });
@@ -385,7 +384,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 if (Objects.isNull(wmsCartonEntity)){
                     throw new ServiceException("已下推的装箱不允许再删除");
                 }
-                WmsCartonSpecEntity specEntity = cartonSpecEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(wmsCartonEntity.getSpecId()) && e.getId().equals(wmsCartonEntity.getSpecId())).findFirst().orElse(null);
+                WmsCartonSpecEntity specEntity = cartonSpecEntityList.stream().filter(e -> Objects.nonNull(e) && CharSequenceUtil.isNotBlank(wmsCartonEntity.getSpecId()) && e.getId().equals(wmsCartonEntity.getSpecId())).findFirst().orElse(null);
                 if (Objects.isNull(specEntity)){
                     throw new ServiceException("已下推的箱规不允许再删除");
                 }

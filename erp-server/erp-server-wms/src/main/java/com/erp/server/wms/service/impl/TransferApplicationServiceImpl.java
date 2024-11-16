@@ -213,7 +213,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id));
+        this.submit(Collections.singletonList(id));
         return id;
     }
 
@@ -256,7 +256,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Override
@@ -317,9 +317,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //组织
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
-        param.setOrgIdList(Arrays.asList(viewDTO.getOutOrgId()));
+        param.setOrgIdList(Collections.singletonList(viewDTO.getOutOrgId()));
         param.setSkuIdList(skuIds);
-        param.setWarehouseIdList(Arrays.asList(viewDTO.getOutWarehouseId()));
+        param.setWarehouseIdList(Collections.singletonList(viewDTO.getOutWarehouseId()));
         //库存信息
         List<InventoryEntity> inventoryInfoList = inventoryService.listInventoryByParam(param);
 
@@ -458,12 +458,12 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //审核通过 TODO(判断是否存在流程)
 
             //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.APPROVE.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.APPROVE.getStatus());
             //审核通过后生成拣货明细
-            generatePickingDetail(Arrays.asList(entity));
+            generatePickingDetail(Collections.singletonList(entity));
 
             //获取需要自动生成加工单的数据
-            /*List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(Arrays.asList(id));
+            /*List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(Collections.singletonList(id));
             List<String> infoIds = transferApplicationDetailEntities.stream().filter(req -> req.getIsAutoMachine().equals(Boolean.TRUE)).map(TransferApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
             List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfoList = viewGenerateMachineInfo(infoIds, Boolean.TRUE, singleApproveParamDTO.getQty());
             saveGenerateMachineInfo(viewGenerateMachineInfoList);*/
@@ -471,10 +471,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             log.info("调拨申请单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
             //更新单据状态
-            updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        List<Pair<String, String>> pairList = Arrays.asList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Collections.singletonList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个调拨申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(CharSequenceUtil.isNotBlank(singleApproveParamDTO.getComment()) ? String.format(",意见：%s", singleApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "审核操作");
     }
 

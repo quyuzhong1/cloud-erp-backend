@@ -127,7 +127,7 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
                 continue;
             }
             //优先取录入的bom版本，没有则取最新bom版本
-            if (StrUtil.isNotBlank(outInStockDTO.getBomVersion())) {
+            if (CharSequenceUtil.isNotBlank(outInStockDTO.getBomVersion())) {
                 childList = childList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBomVersion(),outInStockDTO.getBomVersion())).collect(Collectors.toList());
             } else {
                 String bomVersion = childList.stream().max(Comparator.comparing(BomChildrenSkuDTO::getBomVersion)).map(BomChildrenSkuDTO::getBomVersion).get();

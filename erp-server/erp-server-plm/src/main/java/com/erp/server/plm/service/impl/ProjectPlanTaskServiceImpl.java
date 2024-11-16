@@ -14,7 +14,6 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
@@ -53,6 +52,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.alibaba.excel.EasyExcelFactory.read;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SCHEDULE_TASK;
 
 /**
@@ -194,10 +194,8 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     //排期类型
                     String scheduleType = vo.getScheduleType();
                     //如果是变更 且不在 两个状态中 就是变更
-                    if (change.equals(scheduleType)) {
-                        if (scheduleStatusList.contains(scheduleStatus)) {
-                            vo.setIsChange(true);
-                        }
+                    if (change.equals(scheduleType) && scheduleStatusList.contains(scheduleStatus)) {
+                          vo.setIsChange(true);
                     }
                     Integer type = vo.getType();
                     String typeName = "一般任务";
@@ -297,7 +295,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         List<FindUserDTO> sysUserList = sysUserFeign.getUserList();
         ProjectPlanTaskExcelListener excelListenerUtil = new ProjectPlanTaskExcelListener(projectTaskList, projectTaskService, productId, sysUserList, infoEntity.getName());
         try {
-            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListenerUtil).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> dataList = excelListenerUtil.getDataList();
             if (CollectionUtils.isEmpty(dataList)) {
                 throw new ServiceException(ApiError.ERROR_95133);
@@ -595,7 +593,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         for (ProjectTaskEntity item : taskList) {
             SysLogEntity sysLogEntity = new SysLogEntity();
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append(userName).append(" ").append(nowTime).append(" ").append("变更");
             String taskId = item.getId();
             ProjectPlanTaskEntity entity = new ProjectPlanTaskEntity();
@@ -726,7 +724,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         ChangeScheduleExportResultVO vo = new ChangeScheduleExportResultVO();
         ChangeScheduleExcelListener excelListener = new ChangeScheduleExcelListener(projectTaskList, productId, sysUserList, infoEntity.getName());
         try {
-            EasyExcel.read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
+            read(excelFile.getInputStream(), ScheduleTaskExportErrorExcelVO.class, excelListener).sheet(0).doRead();
             List<ScheduleTaskExportErrorExcelVO> list = excelListener.getDataList();
             if (CollectionUtils.isEmpty(list)) {
                 throw new ServiceException(ApiError.ERROR_95133);
@@ -744,11 +742,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             }
             vo.setErrorUrl(url);
             List<ChangeScheduleExportVO> succeedList = excelListener.getSucceedDateList();
-//            succeedList = succeedList.stream().collect(
-//                    Collectors.collectingAndThen(
-//                            Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(ChangeScheduleExportVO::getTaskId))),
-//                            ArrayList::new)
-//            );
             vo.setSucceedList(succeedList);
         } catch (IOException e) {
             throw new ServiceException(ApiError.Default);

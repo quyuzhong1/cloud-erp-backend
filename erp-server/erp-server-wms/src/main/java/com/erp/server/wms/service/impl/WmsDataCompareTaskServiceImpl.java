@@ -418,7 +418,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				Map<String, List<Map<String, String>>> importAllDatasMap = new HashMap<>();
 				List<String> importHeadFields = null;
 				for(WmsDataCompareImportEntity wmsDataCompareImportEntity : wmsDataCompareImportEntityList) {
-					WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Arrays.asList(wmsDataCompareImportEntity.getFileUrl()));
+					WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Collections.singletonList(wmsDataCompareImportEntity.getFileUrl()));
 					List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
 					if(CollUtil.isEmpty(headFieldLists)) {
 						wmsDataCompareImportEntity.setParseStatus(WmsDataCompareImportParseStatusEnum.FINISH.getCode());
@@ -437,7 +437,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 				Map<String, List<Map<String, String>>> systemAllDatasMap = new HashMap<>();
 				List<String> systemHeadFields = null;
 				for(WmsDataCompareImportEntity wmsDataCompareImportEntity : sysWmsDataCompareImportEntityList) {
-					WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Arrays.asList(wmsDataCompareImportEntity.getFileUrl()));
+					WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Collections.singletonList(wmsDataCompareImportEntity.getFileUrl()));
 					List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
 					if(CollUtil.isEmpty(headFieldLists)) {
 						wmsDataCompareImportEntity.setParseStatus(WmsDataCompareImportParseStatusEnum.FINISH.getCode());
@@ -686,7 +686,7 @@ public class WmsDataCompareTaskServiceImpl extends SuperServiceImpl<WmsDataCompa
 					.eq(WmsDataCompareImportEntity::getMainFlag, Boolean.FALSE)
 					.eq(WmsDataCompareImportEntity::getParseStatus, WmsDataCompareImportParseStatusEnum.WAIT.getCode()).list();
 			for(WmsDataCompareImportEntity wmsDataCompareImportEntity : wmsDataCompareImportEntityList) {
-				WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Arrays.asList(wmsDataCompareImportEntity.getFileUrl()));
+				WmsDataCompareExcelDto wmsDataCompareExcelDto = WmsDataCompareUtils.getWmsDataCompareExcelDto(Collections.singletonList(wmsDataCompareImportEntity.getFileUrl()));
 				List<List<String>> headFieldLists = wmsDataCompareExcelDto.getHeadFieldLists();
 				if(CollUtil.isEmpty(headFieldLists)) {
 					continue;

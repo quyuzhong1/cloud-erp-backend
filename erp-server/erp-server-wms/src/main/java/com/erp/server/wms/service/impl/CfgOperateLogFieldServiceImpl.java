@@ -8,8 +8,10 @@ import com.erp.model.wms.entity.StocktakingProfitLossDetailEntity;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.server.wms.mapper.CfgOperateLogFieldMapper;
 import com.erp.server.wms.service.CfgOperateLogFieldService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,6 +26,9 @@ import java.util.List;
 @Service
 public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLogFieldMapper, CfgOperateLogFieldEntity> implements CfgOperateLogFieldService {
 
+    @Lazy
+    @Resource
+    private CfgOperateLogFieldService service;
     @Override
     public List<CfgOperateLogFieldEntity> listByClassPaths(List<String> classPaths) {
         LambdaQueryWrapper<CfgOperateLogFieldEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -45,6 +50,6 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
                 ,new CfgOperateLogFieldEntity().setField("usableQty").setFieldName("可用数量").setClassPath(classPath).setType(0).setEnumClass("")
                 ,new CfgOperateLogFieldEntity().setField("frozenQty").setFieldName("冻结数量").setClassPath(classPath).setType(0).setEnumClass("")
         );
-        return this.saveBatch(logFields);
+        return service.saveBatch(logFields);
     }
 }

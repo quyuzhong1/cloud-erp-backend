@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -21,7 +20,6 @@ import java.util.Objects;
  * @since 2024-09-24
 */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("report_order_data")
 public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
@@ -118,6 +116,10 @@ public class ReportOrderDataEntity extends BaseEntity<ReportOrderDataEntity> {
         }
         ReportOrderDataEntity that = (ReportOrderDataEntity) o;
         return Objects.equals(warehouseId, that.warehouseId) && Objects.equals(virtualWarehouseId, that.virtualWarehouseId) && Objects.equals(skuId, that.skuId) && Objects.equals(qty, that.qty) && approveStatus == that.approveStatus && Objects.equals(status, that.status) && Objects.equals(invalidStatus, that.invalidStatus) && Objects.equals(sourceId, that.sourceId) && Objects.equals(sourceDetailId, that.sourceDetailId) && Objects.equals(sourceCode, that.sourceCode) && Objects.equals(sourceType, that.sourceType) && Objects.equals(date, that.date) && Objects.equals(deliveryNoticeQty, that.deliveryNoticeQty) && Objects.equals(frozenQty, that.frozenQty);
+    }
+    @Override
+    public int hashCode(){
+        return Objects.hash(super.hashCode());
     }
 
     public static final String WAREHOUSE_ID = "warehouse_id";

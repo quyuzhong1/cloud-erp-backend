@@ -251,10 +251,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             List<String> skuIds = entity.getDetailEntityList().stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
             plmTaskFeign.updateOccupyStatus(skuIds);
             //提交
-            this.submit(Arrays.asList(id));
+            this.submit(Collections.singletonList(id));
             //审核
             BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setIds(Arrays.asList(id));
+            baseApproveParamDTO.setIds(Collections.singletonList(id));
             baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
             baseApproveParamDTO.setComment("");
             this.approve(id, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(), isPushWdt);
@@ -268,7 +268,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Transactional(rollbackFor = Exception.class)
     public String disApproveAndGenerate(String dbId, DmpSoPrestockInfoDTO.PrestockDTO dto) {
         service.disApprove(dbId, false);
-        service.delete(Arrays.asList(dbId));
+        service.delete(Collections.singletonList(dbId));
         OtherInstockEntity otherInstockEntity = this.buildWdtPreStock(dto);
         return service.addAndApprove(otherInstockEntity, false);
     }
@@ -307,7 +307,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id));
+        this.submit(Collections.singletonList(id));
         return id;
     }
 
@@ -341,7 +341,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Override
@@ -388,7 +388,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //产品信息
         List<String> skuIds = detailList.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Collections.singletonList(entity.getWarehouseId()));
         for (OtherInstockDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
@@ -480,12 +480,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //审核通过 TODO(判断是否存在流程)
 
             //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.APPROVE.getStatus(), entity.getApproveTime());
+            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.APPROVE.getStatus(), entity.getApproveTime());
             //更新库存
             updateInventoryTransCore(entity);
 
             //审核发送金蝶
-            sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             if(isPushWdt){
                 //推送旺店通
                 if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
@@ -499,7 +499,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //中止当前审核流程
 
             //更新单据状态
-            updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.REJECT.getStatus(), null);
+            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.REJECT.getStatus(), null);
         }
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), CharSequenceUtil.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
@@ -523,13 +523,13 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //取回流程 TODO
 
         //更新单据为待提交
-        updateApproveStatusForDisApprove(Arrays.asList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatusForDisApprove(Collections.singletonList(id), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //回扣库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.OTHER_INSTOCK, Arrays.asList(id));
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.OTHER_INSTOCK, Collections.singletonList(id));
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //反审核发送金蝶
-        sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+        sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         if(isPushWdt){
             //发送旺店通
@@ -685,7 +685,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         entity.setWarehouseName(warehouse.getName());
 
         //组织信息
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(warehouse.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(warehouse.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
@@ -806,7 +806,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
@@ -814,7 +814,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 dateList.add(startDate);
                 dateList.add(endDate);
                 pagingParamDTO.setBillDateList(dateList);
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.pdaListCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -834,10 +834,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id));
+        this.submit(Collections.singletonList(id));
         //审核
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(Arrays.asList(id));
+        baseApproveParamDTO.setIds(Collections.singletonList(id));
         baseApproveParamDTO.setType(ApproveTypeEnum.PASS.getStatus());
         baseApproveParamDTO.setComment("");
         this.approve(id, baseApproveParamDTO.getType(), baseApproveParamDTO.getComment(), true);
@@ -1272,11 +1272,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if(Objects.isNull(warehouseEntity)){
             throw new ServiceException("旺店通映射的系统仓库为空");
         }
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(warehouseEntity.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(warehouseEntity.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
-        List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByNames(Arrays.asList("仓储部"));
+        List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByNames(Collections.singletonList("仓储部"));
         if (CollectionUtils.isEmpty(sysDepartmentEntity)) {
             throw new ServiceException("获取不到仓储部门信息");
         }

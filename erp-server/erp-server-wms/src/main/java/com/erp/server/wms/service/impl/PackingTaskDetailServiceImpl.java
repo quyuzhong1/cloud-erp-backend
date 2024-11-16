@@ -104,7 +104,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
     @Override
     public void removeByMainId(String mainId) {
-        if (StrUtil.isNotBlank(mainId)){
+        if (CharSequenceUtil.isNotBlank(mainId)){
             lambdaUpdate().eq(PackingTaskDetailEntity::getMainId, mainId).remove();
         }
     }
@@ -123,7 +123,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
     @Override
     public Integer countDeliveryQty(String id) {
-        if (StrUtil.isNotBlank(id)){
+        if (CharSequenceUtil.isNotBlank(id)){
             return baseMapper.countDeliveryQty(id);
         }
         return 0;
