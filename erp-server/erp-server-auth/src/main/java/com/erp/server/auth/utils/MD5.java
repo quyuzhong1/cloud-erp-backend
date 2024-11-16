@@ -3,6 +3,7 @@ package com.erp.server.auth.utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 @Slf4j
@@ -83,7 +84,7 @@ public class MD5 {
 		keyBeanInit();
 		try {
 			keyBeanUpdate(inbuf.getBytes(StandardCharsets.ISO_8859_1), inbuf.length());
-		} catch (UnsupportedEncodingException e) {
+		} catch (Exception e) {
 			log.error("不支持字符");
 		}
 		keyBeanFinal();
