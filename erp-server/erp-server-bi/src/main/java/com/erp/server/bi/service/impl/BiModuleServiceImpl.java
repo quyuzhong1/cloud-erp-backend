@@ -142,7 +142,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             throw new ServiceException(ApiError.ERROR_97004);
         }
         Boolean stateFlag = dto.getState();
-        if (stateFlag) {
+        if (Boolean.TRUE.equals(stateFlag)) {
             entity.setState(BaseStateConstants.OPEN_STATE);
         } else {
             entity.setState(BaseStateConstants.CLOSE_STATE);
@@ -366,7 +366,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         Boolean uploadFlag = biModule.getUploadFlag();
         Object imageObject = biModule.getImageFile();
         // 当上传了文件 且文件不为空的时候
-        if (imageObject != null && !"null".equals(imageObject) && uploadFlag) {
+        if (imageObject != null && !"null".equals(imageObject) && Boolean.TRUE.equals(uploadFlag)) {
             MultipartFile imageFile = (MultipartFile) imageObject;
             File file = FileUtil.multiToFile(imageFile);
 
@@ -425,7 +425,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             throw new ServiceException(ApiError.ERROR_97044);
         }
         Boolean flag = this.removeById(id);
-        if (flag) {
+        if (Boolean.TRUE.equals(flag)) {
             modulePermissionService.deleteByModuleId(id);
         }
         return flag;

@@ -56,9 +56,8 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
         detailMap.keySet().stream().forEach(x -> {
             List<BiDataSourceCostDetailEntity> detailList = detailMap.get(x);
             HashMap<String, BigDecimal> tempMap = new HashMap<>(detailList.size());
-            detailList.stream().forEach(m -> {
-                tempMap.put(m.getCostType(), m.getCostValue());
-            });
+            detailList.stream().forEach(m -> tempMap.put(m.getCostType(), m.getCostValue()));
+
             entityMap.put(x, tempMap);
         });
 

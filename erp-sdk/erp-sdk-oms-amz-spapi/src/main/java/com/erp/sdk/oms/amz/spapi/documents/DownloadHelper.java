@@ -47,7 +47,7 @@ public class DownloadHelper {
             return new DownloadBundle(
                     spec.getCompressionAlgorithm(), contentType, spec.getCryptoStreamFactory(), tmpFile);
         } catch (Exception e) {
-            tmpFile.delete();
+            boolean delete = tmpFile.delete();
             throw e;
         }
     }

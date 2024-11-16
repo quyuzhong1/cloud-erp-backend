@@ -25,7 +25,7 @@ public enum WarehousePlatformTypeEnum {
     public static String getNameByCode(String code) {
         for (WarehousePlatformTypeEnum item : WarehousePlatformTypeEnum.values()) {
             if (code.equals(item.getCode())) {
-                item.getName();
+                return item.getName();
             }
         }
         return "";

@@ -69,14 +69,14 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
 
     @Override
     public PagingVO<DmpReturnOrderInfoDTO> paging(PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         DmpReturnOrderInfoSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpReturnOrderInfoDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             pageData.getRecords().forEach(obj -> obj.setStatusName(ReturnOrderStatusEnum.getName(obj.getStatus())));
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
         try {
             read(excelFile.getInputStream(), DmpReturnOrderInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<DmpReturnOrderInfoImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
+            if (!list.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/dmpReturnOrderInfo.xlsx";
                 String name = "dmpRefundInfo";

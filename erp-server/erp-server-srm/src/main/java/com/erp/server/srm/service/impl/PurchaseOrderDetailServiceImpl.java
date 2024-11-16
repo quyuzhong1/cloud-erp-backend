@@ -1,7 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -100,7 +100,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "采购订单明细表（已确认）", purchaseOrderDetailEntity.getCode());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "采购订单明细表（已确认）", purchaseOrderDetailEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, purchaseOrderDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -131,7 +131,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         // 记录主单操作日志
         log.info("编辑 开始记录采购订单明细表（已确认）日志数据，单号：【{}】", purchaseOrderDetailEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), purchaseOrderDetailEntity.getCode(), "采购订单明细表（已确认）");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), purchaseOrderDetailEntity.getCode(), "采购订单明细表（已确认）");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, purchaseOrderDetailEntity, null, purchaseOrderDetailEntity.getId(), msg);
         return Boolean.TRUE;

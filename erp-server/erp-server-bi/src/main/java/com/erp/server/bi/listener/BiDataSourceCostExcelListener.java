@@ -52,6 +52,7 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
 
     private List<String> headList;
 
+
     public BiDataSourceCostExcelListener(BiDataSourceCostService biDataSourceCostService, BiDataSourceCostDetailService biDataSourceCostDetailService,
                                          List<BiShopInfoEntity> shopList, List<FindUserDTO> userList, List<BiDictEntity> dictList, List<SysDepartmentDTO> deptList) {
         this.biDataSourceCostService = biDataSourceCostService;
@@ -264,13 +265,13 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
     }
 
     private boolean errorMsg(Map<Integer, String> map, List<String> errorMsgList) {
-        String errStr = "";
-        if (errorMsgList.size() > 0) {
+        StringBuilder errStr = new StringBuilder();
+        if (!errorMsgList.isEmpty()) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+                errStr.append(indexTemp).append("、").append(errorMsgList.get(i)).append("；");
             }
-            map.put(map.size() ,errStr);
+            map.put(map.size() , errStr.toString());
             list.add(map);
             return true;
         }
@@ -301,6 +302,6 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 }

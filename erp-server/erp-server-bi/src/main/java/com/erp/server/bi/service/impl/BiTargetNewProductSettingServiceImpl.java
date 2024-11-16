@@ -3,7 +3,6 @@ package com.erp.server.bi.service.impl;
 
 import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -12,10 +11,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.dto.excel.TargetNewProductSettingImportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
 
-import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
@@ -23,14 +20,12 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.listener.BiTargetNewProductSettingExcelListener;
-import com.erp.server.bi.listener.BiTargetSkuSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetNewProductSettingMapper;
 import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.bi.service.BiTargetYearService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
-import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -336,10 +331,10 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     public PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
-        IPage pageData = baseMapper.paging(query, params, multiplyNum);
+        IPage<BiTargetNewProductSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params, multiplyNum);
         List<BiTargetNewProductSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -441,12 +436,11 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
      */
     @Override
     public Boolean delete(BiTargetNewProductSettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetNewProductSettingEntity::getStaffId, dto.getStaffId()).
                 eq(BiTargetNewProductSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetNewProductSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
-        return result;
     }
 
     /**
@@ -460,8 +454,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto, multiplyNum);
-        return pagingTotal;
+        return baseMapper.pagingTotal(dto, multiplyNum);
     }
 
 

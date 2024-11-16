@@ -54,17 +54,17 @@ public class BiTargetCategorySettingExcelListener extends AnalysisEventListener<
         }
         String metricsName = excelDTO.getMetricsName();
         Boolean isExistMetrics = metricsNameList.contains(metricsName);
-        if (!isExistMetrics) {
+        if (Boolean.FALSE.equals(isExistMetrics)) {
             errorMsgList.add("考核指标不存在");
         }
         String categoryName = excelDTO.getCategoryName();
         BasicCategoryEntity category = basicCategoryList.stream().filter(c -> c.getName().equals(categoryName))
                 .findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(category)) {
+        if (ObjectUtil.isEmpty(category) || category == null) {
             errorMsgList.add("分类不存在");
         }
         //添加错误数据
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
@@ -97,7 +97,7 @@ public class BiTargetCategorySettingExcelListener extends AnalysisEventListener<
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 
 

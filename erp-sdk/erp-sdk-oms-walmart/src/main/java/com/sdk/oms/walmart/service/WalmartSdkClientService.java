@@ -323,7 +323,7 @@ public class WalmartSdkClientService {
 
         walmartShipOrderDTO.setOrderShipment(orderShipmentBean);
 
-        baseUrl.replace("{purchaseOrderId}", dto.getPlatformCode());
+        baseUrl = baseUrl.replace("{purchaseOrderId}", dto.getPlatformCode());
 
         HashMap<String, Object> map = (HashMap<String, Object>) BeanUtil.beanToMap(walmartShipOrderDTO);
         String param = JSONObject.toJSONString(map);

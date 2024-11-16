@@ -356,7 +356,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         String metrics = params.getMetrics();
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(metrics);
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<BiTargetShopSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params,multiplyNum);
         List<BiTargetShopSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
@@ -607,12 +607,11 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
      */
     @Override
     public Boolean delete(BiTargetShopSettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetShopSettingEntity::getShopId, dto.getShopId()).
                 eq(BiTargetShopSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetShopSettingEntity::getMetrics, dto.getMetrics()).
-                remove();
-        return result;
+                remove();;
     }
 
     /**

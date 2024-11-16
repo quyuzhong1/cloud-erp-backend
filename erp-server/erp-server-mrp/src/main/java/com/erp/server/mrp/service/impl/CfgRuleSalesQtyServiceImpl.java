@@ -157,11 +157,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
                 viewDetailDTO.setFixedSalesQtyList(fixedViewList);
             }
             //去噪信息
-            List<CfgRuleSalesDenoisingEntity> denoisingList = salesDenoisingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSalesQtyId(), cfgRuleSalesQtyEntity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(denoisingList)) {
-                List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingViewList = BeanMapperUtils.copyList(CfgRuleSalesDenoisingDTO.ViewDTO.class, denoisingList);
-                viewDetailDTO.setSalesDenoisingList(salesDenoisingViewList);
-            }
+            setDenoising(cfgRuleSalesQtyEntity, salesDenoisingList, viewDetailDTO);
             //明细赋值
             if (CharSequenceUtil.equals(cfgRuleSalesQtyEntity.getType(),CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())) {
                 viewDTO.setConventionalDetail(viewDetailDTO);
@@ -171,6 +167,20 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         }
         viewDTO.setIsCfgSame(list.get(0).getIsCfgSame());
         return viewDTO;
+    }
+
+    /**
+     * 设置去噪信息
+     * @param cfgRuleSalesQtyEntity 销量
+     * @param salesDenoisingList 去噪信息
+     * @param viewDetailDTO 返回结果
+     */
+    private static void setDenoising(CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, List<CfgRuleSalesDenoisingEntity> salesDenoisingList, CfgRuleSalesQtyDTO.ViewDetailDTO viewDetailDTO) {
+        List<CfgRuleSalesDenoisingEntity> denoisingList = salesDenoisingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSalesQtyId(), cfgRuleSalesQtyEntity.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(denoisingList)) {
+            List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingViewList = BeanMapperUtils.copyList(CfgRuleSalesDenoisingDTO.ViewDTO.class, denoisingList);
+            viewDetailDTO.setSalesDenoisingList(salesDenoisingViewList);
+        }
     }
 
     @Override
@@ -210,11 +220,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
             viewDetailDTO.setFixedSalesQtyList(fixedViewList);
         }
         //去噪信息
-        List<CfgRuleSalesDenoisingEntity> denoisingList = salesDenoisingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSalesQtyId(), entity.getId())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(denoisingList)) {
-            List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingViewList = BeanMapperUtils.copyList(CfgRuleSalesDenoisingDTO.ViewDTO.class, denoisingList);
-            viewDetailDTO.setSalesDenoisingList(salesDenoisingViewList);
-        }
+        setDenoising(entity, salesDenoisingList, viewDetailDTO);
         return viewDetailDTO;
     }
 

@@ -129,13 +129,13 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
             }
         }
 
-        String errStr = "";
-        if (errorMsgList.size() > 0) {
+        StringBuilder errStr = new StringBuilder();
+        if (!errorMsgList.isEmpty()) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+                errStr.append(indexTemp).append("、").append(errorMsgList.get(i)).append("；");
             }
-            dto.setErrorMsg(errStr);
+            dto.setErrorMsg(errStr.toString());
             list.add(dto);
             return;
         }
@@ -172,6 +172,6 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 }

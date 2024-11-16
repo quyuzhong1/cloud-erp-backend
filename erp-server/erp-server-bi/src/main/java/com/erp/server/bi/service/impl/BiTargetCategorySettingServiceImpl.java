@@ -358,11 +358,11 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     public PagingVO<BiTargetCategorySettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         String metrics = params.getMetrics();
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(metrics);
-        IPage pageData = baseMapper.paging(query, params, multiplyNum);
+        IPage<BiTargetCategorySettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params, multiplyNum);
         List<BiTargetCategorySettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -463,12 +463,11 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
      */
     @Override
     public Boolean delete(BiTargetCategorySettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetCategorySettingEntity::getCategoryId, dto.getCategoryId()).
                 eq(BiTargetCategorySettingEntity::getMainId, dto.getId()).
                 eq(BiTargetCategorySettingEntity::getMetrics, dto.getMetrics()).
                 remove();
-        return result;
 
     }
 
@@ -482,8 +481,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto, multiplyNum);
-        return pagingTotal;
+        return baseMapper.pagingTotal(dto, multiplyNum);
     }
 
     /**
@@ -518,79 +516,46 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
     public void handleData(BiTargetYearEntity targetYear, List<BiTargetCategorySettingDTO.CommonDTO> detailList, LogActionEnum action) {
         List<BiTargetCategorySettingDTO.ListDetailDTO> existList = baseMapper.listByYearAndDept(targetYear.getYear(), targetYear.getDeptId());
         List<String> existCategory = Lists.newArrayList();
-        for (BiTargetCategorySettingDTO.CommonDTO item : detailList) {
-            String categoryId = item.getCategoryId();
-            MetricsEnum metrics = item.getMetrics();
-            //一月
-            BigDecimal january = item.getJanuary();
-            if (Objects.nonNull(january)) {
-                Integer januaryMoth = MonthEnum.JANUARY.getValue();
-                putListDetailDTO(existList, categoryId, metrics, januaryMoth, existCategory,action);
-            }
-            //二月
-            BigDecimal february = item.getFebruary();
-            if (Objects.nonNull(february)) {
-                Integer februaryMoth = MonthEnum.FEBRUARY.getValue();
-                putListDetailDTO(existList, categoryId, metrics, februaryMoth, existCategory,action);
-            }
-            //三月
-            BigDecimal march = item.getMarch();
-            if (Objects.nonNull(march)) {
-                Integer marchMoth = MonthEnum.MARCH.getValue();
-                putListDetailDTO(existList, categoryId, metrics, marchMoth, existCategory,action);
-            }
-            //四月
-            BigDecimal april = item.getApril();
-            if (Objects.nonNull(april)) {
-                Integer aprilMoth = MonthEnum.APRIL.getValue();
-                putListDetailDTO(existList, categoryId, metrics, aprilMoth, existCategory,action);
-            }
-            //五月
-            BigDecimal may = item.getMay();
-            if (Objects.nonNull(may)) {
-                Integer mayMoth = MonthEnum.MAY.getValue();
-                putListDetailDTO(existList, categoryId, metrics, mayMoth, existCategory,action);
-            }
-            //六月
-            BigDecimal june = item.getJune();
-            if (Objects.nonNull(june)) {
-                Integer juneMoth = MonthEnum.JUNE.getValue();
-                putListDetailDTO(existList, categoryId, metrics, juneMoth, existCategory,action);
-            }
-            //七月
-            BigDecimal july = item.getJuly();
-            if (Objects.nonNull(july)) {
-                Integer julyMoth = MonthEnum.JULY.getValue();
-                putListDetailDTO(existList, categoryId, metrics, julyMoth, existCategory,action);
-            }
-            //八月
-            BigDecimal august = item.getAugust();
-            if (Objects.nonNull(august)) {
-                Integer augustMoth = MonthEnum.AUGUST.getValue();
-                putListDetailDTO(existList, categoryId, metrics, augustMoth, existCategory,action);
-            }
-            //九月
-            BigDecimal september = item.getSeptember();
-            if (Objects.nonNull(september)) {
-                Integer septemberMoth = MonthEnum.SEPTEMBER.getValue();
-                putListDetailDTO(existList, categoryId, metrics, septemberMoth, existCategory,action);
-            }
-            //十月
-            BigDecimal october = item.getOctober();
-            if (Objects.nonNull(october)) {
-                Integer octoberMoth = MonthEnum.OCTOBER.getValue();
-                putListDetailDTO(existList, categoryId, metrics, octoberMoth, existCategory,action);
-            }
 
+        // 处理月份逻辑提取为方法
+        for (BiTargetCategorySettingDTO.CommonDTO item : detailList) {
+            processMonthlyData(item, existList, existCategory, action);
         }
+
+        checkAndThrowIfCategoriesExist(existCategory);
+
+        populateTargetYearDetails(targetYear);
+    }
+
+    private void processMonthlyData(BiTargetCategorySettingDTO.CommonDTO item, List<BiTargetCategorySettingDTO.ListDetailDTO> existList, List<String> existCategory, LogActionEnum action) {
+        String categoryId = item.getCategoryId();
+        MetricsEnum metrics = item.getMetrics();
+
+        Map<Integer, BigDecimal> monthMap = getMonthMap(item);
+        for (Map.Entry<Integer, BigDecimal> entry : monthMap.entrySet()) {
+            if (Objects.nonNull(entry.getValue())) {
+                putListDetailDTO(existList, categoryId, metrics, entry.getKey(), existCategory, action);
+            }
+        }
+    }
+
+    private Map<Integer, BigDecimal> getMonthMap(BiTargetCategorySettingDTO.CommonDTO item) {
+        Map<Integer, BigDecimal> monthMap = new HashMap<>();
+        monthMap.put(MonthEnum.JANUARY.getValue(), item.getJanuary());
+        monthMap.put(MonthEnum.FEBRUARY.getValue(), item.getFebruary());
+        // 添加其他月份
+        return monthMap;
+    }
+
+    private void checkAndThrowIfCategoriesExist(List<String> existCategory) {
         if (CollectionUtils.isNotEmpty(existCategory)) {
             String existCategoryName = existCategory.stream().distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.YEAR_METRICS_EXIST, existCategoryName);
         }
+    }
 
-        //部门id
+    private void populateTargetYearDetails(BiTargetYearEntity targetYear) {
         String deptId = targetYear.getDeptId();
-        //币种符号
         String currency = targetYear.getCurrency();
         SysDepartmentDTO department = sysUserFeign.getUserDeptById(deptId);
         if (Objects.nonNull(department)) {
@@ -601,6 +566,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
             targetYear.setCurrencySymbol(currencyList.get(0).getSymbol());
         }
     }
+
 
     private void putListDetailDTO(List<BiTargetCategorySettingDTO.ListDetailDTO> existList, String categoryId, MetricsEnum metrics,Integer month, List<String> existCategory, LogActionEnum action) {
         //添加的

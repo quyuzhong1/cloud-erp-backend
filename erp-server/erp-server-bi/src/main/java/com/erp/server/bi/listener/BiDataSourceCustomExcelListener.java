@@ -73,7 +73,7 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         List<BiDataSourceCustomDetailEntity> detailList = new ArrayList<>();
         Integer yearDate = 0;
         //旧数据时记录
-        if (ObjectUtils.isNotEmpty(iterator)) {
+        if (ObjectUtils.isNotEmpty(iterator) && iterator != null) {
             while (iterator.hasNext()) {
                 Map.Entry<Integer, String> entry = iterator.next();
                 if (ObjectUtils.isEmpty(entry.getKey())) {
@@ -184,13 +184,13 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         if (CollectionUtils.isEmpty(detailList) && CollectionUtils.isEmpty(errorMsgList)) {
             errorMsgList.add("自助添加数据不能为空");
         }
-        String errStr = "";
-        if (errorMsgList.size() > 0) {
+        StringBuilder errStr = new StringBuilder();
+        if (!errorMsgList.isEmpty()) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+                errStr.append(indexTemp).append("、").append(errorMsgList.get(i)).append("；");
             }
-            map.put(head.size() - 1 ,errStr);
+            map.put(head.size() - 1 , errStr.toString());
             list.add(map);
             return;
         }
@@ -254,6 +254,6 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 }

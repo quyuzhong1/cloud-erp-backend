@@ -169,7 +169,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
      * 查询成本数据
      */
     private List<BiDataSourceCostEntity> listCostList (BiDataSourceCostDTO.GroupDTO dto) {
-        List<BiDataSourceCostEntity> dataSourceCostList = lambdaQuery()
+        return lambdaQuery()
                 .in(CollUtil.isNotEmpty(dto.getSite()), BiDataSourceCostEntity::getSite, dto.getSite())
                 .in(CollUtil.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
                 .in(CollUtil.isNotEmpty(dto.getDepartment()), BiDataSourceCostEntity::getDeptId, dto.getDepartment())
@@ -179,7 +179,6 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .le(BiDataSourceCostEntity::getMonth,dto.getEndTime())
                 .last(CharSequenceUtil.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
                 .list();
-        return dataSourceCostList;
     }
 
     /**
@@ -433,7 +432,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         try {
             read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
             List<Map<Integer, String>> list = excelListenerUtil.getDateList();
-            if (CollectionUtils.isEmpty(list) || list.size() == 0) {
+            if (CollectionUtils.isEmpty(list)) {
                 return true;
             }
             List<String> headList = excelListenerUtil.getHead();
@@ -576,8 +575,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .sorted(Comparator.comparing(DeptCostVO::getCostValue))
                 .collect(Collectors.toList());
         // 表头 SeriesVO
-        List<SeriesVO<String>> seriesList = getDeptSeriesVo(profitMap, costSaleExpenses);
-        return seriesList;
+        return getDeptSeriesVo(profitMap, costSaleExpenses);
     }
 
     private static List<SeriesVO<String>> getDeptSeriesVo(Map<String, String> profitMap, List<DeptCostVO> costSaleExpenses) {
@@ -616,8 +614,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         QueryWrapper<BiDataSourceCostEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("max(month) as month");
         queryWrapper.last("limit 1");
-        BiDataSourceCostEntity maxMonthEntity = baseMapper.selectOne(queryWrapper);
-        return maxMonthEntity;
+        return baseMapper.selectOne(queryWrapper);
     }
 
     @Override
@@ -695,7 +692,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         Map<String, String> result = sortMap.entrySet().stream()
                 .limit(rankNum)
-                .collect(Collectors.toMap(req -> req.getKey(), reqV -> reqV.getValue().toString()));
+                .collect(Collectors.toMap(Map.Entry::getKey, reqV -> reqV.getValue().toString()));
         Map<String, String> descSortMap = MapUtil.sortByValue(result, false);
         // 表头 SeriesVO
         return getSeriesVOS(descSortMap);
@@ -754,7 +751,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         Map<LocalDate, Map<String, BigDecimal>> costMap = dateCostVOS.stream()
                 .collect(Collectors.groupingBy(DateCostVO::getGroupDate,
                         Collectors.toMap(DateCostVO::getCostType, DateCostVO::getCostValue)));
-        Map<Integer, BigDecimal> profitMap = costMap.keySet().stream().collect(Collectors.toMap(e -> e.getMonthValue(), v -> {
+        Map<Integer, BigDecimal> profitMap = costMap.keySet().stream().collect(Collectors.toMap(LocalDate::getMonthValue, v -> {
             Map<String, BigDecimal> tempMap = costMap.get(v);
             BigDecimal costMainBusinessIncome = tempMap.getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), BigDecimal.ZERO);
             BigDecimal costTotalCost = tempMap.getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(), BigDecimal.ZERO);
@@ -870,10 +867,10 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 销售毛利率 按照季度汇总数据
         Map<LocalDate, Map<String, BigDecimal>> costMap = dateCostVOS.stream()
-                .collect(Collectors.groupingBy(x -> x.getGroupDate(),
+                .collect(Collectors.groupingBy(DateCostVO::getGroupDate,
                         Collectors.toMap(DateCostVO::getCostType, DateCostVO::getCostValue)));
         // 月度数据
-        Map<Integer, BigDecimal> profitMap = costMap.keySet().stream().collect(Collectors.toMap(e -> e.getMonthValue(), v -> {
+        Map<Integer, BigDecimal> profitMap = costMap.keySet().stream().collect(Collectors.toMap(LocalDate::getMonthValue, v -> {
             Map<String, BigDecimal> tempMap = costMap.get(v);
             BigDecimal costMainBusinessIncome = tempMap.getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), BigDecimal.ZERO);
             BigDecimal costTotalCost = tempMap.getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(), BigDecimal.ZERO);
@@ -901,8 +898,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 净利润
         HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>(4);
         // 表头 SeriesVO
-        List<SeriesVO<String>> seriesList = getDateAnalyze(quarterMap, quarterCostMap, quarterSalesMap, netProfitMap, 4);
-        return seriesList;
+        return getDateAnalyze(quarterMap, quarterCostMap, quarterSalesMap, netProfitMap, 4);
     }
 
     @Override
@@ -916,10 +912,10 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         }
         // 销售毛利率
         Map<LocalDate, Map<String, BigDecimal>> costMap = dateCostVOS.stream()
-                .collect(Collectors.groupingBy(x -> x.getGroupDate(),
+                .collect(Collectors.groupingBy(DateCostVO::getGroupDate,
                         Collectors.toMap(DateCostVO::getCostType, DateCostVO::getCostValue)));
         // 年度分组数据销售毛利率
-        Map<Integer, BigDecimal> yearMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> e.getYear(), MathUtil.summingBigDecimal(v -> {
+        Map<Integer, BigDecimal> yearMap = costMap.keySet().stream().collect(Collectors.groupingBy(LocalDate::getYear, MathUtil.summingBigDecimal(v -> {
             Map<String, BigDecimal> tempMap = costMap.get(v);
             BigDecimal costMainBusinessIncome = tempMap.getOrDefault(DataSourceCostEnum.COST_MAINBUSINESSINCOME.getCode(), BigDecimal.ZERO);
             BigDecimal costTotalCost = tempMap.getOrDefault(DataSourceCostEnum.COST_TOTALCOST.getCode(), BigDecimal.ZERO);
@@ -986,17 +982,11 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 deptCostMap.getOrDefault(x, BigDecimal.ZERO), deptSalesMap.getOrDefault(x, BigDecimal.ZERO),
                 deptMainMap.getOrDefault(x, BigDecimal.ZERO))).collect(Collectors.toList());
         AtomicInteger rankIndex = new AtomicInteger(1);
-        List<CostProfitAnalyzeRankVO> rankResult = resultList.stream()
+        return resultList.stream()
                 .sorted(Comparator.comparing(CostProfitAnalyzeRankVO.getByRankKey(dto.getRankKey())).reversed())
-                .map(x -> {
-                    // 设置 ranking
-                    x.setRanking(rankIndex.getAndIncrement());
-                    return x;
-                })
+                .peek(x -> x.setRanking(rankIndex.getAndIncrement()))
                 .filter(x -> x.getRanking() <= dto.getRankNum())
                 .collect(Collectors.toList());
-
-        return rankResult;
     }
 
     @Override
@@ -1059,7 +1049,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         profitVo.setName("销售利润");
         List<String> profitList = Collections.emptyList();
         if(CollUtil.isNotEmpty(profitMap)){
-            profitList = profitMap.keySet().stream().map(x -> profitMap.get(x))
+            profitList = profitMap.keySet().stream().map(profitMap::get)
                     .collect(Collectors.toList());
         }
         profitVo.setData(profitList);

@@ -2,8 +2,6 @@ package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.impl.RedisService;
@@ -13,11 +11,8 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.BiDataSourceCostDTO;
 import com.erp.model.bi.dto.TargetFinishDTO;
 import com.erp.model.bi.enums.*;
-import com.erp.model.dmp.entity.BiOrderInfoEntity;
-import com.erp.model.dmp.entity.BiRefundInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.BiOrderInfoMapper;
 import com.erp.server.bi.mapper.BiRefundInfoMapper;
 import com.erp.server.bi.service.*;
@@ -70,6 +65,8 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
     @Resource
     private RedisService redisService;
+    
+    public static final String TYPE_NAME = "typeName";
 
     @Override
     @Cacheable(cacheNames = "cache:bi:targetFinish",keyGenerator = "myKeyGenerator")
@@ -95,7 +92,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
 
 
         //表头数据
-        headMap.put("typeName",TargetSearchTypeEnum.getByCode(dto.getSearchType()));
+        headMap.put(TYPE_NAME,TargetSearchTypeEnum.getByCode(dto.getSearchType()));
         headMap.put("totalName","累计年度目标/完成率");
         MonthEnum[] values = MonthEnum.values();
         for (MonthEnum monthEnum : values) {
@@ -131,7 +128,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
             for (Map.Entry<String, List<TargetFinishDTO.ViewDTO>> entry : map.entrySet()) {
                 LinkedHashMap<String, Object> result = new LinkedHashMap<>();
                 List<TargetFinishDTO.ViewDTO> value = entry.getValue();
-                result.put("typeName",entry.getKey());
+                result.put(TYPE_NAME,entry.getKey());
 
                 TargetFinishDTO.TotalSlotDTO totalSlotDTO = new TargetFinishDTO.TotalSlotDTO();
                 //年目标
@@ -201,7 +198,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 //目标数据
                 LinkedHashMap<String, Object> targetMap = new LinkedHashMap<>();
                 //类型名称
-                targetMap.put("typeName",map.get("typeName"));
+                targetMap.put(TYPE_NAME,map.get(TYPE_NAME));
                 //指标
                 targetMap.put("metrics","目标值");
                 //年累计
@@ -210,7 +207,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 //实际数据
                 LinkedHashMap<String, Object> realMap = new LinkedHashMap<>();
                 //类型名称
-                realMap.put("typeName",map.get("typeName"));
+                realMap.put(TYPE_NAME,map.get(TYPE_NAME));
                 //指标
                 realMap.put("metrics",MetricsEnum.getNameByCode(dto.getMetrics()));
                 //年累计
@@ -219,7 +216,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                 //完成率/占比
                 LinkedHashMap<String, Object> rateMap = new LinkedHashMap<>();
                 //类型名称
-                rateMap.put("typeName",map.get("typeName"));
+                rateMap.put(TYPE_NAME,map.get(TYPE_NAME));
                 //指标
                 rateMap.put("metrics",TargetFinishViewTypeEnum.getNameByCode(dto.getViewType()));
                 //年累计

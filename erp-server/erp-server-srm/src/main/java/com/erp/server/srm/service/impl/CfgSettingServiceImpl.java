@@ -2,7 +2,7 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -20,11 +20,13 @@ import com.erp.model.srm.vo.ConfigVO;
 import com.erp.model.srm.vo.SupplierConfigVO;
 import com.erp.server.srm.convert.CfgSettingConfigConverter;
 import com.erp.server.srm.mapper.CfgSettingMapper;
-import com.erp.server.srm.service.*;
+import com.erp.server.srm.service.CfgSettingService;
+import com.erp.server.srm.service.DictBasicService;
+import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +46,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private UserService userService;
@@ -65,7 +67,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 throw new ServiceException("系统配置管理保存失败");
             }
             // 操作日志
-            String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "系统配置管理", cfgSettingEntity.getId());
+            String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.CONTENT_96018.msg, cfgSettingEntity.getId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), "新增操作");
         }
 
@@ -74,13 +76,13 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private List<CfgSettingEntity> buildSettingData(OrderAcceptDTO orderAcceptDTO, ReturnConfirmDTO returnConfirmDTO) {
         List<CfgSettingEntity> cfgSettingEntities = new ArrayList<>();
         if (Objects.nonNull(orderAcceptDTO)) {
-            CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.ConfigToOrderAcceptEntity(orderAcceptDTO);
+            CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.configToOrderAcceptEntity(orderAcceptDTO);
             handleData(cfgSettingEntity);
             cfgSettingEntity.setDataJson(JSONUtil.parseObj(orderAcceptDTO, true));
             cfgSettingEntities.add(cfgSettingEntity);
         }
         if (Objects.nonNull(returnConfirmDTO)) {
-            CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.ConfigToReturnConfigEntity(returnConfirmDTO);
+            CfgSettingEntity cfgSettingEntity = CfgSettingConfigConverter.INSTANCE.configToReturnConfigEntity(returnConfirmDTO);
             handleData(cfgSettingEntity);
             cfgSettingEntity.setDataJson(JSONUtil.parseObj(returnConfirmDTO, true));
             cfgSettingEntities.add(cfgSettingEntity);
@@ -100,7 +102,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
                 CfgSettingEntity old = super.getById(cfgSettingEntity.getId());
                 if(null == old){
-                    throw  new ServiceException(ApiError.NOT_EXIST_BILL, "系统配置管理");
+                    throw  new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.CONTENT_96018.msg);
                 }
                 log.info("编辑 开始修改系统配置管理数据，id：【{}】", old.getId());
                 boolean save = super.updateById(cfgSettingEntity);
@@ -109,7 +111,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 }
                 // 记录主单操作日志
                 log.info("编辑 开始记录系统配置管理日志数据，id：【{}】", cfgSettingEntity.getId());
-                String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), "系统配置管理");
+                String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgSettingEntity.getId(), ApiError.CONTENT_96018.msg);
                 operateLogService.addModuleOperateLogByObj(old, cfgSettingEntity, ModuleTypeEnum.SRM_USER.getCode(), cfgSettingEntity.getId(), msg);
             }
         }
@@ -196,7 +198,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     public List<CfgSettingDTO.ViewDTO> listByKey(String key) {
         List<CfgSettingEntity> list = lambdaQuery().eq(CfgSettingEntity::getKey, key).eq(CfgSettingEntity::getDisabled,Boolean.FALSE).list();
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         ConfigKeyEnum keyEnum = ConfigKeyEnum.getEnum(key);
         List<CfgSettingDTO.ViewDTO> configList = new ArrayList<>(list.size());
@@ -246,43 +248,43 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     }
 
     private String getConfigOrderDesc(CfgSettingEntity orderCfgSettingEntity) {
-        StringBuffer stringBuffer = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (Objects.isNull(orderCfgSettingEntity)) {
-            stringBuffer.append("手工接受");
+            sb.append("手工接受");
         } else {
             OrderAcceptDTO orderAcceptDTO = JSONUtil.toBean(orderCfgSettingEntity.getDataJson(), OrderAcceptDTO.class);
             Boolean enable = orderAcceptDTO.getEnable();
             Integer duration = orderAcceptDTO.getDuration();
             String unit = orderAcceptDTO.getUnit();
-            if (Objects.nonNull(enable) && enable) {
+            if (Objects.nonNull(enable) && Boolean.TRUE.equals(enable)) {
                 //启用
-                stringBuffer.append("[").append(duration).append(unit).append("]自动接受");
-                return "[" + duration + unit + "]自动接受";
+                sb.append("[").append(duration).append(unit).append("]自动接受");
+                return sb.toString();
             } else {
-                stringBuffer.append("手工接受");
+                sb.append("手工接受");
             }
         }
-        return stringBuffer.toString();
+        return sb.toString();
     }
 
     private String getConfigReturnDesc(CfgSettingEntity returnCfgSettingEntity) {
-        StringBuffer stringBuffer = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (Objects.isNull(returnCfgSettingEntity)) {
-            stringBuffer.append("手工确认");
+            sb.append("手工确认");
         } else {
             ReturnConfirmDTO returnConfirmDTO = JSONUtil.toBean(returnCfgSettingEntity.getDataJson(), ReturnConfirmDTO.class);
             Boolean enable = returnConfirmDTO.getEnable();
             Integer duration = returnConfirmDTO.getDuration();
             String unit = returnConfirmDTO.getUnit();
-            if (Objects.nonNull(enable) && enable) {
+            if (Objects.nonNull(enable) && Boolean.TRUE.equals(enable)) {
                 //启用
-                stringBuffer.append("[").append(duration).append(unit).append("]自动接受");
+                sb.append("[").append(duration).append(unit).append("]自动接受");
                 return "[" + duration + unit + "]自动确认";
             } else {
-                stringBuffer.append("手工确认");
+                sb.append("手工确认");
             }
         }
-        return stringBuffer.toString();
+        return sb.toString();
     }
 
     /**

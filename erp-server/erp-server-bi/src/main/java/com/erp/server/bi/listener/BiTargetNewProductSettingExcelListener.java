@@ -1,7 +1,7 @@
 package com.erp.server.bi.listener;/**
  * @author Lambda
  * @Classname BiTargetStaffSettingExcelListener
- * @Description TODO
+ * @Description
  * @Date 2023-09-15 15:27
  * @Created by yl
  */
@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-15 15:27
  */
@@ -55,7 +55,7 @@ public class BiTargetNewProductSettingExcelListener extends AnalysisEventListene
         }
         String metricsName = excelDTO.getMetricsName();
         Boolean isExistMetrics = metricsNameList.contains(metricsName);
-        if (!isExistMetrics) {
+        if (Boolean.FALSE.equals(isExistMetrics)) {
             errorMsgList.add("考核指标不存在");
         }
         String staffName = excelDTO.getStaffName();
@@ -66,7 +66,7 @@ public class BiTargetNewProductSettingExcelListener extends AnalysisEventListene
             errorMsgList.add("人员不存在");
         }
         //添加错误数据
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
@@ -76,6 +76,9 @@ public class BiTargetNewProductSettingExcelListener extends AnalysisEventListene
         addDTO.setMetrics(metricsEnum);
         addDTO.setMetricsName(metricsName);
         //人
+        if (user == null) {
+            return;
+        }
         addDTO.setStaffId(user.getUserId());
         addDTO.setStaffName(user.getUserName());
         //一月
@@ -119,7 +122,7 @@ public class BiTargetNewProductSettingExcelListener extends AnalysisEventListene
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 
     public List<TargetNewProductSettingImportExcelDTO> getErrorList() {

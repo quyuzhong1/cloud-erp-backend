@@ -105,7 +105,7 @@ public class BiTargetManagementController extends BaseController {
         try {
             read(excelFile.getInputStream(), BiTargetManagementImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<BiTargetManagementImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
+            if (!list.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/biTargetManagement.xlsx";
                 String name = "biTargetManagement";
