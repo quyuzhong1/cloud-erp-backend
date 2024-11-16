@@ -91,7 +91,7 @@ public class ApiHttpClientUtils extends HttpClientUtils {
     }
 
     private static boolean checkParam(AffterentParam param) {
-        if (StringUtils.isBlank(param.getAppKey()) || StringUtils.isBlank(param.getVersion()) || StringUtils.isBlank(param.getMethod()) ||
+        if (StringUtils.isBlank(param.getAppKey())  || StringUtils.isBlank(param.getMethod()) ||
                 StringUtils.isBlank(param.getVersion()) || StringUtils.isBlank(param.getFormat()) || StringUtils.isBlank(param.getLanguage()) ||
                 StringUtils.isBlank(param.getAppSecret()))
             return false;

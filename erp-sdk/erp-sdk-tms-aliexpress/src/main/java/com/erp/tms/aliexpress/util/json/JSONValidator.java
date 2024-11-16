@@ -6,7 +6,6 @@ import java.text.StringCharacterIterator;
 /**
  * @author zdy
  * @ClassName JSONValidator
- * @description: TODO
  * @date 2023年11月14日
  * @version: 1.0
  */
@@ -176,8 +175,7 @@ public class JSONValidator {
         int start = this.col - 1;
         if ("\\\"/bfnrtu".indexOf(this.c) < 0)
             return error("escape sequence \\\",\\\\,\\/,\\b,\\f,\\n,\\r,\\t or \\uxxxx", start);
-        if (this.c == 'u' && (
-                !ishex(nextCharacter()) || !ishex(nextCharacter()) || !ishex(nextCharacter()) || !ishex(nextCharacter())))
+        if (this.c == 'u' && (!ishex(nextCharacter())))
             return error("unicode escape sequence \\uxxxx", start);
         return true;
     }
