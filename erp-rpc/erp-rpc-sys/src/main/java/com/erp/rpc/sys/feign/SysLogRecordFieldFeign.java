@@ -2,6 +2,7 @@ package com.erp.rpc.sys.feign;
 
 import com.erp.model.sys.dto.SysLogRecordFieldDTO;
 import com.erp.model.sys.dto.SysLogRecordFieldListDTO;
+import com.erp.model.sys.entity.SysLogRecordFieldEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;

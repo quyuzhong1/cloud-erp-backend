@@ -2,14 +2,14 @@ package com.erp.rpc.sys.feign.aspect;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.Tuple;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ReflectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.annotation.Idempotent;
 import com.common.business.config.GlobalExceptionHandler;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -57,6 +57,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -108,6 +109,16 @@ public class SysLoggingAspect {
     @Pointcut("@annotation(com.common.core.anno.LogAction)")
     public void logPointcut() {
     }
+
+//    @Before("logPointcut()")
+//    public void doBefore(JoinPoint jp) {
+//        log.debug("Sys Logging doBefore()");
+//    }
+
+//    @After("logPointcut()")
+//    public void doAfter() {
+//        log.debug("Sys Logging doAfter()");
+//    }
 
     /**
      * 核心业务正常结束时执行
@@ -206,7 +217,13 @@ public class SysLoggingAspect {
                 bo.setClassPath(classPath);
             }
 
-            obj = proceedJoinPoint(joinPoint);
+            try {
+                obj = joinPoint.proceed();
+            } catch (Throwable e) {
+                log.debug("Sys Logging proceed error:{}", e.getMessage());
+                // 传递异常
+                obj = e;
+            }
             // 处理后操作
             Object newObject = afterFindObj(joinPoint, logAction, id);
             // 生成对比描述或单记录自定义描述
@@ -229,14 +246,7 @@ public class SysLoggingAspect {
             redisUtil.del(idempotentKey);
         }
     }
-    private Object proceedJoinPoint(ProceedingJoinPoint joinPoint) throws Throwable {
-        try {
-            return joinPoint.proceed();
-        } catch (Throwable e) {
-            log.debug("Sys Logging proceed error:{}", e.getMessage());
-            return e;
-        }
-    }
+
     private String getIdempotentKey(ProceedingJoinPoint proceedingJoinPoint){
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = null;
@@ -256,6 +266,23 @@ public class SysLoggingAspect {
         String submitKey = "Idempotent:" + MD5Util.toMD5(url + "_" + token + ":" + params);
         return submitKey;
     }
+
+    /**
+     * 根据切入点获取执行的方法
+     */
+    private Method currentMethod(JoinPoint joinPoint) {
+        String methodName = joinPoint.getSignature().getName();
+        //获取目标类的所有方法，找到当前要执行的方法
+        Method[] methods = joinPoint.getTarget().getClass().getMethods();
+        Method resultMethod = null;
+        for (Method method : methods) {
+            if (method.getName().equals(methodName)) {
+                resultMethod = method;
+                break;
+            }
+        }
+        return resultMethod;
+    }
     /**
      * 参数拼装
      */
@@ -265,7 +292,7 @@ public class SysLoggingAspect {
             for (Object o : paramsArray) {
                 if (!ObjectUtils.isEmpty(o) && !isFilterObject(o)) {
                     try {
-                        params.append(JSON.toJSONString(o)).append(" ");
+                        params.append(com.alibaba.fastjson.JSONObject.toJSONString(o)).append(" ");
                     } catch (Exception e) {
                         log.error("日志记录中转换传参异常：{}",e.getMessage());
                     }
@@ -283,11 +310,16 @@ public class SysLoggingAspect {
         if (clazz.isArray()) {
             return clazz.getComponentType().isAssignableFrom(MultipartFile.class);
         } else if (Collection.class.isAssignableFrom(clazz)) {
-            Collection<?> collection = (Collection<?>) o;
-            return collection.stream().anyMatch(MultipartFile.class::isInstance);
+            Collection collection = (Collection) o;
+            for (Object value : collection) {
+                return value instanceof MultipartFile;
+            }
         } else if (Map.class.isAssignableFrom(clazz)) {
-            Map<?, ?> map = (Map<?, ?>) o;
-            return map.values().stream().anyMatch(MultipartFile.class::isInstance);
+            Map map = (Map) o;
+            for (Object value : map.entrySet()) {
+                Map.Entry entry = (Map.Entry) value;
+                return entry.getValue() instanceof MultipartFile;
+            }
         }
         return o instanceof MultipartFile || o instanceof HttpServletRequest || o instanceof HttpServletResponse
                 || o instanceof BindingResult;
@@ -319,7 +351,8 @@ public class SysLoggingAspect {
             // 1:非数组请求参数处理
             if (!(paramsObj instanceof Collection)) {
                 Map<String, Object> paramsMap = BeanUtil.beanToMap(paramsObj);
-                return CharSequenceUtil.format(logAction.desc(), paramsMap);
+                // 将请求参数填充  {paramName1} {paramName2}
+                return StrUtil.format(logAction.desc(), paramsMap);
             }
             return "";
         }
@@ -426,7 +459,8 @@ public class SysLoggingAspect {
             return ((Collection<?>) args[0]).stream()
                     .map(e -> {
                         Map<String, Object> paramsMap = BeanUtil.beanToMap(e);
-                        String currentDesc = CharSequenceUtil.format(logAction.desc(), paramsMap);
+                        // 将请求参数填充  {paramName1} {paramName2}
+                        String currentDesc = StrUtil.format(logAction.desc(), paramsMap);
                         // 初始化
                         SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
                         // 设置记录ID
@@ -440,6 +474,7 @@ public class SysLoggingAspect {
             // 数组请求参数处理
             return Arrays.stream(files)
                     .map(e -> {
+                        // 将请求参数填充  {paramName1} {paramName2}
                         String currentDesc = logAction.desc().replace("{name}", Objects.requireNonNull(e.getOriginalFilename()));
                         // 初始化
                         return initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
@@ -461,7 +496,7 @@ public class SysLoggingAspect {
         dto.setRecordId(id);
         if (StringUtils.isBlank(dto.getResponseParams()) || StringUtils.isNotBlank(dto.getErrorMsg())) {
             // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-            String lastResult = CharSequenceUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, "异常");
+            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, "异常");
             // 设置当前描述
             dto.setDescription(lastResult);
             return;
@@ -470,7 +505,7 @@ public class SysLoggingAspect {
         if (null == data || !(JSONUtil.isTypeJSONArray(data))) {
             // 设置当前描述
             // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-            String lastResult = CharSequenceUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, "操作成功");
+            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, "操作成功");
             // 设置当前描述
             dto.setDescription(lastResult);
             return;
@@ -481,7 +516,7 @@ public class SysLoggingAspect {
             return;
         }
         // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-        String lastResult = CharSequenceUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, currentResult.getMsg());
+        String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, currentResult.getMsg());
         // 设置当前描述
         dto.setDescription(lastResult);
         // 设置记录Code
@@ -546,11 +581,12 @@ public class SysLoggingAspect {
             if (null != idValueObj){
                 return Collections.singletonList(idValueObj.toString());
             }
-            String msg = CharSequenceUtil.format("未找到批量查询字段内容,key={}", idsKey);
+            String msg = StrUtil.format("未找到批量查询字段内容,key={}", idsKey);
             throw new ServiceException(msg);
         }
         // 兼容非List
         if (!(idsValueObj instanceof List<?>)) {
+//            throw new ServiceException("批量查询字段:" + idsKey);
             return Collections.singletonList(idsValueObj.toString());
         }
         List<String> idsResult = new LinkedList<>();
@@ -642,17 +678,37 @@ public class SysLoggingAspect {
             Method nameViewMethod = null;
             // 调用结果
             Object invokeResult = null;
-            Result result = getResult(target, nameViewMethod, annoViewMethod);
+            for (Method method : target.getClass().getDeclaredMethods()) {
+                // 记录view方法
+                if ("view".equals(method.getName())) {
+                    nameViewMethod = method;
+                }
+                if (method.isAnnotationPresent(LogViewService.class)) {
+                    annoViewMethod = method;
+                    break;
+                }
+            }
             // 启用带LogViewService注解的方法
-            if (null != result.annoViewMethod) {
-                targetMethod = result.annoViewMethod;
+            if (null != annoViewMethod) {
+                targetMethod = annoViewMethod;
             }
             //  启用名为view的方法
-            if (null != result.nameViewMethod && null == targetMethod) {
-                targetMethod = result.nameViewMethod;
+            if (null != nameViewMethod && null == targetMethod) {
+                targetMethod = nameViewMethod;
             }
             if (null != targetMethod) {
-                invokeResult = getObject(target, idObj, targetMethod, invokeResult);
+                if (targetMethod.isAnnotationPresent(PostMapping.class)) {
+                    // view方法为Post
+                    BaseIdDTO dto = new BaseIdDTO();
+                    dto.setId(idObj.toString());
+                    invokeResult = targetMethod.invoke(target, dto);
+                } else if (targetMethod.isAnnotationPresent(GetMapping.class)) {
+                    // view方法为Get
+                    invokeResult = targetMethod.invoke(target, idObj);
+                } else if (targetMethod.isAnnotationPresent(RequestMapping.class)){
+                    // 兼容旧接口
+                    invokeResult = targetMethod.invoke(target, idObj);
+                }
                 // 解析结果
                 if (invokeResult instanceof ApiResult) {
                     return ((ApiResult<?>) invokeResult).getData();
@@ -666,47 +722,6 @@ public class SysLoggingAspect {
             log.error("[系统日志]未找到查询view异常:[{}]", e.getMessage());
         }
         return null;
-    }
-
-    private static Object getObject(Object target, Object idObj, Method targetMethod, Object invokeResult) throws IllegalAccessException, InvocationTargetException {
-        if (targetMethod.isAnnotationPresent(PostMapping.class)) {
-            // view方法为Post
-            BaseIdDTO dto = new BaseIdDTO();
-            dto.setId(idObj.toString());
-            invokeResult = targetMethod.invoke(target, dto);
-        } else if (targetMethod.isAnnotationPresent(GetMapping.class)) {
-            // view方法为Get
-            invokeResult = targetMethod.invoke(target, idObj);
-        } else if (targetMethod.isAnnotationPresent(RequestMapping.class)){
-            // 兼容旧接口
-            invokeResult = targetMethod.invoke(target, idObj);
-        }
-        return invokeResult;
-    }
-
-    private static Result getResult(Object target, Method nameViewMethod, Method annoViewMethod) {
-        for (Method method : target.getClass().getDeclaredMethods()) {
-            // 记录view方法
-            if ("view".equals(method.getName())) {
-                nameViewMethod = method;
-            }
-            if (method.isAnnotationPresent(LogViewService.class)) {
-                annoViewMethod = method;
-                break;
-            }
-        }
-        Result result = new Result(annoViewMethod, nameViewMethod);
-        return result;
-    }
-
-    private static class Result {
-        public final Method annoViewMethod;
-        public final Method nameViewMethod;
-
-        public Result(Method annoViewMethod, Method nameViewMethod) {
-            this.annoViewMethod = annoViewMethod;
-            this.nameViewMethod = nameViewMethod;
-        }
     }
 
     /**
@@ -784,7 +799,7 @@ public class SysLoggingAspect {
         }
         String field = detailFieldList.get(0).getField();
         // 明细类名
-        String subField = CharSequenceUtil.subBefore(field, ".", false);
+        String subField = StrUtil.subBefore(field, ".", false);
         if (StringUtils.isBlank(subField)) {
             return;
         }
@@ -835,7 +850,7 @@ public class SysLoggingAspect {
             return;
         }
         Map<String, SysLogRecordFieldListDTO> detailFieldMap = detailFieldList.stream()
-                .collect(Collectors.toMap(e -> CharSequenceUtil.subAfter(e.getField(), ".", true), Function.identity()));
+                .collect(Collectors.toMap(e -> StrUtil.subAfter(e.getField(), ".", true), Function.identity()));
 
         // 遍历更新的明细
         udpateList.forEach(tuple -> {
@@ -853,7 +868,7 @@ public class SysLoggingAspect {
                 }
 
                 // 组合日志描述
-                String logDesc = CharSequenceUtil.format(DETAIL_UPDATE_LOG_DEC,
+                String logDesc = StrUtil.format(DETAIL_UPDATE_LOG_DEC,
                         fieldDto.getFieldName(),
                         fieldDto.parseDescByType(diffObj.getLeft()),
                         fieldDto.parseDescByType(diffObj.getRight()));
@@ -874,7 +889,7 @@ public class SysLoggingAspect {
             if (null == idObj) {
                 throw new ServiceException("找不到实体的ID, class=".concat(obj.getClass().toString()));
             }
-            String deleteLogDesc = CharSequenceUtil.format(detailAddLogDec, idObj.toString());
+            String deleteLogDesc = StrUtil.format(detailAddLogDec, idObj.toString());
             stringBuilder.append(deleteLogDesc);
         });
     }
@@ -892,7 +907,7 @@ public class SysLoggingAspect {
                 return;
             }
             // 组合日志描述
-            String logDesc = CharSequenceUtil.format(MAIN_UPDATE_LOG_DEC,
+            String logDesc = StrUtil.format(MAIN_UPDATE_LOG_DEC,
                     fieldDto.getFieldName(),
                     fieldDto.parseDescByType(diff.getLeft()),
                     fieldDto.parseDescByType(diff.getRight()));
@@ -936,7 +951,7 @@ public class SysLoggingAspect {
                     // 调用globalExceptionHandler失败：全局异常解析失败
                     ApiResult<?> result = new ApiResult<>();
                     result.setCode(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.code);
-                    result.setMsg(CharSequenceUtil.format(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.msg, e.getMessage()));
+                    result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_HANDLER_METHOD_ERROR.msg, e.getMessage()));
                     return result;
                 }
             }
@@ -944,7 +959,7 @@ public class SysLoggingAspect {
         // 找不到globalExceptionHandler异常, 默认提示未知异常
         ApiResult<?> result = new ApiResult<>();
         result.setCode(ApiError.GLOBAL_EXCEPTION_UN_KNOW.code);
-        result.setMsg(CharSequenceUtil.format(ApiError.GLOBAL_EXCEPTION_UN_KNOW.msg, JSONUtil.toJsonStr(obj)));
+        result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_UN_KNOW.msg, JSONUtil.toJsonStr(obj)));
         return result;
     }
 

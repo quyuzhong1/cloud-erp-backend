@@ -2,7 +2,6 @@ package com.erp.server.tms.service.logistics;
 
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
@@ -28,6 +27,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
+import com.sdk.tms.track123.model.request.ExtendField;
 import com.sdk.tms.track123.model.request.OceanRegisterRequest;
 import com.sdk.tms.track123.model.request.RegisterRequest;
 import com.sdk.tms.track123.model.request.TrackRequest;
@@ -55,9 +55,6 @@ import java.util.*;
 @Component
 @LogisticsPlatformType(LogisticsPlatformEnum.TRACK123)
 public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
-    public static final String CLIENT_SECRET = "clientSecret";
-    public static final String NUMBER = "00000";
-    public static final String MESSAGE = "注册数据不能为空";
     @Resource
     private TrackShipperService trackShipperService;
     @Resource
@@ -66,9 +63,8 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private LogisticsOperateService logisticsOperateService;
-    private static final String HAS_BEEN_IMPORTED = "The order number has been imported";
-    public static final String YYYY_MM_DD_HH_MM_SS = "yyyy-MM-dd HH:mm:ss";
-    private static final  DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern(YYYY_MM_DD_HH_MM_SS);
+    private final static String HAS_BEEN_IMPORTED = "The order number has been imported";
+    private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     /**
      * 轨迹查询
      *
@@ -86,9 +82,9 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         ValidatorUtil.validateEntity(trackRequest);
         try {
-            TrackResponse track = trackShipperService.getTrack(logisticsTrackVO.getAuthMap().get(CLIENT_SECRET), trackRequest);
+            TrackResponse<ResponseData> track = trackShipperService.getTrack(logisticsTrackVO.getAuthMap().get("clientSecret"), trackRequest);
             //成功
-            if (Objects.nonNull(track) && NUMBER.equalsIgnoreCase(track.getCode())) {
+            if (Objects.nonNull(track) && "00000".equalsIgnoreCase(track.getCode())) {
                 //查询成功的单号
                 List<TrackDetail> accepted = track.getData().getAccepted().getContent();
                 if (CollectionUtils.isNotEmpty(accepted)) {
@@ -100,7 +96,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                                 LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
                                 logisticsTrackEntity.setTrackNo(trackDetail.getTrackNo());
                                 logisticsTrackEntity.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
-                                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern(YYYY_MM_DD_HH_MM_SS));
+                                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                 logisticsTrackEntity.setTrackTime(eventTime);
                                 logisticsTrackEntity.setAddress(trackingDetail.getAddress());
                                 logisticsTrackEntity.setContent(trackingDetail.getEventDetail());
@@ -156,93 +152,75 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<List<LogisticsTrackEntity>> getOceanTrack(List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> oceanTrackRequestList) {
         List<LogisticsTrackEntity> logisticsTrackList = new ArrayList<>();
         ValidatorUtil.validateEntity(oceanTrackRequestList);
-
         try {
-            TrackOceanResponse track = trackShipperOceanService.getTrack(oceanTrackRequestList.get(0).getAuthMap().get(CLIENT_SECRET), oceanTrackRequestList);
-            if (NUMBER.equalsIgnoreCase(track.getCode())) {
-                oceanProcessAcceptedTracks(track.getData().getAccepted(), logisticsTrackList);
-                oceanProcessRejectedTracks(track.getData().getRejected(), logisticsTrackList);
-                pushSuccessOperateLog(oceanTrackRequestList, track);
+            TrackOceanResponse<OceanResponseData> track = trackShipperOceanService.getTrack(oceanTrackRequestList.get(0).getAuthMap().get("clientSecret"), oceanTrackRequestList);
+            //成功
+            if ("00000".equalsIgnoreCase(track.getCode())) {
+                //查询成功的单号
+                List<OceanTrackInfo> accepted = track.getData().getAccepted();
+                if (CollectionUtils.isNotEmpty(accepted)) {
+                    accepted.forEach(trackDetail -> {
+                        List<OceanContainerInfo> containerInfoList = trackDetail.getContainerInfo();
+                        if (CollectionUtils.isNotEmpty(containerInfoList)){
+                            containerInfoList.forEach(oceanContainerInfo -> {
+                                List<OceanTrackingDetail> trackingDetails = oceanContainerInfo.getTrackingDetails();
+                                if(CollectionUtils.isNotEmpty(trackingDetails)){
+                                    //本地物流
+                                    trackingDetails.forEach(trackingDetail -> {
+                                        LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+                                        logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
+                                        logisticsTrackEntity.setStatus(convertOceanTrackStatus(trackingDetail.getEventStatus()));//转换类型
+                                        LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                        logisticsTrackEntity.setTrackTime(eventTime);
+                                        logisticsTrackEntity.setContent(trackingDetail.getEventDetails());
+                                        logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
+                                        logisticsTrackList.add(logisticsTrackEntity);
+                                    });
+                                }
+//                                else{
+//                                    LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+//                                    logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
+//                                    logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());//转换类型
+//                                    LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                                    logisticsTrackEntity.setTrackTime(eventTime);
+//                                    logisticsTrackEntity.setContent("暂无信息");
+//                                    logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
+//                                    logisticsTrackList.add(logisticsTrackEntity);
+//                                }
+                            });
+                        }
+                    });
+                }
+                //查询失败的单号
+                List<Rejected> rejecteds = track.getData().getRejected();
+                if (CollectionUtils.isNotEmpty(rejecteds)) {
+                    rejecteds.forEach(rejected -> {
+                        LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+                        logisticsTrackEntity.setTrackNo(rejected.getTrackingNo());
+                        logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                        logisticsTrackEntity.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
+                        logisticsTrackEntity.setTrackTime(LocalDateTime.now());
+                        logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
+                        logisticsTrackList.add(logisticsTrackEntity);
+                    });
+                }
+                logisticsOperateService.pullOperateLog(null,
+                        null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(oceanTrackRequestList), JSONUtil.toJsonStr(track));
                 return success(logisticsTrackList);
             } else {
-                pushFailedOperateLog(oceanTrackRequestList, track);
-                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ": " + track.getMsg());
+                logisticsOperateService.pullOperateLog(null,
+                        null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(oceanTrackRequestList), JSONUtil.toJsonStr(track));
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + track.getMsg());
             }
         } catch (Exception e) {
-            log.error("获取物流跟踪信息失败", e);
-            pushFailedOperateLog(oceanTrackRequestList, e);
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ": " + e.getMessage());
+            logisticsOperateService.pullOperateLog(null,
+                    null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(oceanTrackRequestList), JSONUtil.toJsonStr(e));
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
     }
-
-    private void oceanProcessAcceptedTracks(List<OceanTrackInfo> accepted, List<LogisticsTrackEntity> logisticsTrackList) {
-        if (CollectionUtils.isEmpty(accepted)) {
-            return;
-        }
-
-        accepted.forEach(trackDetail -> {
-            List<OceanContainerInfo> containerInfoList = trackDetail.getContainerInfo();
-            if (CollectionUtils.isNotEmpty(containerInfoList)) {
-                containerInfoList.forEach(oceanContainerInfo -> {
-                    List<OceanTrackingDetail> trackingDetails = oceanContainerInfo.getTrackingDetails();
-                    if (CollectionUtils.isNotEmpty(trackingDetails)) {
-                        trackingDetails.forEach(trackingDetail -> {
-                            LogisticsTrackEntity logisticsTrackEntity = createLogisticsTrackEntity(trackDetail, trackingDetail);
-                            logisticsTrackList.add(logisticsTrackEntity);
-                        });
-                    }
-                });
-            }
-        });
-    }
-
-    private void oceanProcessRejectedTracks(List<Rejected> rejected, List<LogisticsTrackEntity> logisticsTrackList) {
-        if (CollectionUtils.isEmpty(rejected)) {
-            return;
-        }
-
-        rejected.forEach(rejected1 -> {
-            LogisticsTrackEntity logisticsTrackEntity = createRejectedLogisticsTrackEntity(rejected1);
-            logisticsTrackList.add(logisticsTrackEntity);
-        });
-    }
-
-    private LogisticsTrackEntity createLogisticsTrackEntity(OceanTrackInfo trackDetail, OceanTrackingDetail trackingDetail) {
-        LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-        logisticsTrackEntity.setTrackNo(trackDetail.getTrackingNo());
-        logisticsTrackEntity.setStatus(convertOceanTrackStatus(trackingDetail.getEventStatus()));
-        LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern(YYYY_MM_DD_HH_MM_SS));
-        logisticsTrackEntity.setTrackTime(eventTime);
-        logisticsTrackEntity.setContent(trackingDetail.getEventDetails());
-        logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
-        return logisticsTrackEntity;
-    }
-
-    private LogisticsTrackEntity createRejectedLogisticsTrackEntity(Rejected rejected) {
-        LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-        logisticsTrackEntity.setTrackNo(rejected.getTrackingNo());
-        logisticsTrackEntity.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
-        logisticsTrackEntity.setContent(rejected.getError().getCode() + ": " + rejected.getError().getMsg());
-        logisticsTrackEntity.setTrackTime(LocalDateTime.now());
-        logisticsTrackEntity.setTransportType(LogisticsTransportTypeEnum.OCEAN.getCode());
-        return logisticsTrackEntity;
-    }
-
-    private void pushSuccessOperateLog(List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> requestList, TrackOceanResponse response) {
-        logisticsOperateService.pullOperateLog(null, null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                RequestStatusEnums.SUCCESS.getCode(), JSON.toJSONString(requestList), JSON.toJSONString(response));
-    }
-
-    private void pushFailedOperateLog(List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> requestList, TrackOceanResponse response) {
-        logisticsOperateService.pullOperateLog(null, null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                RequestStatusEnums.FAILED.getCode(), JSON.toJSONString(requestList), JSON.toJSONString(response));
-    }
-
-    private void pushFailedOperateLog(List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> requestList, Exception e) {
-        logisticsOperateService.pullOperateLog(null, null, BusinessTypeEnum.GET_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
-                RequestStatusEnums.FAILED.getCode(), JSON.toJSONString(requestList), JSON.toJSONString(e));
-    }
-
 
     /**
      * 【与track123轨迹对应关系-到港之前均为运输中，到港后更新「已到港」，查验变更为[查验中]】
@@ -264,124 +242,84 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<List<RegisterResponseVO>> registerLogisticsNumber(RegisterTrackVO registerTrackVO) {
         List<LogisticsRegisterVO> logisticsRegisterVOS = registerTrackVO.getLogisticsRegisterVOS();
         Map<String, String> authMap = registerTrackVO.getAuthMap();
-        String token = authMap.get(CLIENT_SECRET);
-
+        String token = authMap.get("clientSecret");
+        List<RegisterResponseVO> registerResponseVOS = new ArrayList<>();
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)) {
-            return failure(MESSAGE);
+            return failure("注册数据不能为空");
         }
-
-        List<RegisterRequest> registerRequests = prepareRegisterRequests(logisticsRegisterVOS);
+        List<RegisterRequest> registerRequests = LogisticsChannelConverter.INSTANCE.registerTrackNoByTrack123(logisticsRegisterVOS);
+        //去掉非顺丰物流单手机号传递
+        registerRequests.forEach(registerRequest -> {
+            String trackNo = registerRequest.getTrackNo();
+            if (StringUtils.isEmpty(trackNo) || !trackNo.startsWith("SF")){
+                registerRequest.setExtendFieldMap(null);
+//                ExtendField extendFieldMap = registerRequest.getExtendFieldMap();
+//                if (Objects.nonNull(extendFieldMap)){
+//                    extendFieldMap.setPhoneSuffix(null);
+//                }
+            }
+        });
         ValidatorUtil.validateEntity(registerRequests);
-
         try {
             RegisterResult registerResult = trackShipperService.registerLogisticsNumber(token, registerRequests);
-            return handleRegisterResult(registerResult, registerTrackVO);
-        } catch (Exception e) {
-            log.error("注册物流单号失败", e);
-            pushFailedOperateLog(registerTrackVO, e);
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ": " + e.getMessage());
-        }
-    }
-
-    private List<RegisterRequest> prepareRegisterRequests(List<LogisticsRegisterVO> logisticsRegisterVOS) {
-        List<RegisterRequest> registerRequests = LogisticsChannelConverter.INSTANCE.registerTrackNoByTrack123(logisticsRegisterVOS);
-        registerRequests.forEach(this::filterExtendFieldMap);
-        return registerRequests;
-    }
-
-    private void filterExtendFieldMap(RegisterRequest registerRequest) {
-        String trackNo = registerRequest.getTrackNo();
-        if (StringUtils.isEmpty(trackNo) || !trackNo.startsWith("SF")) {
-            registerRequest.setExtendFieldMap(null);
-        }
-    }
-
-    private ApiResult<List<RegisterResponseVO>> handleRegisterResult(RegisterResult registerResult, RegisterTrackVO registerTrackVO) {
-        if (!NUMBER.equalsIgnoreCase(registerResult.getCode())) {
-            pushFailedOperateLog(registerTrackVO, registerResult);
-            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ": " + registerResult.getMsg());
-        }
-
-        List<RegisterResponseVO> registerResponseVOS = new ArrayList<>();
-        processAcceptedTracks(registerResult.getData().getAccepted(), registerResponseVOS);
-        processRejectedTracks(registerResult.getData().getRejected(), registerResponseVOS);
-
-        pushSuccessOperateLog(registerTrackVO, registerResult);
-        return success(registerResponseVOS);
-    }
-
-    private void processAcceptedTracks(List<Accepted> accepted, List<RegisterResponseVO> registerResponseVOS) {
-        if (CollectionUtils.isNotEmpty(accepted)) {
-            accepted.forEach(accepted1 -> registerResponseVOS.add(
-                    RegisterResponseVO.builder()
-                            .trackNo(accepted1.getTrackNo())
-                            .trackStatus(true)
-                            .build()));
-        }
-    }
-
-    private void processRejectedTracks(List<Rejected> rejected, List<RegisterResponseVO> registerResponseVOS) {
-        if (CollectionUtils.isNotEmpty(rejected)) {
-            rejected.forEach(rejected1 -> {
-                boolean isImported = Objects.nonNull(rejected1.getError()) && StringUtils.isNotEmpty(rejected1.getError().getMsg())
-                        && rejected1.getError().getMsg().equals(HAS_BEEN_IMPORTED);
-                if (isImported) {
-                    registerResponseVOS.add(RegisterResponseVO.builder()
-                            .trackNo(rejected1.getTrackNo())
-                            .trackStatus(true)
-                            .build());
-                } else {
-                    registerResponseVOS.add(RegisterResponseVO.builder()
-                            .trackNo(rejected1.getTrackNo())
-                            .trackStatus(false)
-                            .code(rejected1.getError().getCode())
-                            .msg(rejected1.getError().getMsg())
-                            .build());
+            //成功
+            if ("00000".equalsIgnoreCase(registerResult.getCode())) {
+                RegisterResponse data = registerResult.getData();
+                List<Accepted> accepted = data.getAccepted();
+                if (CollectionUtils.isNotEmpty(accepted)) {
+                    accepted.forEach(accepted1 -> {
+                        registerResponseVOS.add(RegisterResponseVO.builder().trackNo(accepted1.getTrackNo()).trackStatus(true).build());
+                    });
                 }
-            });
+                List<Rejected> rejected = data.getRejected();
+                if (CollectionUtils.isNotEmpty(rejected)) {
+                    rejected.forEach(rejected1 -> {
+                        if (Objects.nonNull(rejected1.getError()) && StringUtils.isNotEmpty(rejected1.getError().getMsg())
+                        && rejected1.getError().getMsg().equals(HAS_BEEN_IMPORTED)){
+                            //已导入的运单号，返回成功
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(true).build());
+                        }else {
+                            registerResponseVOS.add(RegisterResponseVO.builder().trackNo(rejected1.getTrackNo()).trackStatus(false)
+                                    .code(rejected1.getError().getCode())
+                                    .msg(rejected1.getError().getMsg()).build());
+                        }
+                    });
+                }
+                logisticsOperateService.pushOperateLog(null,
+                        null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(registerResult), false);
+                return success(registerResponseVOS);
+            }else {
+                logisticsOperateService.pushOperateLog(null,
+                        null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(registerResult),false);
+                return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + registerResult.getMsg());
+            }
+        }catch (Exception e){
+            logisticsOperateService.pushOperateLog(null,
+                    null, BusinessTypeEnum.REGISTER_TRACK.getCode(), LogisticsPlatformEnum.TRACK123.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(registerTrackVO), JSONUtil.toJsonStr(e),true);
+            return ApiResult.error(ApiError.CALL_THIRD_LOGISTICS_PLATFORM_ERROR.code, getPlatForm().getName() + ":" + e.getMessage());
         }
     }
-
-    private void pushSuccessOperateLog(RegisterTrackVO registerTrackVO, RegisterResult registerResult) {
-        logisticsOperateService.pushOperateLog(null, null, BusinessTypeEnum.REGISTER_TRACK.getCode(),
-                LogisticsPlatformEnum.TRACK123.getCode(), RequestStatusEnums.SUCCESS.getCode(),
-                JSON.toJSONString(registerTrackVO), JSON.toJSONString(registerResult), false);
-    }
-
-    private void pushFailedOperateLog(RegisterTrackVO registerTrackVO, Exception e) {
-        logisticsOperateService.pushOperateLog(null, null, BusinessTypeEnum.REGISTER_TRACK.getCode(),
-                LogisticsPlatformEnum.TRACK123.getCode(), RequestStatusEnums.FAILED.getCode(),
-                JSON.toJSONString(registerTrackVO), JSON.toJSONString(e), true);
-    }
-
-    private void pushFailedOperateLog(RegisterTrackVO registerTrackVO, RegisterResult registerResult) {
-        logisticsOperateService.pushOperateLog(null, null, BusinessTypeEnum.REGISTER_TRACK.getCode(),
-                LogisticsPlatformEnum.TRACK123.getCode(), RequestStatusEnums.FAILED.getCode(),
-                JSON.toJSONString(registerTrackVO), JSON.toJSONString(registerResult), false);
-    }
-
-    private ApiResult<List<RegisterResponseVO>> success(List<RegisterResponseVO> registerResponseVOS) {
-        return ApiResult.success(registerResponseVOS);
-    }
-
 
     @Override
     public ApiResult<List<RegisterResponseVO>> oceanRegisterLogisticsNumber(List<LogisticsTrackBaseDTO.OceanRegisterRequestDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            return failure(MESSAGE);
+            return failure("注册数据不能为空");
         }
         Map<String, String> authMap = list.get(0).getAuthMap();
-        String token = authMap.get(CLIENT_SECRET);
+        String token = authMap.get("clientSecret");
         List<RegisterResponseVO> registerResponseVOS = new ArrayList<>();
         if (CollectionUtils.isEmpty(list)) {
-            return failure(MESSAGE);
+            return failure("注册数据不能为空");
         }
         List<OceanRegisterRequest> registerRequests = handleOceanRegisterRequest(list);
         ValidatorUtil.validateEntity(registerRequests);
         try {
             OceanRegisterResult registerResult = trackShipperOceanService.registerLogisticsNumber(token, registerRequests);
             //成功
-            if (NUMBER.equalsIgnoreCase(registerResult.getCode())) {
+            if ("00000".equalsIgnoreCase(registerResult.getCode())) {
                 OceanResponseData data = registerResult.getData();
                 List<OceanTrackInfo> accepted = data.getAccepted();
                 if (CollectionUtils.isNotEmpty(accepted)) {
@@ -496,7 +434,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         Map<String, String> map = new HashMap<>();
         map.put("id", cfgAppClient.getId());
         map.put("logisticsPlatform", getPlatForm().getCode());
-        map.put(CLIENT_SECRET, cfgAppClient.getClientSecret());
+        map.put("clientSecret", cfgAppClient.getClientSecret());
         map.put("clientId", cfgAppClient.getClientId());
         return Collections.singletonList(map);
     }
@@ -508,8 +446,8 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<Object>authorization(Map<String, String> authMap){
         try {
-            TrackResponse trackResponse = trackShipperService.getCourierList(authMap.get(CLIENT_SECRET));
-            if (!NUMBER.equalsIgnoreCase(trackResponse.getCode()))  {
+            TrackResponse trackResponse = trackShipperService.getCourierList(authMap.get("clientSecret"));
+            if (!"00000".equalsIgnoreCase(trackResponse.getCode()))  {
                 //授权失败
                 return failure("授权失败");
             }else {

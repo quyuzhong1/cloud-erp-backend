@@ -216,11 +216,17 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     public DeliveryOrderDTO.ViewDTO view(String id) {
 
         DeliveryOrderEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "送货单"));
+        isExist(entity);
         List<DeliveryOrderDetailEntity> detailEntityList = detailService.listByMainId(entity.getId());
         DeliveryOrderDTO.ViewDTO viewDTO = DeliveryOrderConverter.INSTANCE.viewConvert(entity,detailEntityList);
         fillView(viewDTO);
         return viewDTO;
+    }
+
+    private static void isExist(DeliveryOrderEntity entity) {
+        if(null == entity){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "送货单");
+        }
     }
 
     private void fillView(DeliveryOrderDTO.ViewDTO viewDTO) {
@@ -628,7 +634,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
                 .eq(DeliveryOrderEntity :: getCode,code)
                 .last("limit 1")
                 .one();
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "送货单"));
+        isExist(entity);
         SupplierEntity supplier = supplierFeign.getSupplierById(entity.getSupplierId());
         if(Objects.isNull(supplier)){
             throw new ServiceException(ApiError.ERROR_96001);
@@ -754,7 +760,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     @Override
     public Boolean update(DeliveryOrderDTO.UpdateDTO updateDTO) {
         DeliveryOrderEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "送货单"));
+        isExist(old);
         DeliveryOrderEntity deliveryOrderEntity = BeanMapperUtils.map(DeliveryOrderEntity.class, updateDTO);
         // 数据处理
         handleData(deliveryOrderEntity,true);

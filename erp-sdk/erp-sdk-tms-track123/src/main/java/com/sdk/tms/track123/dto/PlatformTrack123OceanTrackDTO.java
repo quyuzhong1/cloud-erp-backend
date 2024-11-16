@@ -8,7 +8,6 @@ import com.common.core.enums.PannoEnum;
 import com.sdk.tms.track123.model.response.OceanResponseData;
 import com.sdk.tms.track123.model.response.OceanTrackInfo;
 import com.sdk.tms.track123.model.response.Rejected;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,7 +28,6 @@ import java.util.UUID;
 @Setter
 @Getter
 @NoArgsConstructor
-@EqualsAndHashCode
 public class PlatformTrack123OceanTrackDTO extends CleanBaseDTO {
 
 

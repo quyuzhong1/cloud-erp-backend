@@ -1,19 +1,22 @@
 package com.sdk.tms.track123.handler;
 
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
 import com.common.business.annotation.PlatformType;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.enums.*;
 import com.common.business.handler.AbstractLogisticsTrackHandler;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -103,125 +106,106 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
     }
 
     private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
-        if (CollectionUtils.isEmpty(records)) {
-            return null;
-        }
-
-        String token = cfgAppClient.getClientSecret();
-        List<LogisticsRegisterVO> logisticsRegisterVOS = convertToLogisticsRegisterVO(records);
-
-        if (CollectionUtils.isEmpty(logisticsRegisterVOS)) {
-            return null;
-        }
-
-        TrackRequest trackRequest = createTrackRequest(logisticsRegisterVOS);
-        try {
-            TrackResponse track = trackShipperService.getTrack(token, trackRequest);
-            return Objects.isNull(track) ? null : track.getData();
-        } catch (Exception e) {
-            log.error("获取Track123物流轨迹查询异常：{}", e.getMessage());
-            return null;
-        }
-    }
-
-    private List<LogisticsRegisterVO> convertToLogisticsRegisterVO(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
-        List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
-        for (LogisticsTrackDTO.UpdateTrackDTO updateTrackDTO : records) {
-            if (TrackQueryTypeEnum.TRANSPORT_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && CharSequenceUtil.isNotBlank(updateTrackDTO.getTransportNo())) {
-                String transportNo = updateTrackDTO.getTransportNo();
-                if (CharSequenceUtil.isNotBlank(transportNo)) {
+        if (CollectionUtils.isNotEmpty(records)) {
+            String token = cfgAppClient.getClientSecret();
+            //根据配置进行获取
+            List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
+            //根据配置进行组装注册数据
+            records.forEach(updateTrackDTO -> {
+                if (TrackQueryTypeEnum.TRANSPORT_NO.getCode().equals(updateTrackDTO.getTrackQueryType()) && StrUtil.isNotBlank(updateTrackDTO.getTransportNo())){
+                    String transportNo = updateTrackDTO.getTransportNo();
+                    if (StrUtil.isNotBlank(transportNo)){
+                        logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
+                                .trackNo(transportNo)
+                                .phoneSuffix(updateTrackDTO.getTelNumber())
+                                .build());
+                    }
+                }else {
                     logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
-                            .trackNo(transportNo)
+                            .trackNo(updateTrackDTO.getTrackNo())
                             .phoneSuffix(updateTrackDTO.getTelNumber())
                             .build());
                 }
-            } else {
-                logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
-                        .trackNo(updateTrackDTO.getTrackNo())
-                        .phoneSuffix(updateTrackDTO.getTelNumber())
-                        .build());
+            });
+            if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
+                return null;
             }
+            TrackRequest trackRequest = TrackRequest.builder()
+                    .trackNos(logisticsRegisterVOS.stream().map(LogisticsRegisterVO::getTrackNo).distinct().collect(Collectors.toList()))
+                    .cursor("")
+                    .queryPageSize(100)
+                    .build();
+            try {
+                TrackResponse track = trackShipperService.getTrack(token, trackRequest);
+                return Objects.isNull(track) ? null : track.getData();
+            } catch (Exception e) {
+                log.error("获取Track123物流轨迹查询异常：{}", e.getMessage());
+                return null;
+            }
+        } else {
+            return null;
         }
-        return logisticsRegisterVOS;
     }
-
-    private TrackRequest createTrackRequest(List<LogisticsRegisterVO> logisticsRegisterVOS) {
-        return TrackRequest.builder()
-                .trackNos(logisticsRegisterVOS.stream().map(LogisticsRegisterVO::getTrackNo).distinct().collect(Collectors.toList()))
-                .cursor("")
-                .queryPageSize(100)
-                .build();
-    }
-
 
     @Override
     public List<PlatformTrackDTO> convert(List<PlatformTrack123TrackDTO> sourceDataList) {
-        List<PlatformTrackDTO> resultList = new ArrayList<>();
+        List<PlatformTrackDTO> resultList = new LinkedList<>();
         for (PlatformTrack123TrackDTO sourceDto : sourceDataList) {
-            processAcceptedTracks(resultList, sourceDto);
-            processRejectedTracks(resultList, sourceDto);
+            //将成功和失败的数据返回
+            TrackInfo accepted = sourceDto.getAccepted();
+            if (Objects.nonNull(accepted)) {
+                if (CollectionUtils.isNotEmpty(accepted.getContent())) {
+                    for (TrackDetail trackDetail : accepted.getContent()) {
+                        PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                        acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
+                        acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
+                        acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
+                        LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
+                        if (CollectionUtils.isNotEmpty(localLogisticsInfo.getTrackingDetails())) {
+                            List<PlatformTrackDetail> details = new ArrayList<>();
+                            for (TrackingDetail trackingDetail : localLogisticsInfo.getTrackingDetails()) {
+                                PlatformTrackDetail detail = new PlatformTrackDetail();
+                                detail.setTrackNo(trackDetail.getTrackNo());
+                                detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                                detail.setTrackTime(eventTime);
+                                detail.setContent(trackingDetail.getEventDetail());
+                                details.add(detail);
+                            }
+                            acceptedToSaveDto.setDetails(details);
+                            resultList.add(acceptedToSaveDto);
+                        }
+//                        else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())) {
+//                            List<PlatformTrackDetail> details = new ArrayList<>();
+//                            PlatformTrackDetail detail = new PlatformTrackDetail();
+//                            detail.setTrackNo(trackDetail.getTrackNo());
+//                            detail.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
+//                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                            detail.setTrackTime(eventTime);
+//                            detail.setContent("暂无信息");
+//                            details.add(detail);
+//                            acceptedToSaveDto.setDetails(details);
+//                            resultList.add(acceptedToSaveDto);
+//                        }
+                    }
+                }
+            }
+            if (CollectionUtils.isNotEmpty(sourceDto.getRejected())) {
+                for (Rejected rejected : sourceDto.getRejected()) {
+                    PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
+                    acceptedToSaveDto.setTrackNo(rejected.getTrackNo());
+                    PlatformTrackDetail detail = new PlatformTrackDetail();
+                    detail.setTrackNo(rejected.getTrackNo());
+                    detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                    detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
+                    detail.setTrackTime(LocalDateTime.now());
+                    acceptedToSaveDto.setDetails(Collections.singletonList(detail));
+                    resultList.add(acceptedToSaveDto);
+                }
+            }
+
         }
         return resultList;
-    }
-
-    private void processAcceptedTracks(List<PlatformTrackDTO> resultList, PlatformTrack123TrackDTO sourceDto) {
-        TrackInfo accepted = sourceDto.getAccepted();
-        if (Objects.nonNull(accepted) && CollectionUtils.isNotEmpty(accepted.getContent())) {
-            for (TrackDetail trackDetail : accepted.getContent()) {
-                PlatformTrackDTO acceptedToSaveDto = createAcceptedTrackDTO(trackDetail, sourceDto);
-                List<PlatformTrackDetail> details = createDetails(trackDetail);
-                acceptedToSaveDto.setDetails(details);
-                resultList.add(acceptedToSaveDto);
-            }
-        }
-    }
-
-    private void processRejectedTracks(List<PlatformTrackDTO> resultList, PlatformTrack123TrackDTO sourceDto) {
-        if (CollectionUtils.isNotEmpty(sourceDto.getRejected())) {
-            for (Rejected rejected : sourceDto.getRejected()) {
-                PlatformTrackDTO rejectedToSaveDto = createRejectedTrackDTO(rejected, sourceDto);
-                resultList.add(rejectedToSaveDto);
-            }
-        }
-    }
-
-    private PlatformTrackDTO createAcceptedTrackDTO(TrackDetail trackDetail, PlatformTrack123TrackDTO sourceDto) {
-        PlatformTrackDTO dto = new PlatformTrackDTO();
-        dto.setTrackNo(trackDetail.getTrackNo());
-        dto.setUniqueId(sourceDto.getUniqueId());
-        dto.setPlatform(sourceDto.getPlatform());
-        return dto;
-    }
-
-    private List<PlatformTrackDetail> createDetails(TrackDetail trackDetail) {
-        List<PlatformTrackDetail> details = new ArrayList<>();
-        LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
-        if (CollectionUtils.isNotEmpty(localLogisticsInfo.getTrackingDetails())) {
-            for (TrackingDetail trackingDetail : localLogisticsInfo.getTrackingDetails()) {
-                PlatformTrackDetail detail = new PlatformTrackDetail();
-                detail.setTrackNo(trackDetail.getTrackNo());
-                detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));
-                LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                detail.setTrackTime(eventTime);
-                detail.setContent(trackingDetail.getEventDetail());
-                details.add(detail);
-            }
-        }
-        return details;
-    }
-
-    private PlatformTrackDTO createRejectedTrackDTO(Rejected rejected, PlatformTrack123TrackDTO sourceDto) {
-        PlatformTrackDTO dto = new PlatformTrackDTO();
-        dto.setTrackNo(rejected.getTrackNo());
-        dto.setUniqueId(sourceDto.getUniqueId());
-        dto.setPlatform(sourceDto.getPlatform());
-        PlatformTrackDetail detail = new PlatformTrackDetail();
-        detail.setTrackNo(rejected.getTrackNo());
-        detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
-        detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
-        detail.setTrackTime(LocalDateTime.now());
-        dto.setDetails(Collections.singletonList(detail));
-        return dto;
     }
 
 
@@ -264,6 +248,12 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
         return LogisticTrackStatusEnum.NOT_FIND.getCode();
     }
 
+    public static void main(String[] args) {
+//        String json = "{\"shipmentInfo\":{\"shipmentId\":\"FBA17FKD1MPZ\",\"shipmentName\":\"FBA STA (10/07/2023 07:09)-CMH2\",\"shipFromAddress\":{\"name\":\"LC108092（Ling）\",\"addressLine1\":\"14939 Summit Drive\",\"city\":\"Eastvale\",\"stateOrProvinceCode\":\"CA\",\"countryCode\":\"US\",\"postalCode\":\"92880\"},\"destinationFulfillmentCenterId\":\"CMH2\",\"shipmentStatus\":\"RECEIVING\",\"labelPrepType\":\"SELLER_LABEL\",\"boxContentsSource\":\"INTERACTIVE\"},\"shopId\":\"1720261566995107842\",\"shopName\":\"亚马逊测试店铺美国\",\"platformUpdateTime\":1698995263691,\"downloadStatus\":0,\"downloadTime\":\"\",\"detailList\":[]}";
+//        PlatformTrackDTO shipmentDTO = TrackDataConverter.INSTANCE.downloadDtoToSaveDto(JSONUtil.toBean(json, PlatformTrack123TrackDTO.class));
+//        System.out.println(JSONUtil.toJsonStr(shipmentDTO));
+    }
+
     @Override
     public String getTargetPlatform() {
         return PlatformDictEnum.TRACK123.getCode();
@@ -274,7 +264,6 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
      * true=发送
      * false=不发送（有其他详情需要额外拉取）
      */
-    @Override
     public Boolean getIsSendMq() {
         return Boolean.TRUE;
     }

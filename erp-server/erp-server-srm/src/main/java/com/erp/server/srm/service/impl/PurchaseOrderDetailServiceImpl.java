@@ -35,7 +35,10 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.PurchaseOrderConverter;
 import com.erp.server.srm.mapper.PurchaseOrderDetailMapper;
-import com.erp.server.srm.service.*;
+import com.erp.server.srm.service.DeliveryOrderDetailService;
+import com.erp.server.srm.service.DeliveryOrderService;
+import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.PurchaseOrderDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,7 +51,6 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -113,7 +115,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public Boolean update(PurchaseOrderDetailDTO.UpdateDTO updateDTO) {
         PurchaseOrderDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "采购订单明细表（已确认）"));
+        if(null == old){
+            throw  new ServiceException(ApiError.NOT_EXIST_BILL, "采购订单明细表（已确认）");
+        }
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = BeanMapperUtils.map(PurchaseOrderDetailEntity.class, updateDTO);
 
         // 数据处理

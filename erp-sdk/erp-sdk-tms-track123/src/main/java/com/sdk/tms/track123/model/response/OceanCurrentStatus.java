@@ -1,8 +1,7 @@
 package com.sdk.tms.track123.model.response;
 
+import lombok.Builder;
 import lombok.Data;
-
-import java.io.Serializable;
 
 /**
  * @author Will
@@ -10,7 +9,7 @@ import java.io.Serializable;
  * @date 2024/4/9 16:49
  */
 @Data
-public class OceanCurrentStatus implements Serializable {
+public class OceanCurrentStatus {
 
 
     /**
