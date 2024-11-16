@@ -12,6 +12,7 @@ import com.common.business.dto.RequestDTO;
 import com.common.business.dto.UniqueDto;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -115,7 +116,7 @@ public class LxShopInfoServiceImpl implements IReportSaveService<ShopEntity> {
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.LX_SHOP_INFO_TAG.getName(), JSONUtil.toJsonStr(msg),  msg.getSid().toString());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
     }
