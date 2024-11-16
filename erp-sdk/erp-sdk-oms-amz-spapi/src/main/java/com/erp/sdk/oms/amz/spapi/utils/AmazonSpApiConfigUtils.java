@@ -1,15 +1,10 @@
 package com.erp.sdk.oms.amz.spapi.utils;
 
-import com.common.core.utils.UUID;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
+import cn.hutool.core.util.StrUtil;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.ScopeConstants;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import cn.hutool.core.util.StrUtil;
 
 /**
  * 亚马逊SP-API配置工具类
