@@ -1,9 +1,8 @@
 package com.erp.server.bi.service.impl;
 
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -12,10 +11,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.dto.excel.TargetNewProductSettingImportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetNewProductSettingEntity;
 
-import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
@@ -23,14 +20,12 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.listener.BiTargetNewProductSettingExcelListener;
-import com.erp.server.bi.listener.BiTargetSkuSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetNewProductSettingMapper;
 import com.erp.server.bi.service.BiTargetNewProductSettingService;
 import com.common.core.exception.ServiceException;
 import com.erp.server.bi.service.BiTargetYearService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
-import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -44,6 +39,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -134,84 +130,31 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     private List<BiTargetNewProductSettingEntity> listAdd(BiTargetNewProductSettingDTO.CommonDTO item) {
         List<BiTargetNewProductSettingEntity> addList = new ArrayList<>(24);
         String staffId = item.getStaffId();
-        //指标
         MetricsEnum metrics = item.getMetrics();
-        //一月值
-        BigDecimal january = item.getJanuary();
-        BigDecimal januaryRate = item.getJanuaryRate();
-        //一月值
-        if (Objects.nonNull(january) || Objects.nonNull(januaryRate)) {
-            addList.add(putEntity(staffId, item.getJanuary(), januaryRate, metrics, MonthEnum.JANUARY.getValue()));
-        }
-        //二月值
-        BigDecimal february = item.getFebruary();
-        BigDecimal februaryRate = item.getFebruaryRate();
-        if (Objects.nonNull(february) || Objects.nonNull(februaryRate)) {
-            addList.add(putEntity(staffId, february, februaryRate, metrics, MonthEnum.FEBRUARY.getValue()));
-        }
-        //三月值
-        BigDecimal march = item.getMarch();
-        BigDecimal marchRate = item.getMarchRate();
-        if (Objects.nonNull(march) || Objects.nonNull(marchRate)) {
-            addList.add(putEntity(staffId, march, marchRate, metrics, MonthEnum.MARCH.getValue()));
-        }
-        //四月值
-        BigDecimal april = item.getApril();
-        BigDecimal aprilRate = item.getAprilRate();
-        if (Objects.nonNull(april) || Objects.nonNull(aprilRate)) {
-            addList.add(putEntity(staffId, april, aprilRate, metrics, MonthEnum.APRIL.getValue()));
-        }
-        //五月值
-        BigDecimal may = item.getMay();
-        BigDecimal mayRate = item.getMayRate();
-        if (Objects.nonNull(may) || Objects.nonNull(mayRate)) {
-            addList.add(putEntity(staffId, may, mayRate, metrics, MonthEnum.MAY.getValue()));
-        }
-        //六月值
-        BigDecimal june = item.getJune();
-        BigDecimal juneRate = item.getJuneRate();
-        if (Objects.nonNull(june) || Objects.nonNull(juneRate)) {
-            addList.add(putEntity(staffId, june, juneRate, metrics, MonthEnum.JUNE.getValue()));
-        }
-        //七月值
-        BigDecimal july = item.getJuly();
-        BigDecimal julyRate = item.getJulyRate();
-        if (Objects.nonNull(july) || Objects.nonNull(julyRate)) {
-            addList.add(putEntity(staffId, july, julyRate, metrics, MonthEnum.JULY.getValue()));
-        }
-        //八月值
-        BigDecimal august = item.getAugust();
-        BigDecimal augustRate = item.getAugustRate();
-        if (Objects.nonNull(august) || Objects.nonNull(augustRate)) {
-            addList.add(putEntity(staffId, august, augustRate, metrics, MonthEnum.AUGUST.getValue()));
-        }
-        //九月值
-        BigDecimal september = item.getSeptember();
-        BigDecimal septemberRate = item.getSeptemberRate();
-        if (Objects.nonNull(september) || Objects.nonNull(septemberRate)) {
-            addList.add(putEntity(staffId, september, septemberRate, metrics, MonthEnum.SEPTEMBER.getValue()));
-        }
-        //十月值
-        BigDecimal october = item.getOctober();
-        BigDecimal octoberRate = item.getOctoberRate();
-        if (Objects.nonNull(october) || Objects.nonNull(octoberRate)) {
-            addList.add(putEntity(staffId, october, octoberRate, metrics, MonthEnum.OCTOBER.getValue()));
-        }
-        //十一月值
-        BigDecimal november = item.getNovember();
-        BigDecimal novemberRate = item.getNovemberRate();
-        if (Objects.nonNull(november) || Objects.nonNull(novemberRate)) {
-            addList.add(putEntity(staffId, november, novemberRate, metrics, MonthEnum.NOVEMBER.getValue()));
-        }
-        //十二月值
-        BigDecimal december = item.getDecember();
-        BigDecimal decemberRate = item.getDecemberRate();
-        if (Objects.nonNull(december) || Objects.nonNull(decemberRate)) {
-            addList.add(putEntity(staffId, december, decemberRate, metrics, MonthEnum.DECEMBER.getValue()));
-        }
-        return addList;
 
+        // 将月份及对应值存入数组
+        MonthEnum[] months = MonthEnum.values();
+        BigDecimal[] values = {
+                item.getJanuary(), item.getFebruary(), item.getMarch(), item.getApril(),
+                item.getMay(), item.getJune(), item.getJuly(), item.getAugust(),
+                item.getSeptember(), item.getOctober(), item.getNovember(), item.getDecember()
+        };
+        BigDecimal[] rates = {
+                item.getJanuaryRate(), item.getFebruaryRate(), item.getMarchRate(), item.getAprilRate(),
+                item.getMayRate(), item.getJuneRate(), item.getJulyRate(), item.getAugustRate(),
+                item.getSeptemberRate(), item.getOctoberRate(), item.getNovemberRate(), item.getDecemberRate()
+        };
+
+        // 使用循环来简化每个月的处理
+        for (int i = 0; i < months.length; i++) {
+            if (Objects.nonNull(values[i]) || Objects.nonNull(rates[i])) {
+                addList.add(putEntity(staffId, values[i], rates[i], metrics, months[i].getValue()));
+            }
+        }
+
+        return addList;
     }
+
 
     /**
      * 填充数据
@@ -388,10 +331,10 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     public PagingVO<BiTargetNewProductSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
-        IPage pageData = baseMapper.paging(query, params, multiplyNum);
+        IPage<BiTargetNewProductSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params, multiplyNum);
         List<BiTargetNewProductSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -429,7 +372,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -454,7 +397,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         BiTargetNewProductSettingExcelListener excelListenerUtil = new BiTargetNewProductSettingExcelListener(metricsNameList, userList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), TargetNewProductSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), TargetNewProductSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("新品目标设置 导入错误>>>{}", e);
         }
@@ -493,12 +436,11 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
      */
     @Override
     public Boolean delete(BiTargetNewProductSettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetNewProductSettingEntity::getStaffId, dto.getStaffId()).
                 eq(BiTargetNewProductSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetNewProductSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
-        return result;
     }
 
     /**
@@ -512,8 +454,7 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto, multiplyNum);
-        return pagingTotal;
+        return baseMapper.pagingTotal(dto, multiplyNum);
     }
 
 

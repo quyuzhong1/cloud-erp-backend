@@ -28,7 +28,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class WmsDeliveryPlanDTO implements Serializable {
-
+    private static final long serialVersionUID = 1905122041950251207L;
 
      /**
      * 状态统计

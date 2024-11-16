@@ -48,7 +48,6 @@ public class NoticeNodeServiceImpl extends ServiceImpl<NoticeNodeMapper, NoticeN
         LambdaQueryWrapper<NoticeNodeEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(NoticeNodeEntity::getId, NoticeNodeEntity::getNodeName);
         queryWrapper.notInSql(NoticeNodeEntity::getId,"select node_id from notice_message");
-//        queryWrapper.eq(NoticeNodeEntity::getExistAdd, IsConstant.NO);
         return this.listMaps(queryWrapper);
     }
 }

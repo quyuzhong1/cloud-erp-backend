@@ -101,7 +101,7 @@ public class TmsCfgCostController extends BaseController {
         menuCode = "tms:tmsCfgCost:update",
         serviceClass = TmsCfgCostService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsCfgCostDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsCfgCostDTO.UpdateDTO dto) {
         tmsCfgCostService.update(dto);
         return success();
     }

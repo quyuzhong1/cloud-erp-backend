@@ -3,7 +3,6 @@ package com.sdk.tms.yuntu.dto.request;
 import lombok.Builder;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 

@@ -1,12 +1,10 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 模板交付文档表
@@ -14,7 +12,7 @@ import java.util.Date;
  */
 @Data
 @TableName(value ="template_delivery_docs")
-public class TemplateDeliveryDocsEntity extends BaseEntity implements Serializable {
+public class TemplateDeliveryDocsEntity extends BaseEntity<TemplateDeliveryDocsEntity> implements Serializable {
 
     /**
      * 模板id

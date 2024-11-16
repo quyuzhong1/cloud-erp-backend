@@ -127,7 +127,7 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class salesDenoisingExportDTO {
+    public static class SalesDenoisingExportDTO {
 
         /**
          * 平台

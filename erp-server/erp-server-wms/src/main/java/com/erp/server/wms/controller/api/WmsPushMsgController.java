@@ -62,7 +62,7 @@ public class WmsPushMsgController extends BaseController {
         menuCode = "wms:wmsPushMsg:update",
         serviceClass = WmsPushMsgService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated WmsPushMsgDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated WmsPushMsgDTO.UpdateDTO dto) {
         wmsPushMsgService.update(dto);
         return success();
     }

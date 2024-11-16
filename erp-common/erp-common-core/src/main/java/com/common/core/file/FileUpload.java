@@ -1,6 +1,7 @@
 package com.common.core.file;
 
 import com.common.core.security.SBase64;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -24,7 +25,11 @@ import java.util.UUID;
  * @author Lwy
  * 2017年7月11日
  */
+@Slf4j
 public class FileUpload {
+
+	private FileUpload() {
+	}
 
 	/**
 	 * 上传附件
@@ -221,7 +226,10 @@ public class FileUpload {
 			File file = new File(path);
 			// 路径为文件且不为空则进行删除
 			if (file.isFile() && file.exists()) {
-				file.delete();
+				boolean deleteResult = file.delete();
+				if (!deleteResult){
+					log.warn("file.delete 删除失败");
+				}
 				flag = true;
 			}
 		}
@@ -235,18 +243,27 @@ public class FileUpload {
 		try {
 			File file = new File(delpath);
 			if (!file.isDirectory()) {
-				file.delete();
+				boolean deleteResult = file.delete();
+				if (!deleteResult){
+					log.warn("file.delete 删除失败");
+				}
 			} else if (file.isDirectory()) {
 				String[] filelist = file.list();
 				for (int i = 0; i < filelist.length; i++) {
 					File delfile = new File(delpath + File.separator + filelist[i]);
 					if (!delfile.isDirectory()) {
-						delfile.delete();
+						boolean deleteResult = delfile.delete();
+						if (!deleteResult){
+							log.warn("file.delete 删除失败");
+						}
 					} else if (delfile.isDirectory()) {
 						deleteFileFolder(delpath + File.separator + filelist[i]);
 					}
 				}
-				file.delete();
+				boolean deleteResult = file.delete();
+				if (!deleteResult){
+					log.warn("file.delete 删除失败");
+				}
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);

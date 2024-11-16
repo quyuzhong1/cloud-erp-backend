@@ -108,7 +108,7 @@ public class SupplierDeliveryOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/confirmPrint")
-    public ApiResult<?> confirmPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult confirmPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(srmDeliveryFeign.confirmPrint(dto));
     }
 

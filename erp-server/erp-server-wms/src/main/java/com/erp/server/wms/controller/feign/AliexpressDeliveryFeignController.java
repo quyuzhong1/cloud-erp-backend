@@ -28,7 +28,6 @@ public class AliexpressDeliveryFeignController extends BaseController {
      **/
     @PostMapping("/add")
     public BaseResultDTO.AddDTO add(@RequestBody AliexpressDeliveryDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO add = aliexpressDeliveryService.add(dto);
-        return add;
+        return aliexpressDeliveryService.add(dto);
     }
 }

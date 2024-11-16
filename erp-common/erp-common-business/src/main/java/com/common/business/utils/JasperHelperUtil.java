@@ -18,14 +18,16 @@ import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.export.SimpleExporterInput;
 import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
+import net.sf.jasperreports.j2ee.servlets.BaseHttpServlet;
 import net.sf.jasperreports.j2ee.servlets.ImageServlet;
-import org.apache.regexp.RE;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.NoSuchFileException;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.*;
@@ -143,8 +145,8 @@ public class JasperHelperUtil {
             } else if (docType == FileTypeEnum.HTML) {
                 docType = FileTypeEnum.PDF;
             }
-            HttpServletRequest request = WebUtils.getRequest();
-            HttpServletResponse response = WebUtils.getResponse();
+            HttpServletRequest request = ErpWebUtils.getRequest();
+            HttpServletResponse response = ErpWebUtils.getResponse();
 
             JasperReport jasperReport = (JasperReport) JRLoader.loadObject(is);
             prepareReport(jasperReport, type);
@@ -154,7 +156,7 @@ public class JasperHelperUtil {
             } else {
                 jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, conn);
             }
-            request.getSession().setAttribute(ImageServlet.DEFAULT_JASPER_PRINT_SESSION_ATTRIBUTE, jasperPrint);
+            request.getSession().setAttribute(BaseHttpServlet.DEFAULT_JASPER_PRINT_SESSION_ATTRIBUTE, jasperPrint);
 
             response.setContentType(docType.getTypeContent());
             if (FileTypeEnum.HTML.getCode().equals(type)) {
@@ -259,7 +261,7 @@ public class JasperHelperUtil {
             } else if (docType == FileTypeEnum.HTML) {
                 docType = FileTypeEnum.PDF;
             }
-            HttpServletResponse response = WebUtils.getResponse();
+            HttpServletResponse response = ErpWebUtils.getResponse();
             Map<String, List<ReportDTO>> sysReportMap = reportDTOList.stream().collect(Collectors.groupingBy(e -> e.getReportName().substring(e.getReportName().lastIndexOf("_") + 1)));
             for (int i = 0; i < reportDTOList.size(); i++) {
                 ReportDTO reportDTO = reportDTOList.get(i);
@@ -286,13 +288,13 @@ public class JasperHelperUtil {
                 //定义临时生成报表文件夹
                 String sendReport = "sendFolder";
                 String sFilePath = reportJasperPath + sendReport + "/";
-                System.out.println(sFilePath + "生成文件夹路径-------------------------------");
+                log.info(sFilePath + "生成文件夹路径-------------------------------");
                 File targetFile = new File(sFilePath);
                 if (!targetFile.exists()) {
                     targetFile.mkdirs();
                 }
                 sFilePath += sFileName + "." + type;
-                System.out.println(sFilePath + "生成报表完整路径-------------------------------");
+                log.info(sFilePath + "生成报表完整路径-------------------------------");
                 File file1 = new File(sFilePath);
                 sysFileList.add(file1);
                 exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME, sFilePath);
@@ -318,7 +320,7 @@ public class JasperHelperUtil {
             File sendFile = new File(zipPath + sFileName + ".zip");
             //用于返回给前端的zip路径
             returnPath = zipPath + sFileName + ".zip";
-            System.out.println(sendFile + "生成zip压缩包路径 --------------");
+            log.info(sendFile + "生成zip压缩包路径 --------------");
             //执行成压缩包
             ZipUtils.zipFiles(sysFileList, sendFile);
             response.setContentLength((int) sendFile.length());
@@ -334,13 +336,21 @@ public class JasperHelperUtil {
             response.flushBuffer();// 不可少
             //删除文件
             for (File file1 : sysFileList) {
-                if (file1.exists()) {
-                    file1.delete();
-                }
+                checkAndDelete(file1);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return returnPath;
+    }
+
+    private static void checkAndDelete(File file1) {
+        if (!file1.exists()) {
+            log.info("file1 not exists() --------------");
+            return;
+        }
+        if(!file1.delete()){
+            log.info("file1.delete() delete --------------");
+        }
     }
 }

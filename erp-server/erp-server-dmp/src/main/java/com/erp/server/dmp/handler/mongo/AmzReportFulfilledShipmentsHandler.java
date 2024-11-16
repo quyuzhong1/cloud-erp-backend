@@ -1,6 +1,22 @@
 package com.erp.server.dmp.handler.mongo;
 
-import cn.hutool.core.util.StrUtil;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.MongoSuperDTO;
@@ -9,39 +25,21 @@ import com.common.business.dto.UniqueDto;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.wrapper.FeignQuery;
-import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.DmpMongoHandleTaskEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.wms.feign.WmsAmazonFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
-import com.erp.sdk.oms.amz.spapi.dto.*;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
+import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import com.erp.server.dmp.enums.DownloadStatusEnum;
 import com.erp.server.dmp.handler.DmpMongoHandler;
 import com.erp.server.dmp.service.AmazonDownloadService;
-import com.erp.server.dmp.service.CfgTimezoneService;
 import com.erp.server.dmp.service.DmpMongoHandleTaskService;
 import com.erp.server.dmp.service.impl.BusinessServiceImpl;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
-import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 亚马逊物流销售报告处理服务
@@ -81,10 +79,8 @@ public class AmzReportFulfilledShipmentsHandler extends DmpMongoHandler {
         String maxLastId = allList.stream().map(ReportSuperMongoDTO::getId).max(String::compareTo).orElse("0");
         dmpMongoHandleTaskService.updateMaxLastIdAndNextTime(mongoHandleTaskEntity, maxLastId);
 
-//        log.warn("亚马逊物流销售报告处理服务处理：转换前的数据={}", JSONUtil.toJsonStr(allList));
         // 补充数据
         List<ReportFulfilledShipmentsMongoDTO> canHandleList = amazonDownloadService.reportFulfillmentFillData(allList);
-//        log.warn("亚马逊物流销售报告处理服务处理：转换后的数据={}", JSONUtil.toJsonStr(allList));
 
         List<String> uniqueIds = canHandleList.stream()
                 .map(e -> StrUtil.format("{}_{}", e.getAmazonOrderId(), e.getShopId()))

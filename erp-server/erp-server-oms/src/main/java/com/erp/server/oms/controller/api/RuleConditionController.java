@@ -1,18 +1,20 @@
 package com.erp.server.oms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.RuleConditionService;
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.server.oms.service.RuleConditionService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * 规则条件表
@@ -25,7 +27,7 @@ import com.erp.model.oms.dto.RuleConditionDTO;
 @RequestMapping("/ruleCondition")
 public class RuleConditionController extends BaseController {
 
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
 
     /**
@@ -53,7 +55,7 @@ public class RuleConditionController extends BaseController {
         menuCode = "oms:ruleCondition:update",
         serviceClass = RuleConditionService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated RuleConditionDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated RuleConditionDTO.UpdateDTO dto) {
         ruleConditionService.update(dto);
         return success();
     }

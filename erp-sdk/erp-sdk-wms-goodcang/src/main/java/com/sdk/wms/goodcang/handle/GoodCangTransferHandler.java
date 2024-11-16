@@ -1,5 +1,6 @@
 package com.sdk.wms.goodcang.handle;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.BusinessType;
 import com.common.business.annotation.PlatformCategoryType;
@@ -21,8 +22,10 @@ import com.sdk.wms.goodcang.convert.GoodCangConverter;
 import com.sdk.wms.goodcang.dto.response.GoodCangLogisticsAndWarehouseResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangTransferWarehouseResp;
+import com.sdk.wms.goodcang.dto.response.TwcToWarehouse;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -43,7 +46,7 @@ public class GoodCangTransferHandler extends AbstractPullThirdWarehouseHandler<G
     private GoodCangService goodCangService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     private final String failureMsgHead = "调用谷仓获取中转仓数据接口异常";
 
@@ -66,12 +69,12 @@ public class GoodCangTransferHandler extends AbstractPullThirdWarehouseHandler<G
     }
 
     private <T extends GoodCangLogisticsAndWarehouseResp.Base> void processList(List<T> list, List<GoodCangTransferWarehouseResp> respList) {
-        if(CollectionUtil.isNotEmpty(list)){
+        if(CollUtil.isNotEmpty(list)){
             for(T item : list){
                 String logisticsChannelCode = item.getSmCode();
                 String logisticsChannelName = item.getSmCodeName();
-                List<GoodCangLogisticsAndWarehouseResp.TwcToWarehouse> twcToWarehouseList = item.getTwcToWarehouseList();
-                for(GoodCangLogisticsAndWarehouseResp.TwcToWarehouse twcToWarehouse : twcToWarehouseList){
+                List<TwcToWarehouse> twcToWarehouseList = item.getTwcToWarehouseList();
+                for(TwcToWarehouse twcToWarehouse : twcToWarehouseList){
                     GoodCangTransferWarehouseResp resp = getGoodCangTransferWarehouseResp(twcToWarehouse, logisticsChannelCode, logisticsChannelName);
                     respList.add(resp);
                 }
@@ -79,7 +82,7 @@ public class GoodCangTransferHandler extends AbstractPullThirdWarehouseHandler<G
         }
     }
 
-    private GoodCangTransferWarehouseResp getGoodCangTransferWarehouseResp(GoodCangLogisticsAndWarehouseResp.TwcToWarehouse twcToWarehouse, String logisticsChannelCode, String logisticsChannelName) {
+    private GoodCangTransferWarehouseResp getGoodCangTransferWarehouseResp(TwcToWarehouse twcToWarehouse, String logisticsChannelCode, String logisticsChannelName) {
         GoodCangTransferWarehouseResp resp = new GoodCangTransferWarehouseResp();
         resp.setLogisticsChannelCode(logisticsChannelCode);
         resp.setLogisticsChannelName(logisticsChannelName);

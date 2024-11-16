@@ -100,6 +100,9 @@ public class SampleXxlJob {
             // command exit
             process.waitFor();
             exitValue = process.exitValue();
+        }catch (InterruptedException e) {
+            XxlJobHelper.log(e);
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             XxlJobHelper.log(e);
         } finally {

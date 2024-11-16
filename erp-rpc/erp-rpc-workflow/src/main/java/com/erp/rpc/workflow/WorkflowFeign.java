@@ -26,7 +26,10 @@ import java.util.List;
 public interface WorkflowFeign {
 
 
-    //启动流程
+    /**
+     * 启动流程(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("feign/process/startProcess")
     ProcessNodeDTO startProcess(@RequestBody StartProcessDTO startProcessDTO);
@@ -46,14 +49,19 @@ public interface WorkflowFeign {
     List<MyToDoTaskVO> getMyToDoTasks(@RequestParam(value="userId") String userId);
 
 
-
-    //审核任务通过
+    /**
+     * 审核任务通过(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("feign/process/taskPass")
     ProcessNodeDTO taskPass(@RequestBody ApproveProcessDTO dto);
 
 
-    //审核任务不通过
+    /**
+     * 审核任务不通过(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("feign/process/taskNoPass")
     ProcessNodeDTO taskNoPass(@RequestBody ApproveProcessDTO dto);
@@ -62,23 +70,35 @@ public interface WorkflowFeign {
     @PostMapping("feign/process/withDraw")
     void withDraw(@RequestBody ApproveProcessDTO dto);
 
-    //取回流程
+    /**
+     * 取回流程(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("feign/process/fetchBack")
     void fetchBack(@RequestBody ApproveProcessDTO dto);
 
 
-    //取回起始点
+    /**
+     * 取回起始点(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("feign/process/rejectOrigin")
     void rejectOrigin(@RequestBody ApproveProcessDTO dto);
 
-    //终止流程
+    /**
+     * 终止流程(弃用)
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("feign/process/terminate")
     void terminate(@RequestBody ApproveProcessDTO dto);
 
-    //取消流程
+    /**
+     * 取消流程
+     * @deprecated
+     */
     @Deprecated
     @PostMapping("feign/process/cancelProcess")
     void cancelProcess(@RequestBody List<String> ids);

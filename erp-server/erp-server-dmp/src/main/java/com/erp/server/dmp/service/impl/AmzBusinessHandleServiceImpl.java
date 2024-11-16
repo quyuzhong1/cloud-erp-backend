@@ -82,10 +82,6 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
     @Override
     public Boolean checkAndSendSoOutStock(DmpPullSoOutStockDTO dto) {
         // 查询来源明细ID
-//        List<SoB2cDetailEntity> detailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(dto.getSoB2cId()));
-//        if (CollectionUtils.isEmpty(detailEntityList)){
-//            throw new ServiceException("检查生成亚马逊FBA销售出库单失败,为找到明细:id=" + dto.getSoB2cId());
-//        }
         // 查询异常内容
         SoB2cErrorEntity b2cError = soB2cFeign.getB2cError(dto.getSoB2cId(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
         if(null == b2cError){
@@ -195,7 +191,6 @@ public class AmzBusinessHandleServiceImpl implements AmzBusinessHandleService {
 
             String modelTaskId = dmpPullTaskService.saveOrUpdateDmpSyncTask(new DmpPullTaskEntity(msg.getPlatform(), businessType.getSourceType().getCode(), "ERP", topic, tag, msg));
             // 同步处理
-//            dmpPullTaskService.updateSyncInfo(String.valueOf(modelTaskId), SyncStatusEnum.SUCCESS_SYNC.getCode(), "同步成功");
             msg.setDmpSyncTaskId(modelTaskId);
             ApiResult<?> apiResult = wmsAmazonFeign.consumerOtherSoOutStock(msg);
             if (200 != apiResult.getCode()) {

@@ -1,6 +1,6 @@
 package com.erp.server.tms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -15,7 +15,6 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.EnumsUtil;
-
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.OperateLogDTO;
 import com.erp.model.tms.entity.CfgOperateLogFieldEntity;
@@ -279,7 +278,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
      * @return String
      */
     private String handleEnumVale (String object,Class<?> aClass) {
-        if (StrUtil.isBlank(object)) {
+        if (CharSequenceUtil.isBlank(object)) {
             return "";
         }
         List<String> resultList = new ArrayList<>();

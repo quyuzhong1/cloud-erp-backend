@@ -11,18 +11,16 @@ import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.entity.MultipleOptionEntity;
 import com.erp.model.tms.entity.TransferDeclareDeadlineSettingEntity;
 import com.erp.server.tms.mapper.TransferDeclareDeadlineSettingMapper;
-import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.MultipleOptionService;
-import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TransferDeclareDeadlineSettingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TransferDeclareDeadlineSettingServiceImpl extends SuperServiceImpl<TransferDeclareDeadlineSettingMapper, TransferDeclareDeadlineSettingEntity> implements TransferDeclareDeadlineSettingService {
-    @Autowired
+    @Resource
     private MultipleOptionService multipleOptionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)

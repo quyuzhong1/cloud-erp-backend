@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname SoB2cDeliveryFeign
- * @Description TODO
+ * @Description SoB2cDeliveryFeign
  * @Date 2023-12-18 11:37
  * @Created by yl
  */

@@ -1,18 +1,20 @@
 package com.erp.server.workflow.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.FindUserDTO;
 import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import org.jvnet.hk2.annotations.Service;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -37,13 +39,13 @@ public class AssigneeStrategyTypeService {
         String assignee = dto.getAssignee();
         // 发起人
         String startUserId = dto.getStartUserId();
-        if(StrUtil.isBlank(assignee)){
-            return Collections.EMPTY_LIST;
+        if(CharSequenceUtil.isBlank(assignee)){
+            return Collections.emptyList();
         }
-        List<String> roleIds = StrUtil.isNotBlank(assignee) ? Arrays.asList(assignee.split(",")) : Collections.EMPTY_LIST;
+        List<String> roleIds = CharSequenceUtil.isNotBlank(assignee) ? Arrays.asList(assignee.split(",")) : Collections.emptyList();
         List<FindUserDTO> userList = sysUserFeign.getUserListByRoleIds(new SysFeignDTO.ListByRoleIdsDTO(roleIds, startUserId));
-        if(CollectionUtil.isEmpty(userList)){
-            return Collections.EMPTY_LIST;
+        if(CollectionUtils.isEmpty(userList)){
+            return Collections.emptyList();
         }
         return userList.stream().map(FindUserDTO::getUserId).collect(Collectors.toList());
     }
@@ -56,8 +58,8 @@ public class AssigneeStrategyTypeService {
     public List<String> superiorAssignee(CamundaDTO.StrategyParamDTO dto) {
         // 根据用户查询上级
         List<UserSuperiorDTO> superList = sysUserFeign.listSuperiorByUserIds(Arrays.asList(dto.getStartUserId()));
-        if(CollectionUtil.isEmpty(superList)){
-            return Collections.EMPTY_LIST;
+        if(CollectionUtils.isEmpty(superList)){
+            return Collections.emptyList();
         }
         ChargeSuperiorEnum chargeSuperior = ChargeSuperiorEnum.getByDictValue(dto.getAssignee());
         // 默认直接上级
@@ -76,7 +78,7 @@ public class AssigneeStrategyTypeService {
                     .orElse(null)
                 );
         // 发起人
-        return null != userId ? Arrays.asList(userId) : Collections.EMPTY_LIST;
+        return null != userId ? Arrays.asList(userId) : Collections.emptyList();
     }
 
     /**
@@ -96,6 +98,6 @@ public class AssigneeStrategyTypeService {
      */
     public List<String> somebodyAssignee(CamundaDTO.StrategyParamDTO dto) {
         String assignee = dto.getAssignee();
-        return  StrUtil.isNotBlank(assignee) ? Arrays.asList(assignee.split(",")) : Collections.EMPTY_LIST;
+        return  CharSequenceUtil.isNotBlank(assignee) ? Arrays.asList(assignee.split(",")) : Collections.emptyList();
     }
 }

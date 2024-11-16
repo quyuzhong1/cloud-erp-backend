@@ -443,7 +443,7 @@ public class SysRoleMenuServiceImpl extends ServiceImpl<SysRoleMenuMapper, SysRo
      * @date 2022-09-26 9:54
      */
     private List<SysMenuVO> getRoleChildrenLeftList(SysMenuVO item, List<SysMenuVO> treeList, List<String> menuIds, Integer functionType, Integer buttonType) {
-        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId()) && menu.getType() != functionType && menu.getType() != buttonType))
+        List<SysMenuVO> collectList = treeList.stream().filter(menu -> (item.getMenuId().equals(menu.getParentId()) && menuIds.contains(menu.getMenuId()) && !menu.getType().equals(functionType) && !menu.getType().equals(buttonType)))
                 .sorted(Comparator.comparing(SysMenuVO::getIndex))
                 .map(m -> {
                     m.setParentName(item.getMenuName());

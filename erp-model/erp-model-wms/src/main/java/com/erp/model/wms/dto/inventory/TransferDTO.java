@@ -4,7 +4,6 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import lombok.Data;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;

@@ -8,6 +8,7 @@ import com.common.core.utils.MapUtil;
 
 import cn.hutool.core.collection.CollUtil;
 
+import org.jfree.util.Log;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.util.ObjectUtils;
 
@@ -51,7 +52,7 @@ public class MongoUtil {
 	private static Map<String, List<ParamData>> getFilterParam(Object obj){
 		Class<? extends Object> classType=obj.getClass();
 		List<Field> fields = new ArrayList<>() ;
-		while(classType !=null && !classType.getSimpleName().toLowerCase().equals("object")) {
+		while(classType !=null && !(classType instanceof Object)) {
 			fields.addAll(Arrays.asList(classType .getDeclaredFields()));
 			classType = classType.getSuperclass();
 		}
@@ -178,7 +179,7 @@ public class MongoUtil {
 		Criteria criteria = new Criteria();
 		Class<? extends Object> classType=obj.getClass();
 		List<Field> fields = new ArrayList<>() ;
-		while(classType !=null && !classType.getSimpleName().toLowerCase().equals("object")) {
+		while(classType !=null && !(classType instanceof Object)) {
 			fields.addAll(Arrays.asList(classType .getDeclaredFields()));
 			classType = classType.getSuperclass();
 		}
@@ -278,7 +279,7 @@ public class MongoUtil {
 		MapUtil params = new MapUtil();
 		Class<? extends Object> classType=obj.getClass();
 		List<Field> fields = new ArrayList<>() ;
-		while(classType !=null && !classType.getSimpleName().toLowerCase().equals("object")) {
+		while(classType !=null && !(classType instanceof Object)) {
 			fields.addAll(Arrays.asList(classType .getDeclaredFields()));
 			classType = classType.getSuperclass();
 		}
@@ -436,8 +437,7 @@ public class MongoUtil {
              }
              return (T)obj;
          } catch (Exception e) {
-             // TODO Auto-generated catch block
-             e.printStackTrace();
+        	 Log.error("getBean错误" , e);
          }
           
          return null;

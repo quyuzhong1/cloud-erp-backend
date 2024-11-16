@@ -22,7 +22,7 @@ import java.util.List;
 @Mapper
 public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
-    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params,@Param("categoryIdList") List<String> categoryIdList);
+    IPage<ProductShowDTO> paging(Page<ProductSearchDTO.PagingParamDTO> query, @Param("params") ProductSearchDTO.PagingParamDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
     List<ProductShowDTO> listAllExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
@@ -34,7 +34,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param categoryIdList
      * @return
      */
-    IPage<ProductShowDTO> myProjectPaging(Page query, @Param("params")ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId") String userId);
+    IPage<ProductShowDTO> myProjectPaging(Page<ProductSearchDTO.PagingParamDTO> query, @Param("params")ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId") String userId);
 
     /**
      * 我的项目导出
@@ -55,7 +55,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param categoryIdList
      * @return
      */
-    IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
+    IPage<ProductShowDTO> collect(Page<ProductSearchDTO.PagingParamDTO> query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
 
     List<ProductShowDTO> collectExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
 

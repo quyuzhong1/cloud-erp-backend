@@ -2,7 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -42,11 +42,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,29 +62,29 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliveryWarehouseMapper, RuleDeliveryWarehouseEntity> implements RuleDeliveryWarehouseService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private WmsTaskFeign wmsTaskFeign;
 
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
 
-    @Autowired
+    @Resource
     private SpElServer spElServer;
 
 
-    @Autowired
+    @Resource
     private InventoryFeign inventoryFeign;
 
-    @Autowired
+    @Resource
     private SoB2cDetailService soB2cDetailService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     @Lazy
     private SoB2cService soB2cService;
 
@@ -114,7 +115,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货仓库规则单", ruleDeliveryWarehouseEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货仓库规则单", ruleDeliveryWarehouseEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_DELIVERY_WAREHOUSE.getCode(), ruleDeliveryWarehouseEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
         return ruleDeliveryWarehouseEntity.getId();
@@ -128,7 +129,9 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     public Boolean update(RuleDeliveryWarehouseDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         RuleDeliveryWarehouseEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+        }
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
@@ -150,7 +153,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
         }
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleDeliveryWarehouseEntity.getId(), "发货仓库规则单");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleDeliveryWarehouseEntity.getId(), "发货仓库规则单");
         operateLogService.addModuleOperateLogByObj(old, ruleDeliveryWarehouseEntity, ModuleTypeEnum.RULE_DELIVERY_WAREHOUSE.getCode(), ruleDeliveryWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -167,7 +170,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     public PagingVO<RuleDeliveryWarehouseDTO.PagingViewDTO> paging(PagingDTO<RuleDeliveryWarehouseDTO.PagingParamDTO> dto) {
         RuleDeliveryWarehouseDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         return new PagingVO<>(pageData);
     }
@@ -184,7 +187,9 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     @Override
     public RuleDeliveryWarehouseDTO.ViewDTO view(String id) {
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
-        Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
+        if(null == ruleDeliveryWarehouse){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+        }
         RuleDeliveryWarehouseDTO.ViewDTO view = new RuleDeliveryWarehouseDTO.ViewDTO();
         BeanMapper.copy(ruleDeliveryWarehouse, view);
         String type = DictBasicTypeEnum.FIELD.getType();
@@ -205,7 +210,9 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
     public Boolean updateStatus(UpdateStateDTO dto) {
         String id = dto.getId();
         RuleDeliveryWarehouseEntity ruleDeliveryWarehouse = this.getById(id);
-        Optional.ofNullable(ruleDeliveryWarehouse).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单"));
+        if(null == ruleDeliveryWarehouse){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货仓库规则单");
+        }
         Boolean disabled = ruleDeliveryWarehouse.getDisabled();
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
@@ -259,14 +266,14 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
                 //未匹配到条件
                  soB2cDetailService.updateIsMatchWarehouseRule(entity.getId(),detailIdList);
             } else {
-                if(StrUtil.isNotBlank(ruleMatchResult.getName())){
-                    String msg = StrUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
+                if(CharSequenceUtil.isNotBlank(ruleMatchResult.getName())){
+                    String msg =  CharSequenceUtil.format("自动匹配仓库规则成功，规则名称：{}", ruleMatchResult.getName());
                     operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "配货操作");
                 }
                 //更新明细仓库信息
                 String warehouseId = ruleMatchResult.getWarehouseId();
                 //返回了仓库则更新仓库为空的数据
-                if (StrUtil.isNotBlank(warehouseId)) {
+                if (CharSequenceUtil.isNotBlank(warehouseId)) {
                     updateWarehouseList.add(new Pair<>(soB2cDetail,warehouseId));
                 }
             }

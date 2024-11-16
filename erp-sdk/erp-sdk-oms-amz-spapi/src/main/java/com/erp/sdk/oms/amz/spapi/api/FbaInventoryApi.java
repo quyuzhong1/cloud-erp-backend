@@ -26,7 +26,6 @@ import okhttp3.Call;
 import okhttp3.Interceptor;
 import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.tools.ant.taskdefs.Sleep;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -249,6 +248,7 @@ public class FbaInventoryApi {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 log.warn("睡眠异常:{}", e.getMessage());
+                Thread.currentThread().interrupt();
             }
             withHttpInfo = getInventorySummariesWithHttpInfo(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus, currentNextToken);
             GetInventorySummariesResponse curData = withHttpInfo.getData();

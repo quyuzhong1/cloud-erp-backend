@@ -18,5 +18,5 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface BiShopChangeLogMapper extends BaseMapper<BiShopChangeLogEntity> {
 
-    IPage<DmpShopChangeLogDTO> paging(Page query,@Param("params") AdvanceSearchDTO params);
+    IPage<DmpShopChangeLogDTO> paging(Page<Object> query,@Param("params") AdvanceSearchDTO params);
 }

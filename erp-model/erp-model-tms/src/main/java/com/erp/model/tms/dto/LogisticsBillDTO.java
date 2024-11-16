@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -723,14 +722,6 @@ public class LogisticsBillDTO implements Serializable {
          * 包裹信息
          */
         private PackageDTO packageInfo;
-
-//        /**
-//         * sku Id list
-//         */
-//        @Size(min = 1,message = "sku信息不能为空")
-//        @NotNull(message = "sku信息不能为空L")
-//        private List<SkuDTO> skuList;
-
         /**
          * 产品信息不能为空
          */

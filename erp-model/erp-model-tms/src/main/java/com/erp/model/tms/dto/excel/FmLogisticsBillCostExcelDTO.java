@@ -1,7 +1,6 @@
 package com.erp.model.tms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.common.core.anno.FieldValid;
 import lombok.Data;
 
 import java.io.Serializable;

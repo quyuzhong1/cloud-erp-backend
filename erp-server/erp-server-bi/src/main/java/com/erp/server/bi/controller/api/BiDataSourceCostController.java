@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -67,7 +68,7 @@ public class BiDataSourceCostController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "成本数据-导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dataSourceCost:exportExcel", tableAlias = "bdsc")
-    public ApiResult exportExcel(@RequestBody BiDataSourceCostSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody BiDataSourceCostSearchDTO dto, HttpServletResponse response) {
         biDataSourceCostService.exportExcel(dto, response);
         return success();
     }
@@ -82,9 +83,9 @@ public class BiDataSourceCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "成本数据-导入")
     @PostMapping("/importBiDataSourceCostFile")
-    public ApiResult importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean flag = biDataSourceCostService.importExcel(excelFile, response);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<Object> importBiDataSourceCostFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        boolean flag = biDataSourceCostService.importExcel(excelFile, response);
+        return flag ? this.success() : this.failure();
     }
 
     /**
@@ -100,7 +101,7 @@ public class BiDataSourceCostController extends BaseController {
             menuCode = "bi:dataSourceCost:updateBiDataSourceCost",
             serviceClass =  BiDataSourceCostService.class,
             keyIdName = "id")
-    public ApiResult updateBiDataSourceCost(@RequestBody List<LinkedHashMap<String,Object>> list) {
+    public ApiResult<Void> updateBiDataSourceCost(@RequestBody List<LinkedHashMap<String,Object>> list) {
         biDataSourceCostService.updateBiDataSourceCost(list);
         return success();
     }
@@ -114,7 +115,7 @@ public class BiDataSourceCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "成本数据-下载模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/biDataSourceCost.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -126,12 +127,12 @@ public class BiDataSourceCostController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return success();
     }

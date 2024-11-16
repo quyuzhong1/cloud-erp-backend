@@ -1,8 +1,10 @@
 package com.erp.server.tms.service.logistics;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.LogisticsPlatformType;
@@ -10,7 +12,6 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FileUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -31,14 +32,11 @@ import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.sdk.tms.disifang.model.base.ResponseMsg;
-import com.sdk.tms.disifang.model.label.request.LabelRequest;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.Dropoff;
 import com.sdk.tms.shopee.model.logistics.request.ShipOrderRequest;
 import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
-import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
 import com.sdk.tms.shopee.model.logistics.response.*;
 import com.sdk.tms.shopee.service.ShopeeLogisticsService;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +51,6 @@ import java.util.stream.Collectors;
 /**
  * @author zdy
  * @ClassName ShopeeLogisticsHandlerImpl
- * @description: TODO
  * @date 2023年11月13日
  * @version: 1.0
  */
@@ -148,7 +145,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("",
                     orderSn, BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
-            throw new ServiceException(StrUtil.format("虾皮【{}】标记发货异常请求异常:{}",orderSn,e.getMessage()));
+            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】标记发货异常请求异常:{}",orderSn,e.getMessage()));
         }
     }
 
@@ -171,7 +168,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("",
                     shipOrderRequest.getOrderSn(), BusinessTypeEnum.SHIPPING_ORDER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
-            log.error(StrUtil.format("虾皮【{}】标记发货异常请求异常:{}",shipOrderRequest.getOrderSn(),e.getMessage()));
+            log.error(CharSequenceUtil.format("虾皮【{}】标记发货异常请求异常:{}",shipOrderRequest.getOrderSn(),e.getMessage()));
             //标发异常不进行抛出异常
         }
     }
@@ -209,7 +206,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("",
                     orderSn, BusinessTypeEnum.SHIPPING_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
-            log.error(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,e.getMessage()));
+            log.error(CharSequenceUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,e.getMessage()));
         }
         return shipOrderRequest;
     }
@@ -232,7 +229,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 ValidatorUtil.validateEntity(baseRequest);
                 TrackResponse trackResponse = shopeeLogisticsService.getTrackNumber(baseRequest,logisticsQueryVO.getDeliveryNo());
                 responseVO.setDeliveryNo(logisticsQueryVO.getDeliveryNo());
-                if (Objects.nonNull(trackResponse) && StrUtil.isNotBlank(trackResponse.getTrackingNumber())) {
+                if (Objects.nonNull(trackResponse) && CharSequenceUtil.isNotBlank(trackResponse.getTrackingNumber())) {
                     responseVO.setTransportNo(trackResponse.getTrackingNumber());
                     responseVO.setTrackNo(trackResponse.getTrackingNumber());
                     responseVO.success();
@@ -279,7 +276,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             }
             JSONObject response = baseResponse.getResponse();
             String error = response.getString("error");
-            if (StrUtil.isNotEmpty(error)) {
+            if (CharSequenceUtil.isNotEmpty(error)) {
                 logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(baseResponse));
@@ -288,7 +285,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             }
             JSONArray jsonArray = response.getJSONArray("logistics_channel_list");
             //渠道列表
-            List<LogisticsChannel> logisticsChannels = JSONObject.parseArray(jsonArray.toJSONString(), LogisticsChannel.class);
+            List<LogisticsChannel> logisticsChannels = JSON.parseArray(jsonArray.toJSONString(), LogisticsChannel.class);
             //接口数据映射
             List<LogisticsSaleChannelEntity> logisticsSaleChannelEntities = LogisticsChannelConverter.INSTANCE.channelConvertByShopee(logisticsChannels);
             logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
@@ -343,8 +340,8 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         String orderSnList = orderRequestList.stream().map(ShippingOrderRequest::getOrderSn).collect(Collectors.joining(","));
         //下载面单文件 THERMAL_AIR_WAYBILL NORMAL_AIR_WAYBILL
         String shippingDocumentType = "THERMAL_AIR_WAYBILL";//默认类型
-        if (CollectionUtil.isNotEmpty(shippingDocumentParameter)){
-            ShippingDocumentParameterResponse shippingDocumentParameterResponse = shippingDocumentParameter.stream().filter(e -> StrUtil.isNotBlank(e.getSuggestShippingDocumentType())).findFirst().orElse(null);
+        if (CollUtil.isNotEmpty(shippingDocumentParameter)){
+            ShippingDocumentParameterResponse shippingDocumentParameterResponse = shippingDocumentParameter.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSuggestShippingDocumentType())).findFirst().orElse(null);
             if (Objects.nonNull(shippingDocumentParameterResponse)){
                 shippingDocumentType = shippingDocumentParameterResponse.getSuggestShippingDocumentType();
             }
@@ -361,7 +358,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             responses.add(response);
             return success(responses);
         }catch (Exception e){
-            log.error(StrUtil.format("虾皮下载面单异常：{}", e.getMessage()));
+            log.error(CharSequenceUtil.format("虾皮下载面单异常：{}", e.getMessage()));
             logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.DOWNLOAD_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), e.getMessage());
             //获取面单结果异常直接抛出
@@ -377,7 +374,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), JSONUtil.toJsonStr(shippingDocumentResult));
 
         } catch (Exception e) {
-            log.error(StrUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
+            log.error(CharSequenceUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
             logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.SHIPPING_DOCUMENT_RESULT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), e.getMessage());
             //获取面单结果异常直接抛出
@@ -400,7 +397,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), JSONUtil.toJsonStr(shippingDocument));
 
         } catch (Exception e) {
-            log.error(StrUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
+            log.error(CharSequenceUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
             logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.CREATE_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), e.getMessage());
             //创建面单打印异常不直接返回
@@ -415,7 +412,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.SHIPPING_DOCUMENT_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), JSONUtil.toJsonStr(shippingDocumentParameter));
         }catch (Exception e){
-            log.error(StrUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
+            log.error(CharSequenceUtil.format("虾皮创建打印面单异常：{}", e.getMessage()));
             logisticsOperateService.pullOperateLog("", orderSnList, BusinessTypeEnum.SHIPPING_DOCUMENT_PARAMETER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest) + JSONUtil.toJsonStr(orderRequestList), e.getMessage());
             //查询面单打印类型不抛出异常
@@ -429,7 +426,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult<Object>authorization(Map<String, String> authMap){
         BaseRequest baseRequest = getBaseRequest(authMap);
         try {
             BaseResponse baseResponse = shopeeLogisticsService.getChannelList(baseRequest);
@@ -438,7 +435,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             }
             JSONObject response = baseResponse.getResponse();
             String error = response.getString("error");
-            if (StrUtil.isNotEmpty(error)) {
+            if (CharSequenceUtil.isNotEmpty(error)) {
                 return failure("授权失败");
             }
             return success("授权成功");

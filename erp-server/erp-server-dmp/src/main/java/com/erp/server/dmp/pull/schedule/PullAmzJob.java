@@ -160,6 +160,7 @@ public class PullAmzJob {
             latch.await();
         } catch (InterruptedException e) {
             XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 监听任务异常:{}", e.getMessage());
+            Thread.currentThread().interrupt();
         }
 
         XxlJobHelper.log("[拉取亚马逊订单详情任务] amazonSalesOrderDetail 任务结束");

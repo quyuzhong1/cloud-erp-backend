@@ -27,10 +27,10 @@ public class RedisService  {
     //有些场景为了防止缓存穿透（数据库不存在的值缓存没有，数据库中也没用）增加空值，并且设置过期时间（防止大量不存在的不存在的值占用redis内存空间）
     public static String EMPTY_CACHE_VALUE = "{}";
 
-    public static long ONE_DAY_CACHE_TIME = 24 * 60 * 60;//单位秒
+    public static long ONE_DAY_CACHE_TIME = 24 * 60 * 60L ;//单位秒
 
 
-    public static long EIGHT_HOURS_CACHE_TIME = 8 * 60 * 60;//单位秒
+    public static long EIGHT_HOURS_CACHE_TIME = 8 * 60 * 60L;//单位秒
 
     /**
      * 缓存基本的对象，Integer、String、实体类等

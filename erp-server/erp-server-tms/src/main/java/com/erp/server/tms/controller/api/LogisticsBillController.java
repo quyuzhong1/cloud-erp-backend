@@ -102,7 +102,7 @@ public class LogisticsBillController extends BaseController {
      * @date 2023-11-09 10:54
      */
     @PostMapping("/export")
-    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
         Boolean result = logisticsBillService.exportExcel(dto);
         return result ? success() : failure();
     }
@@ -171,7 +171,7 @@ public class LogisticsBillController extends BaseController {
      * @return
      */
     @PostMapping("/initLogisticsBillBusinessCode")
-    public ApiResult initLogisticsBillBusinessCode(){
+    public ApiResult<Object>initLogisticsBillBusinessCode(){
         logisticsBillService.initLogisticsBillBusinessCode();
         return success();
     }

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.common.business.dto.base.BaseResultDTO;
@@ -12,25 +13,24 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
-import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.LogisticsBillDetailService;
+import com.erp.server.tms.service.LogisticsTrackService;
+import com.erp.server.tms.service.OperateLogService;
 import com.google.common.collect.Lists;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
+import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMapper, LogisticsTrackEntity> implements LogisticsTrackService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
@@ -58,7 +58,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     public BaseResultDTO.AddDTO add(LogisticsTrackDTO.AddDTO addDTO) {
         LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
         BeanMapperUtils.copy(addDTO, logisticsTrackEntity);
-        if (StrUtil.isBlank(logisticsTrackEntity.getTrackNo())){
+        if (CharSequenceUtil.isBlank(logisticsTrackEntity.getTrackNo())){
             return new BaseResultDTO.AddDTO();
         }
 
@@ -72,10 +72,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流轨迹单", logisticsTrackEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流轨迹单", logisticsTrackEntity.getId());
+        
         operateLogService.addModuleOperateLog(msg, null, logisticsTrackEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        
 
         return new BaseResultDTO.AddDTO(logisticsTrackEntity.getId(), logisticsTrackEntity.getId());
     }
@@ -97,12 +97,12 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         if (!save) {
             throw new ServiceException("物流轨迹单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        
 
         // 记录主单操作日志
         log.info("编辑 开始记录物流轨迹单日志数据，id：【{}】", logisticsTrackEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsTrackEntity.getId(), "物流轨迹单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsTrackEntity.getId(), "物流轨迹单");
+        
         operateLogService.addModuleOperateLogByObj(old, logisticsTrackEntity, null, logisticsTrackEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -154,8 +154,8 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     @Override
     @Async("tmsExecutor")
     public void processTrackData(PlatformTrackDTO dto){
-        log.info(StrUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
-        if (StrUtil.isBlank(dto.getTrackNo()) || CollectionUtils.isEmpty(dto.getDetails())){
+        log.info(CharSequenceUtil.format("-------记录【{}】物流轨迹开始------", dto.getTrackNo()));
+        if (CharSequenceUtil.isBlank(dto.getTrackNo()) || CollectionUtils.isEmpty(dto.getDetails())){
             return;
         }
         List<LogisticsTrackEntity> newList = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
@@ -165,7 +165,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         LogisticsTrackEntity maxTrack = newList.stream().max(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).orElse(null);
         //根据跟踪号进行更新操作
         logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(maxTrack);
-        log.info(StrUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
+        log.info(CharSequenceUtil.format("-------记录【{}】物流轨迹结束------", dto.getTrackNo()));
 
     }
 
@@ -189,7 +189,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void webhookByTrack123(LogisticsTrackDTO.TrackWebHookDTO dto) {
-        if (Objects.isNull(dto.getData()) || StrUtil.isBlank(dto.getData().getTrackNo()) || Objects.isNull(dto.getData().getLocalLogisticsInfo())
+        if (Objects.isNull(dto.getData()) || CharSequenceUtil.isBlank(dto.getData().getTrackNo()) || Objects.isNull(dto.getData().getLocalLogisticsInfo())
                 || CollectionUtils.isEmpty(dto.getData().getLocalLogisticsInfo().getTrackingDetails())){
             log.info("webhook接收到数据格式无数据记录：{}", dto);
             return;
@@ -211,7 +211,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
 
     @Override
     public void saveIncrementTrackData(String trackNo, List<LogisticsTrackEntity> newList) {
-        if (StrUtil.isBlank(trackNo) || CollectionUtils.isEmpty(newList)){
+        if (CharSequenceUtil.isBlank(trackNo) || CollectionUtils.isEmpty(newList)){
             return;
         }
         List<LogisticsTrackEntity> oldList = this.listByTrackNoList(Collections.singletonList(trackNo));
@@ -219,7 +219,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             this.saveBatch(newList);
         }else {
             List<String> md5List = oldList.stream().map(LogisticsTrackEntity::getMd5).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-            List<LogisticsTrackEntity> noExistList = newList.stream().filter(e -> StrUtil.isNotBlank(e.getMd5()) && !md5List.contains(e.getMd5())).collect(Collectors.toList());
+            List<LogisticsTrackEntity> noExistList = newList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getMd5()) && !md5List.contains(e.getMd5())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(noExistList)){
                 this.saveBatch(noExistList);
             }
@@ -242,6 +242,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
      * 新增修改处理数据
      */
     private void handleData(LogisticsTrackEntity logisticsTrackEntity) {
-        // TODO 验证数据 & 数据赋值
+        
     }
 }

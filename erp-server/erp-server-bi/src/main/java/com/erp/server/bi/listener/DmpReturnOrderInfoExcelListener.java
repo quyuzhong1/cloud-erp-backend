@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpReturnOrderInfoImportExcelDTO> {
-    private Integer importType;
-
 
     private BiOrderInfoService biOrderInfoService;
 
@@ -47,9 +45,8 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
 
     private List<BiReturnOrderInfoEntity> returnOrderList;
 
-    public DmpReturnOrderInfoExcelListener(Integer importType, List<BiReturnOrderInfoEntity> returnOrderList, BiOrderInfoService biOrderInfoService, BiReturnOrderInfoService biReturnOrderInfoService
+    public DmpReturnOrderInfoExcelListener(List<BiReturnOrderInfoEntity> returnOrderList, BiOrderInfoService biOrderInfoService, BiReturnOrderInfoService biReturnOrderInfoService
             , BiShopInfoService biShopInfoService, BiReturnOrderItemService biReturnOrderItemService, PlmTaskFeign plmTaskFeign) {
-        this.importType = importType;
         this.biOrderInfoService = biOrderInfoService;
         this.biShopInfoService = biShopInfoService;
         this.biReturnOrderInfoService = biReturnOrderInfoService;
@@ -132,13 +129,13 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
         }
 
 
-        String errStr = "";
-        if (errorMsgList.size() > 0) {
+        StringBuilder errStr = new StringBuilder();
+        if (!errorMsgList.isEmpty()) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+                errStr.append(indexTemp).append("、").append(errorMsgList.get(i)).append("；");
             }
-            dto.setErrorMsg(errStr);
+            dto.setErrorMsg(errStr.toString());
             list.add(dto);
             return;
         }
@@ -179,6 +176,6 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 }

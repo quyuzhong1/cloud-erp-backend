@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq.consumer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -105,10 +106,10 @@ public class PlatformSoMultiChannelConsumerService<T extends DmpSyncTaskIdDTO> e
     public String getTableName(String platform){
         // 亚马逊多渠道订单和B2C订单来源一致
         if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(platform)){
-            return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+            return  CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                     platform, BusinessTypeEnum.ORDER.getCode());
         } else {
-            return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+            return  CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                     platform, BusinessTypeEnum.SO_MULTI_CHANNEL.getCode());
         }
 

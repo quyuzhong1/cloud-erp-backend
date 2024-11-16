@@ -14,7 +14,7 @@ public interface ProjectReportFormsService {
      * @param dto
      * @return com.common.business.vo.PagingVO<java.util.List<com.erp.model.plm.dto.ProjectReportFormsDTO.PagingView>>
      **/
-    PagingVO<List<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(PagingDTO<ProjectReportFormsDTO.PagingParam> dto);
+    PagingVO<ProjectReportFormsDTO.PagingView> projectReportFormsPaging(PagingDTO<ProjectReportFormsDTO.PagingParam> dto);
 
     /**
      * 任务详情

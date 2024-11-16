@@ -105,7 +105,8 @@ public class InventoryReportDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportTransportItem {
+    public static class ExportTransportItem implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
         /**
          * 仓库id（勾选导出必传参数）
@@ -348,9 +349,8 @@ public class InventoryReportDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class InventoryAgeRangeDTO {
-
-
+    public static class InventoryAgeRangeDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 开始值
          */
@@ -424,7 +424,8 @@ public class InventoryReportDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportInventoryAgeItem {
+    public static class ExportInventoryAgeItem implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
         /**
          * 仓库id（勾选导出必传参数）
@@ -504,7 +505,9 @@ public class InventoryReportDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class CheckData {
+    public static class CheckData implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
+
         /**
          * 仓库
          */

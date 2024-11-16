@@ -1,18 +1,16 @@
 package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.entity.RealOutOfStockEntity;
-import com.erp.model.mrp.entity.RptOutOfStockEntity;
 import com.erp.server.mrp.mapper.RealOutOfStockMapper;
 import com.erp.server.mrp.service.RealOutOfStockService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.mrp.service.RptOutOfStockService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * <p>
@@ -46,8 +44,7 @@ public class RealOutOfStockServiceImpl extends SuperServiceImpl<RealOutOfStockMa
     @Override
     public void dealRealOutOfStock(LocalDate calculationDate) {
         //查询当日所有断货报告
-        List<RptOutOfStockEntity> rptOutOfStockList = rptOutOfStockService.list(Wrappers.<RptOutOfStockEntity>lambdaQuery()
-                .eq(RptOutOfStockEntity::getDate, ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate));
+
         //保存到真实断货表
 
     }

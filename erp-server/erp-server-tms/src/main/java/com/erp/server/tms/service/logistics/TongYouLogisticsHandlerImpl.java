@@ -248,7 +248,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             TongYouResponse<List<TongYouChannel>> tongYouResponse = tongYouService.getAllChannel(authMap);
             if (!tongYouResponse.getSuccess()) {

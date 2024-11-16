@@ -1,7 +1,7 @@
 package com.common.core.utils.date;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -391,7 +391,7 @@ public class LocalDateUtil {
     }
 
     public static LocalDateTime strToLocalDateTime(String timeStr) {
-        if (StrUtil.isBlank(timeStr)) {
+        if (CharSequenceUtil.isBlank(timeStr)) {
             return null;
         }
         if(timeStr.contains("T")){
@@ -410,7 +410,7 @@ public class LocalDateUtil {
     }
 
     public static LocalDateTime plusHours(LocalDateTime startTime, String hourStr) {
-        if (StrUtil.isBlank(hourStr)){
+        if (CharSequenceUtil.isBlank(hourStr)){
             return startTime;
         }
         BigDecimal hour = new BigDecimal(hourStr);

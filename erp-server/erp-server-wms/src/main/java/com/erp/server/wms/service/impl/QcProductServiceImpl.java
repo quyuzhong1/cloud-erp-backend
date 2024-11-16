@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -59,19 +60,19 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void add(String billId, QcProductDTO.AddDTO qcProduct,String skuId) {
-        if(StringUtils.isBlank(skuId)){
+        if(CharSequenceUtil.isBlank(skuId)){
             throw new ServiceException(ApiError.ERROR_95107);
         }
         QcProductEntity qcProductEntity = new QcProductEntity();
         BeanMapper.copy(qcProduct, qcProductEntity);
         String id = qcProduct.getId();
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             id = IdWorker.getIdStr();
         }
         qcProductEntity.setMainId(billId);
         qcProductEntity.setSkuId(skuId);
         qcProductEntity.setId(id);
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(skuId));
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(skuId));
 
         SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
         if(skuVO!=null){
@@ -90,7 +91,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         this.saveOrUpdate(qcProductEntity);
 
         //标记SKU
-        plmTaskFeign.updateOccupyStatus(Arrays.asList(qcProductEntity.getSkuId()));
+        plmTaskFeign.updateOccupyStatus(Collections.singletonList(qcProductEntity.getSkuId()));
     }
 
 
@@ -109,7 +110,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         if (product != null) {
             BeanMapper.copy(product, productView);
             List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(product.getSkuId()));
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(product.getId()));
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(product.getId()));
             List<String> boxImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> boxNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
 

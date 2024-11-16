@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -100,7 +101,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
      * 根据平台组装表名
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.FBA_SHIPMENT.getCode());
     }
 
@@ -228,7 +229,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         requestDTO.setShopId(entity.getShopId());
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getRelatedShopByIdAndCountry(requestDTO);
         if (null == shopInfoEntity){
-            String msg = StrUtil.format("仓库中心对应国家的店铺未授权, shopId={}, country={}", entity.getShopId(), country);
+            String msg = CharSequenceUtil.format("仓库中心对应国家的店铺未授权, shopId={}, country={}", entity.getShopId(), country);
             throw new ServiceException(msg);
         }
         entity.setShopId(shopInfoEntity.getId());

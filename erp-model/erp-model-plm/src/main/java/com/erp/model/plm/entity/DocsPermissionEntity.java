@@ -16,7 +16,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("docs_permission")
-public class DocsPermissionEntity extends BaseEntity implements Serializable {
+public class DocsPermissionEntity extends BaseEntity<DocsPermissionEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

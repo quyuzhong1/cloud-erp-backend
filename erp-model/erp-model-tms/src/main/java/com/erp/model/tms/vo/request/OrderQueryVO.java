@@ -1,16 +1,14 @@
 package com.erp.model.tms.vo.request;
 
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 /**
  * @author zdy
  * @ClassName OrderQueryVO
- * @description: TODO
+
  * @date 2023年11月08日
  * @version: 1.0
  */

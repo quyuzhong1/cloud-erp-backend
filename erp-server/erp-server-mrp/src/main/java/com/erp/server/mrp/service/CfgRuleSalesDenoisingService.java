@@ -17,13 +17,13 @@ import java.util.List;
 public interface CfgRuleSalesDenoisingService extends SuperService<CfgRuleSalesDenoisingEntity> {
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-08-23
-    * @param salesDenoisingList
-    * @return
-    */
-    Boolean update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId,Boolean isCustom);
+     * 修改
+     *
+     * @param salesDenoisingList
+     * @author will
+     * @date: 2024-08-23
+     */
+     void update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId,Boolean isCustom);
 
     /**
      * 根据销量id集合查询

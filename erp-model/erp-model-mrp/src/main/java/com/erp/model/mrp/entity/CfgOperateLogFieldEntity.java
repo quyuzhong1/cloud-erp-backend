@@ -2,6 +2,7 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -20,6 +21,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("cfg_operate_log_field")
+@EqualsAndHashCode(callSuper = true)
 public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntity> {
 
     /**

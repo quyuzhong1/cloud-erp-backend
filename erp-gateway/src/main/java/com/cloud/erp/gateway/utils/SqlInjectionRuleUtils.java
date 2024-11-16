@@ -20,7 +20,10 @@ import java.util.regex.Pattern;
  **/
 @Slf4j
 public class SqlInjectionRuleUtils {
-    
+
+    private SqlInjectionRuleUtils() {
+    }
+
     /**
      * SQL的正则表达式
      */
@@ -66,9 +69,8 @@ public class SqlInjectionRuleUtils {
      * @return
      */
     public static boolean jsonRequestSqlKeyWordsCheck(String value) {
-        if (JSONUtil.isJsonObj(value)) {
-            JSONObject json = JSONUtil.parseObj(value);
-            Map<String, Object> map = json;
+        if (JSONUtil.isTypeJSONObject(value)) {
+            Map<String, Object> map = JSONUtil.parseObj(value);
             if (CollectionUtils.isEmpty(map)) {
                 return false;
             }
@@ -80,14 +82,13 @@ public class SqlInjectionRuleUtils {
                         .map(String::toLowerCase)
                         .orElse("");
                 if (sqlPattern.matcher(lowerValue).find()) {
-                    log.error("参数[{}]中包含不允许sql的关键词", lowerValue);
+                    log.error("json参数[{}]中包含不允许sql的关键词", lowerValue);
                     return true;
                 }
                 return false;
             });
         } else {
-            JSONArray json = JSONUtil.parseArray(value);
-            List<Object> list = json;
+            List<Object> list = JSONUtil.parseArray(value);
             //对post请求参数值进行sql注入检验
             return list.stream().parallel().anyMatch(obj -> {
                 //这里需要将参数转换为小写来处理

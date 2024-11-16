@@ -40,7 +40,7 @@ public interface TransferLogisticsSupplierMapper extends BaseMapper<TransferLogi
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage
      **/
-    IPage<TransferLogisticsSupplierDTO.PagingViewDTO> paging(Page query, @Param("params") TransferLogisticsSupplierDTO.PagingParamDTO params);
+    IPage<TransferLogisticsSupplierDTO.PagingViewDTO> paging(Page<TransferLogisticsSupplierDTO.PagingViewDTO> query, @Param("params") TransferLogisticsSupplierDTO.PagingParamDTO params);
 
     /**
      * 导出

@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -32,10 +33,11 @@ import com.erp.server.oms.service.RuleOrderApprovalService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,16 +52,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderApprovalMapper, RuleOrderApprovalEntity> implements RuleOrderApprovalService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
 
-    @Autowired
+    @Resource
     private SpElServer spElServer;
 
-    @Autowired
+    @Resource
     private CfgConditionService cfgConditionService;
 
     @Transactional(rollbackFor = Exception.class)
@@ -102,7 +104,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单审核规则", ruleOrderApprovalEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单审核规则", ruleOrderApprovalEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), id, "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -117,7 +119,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     public Boolean update(RuleOrderApprovalDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         RuleOrderApprovalEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
+        isExist(old);
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<String> fieldList = conditionList.stream().map(RuleConditionDTO.UpdateDTO::getField).distinct().collect(Collectors.toList());
         List<CfgConditionEntity> cfgConditionEntities = cfgConditionService.listByFields(fieldList);
@@ -154,9 +156,15 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
 
         ruleConditionService.updateRuleCondition(id, conditionList);
 
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleOrderApprovalEntity.getId(), "订单审核规则");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleOrderApprovalEntity.getId(), "订单审核规则");
         operateLogService.addModuleOperateLogByObj(old, ruleOrderApprovalEntity, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), ruleOrderApprovalEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private static void isExist(RuleOrderApprovalEntity old) {
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则");
+        }
     }
 
     /**
@@ -188,7 +196,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     public PagingVO<RuleOrderApprovalDTO.PagingViewDTO> paging(PagingDTO<RuleOrderApprovalDTO.PagingParamDTO> dto) {
         RuleOrderApprovalDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         return new PagingVO<>(pageData);
     }
@@ -205,7 +213,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Override
     public Boolean updateStatus(UpdateStateDTO dto) {
         RuleOrderApprovalEntity ruleOrderApproval = this.getById(dto.getId());
-        Optional.ofNullable(ruleOrderApproval).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
+        isExist(ruleOrderApproval);
         Boolean disabled = ruleOrderApproval.getDisabled();
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
@@ -219,7 +227,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
     @Override
     public RuleOrderApprovalDTO.ViewDTO view(String id) {
         RuleOrderApprovalEntity ruleOrderApproval = this.getById(id);
-        Optional.ofNullable(ruleOrderApproval).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单审核规则"));
+        isExist(ruleOrderApproval);
         RuleOrderApprovalDTO.ViewDTO view = new RuleOrderApprovalDTO.ViewDTO();
         BeanMapper.copy(ruleOrderApproval, view);
         String categoryDetailId = ruleOrderApproval.getCategoryDetailId();

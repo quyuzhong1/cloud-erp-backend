@@ -55,7 +55,7 @@ public class TmsFirstMileReconciliationController extends BaseController {
             menuCode = "tms:tmsFirstMileReconciliation:update",
             serviceClass = TmsFirstMileReconciliationService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdateDTO dto) {
         tmsFirstMileReconciliationService.updateReconciliation(dto);
         return success();
     }

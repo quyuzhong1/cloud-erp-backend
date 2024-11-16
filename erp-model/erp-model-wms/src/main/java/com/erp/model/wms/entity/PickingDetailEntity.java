@@ -94,10 +94,6 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
-
-    public static final String UNIT = "unit";
-
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";

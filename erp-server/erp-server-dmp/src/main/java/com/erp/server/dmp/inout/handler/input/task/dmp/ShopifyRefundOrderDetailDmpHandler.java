@@ -8,7 +8,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
-import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.sdk.oms.shopify.api.rest.model.ShopifyLineItem;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
@@ -80,7 +79,7 @@ public class ShopifyRefundOrderDetailDmpHandler extends DmpInputDoNextDmpHandler
         Map<String, String> dmpRefundIdMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(listMaps)) {
             for(Map<String, Object> listMap : listMaps) {
-                dmpRefundIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.ID).toString());
+                dmpRefundIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
             }
         }
         for (List<TreeMap<String, Object>> dmpInputMongoList : dmpInputDataDmpRelationMaps.values()) {

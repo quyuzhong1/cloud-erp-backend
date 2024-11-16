@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -117,7 +118,7 @@ public class QcRemarkServiceImpl extends SuperServiceImpl<QcRemarkMapper, QcRema
      * @date 2023-04-19 11:27
      */
     private List<String> getDeleteIds(List<QcRemarkDTO.AddDTO> remarkList, List<QcRemarkEntity> dbList) {
-        List<String> ids = remarkList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> ids = remarkList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(QcRemarkDTO.AddDTO::getId).collect(Collectors.toList());
         List<String> dbIds = dbList.stream().map(QcRemarkEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());

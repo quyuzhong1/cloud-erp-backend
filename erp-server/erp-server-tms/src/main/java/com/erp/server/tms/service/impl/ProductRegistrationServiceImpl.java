@@ -413,7 +413,7 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
     }
 
     @Override
-    public ApiResult<?> pullAllProduct(String declareSupplierId) {
+    public ApiResult pullAllProduct(String declareSupplierId) {
         if(StringUtils.isBlank(declareSupplierId)){
             return ApiResult.error(500,"平台商Id不能为空");
         }

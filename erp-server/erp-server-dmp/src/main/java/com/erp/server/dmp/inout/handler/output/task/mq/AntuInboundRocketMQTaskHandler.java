@@ -1,7 +1,18 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformInboundDTO;
 import com.common.business.dto.PlatformInboundDTO.Receiving;
@@ -12,14 +23,9 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.sdk.wms.antu.dto.response.AntuReceiptResp;
 import com.sdk.wms.antu.enums.AntuEnums;
-import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp.GcReceiving;
-import com.sdk.wms.goodcang.enums.GoodCangEnums;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 
 @Service
 @Scope("prototype")

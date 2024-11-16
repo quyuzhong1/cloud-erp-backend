@@ -15,7 +15,7 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface NoticeMessageRecordMapper extends BaseMapper<NoticeMessageRecordEntity> {
 
-    IPage paging(Page query, @Param("params") BaseSearchDTO params);
+    IPage<NoticeMessageRecordEntity> paging(Page<BaseSearchDTO> query, @Param("params") BaseSearchDTO params);
 }
 
 

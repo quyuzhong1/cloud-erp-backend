@@ -37,6 +37,7 @@ import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -277,7 +278,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      */
     @GetMapping("/exportTemplate")
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载头程物流单模板")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object>exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "excel/fmLogistics.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -289,7 +290,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -314,7 +315,7 @@ public class TmsFirstMileLogisticController extends BaseController {
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程物流单")
     @WebAdvanceQuery(handler = TmsFirstMileLogisticQueryHandler.class)
-    public ApiResult export(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+    public ApiResult<Object>export(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         tmsFirstMileLogisticService.export(pagingParamDTO,response);
         return success();
     }
@@ -325,7 +326,7 @@ public class TmsFirstMileLogisticController extends BaseController {
     @PostMapping("/exportFeeDetail")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程物流单费用明细")
     @WebAdvanceQuery(handler = TmsFirstMileLogisticQueryHandler.class)
-    public ApiResult exportFeeDetail(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
+    public ApiResult<Object>exportFeeDetail(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {
         tmsFirstMileLogisticService.exportFeeDetail(pagingParamDTO,response);
         return success();
     }

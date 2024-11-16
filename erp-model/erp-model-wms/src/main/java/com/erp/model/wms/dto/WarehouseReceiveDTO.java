@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,14 +23,14 @@ import java.util.List;
  **/
 @Data
 @NoArgsConstructor
-public class WarehouseReceiveDTO {
-
+public class WarehouseReceiveDTO implements Serializable {
+    private static final long serialVersionUID = 1905122041950251207L;
     /**
      * 添加
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends BaseEntity {
+    public static class AddDTO extends BaseEntity<AddDTO> {
 
         /**
          * 采购订单id
@@ -131,47 +132,6 @@ public class WarehouseReceiveDTO {
         @Valid
         private List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList;
     }
-
-
-//    /**
-//     * 质检需要的信息
-//     */
-//    @Data
-//    @NoArgsConstructor
-//    public static class QcDTO {
-//
-//
-//        private Boolean isFirstMassProduct;
-//        /**
-//         * 交货仓库id
-//         */
-//        private String deliveryWarehouseId;
-//
-//        private String supplierId;
-//
-//        private String purchaseOrderId;
-//
-//        private String purchaseOrderCode;
-//
-//
-//        private String skuId;
-//
-//
-//        private String skuNo;
-//
-//
-//        private String receiveQty;
-//
-//        private String productGrade;
-//
-//        /**
-//         *变体属性
-//         */
-//        private String variantProperty;
-//
-//
-//    }
-
 
     /**
      * 详情

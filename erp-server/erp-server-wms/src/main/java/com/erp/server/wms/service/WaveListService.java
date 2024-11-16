@@ -91,7 +91,7 @@ public interface WaveListService extends SuperService<WaveListEntity> {
     /**
      * 完成打印
      */
-    ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO);
+    ApiResult printFinish(BaseIdsDTO.IdsDTO idsDTO);
 
     /**
      * 高级查询查波次表的发货单id

@@ -59,9 +59,9 @@ public enum AmzReportTaskStatusEnum {
         );
     }
 
-    public static AmzReportTaskStatusEnum getByCode(String Code) {
+    public static AmzReportTaskStatusEnum getByCode(String code) {
         return Arrays.stream(AmzReportTaskStatusEnum.values())
-                .filter(r -> r.getCode().equalsIgnoreCase(Code))
+                .filter(r -> r.getCode().equalsIgnoreCase(code))
                 .findFirst().orElse(null);
     }
 

@@ -199,7 +199,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         String docsNameId = dto.getDeliveryDocsId();
         TemplateTaskDocsNameEntity docsNameEntity=this.getById(docsNameId);
         if(Objects.isNull(docsNameEntity)){
-            throw new ServiceException(ApiError.ERROR_DOCS_NO);
+            throw new ServiceException(ApiError.ERROR_95052);
         }
         List<String> names = docksNames.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)&&!docsNameEntity.getName().equals(name)) {
@@ -285,9 +285,9 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
     @Override
     public DocsDTO view(String id) {
         TemplateTaskDocsNameEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException("模板任务文档名称表记录不存在，id=" + id));
+        TemplateTaskDocsNameEntity oldEntity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException("模板任务文档名称表记录不存在，id=" + id));
         DocsDTO dto = new DocsDTO();
-        dto.setName(entity.getName());
+        dto.setName(oldEntity.getName());
         dto.setId(entity.getId());
         dto.setState(true);
         return dto;

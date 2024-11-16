@@ -1,15 +1,15 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.Map;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.util.Map;
 
 
 /**
@@ -53,15 +53,15 @@ public class PlmCfgSettingEntity extends BaseEntity<PlmCfgSettingEntity> {
     private String remark;
 
 
-    public static final String KEY = "key";
+    public static final String FIELD_KEY = "key";
 
     public static final String DATA_JSON = "data_json";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
-    public static final String INDEX = "index";
+    public static final String FIELD_INDEX = "index";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

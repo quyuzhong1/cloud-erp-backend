@@ -59,7 +59,7 @@ public interface ProductRegistrationService extends SuperService<ProductRegistra
 
     void export(ProductRegistrationDTO.PagingParamDTO dto);
 
-    ApiResult<?> pullAllProduct(String declareSupplierId);
+    ApiResult<Object> pullAllProduct(String declareSupplierId);
     /**
      * @description: 根据skuId查询
      * @author Will

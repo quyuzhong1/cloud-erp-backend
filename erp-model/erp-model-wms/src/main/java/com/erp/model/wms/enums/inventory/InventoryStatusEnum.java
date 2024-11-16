@@ -40,10 +40,6 @@ public enum InventoryStatusEnum  implements EnumMessage {
         return controlLocation;
     }
 
-    public void setControlLocation(Boolean controlLocation) {
-        this.controlLocation = controlLocation;
-    }
-
 
     InventoryStatusEnum(String code, String name, Boolean controlLocation) {
         this.code = code;

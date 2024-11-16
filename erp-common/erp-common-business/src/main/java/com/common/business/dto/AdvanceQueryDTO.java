@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * 高级筛选通用查询DTO
  * @Author LiuRuiPeng
@@ -15,8 +17,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AdvanceQueryDTO {
+public class AdvanceQueryDTO implements Serializable {
 
+    private static final long serialVersionUID = 7251567856692109648L;
     // 前端字段名,也是数据库查询名
     private String field;
 

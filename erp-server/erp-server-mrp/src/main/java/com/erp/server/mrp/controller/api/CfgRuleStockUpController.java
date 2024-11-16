@@ -37,7 +37,7 @@ public class CfgRuleStockUpController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    public ApiResult<?> update(@RequestBody @Validated CfgRuleStockUpDTO.UpdateDTO dto) {
+    public ApiResult<String> update(@RequestBody @Validated CfgRuleStockUpDTO.UpdateDTO dto) {
         cfgRuleStockUpService.update(dto);
         return success();
     }

@@ -45,8 +45,8 @@ public class NoticeMessageController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<NoticeMessageDTO>>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
-        PagingVO<List<NoticeMessageDTO>> pagingVO = noticeMessageService.paging(dto);
+    public ApiResult<PagingVO<NoticeMessageDTO>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<NoticeMessageDTO> pagingVO = noticeMessageService.paging(dto);
         return success(pagingVO);
     }
 
@@ -58,8 +58,8 @@ public class NoticeMessageController extends BaseController {
      * @return
      */
     @GetMapping("/getItemPeople")
-    public ApiResult getItemPeople() {
-        List<Map> list = NoticeItemPeopleEnum.getAll();
+    public ApiResult<Object> getItemPeople() {
+        List<Map<String,String>> list = NoticeItemPeopleEnum.getAll();
         return success(list);
     }
 
@@ -72,7 +72,7 @@ public class NoticeMessageController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增通知")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated NoticeMessageDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated NoticeMessageDTO dto) {
         Boolean flag = noticeMessageService.add(dto);
         return flag == true ? success() : failure();
     }
@@ -85,7 +85,7 @@ public class NoticeMessageController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "更改通知")
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated NoticeMessageDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated NoticeMessageDTO dto) {
         Boolean flag = noticeMessageService.updateNotice(dto);
         return flag == true ? success() : failure();
     }
@@ -99,7 +99,7 @@ public class NoticeMessageController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置通知状态:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateState")
-    public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
+    public ApiResult<Object> updateState(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean flag = noticeMessageService.updateState(dto);
         return flag == true ? success() : failure();
     }

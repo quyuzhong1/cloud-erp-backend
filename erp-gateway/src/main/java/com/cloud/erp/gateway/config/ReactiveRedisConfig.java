@@ -3,6 +3,7 @@ import java.util.Objects;
 
 import javax.annotation.Resource;
 
+import com.common.core.exception.ServiceException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +33,7 @@ public class ReactiveRedisConfig {
     public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory(LettucePoolingClientConfiguration lettucePoolingClientConfiguration) {
         log.info("redis配置的节点: {}", redisProperties.getNodesInfoList());
         if (CollectionUtils.isEmpty(redisProperties.getNodesInfoList())) {
-            throw new RuntimeException("redis nodesInfo is empty");
+            ServiceException.runError("redis nodesInfo is empty");
         }
 
         int nodeSize = redisProperties.getNodesInfoList().size();
@@ -49,8 +50,7 @@ public class ReactiveRedisConfig {
                 configuration.setPassword(RedisPassword.of(password));
             }
             // factory.setShareNativeConnection(false);//是否允许多个线程操作共用同一个缓存连接，默认true，false时每个操作都将开辟新的连接
-            LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory(configuration);
-            return lettuceConnectionFactory;
+            return new LettuceConnectionFactory(configuration);
         } else {
             //cluster模式
             RedisClusterConfiguration configuration = new RedisClusterConfiguration();

@@ -1,6 +1,6 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -67,7 +67,7 @@ public class CfgReconciliationFieldExcelListener extends AnalysisEventListener<C
                                 && e.getErpFieldName().equals(importExcelDTO.getErpFieldName()))
                 .count();
         if (count > 0){
-            importExcelDTO.setErrorMsg(StrUtil.format("【{}】【{}】【{}】当页配置已存在",
+            importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】【{}】【{}】当页配置已存在",
                     importExcelDTO.getReconciliationTypeName(),
                     importExcelDTO.getThirdName(),
                     importExcelDTO.getErpFieldName()
@@ -81,6 +81,8 @@ public class CfgReconciliationFieldExcelListener extends AnalysisEventListener<C
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        if(CollectionUtils.isEmpty(successList)){
+            return;
+        }
     }
 }

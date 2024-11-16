@@ -16,7 +16,7 @@ import java.util.List;
  * @Created by yl
  */
 public interface ProductArchiveService extends IService<ProductArchiveEntity> {
-    PagingVO<List<ProductArchiveDTO>> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto);
+    PagingVO<ProductArchiveDTO> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto);
 
     boolean activate(String productId);
 

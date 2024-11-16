@@ -1,8 +1,8 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -15,10 +15,10 @@ import com.erp.server.mrp.mapper.SalesEstimateManualMapper;
 import com.erp.server.mrp.service.OperateLogService;
 import com.erp.server.mrp.service.SalesEstimateManualService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -34,7 +34,7 @@ import java.util.List;
 @Slf4j
 @Service
 public class SalesEstimateManualServiceImpl extends SuperServiceImpl<SalesEstimateManualMapper, SalesEstimateManualEntity> implements SalesEstimateManualService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     /**
@@ -59,7 +59,7 @@ public class SalesEstimateManualServiceImpl extends SuperServiceImpl<SalesEstima
 
         // 记录主单操作日志
         log.info("编辑 开始记录运营销量预估日志数据，id：【{}】", salesEstimateManualEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), salesEstimateManualEntity.getId(), "运营销量预估");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), salesEstimateManualEntity.getId(), "运营销量预估");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, salesEstimateManualEntity, null, salesEstimateManualEntity.getId(), msg);
         return Boolean.TRUE;
@@ -100,10 +100,5 @@ public class SalesEstimateManualServiceImpl extends SuperServiceImpl<SalesEstima
         Integer days = thisMonthDays - thisDays + 1;
         BigDecimal currentMonthSurplusSalesQty = MathUtil.multiply(MathUtil.divide(currentMonthSalesQty,new BigDecimal(thisMonthDays)),new BigDecimal(days));
         salesEstimateManualEntity.setCurrentMonthSurplusSalesQty(currentMonthSurplusSalesQty);
-    }
-
-    public static void main(String[] args) {
-        LocalDate now = LocalDate.now();
-        System.out.println(now.getMonth().maxLength());
     }
 }

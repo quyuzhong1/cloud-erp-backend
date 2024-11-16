@@ -1,12 +1,11 @@
 package com.erp.server.tms.query;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.query.AbstractQueryHandler;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +30,7 @@ public class FirstMileCostAllocationQueryHandler extends AbstractQueryHandler {
             }else if (value instanceof List){
                 List<LocalDate> values = new ArrayList<>();
                 for (String s : (List<String>)value) {
-                    if (StrUtil.isNotBlank(s)){
+                    if (CharSequenceUtil.isNotBlank(s)){
                         String value1 = s + "-01";
                         values.add(LocalDate.parse(value1, dateTimeFormatter));
                     }

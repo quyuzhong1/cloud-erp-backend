@@ -244,22 +244,20 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
                     }
                     List<String> chargeList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
                     //按角色分配
-                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                        if (chargeList.contains(projectRoleEntity.getName())) {
-                            //更新任务审核人
-                            if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
-                                List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
-                                for (String userId : dto.getUserIdList()) {
-                                    if (!chargetIds.contains(userId)) {
-                                        chargetIds.add(userId);
-                                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && chargeList.contains(projectRoleEntity.getName())) {
+                        //更新任务审核人
+                        if (StringUtils.isNotBlank(taskChargeDistributionEntity.getChargeIds())) {
+                            List<String> chargetIds = Arrays.stream(taskChargeDistributionEntity.getChargeIds().split(",")).collect(Collectors.toList());
+                            for (String userId : dto.getUserIdList()) {
+                                if (!chargetIds.contains(userId)) {
+                                    chargetIds.add(userId);
                                 }
-                                taskChargeDistributionEntity.setChargeIds(StringUtils.join(chargetIds, ","));
-                            } else {
-                                taskChargeDistributionEntity.setChargeIds(StringUtils.join(dto.getUserIdList(), ","));
                             }
-                            addTaskChargeDistributionList.add(taskChargeDistributionEntity);
+                            taskChargeDistributionEntity.setChargeIds(StringUtils.join(chargetIds, ","));
+                        } else {
+                            taskChargeDistributionEntity.setChargeIds(StringUtils.join(dto.getUserIdList(), ","));
                         }
+                        addTaskChargeDistributionList.add(taskChargeDistributionEntity);
                     }
                     //按上级分配
                     if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && StringUtils.isNotBlank(obj.getChargeId())) {
@@ -308,13 +306,13 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
      * @date 2022-09-26 18:29
      */
     @Override
-    public PagingVO<List<MemberPagingShowDTO>> paging(PagingDTO<MemberPagingDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+    public PagingVO<MemberPagingShowDTO> paging(PagingDTO<MemberPagingDTO> dto) {
+        Page<MemberPagingDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         MemberPagingDTO params = dto.getParams();
         String productId = params.getProductId();
         List<String> roleIds = new ArrayList<>();
         String roleId = params.getProjectRoleId();
-        IPage pageData = new Page(); //查看所有的人
+        IPage<MemberPagingShowDTO> pageData; //查看所有的人
         if (StringUtils.isBlank(roleId)) {
             List<ProjectRoleEntity> roleList = projectRoleService.listByProductId(productId);
             List<RoleRefMemberEntity> refList = roleRefMemberService.getByProductId(productId);
@@ -380,7 +378,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
             }
         }
 
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
 
     }
 
@@ -475,11 +473,10 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
     @Override
     public List<ProjectMemberDTO> memberList(String productId) {
-        List<ProjectMemberDTO> resultList = new ArrayList<>();
         LambdaQueryWrapper<ProjectMembersEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectMembersEntity::getProductId, productId);
         List<ProjectMembersEntity> list = this.list(queryWrapper);
-        resultList = BeanMapper.copyList(list, ProjectMemberDTO.class);
+        List<ProjectMemberDTO> resultList = BeanMapper.copyList(list, ProjectMemberDTO.class);
         if (CollectionUtils.isNotEmpty(resultList)) {
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
             for (ProjectMemberDTO item : resultList) {
@@ -528,7 +525,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
             //延期的任务数
             int postponeTaskCount = 0;
-            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) > MathUtil.ZERO).collect(Collectors.toList()).size();
             TaskConductDTO dto = new TaskConductDTO();
             dto.setMembersId(item.getUserId());
             dto.setMembersName(item.getUserName());
@@ -542,13 +539,6 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
         }
 
         return resultList;
-    }
-
-    @Override
-    @Transactional
-    public void addRoleAndMembersByApproval(String productId, String productPropertyId) {
-
-
     }
 
 
@@ -581,6 +571,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean saveByRoleAndMembers(String productId, String projectId, String roleName, List<String> memberList) {
         ProjectRoleEntity found = projectRoleService.getByRoleName(productId, roleName);
         if (ObjectUtils.isEmpty(found)) {

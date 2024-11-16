@@ -1,11 +1,9 @@
 package com.erp.server.oms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -17,7 +15,6 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -50,7 +47,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -97,14 +93,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     private WmsTaskFeign wmsTaskFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
-    private BankAccountService bankAccountService;
-
     @Resource
-    private MQProducerService mqProducerService;
+    private BankAccountService bankAccountService;
 
     @Resource
     private KingdeeReceiptConditionService kingdeeReceiptConditionService;
@@ -184,7 +177,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Override
     public void syncOrderToDmp(SoInfoEntity entity, String syncOperate) {
 
-        if (!dmpTaskFeign.needPushMQ(LocalDateTime.now())) {
+        if (Boolean.FALSE.equals(dmpTaskFeign.needPushMQ(LocalDateTime.now()))) {
             return;
         }
         Map<String, Object> resultMap = new HashMap<>();
@@ -232,7 +225,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             exchangeRate = BigDecimal.ONE;
         }
         //订单业务字段设置
-        if (Objects.nonNull(soInfoEntity.getInvalidStatus()) && soInfoEntity.getInvalidStatus()) {
+        if (Objects.nonNull(soInfoEntity.getInvalidStatus()) && Boolean.TRUE.equals(soInfoEntity.getInvalidStatus())) {
             biOrderInfoEntity.setOrderStatus(5);
         } else {
             //默认待配货
@@ -259,11 +252,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         BigDecimal itemTotalCost = BigDecimal.ZERO;
         soDetailEntities.stream().forEach(
                 soDetailEntity -> {
-                    orderCost.add(Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
-                    itemTotal.add(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO)
+                    BigDecimal add = orderCost.add(Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO).multiply(exchangeRate));
+                    BigDecimal add1 = itemTotal.add(Optional.ofNullable(soDetailEntity.getPrice()).orElse(BigDecimal.ZERO)
                             .multiply(BigDecimal.valueOf(Optional.ofNullable(soDetailEntity.getQty()).orElse(0))).multiply(exchangeRate));
-                    itemTotalOrigin.add(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO));
-                    itemTotalCost.add(Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO));
+                    BigDecimal add2 = itemTotalOrigin.add(Optional.ofNullable(soDetailEntity.getTaxAmountBefore()).orElse(BigDecimal.ZERO));
+                    BigDecimal add3 = itemTotalCost.add(Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO));
                 }
         );
         //订单成本价
@@ -301,7 +294,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         if (com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(soInfoEntity.getSalesDeptId())) {
             try {
                 List<SysDepartmentEntity> dept = sysUserFeign.listDeptByIds(Collections.singletonList(soInfoEntity.getSalesDeptId()));
-                if (CollectionUtil.isNotEmpty(dept)) {
+                if (CollUtil.isNotEmpty(dept)) {
                     biOrderInfoEntity.setDeptName(dept.get(0).getName());
                 }
             } catch (Exception e) {
@@ -315,7 +308,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //订单明细
         List<BiOrderItemSplitEntity> orderItemEntities = new ArrayList<>(soDetailEntities.size());
         //明细字段转换
-        if (CollectionUtil.isNotEmpty(soDetailEntities)) {
+        if (CollUtil.isNotEmpty(soDetailEntities)) {
             soDetailEntities.forEach(soDetailEntity -> {
                 BiOrderItemSplitEntity biOrderItemSplitEntity = SoInfoConverter.INSTANCE.soDetailToDmpOrderItem(soDetailEntity);
                 biOrderItemSplitEntity.setOrderId(biOrderInfoEntity.getId());

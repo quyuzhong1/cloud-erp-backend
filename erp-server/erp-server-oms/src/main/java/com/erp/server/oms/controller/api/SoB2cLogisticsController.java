@@ -2,7 +2,7 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +23,7 @@ import com.common.core.controller.vo.ApiResult;
 @RequestMapping("/soB2cLogistics")
 public class SoB2cLogisticsController extends BaseController {
 
-    @Autowired
+    @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
 
 

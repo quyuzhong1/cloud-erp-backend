@@ -1,5 +1,6 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
@@ -89,7 +90,7 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
         //仓库id
         String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                 findFirst().map(WarehouseEntity::getId).orElse("");
-        if (StringUtils.isBlank(warehouseId)) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
             errorMsgList.add("仓库不存在");
         }
         //仓位

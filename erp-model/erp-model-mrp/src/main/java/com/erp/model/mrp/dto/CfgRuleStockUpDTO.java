@@ -1,10 +1,12 @@
 package com.erp.model.mrp.dto;
 
-import com.erp.model.mrp.entity.*;
+import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
+import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
+import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import lombok.*;
-import org.springframework.util.ObjectUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -12,6 +14,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -481,24 +484,36 @@ public class CfgRuleStockUpDTO implements Serializable {
                                            CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult,
                                            CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult,List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> refStockingRatioResults
         ) {
-            this.setId(Optional.ofNullable(entity).orElse(defaultStockUp).getId());
-            this.setPurchaseApproveDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getPurchaseApproveDays())) ? defaultStockUp.getPurchaseApproveDays() : entity.getPurchaseApproveDays());
-            this.setProductionDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getProductionDays())) ? defaultStockUp.getProductionDays() : entity.getProductionDays());
-            this.setSupplierDeliveryDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getSupplierDeliveryDays())) ? defaultStockUp.getSupplierDeliveryDays() : entity.getSupplierDeliveryDays());
-            this.setQcDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getQcDays())) ? defaultStockUp.getQcDays() : entity.getQcDays());
-            this.setPurchaseCycleDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getPurchaseCycleDays())) ? defaultStockUp.getPurchaseCycleDays() : entity.getPurchaseCycleDays());
-            this.setSafeDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getSafeDays())) ? defaultStockUp.getSafeDays() : entity.getSafeDays());
-            this.setInstockDays((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getInstockDays())) ? defaultStockUp.getInstockDays() : entity.getInstockDays());
+            CfgRuleStockUpEntity effectiveEntity = Optional.ofNullable(entity).orElse(defaultStockUp);
+            // 设置实体字段值
+            this.setId(effectiveEntity.getId());
+            this.setPurchaseApproveDays(getOrDefault(entity, CfgRuleStockUpEntity::getPurchaseApproveDays, defaultStockUp.getPurchaseApproveDays()));
+            this.setProductionDays(getOrDefault(entity, CfgRuleStockUpEntity::getProductionDays, defaultStockUp.getProductionDays()));
+            this.setSupplierDeliveryDays(getOrDefault(entity, CfgRuleStockUpEntity::getSupplierDeliveryDays, defaultStockUp.getSupplierDeliveryDays()));
+            this.setQcDays(getOrDefault(entity, CfgRuleStockUpEntity::getQcDays, defaultStockUp.getQcDays()));
+            this.setPurchaseCycleDays(getOrDefault(entity, CfgRuleStockUpEntity::getPurchaseCycleDays, defaultStockUp.getPurchaseCycleDays()));
+            this.setSafeDays(getOrDefault(entity, CfgRuleStockUpEntity::getSafeDays, defaultStockUp.getSafeDays()));
+            this.setInstockDays(getOrDefault(entity, CfgRuleStockUpEntity::getInstockDays, defaultStockUp.getInstockDays()));
+
+            // 设置默认/新备货比率
             this.setStockingRatio(defaultStockUp.getStockingRatio());
             this.setNewStockingRatio(defaultStockUp.getNewStockingRatio());
-            this.setRefStockingRatio(ObjectUtils.isEmpty(entity) ? null : entity.getStockingRatio());
-            this.setPlatformType((ObjectUtils.isEmpty(entity) || ObjectUtils.isEmpty(entity.getPlatformType())) ? defaultStockUp.getPlatformType() : entity.getPlatformType());
-            this.setRefId((ObjectUtils.isEmpty(entity)) ? "" : entity.getRefId());
+            this.setRefStockingRatio(entity != null ? entity.getStockingRatio() : null);
+
+            // 设置平台类型和引用ID
+            this.setPlatformType(getOrDefault(entity, CfgRuleStockUpEntity::getPlatformType, defaultStockUp.getPlatformType()));
+            this.setRefId(entity != null ? entity.getRefId() : "");
+            // 设置物流和备货比率结果
             this.setLogisticsResult(logisticsResult);
             this.setLogisticsMinResult(logisticsMinResult);
             this.setLogisticsMaxResult(logisticsMaxResult);
             this.setStockingRatioResults(stockingRatioResults);
             this.setRefStockingRatioResults(refStockingRatioResults);
+        }
+
+        // 提取默认值的辅助方法
+        private <T> T getOrDefault(CfgRuleStockUpEntity entity, Function<CfgRuleStockUpEntity, T> getter, T defaultValue) {
+            return (entity != null && getter.apply(entity) != null) ? getter.apply(entity) : defaultValue;
         }
     }
 

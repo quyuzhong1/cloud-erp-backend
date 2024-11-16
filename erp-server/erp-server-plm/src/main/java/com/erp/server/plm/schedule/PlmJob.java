@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.collection.CollUtil.isNotEmpty;
 import static cn.hutool.json.XMLTokener.entity;
 
 /**
@@ -93,30 +94,6 @@ public class PlmJob {
     }
 
     /**
-     * 产品信息同步到其他表冗余
-     */
-//    @XxlJob("productInfoSyncDmp")
-    public void productInfoSyncDmp() {
-//        List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
-//        syncProductService.syncProductInfoToDmp(list);
-//        scmSyncProductService.syncProductInfoToScm(list);
-    }
-
-    /**
-     * 产品sku表同步到其他表冗余
-     */
-//    @XxlJob("productSkuSyncDmp")
-    public void productSkuSyncDmp() {
-//        wmsSyncProductService.syncProductInfoToWms();
-//        wmsSyncProductService.syncProductSkuSaleToWms();
-
-//        List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
-//        syncProductService.syncProductSkuToDmp(list);
-//        wmsSyncProductService.syncProductSkuToWms(list);
-//        scmSyncProductService.syncProductSkuToScm(list);
-    }
-
-    /**
      * 新老品同步
      */
     @XxlJob("newProductToDmp")
@@ -133,7 +110,7 @@ public class PlmJob {
     public void recalDestDeclarePrice(){
         XxlJobHelper.log("recalDestDeclarePrice start : {}", LocalDateTime.now());
         List<ProductDetailEntity> details = productDetailService.getProductDetailByDestDeclarePrice();
-        if (CollectionUtil.isNotEmpty(details)){
+        if (isNotEmpty(details)){
             XxlJobHelper.log("重算目的国申报价sku数量：{}", details.size());
             productDetailService.recalDestDeclarePrice(details);
         }

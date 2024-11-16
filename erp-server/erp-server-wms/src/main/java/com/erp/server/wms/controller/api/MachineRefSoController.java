@@ -19,6 +19,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 
+import javax.annotation.Resource;
+
 /**
  * 加工单和销售订单关联表
  *
@@ -31,7 +33,7 @@ import com.erp.model.wms.dto.MachineRefSoDTO;
 @RequestMapping("/machineRefSo")
 public class MachineRefSoController extends BaseController {
 
-    @Autowired
+    @Resource
     private MachineRefSoService machineRefSoService;
 
     /**

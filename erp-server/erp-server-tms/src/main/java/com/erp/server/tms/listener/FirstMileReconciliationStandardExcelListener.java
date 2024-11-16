@@ -1,6 +1,6 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -55,9 +55,9 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        if ((StrUtil.isBlank(excelDTO.getCostName()) || StrUtil.isBlank(excelDTO.getCostValue()))
-                && StrUtil.isBlank(excelDTO.getActualWeight())
-                && StrUtil.isBlank(excelDTO.getVolumeWeight())
+        if ((CharSequenceUtil.isBlank(excelDTO.getCostName()) || CharSequenceUtil.isBlank(excelDTO.getCostValue()))
+                && CharSequenceUtil.isBlank(excelDTO.getActualWeight())
+                && CharSequenceUtil.isBlank(excelDTO.getVolumeWeight())
         ) {
             errorMsgList.add("实际实重、实际计费重、（费用项、费用金额）至少填一个");
         }

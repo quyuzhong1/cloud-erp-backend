@@ -1,36 +1,22 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.erp.model.tms.entity.TmsCarrierEntity;
 import com.erp.server.tms.mapper.TmsCarrierMapper;
 import com.erp.server.tms.service.TmsCarrierService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TmsCarrierDTO;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -60,7 +46,7 @@ public class TmsCarrierServiceImpl extends SuperServiceImpl<TmsCarrierMapper, Tm
     public TmsCarrierEntity getByCodeAndSalesPlatform(String carrierCode, String dictPlatform) {
         return lambdaQuery().eq(TmsCarrierEntity::getSalesPlatform, dictPlatform)
                 .eq(TmsCarrierEntity::getCode, carrierCode)
-                .last("LIMIT 1")
+                .last(SqlConstants.LIMIT_1)
                 .one();
     }
 
