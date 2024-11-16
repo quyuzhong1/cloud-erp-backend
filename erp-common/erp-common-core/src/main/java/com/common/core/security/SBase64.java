@@ -72,34 +72,6 @@ public class SBase64 {
 	}
 
 	/**
-	 * 文件转Base64字符串
-	 *
-	 * @param fileName 文件名
-	 * @return Base64字符串
-	 * @throws IOException 抛出异常
-	 */
-	public static String fileToBase64(String fileName) throws IOException {
-		InputStream in = null;
-		byte[] data = null;
-		try {
-			File file = new File(fileName);
-			if (!file.exists()) {
-				throw new IOException("fileName:" + fileName + ",文件不存在");
-			}
-
-			in = new FileInputStream(fileName);
-			data = new byte[in.available()];
-			in.read(data);
-		} catch (IOException e) {
-			throw e;
-		} finally {
-			IOUtils.closeQuietly(in);
-		}
-		// 对字节数组Base64编码
-		return Base64.encodeBase64String(data);// 返回Base64编码过的字节数组字符串
-	}
-
-	/**
 	 * Base64字符串转文件并写入
 	 *
 	 * @param base64Str Base64字符串
@@ -143,10 +115,8 @@ public class SBase64 {
 	}
 
 	public static void main(String[] args) throws IOException {
-		String primstr = fileToBase64("C:/Users/Administrator/Desktop/itext测试/iTextAsian.zip");
-
 		try {
-			base64ToFile(primstr, "C:/Users/Administrator/Desktop/itext测试/新建文本文档1.zip");
+			base64ToFile("", "C:/Users/Administrator/Desktop/itext测试/新建文本文档1.zip");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
