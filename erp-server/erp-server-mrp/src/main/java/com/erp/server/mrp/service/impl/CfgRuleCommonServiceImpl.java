@@ -163,27 +163,40 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
                     .filter(v -> Boolean.TRUE.equals(isEnableOverseas) || (Boolean.FALSE.equals(isEnableOverseas) && !CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_INVENTORY.getCode().equals(v.getCode())))
                     .collect(Collectors.toList());
             List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS = new ArrayList<>();
-            if (CfgRuleInventoryNodeEnum.getParentNodes(isEnableOverseas).contains(node)) {
-                for (CfgRuleCommonEntity common : collect) {
-                    List<CfgRuleCommonDTO.DescriptionDTO> dtos = list.stream()
-                            .filter(v -> v.getParentId().equals(common.getId()))
-                            .filter(e -> "true".equals(e.getValue()))
-                            .map(e -> new CfgRuleCommonDTO.DescriptionDTO(e.getName()))
-                            .collect(Collectors.toList());
-                    if (CollectionUtils.isNotEmpty(dtos)) {
-                        descriptionDTOS.add(new CfgRuleCommonDTO.DescriptionDTO(common.getName(), dtos));
-                    }
-                }
-            }else {
-                descriptionDTOS = collect.stream()
-                        .filter(e -> "true".equals(e.getValue()))
-                        .map(e -> new CfgRuleCommonDTO.DescriptionDTO(e.getName()))
-                        .collect(Collectors.toList());
-            }
+            descriptionDTOS = getDescriptionDTOS(node, isEnableOverseas, collect, list, descriptionDTOS);
             map.put(node, descriptionDTOS);
         }
 
         return map;
+    }
+
+    /**
+     * 获取每个节点下为true的数据
+     * @param node             类型
+     * @param isEnableOverseas 是否开启海外仓
+     * @param collect          公共配置
+     * @param list             公共配置
+     * @param descriptionDTOS  结果
+     */
+    private static List<CfgRuleCommonDTO.DescriptionDTO> getDescriptionDTOS(String node, Boolean isEnableOverseas, List<CfgRuleCommonEntity> collect, List<CfgRuleCommonEntity> list, List<CfgRuleCommonDTO.DescriptionDTO> descriptionDTOS) {
+        if (CfgRuleInventoryNodeEnum.getParentNodes(isEnableOverseas).contains(node)) {
+            for (CfgRuleCommonEntity common : collect) {
+                List<CfgRuleCommonDTO.DescriptionDTO> dtos = list.stream()
+                        .filter(v -> v.getParentId().equals(common.getId()))
+                        .filter(e -> "true".equals(e.getValue()))
+                        .map(e -> new CfgRuleCommonDTO.DescriptionDTO(e.getName()))
+                        .collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(dtos)) {
+                    descriptionDTOS.add(new CfgRuleCommonDTO.DescriptionDTO(common.getName(), dtos));
+                }
+            }
+        }else {
+            descriptionDTOS = collect.stream()
+                    .filter(e -> "true".equals(e.getValue()))
+                    .map(e -> new CfgRuleCommonDTO.DescriptionDTO(e.getName()))
+                    .collect(Collectors.toList());
+        }
+        return descriptionDTOS;
     }
 
     @Override

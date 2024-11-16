@@ -242,7 +242,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             PoReconciliationDTO.ExportDTO exportDTO = new PoReconciliationDTO.ExportDTO();
             exportDTO.setSupplierName(listDTO.getSupplierName());
             //供应商
-            SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
+            SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
             SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
             if (ObjectUtils.isNotEmpty(supplierEntity)) {
                 exportDTO.setTitil( CharSequenceUtil.format("{}{}年{}月对账单", supplierEntity.getName(), listDTO.getEndDate().getYear(), listDTO.getEndDate().getMonthValue()));
@@ -267,7 +267,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 exportDTO.setBankAccount(accountEntity.getBankAccount());
             }
             //明细
-            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId())).sorted(Comparator.comparing(PoReconciliationDetailEntity::getSourceCode).reversed()).collect(Collectors.toList());
+            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(listDTO.getId(), obj.getMainId())).sorted(Comparator.comparing(PoReconciliationDetailEntity::getSourceCode).reversed()).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailList)) {
                 continue;
             }

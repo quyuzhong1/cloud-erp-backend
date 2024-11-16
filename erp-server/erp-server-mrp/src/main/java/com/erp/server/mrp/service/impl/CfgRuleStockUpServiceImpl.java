@@ -127,7 +127,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         if (ObjectUtil.isEmpty(cfgRuleStockUpEntity)) {
             return;
         }
-        this.removeById(cfgRuleStockUpEntity.getId());
+        ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).removeById(cfgRuleStockUpEntity.getId());
 
         //删除物流信息配置
         cfgRuleLogisticsService.deleteByStockUpId(cfgRuleStockUpEntity.getId());
@@ -213,14 +213,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     * 新增修改处理数据
     */
     private void handleData(CfgRuleStockUpEntity cfgRuleStockUpEntity,CfgRuleStockUpEntity old,Boolean isCustom) {
-        if (MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
-                MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
-            throw new ServiceException("常规品备货系数必须大于等于0，并且小于等于99");
-        }
-        if (MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
-                MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
-            throw new ServiceException("新品备货系数必须大于等于0，并且小于等于99");
-        }
+        checkStockingRation(cfgRuleStockUpEntity);
         //自定义的需要赋值，避免生成变更日志
         if (Boolean.TRUE.equals(isCustom) && ObjectUtil.isNotEmpty(old)) {
             if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getPurchaseApproveDays())) {
@@ -252,5 +245,21 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             }
         }
 
+    }
+
+
+    /**
+     * 校验系数
+     * @param cfgRuleStockUpEntity 备货系数
+     */
+    private static void checkStockingRation(CfgRuleStockUpEntity cfgRuleStockUpEntity) {
+        if (MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
+                MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
+            throw new ServiceException("常规品备货系数必须大于等于0，并且小于等于99");
+        }
+        if (MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
+                MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
+            throw new ServiceException("新品备货系数必须大于等于0，并且小于等于99");
+        }
     }
 }

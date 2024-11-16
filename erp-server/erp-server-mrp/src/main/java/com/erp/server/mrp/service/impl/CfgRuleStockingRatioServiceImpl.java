@@ -177,44 +177,73 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        validateUniqueNames(list);
+        //排序
+        int maxIndex = Boolean.TRUE.equals(isCustom) ? getMaxIndex(oldList) : MathUtil.ZERO;
+        for (CfgRuleStockingRatioEntity stockingRatioEntity : list) {
+            updateStockingRatio(oldList, stockUpId, type, isCustom, stockingRatioEntity, maxIndex);
+            maxIndex ++;
+        }
+    }
+
+    /**
+     * 修改备货系数
+     *
+     * @param oldList             旧数据
+     * @param stockUpId           备货id
+     * @param type                类型
+     * @param isCustom            是否自定义
+     * @param stockingRatioEntity 备货系数
+     * @param maxIndex            优先级
+     */
+    private static void updateStockingRatio(List<CfgRuleStockingRatioEntity> oldList, String stockUpId, String type, Boolean isCustom, CfgRuleStockingRatioEntity stockingRatioEntity, int maxIndex) {
+        //排序
+        stockingRatioEntity.setIndex(maxIndex + 1);
+
+        //存在相同名称时则赋值id
+        CfgRuleStockingRatioEntity entity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), stockingRatioEntity.getName())).findFirst().orElse(null);
+        if (!ObjectUtils.isEmpty(entity)) {
+            stockingRatioEntity.setId(entity.getId());
+            //自定义添加的需要保持原有序号
+            stockingRatioEntity.setIndex(Boolean.TRUE.equals(isCustom) ? entity.getIndex() : stockingRatioEntity.getIndex());
+        }
+        //主表id
+        stockingRatioEntity.setStockUpId(stockUpId);
+        //类型
+        stockingRatioEntity.setType(type);
+        //时间
+        List<LocalDate> dateList = stockingRatioEntity.getDateList();
+        if (!CollectionUtils.isEmpty(dateList)) {
+            if (dateList.size() != 2) {
+                throw new ServiceException("时间区间不能为空");
+            }
+            if (dateList.get(0).isAfter(dateList.get(1))) {
+                throw new ServiceException("开始时间不能大于结束时间");
+            }
+        }
+        stockingRatioEntity.setStartDate(!CollectionUtils.isEmpty(dateList) ? dateList.get(0) : null);
+        stockingRatioEntity.setEndDate(!CollectionUtils.isEmpty(dateList) ? dateList.get(1) : null);
+    }
+
+
+    /**
+     * 获取最大排序
+     *
+     * @param oldList 原销量系数
+     */
+    private Integer getMaxIndex(List<CfgRuleStockingRatioEntity> oldList) {
+        return oldList.stream().max(Comparator.comparingInt(CfgRuleStockingRatioEntity::getIndex)).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
+    }
+
+    /**
+     * 获取销量名称重复数据
+     * @param list 参数
+     */
+    private void validateUniqueNames(List<CfgRuleStockingRatioEntity> list) {
         String names = list.stream().collect(Collectors.groupingBy(CfgRuleStockingRatioEntity::getName)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE)
                 .map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
         if (CharSequenceUtil.isNotBlank(names)) {
             throw new ServiceException("备货系数名称【{}】唯一不能添加重复数据",names);
-        }
-        //排序
-        int maxIndex = MathUtil.ZERO;
-        if (Boolean.TRUE.equals(isCustom)) {
-             maxIndex = oldList.stream().max(Comparator.comparingInt(CfgRuleStockingRatioEntity::getIndex)).map(CfgRuleStockingRatioEntity::getIndex).orElse(MathUtil.ZERO);
-        }
-        for (CfgRuleStockingRatioEntity stockingRatioEntity : list) {
-            //排序
-            stockingRatioEntity.setIndex(maxIndex + 1);
-
-            //存在相同名称时则赋值id
-            CfgRuleStockingRatioEntity entity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), stockingRatioEntity.getName())).findFirst().orElse(null);
-            if (!ObjectUtils.isEmpty(entity)) {
-                stockingRatioEntity.setId(entity.getId());
-                //自定义添加的需要保持原有序号
-                stockingRatioEntity.setIndex(Boolean.TRUE.equals(isCustom) ? entity.getIndex() : stockingRatioEntity.getIndex());
-            }
-            //主表id
-            stockingRatioEntity.setStockUpId(stockUpId);
-            //类型
-            stockingRatioEntity.setType(type);
-            //时间
-            List<LocalDate> dateList = stockingRatioEntity.getDateList();
-            if (!CollectionUtils.isEmpty(dateList)) {
-                if (dateList.size() != 2) {
-                    throw new ServiceException("时间区间不能为空");
-                }
-                if (dateList.get(0).isAfter(dateList.get(1))) {
-                    throw new ServiceException("开始时间不能大于结束时间");
-                }
-            }
-            stockingRatioEntity.setStartDate(!CollectionUtils.isEmpty(dateList) ? dateList.get(0) : null);
-            stockingRatioEntity.setEndDate(!CollectionUtils.isEmpty(dateList) ? dateList.get(1) : null);
-            maxIndex ++;
         }
     }
 }
