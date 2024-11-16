@@ -113,7 +113,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public Boolean update(PurchaseOrderDetailDTO.UpdateDTO updateDTO) {
         PurchaseOrderDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "采购订单明细表（已确认）"));
+        if(null == old){
+            throw  new ServiceException(ApiError.NOT_EXIST_BILL, "采购订单明细表（已确认）");
+        }
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = BeanMapperUtils.map(PurchaseOrderDetailEntity.class, updateDTO);
 
         // 数据处理

@@ -99,7 +99,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             for (CfgSettingEntity cfgSettingEntity : cfgSettingEntities) {
 
                 CfgSettingEntity old = super.getById(cfgSettingEntity.getId());
-                Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "系统配置管理"));
+                if(null == old){
+                    throw  new ServiceException(ApiError.NOT_EXIST_BILL, "系统配置管理");
+                }
                 log.info("编辑 开始修改系统配置管理数据，id：【{}】", old.getId());
                 boolean save = super.updateById(cfgSettingEntity);
                 if (!save) {
