@@ -130,7 +130,7 @@ public class DmpRefundInfoController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return  success();
     }

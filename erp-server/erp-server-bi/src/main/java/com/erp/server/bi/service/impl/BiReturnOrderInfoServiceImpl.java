@@ -126,7 +126,7 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
                 return false;
             }
         } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return true;
     }

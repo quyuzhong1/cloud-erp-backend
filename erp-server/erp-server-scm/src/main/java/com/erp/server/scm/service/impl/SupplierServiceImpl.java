@@ -482,7 +482,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
             }
         }
         //TODO 获取srm 供应商订单规则
@@ -898,7 +898,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
 
     }

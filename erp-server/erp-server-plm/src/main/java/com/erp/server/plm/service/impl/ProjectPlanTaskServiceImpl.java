@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -307,7 +306,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             String fileName = "排期错误";
             ExcelUtil.export(fileName, "task", errorList, ScheduleTaskExportErrorExcelVO.class, response);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
 
         return false;
@@ -744,7 +743,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             List<ChangeScheduleExportVO> succeedList = excelListener.getSucceedDateList();
             vo.setSucceedList(succeedList);
         } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
 
         return vo;
@@ -778,7 +777,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 

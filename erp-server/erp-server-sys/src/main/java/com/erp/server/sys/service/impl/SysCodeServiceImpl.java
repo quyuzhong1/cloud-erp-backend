@@ -220,7 +220,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         dto.setId(entity.getId());
         dto.setUpdateTime(entity.getUpdateTime());
         if (!flag) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 

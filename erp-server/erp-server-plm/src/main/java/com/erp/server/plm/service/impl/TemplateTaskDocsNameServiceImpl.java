@@ -199,7 +199,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         String docsNameId = dto.getDeliveryDocsId();
         TemplateTaskDocsNameEntity docsNameEntity=this.getById(docsNameId);
         if(Objects.isNull(docsNameEntity)){
-            throw new ServiceException(ApiError.ERROR_DOCS_NO);
+            throw new ServiceException(ApiError.ERROR_95052);
         }
         List<String> names = docksNames.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(names) && names.contains(name)&&!docsNameEntity.getName().equals(name)) {

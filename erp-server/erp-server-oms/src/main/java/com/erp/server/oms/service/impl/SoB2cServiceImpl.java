@@ -2277,7 +2277,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String message = apiResult.getMsg();
             //生成异常订单信息
             soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult));
-            throw new ServiceException(ApiError.Default.code, message);
+            throw new ServiceException(ApiError.DEFAULT.code, message);
         } else {
             String shippingOrderNo = apiResult.getData();
             if (StringUtils.isNotBlank(shippingOrderNo)) {
@@ -2626,7 +2626,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //已合并或拆分的单不支持再次合并
             long count = soB2cRefList.stream().filter(obj -> obj.getSourceId().equals(entity.getId()) || obj.getTargetId().equals(entity.getId())).count();
             if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_Operate_NOT_MERGE);
+                throw new ServiceException(ApiError.ERROR_SO_B2C_OPERATE_NOT_MERGE);
             }
             //未付款数据不能操作
             if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {

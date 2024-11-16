@@ -2502,7 +2502,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         queryWrapper.last("LIMIT 1");
         ProductDetailEntity entity = this.getOne(queryWrapper);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         String statusName = ProductDetailStatusEnum.getName(entity.getStatus());
         entity.setStatus(ProductDetailStatusEnum.APPROVAL_PASS.getCode());

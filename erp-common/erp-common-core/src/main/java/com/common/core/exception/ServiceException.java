@@ -58,7 +58,7 @@ public class ServiceException extends RuntimeException {
     public ServiceException(String formatErrMsg,Object... args) {
         // 加上super，否则会显示null
         super(CharSequenceUtil.format(formatErrMsg,args) );
-        this.code = ApiError.Default.code;
+        this.code = ApiError.DEFAULT.code;
         this.msg = CharSequenceUtil.format(formatErrMsg,args) ;
         log.error(msg);
     }
@@ -97,7 +97,7 @@ public class ServiceException extends RuntimeException {
     public ServiceException(String msg) {
         // 加上super，否则会显示null
         super(msg);
-        this.code = ApiError.Default.code;
+        this.code = ApiError.DEFAULT.code;
         this.msg = msg;
         log.error(msg);
     }

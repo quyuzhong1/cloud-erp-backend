@@ -625,7 +625,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             wb.close();
         } catch (Exception e) {
             log.error("下载模板出错了==={}", e);
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
 
     }

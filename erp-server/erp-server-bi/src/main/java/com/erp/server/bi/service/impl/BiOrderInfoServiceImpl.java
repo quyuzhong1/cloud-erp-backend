@@ -113,7 +113,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
     public Boolean updateState(DmpOrderStateDTO dto) {
         BiOrderInfoEntity biOrderInfoEntity = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(biOrderInfoEntity)) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         biOrderInfoEntity.setCorrectionStatus(dto.getState());
         return this.updateById(biOrderInfoEntity);
@@ -1098,7 +1098,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
                 return false;
             }
         } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return true;
     }
@@ -1401,7 +1401,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
         List<BiOrderInfoEntity> list = query()
                 .select("MIN(platform_create_time) as platform_create_time",
                         "source_platform as source_platform")
-                .inSql(BaseEntity.ID, subSql)
+                .inSql(BaseEntity.FIELD_ID, subSql)
                 .groupBy(BiOrderInfoEntity.SOURCE_PLATFORM)
                 .list();
         if (CollectionUtils.isEmpty(list)) {

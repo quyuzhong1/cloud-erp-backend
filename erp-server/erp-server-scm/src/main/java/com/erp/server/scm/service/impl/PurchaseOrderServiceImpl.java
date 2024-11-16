@@ -1371,7 +1371,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
 
@@ -2741,7 +2741,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
 

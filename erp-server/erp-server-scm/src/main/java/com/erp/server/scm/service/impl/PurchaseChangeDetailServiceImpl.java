@@ -293,16 +293,16 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
              */
             if (isNotBlank(receiveMsg) && isNotBlank(stockInMsg))  {
                 if (MathUtil.compareTo(receiveResultQty,stockInQty) > MathUtil.ZERO) {
-                    throw new ServiceException(ApiError.Default.code,receiveMsg);
+                    throw new ServiceException(ApiError.DEFAULT.code,receiveMsg);
                 } else {
-                    throw new ServiceException(ApiError.Default.code,stockInMsg);
+                    throw new ServiceException(ApiError.DEFAULT.code,stockInMsg);
                 }
             } else {
                 if (isNotBlank(receiveMsg)) {
-                    throw new ServiceException(ApiError.Default.code,receiveMsg);
+                    throw new ServiceException(ApiError.DEFAULT.code,receiveMsg);
                 }
                 if (isNotBlank(stockInMsg)) {
-                    throw new ServiceException(ApiError.Default.code,stockInMsg);
+                    throw new ServiceException(ApiError.DEFAULT.code,stockInMsg);
                 }
             }
 

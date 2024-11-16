@@ -4631,7 +4631,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                             LocalDateTime date = LocalDateTime.parse(auditorHandleDTO.getEndTime(), DateTimeFormatter.ofPattern(DateUtils.DATE_FORMAT_19));
                             taskProcessNodeDTO.setOperateTime(date);
                         } catch (Exception e) {
-                            throw new ServiceException(ApiError.Default);
+                            throw new ServiceException(ApiError.DEFAULT);
                         }
                     }
                     if (TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(state) && operatorName.equals(userName) && !TaskStateEnum.APPROVAL_PASS.getName().equals(auditorHandleDTO.getHandContent())) {

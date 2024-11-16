@@ -18,7 +18,7 @@ public enum ApiError implements Serializable {
     /**
      * 服务调用异常
      */
-    Default(9999, "系统异常，请联系【实施人员】协调开发人员排查"),
+    DEFAULT(9999, "系统异常，请联系【实施人员】协调开发人员排查"),
     WARNING(8888, "系统警告..."),
 
     ERROR_5000(5000, "存在越权访问URL"),
@@ -398,7 +398,6 @@ public enum ApiError implements Serializable {
     ERROR_95152(95152, "请录入已审核的父级SKU"),
     ERROR_95153(95153, "请录入已审核的子级SKU"),
     ERROR_95154(95154, "产品信息未发现已审核SKU"),
-    ERROR_95155(95155, "文档不存在"),
     ERROR_95156(95156, "该文档已被引用状态不能关闭"),
     ERROR_95157(95157, "请选择模板"),
     ERROR_MSG_IS_NOT_NULL(95158, "消息模板不能为空"),
@@ -417,7 +416,6 @@ public enum ApiError implements Serializable {
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
     ERROR_95163(95163, "未找到选择的BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
-    ERROR_DOCS_NO(95165,"文档不存在"),
     ERROR_95166(95166, "未找到BOM子件"),
     ERROR_95167(95167,"变体类型已被关联，不可删除"),
     ERROR_95168(95168,"变体值已被关联，不可删除"),
@@ -1329,8 +1327,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
     PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT(92116,"平台仓订单不支持拦截"),
-    ERROR_SO_B2C_Operate_NOT_SPLIT(92117,"B2C销售订单【{}】已合并或拆分不支持拆分"),
-    ERROR_SO_B2C_Operate_NOT_MERGE(92118,"B2C销售订单【{}】已合并或拆分不支持合并"),
+    ERROR_SO_B2C_OPERATE_NOT_SPLIT(92117,"B2C销售订单【{}】已合并或拆分不支持拆分"),
+    ERROR_SO_B2C_OPERATE_NOT_MERGE(92118,"B2C销售订单【{}】已合并或拆分不支持合并"),
     NOT_DELIVERY_NOT_INTERCEPT(92119,"只有待发货订单可以发起拦截"),
     IS_EXIST_NOT_INTERCEPT(92120,"订单取消，发货被拦截"),
     CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
@@ -1546,7 +1544,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
-    ERROR_end(1000000, "系统错误"),
+    ERROR_END(1000000, "系统错误"),
     ;
 
     public Integer code;

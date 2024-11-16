@@ -3,11 +3,9 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
@@ -66,8 +64,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.rtfparserkit.rtf.Command.list;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_APPLICATION;
 
@@ -1053,7 +1049,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
 

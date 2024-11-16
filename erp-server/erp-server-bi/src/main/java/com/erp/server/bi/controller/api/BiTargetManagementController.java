@@ -116,7 +116,7 @@ public class BiTargetManagementController extends BaseController {
                 return failure();
             }
         } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return success();
     }
@@ -148,7 +148,7 @@ public class BiTargetManagementController extends BaseController {
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return success();
     }

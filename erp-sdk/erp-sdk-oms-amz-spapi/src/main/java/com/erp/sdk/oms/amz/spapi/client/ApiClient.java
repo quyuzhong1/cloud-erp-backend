@@ -1120,12 +1120,12 @@ public class ApiClient {
                 TrustManager trustAll = new X509TrustManager() {
                     @Override
                     public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        // TODO document why this method is empty
+                        // document why this method is empty
                     }
 
                     @Override
                     public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        // TODO document why this method is empty
+                        // document why this method is empty
                     }
 
                     @Override

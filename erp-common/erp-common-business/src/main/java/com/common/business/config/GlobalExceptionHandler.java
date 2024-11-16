@@ -159,7 +159,7 @@ public class GlobalExceptionHandler {
         if (e.getMessage().contains("value too long")) {
             return ApiResult.error(ApiError.ERROR_1025);
         } else {
-            return ApiResult.error(ApiError.Default);
+            return ApiResult.error(ApiError.DEFAULT);
         }
     }
 
@@ -176,7 +176,7 @@ public class GlobalExceptionHandler {
         if (!StringUtils.isEmpty(e.getMessage()) && e.getMessage().contains("No instances available for")) {
             return ApiResult.error(ApiError.ERROR_1023);
         } else {
-            return ApiResult.error(ApiError.Default);
+            return ApiResult.error(ApiError.DEFAULT);
         }
     }
 
@@ -204,14 +204,14 @@ public class GlobalExceptionHandler {
         if (StrUtils.isNotEmpty(ex.getMessage()) && ex.getMessage().contains("attempt to unlock lock, not locked by current thread by node id")) {
             return ApiResult.error(ApiError.ERROR_1026);
         } else {
-            return ApiResult.error(ApiError.Default);
+            return ApiResult.error(ApiError.DEFAULT);
         }
     }
 
     @ExceptionHandler(value = NullPointerException.class)
     public ApiResult resolveException(NullPointerException ex) {
         log.error("系统异常:", ex);
-        return ApiResult.error(ApiError.Default);
+        return ApiResult.error(ApiError.DEFAULT);
     }
 
     @ExceptionHandler(value = ClientException.class)

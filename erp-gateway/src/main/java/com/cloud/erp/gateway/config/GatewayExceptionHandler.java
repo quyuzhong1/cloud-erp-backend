@@ -36,7 +36,7 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 	 */
 	@Override
 	protected Map<String, Object> getErrorAttributes(ServerRequest request, ErrorAttributeOptions options) {
-		ApiError defaultError = ApiError.Default;
+		ApiError defaultError = ApiError.DEFAULT;
 		String code = StrUtils.null2EmptyWithTrim(defaultError.code);
 		String errorMessage = defaultError.msg;
 		Map<String, Object> map = new HashMap<>(4);

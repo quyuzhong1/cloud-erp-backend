@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.business.enums.InventoryClosedRecordEnum;
@@ -34,10 +33,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -226,7 +223,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 transactionFlowService.updateUnapprovedById(txnFlow.getId(), txnFlow.getVersion());
             } catch (Exception e) {
                 log.error("反审核》》》，交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存操作异常", businessTypeEnum.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), txnFlow.getSourceId(), txnFlow.getSkuNo(), e);
-                ServiceException.runError(ApiError.Default.code, e.getMessage());
+                ServiceException.runError(ApiError.DEFAULT.code, e.getMessage());
                 Thread.currentThread().interrupt();
             } finally {
                 //释放锁  锁是否存在，是当前执行线程的锁

@@ -42,15 +42,15 @@ public class FeignErrorDecoder implements ErrorDecoder {
                     }
                     return  new ServiceException(code, msg);
                 }else{
-                    return  new ServiceException(ApiError.Default);
+                    return  new ServiceException(ApiError.DEFAULT);
                 }
             }else{
-                return  new ServiceException(ApiError.Default);
+                return  new ServiceException(ApiError.DEFAULT);
             }
         } catch (Exception e) {
             log.error("FeignErrorDecoder 出错了 {}", e);
         }
 
-         return  new ServiceException(ApiError.Default);
+         return  new ServiceException(ApiError.DEFAULT);
     }
 }

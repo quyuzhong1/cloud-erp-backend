@@ -96,7 +96,7 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 		Map<String, String> billNoIdMap = new HashMap<>();
 		if(CollUtil.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
-				billNoIdMap.put(listMap.get("buyer_user_id").toString() + "_" + listMap.get("third_code").toString(), listMap.get(BaseEntity.ID).toString());
+				billNoIdMap.put(listMap.get("buyer_user_id").toString() + "_" + listMap.get("third_code").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
 		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {

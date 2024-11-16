@@ -26,7 +26,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.ImportPurchasePriceExcelDTO;
@@ -592,7 +591,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 listApiResult = workflowFeign.curApprover(dtoList);
                 Integer code = listApiResult.getCode();
                 if (200 != code) {
-                    throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
                 }
             }
 
@@ -882,7 +881,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 

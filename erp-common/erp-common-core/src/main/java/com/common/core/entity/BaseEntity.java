@@ -77,13 +77,13 @@ public class BaseEntity<T extends BaseEntity<T>> extends Model<T> {
     @TableLogic
     private Boolean isDeleted;
 
-    public static final String ID = "id";
+    public static final String FIELD_ID = "id";
 
     public static final String CREATE_TIME = "create_time";
 
     public static final String UPDATE_TIME = "update_time";
 
-    public static final String VERSION = "version";
+    public static final String FIELD_VERSION = "version";
 
     public static final String IS_DELETED = "is_deleted";
 

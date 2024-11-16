@@ -251,7 +251,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-          throw new ServiceException(ApiError.Default);
+          throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -299,7 +299,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -338,7 +338,7 @@ public class ExcelUtil {
                     .doWrite(list2);
 
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -370,7 +370,7 @@ public class ExcelUtil {
                     .doWrite(list2);
             return outputStream.toByteArray();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 

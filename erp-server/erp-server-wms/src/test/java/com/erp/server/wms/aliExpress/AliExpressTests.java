@@ -7,25 +7,19 @@ import cn.hutool.json.JSONUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.tms.entity.TmsCarrierEntity;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
-import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.enums.Protocol;
-import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
 import com.erp.server.wms.service.FbaShipmentService;
-import com.erp.tms.aliexpress.model.order.response.AllCarrierResponse;
 import com.erp.tms.aliexpress.model.query.request.QueryShipmentOrder;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -120,7 +114,7 @@ public class AliExpressTests {
             Boolean success = jsonObject.getBool("result_success", Boolean.FALSE);
             if (!success) {
                 String msg = jsonObject.getOrDefault("result_error_desc", "").toString();
-                throw new ServiceException(ApiError.Default, msg);
+                throw new ServiceException(ApiError.DEFAULT, msg);
             }
         } catch (Exception e) {
             throw new ServiceException("查询速卖通订单地址失败" + JSONUtil.toJsonStr(e));
