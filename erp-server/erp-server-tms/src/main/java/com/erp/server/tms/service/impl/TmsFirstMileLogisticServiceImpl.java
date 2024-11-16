@@ -592,7 +592,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             if(StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTime()) && !logisticsChannelEntity.getEffectiveTime().equals("0")
                     && StringUtils.isNotBlank(logisticsChannelEntity.getEffectiveTimeUnit())){
                 //判断是否是数字，不是数字的话不计算预警，直接返回中文
-                String regex = "\\d*[1-9]+\\d*";
+                String regex = "\\d*+[1-9]+\\d*";
                 Pattern pattern = Pattern.compile(regex);
                 if(!pattern.matcher(logisticsChannelEntity.getEffectiveTime()).matches()){
                     pagingVO.setEstimatedTimeDesc(logisticsChannelEntity.getEffectiveTime());
@@ -785,7 +785,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         List<TmsFirstMileLogisticDTO.OverdueDTO> overdueList = baseMapper.overdueStatistics(OrderTypeEnum.FIRST_MILE.getCode(),dto.getPermissionSql());
         overdueList.forEach(v->{
             //判断是否是数字，不是数字忽略
-            String regex = "\\d*[1-9]+\\d*";
+            String regex = "\\d*+[1-9]+\\d*";
             Pattern pattern = Pattern.compile(regex);
             if(!pattern.matcher(v.getEffectiveTime()).matches()){
                 return;
@@ -1629,7 +1629,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         //0为默认值，不处理
         if(!logisticsChannelEntity.getEffectiveTime().equals("0")){
             //判断是否是数字，不是数字忽略
-            String regex = "\\d*[1-9]+\\d*";
+            String regex = "\\d*+[1-9]+\\d*";
             Pattern pattern = Pattern.compile(regex);
             if(pattern.matcher(logisticsChannelEntity.getEffectiveTime()).matches()){
                 int estimatedDay = Integer.parseInt(logisticsChannelEntity.getEffectiveTime());
