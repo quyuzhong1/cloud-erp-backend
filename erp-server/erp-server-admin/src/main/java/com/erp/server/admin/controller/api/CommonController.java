@@ -1,6 +1,6 @@
 package com.erp.server.admin.controller.api;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.EnumCacheUtils;
@@ -29,7 +29,7 @@ public class CommonController extends BaseController {
     public ApiResult<Map<String,List<Map<String,Object>>>> enumSelect(@RequestParam(value = "types")List<String> types) {
         Map<String,List<Map<String,Object>>> typeMaps = Maps.newHashMap();
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
-        if(CollectionUtil.isNotEmpty(types)) {
+        if(CollUtil.isNotEmpty(types)) {
             types.stream().forEach(r-> typeMaps.put(r,enumMaps.get(r)));
         }
         return success(typeMaps);
