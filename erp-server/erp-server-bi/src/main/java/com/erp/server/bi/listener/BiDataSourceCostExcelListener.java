@@ -92,6 +92,12 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
         }
 
 
+        if (fieldHandler(map, errorMsgList, entity)) return;
+        //根据月份、店铺数据查询
+        saveData(entity, detailList);
+    }
+
+    private boolean fieldHandler(Map<Integer, String> map, List<String> errorMsgList, BiDataSourceCostEntity entity) {
         if (StringUtils.isBlank(entity.getDeptName())) {
             errorMsgList.add("销售事业部不能为空");
         } else {
@@ -126,10 +132,9 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
             entity.setShopId(biShopInfoEntity.getId());
         }
         if (errorMsg(map, errorMsgList)) {
-            return;
+            return true;
         }
-        //根据月份、店铺数据查询
-        saveData(entity, detailList);
+        return false;
     }
 
     private void handleField(BiDataSourceCostEntity entity,

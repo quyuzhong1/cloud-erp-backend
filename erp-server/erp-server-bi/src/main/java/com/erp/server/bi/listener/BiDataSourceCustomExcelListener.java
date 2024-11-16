@@ -232,10 +232,10 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> list = map.values().stream().collect(Collectors.toList());
-        list.add("错误信息");
+        List<String> listValue = map.values().stream().collect(Collectors.toList());
+        listValue.add("错误信息");
         this.headMap = map;
-        this.headList = list;
+        this.headList = listValue;
     }
 
     public List<String> getHead(){

@@ -1,6 +1,5 @@
 package com.erp.server.bi.service.impl;
 
-import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -69,7 +68,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
 
     @Override
     public PagingVO<LinkedHashMap<String,Object>> paging(PagingDTO<BiDataSourceCustomSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         BiDataSourceCustomSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<LinkedHashMap<String,Object>> pageData = baseMapper.paging(query, params);
@@ -174,7 +173,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
 
     @Override
     public ChartVO<BiDataSourceCustomGraphicalDTO> listGraphicalData(String moduleId, Integer year) {
-        ChartVO<BiDataSourceCustomGraphicalDTO> chartVO = new ChartVO();
+        ChartVO<BiDataSourceCustomGraphicalDTO> chartVO = new ChartVO<>();
         BiModuleEntity biModuleEntity = biModuleService.getById(moduleId);
         if (ObjectUtils.isEmpty(biModuleEntity)) {
             return chartVO;
@@ -225,7 +224,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
             dataList.add(dto);
         }
         chartVO.setXAxis(headList);
-        SeriesVO<BiDataSourceCustomGraphicalDTO> seriesVO = new SeriesVO();
+        SeriesVO<BiDataSourceCustomGraphicalDTO> seriesVO = new SeriesVO<>();
         String desc = BiDataSourceCustomTypeEnum.getDesc(dataDimension);
         seriesVO.setName(desc.concat("图"));
         seriesVO.setData(dataList);
@@ -419,30 +418,47 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         List<BiDictEntity> dictList = getDictListByType(type);
 
         for (LinkedHashMap<String, Object> map : list) {
-            if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type) ||
-                    BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type) ||
-                    BiDataSourceCustomTypeEnum.DAY.getCode().equals(type)) {
-                List<String> keyList = head.keySet().stream().collect(Collectors.toList());
-                for (String key : keyList) {
-                    Object value = map.get(key);
-                    map.remove(key);
-                    map.put(key, ObjectUtils.isEmpty(value) ? "" : value);
-                }
+            // 处理特定类型的键值更新
+            if (shouldUpdateKeys(type)) {
+                updateMapKeys(map, head);
             }
 
-            for (BiDictEntity dictEntity : dictList) {
-                if (BiDataSourceCustomTypeEnum.MONTH.getCode().equals(type)) {
-                    String value = getValueForMonth(biDataSourceCustomDetailList, map, dictEntity);
-                    map.put(dictEntity.getName(), value);
-                } else if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(type)) {
-                    String value = getValueForQuarter(biDataSourceCustomDetailList, map, dictEntity);
-                    map.put(dictEntity.getName(), value);
-                }
-            }
+            // 处理 dictList 中的数据
+            processDictListForMap(type, dictList, biDataSourceCustomDetailList, map);
 
             map.remove("id");
         }
     }
+
+    private boolean shouldUpdateKeys(Integer type) {
+        return BiDataSourceCustomTypeEnum.YEAR.getCode().equals(type) ||
+                BiDataSourceCustomTypeEnum.WEEK.getCode().equals(type) ||
+                BiDataSourceCustomTypeEnum.DAY.getCode().equals(type);
+    }
+
+    private void updateMapKeys(LinkedHashMap<String, Object> map, LinkedHashMap<String, Object> head) {
+        List<String> keyList = new ArrayList<>(head.keySet());
+        for (String key : keyList) {
+            Object value = map.get(key);
+            map.remove(key);
+            map.put(key, ObjectUtils.isEmpty(value) ? "" : value);
+        }
+    }
+
+    private void processDictListForMap(Integer type, List<BiDictEntity> dictList, List<BiDataSourceCustomDetailEntity> biDataSourceCustomDetailList, LinkedHashMap<String, Object> map) {
+        for (BiDictEntity dictEntity : dictList) {
+            String value;
+            if (BiDataSourceCustomTypeEnum.MONTH.getCode().equals(type)) {
+                value = getValueForMonth(biDataSourceCustomDetailList, map, dictEntity);
+            } else if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(type)) {
+                value = getValueForQuarter(biDataSourceCustomDetailList, map, dictEntity);
+            } else {
+                continue;
+            }
+            map.put(dictEntity.getName(), value);
+        }
+    }
+
 
     private String getValueForMonth(List<BiDataSourceCustomDetailEntity> biDataSourceCustomDetailList, LinkedHashMap<String, Object> map, BiDictEntity dictEntity) {
         return biDataSourceCustomDetailList.stream()
