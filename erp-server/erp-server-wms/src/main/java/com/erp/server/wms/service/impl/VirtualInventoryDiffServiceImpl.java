@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -76,12 +77,12 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //库存差异
-        Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> CharSequenceUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isDiff)) {
             dto.getParams().setIsDiff(Boolean.valueOf(isDiff.toString()));
         }
         //超出分配
-        Object isExceed = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isExceed") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        Object isExceed = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> CharSequenceUtil.equals(obj.getField(), "isExceed") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isExceed)) {
             dto.getParams().setIsExceed(Boolean.valueOf(isExceed.toString()));
         }
@@ -193,7 +194,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
         //虚拟可用库存总和
         Integer usableTotalQty = virtualInventoryQtyList.stream()
-                .filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode()))
+                .filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode()))
                 .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                 .reduce(MathUtil.ZERO, Integer::sum);
 
@@ -203,10 +204,10 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         for (VirtualInventoryDiffDTO.ListSuggestQtyParamDTO qtyParamDTO : list) {
             VirtualInventoryDiffDTO.ListSuggestQtyDTO listSuggestQtyDTO = BeanMapperUtils.map(VirtualInventoryDiffDTO.ListSuggestQtyDTO.class, qtyParamDTO);
             //可用数量
-            Integer usableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), qtyParamDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), qtyParamDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getVirtualWarehouseId(), qtyParamDTO.getVirtualWarehouseId())
-                            && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
+            Integer usableQty = virtualInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), qtyParamDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), qtyParamDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), qtyParamDTO.getVirtualWarehouseId())
+                            && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .findFirst().orElse(MathUtil.ZERO);
             /**
@@ -222,12 +223,12 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
     @Override
     public PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
         //库存差异
-        Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        Object isDiff = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> CharSequenceUtil.equals(obj.getField(), "isDiff") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isDiff)) {
             dto.getParams().setIsDiff(Boolean.valueOf(isDiff.toString()));
         }
         //超出分配
-        Object isExceed = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "isExceed") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
+        Object isExceed = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> CharSequenceUtil.equals(obj.getField(), "isExceed") && ObjectUtil.isNotNull(obj.getValue())).map(AdvanceQueryDTO::getValue).findFirst().orElse(null);
         if (ObjectUtil.isNotNull(isExceed)) {
             dto.getParams().setIsExceed(Boolean.valueOf(isExceed.toString()));
         }
@@ -287,7 +288,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
         for (VirtualInventoryDiffDTO.ListDetailQtyDTO listDetailQtyDTO : list) {
             //虚拟仓库
-            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDetailQtyDTO.getVirtualWarehouseId()))
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDetailQtyDTO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             listDetailQtyDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
             listDetailQtyDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
@@ -310,7 +311,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
 
         for (VirtualInventoryDiffDTO.ListDiffExportDataDTO listDTO : list) {
             //虚拟仓库
-            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getVirtualWarehouseId()))
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             listDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
             listDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());

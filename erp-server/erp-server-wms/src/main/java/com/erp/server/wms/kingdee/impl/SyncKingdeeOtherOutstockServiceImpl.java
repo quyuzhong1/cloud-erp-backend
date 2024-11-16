@@ -254,7 +254,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
                 jsonObject.set("receiveOrgCode", receiveOrgCode);
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位

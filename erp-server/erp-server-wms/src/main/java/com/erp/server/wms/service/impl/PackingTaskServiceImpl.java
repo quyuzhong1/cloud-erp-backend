@@ -2536,30 +2536,30 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      */
     private String getDeliveryNo(WmsCartonEntity wmsCartonEntity, PackingTaskEntity packingTaskEntity) {
         if (Objects.isNull(wmsCartonEntity)){
-            return StrUtil.EMPTY;
+            return CharSequenceUtil.EMPTY;
         }
         List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByCartonIds(Collections.singletonList(wmsCartonEntity.getId()));
         List<String> fbaShipmentIds = fbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getMainId).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(fbaShipmentIds)){
-            return StrUtil.EMPTY;
+            return CharSequenceUtil.EMPTY;
         }
         List<FbaShipmentEntity> fbaShipmentEntities = fbaShipmentService.listByIds(fbaShipmentIds);
         if (CollectionUtils.isEmpty(fbaShipmentEntities)){
-            return StrUtil.EMPTY;
+            return CharSequenceUtil.EMPTY;
         }
         List<String> shipmentCodes = fbaShipmentEntities.stream().map(FbaShipmentEntity::getCode).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByFbaShipmentCodes(shipmentCodes);
         if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntities)){
-            return StrUtil.EMPTY;
+            return CharSequenceUtil.EMPTY;
         }
         List<String> deliveryIds = firstMileDeliveryDetailEntities.stream().map(FirstMileDeliveryDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listByIds(deliveryIds);
         if (CollectionUtils.isEmpty(firstMileDeliveryEntities)){
-            return StrUtil.EMPTY;
+            return CharSequenceUtil.EMPTY;
         }
         List<String> codeList = firstMileDeliveryEntities.stream().filter(e -> Objects.equals(e.getSourceId(),packingTaskEntity.getSourceId())).map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(codeList)){
-            return StrUtil.EMPTY;
+            return CharSequenceUtil.EMPTY;
         }
         return String.join(",", codeList);
     }

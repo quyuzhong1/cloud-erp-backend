@@ -375,7 +375,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 map.put("warehouseCode", warehouseCode);
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位

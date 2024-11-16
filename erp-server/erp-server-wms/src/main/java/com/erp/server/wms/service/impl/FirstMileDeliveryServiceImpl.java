@@ -228,7 +228,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     private void matchTransferRule(FirstMileDeliveryEntity entity) {
-        entity.setTransferWarehouseIds(StrUtil.EMPTY);
+        entity.setTransferWarehouseIds(CharSequenceUtil.EMPTY);
         //匹配中转配置
         CfgRuleOutDTO.MatchTransferRuleDTO matchRuleDTO = new CfgRuleOutDTO.MatchTransferRuleDTO();
         matchRuleDTO.setType(StockOutTransferTypeEnum.FIRST_MILE.getCode());
@@ -262,7 +262,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isNotEmpty(updateDTO.getTransferWarehouseIdList())){
             firstMileDeliveryEntity.setTransferWarehouseIds(String.join(",", updateDTO.getTransferWarehouseIdList()));
         }else {
-            firstMileDeliveryEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+            firstMileDeliveryEntity.setTransferWarehouseIds(CharSequenceUtil.EMPTY);
         }
         // 数据处理
         handleData(firstMileDeliveryEntity);

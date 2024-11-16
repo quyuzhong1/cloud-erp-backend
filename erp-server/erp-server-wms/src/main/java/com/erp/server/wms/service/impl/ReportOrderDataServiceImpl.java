@@ -134,7 +134,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //取销售套装bom
         if (CollectionUtils.isNotEmpty(bomChildrenSkuList)) {
-            bomChildrenSkuList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+            bomChildrenSkuList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
         }
 
         //子级sku
@@ -215,9 +215,9 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
 
         //需要添加订单需求明细数据
         List<ReportOrderDataEntity> list = reportOrderDataList.stream().filter(obj ->
-                (StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_INFO.getCode()) && approveStatusList.contains(obj.getApproveStatus()) && !obj.getInvalidStatus() && deliveryStatusList.contains(obj.getStatus()))
-                        || (StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C.getCode()) && approveStatusList.contains(obj.getApproveStatus()) && !obj.getInvalidStatus() && billStatusList.contains(obj.getStatus()))
-                        || (StrUtil.equals(obj.getSourceType(), SourceTypeEnum.REQUISITION_APPLICATION.getCode()) && statusList.contains(obj.getStatus()) && !obj.getInvalidStatus())
+                (CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_INFO.getCode()) && approveStatusList.contains(obj.getApproveStatus()) && !obj.getInvalidStatus() && deliveryStatusList.contains(obj.getStatus()))
+                        || (CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C.getCode()) && approveStatusList.contains(obj.getApproveStatus()) && !obj.getInvalidStatus() && billStatusList.contains(obj.getStatus()))
+                        || (CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.REQUISITION_APPLICATION.getCode()) && statusList.contains(obj.getStatus()) && !obj.getInvalidStatus())
         ).collect(Collectors.toList());
         //符合条件数据为空则返回
         if (CollectionUtils.isEmpty(list)) {
@@ -227,7 +227,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         List<ReportOrderDemandDetailDTO.AddDTO> addList = new ArrayList<>();
         for (ReportOrderDataEntity entity : list) {
             //bom信息
-            List<BomChildrenSkuDTO> skuList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), entity.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> skuList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).collect(Collectors.toList());
             //拆分
             List<ReportOrderDemandDetailDTO.AddDTO> splitAddList = handleReportOrderDemandDetail(entity, skuList, virtualInventoryList, isSplit);
             addList.addAll(splitAddList);
@@ -255,13 +255,13 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             BeanMapperUtils.copy(value.get(0),addDTO);
 
             //b2b需求数
-            Integer soQty = value.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_INFO.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer soQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_INFO.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setSoQty(soQty);
             //b2c需求数
-            Integer b2cQty = value.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer b2cQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setB2cSoQty(b2cQty);
             //头程需求数
-            Integer firstMileQty = value.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.REQUISITION_APPLICATION.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer firstMileQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.REQUISITION_APPLICATION.getCode())).map(ReportOrderDemandDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setFirstMileQty(firstMileQty);
             //剩余需求总数
             Integer totalQty = soQty + b2cQty + firstMileQty;
@@ -323,18 +323,18 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             Integer totalQty = value.stream().map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setTotalQty(totalQty);
             //虚拟仓可用库存
-            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())
-                    && StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
-                    && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
-                    && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
+            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), entity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                    && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
+                    && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
             ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setVirtualUsableQty(virtualUsableQty);
 
             //虚拟仓冻结库存
-            Integer virtualFrozenQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())
-                    && StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
-                    && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
-                    && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode())
+            Integer virtualFrozenQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), entity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                    && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
+                    && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode())
             ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setVirtualFrozenQty(virtualFrozenQty);
             //虚拟仓库存
@@ -387,7 +387,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
     private List<ReportOrderDataEntity> handleB2cSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,
                                  List<BomChildrenSkuDTO> bomChildrenSkuList,Boolean isSplit) {
         if (ObjectUtil.isEmpty(statusDTO)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         //订单状态
         List<String> statusList =  CollectionUtils.isEmpty(statusDTO.getStatusList()) ? new ArrayList<>() : statusDTO.getStatusList();
@@ -420,7 +420,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
     private List<ReportOrderDataEntity> handleB2bSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,
                                  List<BomChildrenSkuDTO> bomChildrenSkuList,Boolean isSplit) {
         if (ObjectUtil.isEmpty(statusDTO)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         //发货状态
         List<String> statusList =  CollectionUtils.isEmpty(statusDTO.getStatusList()) ? new ArrayList<>() : statusDTO.getStatusList();
@@ -455,7 +455,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         List<ReportOrderDataEntity> resultList = new ArrayList<>();
         for (ReportOrderDataEntity orderDataEntity : list) {
             //bom信息
-            List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), orderDataEntity.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), orderDataEntity.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(bomList)) {
                 resultList.add(orderDataEntity);
                 continue;
@@ -500,10 +500,10 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                 ReportOrderDemandDetailDTO.AddDTO bomAddDTO = new ReportOrderDemandDetailDTO.AddDTO();
                 BeanMapperUtils.copy(addDTO,bomAddDTO);
                 //子级虚拟仓可用
-                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
-                                && StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
-                                && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
-                                && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
+                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
+                                && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                                && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
+                                && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
                         .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
                 bomAddDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
 
@@ -524,10 +524,10 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                 addList.add(bomAddDTO);
             }
         } else {
-            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
-                            && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
-                            && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
+            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), entity.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
+                            && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
                     )
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setVirtualUsableQty(virtualUsableQty);
@@ -556,7 +556,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
      */
     private List<ReportOrderDataEntity> listBySourceDetailIdList(List<String> sourceDetailIdList){
         if (CollectionUtils.isEmpty(sourceDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
        return lambdaQuery().in(ReportOrderDataEntity::getSourceDetailId,sourceDetailIdList).list();
     }
@@ -583,7 +583,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         for (ReportOrderDataEntity entity : resultList) {
 
             //发货通知单数量（仅b2b）
-            Integer deliveryNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), entity.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer deliveryNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             entity.setDeliveryNoticeQty(deliveryNoticeQty);
             //冻结数量（仅b2b）
             Integer frozenQty = ObjectUtil.isEmpty(entity.getFrozenQty()) ? MathUtil.ZERO : entity.getFrozenQty();

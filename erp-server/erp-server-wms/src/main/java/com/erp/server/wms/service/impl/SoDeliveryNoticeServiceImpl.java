@@ -338,7 +338,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     private void matchTransferRule(SoDeliveryNoticeEntity soDeliveryNoticeEntity, SoInfoEntity soInfoEntity) {
-        soDeliveryNoticeEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+        soDeliveryNoticeEntity.setTransferWarehouseIds(CharSequenceUtil.EMPTY);
         List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(soDeliveryNoticeEntity.getSourceId()));
         SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
         //是否中转
@@ -410,7 +410,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollUtil.isNotEmpty(dto.getTransferWarehouseIdList())){
             soDeliveryNoticeEntity.setTransferWarehouseIds(String.join(",",dto.getTransferWarehouseIdList()));
         }else {
-            soDeliveryNoticeEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+            soDeliveryNoticeEntity.setTransferWarehouseIds(CharSequenceUtil.EMPTY);
         }
         boolean flag = this.updateById(soDeliveryNoticeEntity);
         //操作日志
@@ -1344,7 +1344,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         /**
          * 1、按现有逻辑进行冻结数量转移
          */
-        if (!StrUtil.equals(entity.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())) {
+        if (!CharSequenceUtil.equals(entity.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())) {
             //虚拟库存扣减
             soDeliveryNoticeDetailService.handleVirtualInventory(id,detailList);
 
@@ -1421,7 +1421,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Arrays.asList(id));
         if (CollectionUtils.isNotEmpty(transferInfoList)) {
             //审核通过的直接调拨单
-            transferInfoList = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            transferInfoList = transferInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(transferInfoList)) {
                 List<String> mainIdList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
@@ -1443,7 +1443,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isNotEmpty(soOutstockList)) {
 
             //审核通过的直接调拨单
-            soOutstockList = soOutstockList.stream().filter(obj -> StrUtil.equals(obj.getApproveStatus().getCode(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            soOutstockList = soOutstockList.stream().filter(obj -> CharSequenceUtil.equals(obj.getApproveStatus().getCode(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
             //无数据则直接返回
             if (CollectionUtils.isEmpty(soOutstockList)) {
                 lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidRemark,"数据处理")
@@ -1461,7 +1461,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //减少可用添加冻结
             List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
             for (SoOutstockDetailEntity outstockDetailEntity : soOutstockDetailList) {
-                SoOutstockEntity outstockEntity = soOutstockList.stream().filter(obj -> StrUtil.equals(obj.getId(), outstockDetailEntity.getMainId())).findFirst().orElse(null);
+                SoOutstockEntity outstockEntity = soOutstockList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), outstockDetailEntity.getMainId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(outstockEntity)) {
                     throw new ServiceException("销售出库单未找到");
                 }
@@ -1586,7 +1586,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
 
             //发货通知单主表信息
-            SoDeliveryNoticeEntity soDeliveryNoticeEntity = deliveryNoticeEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = deliveryNoticeEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
                 throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
             }

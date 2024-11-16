@@ -129,7 +129,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
             List<ReportOrderDemandDetailDTO.BomDTO> bomList = new ArrayList<>();
             for (ReportOrderDemandDetailDTO.BomJsonDTO bomJsonDTO : bomJsonList) {
 
-               ReportOrderDemandDetailEntity reportOrderDemandDetailEntity = reportOrderDemandDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomJsonDTO.getSkuId())).findFirst().orElse(null);
+               ReportOrderDemandDetailEntity reportOrderDemandDetailEntity = reportOrderDemandDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), bomJsonDTO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(reportOrderDemandDetailEntity)) {
                     throw new ServiceException(CharSequenceUtil.format("销售订单【{}】、SKU【{}】未找到",entity.getSourceCode(),bomJsonDTO.getSkuNo()));
                 }
@@ -144,7 +144,7 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
            viewBomQtyDTO.setParentSkuNo(bomJsonList.get(0).getParentSkuNo());
            viewBomQtyDTO.setBomList(bomList);
            //本条数据子级SKU用量
-           quantity = bomList.stream().filter(obj -> StrUtil.equals(obj.getChildSkuId(), entity.getSkuId())).map(ReportOrderDemandDetailDTO.BomDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
+           quantity = bomList.stream().filter(obj -> CharSequenceUtil.equals(obj.getChildSkuId(), entity.getSkuId())).map(ReportOrderDemandDetailDTO.BomDTO::getQuantity).findFirst().orElse(MathUtil.ZERO);
         }
         //父级需求量
         ReportOrderDemandDetailDTO.ParentQtyDTO parentQtyDTO = new ReportOrderDemandDetailDTO.ParentQtyDTO();
@@ -202,17 +202,17 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
 
         for (ReportOrderDemandDetailEntity entity : list) {
             //产品信息
-            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getSkuId())).findFirst().orElse(null);
+            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDetailEntity)) {
                 entity.setSkuNo(productDetailEntity.getSkuNo());
                 entity.setProductName(productDetailEntity.getName());
             }
             //仓库
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
             entity.setWarehouseName(warehouseName);
 
             //虚拟仓
-            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             entity.setVirtualWarehouseName(virtualWarehouseName);
 
             //需求数量为0则不新增
@@ -238,11 +238,11 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
             //订单类型
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
 
-            String statusName = !StrUtil.equals(SourceTypeEnum.SO_INFO.getCode(), listDTO.getSourceType()) ?
-                    StrUtil.equals(SourceTypeEnum.SO_B2C.getCode(), listDTO.getSourceType()) ? SoB2cBillStatusEnum.getName(listDTO.getStatus()) : RequisitionApplicationStatusEnum.getName(listDTO.getStatus())
+            String statusName = !CharSequenceUtil.equals(SourceTypeEnum.SO_INFO.getCode(), listDTO.getSourceType()) ?
+                    CharSequenceUtil.equals(SourceTypeEnum.SO_B2C.getCode(), listDTO.getSourceType()) ? SoB2cBillStatusEnum.getName(listDTO.getStatus()) : RequisitionApplicationStatusEnum.getName(listDTO.getStatus())
                     : DeliveryStatusEnum.getName(listDTO.getStatus());
             //订单状态
-            if (StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode(), listDTO.getSourceType())) {
+            if (CharSequenceUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode(), listDTO.getSourceType())) {
                 listDTO.setStatusName(statusName);
             } else {
                 listDTO.setStatusName(CharSequenceUtil.format("{}-{}", ApproveStatusEnum.getName(listDTO.getApproveStatus()),statusName));

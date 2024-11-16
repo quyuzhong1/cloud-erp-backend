@@ -738,13 +738,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //遍历父级采购明细匹配子件入库记录
         for (PoInstockDetailEntity poDetailEntity : poInstockDetailList){
             //采购订单明细-成品
-            PurchaseOrderDetailEntity purchaseOrderDetail = purchaseOrderDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), poDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            PurchaseOrderDetailEntity purchaseOrderDetail = purchaseOrderDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (Objects.isNull(purchaseOrderDetail)) {
                 log.error(ApiError.ERROR_98026.msg);
                 continue;
             }
             //子级委外订单明细
-            List<SubcontractOrderDetailEntity> subDetailList = subcontractOrderDetailEntityList.stream().filter(obj -> StrUtil.equals(obj.getParentId(), purchaseOrderDetail.getSourceDetailId())).collect(Collectors.toList());
+            List<SubcontractOrderDetailEntity> subDetailList = subcontractOrderDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentId(), purchaseOrderDetail.getSourceDetailId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(subDetailList)) {
                 log.error(ApiError.ERROR_98070.msg);
                 continue;
@@ -1369,9 +1369,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();
 
                 //订单明细数据校验
-                String skuNos = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus())
+                String skuNos = purchaseOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus())
                         )
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                 if (StrUtil.isNotBlank(skuNos)) {
@@ -1645,7 +1645,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     public List<QcInfoEntity> getReceiveQcInfo (List<WarehouseReceiveDetailEntity> resultReceiveDetailList,List<String> notHasPodIdList) {
 
         if (CollectionUtils.isEmpty(resultReceiveDetailList) && CollectionUtils.isEmpty(notHasPodIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         //收货单明细id
         List<String> receiveDetailIds = resultReceiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).distinct().collect(Collectors.toList());
@@ -2015,11 +2015,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         for (PoInstockEntity poInstockEntity : resultList) {
             //入库明细信息
-            List<PoInstockDetailEntity> thisPoDetailList = poInstockDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), poInstockEntity.getId())).collect(Collectors.toList());
+            List<PoInstockDetailEntity> thisPoDetailList = poInstockDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), poInstockEntity.getId())).collect(Collectors.toList());
             SubcontractIssueDTO.AddDTO addDTO = new SubcontractIssueDTO.AddDTO();
 
             //采购订单关联的委外订单id
-            String sourceId = purchaseOrderList.stream().filter(obj -> StrUtil.equals(obj.getId(), poInstockEntity.getPurchaseOrderId()))
+            String sourceId = purchaseOrderList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poInstockEntity.getPurchaseOrderId()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceId())).orElse("");
             addDTO.setSubcontractOrderId(sourceId);
             addDTO.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
@@ -2030,12 +2030,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
             for (PoInstockDetailEntity detailEntity : thisPoDetailList) {
                 //采购订单明细
-                PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(poDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_98026);
                 }
                 //子级委外订单明细
-                List<SubcontractOrderDetailEntity> subDetailList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getParentId(), poDetailEntity.getSourceDetailId())).collect(Collectors.toList());
+                List<SubcontractOrderDetailEntity> subDetailList = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentId(), poDetailEntity.getSourceDetailId())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(subDetailList)) {
                     throw new ServiceException(ApiError.ERROR_98070);
                 }

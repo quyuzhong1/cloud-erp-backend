@@ -2,6 +2,7 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.enums.HandoverStatusEnum;
@@ -45,8 +46,8 @@ public class PackageForecastJob {
         DateTime dateTime = DateUtil.offsetMonth(DateUtil.date(), -3);
         //根据订单查询组包明细  默认查询 3月内的组包数据
         List<PackageForecastEntity> orders = packageForecastService.lambdaQuery()
-                .ne(PackageForecastEntity::getHandoverNo, StrUtil.EMPTY)
-                .eq(PackageForecastEntity::getHandoverStatus,StrUtil.EMPTY)
+                .ne(PackageForecastEntity::getHandoverNo, CharSequenceUtil.EMPTY)
+                .eq(PackageForecastEntity::getHandoverStatus, CharSequenceUtil.EMPTY)
                 .gt(PackageForecastEntity::getBillDate, dateTime)
                 .list();
         if (CollectionUtils.isEmpty(orders)){

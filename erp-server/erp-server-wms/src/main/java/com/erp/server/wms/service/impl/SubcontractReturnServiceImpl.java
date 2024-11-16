@@ -132,9 +132,9 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         subcontractReturnDetailService.add(addDTO.getDetailList(),subcontractReturnEntity.getId());
         // 操作日志
         String msg = null;
-        if (StrUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),subcontractReturnEntity.getSourceType())){
+        if (CharSequenceUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),subcontractReturnEntity.getSourceType())){
             msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外退料单" , subcontractReturnEntity.getCode());
-        }else if (StrUtil.equals(SourceTypeEnum.PO_RETURN.getCode(),subcontractReturnEntity.getSourceType())){
+        }else if (CharSequenceUtil.equals(SourceTypeEnum.PO_RETURN.getCode(),subcontractReturnEntity.getSourceType())){
             //TODO 增加子件和成品退货单记录
             msg = CharSequenceUtil.format("用户【{}】从成品采购退货单【{}】下推生成了委外退料单【{}】", UserContext.getDefaultLoginUser().getUserName(), subcontractReturnEntity.getSourceCode(), subcontractReturnEntity.getCode());
         }
@@ -162,7 +162,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         SubcontractReturnEntity subcontractReturnEntity =  BeanMapperUtils.map(SubcontractReturnEntity.class, updateDTO);
 
         //来源为委外时，验证供应商是否一致
-        if (StrUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),old.getSourceType()) ||  CharSequenceUtil.isBlank(old.getSourceType())) {
+        if (CharSequenceUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),old.getSourceType()) ||  CharSequenceUtil.isBlank(old.getSourceType())) {
             List<SubcontractReturnDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
             List<String> sourceDetailIdList = detailList.stream().map(SubcontractReturnDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
             checkSupplier(subcontractReturnEntity,sourceDetailIdList);
@@ -763,7 +763,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         }
         subcontractReturnEntity.setSubcontractOrderCode(subcontractOrderList.get(0).getCode());
         //来源单号为委外订单时
-        if (StrUtil.equals(subcontractReturnEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {
+        if (CharSequenceUtil.equals(subcontractReturnEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {
             if (StrUtil.isNotBlank(subcontractReturnEntity.getSourceId()) && CharSequenceUtil.isBlank(subcontractReturnEntity.getSourceCode())){
                 PoReturnEntity poReturnEntity = poReturnService.getById(subcontractReturnEntity.getSourceId());
                 if (Objects.nonNull(poReturnEntity)){

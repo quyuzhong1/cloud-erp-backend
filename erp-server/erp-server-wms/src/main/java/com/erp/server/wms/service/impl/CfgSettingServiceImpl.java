@@ -241,7 +241,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
         }
         //查询是否是修改
-        String id = cfgSettingList.stream().filter(obj -> StrUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         entity.setId(id);
         entity.setIndex(listDTO.getSort());
         entity.setKey(listDTO.getValue());
@@ -258,7 +258,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      */
     private void handlePoReconciliationSetting (CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO) {
         //设置时间为空
-        if (StrUtil.equals(ReconciliationTypeEnum.CREAT_BY_MONTH.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
+        if (CharSequenceUtil.equals(ReconciliationTypeEnum.CREAT_BY_MONTH.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
             poReconciliationSettingDTO.setEndDate(null);
         }
     }

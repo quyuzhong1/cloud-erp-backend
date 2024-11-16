@@ -142,7 +142,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         List<ThirdMappingDTO.AddDTO> thirdMappings = thirdMappingList.stream().filter(obj -> StrUtil.isNotBlank(obj.getThirdId())).collect(Collectors.toList());
         for (ThirdMappingDTO.AddDTO addDTO : thirdMappings) {
             //拼接日志
-            String thirdWarehouseName = thirdWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), addDTO.getThirdId())).map(ThirdWarehouseEntity::getName).findFirst().orElse("");
+            String thirdWarehouseName = thirdWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), addDTO.getThirdId())).map(ThirdWarehouseEntity::getName).findFirst().orElse("");
             String msg = CharSequenceUtil.format("{}-{};",ThirdSysTypeEnum.getNameByCode(addDTO.getThirdSysType()),thirdWarehouseName);
             newChannelMsg.add(msg);
             if (!oldChannelMsg.contains(msg)) {

@@ -115,23 +115,23 @@ public class VirtualInventoryTransCoreServiceImpl implements VirtualInventoryTra
         if (CollUtil.isEmpty(bomChildrenSkuList)) {
             return resultList;
         }
-        List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
         if (CollUtil.isEmpty(bomList)) {
             return resultList;
         }
         for (VirtualInventoryStockDTO.OutInStockDTO outInStockDTO : paramList) {
             //bom信息
-            List<BomChildrenSkuDTO> childList = bomList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), outInStockDTO.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> childList = bomList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), outInStockDTO.getSkuId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(childList)) {
                 resultList.add(outInStockDTO);
                 continue;
             }
             //优先取录入的bom版本，没有则取最新bom版本
             if (StrUtil.isNotBlank(outInStockDTO.getBomVersion())) {
-                childList = childList.stream().filter(obj -> StrUtil.equals(obj.getBomVersion(),outInStockDTO.getBomVersion())).collect(Collectors.toList());
+                childList = childList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBomVersion(),outInStockDTO.getBomVersion())).collect(Collectors.toList());
             } else {
                 String bomVersion = childList.stream().max(Comparator.comparing(BomChildrenSkuDTO::getBomVersion)).map(BomChildrenSkuDTO::getBomVersion).get();
-                childList = childList.stream().filter(obj -> StrUtil.equals(obj.getBomVersion(),bomVersion)).collect(Collectors.toList());
+                childList = childList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBomVersion(),bomVersion)).collect(Collectors.toList());
             }
             if (CollUtil.isEmpty(childList)) {
                 throw new ServiceException(CharSequenceUtil.format("SKU【】未找到版本为【{}】的BOM",outInStockDTO.getSkuId(),outInStockDTO.getBomVersion()));

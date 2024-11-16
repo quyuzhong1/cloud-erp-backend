@@ -224,7 +224,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     @Override
     public List<SubcontractReturnDetailEntity> listByMainIds(List<String> mainIdList) {
         if (CollUtil.isEmpty(mainIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(SubcontractReturnDetailEntity::getMainId,mainIdList).list();
     }
@@ -237,7 +237,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     @Override
     public List<SubcontractReturnDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList) {
         if (CollectionUtils.isEmpty(sourceDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listBySourceDetailIdList(sourceDetailIdList);
     }
@@ -245,7 +245,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     @Override
     public List<SubcontractReturnDetailEntity> listBySubcontractOrderDetailIdList(List<String> subcontractOrderDetailIdList) {
         if (CollectionUtils.isEmpty(subcontractOrderDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
     }

@@ -138,7 +138,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         // 从分步式调入单的来源id查询分步式调出单明细
         List<TransferOutDetailEntity> transferOutDetailList = baseMapper.listTransferOutDetailByParam(param);
         if (CollUtil.isEmpty(transferOutDetailList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         Map<String,TransferOutDetailEntity> transferDetailMap = transferOutDetailList.stream().collect(Collectors.toMap(TransferOutDetailEntity::getId, Function.identity()));
         // 分步式调出单明细id集合

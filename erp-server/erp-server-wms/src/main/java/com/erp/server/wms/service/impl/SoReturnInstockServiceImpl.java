@@ -1413,7 +1413,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             addDTO.setBillDate(LocalDate.now());
             addDTO.setOutOrgId(entity.getInventoryOrgId());
             addDTO.setInOrgId(orgId);
-            addDTO.setType(StrUtil.equals(addDTO.getInOrgId(),addDTO.getOutOrgId()) ? TransferTypeEnum.IN_ORG.getCode() : TransferTypeEnum.CROSS_ORG.getCode());
+            addDTO.setType(CharSequenceUtil.equals(addDTO.getInOrgId(),addDTO.getOutOrgId()) ? TransferTypeEnum.IN_ORG.getCode() : TransferTypeEnum.CROSS_ORG.getCode());
             addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
             addDTO.setSourceId(entity.getId());
             addDTO.setSourceCode(entity.getCode());

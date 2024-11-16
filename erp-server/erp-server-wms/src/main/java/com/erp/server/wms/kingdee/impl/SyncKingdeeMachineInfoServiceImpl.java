@@ -227,7 +227,7 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
                 jsonObject.set("warehouseCode", warehouseCode);
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位
@@ -258,7 +258,7 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
                 subObject.set("unit",machineSubComponents.getUnit());
                 subObject.set("qty",machineSubComponents.getQty());
                 //是否下推仓位
-                Boolean isPushSub = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), machineSubComponents.getWarehouseId()))
+                Boolean isPushSub = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), machineSubComponents.getWarehouseId()))
                         .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
                 if (isPushSub) {
                     //仓位

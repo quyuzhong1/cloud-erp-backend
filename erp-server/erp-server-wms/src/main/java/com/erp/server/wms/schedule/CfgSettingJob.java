@@ -120,14 +120,14 @@ public class CfgSettingJob {
         //质检单总计
         Integer totalCount = list.stream().map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).reduce(MathUtil.ZERO,Integer::sum);
         //已质检数量
-        Integer hasQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getCode())
-                || StrUtil.equals(obj.getType(), QcBillStatusEnum.EXEMPTION.getCode()))
+        Integer hasQcCount = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getCode())
+                || CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.EXEMPTION.getCode()))
                 .map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount)
                 .reduce(MathUtil.ZERO,Integer::sum);
         //未质检数量
-        Integer notQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.DRAFT.getCode())
-                ||  StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getCode())
-                ||  StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_RE_QC.getCode()))
+        Integer notQcCount = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.DRAFT.getCode())
+                ||  CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getCode())
+                ||  CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_RE_QC.getCode()))
                 .map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount)
                 .reduce(MathUtil.ZERO,Integer::sum);
         //累计未质检

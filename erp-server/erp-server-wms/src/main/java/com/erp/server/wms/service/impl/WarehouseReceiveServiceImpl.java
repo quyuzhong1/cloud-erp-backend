@@ -1192,9 +1192,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     if (generateReceiveDTO.getId().equals(receiveDTO.getId())) {
                         WarehouseReceiveDetailDTO.AddDTO detailAddDTO = new WarehouseReceiveDetailDTO.AddDTO();
                         //订单明细数据校验
-                        String skuNos = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
-                                        && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
-                                        && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus())
+                        String skuNos = purchaseOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                        && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                        && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus())
                                 )
                                 .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                         if (StrUtil.isNotBlank(skuNos)) {

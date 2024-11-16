@@ -915,28 +915,28 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO resultDTO = new VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO();
             BeanMapperUtils.copy(paramDTO,resultDTO);
             //实体仓可用库存
-            Integer warehouseUsableQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getInventoryStatus(),InventoryStatusEnum.USABLE.getCode())
+            Integer warehouseUsableQty = skuInventoryTotalList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getInventoryStatus(),InventoryStatusEnum.USABLE.getCode())
                     )
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
             resultDTO.setWarehouseUsableQty(warehouseUsableQty);
             //实体仓已分配库存
-            Integer distributionQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()))
+            Integer distributionQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getSkuId(), paramDTO.getSkuId()))
                     .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
             resultDTO.setDistributionQty(ObjectUtil.isEmpty(distributionQty) ? MathUtil.ZERO : distributionQty);
 
             //实体仓实际库存
-            Integer warehouseRealQty = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()))
+            Integer warehouseRealQty = skuInventoryTotalList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()))
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
             resultDTO.setUnDistributionQty(warehouseRealQty - resultDTO.getDistributionQty());
 
-            Integer toVirtualWarehouseUsableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getToVirtualWarehouseId()))
+            Integer toVirtualWarehouseUsableQty = virtualInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && CharSequenceUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getToVirtualWarehouseId()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
             resultDTO.setToVirtualWarehouseUsableQty(toVirtualWarehouseUsableQty);
-            Integer fromVirtualWarehouseUsableQty = virtualInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getFromVirtualWarehouseId()))
+            Integer fromVirtualWarehouseUsableQty = virtualInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId()) && CharSequenceUtil.equals(obj.getSkuId(), paramDTO.getSkuId()) && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getFromVirtualWarehouseId()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
             resultDTO.setFromVirtualWarehouseUsableQty(fromVirtualWarehouseUsableQty);
             resultList.add(resultDTO);

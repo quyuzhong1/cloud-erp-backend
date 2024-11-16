@@ -141,7 +141,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             //仓位转换,然后拆分为有映射的和没有映射的
             Pair<List<T>, List<T>> pair = handleTransfer(goodsLists, warehouseId);
             if(! pair.getKey().isEmpty()){
-                List<T> combinationList = combinationSku(pair.getKey(), operateEnum);
+                List<T> combinationList = combinationSku(pair.getKey());
                 String codeWithPush = docNoGenHelper.generateCode(businessNoTypeEnum);
                 String idWithPush = saveMiddleData(sourceId, sourceCode, sourceTypeEnum, combinationList, codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
                 List<DmpPushTaskEntity> pushTaskList = generateTask(combinationList, operateEnum, codeWithPush, thirdWarehouseCode, sourceCode, idWithPush, SyncStatusEnum.IN_SYNC, sourceTypeEnum);
@@ -151,10 +151,10 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             }
 
             if(! pair.getValue().isEmpty()){
-                List<T> combinationListWithNoPush = combinationSku(pair.getValue(), operateEnum);
+                List<T> combinationListWithNoPush = combinationSku(pair.getValue());
                 String codeWithNoPush = docNoGenHelper.generateCode(businessNoTypeEnum);
                 String idWithNoPush = saveMiddleData(sourceId, sourceCode, sourceTypeEnum, combinationListWithNoPush, codeWithNoPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
-                List<DmpPushTaskEntity> pushTaskListNoPush = generateTask(combinationListWithNoPush, operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum);
+                generateTask(combinationListWithNoPush, operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum);
             }
         }
     }
@@ -178,11 +178,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         String warehouseId = viewDTO.getWarehouseId();
         String sourceCode = viewDTO.getSourceCode();
         Pair<List<T>, List<T>> pair = handleTransfer(goodsLists, warehouseId);
-//        if(pair.getKey().isEmpty()){
-//            log.error("查询&同步时没有找到仓位映射, 取消推送: {} {}", midTableId, warehouseId);
-//            return;
-//        }
-        boolean removeSuccess = dmpTaskFeign.deletePushTaskBySourceId(midTableId);
+        dmpTaskFeign.deletePushTaskBySourceId(midTableId);
         if(! pair.getKey().isEmpty()){
             String codeWithPush = viewDTO.getThirdCode();
             String idWithPush = saveMiddleData(viewDTO.getSourceId(), sourceCode, sourceTypeEnum, pair.getKey(), codeWithPush, warehouseId, thirdWarehouseCode, operateEnum, "1");
@@ -195,7 +191,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
         if(! pair.getValue().isEmpty()){
             String codeWithNoPush = docNoGenHelper.generateCode(businessNoTypeEnum);
             String idWithNoPush = saveMiddleData(viewDTO.getSourceId(), sourceCode, sourceTypeEnum, pair.getValue(), codeWithNoPush, warehouseId, thirdWarehouseCode, operateEnum, "0");
-            List<DmpPushTaskEntity> pushTaskListNoPush = generateTask(pair.getValue(), operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum);
+            generateTask(pair.getValue(), operateEnum, codeWithNoPush, thirdWarehouseCode, sourceCode, idWithNoPush, SyncStatusEnum.NO_NEED_SYNC, sourceTypeEnum);
         }
     }
 
@@ -254,12 +250,11 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
     /**
      * 合并相同仓位的sku
      * @param goodsList
-     * @param operateEnum
      * @return
      * @date: 2024-08-15
      * @author: tanmujin
      */
-    public List<T> combinationSku(List<T> goodsList, SyncOperateEnum operateEnum) {
+    public List<T> combinationSku(List<T> goodsList) {
         Map<String, List<T>> collect = goodsList.stream().collect(Collectors.groupingBy(item -> item.getSpecNo() + "#" + item.getPositionNo()));
         List<T> combinationList = new ArrayList<>();
         for (Map.Entry<String, List<T>> entry : collect.entrySet()) {

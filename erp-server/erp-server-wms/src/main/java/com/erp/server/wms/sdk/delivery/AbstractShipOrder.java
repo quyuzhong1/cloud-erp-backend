@@ -4,7 +4,6 @@ import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
@@ -16,17 +15,13 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cSourcePlatformEnum;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j

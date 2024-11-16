@@ -144,7 +144,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
 
             //获取渠道标发单号
             String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
-            String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
+            String trackingNumber = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
             if (CharSequenceUtil.isBlank(trackingNumber)) {
                 throw new ServiceException("操作失败，渠道标发单号为空");

@@ -280,7 +280,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Override
     public List<WarehouseReceiveDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds) {
         if (CollectionUtils.isEmpty(purchaseDetailIds)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listWarehouseReceiveByPodIds(purchaseDetailIds);
     }

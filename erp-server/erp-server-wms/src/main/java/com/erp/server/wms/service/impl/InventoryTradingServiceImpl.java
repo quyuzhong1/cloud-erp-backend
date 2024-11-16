@@ -363,13 +363,13 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             String skuId = value.get(0).getSkuId();
             String warehouseId = value.get(0).getWarehouseId();
             //虚拟库存校验
-            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),warehouseId) && StrUtil.equals(obj.getSkuId(),skuId))
+            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && CharSequenceUtil.equals(obj.getSkuId(),skuId))
                     .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
             if(MathUtil.compareTo(virtualQty,MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
             }
             //仓库可用库存
-            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),warehouseId) && StrUtil.equals(obj.getSkuId(),skuId))
+            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && CharSequenceUtil.equals(obj.getSkuId(),skuId))
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
             //需要出库存数量
             Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);

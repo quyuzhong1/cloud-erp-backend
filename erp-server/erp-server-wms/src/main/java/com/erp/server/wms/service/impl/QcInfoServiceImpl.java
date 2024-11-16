@@ -271,9 +271,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
                 //采购订单验证
-                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                String skuNos = purOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                 if (StrUtil.isNotBlank(skuNos)) {
                     throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
@@ -523,9 +523,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
                 //采购订单验证
-                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                String skuNos = purOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                 if (StrUtil.isNotBlank(skuNos)) {
                     throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
@@ -913,7 +913,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.isNull(bill)) {
             throw new ServiceException(ApiError.ERROR_99015);
         }
-        if (!StrUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.DRAFT.getCode()) && !StrUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.WAIT_QC.getCode())) {
+        if (!CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.DRAFT.getCode()) && !CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.WAIT_QC.getCode())) {
             throw new ServiceException(ApiError.ERROR_99020);
         }
         //质检信息
@@ -963,9 +963,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
             if (purchaseOrder != null) {
                 //采购订单验证
-                String skuNos = purOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                String skuNos = purOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                 if (StrUtil.isNotBlank(skuNos)) {
                     throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);

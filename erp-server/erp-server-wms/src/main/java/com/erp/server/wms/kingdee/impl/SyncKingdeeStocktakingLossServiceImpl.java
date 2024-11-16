@@ -200,7 +200,7 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
             Integer inventoryQty = item.getFrozenQty() + item.getUsableQty();
             jsonObject.set("inventoryQty", inventoryQty);
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), item.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位

@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -194,11 +195,11 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             //来源类型名称
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             //实体仓库名称
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
             listDTO.setWarehouseName(warehouseName);
 
             //组织名称
-            String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+            String orgName = accountingCompanyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
             listDTO.setOrgName(orgName);
 
             //操作状态名称
@@ -226,7 +227,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             //来源类型名称
             inventoryDetailDTO.setSourceTypeName(SourceTypeEnum.getName(inventoryDetailDTO.getSourceType()));
             //实体仓库名称
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), inventoryDetailDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), inventoryDetailDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
             inventoryDetailDTO.setWarehouseName(warehouseName);
 
         }

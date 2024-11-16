@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -205,7 +206,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
             //组织
             jsonObject.put("orgCode", accountingCompanyList.get(0).getCode());
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detail.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位
@@ -217,8 +218,8 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
             //委外主表金蝶id
             jsonObject.set("subKingdeeId", subcontractOrderList.get(0).getSyncKingdeeId());
             //委外明细金蝶id
-            String parentId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detail.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
-            String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), parentId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
+            String parentId = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detail.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
+            String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), parentId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
             jsonObject.set("subKingdeeDetailId", subKingdeeDetailId);
             list.add(jsonObject);
         }

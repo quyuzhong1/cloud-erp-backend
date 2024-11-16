@@ -842,7 +842,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if (ObjectUtils.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
-            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
+            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soInfoEntity)) {
                 throw new ServiceException(ApiError.ERROR_92016);
             }
@@ -925,7 +925,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      */
     private List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList) {
         if (CollectionUtils.isEmpty(soDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<SoOutstockDetailEntity> list = baseMapper.listBySoDetailIds(soDetailIdList);
         return list;

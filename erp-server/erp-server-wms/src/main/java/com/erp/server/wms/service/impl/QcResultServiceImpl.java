@@ -570,7 +570,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
      */
     private List<ProductInfoDTO.ProductRolePeopleDTO> listSendUser (List<String> skuIdList,List<NoticeReceiverDTO.InfoDTO> receiverList,List<String> userIdList) {
         if (CollectionUtils.isEmpty(receiverList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         //根据sku 获取角色的
         List<ProductInfoDTO.ProductRolePeopleDTO> rolePeopleList = new ArrayList<>();

@@ -266,13 +266,13 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
 
             //销售明细
-            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92016);
             }
 
             //销售订单
-            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
+            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }

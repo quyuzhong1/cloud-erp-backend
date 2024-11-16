@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -107,7 +108,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         List<WaveListDetailDTO.DeliveryInfoDTO> rowList = new ArrayList<>(waveDetailList.size());
         //发货单列表
         for (WaveListDetailEntity deliveryLevel : waveDetailList) {
-            List<String> pickIds = pickingList.stream().filter(obj -> StrUtil.equals(obj.getSourceCode(), deliveryLevel.getDeliveryCode())).map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
+            List<String> pickIds = pickingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceCode(), deliveryLevel.getDeliveryCode())).map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
             List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> pickIds.contains(item.getMainId())).collect(Collectors.toList());
             Map<String, List<PickingDetailEntity>> collect = pickingDetailGroup.stream().collect(Collectors.groupingBy(item -> item.getSkuId() + "#" + item.getSkuNo()));
             //sku列表

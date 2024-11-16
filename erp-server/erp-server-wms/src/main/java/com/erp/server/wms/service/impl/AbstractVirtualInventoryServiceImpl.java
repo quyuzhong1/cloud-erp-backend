@@ -209,13 +209,13 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
     private VirtualInventoryEntity getAvaliableInventory(List<VirtualWarehouseEntity> virtualWarehouseList,List<WarehouseEntity> warehouseList,
                                                   VirtualTransFlowEntity virtualTransFlowEntity) {
         //虚拟仓库信息
-        VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), virtualTransFlowEntity.getVirtualWarehouseId()))
+        VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), virtualTransFlowEntity.getVirtualWarehouseId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isEmpty(virtualWarehouseEntity)) {
             throw new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST);
         }
         //实物仓库
-        WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), virtualTransFlowEntity.getWarehouseId()))
+        WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), virtualTransFlowEntity.getWarehouseId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isEmpty(warehouseEntity)) {
             throw new ServiceException(ApiError.ERROR_99002);
@@ -378,7 +378,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         // 查询配置的交易规则
         List<CfgVirtualTransRulesEntity> list = cfgVirtualTransRulesService.findByDictBizType(businessType.getCode());
         if(CollUtil.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<VirtualTransRuleDTO.StockParamDTO> ruleList = Lists.newArrayListWithExpectedSize(list.size());
         list.forEach(r->{

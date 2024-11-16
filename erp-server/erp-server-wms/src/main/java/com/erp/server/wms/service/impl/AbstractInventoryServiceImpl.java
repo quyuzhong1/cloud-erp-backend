@@ -54,6 +54,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public abstract class AbstractInventoryServiceImpl implements InventoryStockService {
+    public static final String TEMPLATE = "{}:{}:{}:{}:{}";
     @Resource
     private RedissonClient redisson;
     @Resource
@@ -178,14 +179,13 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         txnFlows.forEach(txnFlow -> {
             // 检测是否允许库存交易=
             InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getAndCheckByCode(txnFlow.getDictInventoryStatus());
-            InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.getByCode(txnFlow.getSourceCode());
-            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(), txnFlow.getWarehouseId(), txnFlow.getWarehouseLocation(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getDictInventoryStatus(), txnFlow.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList, sourceTypeEnum);
+            checkAllowTransaction(closedDateMap.get(txnFlow.getOrgId()), txnFlow.getOrgId(), txnFlow.getWarehouseId(), txnFlow.getWarehouseLocation(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getDictInventoryStatus(), txnFlow.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList);
 
             // 获取单据业务类型
             InventoryBusinessTypeEnum businessTypeEnum = InventoryBusinessTypeEnum.getByCode(txnFlow.getDictBizType());// 取原交易流水的业务类型
 
             // 按照仓库+仓位+库存状态+SKU 进行锁定
-            String lockKey = CharSequenceUtil.format("{}:{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), txnFlow.getWarehouseId(), StrUtils.null2EmptyWithTrim(txnFlow.getWarehouseLocation()), txnFlow.getDictInventoryStatus(), txnFlow.getSkuId());
+            String lockKey = CharSequenceUtil.format(TEMPLATE, DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), txnFlow.getWarehouseId(), StrUtils.null2EmptyWithTrim(txnFlow.getWarehouseLocation()), txnFlow.getDictInventoryStatus(), txnFlow.getSkuId());
             RLock rLock = redisson.getLock(lockKey);
             boolean isLock;
             try {
@@ -218,11 +218,6 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 if (!updateFlag) {
                     ServiceException.runError(ApiError.ERROR_1027);
                 }
-                updateFlag = inventoryService.updateQtyById(inventory.getId(), txnFlow.getQty());
-                if (!updateFlag) {
-                    ServiceException.runError(ApiError.ERROR_1027);
-                }
-
                 InventoryEntity entity = inventoryService.getById(inventory.getId());
                 transactionFlowService.add(txnFlow, entity.getQty());
                 inventoryHisService.addOrUpdate(inventory.getId(), LocalDate.now(), entity.getQty());
@@ -257,9 +252,8 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
      * @param billDate                      单据日期
      * @param inventoryStatusEnum
      * @param lastStocktakingProfitLossList
-     * @param sourceType
      */
-    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList, InventorySourceTypeEnum sourceType) {
+    private void checkAllowTransaction(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, String skuNo, String dictInventoryStatus, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList) {
         // 库存关账时间检测
         log.info("closeDate:{}", closeDate);
 
@@ -269,30 +263,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
          * 获取到非system的用户时正常校验
          */
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        if (!CharSequenceUtil.isBlank(userInfo.getUid())) {
-            // 存在关账时间并非在途库存
-            if (null != closeDate && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)) {
-                if (billDate.isBefore(closeDate) || billDate.equals(closeDate)) {
-                    ServiceException.runError(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
-                }
-            }
-            // 检查盘盈盘亏单最新单据时间并非在途库存
-            if (!CollectionUtils.isEmpty(lastStocktakingProfitLossList) && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum)) {
-                // 盘盈盘亏单 匹配 仓库ID, 组织ID，仓位，skuId
-                StocktakingProfitLossDetailDTO.LastDTO lastDTO = lastStocktakingProfitLossList.stream()
-                        .filter(e -> e.getWarehouseId().equalsIgnoreCase(warehouseId)
-                                && e.getWarehouseLocation().equals(null == warehouseLocation ? "" : warehouseLocation)
-                                && e.getWarehouseOrgId().equalsIgnoreCase(orgId)
-                                && e.getSkuId().equalsIgnoreCase(skuId))
-                        .findFirst()
-                        .orElse(null);
-                if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))) {
-                    // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                    ServiceException.runError(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
-                }
-            }
-        }
-
+        checkCloseBill(closeDate, orgId, warehouseId, warehouseLocation, skuId, billDate, inventoryStatusEnum, lastStocktakingProfitLossList, userInfo);
         // 盘点冻结
         String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, "*", orgId, warehouseId, warehouseLocation, skuId, dictInventoryStatus);
         Collection<String> keys = redisUtil.keys(redisKey);
@@ -302,6 +273,33 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(warehouseId);
         String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : warehouseId;
         ServiceException.runError(ApiError.STOCK_FREEZE_NOT_ALLOW, warehouseName, warehouseLocation, skuNo, dictInventoryStatus, "盘点");
+    }
+
+    private static void checkCloseBill(LocalDate closeDate, String orgId, String warehouseId, String warehouseLocation, String skuId, LocalDate billDate, InventoryStatusEnum inventoryStatusEnum, List<StocktakingProfitLossDetailDTO.LastDTO> lastStocktakingProfitLossList, LoginUser userInfo) {
+        if (CharSequenceUtil.isBlank(userInfo.getUid())) {
+            return;
+        }
+        // 存在关账时间并非在途库存
+        if (Objects.nonNull(closeDate) && !InventoryStatusEnum.IN_TRANSIT.equals(inventoryStatusEnum) && (billDate.isBefore(closeDate) || billDate.equals(closeDate))) {
+            throw new ServiceException(ApiError.ERROR_INVENTORY_CLOSED, closeDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        }
+        // 检查盘盈盘亏单最新单据时间并非在途库存
+        if (CollUtil.isNotEmpty(lastStocktakingProfitLossList) && !Objects.equals(InventoryStatusEnum.IN_TRANSIT,inventoryStatusEnum)) {
+            // 盘盈盘亏单 匹配 仓库ID, 组织ID，仓位，skuId
+            warehouseLocation = CharSequenceUtil.isBlank(warehouseLocation) ? CharSequenceUtil.EMPTY : warehouseLocation;
+            String finalWarehouseLocation = warehouseLocation;
+            StocktakingProfitLossDetailDTO.LastDTO lastDTO = lastStocktakingProfitLossList.stream()
+                    .filter(e -> e.getWarehouseId().equalsIgnoreCase(warehouseId)
+                            && Objects.equals(finalWarehouseLocation, e.getWarehouseLocation())
+                            && e.getWarehouseOrgId().equalsIgnoreCase(orgId)
+                            && e.getSkuId().equalsIgnoreCase(skuId))
+                    .findFirst()
+                    .orElse(null);
+            if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))) {
+                // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
+                ServiceException.runError(ApiError.ERROR_STOCKTAKING_PROFIT_LOSS_CLOSED, lastDTO.getCode(), lastDTO.getBillDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            }
+        }
     }
 
     /**
@@ -369,11 +367,11 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
                 Collections.singletonList(param.getSkuId())
         );
 
-        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList, param.getSourceType());
+        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList);
         log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
 
         // 按照仓库+仓位+库存状态+SKU 进行锁定
-        String lockKey = CharSequenceUtil.format("{}:{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), param.getWarehouseId(), StrUtils.null2EmptyWithTrim(param.getWarehouseLocation()), inventoryStatusEnum.getCode(), param.getSkuId());
+        String lockKey = CharSequenceUtil.format(TEMPLATE, DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), param.getWarehouseId(), StrUtils.null2EmptyWithTrim(param.getWarehouseLocation()), inventoryStatusEnum.getCode(), param.getSkuId());
         RLock rLock = redisson.getLock(lockKey);
         boolean isLock;
         try {
@@ -425,13 +423,13 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
         );
 
 
-        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList, param.getSourceType());
+        checkAllowTransaction(closedDateMap.get(warehouseInfo.getOrgId()), warehouseInfo.getOrgId(), param.getWarehouseId(), param.getWarehouseLocation(), param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(), param.getBillDate(), inventoryStatusEnum, lastStocktakingProfitLossList);
         // 待出库数量
         Integer waitOutQty = param.getQty();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
 
         // 按照仓库+仓位+库存状态+SKU 进行锁定
-        String lockKey = CharSequenceUtil.format("{}:{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), param.getWarehouseId(), StrUtils.null2EmptyWithTrim(param.getWarehouseLocation()), inventoryStatusEnum.getCode(), param.getSkuId());
+        String lockKey = CharSequenceUtil.format(TEMPLATE, DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), param.getWarehouseId(), StrUtils.null2EmptyWithTrim(param.getWarehouseLocation()), inventoryStatusEnum.getCode(), param.getSkuId());
         RLock rLock = redisson.getLock(lockKey);
         boolean isLock;
         try {
@@ -699,7 +697,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
             });
             return transactionRuleDTOS;
         }
-        return null;
+        return Collections.emptyList();
     }
 
     /**

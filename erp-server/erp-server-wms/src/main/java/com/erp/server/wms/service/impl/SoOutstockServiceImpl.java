@@ -1792,12 +1792,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_99002);
         }
         //调出仓库
-        WarehouseEntity fromWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), fromWarehouseId)).findFirst().orElse(null);
+        WarehouseEntity fromWarehouseEntity = warehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), fromWarehouseId)).findFirst().orElse(null);
         if (Objects.isNull(fromWarehouseEntity)) {
             throw new ServiceException("调出仓库不能为空");
         }
         //调入仓库
-        WarehouseEntity toWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), toWarehouseId)).findFirst().orElse(null);
+        WarehouseEntity toWarehouseEntity = warehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), toWarehouseId)).findFirst().orElse(null);
         if (Objects.isNull(toWarehouseEntity)) {
             throw new ServiceException("调入仓库不能为空");
         }

@@ -241,7 +241,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<WarehouseDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = new ArrayList<>();
 
             //虚拟仓
-            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), paramDTO.getDictPlatform())
+            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictPlatform(), paramDTO.getDictPlatform())
                     && (CollectionUtils.isEmpty(obj.getRelationIdList()) || ObjectUtil.isEmpty(paramDTO.getRelationId()) || obj.getRelationIdList().contains(paramDTO.getRelationId())))
                     .map(VirtualWarehouseRelationDTO.ListPlatformDTO::getVirtualWarehouseId).findFirst().orElse("");
 
@@ -264,9 +264,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                     continue;
                 }
                 //实体仓下可用虚拟库存
-                Integer virtualInventoryQty = virtualUsableQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), listDTO.getId())
-                                && StrUtil.equals(obj.getSkuId(),paramDTO.getSkuId())
-                                && StrUtil.equals(obj.getToVirtualWarehouseId(),virtualWarehouseId))
+                Integer virtualInventoryQty = virtualUsableQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getId())
+                                && CharSequenceUtil.equals(obj.getSkuId(),paramDTO.getSkuId())
+                                && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(),virtualWarehouseId))
                         .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty).findFirst().orElse(MathUtil.ZERO);
                 warehouseInventoryQtyDTO.setVirtualInventoryQty(virtualInventoryQty);
                 //非bom则直接返回
@@ -278,9 +278,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                  List<Integer> parentUsableQtyList = new ArrayList<>();
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
                     //虚拟仓是否缺货
-                    Integer childVirtualUsableQty = virtualUsableQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
-                                    && StrUtil.equals(obj.getToVirtualWarehouseId(), virtualWarehouseId)
-                                    && StrUtil.equals(obj.getWarehouseId(), listDTO.getId())
+                    Integer childVirtualUsableQty = virtualUsableQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
+                                    && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(), virtualWarehouseId)
+                                    && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getId())
                             ).map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty)
                             .findFirst().orElse(MathUtil.ZERO);
                     //针对父级可用数量
@@ -382,9 +382,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<String> warehouseNameList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseName).distinct().collect(Collectors.toList());
             List<String> warehoseAreaList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
             List<String> warehosueLocationList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
-            warehouseNameList = CollectionUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.EMPTY_LIST;
-            warehoseAreaList = CollectionUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.EMPTY_LIST;
-            warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.EMPTY_LIST;
+            warehouseNameList = CollectionUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.emptyList();
+            warehoseAreaList = CollectionUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.emptyList();
+            warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.emptyList();
             throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList));
         }
     }

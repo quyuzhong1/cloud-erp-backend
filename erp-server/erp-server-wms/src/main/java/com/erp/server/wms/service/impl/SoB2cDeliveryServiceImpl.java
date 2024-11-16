@@ -247,7 +247,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     private void matchTransferRule(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
-        soB2cDeliveryEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+        soB2cDeliveryEntity.setTransferWarehouseIds(CharSequenceUtil.EMPTY);
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, soB2cDeliveryEntity.getSourceId()).list();
         if (CollUtil.isEmpty(receiverList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
@@ -561,7 +561,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
             //波次信息
-            WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
+            WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
             viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
             printPickingViewList.add(viewDTO);
         }
@@ -1172,7 +1172,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<VirtualInventoryStockDTO.OutInStockDTO> unShippedparamList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
 
-            SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            SoB2cDeliveryEntity entity = deliveryEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
             }
@@ -1192,7 +1192,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
             outInStockDTO.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
 
-            if (StrUtil.equals(entity.getStatus(),SoB2cDeliveryStatusEnum.SHIPPED.getCode())) {
+            if (CharSequenceUtil.equals(entity.getStatus(),SoB2cDeliveryStatusEnum.SHIPPED.getCode())) {
                 shippedParamList.add(outInStockDTO);
             } else {
                 unShippedparamList.add(outInStockDTO);
@@ -1924,7 +1924,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.B2C_SO_DELIVERY_NOT_EXISTS);
         }
-        if (!StrUtil.equals(entity.getStatus(),SoB2cDeliveryStatusEnum.SHIPPED.getCode())) {
+        if (!CharSequenceUtil.equals(entity.getStatus(),SoB2cDeliveryStatusEnum.SHIPPED.getCode())) {
             throw new ServiceException(CharSequenceUtil.format("发货单【{}】非已发货不支持重新出库",entity.getCode()));
         }
         List<SoOutstockEntity> soOutstockList = soOutstockService.listBySourceId(Arrays.asList(id));
@@ -1936,7 +1936,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (ObjectUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException("未找到销售订单不支持重新出库");
         }
-        if (StrUtil.equals(soB2cEntity.getSignOrderError(), SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode())) {
+        if (CharSequenceUtil.equals(soB2cEntity.getSignOrderError(), SoB2cErrorTypeEnum.VIRTUAL_FREEZE_QTY.getCode())) {
             throw new ServiceException("扣减虚拟冻结库存异常不支持重新出库");
         }
 
@@ -2026,12 +2026,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         addDTO.setBillDate(LocalDate.now());
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调出仓库
-        WarehouseEntity outWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), fromWarehouseId)).findFirst().orElse(null);
+        WarehouseEntity outWarehouseEntity = warehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), fromWarehouseId)).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(outWarehouseEntity)) {
             throw new ServiceException("调出仓库不能为空");
         }
         //调入仓库
-        WarehouseEntity inWarehouseEntity = warehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), toWarehouseId)).findFirst().orElse(null);
+        WarehouseEntity inWarehouseEntity = warehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), toWarehouseId)).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(inWarehouseEntity)) {
             throw new ServiceException("调入仓库不能为空");
         }

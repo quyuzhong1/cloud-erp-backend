@@ -107,7 +107,7 @@ public class MachineRefSoServiceImpl extends SuperServiceImpl<MachineRefSoMapper
     @Override
     public List<MachineRefSoEntity> listBySoDetailIdList(List<String> refDetailIdList) {
         if (CollectionUtils.isEmpty(refDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(MachineRefSoEntity::getSoDetailId,refDetailIdList).list();
     }
@@ -115,7 +115,7 @@ public class MachineRefSoServiceImpl extends SuperServiceImpl<MachineRefSoMapper
     @Override
     public List<MachineRefSoEntity> listBySoIdList(List<String> soIds) {
         if (CollectionUtils.isEmpty(soIds)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(MachineRefSoEntity::getSoId,soIds).list();
     }

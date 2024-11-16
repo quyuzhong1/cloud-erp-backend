@@ -191,8 +191,8 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                 throw new ServiceException(ApiError.ERROR_99114);
             }
             //如果是待上传或上传失败则直接返回
-            if (StrUtil.equals(soB2cEntity.getTransferStatus(),TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
-                    StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
+            if (CharSequenceUtil.equals(soB2cEntity.getTransferStatus(),TransferStatusEnum.WAIT.getCode()) || CharSequenceUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
+                    CharSequenceUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
                 return this.buildViewDTO(entity,soB2cEntity.getTransferStatus(),declareDetailEntity.getOrderUploadStatus(), trackNo);
             }
 

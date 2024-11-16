@@ -492,7 +492,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
     @Override
     public List<WarehouseReceiveDTO.PoReturnDetailDTO> listReturnOrderDetailByReceiveIds(List<String> receiveIds) {
         if (CollectionUtils.isEmpty(receiveIds)){
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listReturnOrderDetailByReceiveIds(receiveIds);
     }

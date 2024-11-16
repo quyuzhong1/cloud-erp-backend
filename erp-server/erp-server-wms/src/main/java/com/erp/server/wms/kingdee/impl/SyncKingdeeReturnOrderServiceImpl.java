@@ -334,7 +334,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             //退款单价
             jsonObject.set("returnPrice", detail.getReturnPrice());
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getReturnWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getReturnWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位
@@ -350,7 +350,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
                 jsonObject.set("subCode", purchaseOrderEntity.getSourceCode());
 
                 //金蝶明细id
-                String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(purchaseOrderDetailEntity.getSourceDetailId(), obj.getId())).map(SubcontractOrderDetailEntity::getKingdeeDetailId).findFirst().orElse("");
+                String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(purchaseOrderDetailEntity.getSourceDetailId(), obj.getId())).map(SubcontractOrderDetailEntity::getKingdeeDetailId).findFirst().orElse("");
                 jsonObject.set("subKingdeeDetailId", subKingdeeDetailId);
             }
 

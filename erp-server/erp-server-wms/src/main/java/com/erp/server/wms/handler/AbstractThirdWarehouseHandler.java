@@ -29,6 +29,7 @@ import com.erp.server.wms.service.ThirdWarehouseService;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -49,7 +50,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     private DmpTaskFeign dmpTaskFeign;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     public void handleAuthInfo(String id) {
         OverseasProviderEntity authEntity = getAuthEntity(id);

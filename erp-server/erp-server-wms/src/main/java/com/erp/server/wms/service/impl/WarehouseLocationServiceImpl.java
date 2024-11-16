@@ -229,7 +229,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public List<WarehouseLocationEntity> listByWarehouseIdAndCode(List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam) {
         if (CollectionUtils.isEmpty(listParam)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listByWarehouseIdAndCode(listParam);
     }

@@ -199,7 +199,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
 
         String oldWarehouseMsg = warehouseList.stream().filter(obj -> warehouseIdList.contains(obj.getId()))
                 .map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
-        if (StrUtil.equals(oldWarehouseMsg,newWarehouseMsg)) {
+        if (CharSequenceUtil.equals(oldWarehouseMsg,newWarehouseMsg)) {
             return;
         }
         // 操作日志
@@ -229,7 +229,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     @Override
     public List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList,List<String> virtualWarehouseIdList) {
         if (CollUtil.isEmpty(warehouseIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<VirtualWarehouseRelationEntity> list = lambdaQuery()
                 .in(VirtualWarehouseRelationEntity::getWarehouseId, warehouseIdList)
@@ -259,7 +259,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             isExistVirtualResultDTO.setWarehouseId(dto.getWarehouseId());
             isExistVirtualResultDTO.setRelationId(dto.getRelationId());
 
-            List<VirtualWarehouseRelationDTO.SelectResultDTO> selectResultList = list.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), dto.getWarehouseId())).collect(Collectors.toList());
+            List<VirtualWarehouseRelationDTO.SelectResultDTO> selectResultList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), dto.getWarehouseId())).collect(Collectors.toList());
             //无虚拟仓数据则直接返回
             if (CollectionUtils.isEmpty(selectResultList)) {
                 isExistVirtualResultDTO.setIsExistVirtual(Boolean.FALSE);
@@ -273,23 +273,23 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                 continue;
             }
             //平台
-            String platform = shopList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getRelationId())).map(ShopInfoEntity::getDictPlatform).findFirst().orElse("");
+            String platform = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dto.getRelationId())).map(ShopInfoEntity::getDictPlatform).findFirst().orElse("");
 
             //关联仓库按平台
             String type = selectResultList.get(0).getType();
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(type)) {
-                List<ShopInfoEntity> platformShopList = shopList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), platform)).collect(Collectors.toList());
+                List<ShopInfoEntity> platformShopList = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictPlatform(), platform)).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(platformShopList)) {
                     isExistVirtualResultDTO.setIsExistVirtual(Boolean.FALSE);
                     resultDTOList.add(isExistVirtualResultDTO);
                     continue;
                 }
-                long count = platformShopList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getRelationId())).count();
+                long count = platformShopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dto.getRelationId())).count();
                 isExistVirtualResultDTO.setIsExistVirtual(count > 0 ? Boolean.TRUE : Boolean.FALSE);
                 resultDTOList.add(isExistVirtualResultDTO);
             } else {
                 //按店铺
-                long count = selectResultList.stream().filter(obj -> StrUtil.equals(obj.getRelationId(), dto.getRelationId())).count();
+                long count = selectResultList.stream().filter(obj -> CharSequenceUtil.equals(obj.getRelationId(), dto.getRelationId())).count();
                 isExistVirtualResultDTO.setIsExistVirtual(count > 0 ? Boolean.TRUE : Boolean.FALSE);
                 resultDTOList.add(isExistVirtualResultDTO);
             }
@@ -300,7 +300,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     @Override
     public List<VirtualWarehouseRelationEntity> listByVirtualWarehouseIdList(List<String> virtualWarehouseIdList) {
         if (CollectionUtils.isEmpty(virtualWarehouseIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(VirtualWarehouseRelationEntity::getVirtualWarehouseId,virtualWarehouseIdList).list();
     }

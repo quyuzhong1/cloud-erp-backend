@@ -305,7 +305,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
                 jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getDeliveryWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getDeliveryWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //库位

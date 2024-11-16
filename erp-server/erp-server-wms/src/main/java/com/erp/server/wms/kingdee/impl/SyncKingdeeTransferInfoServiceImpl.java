@@ -239,14 +239,14 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
                 jsonObject.set("outWarehouseCode", outWarehouseCode);
             }
             //是否下推调入仓位
-            Boolean isPushIn = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getInWarehouseId()))
+            Boolean isPushIn = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detail.getInWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPushIn) {
                 //调入仓位
                 jsonObject.set("inWarehouseLocation", detail.getInWarehouseLocation());
             }
             //是否下推调出仓位
-            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getOutWarehouseId()))
+            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detail.getOutWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPushOut) {
                 //调出仓位

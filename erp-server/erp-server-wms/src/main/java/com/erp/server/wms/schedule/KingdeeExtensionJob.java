@@ -86,7 +86,7 @@ public class KingdeeExtensionJob {
             return ReturnT.SUCCESS;
         }
         //现只取STK信息
-        newEntityList = newEntityList.stream().filter(obj -> StrUtil.equals(obj.getCategory(), InventoryClosedRecordEnum.STK.getCode())).collect(Collectors.toList());
+        newEntityList = newEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCategory(), InventoryClosedRecordEnum.STK.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(newEntityList)) {
             XxlJobHelper.log("拉取【STK关账时间】(金蝶->WMS)]：执行结束-无需要金蝶最新库存组织关账时间保存记录");
             return ReturnT.SUCCESS;

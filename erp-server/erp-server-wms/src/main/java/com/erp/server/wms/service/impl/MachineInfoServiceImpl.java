@@ -360,9 +360,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 viewDetailDTO.setProductName(productName);
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = skuInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(),viewDetailDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(),viewDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getWarehouseLocationId(),viewDetailDTO.getWarehouseLocation()))
+            Integer curInventoryQty = skuInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(),viewDetailDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(),viewDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getWarehouseLocationId(),viewDetailDTO.getWarehouseLocation()))
                     .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
             //仓位信息
@@ -370,25 +370,25 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                     && e.getCode().equals(viewDetailDTO.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             viewDetailDTO.setWarehouseLocationName(warehouseLocationEntity1.getName());
             //明细子件
-            List<MachineSubComponentsEntity> subComponentsList = machineSubComponentsList.stream().filter(obj -> StrUtil.equals(viewDetailDTO.getId(), obj.getDetailId())).collect(Collectors.toList());
+            List<MachineSubComponentsEntity> subComponentsList = machineSubComponentsList.stream().filter(obj -> CharSequenceUtil.equals(viewDetailDTO.getId(), obj.getDetailId())).collect(Collectors.toList());
             List<MachineSubComponentsDTO.ViewDTO> subComponentsDTOList = BeanMapperUtils.copyList(MachineSubComponentsDTO.ViewDTO.class, subComponentsList);
 
             for (MachineSubComponentsDTO.ViewDTO subComponentsDTO : subComponentsDTOList) {
                 //产品信息
-                SkuVO skuVO = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                SkuVO skuVO = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())).findFirst().orElse(new SkuVO());
                 subComponentsDTO.setSkuNo(skuVO.getSkuNo());
                 subComponentsDTO.setProductName(skuVO.getSkuName());
 
                 //根据组织、仓库、sku查询可用库存
-                Integer  subComponentsQty = skuInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(),subComponentsDTO.getSkuId())
-                                && StrUtil.equals(obj.getWarehouseId(),subComponentsDTO.getWarehouseId())
-                                && StrUtil.equals(obj.getWarehouseLocationId(),subComponentsDTO.getWarehouseLocation()))
+                Integer  subComponentsQty = skuInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(),subComponentsDTO.getSkuId())
+                                && CharSequenceUtil.equals(obj.getWarehouseId(),subComponentsDTO.getWarehouseId())
+                                && CharSequenceUtil.equals(obj.getWarehouseLocationId(),subComponentsDTO.getWarehouseLocation()))
                         .map(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
                 subComponentsDTO.setCurInventoryQty(subComponentsQty);
 
                 //bom用量
-                Integer quantity = childrenList.stream().filter(obj -> StrUtil.equals(obj.getParentSkuId(), viewDetailDTO.getSkuId())
-                        && StrUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())
+                Integer quantity = childrenList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), viewDetailDTO.getSkuId())
+                        && CharSequenceUtil.equals(obj.getSkuId(), subComponentsDTO.getSkuId())
                 ).map(BomChildrenSkuDTO::getQuantity).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(quantity)) {
                     throw new ServiceException(ApiError.ERROR_95173,viewDetailDTO.getSkuNo());
@@ -470,7 +470,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     public List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String detailId) {
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailId(detailId);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<MachineSubComponentsDTO.ViewDTO> resultList = BeanMapperUtils.copyList(MachineSubComponentsDTO.ViewDTO.class, machineSubComponentsList);
 

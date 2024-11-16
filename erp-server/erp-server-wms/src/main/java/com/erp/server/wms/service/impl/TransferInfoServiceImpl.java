@@ -686,15 +686,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     public void updateVirtualInventoryTransCore (List<TransferInfoEntity> list,List<TransferInfoDetailEntity> detailList) {
 
-        List<TransferInfoEntity> pushList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode(), obj.getSourceType())
-                        || StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> pushList = list.stream().filter(obj -> CharSequenceUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode(), obj.getSourceType())
+                        || CharSequenceUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         //要货申请来源扣减冻结库存
         updateRequistionApplicationInventory(pushList,detailList);
 
         //头程发货单下推直接调拨单库存调整
-        List<TransferInfoEntity> pushFirstMileDeliveryList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode(), obj.getSourceType())
-                        || StrUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> pushFirstMileDeliveryList = list.stream().filter(obj -> CharSequenceUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode(), obj.getSourceType())
+                        || CharSequenceUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(pushFirstMileDeliveryList)){
             List<String> sourceIds = pushFirstMileDeliveryList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
@@ -705,7 +705,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         updateFirstMileDeliveryInventory(pushFirstMileDeliveryList,detailList);
 
         //来源发货通知单
-        List<TransferInfoEntity> transferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> transferInfoList = list.stream().filter(obj -> CharSequenceUtil.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         //过滤来源单发货仓库和调拨单出库仓库不一致数据
         if (CollectionUtils.isNotEmpty(transferInfoList)){
@@ -715,7 +715,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         updateSoDeliveryNoticeInventory(transferInfoList,detailList);
         //来源发货单
-        List<TransferInfoEntity> b2cDeliveryTransferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> b2cDeliveryTransferInfoList = list.stream().filter(obj -> CharSequenceUtil.equals(SourceTypeEnum.SO_B2C_DELIVERY.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         //过滤来源单发货仓库和调拨单出库仓库不一致数据
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = null;
@@ -731,7 +731,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         updateB2cDeliveryInventory(b2cDeliveryTransferInfoList,detailList,soB2cDeliveryEntities,soB2cDeliveryDetailEntities);
 
         //来源销售订单
-        List<TransferInfoEntity> b2cTransferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_B2C.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> b2cTransferInfoList = list.stream().filter(obj -> CharSequenceUtil.equals(SourceTypeEnum.SO_B2C.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         //过滤来源单发货仓库和调拨单出库仓库不一致数据
         List<SoB2cEntity> soB2cEntityList = null;
@@ -758,12 +758,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
             //直接调拨单
-            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
                 throw new ServiceException("直接调拨单未找到");
             }
             //发货通知单明细
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soB2cEntity)) {
                 throw new ServiceException(CharSequenceUtil.format("直接调拨单【{}】未找到销售订单",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
             }
@@ -809,12 +809,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
             //直接调拨单
-            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
                 throw new ServiceException("直接调拨单未找到");
             }
             //发货通知单明细
-            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
+            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soB2cDeliveryEntity)) {
                 throw new ServiceException(CharSequenceUtil.format("直接调拨单【{}】未找到发货单",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
             }
@@ -957,12 +957,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
             //直接调拨单
-            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
                 throw new ServiceException("直接调拨单未找到");
             }
             //发货通知单明细
-            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
                 throw new ServiceException(CharSequenceUtil.format("直接调拨单【{}】未找到发货通知单",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
             }
@@ -1030,12 +1030,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
             //直接调拨单
-            TransferInfoEntity transferInfoEntity = pushFirstMileDeliveryList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            TransferInfoEntity transferInfoEntity = pushFirstMileDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
                 throw new ServiceException("直接调拨单未找到");
             }
 
-            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(firstMileDeliveryDetailEntity)) {
                 throw new ServiceException("未找到头程发货单明细");
             }
@@ -1043,7 +1043,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (ObjectUtil.isEmpty(applicationDetailEntity)) {
                 throw new ServiceException("未找到要货申请明细");
             }
-            RequisitionApplicationEntity applicationEntity = requisitionApplicationList.stream().filter(obj -> StrUtil.equals(obj.getId(), applicationDetailEntity.getMainId())).findFirst().orElse(null);
+            RequisitionApplicationEntity applicationEntity = requisitionApplicationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), applicationDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(applicationEntity)) {
                 throw new ServiceException("未找到直接调拨单对应的要货申请信息");
             }
@@ -1104,12 +1104,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
             //要货申请明细数据
             RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream()
-                    .filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+                    .filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(applicationDetailEntity)) {
                 throw new ServiceException("要货申请不能为空");
             }
             //虚拟仓库存随调出仓出
-            if (!StrUtil.equals(applicationDetailEntity.getFromWarehouseId(),detailEntity.getOutWarehouseId())) {
+            if (!CharSequenceUtil.equals(applicationDetailEntity.getFromWarehouseId(),detailEntity.getOutWarehouseId())) {
                 continue;
             }
             //调拨操作请求实体
@@ -1258,8 +1258,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         log.info("直接调拨单反审核，id=【{}】", entity.getId());
         //发货单来源和发货通知单来源的直接调拨单不允许手动反审核
         if (isManual) {
-            String codeList = list.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C_DELIVERY.getCode())
-                            || StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
+            String codeList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C_DELIVERY.getCode())
+                            || CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
                     .map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
             if (StrUtil.isNotBlank(codeList)) {
                 throw new ServiceException(CharSequenceUtil.format("直接调拨单【{}】不支持手动反审核",codeList));
@@ -1992,7 +1992,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     public List<TransferInfoEntity> listByBatchNoList(List<String> batchNoList) {
         if (CollectionUtils.isEmpty(batchNoList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).orderByDesc(TransferInfoEntity::getIndex).list();
     }

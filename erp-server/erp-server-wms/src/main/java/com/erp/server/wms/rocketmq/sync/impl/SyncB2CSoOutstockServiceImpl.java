@@ -561,7 +561,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         platformDTO.setWarehouseIdList(warehouseIdList);
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = VirtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
-           return StrUtil.EMPTY;
+           return CharSequenceUtil.EMPTY;
         }
         return virtualWarehouseList.get(0).getVirtualWarehouseId();
     }

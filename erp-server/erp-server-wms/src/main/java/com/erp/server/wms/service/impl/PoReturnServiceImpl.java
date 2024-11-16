@@ -358,10 +358,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         poReturnEntity.setReturnUserName(userDTO != null ? userDTO.getUserName() : "");
         //退货组织名称
-        String returnOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getReturnOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        String returnOrgName = companyEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dto.getReturnOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         poReturnEntity.setReturnOrgName(returnOrgName);
         //采购组织名称
-        String purchaseOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        String purchaseOrgName = companyEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dto.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         poReturnEntity.setPurchaseOrgName(purchaseOrgName);
 
         poReturnEntity.setBillDate(dto.getBillDate());
@@ -470,10 +470,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         poReturnEntity.setReturnUserName(userDTO.getUserName());
         //退货组织名称
-        String returnOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getReturnOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        String returnOrgName = companyEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dto.getReturnOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         poReturnEntity.setReturnOrgName(returnOrgName);
         //采购组织名称
-        String purchaseOrgName = companyEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        String purchaseOrgName = companyEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dto.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         poReturnEntity.setPurchaseOrgName(purchaseOrgName);
 
         poReturnEntity.setBillDate(dto.getBillDate());
@@ -1215,7 +1215,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
         for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {
-            PoReturnEntity entity = poReturnEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), poReturnDetailEntity.getMainId())).findFirst().orElse(null);
+            PoReturnEntity entity = poReturnEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poReturnDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 throw new ServiceException(ApiError.ERROR_99008);
             }
@@ -1717,8 +1717,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                             && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))
                     .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             //入库数量
-            Integer inStockQty = poInstockDetailList.stream().filter(obj -> StrUtil.equals(obj.getPurchaseOrderDetailId(), orderDetailEntity.getId())
-                            && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
+            Integer inStockQty = poInstockDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPurchaseOrderDetailId(), orderDetailEntity.getId())
+                            && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()))
                     .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //采购数量
@@ -1833,9 +1833,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
                 //订单明细数据校验
-                String skuNos = purchaseOrderDetailList.stream().filter(obj -> !StrUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
-                                && !StrUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus())
+                String skuNos = purchaseOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus())
                         )
                         .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
                 if (StrUtil.isNotBlank(skuNos)) {
@@ -3005,7 +3005,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 viewDTO = viewList.stream().filter(obj -> Objects.nonNull(obj)
                                 && StrUtil.isNotBlank(obj.getSkuId()) && StrUtil.isNotBlank(priceDTO.getSkuId()) && obj.getSkuId().equals(priceDTO.getSkuId())
                                 && StrUtil.isNotBlank(obj.getSupplierId()) && StrUtil.isNotBlank(priceDTO.getSupplierId()) && obj.getSupplierId().equals(priceDTO.getSupplierId())
-                                && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(priceDTO.getPurchaseOrgId()) && StrUtil.equals(obj.getPurchaseOrgId(),priceDTO.getPurchaseOrgId()))
+                                && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(priceDTO.getPurchaseOrgId()) && CharSequenceUtil.equals(obj.getPurchaseOrgId(),priceDTO.getPurchaseOrgId()))
                         .findFirst().orElse(null);
                 if (Objects.nonNull(viewDTO)) {
                     priceDTO.setTaxPrice(viewDTO.getTaxPrice());
@@ -3020,7 +3020,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 PurchasePriceDTO.PriceDTO priceDTO2 = scmViewList.stream().filter(obj -> Objects.nonNull(obj)
                                 && StrUtil.isNotBlank(obj.getSkuId()) && StrUtil.isNotBlank(priceDTO.getSkuId()) && obj.getSkuId().equals(priceDTO.getSkuId())
                                 && StrUtil.isNotBlank(obj.getSupplierId()) && StrUtil.isNotBlank(priceDTO.getSupplierId()) && obj.getSupplierId().equals(priceDTO.getSupplierId())
-                                && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(priceDTO.getPurchaseOrgId()) && StrUtil.equals(obj.getPurchaseOrgId(),priceDTO.getPurchaseOrgId()))
+                                && StrUtil.isNotBlank(obj.getPurchaseOrgId()) && StrUtil.isNotBlank(priceDTO.getPurchaseOrgId()) && CharSequenceUtil.equals(obj.getPurchaseOrgId(),priceDTO.getPurchaseOrgId()))
                         .findFirst().orElse(null);
                 if (Objects.nonNull(priceDTO2)){
                     priceDTO.setTaxPrice(priceDTO2.getTaxPrice());

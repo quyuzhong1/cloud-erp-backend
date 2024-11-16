@@ -173,7 +173,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         SubcontractIssueEntity subcontractIssueEntity =  BeanMapperUtils.map(SubcontractIssueEntity.class, updateDTO);
 
         //来源为委外时，验证供应商是否一致
-        if (StrUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),old.getSourceType()) ||  CharSequenceUtil.isBlank(old.getSourceType())) {
+        if (CharSequenceUtil.equals(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(),old.getSourceType()) ||  CharSequenceUtil.isBlank(old.getSourceType())) {
             List<SubcontractIssueDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
             List<String> sourceDetailIdList = detailList.stream().map(SubcontractIssueDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
             checkSupplier(subcontractIssueEntity,sourceDetailIdList);
@@ -535,7 +535,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
     @Override
     public List<SubcontractIssueEntity> listBySourceIdList(List<String> sourceIdList) {
         if (CollUtil.isEmpty(sourceIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<SubcontractIssueEntity> list = lambdaQuery()
                 .in(SubcontractIssueEntity::getSourceId, sourceIdList)
@@ -778,7 +778,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         }
         subcontractIssueEntity.setSubcontractOrderCode(subcontractOrderList.get(0).getCode());
         //来源单号为委外订单时
-        if (StrUtil.equals(subcontractIssueEntity.getSourceType(),SourceTypeEnum.SUBCONTRACT_ORDER.getCode())) {
+        if (CharSequenceUtil.equals(subcontractIssueEntity.getSourceType(),SourceTypeEnum.SUBCONTRACT_ORDER.getCode())) {
             subcontractIssueEntity.setSourceCode(subcontractOrderList.get(0).getCode());
         } else {
             //来源单号是入库单

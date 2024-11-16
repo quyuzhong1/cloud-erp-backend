@@ -312,7 +312,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = deliveryService.printPickingView(deliveryIds);
         if (CollUtil.isEmpty(printPickingViewList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         Map<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> map = printPickingViewList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.PrintPickingViewDTO::getWaveCode));
         for (Map.Entry<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> entry : map.entrySet()) {
@@ -337,7 +337,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public List<WaveListEntity> listByPickingCartCodeList(List<String> pickingCartCodeList) {
         if (CollUtil.isEmpty(pickingCartCodeList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(WaveListEntity::getPickingCartCode,pickingCartCodeList)
                 .list();
