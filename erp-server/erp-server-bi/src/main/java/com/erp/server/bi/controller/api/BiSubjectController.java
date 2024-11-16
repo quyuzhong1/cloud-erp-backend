@@ -139,7 +139,7 @@ public class BiSubjectController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除专题")
     @PostMapping("/delete")
-    public ApiResult<Void> deleteById(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> deleteById(@RequestBody @Validated BaseIdDTO dto) {
         boolean flag = this.biSubjectService.deleteById(dto.getId());
         return flag ? success() : failure();
     }
@@ -156,7 +156,7 @@ public class BiSubjectController extends BaseController {
             menuCode = "bi:subject:updateState",
             serviceClass = BiSubjectService.class
     )
-    public ApiResult<Void> updateState(@RequestBody @Validated UpdateStateDTO dto) {
+    public ApiResult<Object> updateState(@RequestBody @Validated UpdateStateDTO dto) {
         boolean flag = this.biSubjectService.updateState(dto);
         return flag ? success() : failure();
     }

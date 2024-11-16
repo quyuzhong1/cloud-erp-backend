@@ -44,7 +44,7 @@ public class BiSysModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增系统模块")
     @PostMapping("/add")
-    public ApiResult<Void> add(@RequestBody @Validated ModuleSysDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated ModuleSysDTO dto) {
         boolean flag = this.sysModuleService.insert(dto);
         return flag ? success() : failure();
     }
@@ -57,7 +57,7 @@ public class BiSysModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新系统模块")
     @PostMapping("/update")
-    public ApiResult<Void> edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleSysDTO dto) {
+    public ApiResult<Object> edit(@RequestBody @Validated(value = {UpdateGroup.class}) ModuleSysDTO dto) {
         boolean flag = this.sysModuleService.updateSysModule(dto);
         return flag ? success() : failure();
     }
@@ -103,7 +103,7 @@ public class BiSysModuleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新系统模块配置:id={id},模块名称={name}")
     @PostMapping("/moduleConfiguration")
-    public ApiResult<Void> moduleConfiguration(@RequestBody @Validated ModuleSysConfigurationDTO dto) {
+    public ApiResult<Object> moduleConfiguration(@RequestBody @Validated ModuleSysConfigurationDTO dto) {
         boolean flag = this.sysModuleService.moduleConfiguration(dto);
         return flag ? success() : failure();
     }

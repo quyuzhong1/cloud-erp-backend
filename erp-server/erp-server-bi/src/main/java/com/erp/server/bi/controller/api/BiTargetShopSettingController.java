@@ -177,7 +177,7 @@ public class BiTargetShopSettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "店铺目标设置删除")
-    public ApiResult<Void> remove(@RequestBody @Validated  BiTargetShopSettingDTO.RemoveDTO dto) {
+    public ApiResult<Object> remove(@RequestBody @Validated  BiTargetShopSettingDTO.RemoveDTO dto) {
         boolean result = biTargetShopSettingService.delete(dto);
         return result ? success() : failure();
     }

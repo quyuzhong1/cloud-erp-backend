@@ -184,7 +184,7 @@ public class BiTargetStaffSettingController extends BaseController {
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "人员目标设置删除")
     @CacheEvict(cacheNames = "cache:bi:listTargetMetrics", allEntries = true)
-    public ApiResult<Void> remove(@RequestBody @Validated BiTargetStaffSettingDTO.RemoveDTO dto) {
+    public ApiResult<Object> remove(@RequestBody @Validated BiTargetStaffSettingDTO.RemoveDTO dto) {
         boolean result = biTargetStaffSettingService.delete(dto);
         return result ? success() : failure();
     }

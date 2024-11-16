@@ -61,7 +61,7 @@ public class DmpShopInfoController extends BaseController {
     */
     @LogAction(value = LogActionEnum.INSERT, desc = "店铺数据新增")
     @PostMapping("/add")
-    public ApiResult<Void> addDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
+    public ApiResult<Object> addDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
         boolean flag = this.biShopInfoService.addDmpShopInfo(dto);
         return flag ? success() : failure();
     }
@@ -75,7 +75,7 @@ public class DmpShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "店铺数据编辑")
     @PostMapping("/update")
-    public ApiResult<Void> updateDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
+    public ApiResult<Object> updateDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
         boolean flag = this.biShopInfoService.updateDmpShopInfo(dto);
         return flag ? success() : failure();
     }
@@ -104,7 +104,7 @@ public class DmpShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "店铺数据负责人变更:店铺id={id},负责人id={chargeId}")
     @PostMapping("/changeChargeName")
-    public ApiResult<Void> changeChargeName(@RequestBody DmpShopInfoChangeDTO dto) {
+    public ApiResult<Object> changeChargeName(@RequestBody DmpShopInfoChangeDTO dto) {
         boolean flag = this.biShopInfoService.changeChargeName(dto);
         return flag ? success() : failure();
     }
@@ -118,7 +118,7 @@ public class DmpShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "店铺数据部门变更:部门id={deptId},负责人id={chargeId}")
     @PostMapping("/changeDept")
-    public ApiResult<Void> changeDept(@RequestBody DmpShopInfoDeptChangeDTO dto) {
+    public ApiResult<Object> changeDept(@RequestBody DmpShopInfoDeptChangeDTO dto) {
         boolean flag = this.biShopInfoService.changeDept(dto);
         return flag ? success() : failure();
     }

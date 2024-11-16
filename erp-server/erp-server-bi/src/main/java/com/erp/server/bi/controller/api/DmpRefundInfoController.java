@@ -98,7 +98,7 @@ public class DmpRefundInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "退款数据导入")
     @PostMapping("/importRefundFile")
-    public ApiResult<Void> importRefundFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+    public ApiResult<Object> importRefundFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
         boolean flag = biRefundInfoService.importOrderFile(excelFile, importType, response);
         return flag ? this.success() : this.failure();
     }

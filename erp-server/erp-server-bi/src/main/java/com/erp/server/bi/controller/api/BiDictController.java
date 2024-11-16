@@ -54,7 +54,7 @@ public class BiDictController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "bi系统字典新增数据")
     @PostMapping("/add")
-    public ApiResult<Void> add(@RequestBody BiDictEntity biDict) {
+    public ApiResult<Object> add(@RequestBody BiDictEntity biDict) {
         boolean flag = this.biDictService.insert(biDict);
         return flag ? success() : failure();
     }
@@ -67,7 +67,7 @@ public class BiDictController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "bi系统字典编辑数据")
     @PostMapping("/update")
-    public ApiResult<Void> edit(@RequestBody BiDictEntity biDict) {
+    public ApiResult<Object> edit(@RequestBody BiDictEntity biDict) {
         boolean flag = this.biDictService.update(biDict);
         return flag ? success() : failure();
     }
@@ -81,7 +81,7 @@ public class BiDictController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "bi系统字典删除数据")
     @PostMapping("/delete")
-    public ApiResult<Void> deleteById(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> deleteById(@RequestBody @Validated BaseIdDTO dto) {
         boolean flag = this.biDictService.deleteById(dto.getId());
         return flag ? success() : failure();
     }
@@ -132,7 +132,7 @@ public class BiDictController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "bi系统字典批量新增:字典名称={name}")
     @PostMapping("/batchAdd")
-    public ApiResult<Void> batchAdd(@RequestBody @Validated List<DictDTO> dictEntities) {
+    public ApiResult<Object> batchAdd(@RequestBody @Validated List<DictDTO> dictEntities) {
         boolean flag = this.biDictService.batchAdd(dictEntities);
         return flag ? success() : failure();
     }
