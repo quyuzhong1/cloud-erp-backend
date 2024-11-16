@@ -309,7 +309,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .execute();
         }
         // 保存流程任务数据
-        processManagementService.updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment(), dto.getVariablesMap());
+        updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment(), dto.getVariablesMap());
         if(Boolean.TRUE.equals(isFirst)){
             sameApproverAutoPass(dto, processManagementList.get(0).getProcessDefinitionId(),currentTask.getProcessInstanceId());
         }
@@ -920,7 +920,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<ProcessManagementDTO.ApproveResultDTO> resultList = new ArrayList<>();
         dtoList.forEach(approveDTO -> {
             // 审批流程
-            ProcessManagementDTO.ApproveResultDTO resultDTO = processManagementService.approveProcess(approveDTO, Boolean.TRUE);
+            ProcessManagementDTO.ApproveResultDTO resultDTO = approveProcess(approveDTO, Boolean.TRUE);
             resultList.add(resultDTO);
         });
         return resultList;

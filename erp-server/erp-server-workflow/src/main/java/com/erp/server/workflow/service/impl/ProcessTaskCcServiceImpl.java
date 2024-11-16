@@ -101,6 +101,6 @@ public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapp
         // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
         mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
         // 审批完成后发送抄送消息更新抄送状态
-        processTaskCcService.updateCcStatus(entity.getTaskId());
+        updateCcStatus(entity.getTaskId());
     }
 }
