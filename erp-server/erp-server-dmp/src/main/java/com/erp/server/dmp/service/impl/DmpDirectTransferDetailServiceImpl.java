@@ -63,7 +63,7 @@ public class DmpDirectTransferDetailServiceImpl extends SuperServiceImpl<DmpDire
     @Override
     public Boolean update(DmpDirectTransferDetailDTO.UpdateDTO updateDTO) {
         DmpDirectTransferDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台直接调拨单详情单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台直接调拨单详情单"));
         DmpDirectTransferDetailEntity dmpDirectTransferDetailEntity =  BeanMapperUtils.map(DmpDirectTransferDetailEntity.class, updateDTO);
 
         // 数据处理
