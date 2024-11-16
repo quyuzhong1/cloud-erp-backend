@@ -1,5 +1,6 @@
 package com.erp.server.bi.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -112,6 +113,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     private DownloadTaskFeign downloadTaskFeign;
     
     public static final String DELIVERY_TIME = "delivery_time";
+    public static final String PLATFORM_CREATE_TIME = "platform_create_time";
+    public static final String QUARTER = "QUARTER";
 
     @Override
     @Cacheable(cacheNames = "cache:bi:getMonthSales", keyGenerator = "myKeyGenerator")
@@ -125,7 +128,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         String settleRate = getSettleRate(dto.getSettleMethod());
         String timeFlag = DELIVERY_TIME;
         if (dto.getTimeType() != null && TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType()) {
-            timeFlag = "platform_create_time";
+            timeFlag = PLATFORM_CREATE_TIME;
         }
         dto.setStartTime(LocalDateUtil.getThisYearStart(now));
         dto.setEndTime(LocalDateUtil.getThisYearEnd(now));
@@ -189,7 +192,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         if (CollectionUtils.isNotEmpty(skuItemNames)) {
             return skuItemNames.stream().collect(Collectors.toMap(SkuItemVO::getSkuNo, SkuItemVO::getItemName));
         } else {
-            return Collections.EMPTY_MAP;
+            return Collections.emptyMap();
         }
     }
 
@@ -654,7 +657,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         list.add(tobMap);
 
         Map<String, Object> tocMap = new HashMap<>();
-        ;
+
         tocMap.put("name", "TOC");
         BigDecimal toCSales = resultList.stream().filter(
                 b -> !b2b.equals(b.getName()) && b.getSales() != null
@@ -683,10 +686,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         LocalDate nowDate = LocalDate.now();
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-        String findTime = DELIVERY_TIME;
-        if (dto.getTimeType() != null && dto.getTimeType() == 0) {
-            findTime = "platform_create_time";
-        }
         LocalDateTime paramsEndTime = dto.getEndTime();
         dto.setEndTime(paramsEndTime, 1);
         List<ShopSalesVO> resultList = baseMapper.getByShop(dto, settleRate);
@@ -778,7 +777,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<Object> xAxisList = new ArrayList<>(initSize);
         List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
         //只有一个柱子
-        SeriesVO<Object> series = new SeriesVO();
+        SeriesVO<Object> series = new SeriesVO<>();
         series.setName("店铺销售额");
         List<Object> dataList = new ArrayList<>(initSize);
         for (Map<String, Object> map : resultList) {
@@ -1078,7 +1077,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         ChartVO chartVO = new ChartVO();
         chartVO.setXAxis(new ArrayList<>());
         List<SeriesVO<Object>> seriesList = new ArrayList<>(5);
-        SeriesVO<Object> series = new SeriesVO();
+        SeriesVO<Object> series = new SeriesVO<>();
         List<Object> list = new ArrayList<>();
         //国内
         Map<String, Object> chinaMap = new HashMap();
@@ -1332,7 +1331,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     public BigDecimal getChainRelativeRatio(BigDecimal sales, BigDecimal oldSales) {
         BigDecimal zero = BigDecimal.ZERO;
-        if (oldSales == null || oldSales.compareTo(zero) == 0 || sales == null || oldSales == null) {
+        if (oldSales == null || oldSales.compareTo(zero) == 0 || sales == null) {
             return zero;
         }
         BigDecimal differ = sales.subtract(oldSales);
@@ -2317,11 +2316,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
     public List<SalesCountVO> byMarketingCenter(BiFilterDTO dto) {
         LocalDate nowDate = LocalDate.now();
         List<SalesCountVO> resultList = new ArrayList<>(12);
-        String deptName = "营销中心";
-        //  List<String> deptIdList = sysUserFeign.getDeptIdsByName(deptName);
         String timeFlag = DELIVERY_TIME;
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
-            timeFlag = "platform_create_time";
+            timeFlag = PLATFORM_CREATE_TIME;
         }
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
@@ -2356,7 +2353,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             String finalM = m > 9 ? String.valueOf(m) : "0".concat(String.valueOf(m));
             SalesCountVO vo = new SalesCountVO();
             vo.setName(year + "年" + m + "月份");
-            SalesFlagVO flag = list.stream().filter(s -> s.getFlag().equals(finalM)).
+            SalesFlagVO flag = list.stream().filter(s -> s.getFlag().toString().equals(finalM)).
                     findFirst().orElse(null);
             BigDecimal sales = BigDecimal.ZERO;
             if (flag != null) {
@@ -2366,7 +2363,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setOrderCount(flag.getOrderCount());
                 vo.setSalesRatio(getSalesRatio(totalSales, sales));
             }
-            SalesFlagVO LastYearFlag = lastYearList.stream().filter(s -> s.getFlag().equals(finalM)).
+            SalesFlagVO LastYearFlag = lastYearList.stream().filter(s -> s.getFlag().toString().equals(finalM)).
                     findFirst().orElse(null);
             if (LastYearFlag != null) {
                 vo.setYearBasisRatio(getChainRelativeRatio(sales, LastYearFlag.getSales()));
@@ -2377,7 +2374,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             } else {
                 String last = m - 1 > 9 ? String.valueOf(m - 1) : "0".concat(String.valueOf(m - 1));
 
-                SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().equals(last)).
+                SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().toString().equals(last)).
                         findFirst().orElse(null);
                 if (lastMonthFlag != null) {
                     vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonthFlag.getSales()));
@@ -2456,7 +2453,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> salesList = baseMapper.getSalesByReport(dto, timeFlag, settleRate, dto.getSearchType(),groupName);
 
 //        //如果是季度
-//        if (dateType.equals("QUARTER")) {
+//        if (dateType.equals(QUARTER)) {
 //            for (SalesFlagVO item : salesList) {
 //                String name = item.getName();
 //                String quarterName = conversionQuarterName(name);
@@ -2538,7 +2535,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         dto.setStartTime(dto.getStartTime().minusYears(1));
         dto.setEndTime(dto.getEndTime().minusYears(1));
         List<DateCostVO> lastYearSalesList = biDataSourceCostService.sumByDateAndCostType(dto, dictValues);
-        List<String> list = new ArrayList<>();
+        List<String> list;
         List<String> dateList = new ArrayList<>();
         ChartVO chartVO = new ChartVO();
 
@@ -2558,7 +2555,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             case "WEEK":
                 throw new ServiceException(ApiError.ERROR_DATE_TYPE);
             case "MONTH":
-                String format = "{}月";
+                String format;
                 list = salesList.stream().map(req -> (req.getGroupDate() + "").substring(0, 7)).collect(Collectors.toList());
                 // 月度分组数据销售毛利率
                 Map<String, BigDecimal> monthMap = costMap.keySet().stream().collect(Collectors.groupingBy(e -> (e + "").substring(0, 7), MathUtil.summingBigDecimal(v -> {
@@ -2579,13 +2576,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     }
                     return costMainBusinessIncome;
                 })));
-//                dateList = IntStream.rangeClosed(1, 12).mapToObj(x -> StrUtil.format(format, x)).collect(Collectors.toList());
                 dateList = list;
                 byDateFinanceSalesNumber(monthMap, lastYearMonthMap, seriesList, list);
                 break;
-            case "QUARTER":
+            case QUARTER:
                 format = "Q{}";
-//                list = IntStream.rangeClosed(1, 4).mapToObj(x -> x).collect(Collectors.toList());
 
                 list = salesList.stream().map(req -> req.getGroupDate().getYear() + "-" + (req.getGroupDate().getMonthValue() - 1) / 3 + 1).distinct().collect(Collectors.toList());
 
@@ -2608,9 +2603,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     }
                     return costMainBusinessIncome;
                 })));
-//                dateList = IntStream.rangeClosed(1, 4).mapToObj(x -> StrUtil.format(format, x)).collect(Collectors.toList());
-
-                dateList = salesList.stream().map(req -> req.getGroupDate().getYear() + "-" + StrUtil.format(format, (req.getGroupDate().getMonthValue() - 1) / 3 + 1)).distinct().collect(Collectors.toList());
+                dateList = salesList.stream().map(req -> req.getGroupDate().getYear() + "-" + CharSequenceUtil.format(format, (req.getGroupDate().getMonthValue() - 1) / 3 + 1)).distinct().collect(Collectors.toList());
                 byDateFinanceSalesNumber(quarterMap, lastYearQuarterMap, seriesList, list);
                 break;
             case "YEAR":
@@ -2635,11 +2628,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                     return costMainBusinessIncome;
                 })));
                 list = salesList.stream().map(req -> req.getGroupDate().getYear() + "").distinct().collect(Collectors.toList());
-                dateList = list.stream().map(req -> StrUtil.format(format, req)).collect(Collectors.toList());
+                dateList = list.stream().map(req -> CharSequenceUtil.format(format, req)).collect(Collectors.toList());
                 byDateFinanceSalesNumber(yearMap, lastYearYearMap, seriesList, list);
                 break;
             default:
-                salesList = new ArrayList<>();
                 break;
         }
 
@@ -2659,7 +2651,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      */
     private void byDateFinanceSalesNumber(Map<String, BigDecimal> monthMap, Map<String, BigDecimal> lastYearMonthMap, List<SeriesVO<Object>> seriesList, List<String> dateList) {
 
-        SeriesVO<Object> sales = new SeriesVO();
+        SeriesVO<Object> sales = new SeriesVO<>();
         sales.setName("今年销售额");
         sales.setType(ChartType.BAR);
         List<Object> orderSalesList = new ArrayList<>();
@@ -2673,7 +2665,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         sales.setData(orderSalesList);
         seriesList.add(sales);
 
-        SeriesVO<Object> lastYearSales = new SeriesVO();
+        SeriesVO<Object> lastYearSales = new SeriesVO<>();
         lastYearSales.setName("去年销售额");
         lastYearSales.setType(ChartType.BAR);
         List<Object> lastYearOrderSalesList = new ArrayList<>();
@@ -2694,7 +2686,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         lastYearSales.setData(lastYearOrderSalesList);
         seriesList.add(lastYearSales);
 
-        SeriesVO<Object> basisRatio = new SeriesVO();
+        SeriesVO<Object> basisRatio = new SeriesVO<>();
         basisRatio.setName("同比");
         basisRatio.setType(ChartType.LINE);
         List<Object> basisRatioList = new ArrayList<>();
@@ -2720,7 +2712,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
-        SeriesVO<Object> chainRelativeRatio = new SeriesVO();
+        SeriesVO<Object> chainRelativeRatio = new SeriesVO<>();
         chainRelativeRatio.setName("环比");
         chainRelativeRatio.setType(ChartType.LINE);
         List<Object> chainRelativeRatioList = new ArrayList<>();
@@ -2780,7 +2772,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //查找的日期
         String timeFlag = DELIVERY_TIME;
         if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
-            timeFlag = "platform_create_time";
+            timeFlag = PLATFORM_CREATE_TIME;
         }
         String groupName = "";
         //类别查询
@@ -2853,7 +2845,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             case "MONTH":
                 dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_month);
                 break;
-            case "QUARTER":
+            case QUARTER:
                 dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_quarter);
                 break;
             case "YEAR":
@@ -2872,7 +2864,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         List<SalesFlagVO> newLastSales = new ArrayList<>(dateList.size());
         dateSalesTrendRatio(dateList,lastDateList,salesList, lastYearSalesList, dateTimeFormatter, dateType, newSales, newLastSales);
 
-        ChartVO chartVO = new ChartVO();
+        ChartVO<Object> chartVO = new ChartVO<>();
         List<String> siteNameList = dateList.stream().map(DateDimensionVO::getDateName).collect(Collectors.toList());
         //有两个
         List<SeriesVO<Object>> seriesList = new ArrayList<>();
@@ -2887,6 +2879,8 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             case SALES_PRICE:
                 dateSalesTrendSalesPrice(newSales, newLastSales, seriesList);
                 break;
+            default:
+                throw new IllegalArgumentException("Unsupported search type: " + dto.getSearchType());
         }
 
         chartVO.setSeries(seriesList);
@@ -2932,7 +2926,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 Date date = DateUtil.strToDate(dateDimensionVO.getDateName(), DateUtil.fmt_month);
                 parse = DateUtil.getPrevMonthDate(date, DateUtil.fmt_month, 1);
             }
-            if ("QUARTER".equals(dateType)) {
+            if (QUARTER.equals(dateType)) {
                 parse = dateDimensionVO.getDateName();
             }
             if ("YEAR".equals(dateType)) {
@@ -3017,28 +3011,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @param seriesList
      */
     private void dateSalesTrendSalesAmount(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
-        SeriesVO<Object> sales = new SeriesVO<Object>();
+        SeriesVO<Object> sales = new SeriesVO<>();
         sales.setName("今年销售额");
         sales.setType(ChartType.BAR);
         List<Object> orderSalesList = salesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         sales.setData(orderSalesList);
         seriesList.add(sales);
 
-        SeriesVO<Object> lastYearSales = new SeriesVO<Object>();
+        SeriesVO<Object> lastYearSales = new SeriesVO<>();
         lastYearSales.setName("去年销售额");
         lastYearSales.setType(ChartType.BAR);
         List<Object> salesAmountList = lastYearSalesList.stream().map(SalesFlagVO::getSales).collect(Collectors.toList());
         lastYearSales.setData(salesAmountList);
         seriesList.add(lastYearSales);
 
-        SeriesVO<Object> salesBasisRatio = new SeriesVO<Object>();
+        SeriesVO<Object> salesBasisRatio = new SeriesVO<>();
         salesBasisRatio.setName("同比");
         salesBasisRatio.setType(ChartType.LINE);
         List<Object> salesBasisRatioList = salesList.stream().map(SalesFlagVO::getSalesBasisRatio).collect(Collectors.toList());
         salesBasisRatio.setData(salesBasisRatioList);
         seriesList.add(salesBasisRatio);
 
-        SeriesVO<Object> salesChainRelativeRatio = new SeriesVO<Object>();
+        SeriesVO<Object> salesChainRelativeRatio = new SeriesVO<>();
         salesChainRelativeRatio.setName("环比");
         salesChainRelativeRatio.setType(ChartType.LINE);
         List<Object> salesChainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesChainRelativeRatio).collect(Collectors.toList());
@@ -3054,28 +3048,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @param seriesList
      */
     private void dateSalesTrendSalesQuantity(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
-        SeriesVO<Object> salesQuantity = new SeriesVO<Object>();
+        SeriesVO<Object> salesQuantity = new SeriesVO<>();
         salesQuantity.setName("今年销量");
         salesQuantity.setType(ChartType.BAR);
         List<Object> salesQuantityList = salesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         salesQuantity.setData(salesQuantityList);
         seriesList.add(salesQuantity);
 
-        SeriesVO<Object> lastYearSalesQuantity = new SeriesVO<Object>();
+        SeriesVO<Object> lastYearSalesQuantity = new SeriesVO<>();
         lastYearSalesQuantity.setName("去年销量");
         lastYearSalesQuantity.setType(ChartType.BAR);
         List<Object> lastYearSalesQuantityList = lastYearSalesList.stream().map(SalesFlagVO::getSalesQuantity).collect(Collectors.toList());
         lastYearSalesQuantity.setData(lastYearSalesQuantityList);
         seriesList.add(lastYearSalesQuantity);
 
-        SeriesVO<Object> basisRatio = new SeriesVO<Object>();
+        SeriesVO<Object> basisRatio = new SeriesVO<>();
         basisRatio.setName("同比");
         basisRatio.setType(ChartType.LINE);
         List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityBasisRatio).collect(Collectors.toList());
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
-        SeriesVO<Object> chainRelativeRatio = new SeriesVO<Object>();
+        SeriesVO<Object> chainRelativeRatio = new SeriesVO<>();
         chainRelativeRatio.setName("环比");
         chainRelativeRatio.setType(ChartType.LINE);
         List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesQuantityChainRelativeRatio).collect(Collectors.toList());
@@ -3091,28 +3085,28 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
      * @param seriesList
      */
     private void dateSalesTrendSalesPrice(List<SalesFlagVO> salesList, List<SalesFlagVO> lastYearSalesList, List<SeriesVO<Object>> seriesList) {
-        SeriesVO<Object> salesQuantity = new SeriesVO<Object>();
+        SeriesVO<Object> salesQuantity = new SeriesVO<>();
         salesQuantity.setName("今年客单价");
         salesQuantity.setType(ChartType.BAR);
         List<Object> salesQuantityList = salesList.stream().map(SalesFlagVO::getSalesPrice).collect(Collectors.toList());
         salesQuantity.setData(salesQuantityList);
         seriesList.add(salesQuantity);
 
-        SeriesVO<Object> lastYearSalesQuantity = new SeriesVO<Object>();
+        SeriesVO<Object> lastYearSalesQuantity = new SeriesVO<>();
         lastYearSalesQuantity.setName("去年客单价");
         lastYearSalesQuantity.setType(ChartType.BAR);
         List<Object> lastYearSalesQuantityList = lastYearSalesList.stream().map(SalesFlagVO::getSalesPrice).collect(Collectors.toList());
         lastYearSalesQuantity.setData(lastYearSalesQuantityList);
         seriesList.add(lastYearSalesQuantity);
 
-        SeriesVO<Object> basisRatio = new SeriesVO<Object>();
+        SeriesVO<Object> basisRatio = new SeriesVO<>();
         basisRatio.setName("同比");
         basisRatio.setType(ChartType.LINE);
         List<Object> basisRatioList = salesList.stream().map(SalesFlagVO::getSalesPriceBasisRatio).collect(Collectors.toList());
         basisRatio.setData(basisRatioList);
         seriesList.add(basisRatio);
 
-        SeriesVO<Object> chainRelativeRatio = new SeriesVO<Object>();
+        SeriesVO<Object> chainRelativeRatio = new SeriesVO<>();
         chainRelativeRatio.setName("环比");
         chainRelativeRatio.setType(ChartType.LINE);
         List<Object> chainRelativeRatioList = salesList.stream().map(SalesFlagVO::getSalesPriceChainRelativeRatio).collect(Collectors.toList());
@@ -3184,7 +3178,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         try {
             new ExcelPrintUtils().patchExport(pagingDTOS, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            e.printStackTrace();
+            // 使用日志框架记录异常
+            log.error("Error occurred during Excel export", e);
+            return Boolean.FALSE;
         }
         return Boolean.TRUE;
     }
@@ -3652,7 +3648,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         try {
             new ExcelPrintUtils().patchExport(pagingDTOS, response, sb.toString(), excelPath);
         } catch (IOException e) {
-            e.printStackTrace();
+            // 使用日志框架记录异常
+            log.error("Error occurred during Excel export", e);
+            return Boolean.FALSE;
         }
         return Boolean.TRUE;
     }
@@ -3676,14 +3674,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //毛利率
         String grossProfitRate = MetricsEnum.GROSS_PROFIT_RATE.getCode();
 
-        List<BiDataSourceCostDTO.DataValueDTO> dataValueList = Collections.emptyList();
+        List<BiDataSourceCostDTO.DataValueDTO> dataValueList;
         switch (dateType) {
             //月
             case "MONTH":
                 dataValueList = biDataSourceCostDetailService.listGrossMonth(dto);
                 break;
             //季度
-            case "QUARTER":
+            case QUARTER:
                 dataValueList = biDataSourceCostDetailService.listGrossQuarter(dto);
                 break;
             //年
@@ -3699,13 +3697,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
 
         statistical.setName("毛利额&毛利率");
-        ChartVO<BigDecimal> chartVO = new ChartVO<BigDecimal>();
+        ChartVO<BigDecimal> chartVO = new ChartVO<>();
         List<String> dataStrList = dataValueList.stream().filter(d -> d.getType().
                         equals(grossProfit)).map(BiDataSourceCostDTO.DataValueDTO::getDateStr).
                 sorted().collect(Collectors.toList());
 
         //如果是季度
-        if (dateType.equals("QUARTER")) {
+        if (dateType.equals(QUARTER)) {
             List<String> quarterList = new ArrayList<>(12);
             for (String dateStr : dataStrList) {
                 String quarterStr = conversionQuarterName(dateStr);
@@ -3719,7 +3717,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //对应值
         List<SeriesVO<BigDecimal>> seriesList = new ArrayList<>(2);
         //毛利额
-        SeriesVO<BigDecimal> grossProfitSeries = new SeriesVO<BigDecimal>();
+        SeriesVO<BigDecimal> grossProfitSeries = new SeriesVO<>();
         grossProfitSeries.setName(MetricsEnum.GROSS_PROFIT.getName());
         grossProfitSeries.setType(ChartType.BAR);
         List<BigDecimal> grossProfitValueList = new ArrayList<>(2);
@@ -3735,7 +3733,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         seriesList.add(grossProfitSeries);
 
         //毛利率
-        SeriesVO<BigDecimal> grossProfitRateSeries = new SeriesVO<BigDecimal>();
+        SeriesVO<BigDecimal> grossProfitRateSeries = new SeriesVO<>();
         grossProfitRateSeries.setName(MetricsEnum.GROSS_PROFIT_RATE.getName());
         grossProfitRateSeries.setType(ChartType.LINE);
         List<BigDecimal> grossProfitRateValueList = new ArrayList<>(12);
@@ -3781,10 +3779,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             biFilterDTO.setCustomerProperty(customerInfoVOS1.get(0).getCustomerProperty());
             filterDTOS.add(biFilterDTO);
         });
-        ChartVO<CustomerSaleVO> chartVO = new ChartVO<CustomerSaleVO>();
+        ChartVO<CustomerSaleVO> chartVO = new ChartVO<>();
         chartVO.setXAxis(new ArrayList<>());
         List<SeriesVO<CustomerSaleVO>> seriesList = new ArrayList<>();
-        SeriesVO<CustomerSaleVO> series = new SeriesVO<CustomerSaleVO>();
+        SeriesVO<CustomerSaleVO> series = new SeriesVO<>();
         series.setName("销售额");
         List<CustomerSaleVO> customerSaleVOS = baseMapper.customerLevelProportion(filterDTOS, settleRate);
         series.setData(customerSaleVOS);
@@ -3823,10 +3821,10 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             biFilterDTO.setCustomerProperty(customerInfoVOS1.get(0).getGroupName());
             filterDTOS.add(biFilterDTO);
         });
-        ChartVO<CustomerSaleVO> chartVO = new ChartVO<CustomerSaleVO>();
+        ChartVO<CustomerSaleVO> chartVO = new ChartVO<>();
         chartVO.setXAxis(new ArrayList<>());
         List<SeriesVO<CustomerSaleVO>> seriesList = new ArrayList<>();
-        SeriesVO<CustomerSaleVO> series = new SeriesVO<CustomerSaleVO>();
+        SeriesVO<CustomerSaleVO> series = new SeriesVO<>();
         series.setName("销售额");
         List<CustomerSaleVO> customerSaleVOS = baseMapper.customerLevelProportion(filterDTOS, settleRate);
         series.setData(customerSaleVOS);
