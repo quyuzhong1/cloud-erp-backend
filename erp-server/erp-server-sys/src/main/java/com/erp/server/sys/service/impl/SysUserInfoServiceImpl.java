@@ -327,7 +327,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
         Integer userState = entity.getUserState();
         //表示禁用
-        if (UserStateConstants.USER_DISABLE == userState) {
+        if (UserStateConstants.USER_DISABLE.equals(userState)) {
             throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();
@@ -655,7 +655,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         Integer userState = userEntity.getUserState();
         //表示禁用
-        if (UserStateConstants.USER_DISABLE == userState) {
+        if (UserStateConstants.USER_DISABLE.equals(userState)) {
             throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();

@@ -66,7 +66,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             //更新当前顺序码
             updateNumByCode(sysCodeDto.getId(),sysCodeDto.getNum());
             return sysCode.toString();
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             log.error("生成单号获取锁异常",e);
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
@@ -101,7 +101,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             //更新当前顺序码
             updateNumByCode(dto.getId(),dto.getNum());
             return sysCode.toString();
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             log.error("生成单号获取锁异常",e);
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
@@ -136,7 +136,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             //更新当前顺序码
             updateNumByCode(dto.getId(),dto.getNum());
             return sysCode.toString();
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             log.error("生成单号获取锁异常",e);
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
