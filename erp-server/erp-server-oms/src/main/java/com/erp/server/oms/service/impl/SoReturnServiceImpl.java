@@ -952,15 +952,23 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceDetailIds(srdIds);
 
         //获取未全部到货的退货单详情id
-        List<String> soReturnDetailIds = new ArrayList<>();
-        soReturnReceiveDetailEntities.stream().collect(Collectors.groupingBy(SoReturnReceiveDetailEntity::getSourceDetailId, Collectors.collectingAndThen(Collectors.toList(), m -> {
-            SoReturnDetailEntity detailEntity = soReturnDetailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
-            int receiveQty = m.stream().mapToInt(SoReturnReceiveDetailEntity::getReceiveQty).sum();
-            if (receiveQty < detailEntity.getReturnQty()) {
-                soReturnDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
-            }
-            return m;
-        })));
+        // 转换 soReturnDetailEntityList 为 Map
+        Map<String, SoReturnDetailEntity> detailEntityMap = soReturnDetailEntityList.stream()
+                .collect(Collectors.toMap(SoReturnDetailEntity::getId, entity -> entity));
+
+        // 获取未全部到货的退货单详情 ID
+        List<String> soReturnDetailIds = soReturnReceiveDetailEntities.stream()
+                .collect(Collectors.groupingBy(SoReturnReceiveDetailEntity::getSourceDetailId))
+                .entrySet().stream()
+                .filter(entry -> {
+                    String sourceDetailId = entry.getKey();
+                    List<SoReturnReceiveDetailEntity> receiveDetails = entry.getValue();
+                    int receiveQty = receiveDetails.stream().mapToInt(SoReturnReceiveDetailEntity::getReceiveQty).sum();
+                    SoReturnDetailEntity detailEntity = detailEntityMap.getOrDefault(sourceDetailId, new SoReturnDetailEntity());
+                    return receiveQty < detailEntity.getReturnQty();
+                })
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
 
         List<String> collect = soReturnReceiveDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
         List<String> ids = srdIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());

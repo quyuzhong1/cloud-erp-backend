@@ -1,15 +1,10 @@
 package com.erp.sdk.oms.amz.spapi.utils;
 
-import com.common.core.utils.UUID;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
+import cn.hutool.core.util.StrUtil;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.ScopeConstants;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import cn.hutool.core.util.StrUtil;
 
 /**
  * 亚马逊SP-API配置工具类
@@ -60,61 +55,6 @@ public class AmazonSpApiConfigUtils {
      * SQS队列地址
      */
     public static String sqsEndpoint;
-
-//    @Value("${openApi.amazon.accessKeyId:}")
-//    public void setAccessKeyId(String accessKeyId) {
-//        AmazonSpApiConfigUtils.accessKeyId = accessKeyId;
-//    }
-//
-//    @Value("${openApi.amazon.secretKey:}")
-//    public void setSecretKey(String secretKey) {
-//        AmazonSpApiConfigUtils.secretKey = secretKey;
-//    }
-//
-//    @Value("${openApi.amazon.roleArn:}")
-//    public void setRoleArn(String roleArn) {
-//        AmazonSpApiConfigUtils.roleArn = roleArn;
-//    }
-//
-//    @Value("${openApi.amazon.clientId:}")
-//    public void setClientId(String clientId) {
-//        AmazonSpApiConfigUtils.clientId = clientId;
-//    }
-//
-//    @Value("${openApi.amazon.clientSecret:}")
-//    public void setClientSecret(String clientSecret) {
-//        AmazonSpApiConfigUtils.clientSecret = clientSecret;
-//    }
-//
-//    @Value("${openApi.amazon.refreshToken:}")
-//    public void setRefreshToken(String refreshToken) {
-//        AmazonSpApiConfigUtils.refreshToken = refreshToken;
-//    }
-//
-//    @Value("${openApi.amazon.lwaEndpoint:}")
-//    public void setLwaEndpoint(String lwaEndpoint) {
-//        AmazonSpApiConfigUtils.lwaEndpoint = lwaEndpoint;
-//    }
-//
-//    @Value("${openApi.amazon.sqsEndpoint:}")
-//    public void setSqsEndpoint(String sqsEndpoint) {
-//        AmazonSpApiConfigUtils.sqsEndpoint = sqsEndpoint;
-//    }
-
-//    public AmazonSpApiConfigUtil AmazonSpApiConfigUtil(AwsMarketplaceEnum marketplaceEnum) {
-//        this.accessKeyId = "AKIA2GGRLY3YDWBPAAZ6";
-//        this.secretKey = "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";
-//        this.region = marketplaceEnum.getEndpointsEnum().getRegion();
-//        this.roleArn = "arn:aws:iam::700518745840:role/SPAPI";
-//        this.roleSessionName = UUID.randomUUID().toString();
-//        this.clientId = "amzn1.application-oa2-client.8319967435d64aee9ada60c82399d08a";
-//        this.clientSecret = "amzn1.oa2-cs.v1.8f226d6b3ea555a913ba62fbcd07ea05ee5ab4ad56e9cffde664636c05c88cda";
-//        this.refreshToken = "Atzr|IwEBIB-75TFCxQq-rbqcKVbnQcYDyqSykTQ9cBqhfDEUfUYY-NHFbJt2bXqMnDtdtCYTU-h5rywDn2mfTyzE2MR4jdvLOhBZbel_5qCNn0W9e2dNEqfub3y_gsEXjgTcnA_IO7UW7lxCeWPlD2ZP2HhXG8pINqkLN_nTZKD_j4ZBSBfWEfKsoOYq6YR_fn3c6Q5_OSMb_lqCl36LXcjxJ31RIcMDvmSAiFgP9iMlxSbEm1gTIdNylU7LHt_OyogMrXhbBqhzy8SHqdpxfWFERD6FZsX1feMNpQxn-VVNMxXoN3kYNVYu1W5gQhhTq-oM8B5yCB0";
-//        this.lwaEndpoint = "https://api.amazon.com/auth/o2/token";
-//        this.spEndPoint = marketplaceEnum.getEndpointsEnum().getEndpointsByProfile();
-//    }
-
-
 
     /**
      * 构建免授权

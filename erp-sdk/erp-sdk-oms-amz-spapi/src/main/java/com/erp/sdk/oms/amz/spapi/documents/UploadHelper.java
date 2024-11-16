@@ -51,7 +51,7 @@ public class UploadHelper {
 
             httpTransferClient.upload(spec.getUrl(), spec.getContentType(), tmpFile);
         } finally {
-            tmpFile.delete();
+            boolean delete = tmpFile.delete();
         }
     }
 

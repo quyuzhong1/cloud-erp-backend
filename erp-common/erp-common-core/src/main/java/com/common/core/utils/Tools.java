@@ -1,12 +1,11 @@
 package com.common.core.utils;
 
+import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
@@ -26,6 +25,11 @@ import java.util.regex.Pattern;
 @Slf4j
 public class Tools {
 
+	public static final String REGEX = "^(((13[0-9])|(15([0-3]|[5-9]))|(18[0,5-9]))\\d{8})|(0\\d{2}-\\d{8})|(0\\d{3}-\\d{7})$";
+	public static final String CHECK_REGEX = "^([a-z0-9A-Z]+[-|_|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$";
+
+	private Tools() {
+	}
 
 	/**
 	 * 检测字符串是否不为空(null,"","null")
@@ -34,7 +38,7 @@ public class Tools {
 	 * @return 不为空则返回true，否则返回false
 	 */
 	public static boolean notEmpty(String s) {
-		return s != null && !"".equals(s.trim());
+		return s != null && !s.trim().isEmpty();
 	}
 
 	/**
@@ -44,7 +48,7 @@ public class Tools {
 	 * @return 为空则返回true，不否则返回false
 	 */
 	public static boolean isEmpty(String s) {
-		return s == null || "".equals(s.trim());
+		return s == null || s.trim().isEmpty();
 	}
 
 	/**
@@ -56,7 +60,7 @@ public class Tools {
 	 */
 	public static String[] str2StrArray(String str, String splitRegex) {
 		if (isEmpty(str)) {
-			return null;
+			return new String[0];
 		}
 		return str.split(splitRegex);
 	}
@@ -83,6 +87,7 @@ public class Tools {
 			try {
 				return sdf.parse(date);
 			} catch (ParseException ignored) {
+				log.warn("str2Date:{}", ignored.getCause());
 			}
 			return new Date();
 		} else {
@@ -127,7 +132,6 @@ public class Tools {
 			long sec = (times / 1000 - day * 24 * 60 * 60 - hour * 60 * 60 - min * 60);
 
 			StringBuilder sb = new StringBuilder();
-			//sb.append("发表于：");
 			if (hour > 0) {
 				sb.append(hour).append("小时前");
 			} else if (min > 0) {
@@ -176,8 +180,7 @@ public class Tools {
 	public static boolean checkEmail(String email) {
 		boolean flag = false;
 		try {
-			String check = "^([a-z0-9A-Z]+[-|_|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$";
-			Pattern regex = Pattern.compile(check);
+			Pattern regex = Pattern.compile(CHECK_REGEX);
 			Matcher matcher = regex.matcher(email);
 			flag = matcher.matches();
 		} catch (Exception ignored) {
@@ -194,7 +197,7 @@ public class Tools {
 	public static boolean checkMobileNumber(String mobileNumber) {
 		boolean flag = false;
 		try {
-			Pattern regex = Pattern.compile("^(((13[0-9])|(15([0-3]|[5-9]))|(18[0,5-9]))\\d{8})|(0\\d{2}-\\d{8})|(0\\d{3}-\\d{7})$");
+			Pattern regex = Pattern.compile(REGEX);
 			Matcher matcher = regex.matcher(mobileNumber);
 			flag = matcher.matches();
 		} catch (Exception e) {
@@ -242,7 +245,7 @@ public class Tools {
 		final BeanWrapper src = new BeanWrapperImpl(source);
 		java.beans.PropertyDescriptor[] pds = src.getPropertyDescriptors();
 
-		Set<String> emptyNames = new HashSet<String>();
+		Set<String> emptyNames = new HashSet<>();
 		for (java.beans.PropertyDescriptor pd : pds) {
 			Object srcValue = src.getPropertyValue(pd.getName());
 			if (srcValue == null) emptyNames.add(pd.getName());
@@ -276,9 +279,9 @@ public class Tools {
 		org.springframework.beans.BeanUtils.copyProperties(source, target, ignoreProperties);
 	}
 
-	public static void cloneBean(Object source, Object target) {
+	public static void cloneBean(Object source) {
 		try {
-			target = BeanUtils.cloneBean(source);
+			BeanUtils.cloneBean(source);
 		} catch (Exception e) {
 			throw new RuntimeException("Clone Bean Failed", e);
 		}
@@ -315,6 +318,7 @@ public class Tools {
 				return errMsg.substring(0, limitLength);
 			}
 		} catch (Exception e2) {
+			log.warn("getErrorLastTrace:{}", e.getMessage());
 		}
 		return errMsg;
 	}
@@ -345,6 +349,7 @@ public class Tools {
 		try {
 			errMsg = errMsg + ":\r\n" + getErrorTrace(getErrorLastCause(e));
 		} catch (Exception e2) {
+			log.warn("getErrorLastTrace:{}", e.getMessage());
 		}
 		return errMsg;
 	}
@@ -358,10 +363,8 @@ public class Tools {
 	public static Throwable getErrorLastCause(Throwable e) {
 		Throwable e1 = e.getCause();
 		if (e1 != null) {
-			//e1.printStackTrace();
 			return getErrorLastCause(e1);
 		} else {
-			//e.printStackTrace();
 			return e;
 		}
 	}
@@ -377,7 +380,7 @@ public class Tools {
 			//一个byte是八位二进制，也就是2位十六进制字符（2的8次方等于16的2次方）
 			return new BigInteger(1, md.digest()).toString(16);
 		} catch (Exception e) {
-			throw new RuntimeException("MD5加密字符串数据异常。", e);
+			throw new ServiceException("MD5加密字符串数据异常。", e);
 		}
 	}
 
