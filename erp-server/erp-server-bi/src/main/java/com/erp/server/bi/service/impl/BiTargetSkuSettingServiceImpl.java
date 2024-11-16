@@ -100,7 +100,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         this.batchAdd(targetYear.getId(), detailList);
         //汇总分类的集合
         List<BiTargetSkuSettingDTO.CommonDTO> gatherCategoryList = detailList.stream().
-                filter(d -> d.getIsGatherCategory()).collect(Collectors.toList());
+                filter(CommonDTO::getIsGatherCategory).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(gatherCategoryList)){
             addDTO.setDetailList(gatherCategoryList);
             autoCreateCategorySetting(addDTO);
@@ -609,12 +609,11 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
      */
     @Override
     public Boolean delete(BiTargetSkuSettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetSkuSettingEntity::getSkuId, dto.getSkuId()).
                 eq(BiTargetSkuSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetSkuSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
-        return result;
 
     }
 
@@ -628,8 +627,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto, multiplyNum);
-        return pagingTotal;
+        return baseMapper.pagingTotal(dto, multiplyNum);
 
     }
 

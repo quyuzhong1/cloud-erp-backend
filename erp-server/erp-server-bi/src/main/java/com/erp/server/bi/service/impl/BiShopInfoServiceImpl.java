@@ -290,11 +290,10 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
+        return list.stream()
                 .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getName()))
                 .distinct()
                 .collect(Collectors.toList());
-        return result;
     }
 
     @Override
