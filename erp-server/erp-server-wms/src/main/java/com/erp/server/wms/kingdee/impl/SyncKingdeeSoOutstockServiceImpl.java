@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -410,7 +411,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<SoOutstockDetailEntity> details = soOutstockDetailService.listByMainIds(Arrays.asList(soOutstockEntity.getId()));
 
         //明细字段转换
-        if (CollectionUtil.isEmpty(details)) {
+        if (CollUtil.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
         //订单明细
@@ -488,7 +489,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         SoInfoEntity soInfoById = soInfoFeign.getSoInfoById(entity.getSoId());
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = new ArrayList<>();
-        if (StringUtils.isNotBlank(soInfoById.getId())) {
+        if (CharSequenceUtil.isNotBlank(soInfoById.getId())) {
             soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoById.getId()));
         }
 
@@ -499,7 +500,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
         //查询供应商信息
         SupplierEntity supplierEntity = null;
-        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getCarrierId())) {
             supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
         }
         //获取币别信息
@@ -528,7 +529,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         //部门
-        if  (StringUtils.isNotBlank(soInfoById.getSalesDeptId())) {
+        if  (CharSequenceUtil.isNotBlank(soInfoById.getSalesDeptId())) {
             DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
             dto.setDeptId(entity.getSalesDeptId());
             dto.setOrgId(entity.getSalesOrgId());
@@ -542,7 +543,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         String sellerId = entity.getSellerId();
 
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(soInfoById.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
@@ -557,7 +558,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         //销售员
         String warehouseKeeperId = entity.getWarehouseKeeperId();
-        if(StringUtils.isNotBlank(warehouseKeeperId)){
+        if(CharSequenceUtil.isNotBlank(warehouseKeeperId)){
             String warehouseOrgId = entity.getWarehouseOrgId();
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(warehouseOrgId);
@@ -572,7 +573,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         String billDate = soInfoById.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String currency = StringUtils.isNotBlank(soInfoById.getCurrency()) ? soInfoById.getCurrency() : "CNY";
+        String currency = CharSequenceUtil.isNotBlank(soInfoById.getCurrency()) ? soInfoById.getCurrency() : "CNY";
         //汇率
         BigDecimal exchangeRate = dmpTaskFeign.getRate(billDate, currency);
         if (Objects.isNull(exchangeRate)) {
@@ -700,7 +701,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         String sellerId = entity.getSellerId();
         SysDepartmentUserNumberDTO deptUser = null;
         String deptId = "";
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             deptUser = sysUserFeign.getDeptByUserId(sellerId);
         }
         if (Objects.nonNull(deptUser)) {
@@ -713,10 +714,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
 
         //部门信息
-        SysDepartmentDTO dept =StringUtils.isNotBlank(deptId)? sysUserFeign.getUserDeptById(deptId):null;
+        SysDepartmentDTO dept =CharSequenceUtil.isNotBlank(deptId)? sysUserFeign.getUserDeptById(deptId):null;
         //查询供应商信息
         SupplierEntity supplierEntity = null;
-        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getCarrierId())) {
             supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
         }
         //币别
@@ -754,7 +755,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         String salesOrgId = entity.getSalesOrgId();
 
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(entity.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
@@ -884,7 +885,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         String sellerId = entity.getSellerId();
         SysDepartmentUserNumberDTO deptUser = null;
         String deptId = "";
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             deptUser = sysUserFeign.getDeptByUserId(sellerId);
         }
         if (Objects.nonNull(deptUser)) {
@@ -898,7 +899,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
         //查询供应商信息
         SupplierEntity supplierEntity = null;
-        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getCarrierId())) {
             supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
         }
         //获取币别信息
@@ -928,7 +929,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         //部门
-        if  (StringUtils.isNotBlank(deptId)) {
+        if  (CharSequenceUtil.isNotBlank(deptId)) {
             DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
             dto.setDeptId(entity.getSalesDeptId());
             dto.setOrgId(entity.getSalesOrgId());
@@ -940,10 +941,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //销售组织
         String salesOrgId = soB2cEntity.getOrgId();
         //币别
-        String currency = StringUtils.isNotBlank(soB2cEntity.getCurrency()) ? soB2cEntity.getCurrency() : "CNY";
+        String currency = CharSequenceUtil.isNotBlank(soB2cEntity.getCurrency()) ? soB2cEntity.getCurrency() : "CNY";
 
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(soB2cEntity.getOrgId());
             findBusinessOperator.setUserId(sellerId);

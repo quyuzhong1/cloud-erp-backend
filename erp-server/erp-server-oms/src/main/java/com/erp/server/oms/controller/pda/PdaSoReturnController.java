@@ -3,8 +3,6 @@ package com.erp.server.oms.controller.pda;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.oms.entity.SoReturnEntity;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.server.oms.service.SoReturnService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.web.bind.annotation.*;

@@ -1,23 +1,23 @@
 package com.erp.server.plm.controller.api;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.UserSelectDto;
+import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.EnumCacheUtils;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseSearchDTO;
 import com.erp.model.plm.dto.ProductOperateRecordDTO;
 import com.erp.model.plm.dto.TaskConductDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.ProductOperateRecordService;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.google.common.collect.Maps;
@@ -82,7 +82,7 @@ public class CommonController extends BaseController {
      */
     @PostMapping("/getUserTask")
     public ApiResult<List<TaskConductDTO>> getUserTask(@RequestBody BaseSearchDTO dto) {
-        ApiResult result = sysUserFeign.userList(dto);
+        ApiResult<List<FindUserDTO>> result = sysUserFeign.userList(dto);
         List<TaskConductDTO> list = new ArrayList<>();
         if (result.isSuccess()) {
             //任务负责人 的任务数 是查看 待发布，未开始，进行中
@@ -106,7 +106,7 @@ public class CommonController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
     @PostMapping("/upload")
-    public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
+    public ApiResult<List<String>> upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
             String filePath = FastDFSClientUtil.uploadFile(file);
@@ -138,7 +138,7 @@ public class CommonController extends BaseController {
      * @Date 2022/10/11 11:52
      **/
     @PostMapping("/saveOrUpdateOperateRecord")
-    public ApiResult saveOrUpdateOperateRecord(@RequestBody ProductOperateRecordDTO dto) {
+    public ApiResult<Object> saveOrUpdateOperateRecord(@RequestBody ProductOperateRecordDTO dto) {
         Boolean flag = productOperateRecordService.saveOrUpdate(dto);
         return flag == true ? this.success() : this.failure();
     }
@@ -152,7 +152,7 @@ public class CommonController extends BaseController {
      * @Date 2022/10/11 11:52
      **/
     @PostMapping("/saveOrUpdateOperateRecordBatch")
-    public ApiResult saveOrUpdateOperateRecordBatch(@RequestBody List<ProductOperateRecordDTO> dto) {
+    public ApiResult<Object> saveOrUpdateOperateRecordBatch(@RequestBody List<ProductOperateRecordDTO> dto) {
         Boolean flag = productOperateRecordService.saveOrUpdateBatch(dto);
         return flag == true ? this.success() : this.failure();
     }
@@ -165,7 +165,7 @@ public class CommonController extends BaseController {
      * @Date 2022/10/11 11:52
      **/
     @PostMapping("/listBasicDictType")
-    public ApiResult listBasicDictType() {
+    public ApiResult<List<String>> listBasicDictType() {
         return this.success(productOperateRecordService.listBasicDictType());
     }
 
@@ -178,7 +178,7 @@ public class CommonController extends BaseController {
     public ApiResult<Map<String,List<Map<String,Object>>>> enumSelect(@RequestParam(value = "types")List<String> types) {
         Map<String,List<Map<String,Object>>> typeMaps = Maps.newHashMap();
         Map<String,List<Map<String,Object>>> enumMaps = EnumCacheUtils.getInstance().getData();
-        if(CollectionUtil.isNotEmpty(types)) {
+        if(CollUtil.isNotEmpty(types)) {
             types.stream().forEach(r-> typeMaps.put(r,enumMaps.get(r)));
         }
         return success(typeMaps);

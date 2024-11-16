@@ -1473,7 +1473,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         buildCustomerDTO(pageData.getRecords());
         CustomerB2CDTO.DropPagingDTO<CustomerB2CDTO.DropListDTO> result = new CustomerB2CDTO.DropPagingDTO<>(pageData);
         if (CollectionUtils.isNotEmpty(pageData.getRecords()))  {
-            long count = pageData.getRecords().stream().filter(obj -> StrUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
+            long count = pageData.getRecords().stream().filter(obj -> CharSequenceUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
             if (count > 0) {
                 result.setIsExist(Boolean.TRUE);
             }

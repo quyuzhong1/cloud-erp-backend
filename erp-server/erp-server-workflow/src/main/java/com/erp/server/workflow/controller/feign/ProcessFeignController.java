@@ -143,8 +143,7 @@ public class ProcessFeignController extends BaseController {
     }
 
     /**
-     * 终止流程(弃用)
-     * @deprecated
+     * 终止流程
      */
     @PostMapping("/terminate")
     public void terminate(@RequestBody @Validated ApproveProcessDTO dto) {
@@ -153,7 +152,6 @@ public class ProcessFeignController extends BaseController {
 
     /**
      * 取消流程(弃用)
-     * @deprecated
      */
     @PostMapping("/cancelProcess")
     public void cancelProcess(@RequestBody List<String> ids) {

@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -99,7 +100,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
      * 根据平台组装表名
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.SO_OUT_STOCK.getCode());
     }
 
@@ -166,19 +167,19 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
         SoOutstockDTO.GenerateB2cDTO generateB2cDTO;
         try {
             PlatformSoOutStockDetailDTO detailDTO = dto.getDetailList().get(0);
-            if (StringUtils.isBlank(detailDTO.getWarehouseId())){
-                String msg = StrUtil.format("未找到对应仓库, 仓库【{}】, 仓库中心【{}】", detailDTO.getWarehouseName(), detailDTO.getFulfillmentCenterId());
+            if (CharSequenceUtil.isBlank(detailDTO.getWarehouseId())){
+                String msg = CharSequenceUtil.format("未找到对应仓库, 仓库【{}】, 仓库中心【{}】", detailDTO.getWarehouseName(), detailDTO.getFulfillmentCenterId());
                 throw new ServiceException(msg);
             }
 
             generateB2cDTO = soB2cFeign.getSoOutStockByIdAndWarehouseId(soB2cEntity.getId(), detailDTO.getWarehouseId());
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getDictPlatform())){
-                if (StringUtils.isBlank(detailDTO.getWarehouseId()) ||
-                    StringUtils.isBlank(detailDTO.getWarehouseName()) ||
-                    StringUtils.isBlank(detailDTO.getWarehouseOrgId()) ||
-                    StringUtils.isBlank(detailDTO.getWarehouseOrgName())
+                if (CharSequenceUtil.isBlank(detailDTO.getWarehouseId()) ||
+                    CharSequenceUtil.isBlank(detailDTO.getWarehouseName()) ||
+                    CharSequenceUtil.isBlank(detailDTO.getWarehouseOrgId()) ||
+                    CharSequenceUtil.isBlank(detailDTO.getWarehouseOrgName())
                 ){
-                    ServiceException.runError(StrUtil.format("仓库信息缺失缺失:未找到仓储中心【{}】对应仓库", detailDTO.getFulfillmentCenterId()));
+                    ServiceException.runError(CharSequenceUtil.format("仓库信息缺失缺失:未找到仓储中心【{}】对应仓库", detailDTO.getFulfillmentCenterId()));
                 }
                 // 按仓库中心对应仓库
                 generateB2cDTO.setWarehouseId(detailDTO.getWarehouseId());
@@ -204,7 +205,7 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
             addError.setReturnJson("");
             addError.setDetailId(detailEntity.getId());
             addError.setMainId(soB2cEntity.getId());
-            addError.setMessage(StrUtil.format("自动生成销售出库单失败：{}", e.getMessage()));
+            addError.setMessage(CharSequenceUtil.format("自动生成销售出库单失败：{}", e.getMessage()));
             soB2cFeign.addSoB2cError(addError);
             return ApiResult.success();
         }
@@ -225,14 +226,14 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
 
 
         // 校验sku映射关系
-        if (generateB2cDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
+        if (generateB2cDTO.getDetailList().stream().anyMatch(e-> CharSequenceUtil.isBlank(e.getSkuId()))){
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
             addError.setParamJson(JSONUtil.toJsonStr(ext));
             addError.setReturnJson("");
             addError.setDetailId(generateB2cDTO.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSoDetailId).findFirst().orElse(""));
             addError.setMainId(soB2cEntity.getId());
-            addError.setMessage(StrUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系"));
+            addError.setMessage(CharSequenceUtil.format("自动生成销售出库单失败：订单未匹配Sku映射关系"));
             soB2cFeign.addSoB2cError(addError);
             return ApiResult.success();
         }

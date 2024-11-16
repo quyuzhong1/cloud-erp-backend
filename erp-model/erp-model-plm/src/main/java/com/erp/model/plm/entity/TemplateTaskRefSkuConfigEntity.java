@@ -20,7 +20,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("template_task_ref_sku_config")
-public class TemplateTaskRefSkuConfigEntity extends BaseEntity implements Serializable {
+public class TemplateTaskRefSkuConfigEntity extends BaseEntity<TemplateTaskRefSkuConfigEntity> implements Serializable {
     private static final long serialVersionUID = 443047567565109376L;
 
     /**

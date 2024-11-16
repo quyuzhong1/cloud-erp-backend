@@ -1,14 +1,14 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 
 /**
@@ -87,7 +87,7 @@ public class PilotApplicationDetailEntity extends BaseEntity<PilotApplicationDet
 
     public static final String MAIN_ID = "main_id";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String SKU_ID = "sku_id";
 
@@ -105,7 +105,7 @@ public class PilotApplicationDetailEntity extends BaseEntity<PilotApplicationDet
 
     public static final String EXPECT_ARRIVE_DATE = "expect_arrive_date";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String PURCHASE_APPLY_QTY = "purchase_apply_qty";
 

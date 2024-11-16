@@ -32,6 +32,6 @@ public class TaskBatchUploadFileDTO  implements Serializable {
 
 
     @NotNull(message = "上传文件不能为空")
-    List<TaskUploadFileDTO>  uploadFileList;
+    private List<TaskUploadFileDTO>  uploadFileList;
 
 }

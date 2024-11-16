@@ -1,5 +1,6 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
@@ -81,7 +82,7 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
         }
         List<FbaShipmentPackingEntity> fbaShipmentPackingEntities = fbaShipmentPackingService.listByFbaCodes(Collections.singletonList(RequisitionApplicationDetailExcelDTO.getFbaShipmentCode()));
         if (CollectionUtils.isNotEmpty(fbaShipmentPackingEntities)){
-            errorMsgList.add(StrUtil.format("{}已绑定下推发货单，无法重复下推",RequisitionApplicationDetailExcelDTO.getFbaShipmentCode()));
+            errorMsgList.add(CharSequenceUtil.format("{}已绑定下推发货单，无法重复下推",RequisitionApplicationDetailExcelDTO.getFbaShipmentCode()));
         }
         RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO shipmentViewDetailDTO = fbaBindShipmentViewDTOS.stream().filter(e -> Objects.equals(RequisitionApplicationDetailExcelDTO.getBoxNo(), e.getBoxNo())).findFirst().orElse(null);
         if (Objects.isNull(shipmentViewDetailDTO)){
@@ -94,7 +95,7 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
         //校验店铺是否一致
         String id = fbaBindShipmentViewDTOS.stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getId).filter(StrUtil::isNotBlank).findFirst().orElse(null);
         RequisitionApplicationEntity requisitionApplication = null;
-        if (StrUtil.isBlank(id)){
+        if (CharSequenceUtil.isBlank(id)){
             errorMsgList.add("要货申请记录id不能为空");
         }else {
             requisitionApplication = requisitionApplicationService.getById(id);
@@ -122,7 +123,7 @@ public class RequisitionApplicationDetailExcelListener extends AnalysisEventList
         FbaShipmentEntity finalShipmentEntity = shipmentEntity;
         fbaBindShipmentViewDTOS.forEach(e -> {
             //数据已存在就不能覆盖
-            if (RequisitionApplicationDetailExcelDTO.getBoxNo().equals(e.getBoxNo()) && StrUtil.isBlank(e.getDeliveryCode())){
+            if (RequisitionApplicationDetailExcelDTO.getBoxNo().equals(e.getBoxNo()) && CharSequenceUtil.isBlank(e.getDeliveryCode())){
                 e.setFbaBoxNo(RequisitionApplicationDetailExcelDTO.getFbaBoxNo());
                 e.setFbaShipmentCode(finalShipmentEntity.getCode());
                 e.setFbaShipmentId(finalShipmentEntity.getId());

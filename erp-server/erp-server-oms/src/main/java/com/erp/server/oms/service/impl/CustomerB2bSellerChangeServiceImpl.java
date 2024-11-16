@@ -49,7 +49,7 @@ import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,7 +72,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER_B2
 @Slf4j
 @Service
 public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<CustomerB2bSellerChangeMapper, CustomerB2bSellerChangeEntity> implements CustomerB2bSellerChangeService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Resource

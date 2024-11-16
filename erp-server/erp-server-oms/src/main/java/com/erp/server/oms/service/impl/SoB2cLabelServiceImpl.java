@@ -10,7 +10,7 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cLabelService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

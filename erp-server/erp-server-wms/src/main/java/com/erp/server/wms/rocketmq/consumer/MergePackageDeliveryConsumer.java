@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -81,7 +82,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         }
         int retryCount = 1;
         // 重试次数key防止无限重试
-        String retryCountKey = StrUtil.format(RedisCacheConstants.MERGE_PACKAGE_RETRY_COUNT_KEY, soId);
+        String retryCountKey = CharSequenceUtil.format(RedisCacheConstants.MERGE_PACKAGE_RETRY_COUNT_KEY, soId);
         Object retryCountObj = redisTemplate.opsForValue().get(retryCountKey);
         if (null != retryCountObj) {
             retryCount = (Integer) retryCountObj;
@@ -105,7 +106,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         }
 
         // 判断当前单据平台标记发货是否有正在处理
-        String signDeliveryKey = StrUtil.format(RedisCacheConstants.MERGE_PACKAGE_SIGN_DELIVERY_KEY, curDeliveryEntity.getDictPlatform(), curDeliveryEntity.getShopId());
+        String signDeliveryKey = CharSequenceUtil.format(RedisCacheConstants.MERGE_PACKAGE_SIGN_DELIVERY_KEY, curDeliveryEntity.getDictPlatform(), curDeliveryEntity.getShopId());
         Boolean setSignResult = redisTemplate.opsForValue().setIfAbsent(signDeliveryKey, soId, 30, TimeUnit.SECONDS);
         if (Boolean.FALSE.equals(setSignResult)) {
             log.warn("【组包处理消费】销售单【{}】因标记发货处理中重试", curDeliveryEntity.getSoCode());
@@ -113,7 +114,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
             SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
                     soId, soId, convertSignDelayLevel(retryCount));
             if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                throw new RuntimeException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
             }
             // 当前停止
             return;
@@ -131,7 +132,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
 
         // 按扣库存逻辑分组
         Map<String, List<SoB2cDeliveryDetailEntity>> map = deliveryDetailList.stream()
-                .collect(Collectors.groupingBy(e -> StrUtil.format("{}_{}_{}", e.getWarehouseId(),
+                .collect(Collectors.groupingBy(e -> CharSequenceUtil.format("{}_{}_{}", e.getWarehouseId(),
                         StrUtils.null2EmptyWithTrim(e.getWarehouseLocation()),
                         e.getSkuId()
                 )));
@@ -140,13 +141,13 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : map.entrySet()) {
             SoB2cDeliveryDetailEntity deliveryDetail = entry.getValue().get(0);
             // 按照仓库+仓位+库存状态+SKU 进行判断
-            String lockKey = StrUtil.format("{}:{}:{}:{}:{}",
+            String lockKey = CharSequenceUtil.format("{}:{}:{}:{}:{}",
                     DistributedLockEnum.WMS_INVENTORY_SKU.getCode(),
                     deliveryDetail.getWarehouseId(),
                     StrUtils.null2EmptyWithTrim(deliveryDetail.getWarehouseLocation()),
                     InventoryStatusEnum.FROZEN.getCode(),
                     deliveryDetail.getSkuId());
-            String soOutStockKey = StrUtil.format(RedisCacheConstants.MERGE_PACKAGE_INVENTORY_KEY, lockKey);
+            String soOutStockKey = CharSequenceUtil.format(RedisCacheConstants.MERGE_PACKAGE_INVENTORY_KEY, lockKey);
             Boolean setSoOutStockResult = redisTemplate.opsForValue().setIfAbsent(soOutStockKey, soId, 30, TimeUnit.SECONDS);
             RLock lock = redisson.getLock(lockKey);
             if (Boolean.FALSE.equals(setSoOutStockResult) || lock.isLocked()) {
@@ -159,7 +160,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
                 SendResult sendResult = mqProducerService.syncClassMsgWithDelayLevel(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
                         soId, soId, convertSoOutStockDelayLevel(retryCount));
                 if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                    throw new RuntimeException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
                 }
                 // 当前停止
                 return;

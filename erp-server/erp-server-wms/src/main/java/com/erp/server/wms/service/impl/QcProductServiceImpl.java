@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -59,13 +60,13 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void add(String billId, QcProductDTO.AddDTO qcProduct,String skuId) {
-        if(StringUtils.isBlank(skuId)){
+        if(CharSequenceUtil.isBlank(skuId)){
             throw new ServiceException(ApiError.ERROR_95107);
         }
         QcProductEntity qcProductEntity = new QcProductEntity();
         BeanMapper.copy(qcProduct, qcProductEntity);
         String id = qcProduct.getId();
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             id = IdWorker.getIdStr();
         }
         qcProductEntity.setMainId(billId);

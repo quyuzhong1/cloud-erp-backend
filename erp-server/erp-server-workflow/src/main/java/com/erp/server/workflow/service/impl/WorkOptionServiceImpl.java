@@ -49,6 +49,7 @@ import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -110,6 +111,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private ProcessTaskManagementService processTaskManagementService;
+    @Lazy
+    @Resource
+    private WorkOptionService workOptionService;
 
     /**
      * 待办模块-模块分类下拉
@@ -326,7 +330,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public Boolean delete(String id) {
-        return this.removeById(id);
+        return workOptionService.removeById(id);
     }
 
     private List<WorkOptionDTO.MyWorkOptionDTO> listTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList, String sysClassify) {
@@ -372,17 +376,17 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 pendingViewDetailDTO.setCount(myWorkOptionDTO.getTableNumber());
                 switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
                     case PLM:
-                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
+                        pendingViewDetailDTO.setModuleUrl(PROTOCOL+ GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     case SCM:
-                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
+                        pendingViewDetailDTO.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     case WMS:
                     case FM:
-                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
+                        pendingViewDetailDTO.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     case OMS:
-                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + myWorkOptionDTO.getModuleUrl());
+                        pendingViewDetailDTO.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     default:
                         break;
@@ -515,11 +519,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveOneDTO.setId(dto.getId());
                 approveOneDTO.setComment(dto.getComment());
                 approveOneDTO.setType(dto.getType());
-                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-                    plmTaskFeign.pilotApprovalPass(approveOneDTO);
-                } else {
-                    plmTaskFeign.pilotApprovalNoPass(approveOneDTO);
-                }
+                plmTaskFeign.pilotApprovalPass(approveOneDTO);
                 break;
             case PRODUCT_BOM_INFO:
                 AuditParamDTO auditParamDTO = new AuditParamDTO();

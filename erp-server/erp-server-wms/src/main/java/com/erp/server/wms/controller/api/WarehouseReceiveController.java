@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -94,7 +95,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
         String id = warehouseReceiveService.add(dto);
-        return StringUtils.isNotBlank(id) == true ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) == true ? success() : failure();
     }
 
     /**

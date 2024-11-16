@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
@@ -400,7 +401,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         
         WarehouseLocationDTO.SelectDTO params = JSON.parseObject(JSON.toJSONString(searchDTO.getParams()), WarehouseLocationDTO.SelectDTO.class);
         IPage<WarehouseLocationDTO.LocationListDTO> pagResult;
-        if (StringUtils.isNotBlank(params.getSkuNo())){
+        if (CharSequenceUtil.isNotBlank(params.getSkuNo())){
             pagResult = baseMapper.pagingSelectBySku(query, params);
         }else {
             pagResult = baseMapper.pagingSelect(query, params);
@@ -836,7 +837,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq(WarehouseLocationEntity::getCode, code)
                 .eq(WarehouseLocationEntity::getType, type)
                 .eq(WarehouseLocationEntity::getWarehouseId,warehouseId)
-                .ne(StringUtils.isNotBlank(id), WarehouseLocationEntity::getId, id));
+                .ne(CharSequenceUtil.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "编码", code);
         }
@@ -847,7 +848,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
                 .eq(WarehouseLocationEntity::getName, name)
                 .eq(WarehouseLocationEntity::getType, type)
                 .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
-                .ne(StringUtils.isNotBlank(id), WarehouseLocationEntity::getId, id));
+                .ne(CharSequenceUtil.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "名称", name);
         }
@@ -970,7 +971,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> stockingAreaDTOList = new ArrayList<>();
             List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> pickingAreaDTOList = new ArrayList<>();
             for (WarehouseLocationEntity areaEntity : areaList) {
-                if(! StringUtils.isNotBlank(areaEntity.getAreaType())){
+                if(! CharSequenceUtil.isNotBlank(areaEntity.getAreaType())){
                     continue;
                 }
                 if(areaEntity.getAreaType().equals("stockingArea")){
@@ -1008,7 +1009,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
 
     public WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo){
-        if(StringUtils.isBlank(warehouseId)||StringUtils.isBlank(skuNo)){
+        if(CharSequenceUtil.isBlank(warehouseId)||CharSequenceUtil.isBlank(skuNo)){
             return null;
         }
         return warehouseLocationMapper.getOneWareInventoryQty(warehouseId,skuNo);

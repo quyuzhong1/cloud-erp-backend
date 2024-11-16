@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.poi.ss.formula.functions.T;
 
 
 /**
@@ -21,5 +22,5 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface CfgRuleDeclareMapper extends BaseMapper<CfgRuleDeclareEntity> {
 
-    IPage<CfgRuleDeclareDTO.PagingViewDTO> paging(Page query, @Param("params") CfgRuleDeclareDTO.PagingParamDTO params);
+    IPage<CfgRuleDeclareDTO.PagingViewDTO> paging(Page<T> query, @Param("params") CfgRuleDeclareDTO.PagingParamDTO params);
 }

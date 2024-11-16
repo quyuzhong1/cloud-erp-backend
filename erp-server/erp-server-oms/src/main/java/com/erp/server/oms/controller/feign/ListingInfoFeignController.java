@@ -42,8 +42,7 @@ public class ListingInfoFeignController extends BaseController {
      **/
     @PostMapping("/listStockSkuNoByProductSkuIds")
     public List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(@RequestBody List<String> productSkuIdList) {
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> list = skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList);
-        return list;
+        return skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList);
     }
 
     /**

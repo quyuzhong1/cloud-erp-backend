@@ -60,13 +60,13 @@ public class CfgModuleOperateLogFieldEntity extends BaseEntity<CfgModuleOperateL
     private String enumClass;
 
 
-    public static final String FIELD = "field";
+    public static final String FIELD_FIELD = "field";
 
     public static final String FIELD_NAME = "field_name";
 
     public static final String CLASS_PATH = "class_path";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String ENUM_CLASS = "enum_class";
 

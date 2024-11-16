@@ -2,7 +2,9 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -111,7 +113,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             Map<String, Object> transferDTOMap = BeanUtil.beanToMap(transferDTO);
             this.checkTransferRule(transferDTO);
             List<String> transferWarehouseIdList = transferDTO.getTransferWarehouseIdList();
-            if (CollectionUtil.isEmpty(transferWarehouseIdList)){
+            if (CollUtil.isEmpty(transferWarehouseIdList)){
                 throw new ServiceException("中转仓配置不能为空");
             }
             List<String> collect = transferWarehouseIdList.stream().filter(StrUtil::isBlank).collect(Collectors.toList());
@@ -143,7 +145,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
     private void checkCfgProductPacking(CfgRuleOutDTO.CfgProductPacking cfgProductPacking) {
         List<CfgRuleOutDTO.CfgProductPackingDetail> cfgProductPackingDetailList = cfgProductPacking.getCfgProductPackingDetailList();
-        if(CollectionUtil.isEmpty(cfgProductPackingDetailList)){
+        if(CollUtil.isEmpty(cfgProductPackingDetailList)){
             return;
         }
 
@@ -160,7 +162,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             return;
         }
         List<CfgRuleOutDTO.B2cAllowableDeviationsCondition> conditionDTOS = b2cAllowableDeviations.getConditionDTOList();
-        if(CollectionUtil.isEmpty(conditionDTOS)){
+        if(CollUtil.isEmpty(conditionDTOS)){
             return;
         }
         List<String> valueList = conditionDTOS.stream().flatMap(v->v.getValList().stream()).collect(Collectors.toList());
@@ -174,7 +176,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         }
 
         for (CfgRuleOutDTO.B2cAllowableDeviationsCondition b2cAllowableDeviationsConditionDetail : conditionDTOS) {
-            if(CollectionUtil.isEmpty(b2cAllowableDeviationsConditionDetail.getConditionDetailList())){
+            if(CollUtil.isEmpty(b2cAllowableDeviationsConditionDetail.getConditionDetailList())){
                 continue;
             }
 
@@ -194,7 +196,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             return;
         }
         List<CfgRuleOutDTO.EquipmentSortingPortConditionDTO> conditionDTOS = equipmentSortingPortDTO.getSortingConditionDTOList();
-        if(CollectionUtil.isEmpty(conditionDTOS)){
+        if(CollUtil.isEmpty(conditionDTOS)){
             return;
         }
         List<String> valueList = conditionDTOS.stream().flatMap(v->v.getValueList().stream()).collect(Collectors.toList());
@@ -265,7 +267,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             return new CfgRuleOutDTO.CheckDTO(true,"");
         }
         List<CfgRuleOutDTO.CfgOverweightDetailDTO> cfgOverweightDetailDTOList = cfgOverweightDTO.getCfgOverweightDetailDTOList();
-        if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
+        if(CollUtil.isEmpty(cfgOverweightDetailDTOList)){
             return new CfgRuleOutDTO.CheckDTO(true,"");
         }
         CfgRuleOutDTO.CfgOverweightDetailDTO cfgOverweightDetailDTO = cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(dto.getType().getCode())).findFirst().orElse(null);
@@ -280,13 +282,13 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 if(!cfgOverweightDetailDTO.isGreaterThanWeightCanOut()){
                     result = false;
                 }
-                logMsg = StrUtil.format("超重{}kg",dto.getScanWeight().subtract(cfgOverweightDetailDTO.getMaxWeight()));
+                logMsg = CharSequenceUtil.format("超重{}kg",dto.getScanWeight().subtract(cfgOverweightDetailDTO.getMaxWeight()));
             }
             if(Objects.nonNull(cfgOverweightDetailDTO.getMinWeight()) && dto.getScanWeight().compareTo(cfgOverweightDetailDTO.getMinWeight())<0){
                 if(!cfgOverweightDetailDTO.isLessThanWeightCanOut()){
                     result = false;
                 }
-                logMsg = StrUtil.format("重量低于最低重量{}kg",cfgOverweightDetailDTO.getMinWeight().subtract(dto.getScanWeight()));
+                logMsg = CharSequenceUtil.format("重量低于最低重量{}kg",cfgOverweightDetailDTO.getMinWeight().subtract(dto.getScanWeight()));
             }
         }
         //校验尺寸
@@ -296,8 +298,8 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
                     result = false;
                 }
-                sizeLog = StringUtils.isBlank(sizeLog)?"超尺寸":sizeLog;
-                sizeLog = sizeLog + StrUtil.format("-长{}cm",dto.getScanLength().subtract(cfgOverweightDetailDTO.getMaxLength()));
+                sizeLog = CharSequenceUtil.isBlank(sizeLog)?"超尺寸":sizeLog;
+                sizeLog = sizeLog + CharSequenceUtil.format("-长{}cm",dto.getScanLength().subtract(cfgOverweightDetailDTO.getMaxLength()));
             }
 
 
@@ -307,8 +309,8 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
                     result = false;
                 }
-                sizeLog = StringUtils.isBlank(sizeLog)?"超尺寸":sizeLog;
-                sizeLog = sizeLog + StrUtil.format("-宽{}cm",dto.getScanWidth().subtract(cfgOverweightDetailDTO.getMaxWidth()));
+                sizeLog = CharSequenceUtil.isBlank(sizeLog)?"超尺寸":sizeLog;
+                sizeLog = sizeLog + CharSequenceUtil.format("-宽{}cm",dto.getScanWidth().subtract(cfgOverweightDetailDTO.getMaxWidth()));
             }
         }
         if(Objects.nonNull(dto.getScanHeight())){
@@ -316,12 +318,12 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
                     result = false;
                 }
-                sizeLog = StringUtils.isBlank(sizeLog)?"超尺寸":sizeLog;
-                sizeLog = sizeLog + StrUtil.format("-高{}cm",dto.getScanHeight().subtract(cfgOverweightDetailDTO.getMaxHeight()));
+                sizeLog = CharSequenceUtil.isBlank(sizeLog)?"超尺寸":sizeLog;
+                sizeLog = sizeLog + CharSequenceUtil.format("-高{}cm",dto.getScanHeight().subtract(cfgOverweightDetailDTO.getMaxHeight()));
             }
         }
-        if(StringUtils.isNotBlank(sizeLog)){
-            logMsg = StringUtils.isBlank(logMsg)?sizeLog:logMsg+"/"+sizeLog;
+        if(CharSequenceUtil.isNotBlank(sizeLog)){
+            logMsg = CharSequenceUtil.isBlank(logMsg)?sizeLog:logMsg+"/"+sizeLog;
         }
         //校验周长
         if(Objects.nonNull(dto.getScanLength()) && Objects.nonNull(dto.getScanWidth()) && Objects.nonNull(dto.getScanHeight())){
@@ -333,8 +335,8 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 if(!cfgOverweightDetailDTO.isSizeNotPassCanOut()){
                     result = false;
                 }
-                String circLog = StrUtil.format("周长超{}cm",circ.subtract(cfgOverweightDetailDTO.getMaxCirc()));
-                logMsg = StringUtils.isBlank(logMsg)?circLog:logMsg+"/"+circLog;
+                String circLog = CharSequenceUtil.format("周长超{}cm",circ.subtract(cfgOverweightDetailDTO.getMaxCirc()));
+                logMsg = CharSequenceUtil.isBlank(logMsg)?circLog:logMsg+"/"+circLog;
             }
         }
         return new CfgRuleOutDTO.CheckDTO(result,logMsg);
@@ -349,7 +351,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             return new CfgRuleOutDTO.CfgOverweightDetailDTO();
         }
         List<CfgRuleOutDTO.CfgOverweightDetailDTO> cfgOverweightDetailDTOList = cfgOverweightDTO.getCfgOverweightDetailDTOList();
-        if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
+        if(CollUtil.isEmpty(cfgOverweightDetailDTOList)){
             return new CfgRuleOutDTO.CfgOverweightDetailDTO();
         }
         return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equals(type)).findFirst().orElse(new CfgRuleOutDTO.CfgOverweightDetailDTO());
@@ -364,7 +366,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             return new ArrayList<>();
         }
         List<CfgRuleOutDTO.CfgProductPackingDetail> cfgOverweightDetailDTOList = cfgOverweightDTO.getCfgProductPackingDetailList();
-        if(CollectionUtil.isEmpty(cfgOverweightDetailDTOList)){
+        if(CollUtil.isEmpty(cfgOverweightDetailDTOList)){
             return new ArrayList<>();
         }
         return cfgOverweightDetailDTOList.stream().filter(v->v.getOverweightType().equalsIgnoreCase(type)).collect(Collectors.toList());
@@ -471,7 +473,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             return;
         }
         List<CfgRuleOutDTO.TransferConditionElement> conditionList = transferDTO.getConditionList();
-        if(CollectionUtil.isEmpty(conditionList)){
+        if(CollUtil.isEmpty(conditionList)){
             return;
         }
         List<ConditionElement> conditionElementList = new ArrayList<>(conditionList.size());

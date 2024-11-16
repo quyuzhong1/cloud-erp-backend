@@ -35,7 +35,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,15 +60,15 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_DECL
 @Slf4j
 @Service
 public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclareProductMapper, SoB2cDeclareProductEntity> implements SoB2cDeclareProductService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     @Lazy
     private SoB2cReceiverService soB2cReceiverService;
-    @Autowired
+    @Resource
     @Lazy
     private SoB2cService soB2cService;
-    @Autowired
+    @Resource
     @Lazy
     private PlmTaskFeign plmTaskFeign;
     @Resource
@@ -111,8 +111,8 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         SoB2cDeclareProductEntity soB2cDeclareProductEntity = B2cOrderConverter.INSTANCE.convertDeclareProductByDto(updateDTO);
         //销售订单
         SoB2cEntity soB2cEntity = soB2cService.getById(old.getSoId());
-        if (!StrUtil.equals(soB2cEntity.getApproveStatus().getCode(), ApproveStatusEnum.APPROVE.getCode())
-            || !StrUtil.equals(soB2cEntity.getBillStatus(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) {
+        if (!CharSequenceUtil.equals(soB2cEntity.getApproveStatus().getCode(), ApproveStatusEnum.APPROVE.getCode())
+            || !CharSequenceUtil.equals(soB2cEntity.getBillStatus(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) {
             throw new ServiceException("仅支持已审核-配货中的订单可操作");
         }
 

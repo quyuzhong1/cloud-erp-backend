@@ -2,21 +2,16 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.DictRuleConditionDTO;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.server.oms.service.DictRuleConditionService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.DictRuleConditionService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.DictRuleConditionDTO;
-
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -30,7 +25,7 @@ import java.util.List;
 @RequestMapping("/dictRuleCondition")
 public class DictRuleConditionController extends BaseController {
 
-    @Autowired
+    @Resource
     private DictRuleConditionService dictRuleConditionService;
 
     /**
@@ -53,9 +48,9 @@ public class DictRuleConditionController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
-    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictRuleConditionDTO.UpdateDTO> dto) {
+    public ApiResult<Object> saveOrUpdate(@RequestBody @Validated List<DictRuleConditionDTO.UpdateDTO> dto) {
         Boolean result = dictRuleConditionService.batchSaveOrUpdate(dto);
-        return result == true ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -67,7 +62,7 @@ public class DictRuleConditionController extends BaseController {
      * @date: 2023-08-30
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated DictRuleConditionDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated DictRuleConditionDTO.UpdateDTO dto) {
         dictRuleConditionService.update(dto);
         return success();
     }

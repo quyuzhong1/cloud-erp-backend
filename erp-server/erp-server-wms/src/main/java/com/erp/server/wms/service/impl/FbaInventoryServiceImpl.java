@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -59,9 +60,9 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_INVENTO
 @Slf4j
 @Service
 public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper, FbaInventoryEntity> implements FbaInventoryService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -107,7 +108,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "FBA库存", fbaInventoryEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "FBA库存", fbaInventoryEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, fbaInventoryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -135,7 +136,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
         // 记录主单操作日志
         log.info("编辑 开始记录FBA库存日志数据，id：【{}】", fbaInventoryEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), fbaInventoryEntity.getId(), "FBA库存");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), fbaInventoryEntity.getId(), "FBA库存");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, fbaInventoryEntity, null, fbaInventoryEntity.getId(), msg);
         return Boolean.TRUE;
@@ -223,8 +224,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public FbaInventoryEntity getByAttribute(String asin, String mSku, String fnSku, String warehouseId) {
-        if (StringUtils.isBlank(asin) || StringUtils.isBlank(mSku) || StringUtils.isBlank(fnSku) || StringUtils.isBlank(warehouseId)) {
-            String msg = StrUtil.format("数据异常，存在空参数：asin={},skuNo={}, fnSku={}, warehouseId={}", asin, mSku, fnSku, warehouseId);
+        if (CharSequenceUtil.isBlank(asin) || CharSequenceUtil.isBlank(mSku) || CharSequenceUtil.isBlank(fnSku) || CharSequenceUtil.isBlank(warehouseId)) {
+            String msg = CharSequenceUtil.format("数据异常，存在空参数：asin={},skuNo={}, fnSku={}, warehouseId={}", asin, mSku, fnSku, warehouseId);
             throw new ServiceException(msg);
         }
         return lambdaQuery()
@@ -259,7 +260,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public List<ListingInfoWithSkuMappingDTO> checkAndSaveFnskuToListing(List<String> platformSkuNoList, String shopId) {
-        if (CollectionUtils.isEmpty(platformSkuNoList) || StringUtils.isBlank(shopId)){
+        if (CollectionUtils.isEmpty(platformSkuNoList) || CharSequenceUtil.isBlank(shopId)){
             return Collections.emptyList();
         }
 
@@ -297,7 +298,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         }
 
         for (T addDTO : detailList) {
-            if (StringUtils.isNotBlank(addDTO.getPlatformFnSku())) {
+            if (CharSequenceUtil.isNotBlank(addDTO.getPlatformFnSku())) {
                 continue;
             }
             updateFnSkulist.stream()

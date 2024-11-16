@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -80,9 +81,9 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     @Lazy
     @Resource
     private AsyncService asyncService;
-    @Autowired
+    @Resource
     private LogisticsFeign logisticsFeign;
-    @Autowired
+    @Resource
     private CfgSettingService cfgSettingService;
 
 
@@ -192,7 +193,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
                 }
             }
         }
-        if(StringUtils.isNotBlank(dto.getSkuNo())){
+        if(CharSequenceUtil.isNotBlank(dto.getSkuNo())){
             //可能扫描sku编号或ean码
             List<PackingInspectionDTO.ViewDTO.ScanSkuInfo> waitScanList = viewDTO.getWaitScanSkuList();
             PackingInspectionDTO.ViewDTO.ScanSkuInfo skuInfo = waitScanList.stream().filter(v->v.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(null);
@@ -263,7 +264,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             if(!soB2cDeliveryDetailService.updateBatchById(detailEntityList)){
                 throw new ServiceException("发货单明细更新失败");
             }
-            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
+            String msg = CharSequenceUtil.format("用户【{}】更新【{}】单据单号为【{}】包装验货完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "包装验货");
         }
         //数据存redis
@@ -294,17 +295,17 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
     }
 
     private void deleteViewDTO(String id) {
-        redisTemplate.delete(StrUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id));
+        redisTemplate.delete(CharSequenceUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id));
     }
 
 
     private void saveViewDTO(String id, PackingInspectionDTO.ViewDTO viewDTO) {
         String json = JSONObject.toJSONString(viewDTO);
-        redisTemplate.opsForValue().set(StrUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id), json,1, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(CharSequenceUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id), json,1, TimeUnit.DAYS);
     }
 
     private PackingInspectionDTO.ViewDTO getViewDTO(String id) {
-        String json = redisTemplate.opsForValue().get(StrUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id));
+        String json = redisTemplate.opsForValue().get(CharSequenceUtil.format(RedisKeyConstant.WMS_PACKING_INSPECTION, id));
         return JSONObject.parseObject(json,new TypeReference<PackingInspectionDTO.ViewDTO>() {}.getType());
     }
 }

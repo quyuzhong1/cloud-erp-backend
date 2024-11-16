@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -102,7 +104,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Resource
     private SyncKingdeeWarehouseService syncKingdeeWarehouseService;
 
-    @Autowired
+    @Resource
     private RedisService redisService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
@@ -255,7 +257,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                         .reduce(MathUtil.ZERO,Integer::sum);
                 warehouseInventoryQtyDTO.setInventoryQty(curInventoryQty);
                 //无虚拟仓或者无库存数据
-                if (CollectionUtils.isEmpty(virtualUsableQtyList) || StrUtil.isBlank(virtualWarehouseId)) {
+                if (CollectionUtils.isEmpty(virtualUsableQtyList) || CharSequenceUtil.isBlank(virtualWarehouseId)) {
                     warehouseInventoryQtyList.add(warehouseInventoryQtyDTO);
                     continue;
                 }
@@ -341,13 +343,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList) {
-        if (CollectionUtil.isEmpty(assertList)) {
+        if (CollUtil.isEmpty(assertList)) {
             return;
         }
         List<WarehouseDTO.WarehouseDisabledAssertDTO> invalidList = new ArrayList<>();
         assertList.stream().forEach(item -> {
             // 仓库禁用/未审核
-            if (StrUtil.isBlank(item.getWarehouseId())) {
+            if (CharSequenceUtil.isBlank(item.getWarehouseId())) {
                 throw new ServiceException("仓库id不能为空");
             }
             WarehouseDTO.UpdateDTO warehouse = detailWithCache(item.getWarehouseId());
@@ -607,7 +609,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         BeanMapper.copy(dto, warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
-        if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getOnwayWarehouseId())) {
             WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
             if (ObjectUtil.isEmpty(entity)) {
                 throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
@@ -619,7 +621,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (result) {
 
             //如果设置了第三方仓绑定
-            if (StringUtils.isNotBlank(dto.getThirdWarehouseName())) {
+            if (CharSequenceUtil.isNotBlank(dto.getThirdWarehouseName())) {
                 WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
                     WarehouseEntity entity = this.getById(checkThirdWarehouseNameExist.getWarehouseId());
@@ -669,7 +671,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         BeanMapper.copy(dto, warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
-        if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getOnwayWarehouseId())) {
             WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
             if (ObjectUtil.isEmpty(entity)) {
                 throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
@@ -718,7 +720,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
         String warehouseId = this.add(dto);
-        if (StringUtils.isBlank(warehouseId)) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         Boolean result = this.submit(Arrays.asList(warehouseId));
@@ -1105,7 +1107,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto) {
         String id = this.updateWarehouse(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(id));
@@ -1116,7 +1118,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(WarehouseEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId), WarehouseEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -1172,7 +1174,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
         List<WarehouseEntity> list = lambdaQuery()
-                .eq(StringUtils.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
+                .eq(CharSequenceUtil.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
                 .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()), WarehouseEntity::getOrgId, dto.getOrgIdList())
                 .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()), WarehouseEntity::getId, dto.getWarehouseIdList())
                 .list();
@@ -1187,8 +1189,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         this.fillListData(resultList, warehouseBindMap);
 
         return resultList.stream()
-                .filter(e -> StringUtils.isBlank(dto.getDictPlatform()) ||
-                        (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
+                .filter(e -> CharSequenceUtil.isBlank(dto.getDictPlatform()) ||
+                        (CharSequenceUtil.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
                 )
                 .filter(e -> ObjectUtil.isEmpty(dto.getIsSupplier()) || (Boolean.TRUE.equals(dto.getIsSupplier()) && e.getTypeId().equals(basic.getId())))
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
@@ -1278,7 +1280,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     private void checkKingdeeWarehouseCode(String id, String kingdeeWarehouseCode) {
         LambdaQueryWrapper<WarehouseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(id)) {
+        if (CharSequenceUtil.isNotBlank(id)) {
             queryWrapper.ne(WarehouseEntity::getId, id);
         }
         queryWrapper.eq(WarehouseEntity::getKingdeeWarehouseCode, kingdeeWarehouseCode);
@@ -1301,7 +1303,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     private void checkName(String id, String name) {
         LambdaQueryWrapper<WarehouseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(id)) {
+        if (CharSequenceUtil.isNotBlank(id)) {
             queryWrapper.ne(WarehouseEntity::getId, id);
         }
         queryWrapper.eq(WarehouseEntity::getName, name);

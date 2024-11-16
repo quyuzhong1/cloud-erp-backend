@@ -28,7 +28,6 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +48,7 @@ import java.util.stream.Collectors;
 @Validated
 public class SoB2cController extends BaseController {
 
-    @Autowired
+    @Resource
     private SoB2cService soB2cService;
     @Resource
     private SoB2cErrorService soB2cErrorService;
@@ -151,7 +150,7 @@ public class SoB2cController extends BaseController {
                     //申报信息规则
                     soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
             }

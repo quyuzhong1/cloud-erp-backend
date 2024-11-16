@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -45,9 +46,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<RequisitionApplicationDetailMapper, RequisitionApplicationDetailEntity> implements RequisitionApplicationDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
@@ -116,8 +117,8 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
                 .set(StrUtil.isNotBlank(fromVirtualWarehouseId),RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
                 .eq(RequisitionApplicationDetailEntity::getId, id);
-        String virtualWarehouseIdToSet = StringUtils.isNotBlank(fromVirtualWarehouseId) ? fromVirtualWarehouseId : "";
-        String virtualWarehouseNameToSet = StringUtils.isNotBlank(fromVirtualWarehouseName) ? fromVirtualWarehouseName : "";
+        String virtualWarehouseIdToSet = CharSequenceUtil.isNotBlank(fromVirtualWarehouseId) ? fromVirtualWarehouseId : "";
+        String virtualWarehouseNameToSet = CharSequenceUtil.isNotBlank(fromVirtualWarehouseName) ? fromVirtualWarehouseName : "";
         eq.set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, virtualWarehouseIdToSet)
                 .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName, virtualWarehouseNameToSet);
 
@@ -168,7 +169,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
 
         //需要新增的数据
-        List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
         List<String> fromVirtualWarehouseIdList = list.stream().map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         Map<String,String> virtualWarehouseNameMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(fromVirtualWarehouseIdList)){
@@ -185,13 +186,13 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             requisitionApplicationDetailEntity.setSkuNo(skuVO.getSkuNo());
             String virtualWarehouseName = virtualWarehouseNameMap.get(requisitionApplicationDetailEntity.getFromVirtualWarehouseId());
-            requisitionApplicationDetailEntity.setFromVirtualWarehouseName(StringUtils.isNotBlank(virtualWarehouseName)?virtualWarehouseName:"");
+            requisitionApplicationDetailEntity.setFromVirtualWarehouseName(CharSequenceUtil.isNotBlank(virtualWarehouseName)?virtualWarehouseName:"");
             if(requisitionApplicationDetailEntity.getFromVirtualWarehouseId() == null){
                 requisitionApplicationDetailEntity.setFromVirtualWarehouseId("");
             }
 
             //校验是否是修改，如果是就新增修改日志
-            if (StringUtils.isNotBlank(requisitionApplicationDetailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(requisitionApplicationDetailEntity.getId())) {
                 RequisitionApplicationDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
@@ -207,7 +208,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     private List<String> getDeleteIds(List<RequisitionApplicationDetailDTO.UpdateDTO> newList, List<RequisitionApplicationDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> org.apache.commons.lang3.StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(RequisitionApplicationDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(RequisitionApplicationDetailEntity
                 ::getId).collect(Collectors.toList());

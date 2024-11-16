@@ -49,7 +49,7 @@ public class BusinessProcessController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "保存流程信息")
     @PostMapping("/save")
-    public ApiResult saveProcess(@RequestBody BusinessProcessDTO dto) {
+    public ApiResult<Object> saveProcess(@RequestBody BusinessProcessDTO dto) {
         Boolean flag = businessProcessService.saveProcess(dto);
         return flag == true ? success() : failure();
     }

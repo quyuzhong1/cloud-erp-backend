@@ -51,10 +51,6 @@ public class SysTaskVO implements Serializable {
      */
     private List<String> roleIds;
 
-//    /**
-//     * 前置任务id
-//     */
-//    private List<String> preTaskIdList;
     /**
      * 前置任务列表
      */

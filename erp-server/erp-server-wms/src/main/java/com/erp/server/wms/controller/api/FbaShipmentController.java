@@ -44,7 +44,7 @@ import java.util.List;
 @RequestMapping("/fbaShipment")
 public class FbaShipmentController extends BaseController {
 
-    @Autowired
+    @Resource
     private FbaShipmentService fbaShipmentService;
 
     @Resource

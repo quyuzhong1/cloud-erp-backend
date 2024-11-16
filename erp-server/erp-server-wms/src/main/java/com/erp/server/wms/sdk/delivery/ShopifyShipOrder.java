@@ -1,6 +1,7 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -77,16 +78,16 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             }
             // 来源明细ID为空代表是手工添加的明细忽略
             soB2cDetailEntityList =  soB2cDetailEntityList.stream()
-                    .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
-//            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
+//            if (detailEntityList.stream().anyMatch(e -> CharSequenceUtil.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
             if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求接口", mainEntity.getCode());
                 continue;
             }
-            if (soB2cDetailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
+            if (soB2cDetailEntityList.stream().anyMatch(e -> CharSequenceUtil.isBlank(e.getSourceDetailId()))) {
                 throw new ServiceException("平台来源详情ID为空");
             }
             soB2cDetailEntityList = super.handleSplit(soB2cDetailEntityList, dto.isFalseDeliveryFlag());
@@ -165,7 +166,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
                 String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
                 String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                         ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
-                if (StrUtil.isBlank(trackingNumber)) {
+                if (CharSequenceUtil.isBlank(trackingNumber)) {
                     throw new ServiceException("操作失败，渠道标发单号为空");
                 }
 

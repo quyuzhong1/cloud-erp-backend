@@ -87,8 +87,8 @@ public class UserNoticeMessageController extends BaseController {
      * @date 2022-11-10 15:54
      */
     @PostMapping("/paging")
-    public ApiResult<PagingVO<List<NoticeMessageRecordEntity>>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
-        PagingVO<List<NoticeMessageRecordEntity>> pagingVO = noticeMessageRecordService.paging(dto);
+    public ApiResult<PagingVO<NoticeMessageRecordEntity>> paging(@RequestBody @Validated PagingDTO<BaseSearchDTO> dto) {
+        PagingVO<NoticeMessageRecordEntity> pagingVO = noticeMessageRecordService.paging(dto);
         return success(pagingVO);
     }
 

@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
@@ -191,7 +192,7 @@ public class SyncKingdeeStocktakingLossServiceImpl implements SyncKingdeeStockta
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("skuNo", item.getSkuNo());
             String unit = item.getUnit();
-            jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
+            jsonObject.set("unit", CharSequenceUtil.isNotBlank(unit) ? unit : "Pcs");
             jsonObject.set("qty", item.getQty());
             String kingdeeWarehouseCode =warehouseList.stream().filter(w->w.getId().equals(item.getWarehouseId())).
                     map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse("");

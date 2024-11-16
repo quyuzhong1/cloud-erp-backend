@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
@@ -20,6 +21,9 @@ import com.erp.model.wms.dto.WmsPushMsgDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 本地推送消息表 服务实现类
@@ -31,7 +35,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class WmsPushMsgServiceImpl extends SuperServiceImpl<WmsPushMsgMapper, WmsPushMsgEntity> implements WmsPushMsgService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -51,7 +55,7 @@ public class WmsPushMsgServiceImpl extends SuperServiceImpl<WmsPushMsgMapper, Wm
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "本地推送消息单" , wmsPushMsgEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "本地推送消息单" , wmsPushMsgEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, wmsPushMsgEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -80,7 +84,7 @@ public class WmsPushMsgServiceImpl extends SuperServiceImpl<WmsPushMsgMapper, Wm
 
         // 记录主单操作日志
             log.info("编辑 开始记录本地推送消息单日志数据，id：【{}】", wmsPushMsgEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsPushMsgEntity.getId(), "本地推送消息单");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsPushMsgEntity.getId(), "本地推送消息单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, wmsPushMsgEntity, null, wmsPushMsgEntity.getId(), msg);
         return Boolean.TRUE;

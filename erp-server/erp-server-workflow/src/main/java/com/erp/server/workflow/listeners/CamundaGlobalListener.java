@@ -33,6 +33,7 @@ import java.util.Map;
 @Slf4j
 public class CamundaGlobalListener {
 
+  public static final String MUL_USER_LIST = "mulUserList";
   @Resource
   private ProcessManagementService processManagementService;
   @Resource
@@ -109,13 +110,13 @@ public class CamundaGlobalListener {
       Object nrOfInstancesObj = executionDelegate.getVariable("nrOfInstances");
       Object loopCounterObj = executionDelegate.getVariable("loopCounter");
       if(ObjectUtil.isEmpty(nrOfInstancesObj) || ObjectUtil.isEmpty(loopCounterObj)){
-        executionDelegate.removeVariable("mulUserList");
+        executionDelegate.removeVariable(MUL_USER_LIST);
         executionDelegate.removeVariable("userList");
       }else {
         int nrOfInstances = (int) nrOfInstancesObj;
         int loopCounter = (int) loopCounterObj;
         if (nrOfInstances == loopCounter + 1) {
-          executionDelegate.removeVariable("mulUserList");
+          executionDelegate.removeVariable(MUL_USER_LIST);
         }
       }
     }
@@ -135,7 +136,7 @@ public class CamundaGlobalListener {
       String startUserId = (String) executionDelegate.getVariable("creator");
       List<String> candidateUsers = processManagementService.getCandidateByAct(destination, executionDelegate.getProcessDefinitionId(),startUserId);
       if(Boolean.TRUE.equals(isMultiInstance) || CharSequenceUtil.equals(nextActType, "multiInstanceBody")){
-        executionDelegate.setVariable("mulUserList", candidateUsers);
+        executionDelegate.setVariable(MUL_USER_LIST, candidateUsers);
       }else {
         executionDelegate.setVariable("userList", candidateUsers);
       }

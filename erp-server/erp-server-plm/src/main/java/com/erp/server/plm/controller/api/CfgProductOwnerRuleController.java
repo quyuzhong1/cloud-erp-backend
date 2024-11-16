@@ -31,7 +31,7 @@ public class CfgProductOwnerRuleController extends BaseController {
 
 
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated CfgProductOwnerRuleDTO.AddDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated CfgProductOwnerRuleDTO.AddDTO dto) {
         Boolean flag = this.cfgProductOwnerRuleService.add(dto);
         return flag  ? success() : failure();
     }

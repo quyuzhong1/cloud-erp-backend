@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -100,11 +101,11 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PDA_WAREHOU
 @Slf4j
 @Service
 public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<WarehouseLocationMoveMapper, WarehouseLocationMoveEntity> implements WarehouseLocationMoveService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
     @Resource
     private WarehouseLocationMoveDetailService warehouseLocationMoveDetailService;
@@ -163,7 +164,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), "新增操作");
         // 新增明细
         warehouseLocationMoveDetailService.add(addDTO, warehouseLocationMoveEntity);
@@ -181,7 +182,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         }
         WarehouseLocationMoveEntity warehouseLocationMoveEntity = new WarehouseLocationMoveEntity();
         BeanMapperUtils.copy(pcAddDTO, warehouseLocationMoveEntity);
-        if (StringUtils.isBlank(warehouseLocationMoveEntity.getId()) && ObjectUtil.isNull(warehouseLocationMoveEntity.getBillDate())) {
+        if (CharSequenceUtil.isBlank(warehouseLocationMoveEntity.getId()) && ObjectUtil.isNull(warehouseLocationMoveEntity.getBillDate())) {
             warehouseLocationMoveEntity.setBillDate(LocalDate.now());
         }
         log.info("开始新增仓位移动主单");
@@ -193,7 +194,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             throw new ServiceException("仓位移动主单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "仓位移动主单" , warehouseLocationMoveEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), "新增操作");
         //新增明细
         pcAddDTO.getDetailList().forEach(detail->{
@@ -239,7 +240,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         warehouseLocationMoveDetailService.update(updateDTO, warehouseLocationMoveEntity);
         // 记录主单操作日志
         log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLogByObj(old, warehouseLocationMoveEntity, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -261,7 +262,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             throw new ServiceException(ApiError.ERROR_1029);
         }
         WarehouseLocationMoveEntity warehouseLocationMoveEntity =  BeanMapperUtils.map(WarehouseLocationMoveEntity.class, pcUpdateDTO);
-        if (StringUtils.isBlank(pcUpdateDTO.getWarehouseId())){
+        if (CharSequenceUtil.isBlank(pcUpdateDTO.getWarehouseId())){
             warehouseLocationMoveEntity.setWarehouseId("");
             warehouseLocationMoveEntity.setWarehouseName("");
         }
@@ -274,7 +275,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         // 记录主单操作日志
         log.info("编辑 开始记录仓位移动主单日志数据，单号：【{}】", warehouseLocationMoveEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), warehouseLocationMoveEntity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLogByObj(old, warehouseLocationMoveEntity, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), warehouseLocationMoveEntity.getId(), msg);
         //修改明细
         WarehouseLocationMoveDTO.UpdateDTO updateDto = new WarehouseLocationMoveDTO.UpdateDTO();
@@ -435,7 +436,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录仓位移动主单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -458,7 +459,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录仓位移动主单日志数据，id：【{}】", mainId);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -497,7 +498,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单", approveType.getName(), dto.getComment());
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -555,7 +556,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         //发送旺店通
         syncDisApproveInfoToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -628,7 +629,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -659,7 +660,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除仓位移动主单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除仓位移动主单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -679,7 +680,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除仓位移动主单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除仓位移动主单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -732,7 +733,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
@@ -763,7 +764,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", mainId);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "仓位移动主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.WAREHOUSE_LOCATION_MOVE_INFO.getCode(), mainId, "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
@@ -796,16 +797,16 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 transferDTO.setBillDate(infoEntity.getBillDate());
                 transferDTO.setSourceDetailId(detailEntity.getId());
                 transferDTO.setCurWarehouseId(dto.getPcShow()?
-                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
+                        (CharSequenceUtil.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                 transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
                 transferDTO.setTargetWarehouseId(dto.getPcShow()?
-                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
+                        (CharSequenceUtil.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                 transferDTO.setTargetWarehouseLocation(detailEntity.getInWarehouseLocation());
                 transferDTO.setQty(detailEntity.getQty());
                 transferDTO.setSkuId(detailEntity.getSkuId());
                 transferDTO.setSkuNo(detailEntity.getSkuNo());
                 transferDTO.setWarehouseId(dto.getPcShow() ?
-                        (StringUtils.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
+                        (CharSequenceUtil.isNotBlank(detailEntity.getWarehouseId()) ? detailEntity.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
 
                 transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                 transferDTOList.add(transferDTO);
@@ -833,16 +834,16 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                         transferDTO.setBillDate(infoEntity.getBillDate());
                         transferDTO.setSourceDetailId(detail.getId());
                         transferDTO.setCurWarehouseId(dto.getPcShow()?
-                                (StringUtils.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
+                                (CharSequenceUtil.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                         transferDTO.setCurWarehouseLocation(detail.getOutWarehouseLocation());
                         transferDTO.setTargetWarehouseId(dto.getPcShow()?
-                                (StringUtils.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
+                                (CharSequenceUtil.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
                         transferDTO.setTargetWarehouseLocation(detail.getInWarehouseLocation());
                         transferDTO.setQty(detail.getQty());
                         transferDTO.setSkuId(detail.getSkuId());
                         transferDTO.setSkuNo(detail.getSkuNo());
                         transferDTO.setWarehouseId(dto.getPcShow() ?
-                                (StringUtils.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
+                                (CharSequenceUtil.isNotBlank(detail.getWarehouseId()) ? detail.getWarehouseId() : infoEntity.getWarehouseId()) : infoEntity.getWarehouseId());
 
                         transferDTO.setInventoryStatus(InventoryStatusEnum.USABLE);
                         transferNewDTOList.add(transferDTO);
@@ -884,7 +885,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         List<String> allWarehouseIds=new ArrayList<>();
         List<String> detailWarehouseIds = detailEntityList.stream().map(WarehouseLocationMoveDetailEntity::getWarehouseId)
                 .filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        if (StringUtils.isNotBlank(warehouseLocationMoveEntity.getWarehouseId())) {
+        if (CharSequenceUtil.isNotBlank(warehouseLocationMoveEntity.getWarehouseId())) {
             allWarehouseIds.add(warehouseLocationMoveEntity.getWarehouseId());
         }
         if (CollectionUtils.isNotEmpty(detailWarehouseIds)) {
@@ -899,13 +900,13 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             viewDTO.setUnitName(skuVO.getUnitName());
             viewDTO.setSkuImg(skuVO.getSkuImagesUrl());
             viewDTO.setProductName(skuVO.getSkuName());
-            viewDTO.setWarehouseId(StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId());
-            viewDTO.setWarehouseName(StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseName()) ? viewDTO.getWarehouseName() : warehouseLocationMoveEntity.getWarehouseName());
+            viewDTO.setWarehouseId(CharSequenceUtil.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId());
+            viewDTO.setWarehouseName(CharSequenceUtil.isBlank(warehouseLocationMoveEntity.getWarehouseName()) ? viewDTO.getWarehouseName() : warehouseLocationMoveEntity.getWarehouseName());
             WarehouseLocationEntity inWarehouseLocationEntity = getWarehouseLocationEntity(warehouseLocationEntities,
-                    StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId(), viewDTO.getInWarehouseLocation());
+                    CharSequenceUtil.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId(), viewDTO.getInWarehouseLocation());
             viewDTO.setInWarehouseLocationName(inWarehouseLocationEntity.getName());
             WarehouseLocationEntity outWarehouseLocationEntity = getWarehouseLocationEntity(warehouseLocationEntities,
-                    StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId(), viewDTO.getOutWarehouseLocation());
+                    CharSequenceUtil.isBlank(warehouseLocationMoveEntity.getWarehouseId()) ? viewDTO.getWarehouseId() : warehouseLocationMoveEntity.getWarehouseId(), viewDTO.getOutWarehouseLocation());
             viewDTO.setOutWarehouseLocationName(outWarehouseLocationEntity.getName());
         }
 
@@ -930,11 +931,11 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
                 .map(WarehouseLocationMoveDTO.DetailViewDTO::getWarehouseId).collect(Collectors.toList()));
         stopWatch.start("拼接数据");
         detailViewDTOs.forEach(detailViewDTO -> {
-            if (StringUtils.isBlank(detailViewDTO.getWarehouseId())) {
+            if (CharSequenceUtil.isBlank(detailViewDTO.getWarehouseId())) {
                 detailViewDTO.setWarehouseId(detailViewDTO.getInfoWarehouseId());
                 detailViewDTO.setWarehouseName(detailViewDTO.getInfoWarehouseName());
             }
-            if (StringUtils.isBlank(detailViewDTO.getWarehouseName())) {
+            if (CharSequenceUtil.isBlank(detailViewDTO.getWarehouseName())) {
                 detailViewDTO.setWarehouseName(detailViewDTO.getInfoWarehouseName());
             }
             InventoryDTO.InventoryBySkuIdAndWarehouseDTO inventoryBySkuIdAndWarehouseDTO = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
@@ -1069,12 +1070,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             data.setDetailCount(skuList.size());
             for (WarehouseLocationMoveDTO.PdaItemDTO pdaItemDTO : itemDTOList) {
                 pdaItemDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities,
-                        StringUtils.isBlank(data.getWarehouseId()) ? pdaItemDTO.getWarehouseId() : data.getWarehouseId(), pdaItemDTO.getInWarehouseLocation()).getName());
-                if (StringUtils.isBlank(pdaItemDTO.getWarehouseId())){
+                        CharSequenceUtil.isBlank(data.getWarehouseId()) ? pdaItemDTO.getWarehouseId() : data.getWarehouseId(), pdaItemDTO.getInWarehouseLocation()).getName());
+                if (CharSequenceUtil.isBlank(pdaItemDTO.getWarehouseId())){
                     pdaItemDTO.setWarehouseId(data.getWarehouseId());
                 }
 
-                if (StringUtils.isBlank(pdaItemDTO.getWarehouseName())){
+                if (CharSequenceUtil.isBlank(pdaItemDTO.getWarehouseName())){
                     pdaItemDTO.setWarehouseName(data.getWarehouseName());
                 }
             }
@@ -1097,7 +1098,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
     * 新增修改处理数据
     */
     private void handleData(WarehouseLocationMoveEntity warehouseLocationMoveEntity) {
-        if (StringUtils.isBlank(warehouseLocationMoveEntity.getId()) && ObjectUtil.isNull(warehouseLocationMoveEntity.getBillDate())) {
+        if (CharSequenceUtil.isBlank(warehouseLocationMoveEntity.getId()) && ObjectUtil.isNull(warehouseLocationMoveEntity.getBillDate())) {
             warehouseLocationMoveEntity.setBillDate(LocalDate.now());
         }
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(warehouseLocationMoveEntity.getWarehouseId()));
@@ -1109,7 +1110,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         if (ObjectUtil.isNotEmpty(companyEntity)) {
             warehouseLocationMoveEntity.setInventoryOrgName(companyEntity.getCompanyName());
         }
-        if (StringUtils.isBlank(warehouseLocationMoveEntity.getWarehouseId())){
+        if (CharSequenceUtil.isBlank(warehouseLocationMoveEntity.getWarehouseId())){
             warehouseLocationMoveEntity.setWarehouseId("");
             warehouseLocationMoveEntity.setWarehouseName("");
         }
@@ -1155,10 +1156,10 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             if (Objects.nonNull(skuVO)) {
                 pdaPcListDTO.setProductName(skuVO.getSkuName());
             }
-            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseId())){
+            if (CharSequenceUtil.isBlank(pdaPcListDTO.getWarehouseId())){
                 pdaPcListDTO.setWarehouseId(pdaPcListDTO.getInfoWarehouseId());
             }
-            if (StringUtils.isBlank(pdaPcListDTO.getWarehouseName())){
+            if (CharSequenceUtil.isBlank(pdaPcListDTO.getWarehouseName())){
                 pdaPcListDTO.setWarehouseName(pdaPcListDTO.getInfoWarehouseName());
             }
             pdaPcListDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, pdaPcListDTO.getWarehouseId(), pdaPcListDTO.getInWarehouseLocation()).getName());

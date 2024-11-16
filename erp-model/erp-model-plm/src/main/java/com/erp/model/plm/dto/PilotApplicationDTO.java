@@ -1,27 +1,23 @@
 package com.erp.model.plm.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
-
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.model.workflow.dto.ProcessTaskManagementAttachmentDTO;
-import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
-
-import com.common.business.dto.AdvanceQueryDTO;
-
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -515,6 +511,7 @@ public class PilotApplicationDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class ApproveDTO extends BaseApproveParamDTO {
+
         /**
          * 附件
          */
@@ -657,7 +654,7 @@ public class PilotApplicationDTO implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class AttachmentDTO{
+    public static class AttachmentDTO implements Serializable{
         /**
          * 文件名称
          */

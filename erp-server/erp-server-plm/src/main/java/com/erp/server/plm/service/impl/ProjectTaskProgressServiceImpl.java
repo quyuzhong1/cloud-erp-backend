@@ -183,9 +183,9 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
      * @date: 2022/11/21 10:39
      */
     @Override
-    public productProgressShowDTO getFinishProgressList(String productId) {
+    public ProductProgressShowDTO getFinishProgressList(String productId) {
         //结果集
-        productProgressShowDTO resultDto = new productProgressShowDTO();
+        ProductProgressShowDTO resultDto = new ProductProgressShowDTO();
         //结果集
         List<ProductProgressPhaseDTO> phaseList = new ArrayList<>();
         List<ProductProgressSkuDTO> skuList = new ArrayList<>();

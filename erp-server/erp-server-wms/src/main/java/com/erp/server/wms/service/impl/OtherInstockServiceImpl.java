@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -301,7 +302,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     public String addAndSubmit(OtherInstockDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
@@ -323,7 +324,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //添加日志
         OtherInstockEntity old = this.getById(dto.getId());
         if(!entity.getReturnLogisticCode().equals(old.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",old.getReturnLogisticCode(),entity.getReturnLogisticCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), old.getId(), "编辑");
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}",old.getReturnLogisticCode(),entity.getReturnLogisticCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), old.getId(), "编辑");
         }
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "", "");
         //更新主表数据
@@ -419,7 +420,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //删除明细数据
         otherInstockDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的其他入库单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(OtherInstockEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的其他入库单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(OtherInstockEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.OTHER_INSTOCK.getCode(), pairList, "删除操作");
         //发送金蝶
@@ -500,7 +501,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.REJECT.getStatus(), null);
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), StringUtils.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), CharSequenceUtil.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单审核");
     }
@@ -538,7 +539,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             }
         }
         //操作日志
-        operateLogService.addModuleOperateLog(StrUtil.format("反审核了一个其他入库单【{}】", entity.getCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("反审核了一个其他入库单【{}】", entity.getCode()), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单反审核");
     }
 
@@ -575,7 +576,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(OtherInstockEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeId), OtherInstockEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId), OtherInstockEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -661,14 +662,14 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseKeeperId, receiverId));
 
         //仓管员
-        if (StringUtils.isNotBlank(warehouseKeeperId)) {
+        if (CharSequenceUtil.isNotBlank(warehouseKeeperId)) {
             FindUserDTO userDTO = userList.stream().filter(obj -> obj.getUserId().equals(warehouseKeeperId)).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 entity.setWarehouseKeeperName(userDTO.getUserName());
             }
         }
         //领料员
-        if (StringUtils.isNotBlank(receiverId)) {
+        if (CharSequenceUtil.isNotBlank(receiverId)) {
             FindUserDTO userDTO = userList.stream().filter(obj -> obj.getUserId().equals(receiverId)).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 entity.setReceiverName(userDTO.getUserName());
@@ -693,7 +694,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         entity.setOrgName(orgName);
 
         //部门信息
-        if (StringUtils.isNotBlank(deptId)) {
+        if (CharSequenceUtil.isNotBlank(deptId)) {
             SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(deptId);
             if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
                 entity.setDeptName(sysDepartmentDTO.getName());
@@ -828,7 +829,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     public String addAndApprove(OtherInstockDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
@@ -867,7 +868,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
      */
     public OtherInstockDTO.AddDTO buildOverFlowMainDto(WarehouseEntity warehouse, boolean isTransitWarehouse, String userId) {
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
-        if (org.apache.commons.lang3.StringUtils.isBlank(warehouse.getOnwayWarehouseId()) && isTransitWarehouse) {
+        if (CharSequenceUtil.isBlank(warehouse.getOnwayWarehouseId()) && isTransitWarehouse) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
         }
         OtherInstockDTO.AddDTO addDTO = new OtherInstockDTO.AddDTO();
@@ -1023,7 +1024,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
             Integer actualQty = Integer.valueOf(importExcelDTO.getActualQtyStr());
 
-            LocalDate billDate = StringUtils.isBlank(importExcelDTO.getBillDateStr()) ? LocalDate.now() : LocalDate.parse(importExcelDTO.getBillDateStr(), DateTimeFormatter.ofPattern("yyyy/M/d"));
+            LocalDate billDate = CharSequenceUtil.isBlank(importExcelDTO.getBillDateStr()) ? LocalDate.now() : LocalDate.parse(importExcelDTO.getBillDateStr(), DateTimeFormatter.ofPattern("yyyy/M/d"));
 
             // 库存方向Map
             InventoryDirectionEnum inventoryDirectionEnum = inventoryDirectionMap.get(importExcelDTO.getInventoryDirection());
@@ -1031,33 +1032,33 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             // 发货仓库
             WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(importExcelDTO.getWarehouseName());
             if (null == warehouseDTO) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓库不存在", importExcelDTO.getWarehouseName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库不存在", importExcelDTO.getWarehouseName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
             if (null != warehouseDTO.getApproveStatus() && !ApproveStatusEnum.APPROVE.equals(warehouseDTO.getApproveStatus())) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓库未审核通过", importExcelDTO.getWarehouseName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库未审核通过", importExcelDTO.getWarehouseName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
             if (null != warehouseDTO.getDisabled() && warehouseDTO.getDisabled()) {
-                importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓库未启用", importExcelDTO.getWarehouseName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库未启用", importExcelDTO.getWarehouseName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
 
             String currentWarehouseId = warehouseDTO.getId();
             WarehouseLocationEntity locationEntity = null;
-            if (StringUtils.isNotBlank(importExcelDTO.getWarehouseLocation())) {
+            if (CharSequenceUtil.isNotBlank(importExcelDTO.getWarehouseLocation())) {
                 List<WarehouseLocationEntity> locationList = warehousrLocationMap.get(currentWarehouseId);
                 if (CollectionUtils.isEmpty(locationList)) {
-                    importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓位不存在", importExcelDTO.getWarehouseLocation()));
+                    importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓位不存在", importExcelDTO.getWarehouseLocation()));
                     errorList.add(importExcelDTO);
                     continue;
                 }
                 locationEntity = locationList.stream().filter(e -> e.getName().equalsIgnoreCase(importExcelDTO.getWarehouseLocation())).findFirst().orElse(null);
                 if (null == locationEntity) {
-                    importExcelDTO.setErrorMsg(StrUtil.format("【{}】仓位不存在", importExcelDTO.getWarehouseLocation()));
+                    importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓位不存在", importExcelDTO.getWarehouseLocation()));
                     errorList.add(importExcelDTO);
                     continue;
                 }
@@ -1065,10 +1066,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
             // 验收员
             FindUserDTO userDTO = null;
-            if (StringUtils.isNotBlank(importExcelDTO.getReceiverName())) {
+            if (CharSequenceUtil.isNotBlank(importExcelDTO.getReceiverName())) {
                 List<FindUserDTO> userDTOList = userMap.get(importExcelDTO.getReceiverName());
                 if (CollectionUtils.isEmpty(userDTOList)) {
-                    importExcelDTO.setErrorMsg(StrUtil.format("【{}】验收员不存在", importExcelDTO.getReceiverName()));
+                    importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】验收员不存在", importExcelDTO.getReceiverName()));
                     errorList.add(importExcelDTO);
                     continue;
                 } else {
@@ -1083,19 +1084,19 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 departmentDTO = currrentDeptList.stream().findFirst().orElse(null);
             }
             if (null == departmentDTO) {
-                importExcelDTO.setErrorMsg(StrUtil.format("部门【{}】不存在", importExcelDTO.getDeptName()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("部门【{}】不存在", importExcelDTO.getDeptName()));
                 errorList.add(importExcelDTO);
                 continue;
             }
 
             SkuVO skuVO = existSkuMap.get(importExcelDTO.getSkuNo());
             if (null == skuVO) {
-                importExcelDTO.setErrorMsg(StrUtil.format("SKU【{}】不存在或未审核通过", importExcelDTO.getSkuNo()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("SKU【{}】不存在或未审核通过", importExcelDTO.getSkuNo()));
                 errorList.add(importExcelDTO);
                 continue;
             }
             if (null != skuVO.getStatus() && !Objects.equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode(), skuVO.getStatus())) {
-                importExcelDTO.setErrorMsg(StrUtil.format("SKU【{}】不存在或未审核通过", importExcelDTO.getSkuNo()));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("SKU【{}】不存在或未审核通过", importExcelDTO.getSkuNo()));
                 errorList.add(importExcelDTO);
                 continue;
             }
@@ -1103,13 +1104,13 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //仓位必填验证
             //判断仓位是否需要必填
             if (warehouseIdList.contains(warehouseDTO.getId())) {
-                if (StringUtils.isBlank(importExcelDTO.getWarehouseLocation()) || null == locationEntity){
-                    importExcelDTO.setErrorMsg(StrUtil.format(" 仓库【{}】下仓位不能为空", importExcelDTO.getWarehouseName()));
+                if (CharSequenceUtil.isBlank(importExcelDTO.getWarehouseLocation()) || null == locationEntity){
+                    importExcelDTO.setErrorMsg(CharSequenceUtil.format(" 仓库【{}】下仓位不能为空", importExcelDTO.getWarehouseName()));
                     errorList.add(importExcelDTO);
                     continue;
                 }
-                if (StringUtils.isBlank(locationEntity.getCode())){
-                    importExcelDTO.setErrorMsg(StrUtil.format(" 仓库【{}】下仓位不能为空", importExcelDTO.getWarehouseName()));
+                if (CharSequenceUtil.isBlank(locationEntity.getCode())){
+                    importExcelDTO.setErrorMsg(CharSequenceUtil.format(" 仓库【{}】下仓位不能为空", importExcelDTO.getWarehouseName()));
                     errorList.add(importExcelDTO);
                     continue;
                 }
@@ -1139,7 +1140,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 // 添加标记
                 signSkuIds.add(skuVO.getSkuId());
             } catch (Exception e) {
-                importExcelDTO.setErrorMsg(StrUtil.format("转换异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("转换异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
                 errorList.add(importExcelDTO);
             }
         }
@@ -1156,7 +1157,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 List<OtherInStockImportExcelDTO> errorSaveList = canHandleList.stream().map(dto  ->
                         {
                             OtherInStockImportExcelDTO errorSaveImportExcelDTO = dto.getImportExcelDTO();
-                            errorSaveImportExcelDTO.setErrorMsg(StrUtil.format("保存异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
+                            errorSaveImportExcelDTO.setErrorMsg(CharSequenceUtil.format("保存异常【{}】", ExceptionUtil.stacktraceToOneLineString(e, 255)));
                             return errorSaveImportExcelDTO;
                         }
                 ).collect(Collectors.toList());
@@ -1298,7 +1299,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<OtherInstockDetailEntity> detailEntityList = new ArrayList<>();
         for (DmpSoPrestockDetailDTO.PrestockDetailDTO prestockDetailDTO : dto.getDetailList()) {
             OtherInstockDetailEntity detailEntity = new OtherInstockDetailEntity();
-            SkuVO skuVO = skuNoList.stream().filter(v->v.getSkuNo().equals(prestockDetailDTO.getSkuNo())).findFirst().orElseThrow(()-> new ServiceException(StrUtil.format("{}旺店通产品映射未找到",prestockDetailDTO.getSkuNo())));
+            SkuVO skuVO = skuNoList.stream().filter(v->v.getSkuNo().equals(prestockDetailDTO.getSkuNo())).findFirst().orElseThrow(()-> new ServiceException(CharSequenceUtil.format("{}旺店通产品映射未找到",prestockDetailDTO.getSkuNo())));
             detailEntity.setSkuId(skuVO.getSkuId());
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setActualQty(prestockDetailDTO.getQty());

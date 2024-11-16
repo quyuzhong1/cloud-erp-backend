@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
@@ -95,7 +96,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         // 根据main ID 查询所有明细
         List<StocktakingPlanDetailEntity> oldDetailList = listByMainId(mainId);
         List<StocktakingPlanDetailEntity> updateList = newDetailList.stream().filter(item -> StrUtil.isNotBlank(item.getId())).collect(Collectors.toList());
-        List<StocktakingPlanDetailEntity> insertList = newDetailList.stream().filter(item -> StrUtil.isBlank(item.getId())).collect(Collectors.toList());
+        List<StocktakingPlanDetailEntity> insertList = newDetailList.stream().filter(item -> CharSequenceUtil.isBlank(item.getId())).collect(Collectors.toList());
         List<String> updateIds = updateList.stream().map(StocktakingPlanDetailEntity::getId).collect(Collectors.toList());
         List<StocktakingPlanDetailEntity> removeList = oldDetailList.stream().filter(item -> !updateIds.contains(item.getId())).collect(Collectors.toList());
 
@@ -103,7 +104,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         if (CollUtil.isNotEmpty(removeList)){
             List<String> removeIds = removeList.stream().map(StocktakingPlanDetailEntity::getId).collect(Collectors.toList());
             removeByIds(removeIds);
-            List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, StrUtil.format("仓库名称：{}，库区：{}，仓位：{}，SKU：{}",
+            List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, CharSequenceUtil.format("仓库名称：{}，库区：{}，仓位：{}，SKU：{}",
                     obj.getWarehouseName(), obj.getWarehouseArea(), obj.getWarehouseLocation(), obj.getSkuNo()))).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除明细数据【%s】", ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), removePairList, "编辑操作");
         }
@@ -123,7 +124,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         // 新增不存在的明细数据
         if (CollUtil.isNotEmpty(insertList)){
             saveBatch(insertList);
-            List<Pair<String, String>> addPairList = insertList.stream().map(obj -> new Pair<>(mainId,StrUtil.format("仓库名称：{}，库区：{}，仓位：{}，SKU：{}",
+            List<Pair<String, String>> addPairList = insertList.stream().map(obj -> new Pair<>(mainId,CharSequenceUtil.format("仓库名称：{}，库区：{}，仓位：{}，SKU：{}",
                     obj.getWarehouseName(), obj.getWarehouseArea(), obj.getWarehouseLocation(), obj.getSkuNo()))).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加明细数据【%s】", ModuleTypeEnum.STOCKTAKING_PLAN.getCode(), addPairList, "编辑操作");
         }

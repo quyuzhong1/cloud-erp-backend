@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -54,7 +55,7 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
         if (CollectionUtils.isEmpty(sourceIdList)) {
             return Collections.emptyList();
         }
-        sourceIdList=sourceIdList.stream().filter(s-> StringUtils.isNotBlank(s)).collect(Collectors.toList());
+        sourceIdList=sourceIdList.stream().filter(s-> CharSequenceUtil.isNotBlank(s)).collect(Collectors.toList());
         return this.lambdaQuery().in(StocktakingTaskUserEntity::getSourceId, sourceIdList).list();
     }
 

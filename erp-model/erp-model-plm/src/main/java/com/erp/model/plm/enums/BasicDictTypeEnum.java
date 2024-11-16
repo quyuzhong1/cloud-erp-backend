@@ -83,7 +83,7 @@ public enum  BasicDictTypeEnum {
         return name;
     }
 
-    public static String getNameByCode(Integer code) {
+    public static String getNameByCode(String code) {
         BasicDictTypeEnum[] basicDictTypeEnums = values();
         for (BasicDictTypeEnum basicDictTypeEnum : basicDictTypeEnums) {
             if (basicDictTypeEnum.getCode().equals(code)) {

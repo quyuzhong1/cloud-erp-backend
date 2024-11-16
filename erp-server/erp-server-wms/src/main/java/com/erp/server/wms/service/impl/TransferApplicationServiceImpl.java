@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -208,7 +209,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     public String addAndSubmit(TransferApplicationDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
@@ -352,7 +353,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //删除明细数据
         transferApplicationDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的调拨申请单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferApplicationEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的调拨申请单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferApplicationEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
         //删除主表数据
@@ -399,7 +400,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         approveProcess(entity, type, comment, isNeedProcess);
 
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个调拨申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个调拨申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -474,7 +475,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         //操作日志
         List<Pair<String, String>> pairList = Arrays.asList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个调拨申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(singleApproveParamDTO.getComment()) ? String.format(",意见：%s", singleApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "审核操作");
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个调拨申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(CharSequenceUtil.isNotBlank(singleApproveParamDTO.getComment()) ? String.format(",意见：%s", singleApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "审核操作");
     }
 
 
@@ -1059,14 +1060,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         for (TransferApplicationDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-            if (StringUtils.isBlank(productName)) {
+            if (CharSequenceUtil.isBlank(productName)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             obj.setProductName(productName);
 
             //调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
-            if (StringUtils.isBlank(transferDirectionName)) {
+            if (CharSequenceUtil.isBlank(transferDirectionName)) {
                 throw new ServiceException(ApiError.ERROR_99049);
             }
             obj.setTransferDirectionName(transferDirectionName);
@@ -1081,7 +1082,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             }
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 obj.setApproveUserName(curApprove);
             }
         }
@@ -1093,7 +1094,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     private void doOpHandleDataId(String inWarehouseId, String outWarehouseId, String applyUserId, TransferApplicationEntity entity) {
 
         //申请人
-        if (StringUtils.isNotBlank(applyUserId)) {
+        if (CharSequenceUtil.isNotBlank(applyUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(applyUserId);
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 entity.setApplyUserName(userDTO.getUserName());

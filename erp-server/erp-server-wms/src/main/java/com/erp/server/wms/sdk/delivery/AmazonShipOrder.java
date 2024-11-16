@@ -2,6 +2,7 @@ package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -84,9 +85,9 @@ public class AmazonShipOrder extends AbstractShipOrder {
             // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略
             detailEntityList =  detailEntityList.stream()
-                    .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
-//            if (detailEntityList.stream().anyMatch(e -> StringUtils.isBlank(e.getSourceDetailId()))) {
+//            if (detailEntityList.stream().anyMatch(e -> CharSequenceUtil.isBlank(e.getSourceDetailId()))) {
 //                throw new ServiceException("平台来源详情ID为空");
 //            }
             detailEntityList = super.handleSplit(detailEntityList, dto.isFalseDeliveryFlag());
@@ -96,7 +97,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
             }
 
             //检查销售订单物流信息是否存在
-            if (StringUtils.isBlank(logisticsEntity.getLogisticsChannelId())){
+            if (CharSequenceUtil.isBlank(logisticsEntity.getLogisticsChannelId())){
                 throw new ServiceException("订单渠道ID为空");
             }
             //获取销售渠道信息
@@ -125,7 +126,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
                     .build();
             Boolean isCancel = deliveryIntercept(interceptDTO);
             if (isCancel){
-                throw new ServiceException(StrUtil.format("销售订单【{}】平台已取消，不支持发货",mainEntity.getCode()));
+                throw new ServiceException(CharSequenceUtil.format("销售订单【{}】平台已取消，不支持发货",mainEntity.getCode()));
             }
 
             ConfirmShipmentRequest body = new ConfirmShipmentRequest();
@@ -145,7 +146,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
             String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
             String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
-            if (StrUtil.isBlank(trackingNumber)) {
+            if (CharSequenceUtil.isBlank(trackingNumber)) {
                 throw new ServiceException("操作失败，渠道标发单号为空");
             }
             // 物流运单号
@@ -326,7 +327,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
      * 标记发货亚马逊Api异常处理
      */
     public void confirmShipmentApiExceptionHandle(ApiException e, String platformCode, OrdersV0Api api) {
-        if (!StringUtils.isBlank(e.getMessage())){
+        if (!CharSequenceUtil.isBlank(e.getMessage())){
             // 其他异常信息
             throw new ServiceException("亚马逊标记发货失败:" + e.getMessage());
         }

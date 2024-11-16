@@ -1,6 +1,7 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -49,7 +50,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
      */
     public List<SoB2cDetailEntity> handleSplit(List<SoB2cDetailEntity> detailList, boolean falseDeliveryFlag){
         List<SoB2cDetailEntity> allDetailList = detailList;
-        detailList = detailList.stream().filter(v -> StringUtils.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
+        detailList = detailList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
         //没有捆绑商品拆分，直接返回
         if (CollectionUtils.isEmpty(detailList)) {
             return allDetailList;

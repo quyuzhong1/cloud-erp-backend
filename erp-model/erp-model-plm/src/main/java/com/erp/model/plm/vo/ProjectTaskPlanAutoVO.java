@@ -48,7 +48,7 @@ public class ProjectTaskPlanAutoVO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ScheduleVO {
+    public static class ScheduleVO implements Serializable{
         /**
          * 任务名称
          */
@@ -71,7 +71,7 @@ public class ProjectTaskPlanAutoVO implements Serializable {
     }
     @Data
     @NoArgsConstructor
-    public static class ScheduleDateVO {
+    public static class ScheduleDateVO implements Serializable{
 
         private String id;
         /**

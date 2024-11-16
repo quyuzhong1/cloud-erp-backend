@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -133,10 +134,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             //平台名称
             String platformName = platformList.stream().filter(obj -> StrUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
 
-            if (StrUtil.isBlank(shopName)) {
-                msg = StrUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()));
+            if (CharSequenceUtil.isBlank(shopName)) {
+                msg = CharSequenceUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()));
             } else {
-                msg = StrUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
+                msg = CharSequenceUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
             }
             oldChannelMsg.add(msg);
         }
@@ -151,10 +152,10 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             //平台名称
             String platformName = platformList.stream().filter(obj -> StrUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
 
-            if (StrUtil.isBlank(shopName)) {
-                msg = StrUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()));
+            if (CharSequenceUtil.isBlank(shopName)) {
+                msg = CharSequenceUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()));
             } else {
-                msg = StrUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
+                msg = CharSequenceUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
             }
             newChannelMsg.add(msg);
             if (!oldChannelMsg.contains(msg)) {
@@ -164,7 +165,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         //size不一致或者有变更
         if (oldChannelMsg.size() != newChannelMsg.size() || isChange) {
             // 操作日志
-            String msg = StrUtil.format("关联渠道：从【{}】修改为【{}】",StrUtil.join(";",newChannelMsg),StrUtil.join(";",oldChannelMsg));
+            String msg = CharSequenceUtil.format("关联渠道：从【{}】修改为【{}】",StrUtil.join(";",newChannelMsg),StrUtil.join(";",oldChannelMsg));
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑信息");
         }
     }
@@ -221,7 +222,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
 
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓渠道日志数据，id：【{}】", virtualWarehouseChannelEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseChannelEntity.getId(), "虚拟仓渠道");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseChannelEntity.getId(), "虚拟仓渠道");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseChannelEntity, null, virtualWarehouseChannelEntity.getId(), msg);
         return Boolean.TRUE;

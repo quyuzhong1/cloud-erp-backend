@@ -11,7 +11,6 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.oms.dto.excel.LogisticsProductExcelDTO;
-import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +73,6 @@ public class LogisticsProductExcelListener extends AnalysisEventListener<Logisti
     }
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 }

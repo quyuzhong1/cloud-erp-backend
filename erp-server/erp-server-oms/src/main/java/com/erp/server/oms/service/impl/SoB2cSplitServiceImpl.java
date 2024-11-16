@@ -841,7 +841,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
 
         //查询订单是否是合并订单
-        List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> StrUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
+        List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> CharSequenceUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(thisRefList)) {
             return;
         }
@@ -881,7 +881,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             viewSplitDTO.setId(entity.getId());
             viewSplitDTO.setCode(entity.getCode());
             //销售订单下对应明细
-            List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), entity.getId())).collect(Collectors.toList());
+            List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), entity.getId())).collect(Collectors.toList());
             List<SoB2cDTO.ViewSplitDetailDTO> viewSplitDetailList = new ArrayList<>();
             for (SoB2cDetailEntity detailEntity : detailList) {
                 SoB2cDTO.ViewSplitDetailDTO viewSplitDetailDTO = new SoB2cDTO.ViewSplitDetailDTO();

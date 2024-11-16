@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.utils.CollectionUtils;
@@ -43,7 +44,7 @@ public class VirtualWarehouseAllocationDetailFeignController {
         List<VirtualWarehousePushHandleRelationEntity> handleRelationEntityList = virtualWarehousePushHandleRelationService
                 .list(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>().eq(VirtualWarehousePushHandleRelationEntity::getHandleDetailId, handelDetailId));
         List<String> detailIds = handleRelationEntityList.stream().map(VirtualWarehousePushHandleRelationEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        if (CollectionUtil.isEmpty(detailIds)){
+        if (CollUtil.isEmpty(detailIds)){
             return Collections.emptyList();
         }
         return virtualWarehouseAllocationDetailService.listByIds(detailIds);

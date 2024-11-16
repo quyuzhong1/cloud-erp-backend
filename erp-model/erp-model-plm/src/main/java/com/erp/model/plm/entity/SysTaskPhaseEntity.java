@@ -1,13 +1,12 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Classname SysTaskPhaseEntity
@@ -18,7 +17,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("sys_project_phase")
-public class SysTaskPhaseEntity extends BaseEntity implements Serializable {
+public class SysTaskPhaseEntity extends BaseEntity<SysTaskPhaseEntity> implements Serializable {
 
     /**
      * 阶段名

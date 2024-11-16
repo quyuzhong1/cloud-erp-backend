@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -83,9 +84,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDeliveryInterceptMapper, SoB2cDeliveryInterceptEntity> implements SoB2cDeliveryInterceptService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
     @Resource
@@ -163,7 +164,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货拦截单" , soB2cDeliveryInterceptEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货拦截单" , soB2cDeliveryInterceptEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), soB2cDeliveryInterceptEntity.getId(), "新增操作");
         // 新增明细（如果有明细的话）
         soB2cDeliveryInterceptDetailService.add(addDTO, soB2cDeliveryInterceptEntity.getId());
@@ -280,7 +281,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             if(CollectionUtils.isNotEmpty(transferList)){
                 transferInfo = transferList.get(0).getTransferLogisticSupplierName() + "-" +transferList.get(0).getName();
             }
-            throw new ServiceException(StrUtil.format("订单{}已经预报给{}，请取消预报后操作",soB2cEntity.getCode(),transferInfo));
+            throw new ServiceException(CharSequenceUtil.format("订单{}已经预报给{}，请取消预报后操作",soB2cEntity.getCode(),transferInfo));
         }
 
         LogisticsBillDTO.CancelBillDTO dto = LogisticsBillDTO.CancelBillDTO.builder()
@@ -321,7 +322,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 if(cancelResult.getCode().equals(-1) && interceptResult.getCode().equals(-1)){
                     msg = "该物流渠道不支持线上发起物流拦截，请线下与物流商沟通后，手动标记拦截结果";
                 }else{
-                    msg = StrUtil.format("取消订单失败原因：{}；拦截订单失败原因：{}", cancelResult.getMsg(),interceptResult.getMsg());
+                    msg = CharSequenceUtil.format("取消订单失败原因：{}；拦截订单失败原因：{}", cancelResult.getMsg(),interceptResult.getMsg());
                 }
                 isSuccess = false;
             }
@@ -331,7 +332,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         this.updateById(entity);
 
         // 操作日志
-        String logMsg = StrUtil.format("用户【{}】发起物流拦截,单据【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截单", entity.getCode());
+        String logMsg = CharSequenceUtil.format("用户【{}】发起物流拦截,单据【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截单", entity.getCode());
         operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
         if(isSuccess){
             return BatchResultDTO.success(entity.getId(),entity.getCode(),msg);
@@ -360,7 +361,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             //已组包/已中转不可操作拦截成功
             //来源id 就是b2c销售订单id
             String sourceId = entity.getSourceId();
-            if (StringUtils.isNotBlank(sourceId)) {
+            if (CharSequenceUtil.isNotBlank(sourceId)) {
                 SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
                 if (Objects.nonNull(soB2cEntity)) {
                     //组包状态
@@ -511,7 +512,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         }
 
         // 操作日志
-        String logMsg = StrUtil.format("用户【{}】物流拦截结果确认【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截单", entity.getCode());
+        String logMsg = CharSequenceUtil.format("用户【{}】物流拦截结果确认【{}】", UserContext.getDefaultLoginUser().getUserName(), "发货拦截单", entity.getCode());
         operateLogService.addModuleOperateLog(logMsg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "处理操作");
 
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "拦截结果确认");
@@ -554,7 +555,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 isInterceptDTO.setIsIntercept(Boolean.FALSE);
             }
             //如果还未手动确认拦截结果，按平台处理结果
-            if (StringUtils.isBlank(interceptEntity.getHandleResult())
+            if (CharSequenceUtil.isBlank(interceptEntity.getHandleResult())
                     && !CancelStatusEnum.FAILURE.getCode().equals(interceptEntity.getCancelStatus())
                     && !InterceptStatusEnum.FAILURE.getCode().equals(interceptEntity.getInterceptStatus())
             ) {

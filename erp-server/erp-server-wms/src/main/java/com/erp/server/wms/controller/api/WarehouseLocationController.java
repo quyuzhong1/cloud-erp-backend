@@ -135,7 +135,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000001", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000001", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -144,7 +144,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000002", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000002", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -153,7 +153,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000003", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000003", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -162,7 +162,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000004", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000004", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -171,7 +171,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000005", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000005", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);

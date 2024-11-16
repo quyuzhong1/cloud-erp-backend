@@ -31,9 +31,9 @@ public class NoticeNodeController extends BaseController {
 
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "添加通知节点:id={id},节点名={nodeName}")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated NoticeNodeDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated NoticeNodeDTO dto) {
         boolean flag = noticeNodeService.addNoticeNode(dto);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
     }
 
     /**

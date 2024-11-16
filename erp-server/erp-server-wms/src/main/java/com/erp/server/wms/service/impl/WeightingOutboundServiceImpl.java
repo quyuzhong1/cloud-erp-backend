@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -162,14 +163,14 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             if (!soB2cDeliveryService.updateById(entity)) {
                 throw new ServiceException("发货单更新失败");
             }
-            String msg = StrUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
+            String msg = CharSequenceUtil.format("用户【{}】更新【{}】单据单号为【{}】称重出库完成", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
 
             for (SoB2cLogisticsEntity v : soB2cLogisticsEntities) {
                 v.setWeight(weightByG);
             }
             //更新物流商重量
-            if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode()) && StringUtils.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+            if(CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getCode()) && CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
                 LogisticsBillDTO.UpdateWeight updateWeight = LogisticsBillDTO.UpdateWeight.builder()
                         .soB2cEntity(soB2cEntity)
                         .soB2cLogisticsEntity(soB2cLogisticsEntity)
@@ -216,7 +217,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             //自动出库
             asyncService.syncAutoOut(entity);
 
-            String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "称重出库", entity.getCode());
+            String msg = CharSequenceUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "称重出库", entity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "称重出库");
 
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {

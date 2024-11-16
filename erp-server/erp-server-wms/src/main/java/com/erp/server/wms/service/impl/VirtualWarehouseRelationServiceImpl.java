@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -71,7 +73,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓实体仓关联关系", virtualWarehouseRelationEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓实体仓关联关系", virtualWarehouseRelationEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, virtualWarehouseRelationEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -100,7 +102,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
 
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓实体仓关联关系日志数据，id：【{}】", virtualWarehouseRelationEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseRelationEntity.getId(), "虚拟仓实体仓关联关系");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseRelationEntity.getId(), "虚拟仓实体仓关联关系");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseRelationEntity, null, virtualWarehouseRelationEntity.getId(), msg);
         return Boolean.TRUE;
@@ -199,7 +201,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             return;
         }
         // 操作日志
-        String msg = StrUtil.format("关联仓库：从【{}】修改为【{}】",oldWarehouseMsg,newWarehouseMsg );
+        String msg = CharSequenceUtil.format("关联仓库：从【{}】修改为【{}】",oldWarehouseMsg,newWarehouseMsg );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑信息");
     }
 
@@ -224,7 +226,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
 
     @Override
     public List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList,List<String> virtualWarehouseIdList) {
-        if (CollectionUtil.isEmpty(warehouseIdList)) {
+        if (CollUtil.isEmpty(warehouseIdList)) {
             return Collections.EMPTY_LIST;
         }
         List<VirtualWarehouseRelationEntity> list = lambdaQuery()
@@ -263,7 +265,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                 continue;
             }
             //未传关联id则直接返回
-            if (StrUtil.isBlank(dto.getRelationId())) {
+            if (CharSequenceUtil.isBlank(dto.getRelationId())) {
                 isExistVirtualResultDTO.setIsExistVirtual(Boolean.TRUE);
                 resultDTOList.add(isExistVirtualResultDTO);
                 continue;

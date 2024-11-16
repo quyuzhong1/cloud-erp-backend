@@ -2,7 +2,9 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.core.config.JacksonConfig;
 import com.erp.model.workflow.entity.ProcessTaskManagementAttachmentEntity;
 import com.erp.server.workflow.mapper.ProcessTaskManagementAttachmentMapper;
 import com.erp.server.workflow.service.ProcessTaskManagementAttachmentService;
@@ -46,9 +48,7 @@ public class ProcessTaskManagementAttachmentServiceImpl extends SuperServiceImpl
             throw new ServiceException("审核附件表（保存用户审核时提交的附件）保存失败");
         }
 
-        // 操作日志
-        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "审核附件表（保存用户审核时提交的附件）" , processTaskManagementAttachmentEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         return new BaseResultDTO.AddDTO(processTaskManagementAttachmentEntity.getId(), processTaskManagementAttachmentEntity.getId());
     }
 
@@ -69,11 +69,10 @@ public class ProcessTaskManagementAttachmentServiceImpl extends SuperServiceImpl
         if(!save) {
             throw new ServiceException("审核附件表（保存用户审核时提交的附件）保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        //  改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
             log.info("编辑 开始记录审核附件表（保存用户审核时提交的附件）日志数据，id：【{}】", processTaskManagementAttachmentEntity.getId());
-            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), processTaskManagementAttachmentEntity.getId(), "审核附件表（保存用户审核时提交的附件）");
         return Boolean.TRUE;
     }
 
@@ -82,6 +81,7 @@ public class ProcessTaskManagementAttachmentServiceImpl extends SuperServiceImpl
     * 新增修改处理数据
     */
     private void handleData(ProcessTaskManagementAttachmentEntity processTaskManagementAttachmentEntity) {
-    // TODO 验证数据 & 数据赋值
+    //  验证数据 & 数据赋值
+        log.debug("handleData processTaskManagementAttachmentEntity：{}", JSONUtil.toJsonStr(processTaskManagementAttachmentEntity));
     }
 }

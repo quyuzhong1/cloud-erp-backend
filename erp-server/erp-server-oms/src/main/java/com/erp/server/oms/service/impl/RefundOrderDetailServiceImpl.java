@@ -13,7 +13,7 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +32,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class RefundOrderDetailServiceImpl extends SuperServiceImpl<RefundOrderDetailMapper, RefundOrderDetailEntity> implements RefundOrderDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
