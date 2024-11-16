@@ -2230,15 +2230,15 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售额TOP20% 老品");
         statistical.setChartType(ChartType.BAR);
-        ChartVO<Object> chart = new ChartVO<>();
-        List<Object> xAxisList = new ArrayList<>(initSize);
-        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
+        ChartVO chart = new ChartVO();
+        List<String> xAxisList = new ArrayList<>(initSize);
+        List<SeriesVO> seriesList = new ArrayList<>(initSize);
         //只有一个柱子
-        SeriesVO<Object> series = new SeriesVO<>();
+        SeriesVO series = new SeriesVO();
         series.setName("销售额");
         List<Object> dataList = new ArrayList<>(initSize);
         for (SalesBaseVO item : list) {
-            dataList.add(item.getSales());
+            dataList.add(String.valueOf(item.getSales()));
             xAxisList.add(item.getFlagNo());
         }
         series.setData(dataList);
@@ -2273,11 +2273,11 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         StatisticalDataVO statistical = new StatisticalDataVO();
         statistical.setName("销售额TOP20% 老品");
         statistical.setChartType(ChartType.BAR);
-        ChartVO<Object> chart = new ChartVO<>();
-        List<Object> xAxisList = new ArrayList<>(initSize);
-        List<SeriesVO<Object>> seriesList = new ArrayList<>(initSize);
+        ChartVO chart = new ChartVO();
+        List<String> xAxisList = new ArrayList<>(initSize);
+        List<SeriesVO> seriesList = new ArrayList<>(initSize);
         //只有一个柱子
-        SeriesVO<Object> series = new SeriesVO<>();
+        SeriesVO series = new SeriesVO();
         series.setName("销售额");
         List<Object> dataList = new ArrayList<>(initSize);
         for (SalesBaseVO item : list) {

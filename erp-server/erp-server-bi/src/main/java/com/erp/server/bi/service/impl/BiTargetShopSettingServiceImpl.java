@@ -611,7 +611,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
                 eq(BiTargetShopSettingEntity::getShopId, dto.getShopId()).
                 eq(BiTargetShopSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetShopSettingEntity::getMetrics, dto.getMetrics()).
-                remove();;
+                remove();
     }
 
     /**

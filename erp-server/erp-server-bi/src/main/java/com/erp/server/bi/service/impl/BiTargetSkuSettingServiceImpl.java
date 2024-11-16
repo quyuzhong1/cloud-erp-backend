@@ -100,7 +100,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         this.batchAdd(targetYear.getId(), detailList);
         //汇总分类的集合
         List<BiTargetSkuSettingDTO.CommonDTO> gatherCategoryList = detailList.stream().
-                filter(CommonDTO::getIsGatherCategory).collect(Collectors.toList());
+                filter(BiTargetSkuSettingDTO.CommonDTO::getIsGatherCategory).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(gatherCategoryList)){
             addDTO.setDetailList(gatherCategoryList);
             autoCreateCategorySetting(addDTO);
