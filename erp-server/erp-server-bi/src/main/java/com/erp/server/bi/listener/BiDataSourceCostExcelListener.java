@@ -98,16 +98,36 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
     }
 
     private boolean fieldHandler(Map<Integer, String> map, List<String> errorMsgList, BiDataSourceCostEntity entity) {
+        validateDeptName(entity, errorMsgList);
+        validatePlatformName(entity, errorMsgList);
+        validateFieldIsNotBlank(entity.getSite(), "站点不能为空", errorMsgList);
+        validateFieldIsNotBlank(entity.getShopName(), "店铺名称不能为空", errorMsgList);
+        validateFieldIsNotBlank(entity.getChargeName(), "负责人不能为空", errorMsgList);
+        validateShopInfo(entity, errorMsgList);
+
+        return errorMsg(map, errorMsgList);
+    }
+
+    // 验证销售事业部
+    private void validateDeptName(BiDataSourceCostEntity entity, List<String> errorMsgList) {
         if (StringUtils.isBlank(entity.getDeptName())) {
             errorMsgList.add("销售事业部不能为空");
         } else {
-            String deptId = deptList.stream().filter(obj -> obj.getName().equals(entity.getDeptName())).map(SysDepartmentDTO::getId).findFirst().orElse("");
+            String deptId = deptList.stream()
+                    .filter(obj -> obj.getName().equals(entity.getDeptName()))
+                    .map(SysDepartmentDTO::getId)
+                    .findFirst()
+                    .orElse("");
             if (StringUtils.isBlank(deptId)) {
                 errorMsgList.add(CharSequenceUtil.format("部门{}不存在", entity.getDeptName()));
             } else {
                 entity.setDeptId(deptId);
             }
         }
+    }
+
+    // 验证平台名称
+    private void validatePlatformName(BiDataSourceCostEntity entity, List<String> errorMsgList) {
         if (StringUtils.isBlank(entity.getPlatformName())) {
             errorMsgList.add("平台名称不能为空");
         } else {
@@ -116,25 +136,28 @@ public class BiDataSourceCostExcelListener extends AnalysisEventListener<Map<Int
                 errorMsgList.add("系统中不存在此平台名称");
             }
         }
-        if (StringUtils.isBlank(entity.getSite())) {
-            errorMsgList.add("站点不能为空");
+    }
+
+    // 验证字段非空
+    private void validateFieldIsNotBlank(String field, String errorMessage, List<String> errorMsgList) {
+        if (StringUtils.isBlank(field)) {
+            errorMsgList.add(errorMessage);
         }
-        if (StringUtils.isBlank(entity.getShopName())) {
-            errorMsgList.add("店铺名称不能为空");
-        }
-        if (StringUtils.isBlank(entity.getChargeName())) {
-            errorMsgList.add("负责人不能为空");
-        }
-        BiShopInfoEntity biShopInfoEntity = shopList.stream().filter(obj -> obj.getName().equals(entity.getShopName()) && obj.getSite().equals(entity.getSite()) && obj.getPlatformName().equals(entity.getPlatformName())).findFirst().orElse(null);
+    }
+
+    // 验证店铺信息
+    private void validateShopInfo(BiDataSourceCostEntity entity, List<String> errorMsgList) {
+        BiShopInfoEntity biShopInfoEntity = shopList.stream()
+                .filter(obj -> obj.getName().equals(entity.getShopName()) &&
+                        obj.getSite().equals(entity.getSite()) &&
+                        obj.getPlatformName().equals(entity.getPlatformName()))
+                .findFirst()
+                .orElse(null);
         if (biShopInfoEntity == null) {
             errorMsgList.add("在平台站点中未找到该店铺");
         } else {
             entity.setShopId(biShopInfoEntity.getId());
         }
-        if (errorMsg(map, errorMsgList)) {
-            return true;
-        }
-        return false;
     }
 
     private void handleField(BiDataSourceCostEntity entity,

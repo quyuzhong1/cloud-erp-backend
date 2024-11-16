@@ -79,7 +79,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         resultMap.put("head",headMap);
         resultMap.put("data",pageData.getRecords());
         pageData.setRecords(Arrays.asList(resultMap));
-        return new PagingVO<LinkedHashMap<String,Object>>(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override

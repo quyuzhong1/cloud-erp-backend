@@ -1627,11 +1627,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(String skuId) {
         ProductDetailEntity detailEntity = this.getById(skuId);
-        Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品sku"));
-        if (detailEntity.getStatus().equals(1) || detailEntity.getStatus().equals(2)) {
+        ProductDetailEntity oldEntity = Optional.ofNullable(detailEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品sku"));
+        if (oldEntity.getStatus().equals(1) || oldEntity.getStatus().equals(2)) {
             throw new ServiceException(ApiError.ERROR_95241);
         }
-        if (detailEntity.getOccupyStatus()) {
+        if (oldEntity.getOccupyStatus()) {
             throw new ServiceException(ApiError.ERROR_95242);
         }
         List<String> idList = Arrays.asList(skuId);
@@ -1673,7 +1673,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setIsDeleted(Boolean.TRUE);
 
         //发送金蝶
-        sendPushTask(Arrays.asList(detailEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
+        sendPushTask(Arrays.asList(oldEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
         //增加一条虚假的同步任务记录
         syncWangDianProductDetailService.addPlmPushMsg(entity);
         return this.remove(queryWrapper);
