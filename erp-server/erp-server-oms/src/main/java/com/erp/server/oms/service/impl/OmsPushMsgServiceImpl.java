@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Optional;
 
 /**
  * <p>
@@ -42,9 +41,6 @@ public class OmsPushMsgServiceImpl extends SuperServiceImpl<OmsPushMsgMapper, Om
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         BeanMapperUtils.copy(addDTO, omsPushMsgEntity);
 
-        // 数据处理
-        handleData(omsPushMsgEntity);
-
         log.info("开始新增本地推送消息单");
         boolean save = super.save(omsPushMsgEntity);
         if(!save) {
@@ -52,11 +48,8 @@ public class OmsPushMsgServiceImpl extends SuperServiceImpl<OmsPushMsgMapper, Om
         }
 
         // 操作日志
-        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "本地推送消息单" , omsPushMsgEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), ApiError.ERROR_92160.msg , omsPushMsgEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, omsPushMsgEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
         return new BaseResultDTO.AddDTO(omsPushMsgEntity.getId(), omsPushMsgEntity.getId());
     }
 
@@ -67,31 +60,20 @@ public class OmsPushMsgServiceImpl extends SuperServiceImpl<OmsPushMsgMapper, Om
     @Override
     public Boolean update(OmsPushMsgDTO.UpdateDTO updateDTO) {
         OmsPushMsgEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "本地推送消息单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, ApiError.ERROR_92160.msg);
+        }
         OmsPushMsgEntity omsPushMsgEntity =  BeanMapperUtils.map(OmsPushMsgEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(omsPushMsgEntity);
         log.info("编辑 开始修改本地推送消息单数据，id：【{}】", old.getId());
         boolean save = super.updateById(omsPushMsgEntity);
         if(!save) {
             throw new ServiceException("本地推送消息单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
             log.info("编辑 开始记录本地推送消息单日志数据，id：【{}】", omsPushMsgEntity.getId());
-            String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), omsPushMsgEntity.getId(), "本地推送消息单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), omsPushMsgEntity.getId(), ApiError.ERROR_92160.msg);
         operateLogService.addModuleOperateLogByObj(old, omsPushMsgEntity, null, omsPushMsgEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(OmsPushMsgEntity omsPushMsgEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 }
