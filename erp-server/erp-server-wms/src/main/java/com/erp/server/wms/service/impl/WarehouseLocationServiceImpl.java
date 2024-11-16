@@ -281,9 +281,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public List<BaseDropDownDTO.CommonDTO> getWarehouseArea(String warehouseId,  WarehouseLocationTypeEnum returnType, String areaId) {
         // 根据仓库查询区域
         List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery()
-                .eq(StrUtil.isNotBlank(warehouseId), WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .eq(CharSequenceUtil.isNotBlank(warehouseId), WarehouseLocationEntity::getWarehouseId, warehouseId)
                 .eq(ObjectUtil.isNotEmpty(returnType), WarehouseLocationEntity::getType, returnType.getCode())
-                .eq(StrUtil.isNotBlank(areaId) && ObjectUtil.equals(WarehouseLocationTypeEnum.LOCATION, returnType), WarehouseLocationEntity::getParentId, areaId)
+                .eq(CharSequenceUtil.isNotBlank(areaId) && ObjectUtil.equals(WarehouseLocationTypeEnum.LOCATION, returnType), WarehouseLocationEntity::getParentId, areaId)
                 .eq(WarehouseLocationEntity::getDisabled, Boolean.FALSE)
                 .list();
         if (CollUtil.isEmpty(warehouseLocationList)) {

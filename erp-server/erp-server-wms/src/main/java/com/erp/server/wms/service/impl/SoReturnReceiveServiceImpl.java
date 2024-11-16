@@ -184,15 +184,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             SoReturnReceiveDTO.StatusCountDTO resultDTO = new SoReturnReceiveDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (SoReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (SoReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -209,13 +209,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 //        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THQS, BusinessNoTypeEnum.CODE_THQS.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_THQS);
         //获取组织信息
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getSalesOrgId()));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(dto.getSalesOrgId()));
         //获取用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(dto.getSellerId(), dto.getWarehouseKeeperId()));
         //获取客户信息
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Arrays.asList(dto.getCustomerId()));
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Collections.singletonList(dto.getCustomerId()));
         //获取部门信息
-        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(Arrays.asList(dto.getSalesDeptId()));
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(Collections.singletonList(dto.getSalesDeptId()));
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
 
@@ -263,7 +263,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
 
         //获取仓库信息
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(dto.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             entity.setWarehouseId(warehouseList.get(MathUtil.ZERO).getId());
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
@@ -319,7 +319,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //根据ids查询sku信息
         List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIdList);
         //退货单详情
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Collections.singletonList(entity.getSourceId()));
         List<String> sourceDetailIds = detailEntityList.stream().map(SoReturnReceiveDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,sourceDetailIds);
         SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,entity.getSourceId());
@@ -409,7 +409,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
     }
 
     @Override
@@ -418,7 +418,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Override
@@ -921,7 +921,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
@@ -929,7 +929,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 dateList.add(startDate);
                 dateList.add(endDate);
                 pagingParamDTO.setBillDateList(dateList);
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);

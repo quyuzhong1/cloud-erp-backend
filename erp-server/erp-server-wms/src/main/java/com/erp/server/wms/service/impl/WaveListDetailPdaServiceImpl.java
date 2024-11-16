@@ -276,7 +276,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     }
 
     @Override
-    public ApiResult<?> scanSkuOrEanCode(String skuId, String code) {
+    public ApiResult scanSkuOrEanCode(String skuId, String code) {
         ProductDetailDTO.ServiceToWavePickingDTO productInfo = productDetailFeign.getProductInfoBySkuId(skuId);
         if(CharSequenceUtil.isNotBlank(productInfo.getSkuNo()) && productInfo.getSkuNo().equals(code)){
             return ApiResult.success();

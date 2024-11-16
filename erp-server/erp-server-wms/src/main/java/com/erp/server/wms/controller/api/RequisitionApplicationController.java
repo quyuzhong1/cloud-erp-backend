@@ -574,7 +574,7 @@ public class RequisitionApplicationController extends BaseController {
      * 要货申请fba 来源生成发货单
      **/
     @PostMapping("/generateDeliveryWithFba")
-    public ApiResult<T> generateDeliveryWithFba(@RequestBody @Validated RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
+    public ApiResult<?> generateDeliveryWithFba(@RequestBody @Validated RequisitionApplicationDTO.GenerateDeliveryWithFbaDTO dto) {
         requisitionApplicationService.generateDeliveryWithFba(dto);
         return success();
     }

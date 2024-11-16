@@ -158,20 +158,20 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
         resultMap.put("date", LocalDateTimeUtil.format(entity.getDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //委外发料明细
-        List<SubcontractIssueDetailEntity> detailList = subcontractIssueDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<SubcontractIssueDetailEntity> detailList = subcontractIssueDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
         }
         //委外订单
-        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(entity.getSubcontractOrderId()));
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(entity.getSubcontractOrderId()));
         if (CollectionUtils.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
         //委外订单明细
-        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(entity.getSourceId()));
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(entity.getSourceId()));
 
         //委外组织
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(subcontractOrderList.get(0).getSubcontractOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(subcontractOrderList.get(0).getSubcontractOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
            throw new ServiceException(ApiError.ERROR_RECEIVE_ORG_NOT_FOUND);
         }

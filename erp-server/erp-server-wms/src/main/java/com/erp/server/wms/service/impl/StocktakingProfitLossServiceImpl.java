@@ -236,7 +236,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 map(FindUserDTO::getUserName).collect(Collectors.joining(","));
         view.setStocktakingUserName(stocktakingUserName);
 
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(id));
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(id));
         view.setDetailList(detailDbList);
         return view;
     }
@@ -319,7 +319,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 盘点仓库，库区，仓位禁用时禁止审核
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if(CollUtil.isEmpty(detailList)){
             throw new ServiceException("未找到盘盈盘亏单详情");
         }
@@ -369,7 +369,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             entity.setApproveStatus(waitSubmitStatus);
             Boolean result = this.updateById(entity);
             if (result) {
-                List<Pair<String, String>> pairList = Arrays.asList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+                List<Pair<String, String>> pairList = Collections.singletonList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
                 String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据 取消流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName());
                 operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "取消流程操作");
             }
@@ -455,7 +455,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 if (isLoss) {
                     inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_LOSS.getCode());
                 }
-                List<InOutStockDTO> members = baseMapper.listInventoryInOut(Arrays.asList(entity.getId()));
+                List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
                 InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
                 for (InOutStockDTO member : members) {
                     member.setSourceType(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS);
@@ -703,7 +703,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private void handleDb(List<StocktakingProfitLossDetailDTO.AddDTO> detailList, StocktakingProfitLossEntity entity) {
         //库存组织id
         String inventoryOrgId = entity.getInventoryOrgId();
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(inventoryOrgId));
         if (CollectionUtils.isEmpty(orgList)) {
             throw new ServiceException(ApiError.ERROR_INVENTORY_ORG_NOT_FOUND);
         }
@@ -729,7 +729,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         List<String> warehouseLocationList = detailList.stream().map(StocktakingProfitLossDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
 
         //组织
-        List<String> orgIdList = Arrays.asList(inventoryOrgId);
+        List<String> orgIdList = Collections.singletonList(inventoryOrgId);
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
         param.setOrgIdList(orgIdList);
         param.setSkuIdList(skuIdList);
@@ -801,7 +801,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     public void handleUpdateDb(List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList, StocktakingProfitLossEntity entity) {
         //库存组织id
         String inventoryOrgId = entity.getInventoryOrgId();
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(inventoryOrgId));
         if (CollectionUtils.isEmpty(orgList)) {
             throw new ServiceException(ApiError.ERROR_INVENTORY_ORG_NOT_FOUND);
         }
@@ -827,7 +827,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         List<String> warehouseLocationList = detailList.stream().map(StocktakingProfitLossDetailDTO.UpdateDTO::getWarehouseLocation).collect(Collectors.toList());
 
         //组织
-        List<String> orgIdList = Arrays.asList(inventoryOrgId);
+        List<String> orgIdList = Collections.singletonList(inventoryOrgId);
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
         param.setOrgIdList(orgIdList);
         param.setSkuIdList(skuIdList);
@@ -997,7 +997,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         stocktakingTaskUserService.removeBySourceId(id);
         //删除操作日志
         String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的盘盈盘亏", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
-        List<StocktakingProfitLossEntity> list = Arrays.asList(entity);
+        List<StocktakingProfitLossEntity> list = Collections.singletonList(entity);
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);

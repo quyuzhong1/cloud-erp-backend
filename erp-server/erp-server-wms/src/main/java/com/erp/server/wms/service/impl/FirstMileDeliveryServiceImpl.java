@@ -329,7 +329,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 //        List<String> deliveryIds = records.stream().map(FirstMileDeliveryDTO.ListFirstMileDTO::getSourceId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
 //        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOS = baseMapper.getBusinessCodeByIds(deliveryIds);
         records.forEach(listFirstMileDTO -> {
-            if (StrUtil.isNotBlank(listFirstMileDTO.getSkuId())){
+            if (CharSequenceUtil.isNotBlank(listFirstMileDTO.getSkuId())){
                 listFirstMileDTO.setProductName(skuMap.get(listFirstMileDTO.getSkuId()));
             }
 //            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), listFirstMileDTO.getSourceId())).findFirst().orElse(null);
@@ -505,7 +505,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
 
         //包含组合产品的发货单，必须有关联的下推的加工组装单且加工单审核通过，否则提示：发货单【发货单号】包含组合产品，请先下推加工单并且审核通过后重试
-        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         List<FirstMileDeliveryDetailEntity> isCombinationList = detailEntityList.stream().filter(req -> req.getIsCombination()).collect(Collectors.toList());
 
         List<String> skuIdList = detailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -526,7 +526,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
             //如果包含了多品bom需要校验，加工单是否审核通过
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
-                List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(Arrays.asList(entity.getId()));
+                List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(Collections.singletonList(entity.getId()));
                 List<MachineInfoEntity> approveMachineInfoEntityList = machineInfoEntityList.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(approveMachineInfoEntityList)) {
                     throw new ServiceException(ApiError.IS_GENERATE_MACHINE, entity.getCode());
@@ -578,7 +578,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
             //如果配置为空时默认为“FBA在途仓-xgwj-fba”
             if (CharSequenceUtil.isBlank(destWarehouse.getOnwayWarehouseId())) {
-                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Arrays.asList("xgwj-fba"));
+                List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(Collections.singletonList("xgwj-fba"));
                 if (CollectionUtils.isEmpty(warehouseEntities)) {
                     throw new ServiceException(ApiError.WAREHOUSE_CODE_XGWJ_FBA_NOT_EXIST);
                 }
@@ -619,7 +619,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
 
         //查询已下推的海外入库单
-        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Arrays.asList(entity.getId()));
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Collections.singletonList(entity.getId()));
 
         //详情信息
         List<TransferInfoDetailDTO.AddDTO> detailAddDtoList = new ArrayList<>();
@@ -701,17 +701,17 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             WmsDeliveryPlanEntity planEntity = wmsDeliveryPlanService.getById(entity.getSourceId());
             if (ObjectUtil.isNotEmpty(planEntity)) {
                 //如果存在有一个审核通过的发货单，状态都是已发货
-                List<FirstMileDeliveryEntity> firstMileDeliveryEntities = this.listBySourceIds(Arrays.asList(entity.getSourceId()));
+                List<FirstMileDeliveryEntity> firstMileDeliveryEntities = this.listBySourceIds(Collections.singletonList(entity.getSourceId()));
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(deliveryEntities)) {
                     //如果没有审核通过否发货单，修改发货计划单的发货状态为未发货
-                    wmsDeliveryPlanService.updateDeliveryStatus(Arrays.asList(entity.getSourceId()), FbaDeliveryStatusEnum.UN_SHIPPED.getCode());
+                    wmsDeliveryPlanService.updateDeliveryStatus(Collections.singletonList(entity.getSourceId()), FbaDeliveryStatusEnum.UN_SHIPPED.getCode());
                 }
             }
         }
 
         //查找发货单下推的分步式调出单自动反审并删除
-        List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceIds(Arrays.asList(id));
+        List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceIds(Collections.singletonList(id));
         //直接调拨单已审核先反审核
         if (CollectionUtils.isNotEmpty(transferInfoEntities)) {
             transferInfoEntities.forEach(transferInfoEntity -> {
@@ -744,7 +744,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (SourceTypeEnum.FBA_SHIPMENT.getCode().equals(entity.getSourceType())) {
             FbaShipmentEntity shipmentEntity = fbaShipmentService.getById(entity.getSourceId());
             if (ObjectUtil.isNotEmpty(shipmentEntity)) {
-                List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Arrays.asList(entity.getSourceId()));
+                List<FbaShipmentDetailEntity> fbaShipmentDetailEntities = fbaShipmentDetailService.listByMainIds(Collections.singletonList(entity.getSourceId()));
                 List<String> detailIds = fbaShipmentDetailEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
                 List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(detailIds);
                 int sum = fbaShipmentReceiveEntities.stream().mapToInt(req -> req.getReceiveQty()).sum();
@@ -760,12 +760,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
 
         //校验下游单据是否生成【包含报关单，物流单】状态为已生成 不可反审核【提示：报关单/物流单[单号]已生成，不可反审核】
-        List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Arrays.asList(entity.getId()));
-        if (CollectionUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
+        List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
             throw new ServiceException(ApiError.TMS_FIRST_MILE_LOGISTIC_EXISTS, tmsFirstMileLogisticEntities.get(0).getTransportNo());
         }
-        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Arrays.asList(entity.getId()));
-        if (CollectionUtil.isNotEmpty(tmsDeclareBillEntities)) {
+        List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(tmsDeclareBillEntities)) {
             throw new ServiceException(ApiError.TMS_DECLARE_BILL_EXISTS, tmsDeclareBillEntities.get(0).getCode());
         }
 
@@ -799,7 +799,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> fbaCodeList = detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         fbaShipmentPackingService.removeByFbaCodeList(fbaCodeList);
         // 删除明细数据
-        firstMileDeliveryDetailService.removeByMainIds(Arrays.asList(id));
+        firstMileDeliveryDetailService.removeByMainIds(Collections.singletonList(id));
         // 删除主单数据
         log.info("删除 开始删除发货单主单数据，id：【{}】", id);
         super.removeById(id);
@@ -877,7 +877,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //审核通过
         if (ApproveType.PASS.equals(dto.getType())) {
             //查询发货详情
-            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(entity.getId()));
+            List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             RequisitionApplicationEntity application = requisitionApplicationService.getById(entity.getSourceId());
             if (ObjectUtil.isNotEmpty(application)) {
                 //如果是FBA货件来源，审核通过修改货件发货状态为已发货
@@ -899,7 +899,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
 
                 //用目的仓查询是否绑定第三方仓
-                List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Arrays.asList(entity.getDestWarehouseId()));
+                List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(Collections.singletonList(entity.getDestWarehouseId()));
                 // 查询发货目的仓平台
                 OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(entity.getDestWarehouseId());
 
@@ -920,10 +920,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 }
 
                 //入库单状态修改为待签收
-                overseasWarehouseInboundService.updateInstockStatus(Arrays.asList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
+                overseasWarehouseInboundService.updateInstockStatus(Collections.singletonList(inboundEntity.getId()), OverseasInstockStatusEnum.TO_BE_SIGNED.getCode());
             }
             //匹配到规则则进行中转调拨，否则直接生成调拨单
-            if (StrUtil.isNotBlank(entity.getTransferWarehouseIds())){
+            if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
                 String batchNo = IdUtil.getSnowflake().nextIdStr();
                 List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
                 //中转循环调拨
@@ -944,7 +944,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     BatchResultDTO autoGenerateResult = tmsFirstMileLogisticFeign.autoGenerateFirstMileLogistic(autoGenerateBillDTO);
                    if(autoGenerateResult.getSuccess()){
                        FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                       updateStatusDTO.setIds(Arrays.asList(entity.getId()));
+                       updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
                        updateStatusDTO.setLogisticsStatus(FmDeliveryLogisticsStatusEnum.FINISH.getCode());
                        this.updateStatus(updateStatusDTO);
                    }
@@ -959,7 +959,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     Boolean autoGenerateResult = tmsDeclareBillFeign.autoGenerateFirstMileDeclare(autoGenerateBillDTO);
                     if(autoGenerateResult){
                         FirstMileDeliveryDTO.UpdateStatusDTO updateStatusDTO = new FirstMileDeliveryDTO.UpdateStatusDTO();
-                        updateStatusDTO.setIds(Arrays.asList(entity.getId()));
+                        updateStatusDTO.setIds(Collections.singletonList(entity.getId()));
                         updateStatusDTO.setDeclareStatus(WmsDeclareStatusEnum.FINISH.getCode());
                         this.updateStatus(updateStatusDTO);
                     }
@@ -1124,15 +1124,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //发货单主信息
         FirstMileDeliveryEntity firstMileDeliveryEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到发货单数据"));
         FirstMileDeliveryDTO.ViewDTO data = BeanMapperUtils.map(FirstMileDeliveryDTO.ViewDTO.class, firstMileDeliveryEntity);
-        if (StrUtil.isNotBlank(firstMileDeliveryEntity.getTransferWarehouseIds())){
+        if (CharSequenceUtil.isNotBlank(firstMileDeliveryEntity.getTransferWarehouseIds())){
             List<String> split = StrUtil.split(firstMileDeliveryEntity.getTransferWarehouseIds(), ",");
             data.setTransferWarehouseIdList(split);
         }
         //查询头程物流单
-        List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Arrays.asList(id));
+        List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(id));
 
         //发货单详情
-        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(id));
+        List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(id));
         // 数据填充处理
         fillOne(data, tmsFirstMileLogisticEntities, detailEntityList);
         return data;
@@ -1178,7 +1178,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
 
         //根据仓库信息获取核算公司
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(data.getInventoryOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(data.getInventoryOrgId()));
 
         //来源类型名称
         data.setSourceTypeName(SourceTypeEnum.getName(data.getSourceType()));
@@ -1199,7 +1199,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         data.setLogisticsView(viewLogisticDTO);
 
         //附件信息
-        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(data.getId()));
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(data.getId()));
         List<String> attachmentUrlList = attachmentList.stream().
                 map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
                 collect(Collectors.toList());
@@ -1268,7 +1268,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      */
     private FirstMileDeliveryDTO.ViewLogisticDTO viewLogistic(FirstMileDeliveryDTO.ViewDTO data, List<LogisticsBillEntity> tmsFirstMileLogisticEntities) {
         FirstMileDeliveryDTO.ViewLogisticDTO logisticsViewDTO = new FirstMileDeliveryDTO.ViewLogisticDTO();
-        if (CollectionUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
+        if (CollUtil.isNotEmpty(tmsFirstMileLogisticEntities)) {
             LogisticsBillEntity tmsFirstMileLogisticEntity = tmsFirstMileLogisticEntities.get(0);
             //渠道
             if (CharSequenceUtil.isNotBlank(tmsFirstMileLogisticEntity.getChannelId())) {
@@ -1286,7 +1286,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //备注
             logisticsViewDTO.setLogisticsRemark(tmsFirstMileLogisticEntity.getRemark());
             //物流运单号
-            logisticsViewDTO.setTrackingNoList(Arrays.asList(tmsFirstMileLogisticEntity.getTransportNo()));
+            logisticsViewDTO.setTrackingNoList(Collections.singletonList(tmsFirstMileLogisticEntity.getTransportNo()));
         }
 
         //发货地址(取值仓库地址)
@@ -1780,7 +1780,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 throw new ServiceException(ApiError.SHIPMENT_NOT_EXIST);
             }
             //根据店铺id查询店铺信息
-            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Arrays.asList(entity.getShopId()));
+            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Collections.singletonList(entity.getShopId()));
             //设置店铺的仓位为目的仓
             ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> entity.getShopId().equals(req.getId())).findFirst().orElse(new ShopInfoEntity());
             firstMileDeliveryEntity.setDestWarehouseId(shopInfoEntity.getWarehouseId());
@@ -1809,7 +1809,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     public List<FirstMileDeliveryDTO.SonItem> sonItemDetailByVersion(FirstMileDeliveryDTO.SonItemDetailByVersion dto) {
         FirstMileDeliveryDetailEntity detailEntity = firstMileDeliveryDetailService.getById(dto.getId());
         FirstMileDeliveryEntity entity = this.getById(detailEntity.getMainId());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Arrays.asList(detailEntity.getSkuNo()));
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(Collections.singletonList(detailEntity.getSkuNo()));
 
         //根据单据id查询审核流程
         List<String> skuIds = skuVOList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
@@ -1883,7 +1883,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         viewDTO.setInstockStatusName(OverseasInstockStatusEnum.TO_BE_SHIPPED.getName());
 
         //查询头程物流单
-        List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Arrays.asList(id));
+        List<LogisticsBillEntity> tmsFirstMileLogisticEntities = tmsFirstMileLogisticFeign.listByOutstockIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(tmsFirstMileLogisticEntities)) {
             LogisticsBillEntity tmsFirstMileLogisticEntity = tmsFirstMileLogisticEntities.get(0);
             viewDTO.setLogisticsMethod(tmsFirstMileLogisticEntity.getShippingMethod());
@@ -1896,7 +1896,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         viewDTO.setDictPlatformName(null == platformEnum ? "" : platformEnum.getName());
 
         //明细信息
-        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Arrays.asList(id));
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(Collections.singletonList(id));
         List<String> skuIdList = firstMileDeliveryDetailEntities.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         List<OverseasWarehouseInboundDetailDTO.ViewDTO> detailViewList = FirstMileDeliveryConverter.INSTANCE.fmdToOverseasWarehouseInboundDetailView(firstMileDeliveryDetailEntities);
@@ -2098,7 +2098,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
             List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(id);
             String fbaShipmentCode = detailEntityList.get(0).getFbaShipmentCode();
-            List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Arrays.asList(fbaShipmentCode));
+            List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(Collections.singletonList(fbaShipmentCode));
             List<String> cartonIds = fbaShipmentPackingEntityList.stream().map(v->v.getCartonId()).distinct().collect(Collectors.toList());
             packedDetailDTO.setTaskId(packingTaskEntity.getId());
             packedDetailDTO.setCartonIds(cartonIds);
@@ -2124,7 +2124,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         for (String billType : dto.getBillTypes()) {
             if (FmDeliveryBillTypeEnum.DECLARE.getCode().equals(billType)) {
                 List<FirstMileDeliveryEntity> deliveryEntityList = deliveryEntities.stream().filter(req -> WmsDeclareStatusEnum.FINISH.getCode().equals(req.getDeclareStatus().getCode())).collect(Collectors.toList());
-                if (CollectionUtil.isNotEmpty(deliveryEntityList)) {
+                if (CollUtil.isNotEmpty(deliveryEntityList)) {
                     throw new ServiceException(ApiError.BILL_IS_GENERATE_DECLARE, deliveryEntityList.get(0).getCode());
                 }
                 lambdaUpdate()
@@ -2134,7 +2134,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             }
 
             if (FmDeliveryBillTypeEnum.LOGISTICS.getCode().equals(billType)) {
-                if (CollectionUtil.isNotEmpty(deliveryEntityLogisticsStatusList)) {
+                if (CollUtil.isNotEmpty(deliveryEntityLogisticsStatusList)) {
                     throw new ServiceException(ApiError.BILL_IS_GENERATE_LOGISTICS, deliveryEntityLogisticsStatusList.get(0).getCode());
                 }
                 lambdaUpdate()
@@ -2164,11 +2164,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //设置箱子明细信息
         result.forEach(v->{
             List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
-            if (CollectionUtils.isEmpty(list) && StrUtil.isNotBlank(v.getSourceId())){
+            if (CollectionUtils.isEmpty(list) && CharSequenceUtil.isNotBlank(v.getSourceId())){
                 list = packingDetailMap.get(v.getSourceId());
             }
             v.setPackingDTOList(list);
-            if (StrUtil.isNotBlank(v.getToCountry())){
+            if (CharSequenceUtil.isNotBlank(v.getToCountry())){
                 DictCountryDTO.ListDTO listDTO = listDTOS.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), v.getToCountry())).findFirst().orElse(null);
                 if (Objects.nonNull(listDTO)){
                     v.setToCountryName(listDTO.getNameCn());

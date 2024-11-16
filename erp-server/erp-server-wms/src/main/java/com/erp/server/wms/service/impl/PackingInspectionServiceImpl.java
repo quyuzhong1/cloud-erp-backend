@@ -181,7 +181,7 @@ public class PackingInspectionServiceImpl implements PackingInspectionService {
             viewDTO = addViewDTO;
             //跟踪号赋值
             if(viewDTO.getTrackNo() == null || null == viewDTO.getPaperSize()){
-                List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+                List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId()));
                 if(CollectionUtils.isNotEmpty(soB2cLogisticsEntityList)){
                     SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntityList.get(0);
                     viewDTO.setTrackNo(soB2cLogisticsEntity.getTrackNo());

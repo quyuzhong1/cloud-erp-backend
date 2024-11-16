@@ -2,27 +2,26 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.AllocateCargoBillPrintDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.entity.WaveListDetailEntity;
 import com.erp.model.wms.entity.WaveListEntity;
-import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryPrintTypeEnum;
+import com.erp.model.wms.enums.WaveStatusEnum;
 import com.erp.server.wms.service.AllocateCargoBillPrintService;
+import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WaveListDetailService;
 import com.erp.server.wms.service.WaveListService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -51,7 +50,7 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         //查询波次号，如果查询到直接返回
         WaveListEntity pickingWave = waveListService.getByCode(businessCode);
         if(ObjectUtil.isNotEmpty(pickingWave)){
-            return AllocateCargoBillPrintDTO.ScanWaveDTO.builder().isDirectPrint(true).waveList(Arrays.asList(AllocateCargoBillPrintDTO.WaveDTO.convertFromPickingWaveEntity(pickingWave))).build();
+            return AllocateCargoBillPrintDTO.ScanWaveDTO.builder().isDirectPrint(true).waveList(Collections.singletonList(AllocateCargoBillPrintDTO.WaveDTO.convertFromPickingWaveEntity(pickingWave))).build();
         }
         //根据拣货车编号查询
         List<WaveListEntity> pickingWaveList = waveListService.listByCarCode(businessCode);
@@ -65,7 +64,7 @@ public class AllocateCargoBillPrintServiceImpl implements AllocateCargoBillPrint
         //有拣货中的波次，直接返回
         WaveListEntity waveListEntity = pickingWaveList.stream().filter(v->v.getStatus().equals(WaveStatusEnum.PICK_ING.getCode())).findFirst().orElse(null);
         if(Objects.nonNull(waveListEntity)){
-            return AllocateCargoBillPrintDTO.ScanWaveDTO.builder().isDirectPrint(true).waveList(Arrays.asList(AllocateCargoBillPrintDTO.WaveDTO.convertFromPickingWaveEntity(waveListEntity))).build();
+            return AllocateCargoBillPrintDTO.ScanWaveDTO.builder().isDirectPrint(true).waveList(Collections.singletonList(AllocateCargoBillPrintDTO.WaveDTO.convertFromPickingWaveEntity(waveListEntity))).build();
         }
         //过滤当天已完成的波次，根据拣货时间倒序，为空抛异常
         LocalDateTime today = LocalDateTime.now().toLocalDate().atStartOfDay();

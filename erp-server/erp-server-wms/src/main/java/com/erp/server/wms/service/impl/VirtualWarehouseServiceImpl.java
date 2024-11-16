@@ -126,12 +126,12 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      */
     private void addThirdMappingOperateLog (List<ThirdMappingDTO.AddDTO> thirdMappingList,VirtualWarehouseEntity virtualWarehouseEntity) {
         //更新数据
-        List<String> thirdIdList = thirdMappingList.stream().filter(obj -> StrUtil.isNotBlank(obj.getThirdId())).map(ThirdMappingDTO.AddDTO::getThirdId).distinct().collect(Collectors.toList());
+        List<String> thirdIdList = thirdMappingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getThirdId())).map(ThirdMappingDTO.AddDTO::getThirdId).distinct().collect(Collectors.toList());
         List<ThirdWarehouseEntity> thirdWarehouseList = CollectionUtils.isEmpty(thirdIdList) ?
                 new ArrayList<>() : FeignQuery.create(ThirdWarehouseEntity.class).in(ThirdWarehouseEntity::getWarehouseId).list();
 
         //虚拟仓关联第三方信息
-        List<ThirdMappingEntity> oldList = dmpThirdMappingFeign.getListBySysIds(Arrays.asList(virtualWarehouseEntity.getId()));
+        List<ThirdMappingEntity> oldList = dmpThirdMappingFeign.getListBySysIds(Collections.singletonList(virtualWarehouseEntity.getId()));
 
         //修改前信息
         Boolean isChange = Boolean.FALSE;
@@ -139,7 +139,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         //修改后信息
         List<String> newChannelMsg = new ArrayList<>();
         //不处理id为空的数据
-        List<ThirdMappingDTO.AddDTO> thirdMappings = thirdMappingList.stream().filter(obj -> StrUtil.isNotBlank(obj.getThirdId())).collect(Collectors.toList());
+        List<ThirdMappingDTO.AddDTO> thirdMappings = thirdMappingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getThirdId())).collect(Collectors.toList());
         for (ThirdMappingDTO.AddDTO addDTO : thirdMappings) {
             //拼接日志
             String thirdWarehouseName = thirdWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), addDTO.getThirdId())).map(ThirdWarehouseEntity::getName).findFirst().orElse("");

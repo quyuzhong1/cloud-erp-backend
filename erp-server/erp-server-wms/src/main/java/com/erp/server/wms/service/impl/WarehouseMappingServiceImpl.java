@@ -122,7 +122,7 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
             return null;
         }
         //组织信息
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(mappingViewByDictPlatform.getWarehouseOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(mappingViewByDictPlatform.getWarehouseOrgId()));
         BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(req -> mappingViewByDictPlatform.getWarehouseOrgId().equals(req.getId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(codeDTO)) {
             mappingViewByDictPlatform.setWarehouseOrgName(codeDTO.getName());

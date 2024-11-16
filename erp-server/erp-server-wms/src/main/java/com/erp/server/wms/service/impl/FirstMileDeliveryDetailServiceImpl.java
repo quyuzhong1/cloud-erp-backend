@@ -79,7 +79,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     public void update(FirstMileDeliveryDTO.UpdateDTO updateDTO, String mainId) {
         List<FirstMileDeliveryDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
         //原明细数据
-        List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> deleteIds = getDeleteIds(detailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<FirstMileDeliveryDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -199,7 +199,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         if (CollectionUtils.isEmpty(skuVOList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
 
         //查询库存sku
         List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();

@@ -359,7 +359,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
     public List<VirtualInventoryDTO.BomReturnDTO> listBomVirtual(VirtualInventoryDTO.BomParamDTO bomParamDTO) {
         List<VirtualInventoryDTO.BomReturnDTO> resultList = new ArrayList<>();
         //根据SKU查询BOM判断是否是组合SKU
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(bomParamDTO.getSkuId()));
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(bomParamDTO.getSkuId()));
         if (CollectionUtils.isEmpty(bomChildrenList)) {
             return Collections.emptyList();
         }
@@ -371,8 +371,8 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         }
         //虚拟仓库存
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
-        paramDTO.setWarehouseIdList(Arrays.asList(bomParamDTO.getWarehouseId()));
-        paramDTO.setVirtualWarehouseIdList(Arrays.asList(bomParamDTO.getVirtualWarehouseId()));
+        paramDTO.setWarehouseIdList(Collections.singletonList(bomParamDTO.getWarehouseId()));
+        paramDTO.setVirtualWarehouseIdList(Collections.singletonList(bomParamDTO.getVirtualWarehouseId()));
         paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         paramDTO.setSkuIdList(skuIdList);
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = this.listInventoryQty(paramDTO);

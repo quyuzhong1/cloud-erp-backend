@@ -78,7 +78,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     @Override
     public void update(RequisitionApplicationDTO.UpdateDTO updateDTO, String mainId) {
         //原明细数据
-        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Arrays.asList(updateDTO.getId()));
+        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Collections.singletonList(updateDTO.getId()));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<RequisitionApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -115,7 +115,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
-                .set(StrUtil.isNotBlank(fromVirtualWarehouseId),RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
+                .set(CharSequenceUtil.isNotBlank(fromVirtualWarehouseId),RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
                 .eq(RequisitionApplicationDetailEntity::getId, id);
         String virtualWarehouseIdToSet = CharSequenceUtil.isNotBlank(fromVirtualWarehouseId) ? fromVirtualWarehouseId : "";
         String virtualWarehouseNameToSet = CharSequenceUtil.isNotBlank(fromVirtualWarehouseName) ? fromVirtualWarehouseName : "";
@@ -166,7 +166,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     * 新增修改处理数据
     */
     private void handleData(List<RequisitionApplicationDetailEntity> list, String mainId, Boolean isUpdate) {
-        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
 
         //需要新增的数据
         List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());

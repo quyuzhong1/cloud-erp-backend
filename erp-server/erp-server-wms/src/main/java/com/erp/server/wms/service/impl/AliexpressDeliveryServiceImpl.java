@@ -96,8 +96,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         ShopSysUserAuthDTO.UserAuthShopParamDTO dto = new ShopSysUserAuthDTO.UserAuthShopParamDTO();
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         dto.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOList = shopSysUserAuthFeign.listUserAuthShop(dto);
-        return viewShopDTOList;
+        return shopSysUserAuthFeign.listUserAuthShop(dto);
     }
 
     @Override

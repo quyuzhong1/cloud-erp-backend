@@ -42,7 +42,7 @@ public class ShipmentFeignController extends BaseController {
      * @author Jim
      */
     @PostMapping("/consumer")
-    public ApiResult<?> consumerPullShipment(@RequestBody PlatformFbaShipmentDTO platformFbaShipmentDTO){
+    public ApiResult consumerPullShipment(@RequestBody PlatformFbaShipmentDTO platformFbaShipmentDTO){
         return platformFbaShipmentConsumerService.handle(new JSONObject(platformFbaShipmentDTO));
     }
 

@@ -68,7 +68,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
                     filterDetailList.addAll(value.stream().map(v -> v.getId()).collect(Collectors.toList()));
                 } else {
                     //将数量设置为拆分前的数量
-                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Arrays.asList(key));
+                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Collections.singletonList(key));
                     if (CollectionUtils.isNotEmpty(soB2cDetailEntity)) {
                         value.forEach(v -> v.setQty(soB2cDetailEntity.get(0).getQty()));
                     }
@@ -79,7 +79,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
                     filterDetailList.addAll(value.stream().map(v -> v.getId()).collect(Collectors.toList()));
                 } else {
                     //将数量设置为拆分前的数量
-                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Arrays.asList(key));
+                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Collections.singletonList(key));
                     if (CollectionUtils.isNotEmpty(soB2cDetailEntity)) {
                         value.forEach(v -> v.setQty(soB2cDetailEntity.get(0).getQty()));
                     }

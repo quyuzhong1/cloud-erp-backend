@@ -61,7 +61,7 @@ public class InventoryFlowRecalculateJob {
         String inventoryId;
         String inventoryOrgId = null;
         Boolean fromTable = Boolean.FALSE;
-        if (StrUtil.isNotBlank(jobParam)) {
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             startTime = jsonParam.getLocalDateTime("startTime", LocalDateTime.parse("2023-07-06T00:00:00"));
             inventoryId = jsonParam.getStr("inventoryId");
@@ -70,7 +70,7 @@ public class InventoryFlowRecalculateJob {
         } else {
             inventoryId = null;
         }
-        if(StrUtil.isNotBlank(inventoryId)){
+        if(CharSequenceUtil.isNotBlank(inventoryId)){
             InventoryEntity inventory = inventoryService.getById(inventoryId);
             if (null != inventory) {
                 inventoryOrgId = inventory.getOrgId();
@@ -171,7 +171,7 @@ public class InventoryFlowRecalculateJob {
                 .filter(entry -> !closedDateMap.containsKey(entry.getKey()))
                 .forEach(entry -> startTimeMap.put(entry.getKey(), entry.getValue().toLocalDate()));
         // 指定组织
-        if(StrUtil.isNotBlank(inventoryOrgId)){
+        if(CharSequenceUtil.isNotBlank(inventoryOrgId)){
             Map<String, LocalDate> result = startTimeMap.entrySet().stream()
                     .filter(entry -> inventoryOrgId.equals(entry.getKey()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

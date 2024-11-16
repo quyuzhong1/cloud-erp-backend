@@ -165,10 +165,10 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         //出库日期
         resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
         //仓库
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Collections.singletonList(entity.getWarehouseId()));
 
         //员工岗位
-        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getReceiverId()));
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(entity.getReceiverId()));
 
         if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
             //领料人
@@ -223,7 +223,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
             resultMap.put("customerCode", customerEntity.getCustomerCode());
         }
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getWarehouseId()));
 
         List<JSONObject> list = new ArrayList<>();
         for (OtherOutstockDetailEntity detail : detailList) {

@@ -186,7 +186,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> warehouseLocationList = resultList.stream().map(SoOutstockDetailDTO.ViewDTO::getWarehouseLocation).collect(Collectors.toList());
         InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
         skuInventoryDTO.setSkuIdList(skuIdList);
-        skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+        skuInventoryDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
         skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
         skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         List<String> idList = dbList.stream().map(SoOutstockDetailEntity::getId).collect(Collectors.toList());
@@ -297,7 +297,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         } else {
             InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
             skuInventoryDTO.setSkuIdList(skuIdList);
-            skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+            skuInventoryDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
             skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
             skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
             //可用数量
@@ -591,7 +591,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         } else {
             InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
             skuInventoryDTO.setSkuIdList(skuIdList);
-            skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+            skuInventoryDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
             skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
             skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
             //获取B2C销售订单详情集合

@@ -3,13 +3,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.dto.SpElExpressionDTO;
@@ -117,7 +114,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
                 throw new ServiceException("中转仓配置不能为空");
             }
             List<String> collect = transferWarehouseIdList.stream().filter(StrUtil::isBlank).collect(Collectors.toList());
-            if (CollectionUtil.isNotEmpty(collect)){
+            if (CollUtil.isNotEmpty(collect)){
                 throw new ServiceException("中转仓配置id不能存在空值");
             }
             CfgRuleOutEntity transferEntity = new CfgRuleOutEntity();
@@ -249,11 +246,9 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
         CfgRuleOutDTO.SortingPortResultDTO resultDTO = this.getSortingPort(commonDTO,dto);
         String sortingPort = resultDTO.getPort();
         if(sortingPort.equals(CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode())){
-            if(resultDTO.getUpdateError()){
-                if(!soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()) && !entity.getStatus().equals(SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())){
-                    entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
-                    entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
-                }
+            if(resultDTO.getUpdateError() && !soB2cEntity.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode()) && !entity.getStatus().equals(SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode())){
+                entity.setStatus(SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode());
+                entity.setAbnormalCause(AbnormalCauseEnum.EQUIPMENT_SORTING.getCode());
             }
         }
         return resultDTO;

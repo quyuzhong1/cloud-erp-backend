@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -196,10 +197,10 @@ public class AsyncServiceImpl implements AsyncService {
 
         //修改订单状态待发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-        updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+        updateDeliveryTimeDTO.setSoB2cIds(Collections.singletonList(entity.getSourceId()));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
-        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Collections.singletonList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
         String msg = CharSequenceUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "流水线称重", entity.getCode());
@@ -208,7 +209,7 @@ public class AsyncServiceImpl implements AsyncService {
         if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
             // 调用第三方平台SDK标记发货(独立事务)
             String businessDesc = "包装验货";
-            this.asyncShipOrder(soB2cEntity.getId(),
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
                     soB2cEntity.getCode(),
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),

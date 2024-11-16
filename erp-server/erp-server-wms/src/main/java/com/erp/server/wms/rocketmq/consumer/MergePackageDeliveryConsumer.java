@@ -70,7 +70,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
     @Override
     public void onMessage(String soId) {
         //查询发货单
-        List<SoB2cDeliveryEntity> deliveryEntities = soB2cDeliveryService.listBySourceIds(Arrays.asList(soId));
+        List<SoB2cDeliveryEntity> deliveryEntities = soB2cDeliveryService.listBySourceIds(Collections.singletonList(soId));
         //过滤掉取消发货
         SoB2cDeliveryEntity curDeliveryEntity = deliveryEntities.stream()
                 .filter(v -> !SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(v.getStatus()))

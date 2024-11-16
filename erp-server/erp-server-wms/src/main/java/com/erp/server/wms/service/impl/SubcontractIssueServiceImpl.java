@@ -427,12 +427,12 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         List<SubcontractIssueDTO.SubcontractDetailListDTO> resultList = new ArrayList<>();
         //委外订单id
         String sourceId = dto.getSourceId();
-        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(sourceId));
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(sourceId));
         if (CollUtil.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
         //委外明细
-        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(sourceId));
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(sourceId));
         if (CollUtil.isEmpty(subcontractOrderDetailList)) {
             throw  new ServiceException(ApiError.ERROR_98070);
         }
@@ -447,7 +447,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIdList);
 
         //委外子级SKU明细
-        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98072);
         }
@@ -640,7 +640,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
         data.setTypeName(typeName);
 
         //委外发料明细
-        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Arrays.asList(data.getId()));
+        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Collections.singletonList(data.getId()));
         if (CollUtil.isEmpty(subcontractIssueDetailList)) {
             throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
         }
@@ -772,7 +772,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
             subcontractIssueEntity.setSourceId(subcontractIssueEntity.getSubcontractOrderId());
         }
         //委外订单
-        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(subcontractIssueEntity.getSubcontractOrderId()));
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(subcontractIssueEntity.getSubcontractOrderId()));
         if (CollUtil.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
@@ -866,7 +866,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
      */
     private void checkSupplier (SubcontractIssueEntity subcontractIssueEntity,List<String> sourceDetailIdList) {
         //委外订单下全部明细
-        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(subcontractIssueEntity.getSourceId()));
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(subcontractIssueEntity.getSourceId()));
         //父级id集合
         List<String> parentIdList = subcontractOrderDetailList.stream().filter(obj -> sourceDetailIdList.contains(obj.getId())).map(SubcontractOrderDetailEntity::getParentId).collect(Collectors.toList());
         //所有父级数据
@@ -893,7 +893,7 @@ public class SubcontractIssueServiceImpl extends SuperServiceImpl<SubcontractIss
      */
     private void autoOutStockInventory (SubcontractIssueEntity entity,Boolean isDelivery) {
         //委外发料明细
-        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<SubcontractIssueDetailEntity> subcontractIssueDetailList = subcontractIssueDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollUtil.isEmpty(subcontractIssueDetailList)) {
             throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST);
         }

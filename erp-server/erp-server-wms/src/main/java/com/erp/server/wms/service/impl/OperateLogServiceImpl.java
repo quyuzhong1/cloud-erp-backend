@@ -229,11 +229,11 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     private Pair<String, String> setDistValue(Pair<String, String> valuePair) {
         String oldValue = "";
         String newValue = "";
-        List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
+        List<DictBasicEntity> oldList = dictBasicService.listByIds(Collections.singletonList(valuePair.getKey().split(",")));
         if (CollectionUtils.isNotEmpty(oldList)) {
             oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
         }
-        List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
+        List<DictBasicEntity> newList = dictBasicService.listByIds(Collections.singletonList(valuePair.getValue().split(",")));
         if (CollectionUtils.isNotEmpty(newList)) {
             newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
         }

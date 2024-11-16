@@ -309,8 +309,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(BaseApproveParamDTO dto, TransferInEntity transferInEntity) {
-        List<String> ids = Arrays.asList(transferInEntity.getId());
-        List<TransferInEntity> list = Arrays.asList(transferInEntity);
+        List<String> ids = Collections.singletonList(transferInEntity.getId());
+        List<TransferInEntity> list = Collections.singletonList(transferInEntity);
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -440,8 +440,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO disApprove(TransferInEntity entity) {
-        List<String> ids = Arrays.asList(entity.getId());
-        List<TransferInEntity> list = Arrays.asList(entity);
+        List<String> ids = Collections.singletonList(entity.getId());
+        List<TransferInEntity> list = Collections.singletonList(entity);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99066);
         }
@@ -658,7 +658,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
     }
 
     @Override

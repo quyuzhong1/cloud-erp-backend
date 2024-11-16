@@ -1262,7 +1262,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             pdaInventoryWarehouseDTO.setOrgId(warehouseEntity.getOrgId());
             pdaInventoryWarehouseDTO.setWarehouseName(warehouseEntity.getName());
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(pdaInventoryWarehouseDTO.getWarehouseId())
-                            && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getWarehouseId()) && StrUtil.isNotBlank(warehouseLocation) && warehouseLocation.equals(e.getCode()))
+                            && pdaInventoryWarehouseDTO.getWarehouseId().equals(e.getWarehouseId()) && CharSequenceUtil.isNotBlank(warehouseLocation) && warehouseLocation.equals(e.getCode()))
                     .findFirst().orElse(new WarehouseLocationEntity());
             pdaInventoryWarehouseDTO.setWarehouseLocation(warehouseLocationEntity.getCode());
             pdaInventoryWarehouseDTO.setWarehouseLocationName(warehouseLocationEntity.getName());

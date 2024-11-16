@@ -246,7 +246,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
         List<VirtualWarehouseRelationDTO.SelectResultDTO> list = baseMapper.listWarehouseIdList(warehouseIdList,shopIdList);
 
         //平台下店铺
-        List<String> platformList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getDictPlatform())).map(VirtualWarehouseRelationDTO.SelectResultDTO::getDictPlatform).distinct().collect(Collectors.toList());
+        List<String> platformList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getDictPlatform())).map(VirtualWarehouseRelationDTO.SelectResultDTO::getDictPlatform).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopList = CollectionUtils.isEmpty(platformList) ? new ArrayList<>() : FeignQuery.create(ShopInfoEntity.class)
                 .in(ShopInfoEntity::getDictPlatform, platformList)
                 .eq(ShopInfoEntity::getDisabled,Boolean.FALSE)

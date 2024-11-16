@@ -355,7 +355,7 @@ public class OtherOutstockController extends BaseController {
      * {@code @date:} 2024/03/21
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+    public ApiResult downloadTemplate(HttpServletResponse response) {
         otherOutstockService.downloadTemplate(response);
         return success();
     }
@@ -367,7 +367,7 @@ public class OtherOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入其他出库单")
     @PostMapping("/import")
-    public ApiResult<?> exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = otherOutstockService.importFile(excelFile, response);
         return result ? success() : failure();
     }

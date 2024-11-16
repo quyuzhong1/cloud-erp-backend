@@ -64,7 +64,7 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
     public Boolean assignUser(StocktakingTaskEntity taskEntity, List<String> userIdList) {
         List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>(1);
         List<FindUserDTO> userList = userInfoFeign.listByUserIds(userIdList);
-        List<String> taskIdList = Arrays.asList(taskEntity.getId());
+        List<String> taskIdList = Collections.singletonList(taskEntity.getId());
         String moduleType = ModuleTypeEnum.STOCKTAKING_TASK.getCode();
         //第一步先删除
         this.removeBySourceIdList(taskIdList);
@@ -132,7 +132,7 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
     @Transactional(rollbackFor = Exception.class)
     public Boolean addTaskUser(String sourceId, String sourceType, List<String> stocktakingUserIdList) {
         //第一步先删除
-        this.removeBySourceIdList(Arrays.asList(sourceId));
+        this.removeBySourceIdList(Collections.singletonList(sourceId));
         List<StocktakingTaskUserEntity> addList = new ArrayList<>(10);
         for (String userId : stocktakingUserIdList) {
             StocktakingTaskUserEntity taskUserEntity = new StocktakingTaskUserEntity();
@@ -149,7 +149,7 @@ public class StocktakingTaskUserServiceImpl extends SuperServiceImpl<Stocktaking
 
     @Override
     public void removeBySourceId(String sourceId) {
-        this.removeBySourceIdList(Arrays.asList(sourceId));
+        this.removeBySourceIdList(Collections.singletonList(sourceId));
     }
 
     public void removeBySourceIdList(List<String> sourceIdList) {

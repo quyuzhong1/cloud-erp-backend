@@ -156,7 +156,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        if (SourceTypeEnum.SELF_ADD.getCode().equals(old.getType()) && StrUtil.isNotBlank(old.getSourceCode())){
+        if (SourceTypeEnum.SELF_ADD.getCode().equals(old.getType()) && CharSequenceUtil.isNotBlank(old.getSourceCode())){
             throw new ServiceException(CharSequenceUtil.format("由采购退货单【{}】自动生成的委外退料单【{}】不支持编辑", old.getSourceCode(), old.getCode()));
         }
         SubcontractReturnEntity subcontractReturnEntity =  BeanMapperUtils.map(SubcontractReturnEntity.class, updateDTO);
@@ -458,7 +458,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(parentSkuIdList);
 
         //委外子级SKU明细
-        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> StrUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollUtil.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98072);
         }
@@ -764,7 +764,7 @@ public class SubcontractReturnServiceImpl extends SuperServiceImpl<SubcontractRe
         subcontractReturnEntity.setSubcontractOrderCode(subcontractOrderList.get(0).getCode());
         //来源单号为委外订单时
         if (CharSequenceUtil.equals(subcontractReturnEntity.getSourceType(),SourceTypeEnum.PO_RETURN.getCode())) {
-            if (StrUtil.isNotBlank(subcontractReturnEntity.getSourceId()) && CharSequenceUtil.isBlank(subcontractReturnEntity.getSourceCode())){
+            if (CharSequenceUtil.isNotBlank(subcontractReturnEntity.getSourceId()) && CharSequenceUtil.isBlank(subcontractReturnEntity.getSourceCode())){
                 PoReturnEntity poReturnEntity = poReturnService.getById(subcontractReturnEntity.getSourceId());
                 if (Objects.nonNull(poReturnEntity)){
                     subcontractReturnEntity.setSourceCode(poReturnEntity.getCode());

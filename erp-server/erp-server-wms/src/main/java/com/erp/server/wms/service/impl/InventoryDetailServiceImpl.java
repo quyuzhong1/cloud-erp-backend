@@ -125,7 +125,7 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
         if(CollUtil.isEmpty(listGreatZero)){
             return Collections.emptyList();
         }
-        if(CollectionUtil.isNotEmpty(filterDetailIdList)){
+        if(CollUtil.isNotEmpty(filterDetailIdList)){
             listGreatZero = listGreatZero.stream().filter(item -> filterDetailIdList.contains(item.getId())).collect(Collectors.toList());
         }
         // 循环扣减

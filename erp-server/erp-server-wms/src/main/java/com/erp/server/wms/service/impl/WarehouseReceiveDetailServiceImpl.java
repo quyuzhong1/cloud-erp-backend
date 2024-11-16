@@ -161,7 +161,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
 
         //原明细数据
-        List<WarehouseReceiveDetailEntity> oldList = this.listDetailByMainIds(Arrays.asList(dto.getId()));
+        List<WarehouseReceiveDetailEntity> oldList = this.listDetailByMainIds(Collections.singletonList(dto.getId()));
         List<String> deleteIds = getDeleteIds(dto.getWarehouseReceiveDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<WarehouseReceiveDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());

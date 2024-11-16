@@ -43,6 +43,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -127,7 +128,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         }
 
         //查询订单物流信息获取跟踪号
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId()));
         if(CollectionUtils.isEmpty(soB2cLogisticsEntities)){
             throw new ServiceException("订单物流信息为空");
         }
@@ -207,8 +208,8 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
             }
             //修改订单状态待发货
             SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-            updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
-            updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
+            updateDeliveryTimeDTO.setSoB2cIds(Collections.singletonList(entity.getSourceId()));
+            updateDeliveryTimeDTO.setSoDeliveryDTOList(Collections.singletonList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
             updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
             updateDeliveryTimeDTO.setSoB2cLogisticsList(soB2cLogisticsEntities);
@@ -265,7 +266,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
         }
 
         //更新B2c物流订单重量
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Arrays.asList(soB2cEntity.getId()));
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(soB2cEntity.getId()));
         for (SoB2cLogisticsEntity v : soB2cLogisticsEntityList) {
             v.setWeight(BigDecimal.ZERO);
         }

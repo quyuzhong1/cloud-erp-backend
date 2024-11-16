@@ -207,7 +207,7 @@ public class PackageServiceImpl implements PackageService {
         }
 
         //查询发货单
-        List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()));
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryService.listBySourceIds(Collections.singletonList(scanResult.getSoId()));
         SoB2cDeliveryEntity deliveryEntity = soB2cDeliveryEntityList.stream().filter(v->!v.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())).findFirst().orElse(null);
         if(Objects.nonNull(deliveryEntity)){
             scanResult.setWeightStatus(deliveryEntity.getIsWeigh()?"已称重":"未称重");
@@ -240,7 +240,7 @@ public class PackageServiceImpl implements PackageService {
             }
 
             //查询中转服务商对应的渠道
-            List<TransferLogisticsChannelEntity> logisticsChannelEntityList = transferLogisticsFeign.listLogisticsChannelByMainId(Arrays.asList(scanResult.getTransferLogisticsSupplierId()));
+            List<TransferLogisticsChannelEntity> logisticsChannelEntityList = transferLogisticsFeign.listLogisticsChannelByMainId(Collections.singletonList(scanResult.getTransferLogisticsSupplierId()));
             if (CollectionUtils.isNotEmpty(logisticsChannelEntityList)) {
                 TransferLogisticsChannelEntity transferLogisticsChannelEntity = logisticsChannelEntityList.stream().filter(req -> scanResult.getTransferLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
@@ -334,7 +334,7 @@ public class PackageServiceImpl implements PackageService {
         if (ObjectUtil.isEmpty(scanResult)) {
             return weightDTO;
         }
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Collections.singletonList(scanResult.getSoId()),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
         if (CollectionUtils.isEmpty(soB2cDeliveryList)) {
             return  weightDTO;
         }

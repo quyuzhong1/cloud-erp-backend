@@ -72,7 +72,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         qcProductEntity.setMainId(billId);
         qcProductEntity.setSkuId(skuId);
         qcProductEntity.setId(id);
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(skuId));
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(skuId));
 
         SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
         if(skuVO!=null){
@@ -91,7 +91,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         this.saveOrUpdate(qcProductEntity);
 
         //标记SKU
-        plmTaskFeign.updateOccupyStatus(Arrays.asList(qcProductEntity.getSkuId()));
+        plmTaskFeign.updateOccupyStatus(Collections.singletonList(qcProductEntity.getSkuId()));
     }
 
 
@@ -110,7 +110,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         if (product != null) {
             BeanMapper.copy(product, productView);
             List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(product.getSkuId()));
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(product.getId()));
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(product.getId()));
             List<String> boxImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> boxNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
 

@@ -164,7 +164,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         resultMap.put("billDate", billDateStr);
 
 
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailDbList)) {
             throw new ServiceException("盘盈盘亏单明细不能为空");
         }
@@ -177,7 +177,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             String orgId=warehouseList.get(0).getOrgId();
             //组织信息
-            List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+            List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(orgId));
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 warehouseOrgCode = accountingCompanyList.get(0).getCode();
             }

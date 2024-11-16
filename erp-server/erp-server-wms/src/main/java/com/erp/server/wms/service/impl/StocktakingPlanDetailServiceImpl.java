@@ -95,7 +95,7 @@ public class StocktakingPlanDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }).collect(Collectors.toList());
         // 根据main ID 查询所有明细
         List<StocktakingPlanDetailEntity> oldDetailList = listByMainId(mainId);
-        List<StocktakingPlanDetailEntity> updateList = newDetailList.stream().filter(item -> StrUtil.isNotBlank(item.getId())).collect(Collectors.toList());
+        List<StocktakingPlanDetailEntity> updateList = newDetailList.stream().filter(item -> CharSequenceUtil.isNotBlank(item.getId())).collect(Collectors.toList());
         List<StocktakingPlanDetailEntity> insertList = newDetailList.stream().filter(item -> CharSequenceUtil.isBlank(item.getId())).collect(Collectors.toList());
         List<String> updateIds = updateList.stream().map(StocktakingPlanDetailEntity::getId).collect(Collectors.toList());
         List<StocktakingPlanDetailEntity> removeList = oldDetailList.stream().filter(item -> !updateIds.contains(item.getId())).collect(Collectors.toList());

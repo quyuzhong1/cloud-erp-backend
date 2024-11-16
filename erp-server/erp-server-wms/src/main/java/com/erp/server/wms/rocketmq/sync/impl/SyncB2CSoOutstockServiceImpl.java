@@ -160,7 +160,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
                 if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
                     //无虚拟仓则不扣减虚拟库存
-                    List<InOutStockDTO> virtualInOutList = inventoryInOutStockDTO.getParamList().stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+                    List<InOutStockDTO> virtualInOutList = inventoryInOutStockDTO.getParamList().stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
                     if (CollectionUtils.isNotEmpty(virtualInOutList)) {
                         //扣减虚拟库存
                         VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -235,7 +235,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setWarehouseName(warehouse.getName());
 
         //查询虚拟仓
-        String virtualWarehouseId = handleVirtualWarehouse(Arrays.asList(soOutstock.getWarehouseId()), shopInfo.getDictPlatform(),shopInfo.getId());
+        String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(soOutstock.getWarehouseId()), shopInfo.getDictPlatform(),shopInfo.getId());
 
         //客户信息
         soOutstock.setCustomerId(shopInfo.getCustomerId());
@@ -330,7 +330,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
         if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getParamList())) {
             //无虚拟仓则不扣减虚拟库存
-            List<InOutStockDTO> virtualInOutList = inOutStockList.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+            List<InOutStockDTO> virtualInOutList = inOutStockList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(virtualInOutList)) {
                 //扣减虚拟仓库存
                 VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();

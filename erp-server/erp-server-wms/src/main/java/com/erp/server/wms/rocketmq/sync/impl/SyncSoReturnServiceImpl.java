@@ -194,12 +194,12 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             detailEntityList.add(instockDetailEntity);
         }
 
-        List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Arrays.asList(kingdeeReturnOrderEntity.getFBillNo()));
+        List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Collections.singletonList(kingdeeReturnOrderEntity.getFBillNo()));
         List<String> ids = soReturnInstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnInstockEntity::getId).collect(Collectors.toList());
         if (kingdeeReturnOrderEntity.getFDocumentStatus().equals("C")) {
             soReturnInstockService.saveKingdeeSoReturn(instockEntity, detailEntityList, ids);
             //更新库存
-            inventoryTransCore(Arrays.asList(instockEntity));
+            inventoryTransCore(Collections.singletonList(instockEntity));
 
             //更新状态
            soReturnInstockService.lambdaUpdate()
@@ -266,7 +266,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     @Transactional(rollbackFor = Exception.class)
     public void disApproveAndGenerate(SoReturnInstockEntity entity, OtherInstockEntity dbOtherInstockEntity, SoReturnInstockEntity newEntity) {
         soReturnInstockService.disApprove(entity,Boolean.TRUE);
-        soReturnInstockService.delete(Arrays.asList(entity.getId()));
+        soReturnInstockService.delete(Collections.singletonList(entity.getId()));
         service.saveWdtReturnData(newEntity,dbOtherInstockEntity);
     }
 

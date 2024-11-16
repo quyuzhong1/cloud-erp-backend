@@ -283,7 +283,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         List<JSONObject> list = new ArrayList<>();
 
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getDeliveryWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getDeliveryWarehouseId()));
 
         for (PoInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();

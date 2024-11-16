@@ -173,8 +173,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
         //获取退货签收单详情表id
-        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByMainIds(Arrays.asList(dto.getSourceId()));
-        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByMainIds(Collections.singletonList(dto.getSourceId()));
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceIds(Collections.singletonList(dto.getSourceId()));
         List<SoReturnInstockDetailEntity> list = new ArrayList<>();
         List<String> warehouseIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getWarehouseId).collect(Collectors.toList());
         warehouseIds.add(dto.getWarehouseId());

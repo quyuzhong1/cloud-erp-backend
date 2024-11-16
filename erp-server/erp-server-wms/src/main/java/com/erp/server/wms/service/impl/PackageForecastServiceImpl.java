@@ -945,7 +945,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             item.setTotalPackageWeightStr(totalPackageWeightStr);
             BigDecimal weight = item.getWeight();
             String weightUnit = item.getWeightUnit();
-            if (Objects.nonNull(weight) && StrUtil.isNotBlank(weightUnit)){
+            if (Objects.nonNull(weight) && CharSequenceUtil.isNotBlank(weightUnit)){
                 String weightStr = weight + weightUnit;
                 item.setWeightStr(weightStr);
             }else {
@@ -997,8 +997,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
         //修改订单状态已发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-        updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(soId));
-        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(soId, deliveryEntity.getCode())));
+        updateDeliveryTimeDTO.setSoB2cIds(Collections.singletonList(soId));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Collections.singletonList(new SoB2cDTO.SoDeliveryDTO(soId, deliveryEntity.getCode())));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
         deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());

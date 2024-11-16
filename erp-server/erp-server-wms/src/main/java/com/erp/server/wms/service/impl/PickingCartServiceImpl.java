@@ -38,10 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * <p>
@@ -125,7 +122,7 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
         PickingCartEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拣货车数据"));
 
         //判断拣货车是否被波次使用
-        List<WaveListEntity> waveList = waveListService.listByPickingCartCodeList(Arrays.asList(entity.getCode()));
+        List<WaveListEntity> waveList = waveListService.listByPickingCartCodeList(Collections.singletonList(entity.getCode()));
         long count = waveList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getStatus(), WaveStatusEnum.FINISH.getCode())).count();
         if (count > 0) {
             throw new ServiceException(CharSequenceUtil.format("拣货车【{}】已被波次列表使用，不支持删除",entity.getCode()));

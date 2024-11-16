@@ -149,7 +149,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             return resultMap;
         }
 
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
             String orgKingdeeId = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getFlagId())).orElse("");
@@ -187,7 +187,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             resultMap.put("chargeCode",findUserDTO.getCode());
         }
         //查询仓位
-        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getId()));
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(warehouseLocationList) && entity.getIsEnableLocation()) {
             //区域
             List<WarehouseLocationEntity> areaList = warehouseLocationList.stream().filter(obj -> Objects.equals(entity.getId(),obj.getWarehouseId()) && WarehouseLocationTypeEnum.AREA.getCode().equals(obj.getType())).collect(Collectors.toList());

@@ -317,11 +317,11 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         validateDisApprove(entity);
 
         // 检查是否有下推单据
-        List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Arrays.asList(id));
+        List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(deliveryEntities)) {
             throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE);
         }
-        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(Arrays.asList(id));
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(requisitionApplicationEntities)) {
             throw new ServiceException(ApiError.EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE);
         }
@@ -353,7 +353,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             throw new ServiceException(ApiError.SUBMIT_IS_DELETE);
         }
         // 删除明细数据
-        wmsDeliveryPlanDetailService.removeByMainIds(Arrays.asList(id));
+        wmsDeliveryPlanDetailService.removeByMainIds(Collections.singletonList(id));
         // 删除主单数据
         log.info("删除 开始删除发货计划主单数据，id：【{}】", id);
         super.removeById(id);
@@ -433,7 +433,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         WmsDeliveryPlanDTO.ViewDTO data = BeanMapperUtils.map(WmsDeliveryPlanDTO.ViewDTO.class, wmsDeliveryPlanEntity);
 
         //发货计划详情
-        List<WmsDeliveryPlanDetailEntity> detailEntityList = wmsDeliveryPlanDetailService.listByMainIds(Arrays.asList(id));
+        List<WmsDeliveryPlanDetailEntity> detailEntityList = wmsDeliveryPlanDetailService.listByMainIds(Collections.singletonList(id));
 
         // 数据填充处理
         fillOne(data, detailEntityList);
@@ -469,7 +469,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //查询第三方仓SKU信息
-//        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getToWarehouseId()));
+//        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Collections.singletonList(data.getToWarehouseId()));
 //        String provideCode;
 //        if(CollectionUtils.isNotEmpty(viewDTOList)){
 //            provideCode = viewDTOList.get(0).getProviderCode();
@@ -563,7 +563,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
         List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews;
-        List<String> ids = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().map(v->v.getId()).collect(Collectors.toList());
+        List<String> ids = requisitionApplicationService.listBySourceIds(Collections.singletonList(id)).stream().map(v->v.getId()).collect(Collectors.toList());
         ids.add(id);
         deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(ids, null);
         return deliverRecordViews;
@@ -763,7 +763,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         if(CharSequenceUtil.isNotBlank(shopId)){
             listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),"","",shopId);
         }else{
-            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(warehouseId));
+            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Collections.singletonList(warehouseId));
             String provideCode = "";
             if(CollectionUtils.isNotEmpty(viewDTOList)){
                 provideCode = viewDTOList.get(0).getProviderCode();
@@ -1006,7 +1006,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     private void handleData(WmsDeliveryPlanEntity wmsDeliveryPlanEntity, List<? extends WmsDeliveryPlanDetailDTO.CommonDTO> detailList) {
 
         //设置仓库中文名
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(wmsDeliveryPlanEntity.getToWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(wmsDeliveryPlanEntity.getToWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getToWarehouseId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(updateDTO)) {
             wmsDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());

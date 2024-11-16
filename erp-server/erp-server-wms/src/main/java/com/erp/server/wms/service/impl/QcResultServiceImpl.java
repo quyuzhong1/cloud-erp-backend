@@ -188,7 +188,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         QcResultEntity qcInfo = this.getByBillId(billId);
         if (qcInfo != null) {
             BeanMapper.copy(qcInfo, qcInfoView);
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(qcInfo.getId()));
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(qcInfo.getId()));
             List<String> imageUrlList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> nameList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
             qcInfoView.setBadImageNameList(nameList);
@@ -376,7 +376,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.HANDLE_MODE_TYPE.getKey()));
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicEnum.HANDLE_MODE_TYPE.getKey()));
         List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         //采购订单id

@@ -194,15 +194,15 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             SoReturnNoticeDTO.StatusCountDTO resultDTO = new SoReturnNoticeDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (SoReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (SoReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -250,7 +250,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(soInfoEntity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
@@ -402,18 +402,18 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
 
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(entity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             viewDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         //退货单
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Collections.singletonList(entity.getSourceId()));
         //销售单详情id集合
         List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
         //获取退货单id
-        List<SoReturnEntity> returnEntities = soReturnFeign.listByIds(Arrays.asList(entity.getSourceId()));
+        List<SoReturnEntity> returnEntities = soReturnFeign.listByIds(Collections.singletonList(entity.getSourceId()));
 
         //b2c退货单
         SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,entity.getSourceId());
@@ -499,7 +499,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
     }
 
     @Override
@@ -508,7 +508,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Override
