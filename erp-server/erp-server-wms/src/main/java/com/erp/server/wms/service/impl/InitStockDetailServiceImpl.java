@@ -25,10 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,11 +45,10 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
 
     @Override
     public List<InitStockDetailEntity> findList(String mainId) {
-        List<InitStockDetailEntity> members = lambdaQuery().eq(InitStockDetailEntity::getMainId,mainId).list();
-        if(CollUtil.isNotEmpty(members)) {
-            members.stream().sorted(Comparator.comparing(InitStockDetailEntity::getId)).collect(Collectors.toList());
+        if (CharSequenceUtil.isBlank(mainId)){
+            return Collections.emptyList();
         }
-        return members;
+        return lambdaQuery().eq(InitStockDetailEntity::getMainId,mainId).orderByAsc(InitStockDetailEntity::getId).list();
     }
 
     @Transactional(rollbackFor = Exception.class)

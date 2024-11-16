@@ -196,7 +196,9 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
             // 根据采购明细找入库预报明细
             InstockForcastDetailEntity instockForcastDetailEntity = instockForcastDetailService.find(instockForcastEntity.getId(), member.getPurchaseOrderDetailId());
-            Optional.ofNullable(instockForcastDetailEntity).orElseThrow(()->new ServiceException("未找到入库预报明细信息"));
+            if (Objects.isNull(instockForcastDetailEntity)){
+                throw new ServiceException("未找到入库预报明细信息");
+            }
             inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
             inOutStockDTO.setSkuId(member.getSkuId());
             inOutStockDTO.setSkuNo(member.getSkuNo());
@@ -235,7 +237,9 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
             // 根据采购明细找入库预报明细
             InstockForcastDetailEntity instockForcastDetailEntity = instockForcastDetailService.find(instockForcastEntity.getId(), member.getPurchaseOrderDetailId());
-            Optional.ofNullable(instockForcastDetailEntity).orElseThrow(()->new ServiceException("未找到入库预报明细信息"));
+            if (Objects.isNull(instockForcastDetailEntity)){
+                throw new ServiceException("未找到入库预报明细信息");
+            }
             // 更新入库预报明细数量
             instockForcastDetailService.updateQtyByPoChange(instockForcastDetailEntity.getId(), member.getQty());
 

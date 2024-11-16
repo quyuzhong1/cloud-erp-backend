@@ -239,7 +239,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     public void update(InitStockDTO.UpdateDTO dto) {
         // 判断数据是否存在
         InitStockEntity originInitStock = super.getById(dto.getId());
-        Optional.ofNullable(originInitStock).orElseThrow(()->new ServiceException("期初库存数据不存在"));
+        if (Objects.isNull(originInitStock)){
+            throw new ServiceException("期初库存数据不存在");
+        }
         checkUpdateRepeateSku(dto, dto.getDetails(), dto.getId());
         // 判断状态是否允许操作（只有待提交且未作废的的才允许修改）
         ValidatorUtil.isTrue((Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
@@ -619,8 +621,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         initStockEntity.setDictTradeType(InventoryBusinessTypeEnum.INVENTORY_INIT.getCode());
         if(StrUtils.isNotEmpty(warehouseId)) {
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
-            ValidatorUtil.isTrue(Objects.nonNull(warehouseDetail) && StrUtils.isNotEmpty(warehouseDetail.getId()),
-                    ()->new ServiceException(ApiError.ERROR_99002));
+            if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isBlank(warehouseDetail.getId())){
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
             initStockEntity.setWarehouseId(warehouseId);
             initStockEntity.setOrgId(warehouseDetail.getOrgId());
             initStockEntity.setWarehouseName(warehouseDetail.getName());

@@ -6,6 +6,7 @@ import com.common.business.dto.PlatformReturnInstockDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -95,7 +96,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		}
 		OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(),dto.getWarehouseCode());
 		if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
-			throw new ServiceException("仓库信息不存在");
+			throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
 		}
 		SoB2cEntity soB2cEntity = null;
 		SoOutstockEntity soOutstock = null;
