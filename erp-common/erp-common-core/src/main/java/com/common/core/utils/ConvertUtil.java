@@ -18,6 +18,9 @@ import java.util.Set;
  */
 public class ConvertUtil {
 
+    private ConvertUtil() {
+    }
+
     public static String toStr(Object value, String defaultValue) {
         if (null == value) {
             return defaultValue;
@@ -798,9 +801,7 @@ public class ConvertUtil {
                 c[i] = (char) (c[i] - 65248);
             }
         }
-        String returnString = new String(c);
-
-        return returnString;
+        return new String(c);
     }
 
 }

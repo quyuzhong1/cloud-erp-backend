@@ -19,6 +19,9 @@ import java.util.List;
 @Slf4j
 public class CsvUtils {
 
+	private CsvUtils() {
+	}
+
 	public static Object resetNull(Object obj) {
 		return obj == null ? "" : obj;
 	}

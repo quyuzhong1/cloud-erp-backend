@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
@@ -20,7 +21,11 @@ import java.util.*;
  * @description: 对象Map互转
  * @date 2022/12/1 19:52
  */
+@Slf4j
 public class BeanMapUtil {
+
+    private BeanMapUtil() {
+    }
 
     // 为保证可见性和有序性，防止出现半初始化
     private static volatile BeanMapUtil INSTANCE;
@@ -47,11 +52,10 @@ public class BeanMapUtil {
      * @param object
      * @return Map
      */
-    public static Map objToMap(Object object)  {
+    public static Map<String, Object> objToMap(Object object)  {
         JSON bean = (JSON)JSON.toJSON(object);
         //bean  to Map
-        Map<String, JSONObject> tempMap = JSON.toJavaObject( bean, Map.class);
-        return tempMap;
+        return JSON.toJavaObject(bean, Map.class);
     }
 
     /**
@@ -60,8 +64,8 @@ public class BeanMapUtil {
      * @return
      * @throws IllegalAccessException
      */
-    public static Map beanToMap(Object object) throws IllegalAccessException {
-        Map<String, Object> map = new HashMap<String, Object>();
+    public static Map<String, Object> beanToMap(Object object) throws IllegalAccessException {
+        Map<String, Object> map = new HashMap<>();
         Field[] fields = object.getClass().getDeclaredFields();
         for (Field field : fields) {
             field.setAccessible(true);
@@ -87,7 +91,7 @@ public class BeanMapUtil {
      * @return
      * @throws Exception
      */
-    public static <T> T mapToBean(Map map, Class<T> beanClass) throws Exception {
+    public static <T> T mapToBean(Map<String, Object> map, Class<T> beanClass) throws InstantiationException, IllegalAccessException {
         T object = beanClass.newInstance();
         Field[] fields = object.getClass().getDeclaredFields();
         for (Field field : fields) {
@@ -119,7 +123,7 @@ public class BeanMapUtil {
             return result;
 
         } else {
-            return null;
+            return Collections.emptyMap();
         }
     }
 
@@ -143,7 +147,7 @@ public class BeanMapUtil {
             return result;
 
         } else {
-            return null;
+            return Collections.emptyMap();
         }
     }
 
@@ -166,7 +170,7 @@ public class BeanMapUtil {
     private Map<Class<?>, CopyOptions> cacheMap = new HashMap<>();
 
 
-    private CopyOptions getCopyOptions(Class source) {
+    private CopyOptions getCopyOptions(Class<?> source) {
         CopyOptions options = cacheMap.get(source);
         if (options == null) {
             // 不加锁，我们认为重复执行不会比并发加锁带来的开销大
