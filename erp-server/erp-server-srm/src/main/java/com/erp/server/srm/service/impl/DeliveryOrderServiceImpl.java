@@ -387,9 +387,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         receiveListDTOList = receiveListDTOList.stream().filter(v->StringUtils.isEmpty(v.getDetailReceiptStatus())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(receiveListDTOList)){
             Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(receiveListDTOList.stream().map(DeliveryOrderDTO.GenerateReceiveListDTO::getSupplierId).distinct().collect(Collectors.toList()));
-            receiveListDTOList.forEach(v->{
-                v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
-            });
+            receiveListDTOList.forEach(v-> v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():""));
         }
         return receiveListDTOList;
     }
@@ -783,7 +781,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
      * 新增修改处理数据
      */
     private void handleData(DeliveryOrderEntity deliveryOrderEntity,Boolean isUpdate) {
-        if(!isUpdate){
+        if(Boolean.FALSE.equals(isUpdate)){
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryOrderEntity.getToWarehouseId()));
             if(CollectionUtils.isEmpty(warehouseList)){
                 throw new ServiceException("仓库信息为空");
