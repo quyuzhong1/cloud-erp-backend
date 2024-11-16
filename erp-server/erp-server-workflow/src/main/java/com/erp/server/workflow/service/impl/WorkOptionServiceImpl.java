@@ -111,9 +111,6 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private ProcessTaskManagementService processTaskManagementService;
-    @Lazy
-    @Resource
-    private WorkOptionService workOptionService;
 
     /**
      * 待办模块-模块分类下拉
@@ -330,7 +327,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public Boolean delete(String id) {
-        return workOptionService.removeById(id);
+        return removeById(id);
     }
 
     private List<WorkOptionDTO.MyWorkOptionDTO> listTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList, String sysClassify) {

@@ -32,9 +32,6 @@ import java.util.stream.Collectors;
 public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapper, ProcessTaskCcEntity> implements ProcessTaskCcService {
     @Resource
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
-    @Lazy
-    @Resource
-    private ProcessTaskCcService processTaskCcService;
 
 
     @Override

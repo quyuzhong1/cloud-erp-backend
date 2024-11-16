@@ -124,9 +124,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private WorkMenuService workMenuService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-    @Lazy
-    @Resource
-    private ProcessManagementService processManagementService;
 
 
     @Override
@@ -336,7 +333,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             dto.setComment("相邻节点审核人重复,审核自动通过");
             dto.setUserId(managementTask.getCurApproveId());
-            processManagementService.approveProcess(dto,Boolean.FALSE);
+            approveProcess(dto,Boolean.FALSE);
         }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
             // 全局去重
             // 查询已完成审核节点
@@ -353,7 +350,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             dto.setComment("全局去重审核人重复,审核自动通过");
             dto.setUserId(managementTask.getCurApproveId());
-            processManagementService.approveProcess(dto, Boolean.FALSE);
+            approveProcess(dto, Boolean.FALSE);
         }
     }
 
@@ -632,7 +629,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
         }
         // 删除本地流程任务数据
-        processManagementService.removeByProcessInstanceId(processInstance.getProcessInstanceId());
+        removeByProcessInstanceId(processInstance.getProcessInstanceId());
 
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }
@@ -835,7 +832,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .setAnnotation("审批超时，自动驳回")
                     .execute();
             // 保存流程任务数据
-            processManagementService.updateApprove(task.getTaskManagementId(), ApproveTypeEnum.REJECT, task.getManagementId(), task.getProcessInstanceId(), "审批超时，自动驳回", null);
+            updateApprove(task.getTaskManagementId(), ApproveTypeEnum.REJECT, task.getManagementId(), task.getProcessInstanceId(), "审批超时，自动驳回", null);
         }
     }
 
@@ -1020,7 +1017,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 遍历待执行任务列表
             for (String taskId : curTask) {
                 ProcessManagementDTO.ManagementTaskDTO managementTaskDTO = curTaskMap.get(taskId);
-                processManagementService.sameApproveHandler(dto, managementTaskDTO, reviewSetting);
+                sameApproveHandler(dto, managementTaskDTO, reviewSetting);
             }
             exitTaskIdList.addAll(curTaskIdList);
         }
