@@ -13,7 +13,6 @@ import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.Dropoff;
 import com.sdk.tms.shopee.model.logistics.request.ShipOrderRequest;
 import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
-import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
 import com.sdk.tms.shopee.model.logistics.response.ShipDetailResponse;
 import com.sdk.tms.shopee.model.logistics.response.ShipDropInfo;
 import com.sdk.tms.shopee.model.logistics.response.ShippingDocumentParameterResponse;
@@ -197,8 +196,6 @@ public class ShopeeLogisticsHandlerImplTest {
 
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= shopeeLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
     @Test
     public void getShippingParameter() {

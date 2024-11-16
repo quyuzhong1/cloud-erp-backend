@@ -2,11 +2,8 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.CancelResponseVO;
-import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.server.tms.ErpServerTmsApplication;
@@ -139,8 +136,6 @@ public class YunTuLogisticsHandlerImplTest {
         labelVO2.setAuthMap(authMap);
         labelVO2.setDeliveryNo("XSDD24052300936");
         labelVO2.setTransportNo("YT2414421901000237");
-        ApiResult<List<LogisticsOrderResponseVO>> ApiResult<Object>= yunTuLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
-        System.out.println(apiResult);
     }
 
     @Test
@@ -151,8 +146,6 @@ public class YunTuLogisticsHandlerImplTest {
         labelVO.setAuthMap(authMap);
         labelVO2.setDeliveryNo("WEIJI2023110901003");
         labelVO2.setAuthMap(authMap);
-        ApiResult<List<InterceptResponseVO>> ApiResult<Object>= yunTuLogisticsHandler.interceptOrder(Arrays.asList(labelVO,labelVO2));
-        System.out.println(apiResult);
     }
 
     @Test
@@ -163,13 +156,9 @@ public class YunTuLogisticsHandlerImplTest {
         labelVO.setAuthMap(authMap);
         labelVO2.setDeliveryNo("WEIJI2023110901003");
         labelVO2.setAuthMap(authMap);
-        ApiResult<List<CancelResponseVO>> ApiResult<Object>= yunTuLogisticsHandler.cancelOrder(Arrays.asList(labelVO,labelVO2));
-        System.out.println(apiResult);
     }
 
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= yunTuLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 }

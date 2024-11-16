@@ -2,13 +2,11 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
 import com.erp.server.tms.ErpServerTmsApplication;
-import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -185,7 +183,6 @@ public class DsfLogisticsHandlerImplTest {
     }
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= dsfLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
+
     }
 }

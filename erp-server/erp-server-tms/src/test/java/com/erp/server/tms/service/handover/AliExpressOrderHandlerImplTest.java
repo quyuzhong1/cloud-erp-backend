@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.handover;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.exception.ServiceException;
@@ -96,7 +97,6 @@ public class AliExpressOrderHandlerImplTest {
         List<AliExpressOrder > orderList = new ArrayList<>();
         aliExpressOrderService.listOrder(orderRequest, orderList);
         System.out.println("订单列表");
-        System.out.println(JSON.toJSONString(orderList));
     }
 
     /**

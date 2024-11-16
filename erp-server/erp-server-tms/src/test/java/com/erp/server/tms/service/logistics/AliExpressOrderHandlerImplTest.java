@@ -1,6 +1,6 @@
 package com.erp.server.tms.service.logistics;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;

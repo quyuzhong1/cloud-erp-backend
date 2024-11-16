@@ -168,7 +168,5 @@ public class WeiShiLogisticsHandlerImplTest {
 
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= weiShiLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 }

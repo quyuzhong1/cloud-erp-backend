@@ -187,7 +187,5 @@ public class UBILogisticsHandlerImplTest {
 
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= ubiLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 }

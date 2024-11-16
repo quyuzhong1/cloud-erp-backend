@@ -208,7 +208,5 @@ public class ExpressLogisticsHandlerImplTest {
 
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= expressLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 }

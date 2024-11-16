@@ -1,23 +1,18 @@
 package com.erp.server.tms.service.logistics;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.ErpServerTmsApplication;
-import com.sdk.tms.yanwen.dto.response.YanWenCreateWayBill;
-import com.sdk.tms.yanwen.dto.response.YanWenResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -98,7 +93,5 @@ public class YanWenLogisticsHandlerImplTest {
 
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= yanWenLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 }

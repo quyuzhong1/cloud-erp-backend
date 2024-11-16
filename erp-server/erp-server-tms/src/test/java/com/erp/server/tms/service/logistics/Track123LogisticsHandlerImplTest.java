@@ -128,7 +128,5 @@ public class Track123LogisticsHandlerImplTest {
 
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= track123LogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 }

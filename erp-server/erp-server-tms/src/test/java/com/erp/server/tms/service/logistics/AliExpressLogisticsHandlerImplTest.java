@@ -1,14 +1,17 @@
 package com.erp.server.tms.service.logistics;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
-import com.erp.model.tms.vo.request.*;
-import com.erp.model.tms.vo.response.*;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.request.OrderRequest;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
@@ -20,7 +23,6 @@ import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.address.SellerResponse;
 import com.erp.tms.aliexpress.model.order.request.Address;
 import com.erp.tms.aliexpress.model.query.request.QueryLogisticsRequest;
-import com.erp.tms.aliexpress.model.query.response.LogisticsServiceResponse;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +34,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -243,8 +244,6 @@ public class AliExpressLogisticsHandlerImplTest {
     }
     @Test
     public void authorization() {
-        ApiResult<Object>ApiResult<Object>= aliExpressLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 
     /**
