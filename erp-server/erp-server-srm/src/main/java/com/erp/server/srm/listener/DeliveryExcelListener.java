@@ -28,11 +28,10 @@ import com.erp.server.srm.convert.DeliveryOrderConverter;
 import com.erp.server.srm.service.DeliveryOrderDetailService;
 import com.erp.server.srm.service.DeliveryOrderService;
 import com.erp.server.srm.service.UserService;
-import jnr.ffi.annotations.In;
-import org.apache.commons.math3.util.Pair;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 
 import java.math.BigInteger;
 import java.time.LocalDate;
@@ -65,7 +64,7 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
 
     private WmsTaskFeign wmsTaskFeign = SpringUtil.getBean(WmsTaskFeign.class);
 
-    private UserService userService = SpringUtil.getBean(UserService.class);;
+    private UserService userService = SpringUtil.getBean(UserService.class);
 
     private DeliveryOrderDetailService deliveryOrderDetailService = SpringUtil.getBean(DeliveryOrderDetailService.class);
 
@@ -101,11 +100,6 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
             return;
         }
         dataList.add(data);
-    }
-
-    public static void main(String[] args) {
-        System.out.println(Integer.MAX_VALUE);
-        System.out.println(new BigInteger("15235656656565600"));
     }
 
     /**
@@ -217,12 +211,6 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
                 if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
                     deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(purchaseOrderDetailEntity.getId()) )
                             .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-                    //收发差异
-//                    diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(purchaseOrderDetailEntity.getId())
-//                                    && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getReceiptStatus())
-//                                    && e.getReceiptStatus().equals(DeliveryOrderEnum.ReceiptStatusEnum.CONFIRMED.getCode()) )
-//                            .map(deliveryOrderDetailEntity -> deliveryOrderDetailEntity.getDeliveryQty() - receiveQty)
-//                            .reduce(MathUtil.ZERO, Integer::sum);
                     //发货数量 - 已审核收货数量
                     Integer srmDeliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(purchaseOrderDetailEntity.getId())
                                     && com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(e.getReceiptStatus())

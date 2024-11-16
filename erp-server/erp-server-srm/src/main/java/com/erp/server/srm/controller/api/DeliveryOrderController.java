@@ -2,13 +2,11 @@ package com.erp.server.srm.controller.api;
 
 
 import com.common.business.annotation.DataIdempotent;
-import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.query.IQueryHandler;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -36,9 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -143,7 +139,7 @@ public class DeliveryOrderController extends BaseController {
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "送货单编辑")
     @DataIdempotent(keyIdName = "dto.id")
-    public ApiResult<?> update(@RequestBody @Validated DeliveryOrderDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated DeliveryOrderDTO.UpdateDTO dto) {
         deliveryOrderService.update(dto);
         return success();
     }
@@ -168,7 +164,7 @@ public class DeliveryOrderController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/confirmPrint")
-    public ApiResult<?> confirmPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> confirmPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(deliveryOrderService.confirmPrint(dto.getIds()));
     }
 
@@ -194,7 +190,7 @@ public class DeliveryOrderController extends BaseController {
      */
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除送货单")
-    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(deliveryOrderService.delete(dto.getIds()));
     }
 
@@ -203,7 +199,7 @@ public class DeliveryOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "发货单下载模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "excel/srmDeliveryTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -230,7 +226,7 @@ public class DeliveryOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "发货单导入")
     @PostMapping("/import")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = deliveryOrderService.importExcel(excelFile, response);
         return result?success():failure();
     }
