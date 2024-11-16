@@ -1,4 +1,4 @@
-package com.erp.model.plm.dto;
+package com.erp.model.plm.vo;
 
 import lombok.Data;
 
