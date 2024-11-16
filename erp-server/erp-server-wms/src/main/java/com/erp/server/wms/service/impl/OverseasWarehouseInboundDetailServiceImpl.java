@@ -266,7 +266,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
 
             entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
             entity.setDiffQty(entity.getDiffQty() + dto.getReceivedQty());
-            entity.setReceiveTime(LocalDateTime.now(ZoneId.systemDefault()));
+            entity.setReceiveTime(dto.getReceiveDate().atStartOfDay());
             // 计算在途数量
             int newTransportQty = entity.getPackQty() - entity.getReceiveQty();
             entity.setTransportQty(newTransportQty);
@@ -326,7 +326,11 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 //审核
                 TransferInfoEntity entity = transferInfoService.getById(transferOutId);
                 if (Objects.nonNull(entity)){
-                    transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+                    try {
+                        transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
+                    }catch (Exception e){
+                        throw new ServiceException(e.getMessage());
+                    }
                 }
             } else {
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);

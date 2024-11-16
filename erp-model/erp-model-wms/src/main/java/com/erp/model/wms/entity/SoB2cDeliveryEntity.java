@@ -195,7 +195,11 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
      */
     @TableField("shipment_mark")
     private String shipmentMark;
-
+    /**
+     * 中转仓库 以,分割记录
+     */
+    @TableField("transfer_warehouse_ids")
+    private String transferWarehouseIds;
     /**
      * 批次号
      */

@@ -40,7 +40,7 @@ import java.util.Objects;
  * @since 2023-05-10
  */
 @RestController
-@LogSystemModule("销售退货定单")
+@LogSystemModule("销售退货订单")
 @RequestMapping("/soReturn")
 @Slf4j
 public class SoReturnController extends BaseController {
@@ -412,5 +412,17 @@ public class SoReturnController extends BaseController {
     public ApiResult<List<SoReturnDTO.PagingView>> listSoReturnDetailBySourceId(@RequestParam("soId") String id) {
         List<SoReturnDTO.PagingView> list = soReturnService.listSoReturnDetailBySourceId(id);
         return success(list);
+    }
+
+    /**
+     * 快粘贴查询, 需要区分是否拆分套装BOM
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author jack
+     * @Date 2024-11-08
+     **/
+    @PostMapping("/listAddDetailWithNoBomView")
+    public ApiResult<SoDetailDTO.ListAddDetailNoBomViewDTO> listAddDetailWithNoBomView(@RequestBody SoReturnDTO.PlatformSkuDTO dto) {
+        return success(soReturnDetailService.listAddDetailWithNoBomView(dto));
     }
 }

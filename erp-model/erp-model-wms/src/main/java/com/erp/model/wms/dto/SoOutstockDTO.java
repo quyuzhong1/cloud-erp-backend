@@ -386,6 +386,15 @@ public class SoOutstockDTO implements Serializable {
          * 物流渠道名称
          */
         private String logisticsChannelName;
+
+        /**
+         * 销售平台
+         */
+        private String dictPlatform;
+        /**
+         * 销售平台名称
+         */
+        private String dictPlatformName;
     }
 
     /**·
@@ -411,7 +420,6 @@ public class SoOutstockDTO implements Serializable {
 
         private List<LocalDate> billDateList;
         
-        private String sortField;
     }
 
     /**

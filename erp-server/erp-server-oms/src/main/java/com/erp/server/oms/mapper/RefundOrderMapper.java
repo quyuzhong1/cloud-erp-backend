@@ -1,10 +1,10 @@
 package com.erp.server.oms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.RefundOrderDTO;
 import com.erp.model.oms.entity.RefundOrderEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -14,11 +14,10 @@ import org.apache.ibatis.annotations.Param;
  * </p>
  *
  * @author Lambda
- * @since 2023-08-25
+ * @since 2024-09-12
  */
 @Mapper
 public interface RefundOrderMapper extends BaseMapper<RefundOrderEntity> {
-
     /**
      * 退款订单
      * @author yl

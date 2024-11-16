@@ -153,6 +153,14 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         return baseMapper.listAllVirtualRequisitionApplicationDetail();
     }
 
+    @Override
+    public List<RequisitionApplicationDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
+        if (CollectionUtils.isEmpty(sourceDetailIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(RequisitionApplicationDetailEntity::getSourceDetailId,sourceDetailIds).list();
+    }
+
     /**
     * 新增修改处理数据
     */

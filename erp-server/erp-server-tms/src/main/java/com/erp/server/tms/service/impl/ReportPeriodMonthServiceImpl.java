@@ -120,7 +120,7 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
             reportPeriodMonthEntity = this.getById(entity.getReportPeriodId());
         }
         if (Objects.isNull(reportPeriodMonthEntity)){
-            LocalDate reportPeriodMonth = LocalDate.now().withDayOfMonth(1);
+            LocalDate reportPeriodMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1);//上月第一天
             if (Objects.nonNull(entity) && Objects.nonNull(entity.getReportPeriodMonth())){
                 reportPeriodMonth = entity.getReportPeriodMonth().withDayOfMonth(1);
             }

@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -41,6 +42,7 @@ import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
+import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -48,6 +50,7 @@ import com.erp.rpc.oms.feign.CfgRuleFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
@@ -148,6 +151,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private SysDictFeign sysDictFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -226,8 +231,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsBillEntity.setPlatformCode(soB2cEntity.getPlatformCode());
             }
         }
-        //订单是否已存在
-
+        if(StrUtil.isNotBlank(logisticsBillEntity.getOutstockId())){
+            List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(Collections.singletonList(logisticsBillEntity.getOutstockId()));
+            logisticsBillEntity.setBusinessCode(CollectionUtils.isNotEmpty(businessDTOList) ? businessDTOList.get(0).getBusinessCode() : "");
+        }
     }
 
     public List<LogisticsBillEntity> listByOutstockIds(List<String> outstockIds) {
@@ -956,76 +963,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     /**
-     * 初始化物流手机号信息
-     * @param dto
-     */
-    @Override
-    public void initLogisticsBillPhone(LogisticsBillDTO.BillPhoneDTO dto) {
-        initLogisticsBillPhoneByOrderType(OrderTypeEnum.B2B.getCode(), dto);
-        initLogisticsBillPhoneByOrderType(OrderTypeEnum.B2C.getCode(), dto);
-    }
-
-    /**
-     * 根据订单类型处理订单数据
-     * @param code
-     * @param dto
-     */
-    private void initLogisticsBillPhoneByOrderType(String code, LogisticsBillDTO.BillPhoneDTO dto) {
-        List<LogisticsBillEntity> list = null;
-        if (Objects.nonNull(dto) && CollectionUtils.isNotEmpty(dto.getIds())){
-            list = lambdaQuery().in(LogisticsBillEntity::getSourceId, dto.getIds())
-                    .eq(LogisticsBillEntity::getOrderType, code)
-                    .list();
-        }else {
-            list = lambdaQuery().eq(LogisticsBillEntity::getOrderType, code)
-                    .eq(LogisticsBillEntity::getTelNumber, "")
-                    .list();
-        }
-        if (CollectionUtils.isEmpty(list)){
-            return;
-        }
-        List<List<LogisticsBillEntity>> partition = Lists.partition(list, 100);
-        partition.forEach(logisticsBillEntities -> {
-            processLogisticsBillPhone(logisticsBillEntities, code);
-        });
-    }
-
-    /**
-     * 数据处理
-     * @param logisticsBillEntities
-     * @param code
-     */
-    private void processLogisticsBillPhone(List<LogisticsBillEntity> logisticsBillEntities, String code) {
-        if (CollectionUtils.isEmpty(logisticsBillEntities)){
-            return;
-        }
-        List<String> orderIds = logisticsBillEntities.stream().map(LogisticsBillEntity::getSourceId).distinct().collect(Collectors.toList());
-        if (OrderTypeEnum.B2B.getCode().equals(code)){
-            List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(orderIds);
-            for (LogisticsBillEntity logisticsBillEntity : logisticsBillEntities) {
-                SoInfoEntity soInfo = soInfoList.stream().filter(e -> StringUtils.isNotEmpty(logisticsBillEntity.getSourceId())
-                        && e.getId().equals(logisticsBillEntity.getSourceId())).findFirst().orElse(null);
-                if (Objects.nonNull(soInfo) && StringUtils.isNotEmpty(soInfo.getTelNumber())){
-                    lambdaUpdate().set(LogisticsBillEntity::getTelNumber, soInfo.getTelNumber())
-                            .eq(LogisticsBillEntity::getId, logisticsBillEntity.getId()).update();
-                }
-
-            }
-        }else if (OrderTypeEnum.B2C.getCode().equals(code)){
-            List<SoB2cDTO.CustomerDTO> customerDTOS = soB2cFeign.listCustomer(orderIds);
-            for (LogisticsBillEntity logisticsBillEntity : logisticsBillEntities) {
-                SoB2cDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(e -> StringUtils.isNotEmpty(logisticsBillEntity.getSourceId())
-                        && e.getSoId().equals(logisticsBillEntity.getSourceId())).findFirst().orElse(null);
-                if (Objects.nonNull(customerDTO) && StringUtils.isNotEmpty(customerDTO.getTelNumber())){
-                    lambdaUpdate().set(LogisticsBillEntity::getTelNumber, customerDTO.getTelNumber())
-                            .eq(LogisticsBillEntity::getId, logisticsBillEntity.getId()).update();
-                }
-
-            }
-        }
-    }
-
-    /**
      * 打印物流面单/配货单
      *
      * @param list
@@ -1305,5 +1242,28 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         //删除主表
         return lambdaUpdate().in(LogisticsBillEntity::getSourceId, sourceId).remove();
+    }
+
+    @Override
+    public void initLogisticsBillBusinessCode() {
+        List<LogisticsBillEntity> list = this.lambdaQuery()
+                .select(LogisticsBillEntity::getId,LogisticsBillEntity::getOutstockId)
+                .eq(LogisticsBillEntity::getOrderType, OrderTypeEnum.FIRST_MILE.getCode()).list();
+        List<List<LogisticsBillEntity>> partition = ListUtil.partition(list, 100);
+        for (List<LogisticsBillEntity> billEntityList : partition){
+            List<String> outStockIds = billEntityList.stream().map(LogisticsBillEntity::getOutstockId).distinct().collect(Collectors.toList());
+            List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByIds(outStockIds);
+            if (CollectionUtils.isEmpty(businessDTOList)){
+                continue;
+            }
+            for (LogisticsBillEntity entity : billEntityList){
+                FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(e -> Objects.equals(entity.getOutstockId(), e.getId())).findFirst().orElse(null);
+                if (Objects.isNull(businessDTO)){
+                    continue;
+                }
+                String businessCode = StrUtil.isBlank(businessDTO.getBusinessCode()) ? StrUtil.EMPTY : businessDTO.getBusinessCode();
+                this.lambdaUpdate().eq(LogisticsBillEntity::getId, entity.getId()).set(LogisticsBillEntity::getBusinessCode, businessCode).update();
+            }
+        }
     }
 }

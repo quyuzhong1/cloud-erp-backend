@@ -417,8 +417,8 @@ public class WmsDeliveryPlanController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>>
      **/
     @PostMapping("/generateRequisitionApplicationView")
-    public ApiResult<List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> generateRequisitionApplicationView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> result = wmsDeliveryPlanService.generateRequisitionApplicationView(dto.getIds());
+    public ApiResult<List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> generateRequisitionApplicationView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> result = wmsDeliveryPlanService.generateRequisitionApplicationView(dto.getDetailIdList());
         return success(result);
     }
 

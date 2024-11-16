@@ -16,7 +16,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * redis单号生成器
@@ -69,5 +71,25 @@ public class DocNoGenHelper implements InitializingBean {
     }
 
 
+    /**
+     * 按单据类型+日期获取递增单号
+     * 单据前缀+6位日期+5位顺序
+     * 注意事项：需在枚举类BusinessNoTypeEnum定义单号前缀，上线切换时需手工把最新的最大值放入到数据库
+     * @return
+     */
+    public String generateCode(BusinessNoTypeEnum businessNoTypeEnum, LocalDate date){
+        String currentDateStr = date.format(DateTimeFormatter.BASIC_ISO_DATE);
+        //注意，不保证绝对有序，有可能中间某个单生成了单号，但是后面数据库报错不会回收
+        String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + businessNoTypeEnum.getName() +  ":" + currentDateStr;
+        Long currentIndex = redisTemplate.execute(redisScript, stringRedisSerializer, stringRedisSerializer, Lists.newArrayList(docNoKey),String.valueOf(1),String.valueOf(ONE_DAY_CACHE_TIME));
+        int fillZeroDigit = BusinessNoTypeEnum.FILL_0_DIGIT;
+        if(BusinessCommonConstants.hasProfile("test") || BusinessCommonConstants.hasProfile("dev")){
+            fillZeroDigit = fillZeroDigit +1;
+        }
+        // 单据前缀+6位日期+5位顺序位
+        String docNo = StrUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(businessNoTypeEnum.getPrefix()), currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),fillZeroDigit,"0"));
+        log.info("单据类型：【{}】生成的单号为【{}】", businessNoTypeEnum.getName(), docNo);
+        return docNo;
+    }
 
 }

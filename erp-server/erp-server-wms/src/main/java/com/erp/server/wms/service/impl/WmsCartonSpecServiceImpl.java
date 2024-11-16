@@ -341,10 +341,12 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         }
         //已装箱明细
         List<WmsCartonDetailEntity> oldDetailEntityList = wmsCartonDetailService.listByTaskIds(Collections.singletonList(taskId));
-
+        //需要删除得装箱明细
+        List<String> needDeleteCartonDetailIds = getNeedDeleteCartonDetailIds(oldDetailEntityList,dto);
         List<String> newCartonIds = dto.getWmsCartonList().stream().map(WmsCartonSpecDTO.AddDTO::getCartonId).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         //需要删除的装箱
         List<String> needDeleteCartonIds = oldCartonEntityList.stream().map(WmsCartonEntity::getId).filter(id -> CollectionUtils.isNotEmpty(newCartonIds) && !newCartonIds.contains(id)).distinct().collect(Collectors.toList());
+
         if (CollectionUtils.isNotEmpty(fbaShipmentPackingEntityList)){
             //存在关联货号，新接口数据为空时
             if (CollectionUtils.isEmpty(newCartonIds)){
@@ -393,13 +395,46 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 compareCartonDetail(cartonDetailEntityList, addDTO.getDetailList());
             }
         }
-        if (Objects.nonNull(isAddCarton) && isAddCarton){
-            //页面新增编辑
-            List<String> specIds = oldCartonEntityList.stream().filter(e -> needDeleteCartonIds.contains(e.getId())).map(WmsCartonEntity::getSpecId).distinct().collect(Collectors.toList());
-            this.removeByIds(specIds);
-            wmsCartonService.deleteByCartonIds(needDeleteCartonIds);
-            wmsCartonDetailService.deleteByCartonIds(needDeleteCartonIds);
+        if (Objects.isNull(isAddCarton) || !isAddCarton){
+            if (CollectionUtils.isNotEmpty(needDeleteCartonIds)){
+                //页面新增编辑
+                List<String> specIds = oldCartonEntityList.stream().filter(e -> needDeleteCartonIds.contains(e.getId())).map(WmsCartonEntity::getSpecId).distinct().collect(Collectors.toList());
+                this.removeByIds(specIds);
+                wmsCartonService.deleteByCartonIds(needDeleteCartonIds);
+                wmsCartonDetailService.deleteByCartonIds(needDeleteCartonIds);
+            }
+            if (CollectionUtils.isNotEmpty(needDeleteCartonDetailIds)){
+                wmsCartonDetailService.removeByIds(needDeleteCartonDetailIds);
+            }
         }
+    }
+
+    private List<String> getNeedDeleteCartonDetailIds(List<WmsCartonDetailEntity> oldDetailEntityList, WmsCartonSpecDTO.WmsCartonAdd dto) {
+        List<String> cartonIds = oldDetailEntityList.stream().map(WmsCartonDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(cartonIds)){
+            return Collections.emptyList();
+        }
+        List<String> needDeleteCartonDetailIds = new ArrayList<>();
+        for (String cartonId : cartonIds){
+            WmsCartonSpecDTO.AddDTO addDTO = dto.getWmsCartonList().stream().filter(e -> Objects.equals(cartonId, e.getCartonId())).findFirst().orElse(null);
+            List<WmsCartonDetailEntity> cartonDetailEntityList = oldDetailEntityList.stream().filter(e -> Objects.equals(cartonId, e.getMainId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(cartonDetailEntityList)){
+                continue;
+            }
+            if (Objects.isNull(addDTO) || CollectionUtils.isEmpty(addDTO.getDetailList())){
+                List<String> detailIds1 = cartonDetailEntityList.stream().map(WmsCartonDetailEntity::getId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(detailIds1)){
+                    needDeleteCartonDetailIds.addAll(detailIds1);
+                }
+                continue;
+            }
+            List<String> existDetailIds = addDTO.getDetailList().stream().map(WmsCartonDetailDTO.AddDTO::getId).collect(Collectors.toList());
+            List<String> detailIds2 = cartonDetailEntityList.stream().map(WmsCartonDetailEntity::getId).filter(id -> !existDetailIds.contains(id)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(detailIds2)){
+                needDeleteCartonDetailIds.addAll(detailIds2);
+            }
+        }
+        return needDeleteCartonDetailIds;
     }
 
     private void compareCartonDetail(List<WmsCartonDetailEntity> cartonDetailEntityList, List<WmsCartonDetailDTO.AddDTO> detailList) {

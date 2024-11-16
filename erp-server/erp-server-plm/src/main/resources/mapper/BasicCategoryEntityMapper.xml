@@ -45,5 +45,22 @@
             child.is_deleted = false and child.pid != '0'
     </select>
 
+    <!-- 递归查询子分类 -->
+    <select id="getCategoryByPid" resultMap="categoryResultMap">
+        SELECT id, name, code, pid
+        FROM basic_category
+        WHERE pid = #{pid} and is_deleted = false
+    </select>
 
+    <!-- 定义递归映射 -->
+    <resultMap id="categoryResultMap" type="com.erp.model.plm.dto.BasicCategoryDTO">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="code" column="code"/>
+        <result property="pid" column="pid"/>
+        <!-- 递归查询子分类 -->
+        <collection property="childrenList" column="id" javaType="List"
+                    ofType="com.erp.model.plm.dto.BasicCategoryDTO"
+                    select="getCategoryByPid"/>
+    </resultMap>
 </mapper>

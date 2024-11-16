@@ -478,5 +478,41 @@ public class SoDeliveryNoticeController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 批量修改中转仓库
+     * @author zdy
+     * @date:  2024-10-24
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateTransferWarehouse")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改中转仓库")
+    public ApiResult<List<BatchResultDTO>> updateTransferWarehouse(@RequestBody @Validated BaseIdsDTO.ChangeDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoDeliveryNoticeEntity> entityList = soDeliveryNoticeService.listByIds(ids);
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            SoDeliveryNoticeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTO = soDeliveryNoticeService.updateTransferWarehouse(entity, dto.getChangeIds());
+            }catch (Exception e){
+                log.error("发货通知单修改中转仓库失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货通知单不存在, 修改中转仓库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }
 
