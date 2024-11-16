@@ -14,9 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.service.impl.RedisService;
@@ -768,7 +766,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             int totalTaskCount = taskList.size();
             //延期的任务数
             int postponeTaskCount = 0;
-            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) > MathUtil.ZERO).collect(Collectors.toList()).size();
             dto.setTotalTaskCount(totalTaskCount);
             dto.setFinishTaskCount(finishTaskCount);
             dto.setIngTaskCount(ingTaskCount);
@@ -802,7 +800,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //总任务数
         int totalTaskCount = list.size();
         //延期的任务数
-        int postponeTaskCount = list.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = list.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) > MathUtil.ZERO).collect(Collectors.toList()).size();
         dto.setTotalTaskCount(totalTaskCount);
         dto.setFinishTaskCount(finishTaskCount);
         dto.setIngTaskCount(ingTaskCount);
@@ -1229,7 +1227,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //总任务数
         int totalTaskCount = taskList.size();
         //延期的任务数
-        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
+        int postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && t.getRealityEndTime() != null && t.getRealityEndTime().compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) > MathUtil.ZERO).collect(Collectors.toList()).size();
         ProductTaskCountDTO taskCountDTO = new ProductTaskCountDTO();
         taskCountDTO.setFinishTaskCount(finishTaskCount);
         taskCountDTO.setUnfinishedTaskCount(unfinishedTaskCount);

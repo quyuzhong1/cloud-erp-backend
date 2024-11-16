@@ -528,7 +528,7 @@ public class ProjectMembersServiceImpl extends ServiceImpl<ProjectMembersMapper,
 
             //延期的任务数
             int postponeTaskCount = 0;
-            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) == 1).collect(Collectors.toList()).size();
+            postponeTaskCount = taskList.stream().filter(t -> t.getPlanEndTime() != null && date.compareTo(LocalDateTimeUtil.of(t.getPlanEndTime())) > MathUtil.ZERO).collect(Collectors.toList()).size();
             TaskConductDTO dto = new TaskConductDTO();
             dto.setMembersId(item.getUserId());
             dto.setMembersName(item.getUserName());
