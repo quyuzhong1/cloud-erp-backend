@@ -110,7 +110,10 @@ public class ZipUtils {
             zipOutStream.close();
             boolean flag = zipFile.delete();
             if (flag) {
-                tempFile.renameTo(zipFile);
+                boolean rename = tempFile.renameTo(zipFile);
+                if (!rename){
+                    log.warn("tempFile.renameTo 重命名文件失败");
+                }
             } else {
                 log.info("删除文件失败。");
             }
@@ -210,7 +213,7 @@ public class ZipUtils {
      * @throws IOException
      */
     public static void zipDirectory(String dirPath, String zipPath) throws IOException {
-        if (zipPath == null || "".equals(zipPath)) {
+        if (zipPath == null || zipPath.isEmpty()) {
             zipDirectory(new File(dirPath), null);
         } else {
             zipDirectory(new File(dirPath), new File(zipPath));
@@ -225,26 +228,25 @@ public class ZipUtils {
      * @throws IOException
      */
     public static void unzip(File zipFile, File destDir) throws IOException {
-        ZipFile zipOutFile = new ZipFile(zipFile, Charset.forName(GBK));
-        Enumeration<? extends ZipEntry> entries = zipOutFile.entries();
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            if (entry.isDirectory()) {
+        try (ZipFile zipOutFile = new ZipFile(zipFile, Charset.forName("GBK"))) {
+            Enumeration<? extends ZipEntry> entries = zipOutFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
                 File tempFile = new File(destDir.getAbsolutePath() + File.separator + entry.getName());
-                if (!tempFile.exists()) {
-                    tempFile.mkdirs();
+                if (entry.isDirectory()) {
+                    if (!tempFile.exists()) {
+                        tempFile.mkdirs();
+                    }
+                } else {
+                    checkParentDir(tempFile);
+                    try (FileOutputStream fileOutStream = new FileOutputStream(tempFile);
+                         BufferedOutputStream bufferOutStream = new BufferedOutputStream(fileOutStream)
+                    ) {
+                        write(zipOutFile.getInputStream(entry), bufferOutStream);
+                    }
                 }
-            } else {
-                File tempFile = new File(destDir.getAbsolutePath() + File.separator + entry.getName());
-                checkParentDir(tempFile);
-                FileOutputStream fileOutStream = new FileOutputStream(tempFile);
-                BufferedOutputStream bufferOutStream = new BufferedOutputStream(fileOutStream);
-                write(zipOutFile.getInputStream(entry), bufferOutStream);
-                bufferOutStream.close();
-                fileOutStream.close();
             }
         }
-        zipOutFile.close();//记得关闭zip文件
     }
 
     /**

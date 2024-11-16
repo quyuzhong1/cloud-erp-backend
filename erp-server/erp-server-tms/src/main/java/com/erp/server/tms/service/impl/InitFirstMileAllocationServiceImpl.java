@@ -355,7 +355,6 @@ public class InitFirstMileAllocationServiceImpl extends SuperServiceImpl<InitFir
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_95131);
         }
     }

@@ -3,6 +3,7 @@ package com.erp.server.srm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -125,7 +126,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         poReconciliationDetailScmService.updateMainIdByIdList(addDTO.getDetailIdList(),poReconciliationEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "采购对账单" , poReconciliationEntity.getCode());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "采购对账单" , poReconciliationEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), poReconciliationEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(poReconciliationEntity.getId(), code);
     }
@@ -241,10 +242,10 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             PoReconciliationDTO.ExportDTO exportDTO = new PoReconciliationDTO.ExportDTO();
             exportDTO.setSupplierName(listDTO.getSupplierName());
             //供应商
-            SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> StrUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
+            SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(), list.get(0).getSupplierId())).findFirst().orElse(new SupplierDTO.SupplierDefaultDTO());
             SupplierEntity supplierEntity = supplierDefaultDTO.getSupplierEntity();
             if (ObjectUtils.isNotEmpty(supplierEntity)) {
-                exportDTO.setTitil(StrUtil.format("{}{}年{}月对账单", supplierEntity.getName(), listDTO.getEndDate().getYear(), listDTO.getEndDate().getMonthValue()));
+                exportDTO.setTitil( CharSequenceUtil.format("{}{}年{}月对账单", supplierEntity.getName(), listDTO.getEndDate().getYear(), listDTO.getEndDate().getMonthValue()));
                 //结算方式名称
                 List<DictBasicEntity> dictBasicList = scmDictFeign.listDictByIdList(Arrays.asList(supplierEntity.getPayMethodId()));
                 if (CollectionUtils.isNotEmpty(dictBasicList)) {
@@ -266,7 +267,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 exportDTO.setBankAccount(accountEntity.getBankAccount());
             }
             //明细
-            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId())).sorted(Comparator.comparing(PoReconciliationDetailEntity::getSourceCode).reversed()).collect(Collectors.toList());
+            List<PoReconciliationDetailEntity> detailList = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(listDTO.getId(), obj.getMainId())).sorted(Comparator.comparing(PoReconciliationDetailEntity::getSourceCode).reversed()).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailList)) {
                 continue;
             }
@@ -327,7 +328,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .set(PoReconciliationEntity::getPurchaseConfirmUserName, userInfo.getUserName())
                 .update();
         log.info("确认 开始记录对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
+        String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "确认操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
     }
@@ -355,7 +356,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .update();
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
+        String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "取消确认操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
@@ -397,7 +398,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
                 .update();
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据签收 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
+        String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据签收 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "签收操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.RECEIVE);
     }
@@ -481,7 +482,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             //业务状态
             listDTO.setStatusName(PoReconciliationEnum.PoReconciliationStatusEnum.getNameByCode(listDTO.getStatus()));
             //对账周期
-            listDTO.setCycle(StrUtil.format("{}-{}",LocalDateTimeUtil.format(listDTO.getStartDate(), DateTimeFormatter.ofPattern("yy.MM.dd")),LocalDateTimeUtil.format(listDTO.getEndDate(), DateTimeFormatter.ofPattern("yy.MM.dd"))));
+            listDTO.setCycle( CharSequenceUtil.format("{}-{}",LocalDateTimeUtil.format(listDTO.getStartDate(), DateTimeFormatter.ofPattern("yy.MM.dd")),LocalDateTimeUtil.format(listDTO.getEndDate(), DateTimeFormatter.ofPattern("yy.MM.dd"))));
             //币种符号
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");

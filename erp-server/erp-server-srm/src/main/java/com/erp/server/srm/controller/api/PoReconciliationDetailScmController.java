@@ -84,7 +84,7 @@ public class PoReconciliationDetailScmController extends BaseController {
             menuCode = "srm:poReconciliationDetail:scm:generatePoReconciliation",
             tableAlias = "prd"
     )
-    public ApiResult<?> generatePoReconciliation(@RequestBody @Validated PoReconciliationDetailDTO.GeneratePoReconciliationDTO dto) {
+    public ApiResult<Object> generatePoReconciliation(@RequestBody @Validated PoReconciliationDetailDTO.GeneratePoReconciliationDTO dto) {
         Boolean flag = poReconciliationDetailScmService.generatePoReconciliation(dto);
         return flag == true ? success() : failure();
     }

@@ -314,14 +314,12 @@ public class DistributeLockerAspect {
         String methodName = joinPoint.getSignature().getName();
         //获取目标类的所有方法，找到当前要执行的方法
         Method[] methods = joinPoint.getTarget().getClass().getMethods();
-        Method resultMethod = null;
         for (Method method : methods) {
             if (method.getName().equals(methodName)) {
-                resultMethod = method;
-                break;
+                return method;
             }
         }
-        return resultMethod;
+        return null;
     }
 
     /**
