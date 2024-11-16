@@ -6,6 +6,10 @@ import com.common.business.vo.LoginUser;
 import java.util.Objects;
 
 public class CommonService {
+
+    private CommonService() {
+    }
+
     public static LoginUser getUserInfo() {
         String userId = "";
         String userName = "";

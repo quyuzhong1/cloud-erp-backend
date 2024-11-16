@@ -285,13 +285,13 @@ public class JasperHelperUtil {
                 //定义临时生成报表文件夹
                 String sendReport = "sendFolder";
                 String sFilePath = reportJasperPath + sendReport + "/";
-                System.out.println(sFilePath + "生成文件夹路径-------------------------------");
+                log.info(sFilePath + "生成文件夹路径-------------------------------");
                 File targetFile = new File(sFilePath);
                 if (!targetFile.exists()) {
                     targetFile.mkdirs();
                 }
                 sFilePath += sFileName + "." + type;
-                System.out.println(sFilePath + "生成报表完整路径-------------------------------");
+                log.info(sFilePath + "生成报表完整路径-------------------------------");
                 File file1 = new File(sFilePath);
                 sysFileList.add(file1);
                 exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME, sFilePath);
@@ -317,7 +317,7 @@ public class JasperHelperUtil {
             File sendFile = new File(zipPath + sFileName + ".zip");
             //用于返回给前端的zip路径
             returnPath = zipPath + sFileName + ".zip";
-            System.out.println(sendFile + "生成zip压缩包路径 --------------");
+            log.info(sendFile + "生成zip压缩包路径 --------------");
             //执行成压缩包
             ZipUtils.zipFiles(sysFileList, sendFile);
             response.setContentLength((int) sendFile.length());

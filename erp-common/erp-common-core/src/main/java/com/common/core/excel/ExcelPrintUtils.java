@@ -114,7 +114,7 @@ public class ExcelPrintUtils {
 				stream = new FileInputStream(fileName);
 			}
 		} catch (Exception e) {
-			System.out.println("获取打印模板文件流" + fileName + "异常!");
+			log.info("获取打印模板文件流" + fileName + "异常!");
 		}
 		return stream;
 	}
@@ -1252,6 +1252,6 @@ public class ExcelPrintUtils {
 		String filePath = "C:\\Users\\Administrator\\Desktop\\新建 XLS 工作表.xls";
 		InputStream inputStream = new FileInputStream(filePath);
 		List<Map<String, String>> makeDataInputStream = makeDataInputStream(inputStream);
-		System.out.println(makeDataInputStream);
+		log.info(makeDataInputStream);
 	}
 }

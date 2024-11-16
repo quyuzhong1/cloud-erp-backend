@@ -1,5 +1,6 @@
 package com.common.core.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -22,8 +23,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@Slf4j
 public class Tools {
-	private static Logger logger = LoggerFactory.getLogger(Tools.class);
 
 
 	/**
@@ -229,10 +230,10 @@ public class Tools {
 				}
 				read.close();
 			} else {
-				System.out.println("找不到指定的文件,查看此路径是否正确:" + filePath);
+				log.info("找不到指定的文件,查看此路径是否正确:" + filePath);
 			}
 		} catch (Exception e) {
-			System.out.println("读取文件内容出错");
+			log.info("读取文件内容出错");
 		}
 		return "";
 	}
@@ -390,9 +391,6 @@ public class Tools {
 		String str = ObjectUtils.toString(obj, "");
 
 		return StringUtils.isNotBlank(str);
-	}
-
-	public static void main(String[] args) {
 	}
 
 }

@@ -651,7 +651,7 @@ public enum RocketMqTagEnum {
 
     public static void main(String[] args) {
         String tagStrByType = getTagStrByType(SKU_INFO);
-        System.out.println("tagStrByType = " + tagStrByType);
+        log.info("tagStrByType = " + tagStrByType);
     }
 
 

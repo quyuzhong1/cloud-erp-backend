@@ -13,6 +13,9 @@ import java.util.List;
  * @Created by yl
  */
 public class BeanMapper {
+    private BeanMapper() {
+    }
+
     private static Mapper dozerBeanMapper =  DozerBeanMapperBuilder.buildDefault();
 
     public static void copy(Object source, Object destinationObject) {
