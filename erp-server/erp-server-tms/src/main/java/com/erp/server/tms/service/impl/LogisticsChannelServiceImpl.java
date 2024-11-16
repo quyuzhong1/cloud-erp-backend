@@ -216,7 +216,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.ViewDTO view(String id) {
         LogisticsChannelEntity channelEntity = this.getById(id);
         if (Objects.isNull(channelEntity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         LogisticsChannelDTO.ViewDTO view = new LogisticsChannelDTO.ViewDTO();
         BeanMapperUtils.copy(channelEntity, view);
@@ -317,7 +317,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         LogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         Boolean dbDisabled = entity.getDisabled();
         if (dbDisabled.equals(disabled)) {
@@ -355,7 +355,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public Boolean copy(String id) {
         LogisticsChannelEntity channel = this.getById(id);
         if (Objects.isNull(channel)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         String addChannelId = IdWorker.getIdStr();
         channel.setId(addChannelId);
@@ -447,7 +447,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds) {
         List<LogisticsChannelEntity> logisticsChannelEntities = this.listByIds(channelIds);
         if (CollectionUtils.isEmpty(logisticsChannelEntities)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         List<LogisticsChannelDTO.BaseDTO> baseDTOS = BeanMapper.copyList(logisticsChannelEntities, LogisticsChannelDTO.BaseDTO.class);
         List<String> mainIds = baseDTOS.stream().map(req -> req.getMainId()).collect(Collectors.toList());

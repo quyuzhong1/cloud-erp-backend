@@ -781,7 +781,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 BigDecimal volumeRatio = BigDecimal.ONE;
                 if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
                     //g
-                    volumeRatio = new BigDecimal(0.001);
+                    volumeRatio = new BigDecimal("0.001");
                 }
                 length = soB2cLogisticsList.get(0).getLength();
                 width = soB2cLogisticsList.get(0).getWidth();

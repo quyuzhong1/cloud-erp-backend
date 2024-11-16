@@ -1423,7 +1423,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         for (TmsFirstMileReconciliationDetailEntity detailEntity : detailEntityList){
             //检查是否存在其他对账单
             if (!CollectionUtils.isEmpty(detailEntityList1)){
-                List<TmsFirstMileReconciliationDetailEntity> collect = detailEntityList1.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getMainId()) && Objects.equals(e.getSourceId(), detailEntity.getSourceId()) && detailEntity.getReconciliationCount() != e.getReconciliationCount()).collect(Collectors.toList());
+                List<TmsFirstMileReconciliationDetailEntity> collect = detailEntityList1.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getMainId()) && Objects.equals(e.getSourceId(), detailEntity.getSourceId()) && !detailEntity.getReconciliationCount().equals(e.getReconciliationCount())).collect(Collectors.toList());
                 if (!CollectionUtils.isEmpty(collect) && detailEntity.getReconciliationCount() == 1){
                     List<String> mainIds = collect.stream().map(TmsFirstMileReconciliationDetailEntity::getMainId).distinct().collect(Collectors.toList());
                     List<TmsFirstMileReconciliationEntity> tmsFirstMileReconciliationEntities = tmsFirstMileReconciliationService.listByIds(mainIds);

@@ -133,7 +133,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
                     ratio = new BigDecimal(1000);
                 } else {
                     //g
-                    ratio = new BigDecimal(0.001);
+                    ratio = new BigDecimal("0.001");
                 }
             }
             //体积重转换比例（体积重固定千克单位）
@@ -541,7 +541,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
                     ratio = new BigDecimal(1000);
                 } else {
                     //g
-                    ratio = new BigDecimal(0.001);
+                    ratio = new BigDecimal("0.001");
                 }
             }
             //体积重转换比例（体积重固定千克单位）
@@ -624,7 +624,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             }
             if (MathUtil.compareTo(decimalPart, 0) > MathUtil.ZERO && MathUtil.compareTo(decimalPart, 0.5) < MathUtil.ZERO) {
                 //未到0.5，进0.5
-                cost = MathUtil.add(integerPart, new BigDecimal(0.5));
+                cost = MathUtil.add(integerPart, new BigDecimal("0.5"));
             }
         }
         //向上取整，小数进1

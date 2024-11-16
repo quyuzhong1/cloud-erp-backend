@@ -1,7 +1,6 @@
 package com.erp.tms.aliexpress.service;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
 import com.erp.tms.aliexpress.api.IopClient;
 import com.erp.tms.aliexpress.api.IopClientImpl;
@@ -42,7 +41,7 @@ public class AliExpressShipperService {
     private static final String WAREHOUSE_CARRIER_SERVICE = "warehouse_carrier_service";
     
     private void validate(String appKey,String appSecret,String token){
-        if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
+        if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
     }
     public ChannelResult getChanelList(Map<String, String> authMap) throws ApiException {
         String appKey = authMap.get(CLIENT_ID);
