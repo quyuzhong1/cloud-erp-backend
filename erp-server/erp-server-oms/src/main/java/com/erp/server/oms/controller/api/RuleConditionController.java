@@ -55,7 +55,7 @@ public class RuleConditionController extends BaseController {
         menuCode = "oms:ruleCondition:update",
         serviceClass = RuleConditionService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated RuleConditionDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated RuleConditionDTO.UpdateDTO dto) {
         ruleConditionService.update(dto);
         return success();
     }

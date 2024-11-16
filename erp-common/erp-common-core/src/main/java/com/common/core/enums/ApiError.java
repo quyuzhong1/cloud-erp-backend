@@ -1389,7 +1389,11 @@ public enum ApiError implements Serializable {
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
     ADMIN(92154,"admin"),
+    ERROR_92155(92155,"b2b客户销售员变更单" ),
     ERROR_92156(92156,"状态由[%s]变更为[%s]"),
+    ERROR_92157(92157,"查询不到销售员"),
+    ERROR_92158(92158,"变更后的销售员id不能为空"),
+    ERROR_92159(92159,"单据不存在"),
     /**
      * TMS 错误
      * 从94000 开始

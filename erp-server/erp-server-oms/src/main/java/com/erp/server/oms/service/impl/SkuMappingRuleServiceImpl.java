@@ -3,14 +3,9 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.erp.model.oms.enums.ListingMatchResultEnum;
-import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
-import org.apache.commons.lang3.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -27,18 +22,25 @@ import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SkuMappingRuleEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.SkuMappingRuleEnum;
+import com.erp.model.plm.dto.BomDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.convert.SkuMappingRuleConverter;
 import com.erp.server.oms.mapper.SkuMappingRuleMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SkuMappingRuleService;
+import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import javax.annotation.Resource;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -476,7 +478,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
 
     @Override
     public PagingVO<SkuMappingRuleDTO.ListDTO> paging(PagingDTO<SkuMappingRuleDTO.ParamsDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<SkuMappingRuleDTO.ListDTO> pageData = baseMapper.paging(query, dto.getParams());
         pageData.getRecords().forEach(v->{
             v.setRuleTypeName(EnumMessage.getNameByCode(SkuMappingRuleEnum.class,v.getRuleType()));

@@ -86,7 +86,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
      */
     @Override
     public PagingVO<ModulePagingDTO> paging(PagingDTO<BaseSearchDTO> dto) {
-        Page<?> query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<ModulePagingDTO> pageData = baseMapper.paging(query, params);
@@ -123,7 +123,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         }
 
 
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
 
@@ -263,19 +263,23 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
             throw new ServiceException(ApiError.ERROR_97027);
         }
         String fileUrl = "";
-        if (imageObject != null && !imageObject.equals("null")) {
+        if (imageObject != null && !"null".equals(imageObject)) {
             MultipartFile imageFile = (MultipartFile) imageObject;
             File file = FileUtil.multiToFile(imageFile);
-            if (CharSequenceUtil.isBlank(imageFile.getOriginalFilename())) {
+
+            // 检查文件名是否为空或为null
+            String originalFilename = imageFile.getOriginalFilename();
+            if (CharSequenceUtil.isBlank(originalFilename)) {
                 throw new ServiceException(ApiError.ERROR_95018);
             }
-            String fileName = imageFile.getOriginalFilename().toLowerCase();
+
+            String fileName = originalFilename.toLowerCase();
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+
             if (StringUtils.isBlank(fileUrl)) {
                 throw new ServiceException(ApiError.ERROR_95018);
             }
         }
-
         module.setImageUrl(fileUrl);
         module.setName(name);
         module.setRemark(biModule.getRemark());
@@ -362,14 +366,18 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
         checkName(biModule.getId(), name);
         Boolean uploadFlag = biModule.getUploadFlag();
         Object imageObject = biModule.getImageFile();
-        //当上传了文件 且文件不为空的时候
-        if (imageObject != null && !imageObject.equals("null") && uploadFlag) {
+        // 当上传了文件 且文件不为空的时候
+        if (imageObject != null && !"null".equals(imageObject) && uploadFlag) {
             MultipartFile imageFile = (MultipartFile) imageObject;
             File file = FileUtil.multiToFile(imageFile);
-            if (CharSequenceUtil.isBlank(imageFile.getOriginalFilename())) {
+
+            // 检查文件名是否为null
+            String originalFilename = imageFile.getOriginalFilename();
+            if (originalFilename == null) {
                 throw new ServiceException(ApiError.ERROR_95018);
             }
-            String fileName = imageFile.getOriginalFilename().toLowerCase();
+
+            String fileName = originalFilename.toLowerCase();
             String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
             if (StringUtils.isBlank(fileUrl)) {
                 throw new ServiceException(ApiError.ERROR_95018);

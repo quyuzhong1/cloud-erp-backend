@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -37,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import javax.annotation.Resource;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,7 +79,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
-        if (!checkResult) {
+        if (Boolean.FALSE.equals(checkResult)) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
         CfgRuleDeclareEntity entity = new CfgRuleDeclareEntity();
@@ -95,7 +94,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), "申报规则单", entity.getName());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), ModuleTypeEnum.RULE_DECLARE.getName(), entity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_DECLARE.getCode(), id, "新增操作");
         return entity.getId();
     }
@@ -108,7 +107,9 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     public Boolean update(CfgRuleDeclareDTO.UpdateDTO updateDTO) {
         String id = updateDTO.getId();
         CfgRuleDeclareEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "申报规则单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.RULE_DECLARE.getName());
+        }
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
@@ -117,13 +118,12 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
-        if (!checkResult) {
+        if (Boolean.FALSE.equals(checkResult)) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
         CfgRuleDeclareEntity entity = BeanMapperUtils.map(CfgRuleDeclareEntity.class, updateDTO);
         // 数据处理
         handleData(entity);
-//        boolean save = super.updateById(entity);
         boolean save = lambdaUpdate().eq(CfgRuleDeclareEntity::getId,entity.getId())
                 .set(CfgRuleDeclareEntity::getName,entity.getName())
                 .set(CfgRuleDeclareEntity::getPriority,entity.getPriority())
@@ -145,7 +145,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         }
         ruleConditionService.updateRuleCondition(id, conditionList);
         // 记录主单操作日志
-        String msg =  CharSequenceUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "申报规则单");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), ModuleTypeEnum.RULE_DECLARE.getName());
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.RULE_DECLARE.getCode(), entity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -159,8 +159,8 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     public PagingVO<CfgRuleDeclareDTO.PagingViewDTO> paging(PagingDTO<CfgRuleDeclareDTO.PagingParamDTO> dto) {
         CfgRuleDeclareDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<CfgRuleDeclareDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO<>(pageData);
 
     }
@@ -168,7 +168,9 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     @Override
     public CfgRuleDeclareDTO.ViewDTO view(String id) {
         CfgRuleDeclareEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "申报规则单"));
+        if(null == entity){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.RULE_DECLARE.getName());
+        }
         CfgRuleDeclareDTO.ViewDTO view = new CfgRuleDeclareDTO.ViewDTO();
         BeanMapper.copy(entity, view);
         String type = DictBasicTypeEnum.FIELD.getType();
@@ -180,12 +182,14 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
     @Override
     public Boolean updateStatus(UpdateStateDTO dto) {
         CfgRuleDeclareEntity entity = this.getById(dto.getId());
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "申报规则单"));
+        if(null == entity){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, ModuleTypeEnum.RULE_DECLARE.getName());
+        }
         Boolean disabled = entity.getDisabled();
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "停用" : "启用", disabled ? "启用" : "停用");
+        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "停用");
         entity.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_DECLARE.getCode(), dto.getId(), "状态变更");
         return this.updateById(entity);
@@ -224,16 +228,16 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
             resetToDeclarePrice(entity,detailMap,maxCustomsAmount, minCustomsAmount);
             addList.add(entity);
         }
-        if (Objects.nonNull(isUpdate) && isUpdate){
+        if (Objects.nonNull(isUpdate) && Boolean.TRUE.equals(isUpdate)){
             //删除已存在申报信息
             soB2cDeclareProductService.removeBySoId(String.valueOf(map.get("id")));
         }
         //判断是否更新规则 isUpdate
         if (CollUtil.isNotEmpty(addList)){
             soB2cDeclareProductService.saveBatch(addList);
-            if (Objects.nonNull(isUpdate) && isUpdate){
+            if (Objects.nonNull(isUpdate) && Boolean.TRUE.equals(isUpdate)){
                 //批量添加操作日志
-                batchAddDeclareOperateLog(declareProductList, addList, "批量更新报关");
+                batchAddDeclareOperateLog(declareProductList, addList);
             }else {
                 String msg =  CharSequenceUtil.format("自动生成报关信息");
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), String.valueOf(map.get("id")), "报关信息生成");
@@ -241,7 +245,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
         }
     }
 
-    private void batchAddDeclareOperateLog(List<SoB2cDeclareProductEntity> declareProductList, List<SoB2cDeclareProductEntity> addList, String operation) {
+    private void batchAddDeclareOperateLog(List<SoB2cDeclareProductEntity> declareProductList, List<SoB2cDeclareProductEntity> addList) {
         List<Pair<String, String>> updateLogPairList = new ArrayList<>();
         for (SoB2cDeclareProductEntity newDeclareProduct : addList) {
             SoB2cDeclareProductEntity old = declareProductList.stream().filter(e -> Objects.nonNull(e) && e.getSoDetailId().equals(newDeclareProduct.getSoDetailId())
@@ -304,7 +308,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
             Boolean matchResult = spElServer.matchDetailExpressionByConditionList(conditionElementList, detailMap);
-            if (matchResult) {
+            if (Boolean.TRUE.equals(matchResult)) {
                 //返回申报明细
                 SoB2cDeclareProductEntity entity = B2cOrderConverter.INSTANCE.convertDeclareProductByMap(detailMap);
                 //重置固定值

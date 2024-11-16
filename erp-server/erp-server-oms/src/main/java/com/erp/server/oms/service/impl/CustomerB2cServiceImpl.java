@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -28,7 +27,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -53,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -360,7 +359,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             approveList.add(ApproveStatusEnum.REJECT.getStatus());
         }
 
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params, approveList);
         List<CustomerB2CDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -1473,7 +1472,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         buildCustomerDTO(pageData.getRecords());
         CustomerB2CDTO.DropPagingDTO<CustomerB2CDTO.DropListDTO> result = new CustomerB2CDTO.DropPagingDTO<>(pageData);
         if (CollectionUtils.isNotEmpty(pageData.getRecords()))  {
-            long count = pageData.getRecords().stream().filter(obj -> StrUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
+            long count = pageData.getRecords().stream().filter(obj -> CharSequenceUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
             if (count > 0) {
                 result.setIsExist(Boolean.TRUE);
             }

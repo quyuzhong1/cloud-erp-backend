@@ -25,5 +25,5 @@ public interface BiDataSourceMapper extends BaseMapper<BiDataSourceEntity> {
      * @param params
      * @return IPage<BiDataSourceDTO>
      */
-    IPage<BiDataSourceDTO> paging(Page query,@Param("params") AdvanceSearchDTO params);
+    IPage<BiDataSourceDTO> paging(Page<Object> query,@Param("params") AdvanceSearchDTO params);
 }

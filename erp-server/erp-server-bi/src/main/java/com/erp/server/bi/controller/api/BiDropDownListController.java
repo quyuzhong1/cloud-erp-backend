@@ -320,7 +320,7 @@ public class BiDropDownListController extends BaseController {
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream().map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getParentCategoryName()))
                 .distinct()
-                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .filter(x -> CharSequenceUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

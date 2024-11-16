@@ -103,7 +103,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
 
     @Override
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         DmpOrderInfoSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpOrderInfoDTO> pageData = baseMapper.paging(query, params);

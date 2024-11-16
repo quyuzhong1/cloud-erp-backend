@@ -27,10 +27,10 @@ public class BiDataSourceServiceImpl extends ServiceImpl<BiDataSourceMapper, BiD
 
     @Override
     public PagingVO<BiDataSourceDTO> paging(PagingDTO<AdvanceSearchDTO> dto) {
-        Page<BiDataSourceDTO> query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         AdvanceSearchDTO params = dto.getParams();
         IPage<BiDataSourceDTO> pageData = baseMapper.paging(query, params);
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
