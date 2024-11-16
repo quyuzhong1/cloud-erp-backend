@@ -3,6 +3,7 @@ package com.erp.sdk.oms.amz.spapi.documents;
 import com.erp.sdk.oms.amz.spapi.documents.exception.CryptoException;
 import com.erp.sdk.oms.amz.spapi.documents.exception.HttpResponseException;
 import com.erp.sdk.oms.amz.spapi.documents.impl.OkHttpTransferClient;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -12,6 +13,7 @@ import java.io.InputStream;
 /**
  * Helper class for encrypting and uploading documents.
  */
+@Slf4j
 public class UploadHelper {
     private final HttpTransferClient httpTransferClient;
     private final String tmpFilePrefix;
@@ -52,6 +54,9 @@ public class UploadHelper {
             httpTransferClient.upload(spec.getUrl(), spec.getContentType(), tmpFile);
         } finally {
             boolean delete = tmpFile.delete();
+            if (!delete){
+                log.warn("document.delete error");
+            }
         }
     }
 

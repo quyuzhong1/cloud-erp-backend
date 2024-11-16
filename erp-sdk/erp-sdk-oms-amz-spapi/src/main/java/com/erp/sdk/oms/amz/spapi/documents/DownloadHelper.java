@@ -2,6 +2,7 @@ package com.erp.sdk.oms.amz.spapi.documents;
 
 import com.erp.sdk.oms.amz.spapi.documents.exception.HttpResponseException;
 import com.erp.sdk.oms.amz.spapi.documents.impl.OkHttpTransferClient;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.io.IOException;
 /**
  * Helper for downloading encrypted documents.
  */
+@Slf4j
 public class DownloadHelper {
     private final HttpTransferClient httpTransferClient;
     private final String tmpFilePrefix;
@@ -48,6 +50,9 @@ public class DownloadHelper {
                     spec.getCompressionAlgorithm(), contentType, spec.getCryptoStreamFactory(), tmpFile);
         } catch (Exception e) {
             boolean delete = tmpFile.delete();
+            if (!delete){
+                log.warn("document.delete error");
+            }
             throw e;
         }
     }
