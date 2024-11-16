@@ -1,6 +1,7 @@
 package com.common.message.enums;
 
 import cn.hutool.core.collection.CollectionUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
  * @Author Cloud
  * @Date 2023/2/6 10:32
  **/
+@Slf4j
 public enum RocketMqTagEnum {
 
     //---------------------------------中台数据抓取从1开始------------------------------------------------------------------------------------------
@@ -651,6 +653,7 @@ public enum RocketMqTagEnum {
 
     public static void main(String[] args) {
         String tagStrByType = getTagStrByType(SKU_INFO);
+
         log.info("tagStrByType = " + tagStrByType);
     }
 
