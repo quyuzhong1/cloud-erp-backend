@@ -33,9 +33,13 @@ public abstract class WebUtils {
             return null;
         }
 
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {return ;}
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            // TODO document why this method is empty
+        }
 
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {return ;}
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            // TODO document why this method is empty
+        }
     }
 
     public static void setIgnoreSSLCheck(boolean ignoreSSLCheck) {

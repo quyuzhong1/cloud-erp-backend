@@ -136,6 +136,6 @@ public class DownloadBundle implements AutoCloseable {
      * Closes this {@link DownloadBundle}, deleting the temporary file containing the encrypted document contents.
      */
     public void close() {
-        document.delete();
+        boolean delete = document.delete();
     }
 }
