@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -59,7 +60,9 @@ public class CfgRuleWaveRecordServiceImpl extends SuperServiceImpl<CfgRuleWaveRe
     @Override
     public Boolean update(CfgRuleWaveRecordDTO.UpdateDTO updateDTO) {
         CfgRuleWaveRecordEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则执行记录单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则执行记录单");
+        }
         CfgRuleWaveRecordEntity cfgRuleWaveRecordEntity =  BeanMapperUtils.map(CfgRuleWaveRecordEntity.class, updateDTO);
 
         // 数据处理

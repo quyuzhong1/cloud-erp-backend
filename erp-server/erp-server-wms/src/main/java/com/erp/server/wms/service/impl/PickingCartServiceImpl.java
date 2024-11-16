@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -91,7 +92,10 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
     @Override
     public Boolean update(PickingCartDTO.UpdateDTO updateDTO) {
         PickingCartEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拣货车管理"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "拣货车管理");
+        }
+//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拣货车管理"));
         PickingCartEntity pickingCartEntity =  BeanMapperUtils.map(PickingCartEntity.class, updateDTO);
 
         // 数据处理

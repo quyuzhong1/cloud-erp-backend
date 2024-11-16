@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -68,7 +69,10 @@ public class WmsDataCompareImportServiceImpl extends SuperServiceImpl<WmsDataCom
     @Override
     public Boolean update(WmsDataCompareImportDTO.UpdateDTO updateDTO) {
         WmsDataCompareImportEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比导入文件信息"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比导入文件信息");
+        }
+//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比导入文件信息"));
         WmsDataCompareImportEntity wmsDataCompareImportEntity =  BeanMapperUtils.map(WmsDataCompareImportEntity.class, updateDTO);
 
         // 数据处理

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -69,7 +70,10 @@ public class OverseasWarehouseInboundReceivedServiceImpl extends SuperServiceImp
     @Override
     public Boolean update(OverseasWarehouseInboundReceivedDTO.UpdateDTO updateDTO) {
         OverseasWarehouseInboundReceivedEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录");
+        }
+//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录"));
         OverseasWarehouseInboundReceivedEntity overseasWarehouseInboundReceivedEntity =  BeanMapperUtils.map(OverseasWarehouseInboundReceivedEntity.class, updateDTO);
 
         // 数据处理

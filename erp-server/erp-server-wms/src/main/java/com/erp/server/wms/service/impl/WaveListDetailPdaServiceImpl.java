@@ -62,7 +62,10 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     @Transactional(rollbackFor = Exception.class)
     public Boolean hangUp(WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO) {
         WaveListEntity old = waveListService.getById(hangUpDTO.getWaveId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "波次列表"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次列表");
+        }
+//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "波次列表"));
         if (!StrUtil.equals(old.getStatus(),WaveStatusEnum.PICK_ING.getCode())) {
             throw new ServiceException(CharSequenceUtil.format("波次【{}】非拣货中，不支持挂起。",old.getCode()));
         }

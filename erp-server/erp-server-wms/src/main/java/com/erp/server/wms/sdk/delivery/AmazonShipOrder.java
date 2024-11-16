@@ -265,7 +265,7 @@ public class AmazonShipOrder extends AbstractShipOrder {
                 .stream().
                 collect(Collectors.groupingBy(ShopInfoEntity::getPlatformShopCode));
         // 异常按亚马逊账号查询
-        platformGroup.entrySet().parallelStream().peek(e->{
+        List<Map.Entry<String, List<ShopInfoEntity>>> collect = platformGroup.entrySet().parallelStream().peek(e -> {
             // 当前账号的所有
             List<PlatformOrderQueryDTO> curDtoList = dtoList.stream()
                     .filter(dto -> shopIds.contains(dto.getShopId()))
@@ -302,14 +302,14 @@ public class AmazonShipOrder extends AbstractShipOrder {
                             .filter(Order::convertCancel)
                             .map(Order::getAmazonOrderId)
                             .collect(Collectors.toList());
-                    if (CollectionUtils.isEmpty(cancelOrderCodeList)){
+                    if (CollectionUtils.isEmpty(cancelOrderCodeList)) {
                         continue;
                     }
                     List<String> soB2cIdList = queryDTOS.stream()
                             .filter(cur -> cancelOrderCodeList.contains(cur.getPlatformCode()))
                             .map(PlatformOrderQueryDTO::getSoB2cId)
                             .collect(Collectors.toList());
-                    if (CollectionUtils.isEmpty(soB2cIdList)){
+                    if (CollectionUtils.isEmpty(soB2cIdList)) {
                         continue;
                     }
                     soB2cFeign.batchUpdateCancelAndLog(soB2cIdList);

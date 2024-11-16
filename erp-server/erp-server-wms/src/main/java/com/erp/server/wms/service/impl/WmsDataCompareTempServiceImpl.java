@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import cn.hutool.core.text.CharSequenceUtil;
@@ -73,7 +74,10 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
     @Override
     public Boolean update(WmsDataCompareTempDTO.UpdateDTO updateDTO) {
         WmsDataCompareTempEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单");
+        }
+//        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单"));
         WmsDataCompareTempEntity wmsDataCompareTempEntity =  BeanMapperUtils.map(WmsDataCompareTempEntity.class, updateDTO);
 
         // 数据处理
