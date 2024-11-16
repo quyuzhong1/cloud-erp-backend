@@ -1,7 +1,6 @@
 package com.erp.rpc.sys.feign.aspect;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.annotation.DataPermission;
@@ -47,12 +46,6 @@ public class DataPermissionAspect {
      * 仅本人数据权限
      */
     public static final Integer DATA_SCOPE_SELF = 1;
-    public static final String SQL_HEAD = " AND string_to_array(";
-    public static final String SQL_LINK = ",',') && string_to_array('";
-    public static final String SQL_LAST = "',',')";
-    public static final String SQL_HEAD_1 = " AND (string_to_array(";
-    public static final String SQL_HEAD_2 = "string_to_array(";
-    public static final String SQL_LAST_2 = "',','))";
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -66,7 +59,7 @@ public class DataPermissionAspect {
     }
 
     @Before("dataScopePointCut()")
-    public void doBefore(JoinPoint point) {
+    public void doBefore(JoinPoint point) throws Throwable {
         handleDataScope(point);
     }
 
@@ -166,42 +159,54 @@ public class DataPermissionAspect {
 
         StringBuilder sqlString = new StringBuilder();
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
+            sqlString = new StringBuilder();
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
+            List<String> list = new ArrayList<>();
+            for (String s : userList) {
+                list.add(s);
+            }
+            if (CollectionUtils.isNotEmpty(list)) {
+                if (tableFieldSize == 1) {
+                    sqlString.append(" AND string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + StringUtils.join(list, ",") + "',',')");
+                } else {
+                    sqlString.append(" AND (string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + StringUtils.join(list, ",") + "',',')");
+                    if (tableFieldSize > 1) {
+                        sqlString.append(" OR ");
+                        for (int i = 1; i < tableFieldSize; i++) {
+                            sqlString.append("string_to_array(" + (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "." + tableFieldList.get(i) + ",',') && string_to_array('" + StringUtils.join(list, ",") + "',','))");
+                        }
+                    }
+                }
 
-            handleScope(userList, user, tableFieldSize, sqlString, tableAliasList, tableFieldList, flag);
-
+            } else {
+                if (tableFieldSize == 1) {
+                    sqlString.append(" AND string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + user.getUid() + "',',')");
+                } else {
+                    sqlString.append(" AND (string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + user.getUid() + "',',')");
+                    if (tableFieldSize > 1) {
+                        sqlString.append(" OR ");
+                        for (int i = 1; i < tableFieldSize; i++) {
+                            sqlString.append("string_to_array(" + (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "." + tableFieldList.get(i) + ",',') && string_to_array('" + user.getUid() + "',','))");
+                        }
+                    }
+                }
+            }
+            //like any (array['%1582313948525367297%','%1549948476757303297%'])
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
-            handleScopeSelf(tableFieldSize, sqlString, tableAliasList, tableFieldList, user.getUid(), flag);
-        }
-        ObjectUtils.setFieldValue(params[inject.index()], inject.permissionSql(), sqlString.toString());
-    }
-
-    private static void handleScopeSelf(int tableFieldSize, StringBuilder sqlString, List<String> tableAliasList, List<String> tableFieldList, String user, boolean flag) {
-        if (tableFieldSize == 1) {
-            sqlString.append(SQL_HEAD + tableAliasList.get(0) + "." + tableFieldList.get(0) + SQL_LINK + user + SQL_LAST);
-        } else {
-            sqlString.append(SQL_HEAD_1 + tableAliasList.get(0) + "." + tableFieldList.get(0) + SQL_LINK + user + SQL_LAST);
-            if (tableFieldSize > 1) {
-                sqlString.append(" OR ");
-                for (int i = 1; i < tableFieldSize; i++) {
-                    sqlString.append(SQL_HEAD_2 + (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "." + tableFieldList.get(i) + SQL_LINK + user + SQL_LAST_2);
+            if (tableFieldSize == 1) {
+                sqlString.append(" AND string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + user.getUid() + "',',')");
+            } else {
+                sqlString.append(" AND (string_to_array(" + tableAliasList.get(0) + "." + tableFieldList.get(0) + ",',') && string_to_array('" + user.getUid() + "',',')");
+                if (tableFieldSize > 1) {
+                    sqlString.append(" OR ");
+                    for (int i = 1; i < tableFieldSize; i++) {
+                        sqlString.append("string_to_array(" + (flag ? tableAliasList.get(i) : tableAliasList.get(0)) + "." + tableFieldList.get(i) + ",',') && string_to_array('" + user.getUid() + "',','))");
+                    }
                 }
             }
         }
-    }
-
-    private static void handleScope(List<String> userList, LoginUser user, int tableFieldSize, StringBuilder sqlString, List<String> tableAliasList, List<String> tableFieldList, boolean flag) {
-        List<String> list = new ArrayList<>();
-        for (String s : userList) {
-            list.add(s);
-        }
-        if (CollectionUtils.isNotEmpty(list)) {
-            handleScopeSelf(tableFieldSize, sqlString, tableAliasList, tableFieldList, StringUtils.join(list, ","), flag);
-
-        } else {
-            handleScopeSelf(tableFieldSize, sqlString, tableAliasList, tableFieldList, user.getUid(), flag);
-        }
+        ObjectUtils.setFieldValue(params[inject.index()], inject.permissionSql(), sqlString.toString());
     }
 
     /**
@@ -221,24 +226,46 @@ public class DataPermissionAspect {
 
         Object obj = joinPoint.getArgs()[0];
 
+        List<Object> objList = new ArrayList<>();
+        if (obj instanceof List) {
+            objList = (List<Object>) obj;
+        } else if (obj instanceof String[]) {
+            objList = Arrays.asList((String[]) joinPoint.getArgs()[0]);
+        } else if (obj instanceof String) {
+            objList = Collections.singletonList(obj);
+        } else if (obj instanceof Map) {
+            Map mapParam = (Map) obj;
+        }
+
         List<String> inputIdList = new ArrayList<>();
         if (obj instanceof String) {
             inputIdList.add(String.valueOf(obj));
         } else {
 
-            inputIdList = handleOther(dataPermission, obj, inputIdList);
+            Map<String, Object> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
+            Object o = null;
+            if (StringUtils.isNotBlank(dataPermission.entityName())) {
+                Object entity = mapParam.get(dataPermission.entityName());
+                o = JSONObject.parseObject(JSONObject.toJSONString(entity)).get(dataPermission.keyIdName());
+            } else {
+                o = mapParam.get(dataPermission.keyIdName());
+            }
+            if (o != null) {
+                if (o instanceof List) {
+                    inputIdList = (List<String>) o;
+                } else if (o instanceof String) {
+                    inputIdList.add(String.valueOf(o));
+                }
+            }
         }
 
         if (CollectionUtils.isEmpty(inputIdList)) {
             return;
         }
-        if (service == null) {
-            throw new ServiceException("未找到对应的service类");
-        }
         List<String> users = new ArrayList<>();
         List<?> objects = service.listByIds(inputIdList);
         for (Object object : objects) {
-            JSONObject jsonObject = JSON.parseObject(JSON.toJSONString(object));
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
             Object o = jsonObject.get(StrUtils.underlineToCamel(dataPermission.tableField(), true));
             if (o == null) {
                 return;
@@ -248,12 +275,15 @@ public class DataPermissionAspect {
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            long containsUserCount = users.stream().filter(userList::contains).count();
+            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
             if (containsUserCount == 0) {
                 throw new ServiceException(ApiError.NO_PERMISSION);
             }
-        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope()) && !users.contains(user.getUid())) {
-            throw new ServiceException(ApiError.NO_PERMISSION);
+        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!users.contains(user.getUid())) {
+                throw new ServiceException(ApiError.NO_PERMISSION);
+            }
+
         }
     }
 
@@ -274,83 +304,91 @@ public class DataPermissionAspect {
 
         Object obj = joinPoint.getArgs()[0];
 
+        List<Object> objList = new ArrayList<>();
+        if (obj instanceof List) {
+            objList = (List<Object>) obj;
+        } else if (obj instanceof String[]) {
+            objList = Arrays.asList((String[]) joinPoint.getArgs()[0]);
+        } else if (obj instanceof String) {
+            objList = Collections.singletonList(obj);
+        } else if (obj instanceof Map) {
+            Map mapParam = (Map) obj;
+        }
 
         List<String> inputIdList = new ArrayList<>();
         if (obj instanceof String) {
             inputIdList.add(String.valueOf(obj));
         } else if (obj instanceof List) {
-            inputIdList = handlePermissionList(dataPermission, (List<Object>) obj, inputIdList);
+            List<Object> list = (List<Object>) obj;
+            for (Object object : list) {
+                Map<String, Object> mapParam = JSONObject.parseObject(JSONObject.toJSONString(object), Map.class);
+                Object o = null;
+                if (StringUtils.isNotBlank(dataPermission.entityName())) {
+                    Object entity = mapParam.get(dataPermission.entityName());
+                    o = JSONObject.parseObject(JSONObject.toJSONString(entity)).get(dataPermission.keyIdName());
+                } else {
+                    o = mapParam.get(dataPermission.keyIdName());
+                }
+                if (o != null) {
+                    if (o instanceof List) {
+                        inputIdList = (List<String>) o;
+                    } else if (o instanceof String) {
+                        inputIdList.add(String.valueOf(o));
+                    }
+                }
+            }
         } else {
 
-            inputIdList = handleOther(dataPermission, obj, inputIdList);
+            Map<String, Object> mapParam = JSONObject.parseObject(JSONObject.toJSONString(obj), Map.class);
+            Object o = null;
+            if (StringUtils.isNotBlank(dataPermission.entityName())) {
+                Object entity = mapParam.get(dataPermission.entityName());
+                o = JSONObject.parseObject(JSONObject.toJSONString(entity)).get(dataPermission.keyIdName());
+            } else {
+                o = mapParam.get(dataPermission.keyIdName());
+            }
+            if (o != null) {
+                if (o instanceof List) {
+                    inputIdList = (List<String>) o;
+                } else if (o instanceof String) {
+                    inputIdList.add(String.valueOf(o));
+                }
+            }
         }
 
         if (CollectionUtils.isEmpty(inputIdList)) {
             return;
         }
-        if (service == null) {
-            throw new ServiceException("未找到对应的service类");
-        }
         List<String> users = new ArrayList<>();
         List<?> objects = service.listByIds(inputIdList);
         for (Object object : objects) {
-            if (handleUpdateObject(dataPermission, object, users)) return;
+            JSONObject jsonObject = JSONObject.parseObject(JSONObject.toJSONString(object));
+
+            if (StringUtils.isBlank(dataPermission.tableField())) {
+                return;
+            }
+            String[] tableFields = dataPermission.tableField().split(",");
+            for (String tableField : tableFields) {
+                Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
+                if (o == null) {
+                    continue;
+                }
+                users.addAll(Arrays.asList(o.toString().split(",")));
+            }
         }
 
         if (DATA_SCOPE_ALL.equals(userRequestPermissions.getDataScope())) {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
-            long containsUserCount = users.stream().filter(userList::contains).count();
+            long containsUserCount = users.stream().filter(u -> userList.contains(u)).count();
             if (containsUserCount == 0) {
                 throw new ServiceException(ApiError.NO_PERMISSION);
             }
-        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())&&!users.contains(user.getUid())) {
-            throw new ServiceException(ApiError.NO_PERMISSION);
-        }
-    }
-
-    private static boolean handleUpdateObject(DataPermission dataPermission, Object object, List<String> users) {
-        JSONObject jsonObject = JSON.parseObject(JSON.toJSONString(object));
-
-        if (StringUtils.isBlank(dataPermission.tableField())) {
-            return true;
-        }
-        String[] tableFields = dataPermission.tableField().split(",");
-        for (String tableField : tableFields) {
-            Object o = jsonObject.get(StrUtils.underlineToCamel(tableField, true));
-            if (o == null) {
-                continue;
-            }
-            users.addAll(Arrays.asList(o.toString().split(",")));
-        }
-        return false;
-    }
-
-    private static List<String> handleOther(DataPermission dataPermission, Object obj, List<String> inputIdList) {
-        Map<String, Object> mapParam = JSON.parseObject(JSON.toJSONString(obj), Map.class);
-        Object o = null;
-        if (StringUtils.isNotBlank(dataPermission.entityName())) {
-            Object entity = mapParam.get(dataPermission.entityName());
-            o = JSON.parseObject(JSON.toJSONString(entity)).get(dataPermission.keyIdName());
-        } else {
-            o = mapParam.get(dataPermission.keyIdName());
-        }
-        if (o != null) {
-            if (o instanceof List) {
-                inputIdList = (List<String>) o;
-            } else if (o instanceof String) {
-                inputIdList.add(String.valueOf(o));
+        } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
+            if (!users.contains(user.getUid())) {
+                throw new ServiceException(ApiError.NO_PERMISSION);
             }
         }
-        return inputIdList;
-    }
-
-    private static List<String> handlePermissionList(DataPermission dataPermission, List<Object> obj, List<String> inputIdList) {
-        List<Object> list = obj;
-        for (Object object : list) {
-            inputIdList = handleOther(dataPermission, object, inputIdList);
-        }
-        return inputIdList;
     }
 
     /**
