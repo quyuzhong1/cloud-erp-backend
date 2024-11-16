@@ -634,7 +634,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         List<DeptCostVO> vo = baseMapper.sumByDeptAndCostType(month, dto, dictValues, groupName);
 
         if (CollUtil.isNotEmpty(vo)) {
-            // 使用 forEach 代替 peek 修改元素
+            // 使用 forEach 代替peek 修改元素
             vo.forEach(x -> x.setMonth(month));
         }
 
@@ -901,7 +901,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 时间分组销售额-季度
         Map<Integer, BigDecimal> quarterSalesMap = biOrderInfoService.statisticsSalesByDate(dto, 1);
 
-        // 净利润 TODO
+        // 净利润
         HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>(4);
         // 表头 SeriesVO
         List<SeriesVO<String>> seriesList = getDateAnalyze(quarterMap, quarterCostMap, quarterSalesMap, netProfitMap, 4);
@@ -943,7 +943,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 时间分组销售额-季度
         Map<Integer, BigDecimal> yearSalesMap = biOrderInfoService.statisticsSalesByDate(dto, 2);
 
-        // 净利润 TODO
+        // 净利润
         HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>(4);
         // 表头 SeriesVO
         List<SeriesVO<String>> seriesList = getDateAnalyze(yearMap, yearCostMap, yearSalesMap, netProfitMap, 0);

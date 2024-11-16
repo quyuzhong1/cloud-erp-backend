@@ -54,7 +54,7 @@ public enum SettleMethodEnum {
         }
         SettleMethodEnum[] values = values();
         for (SettleMethodEnum value : values) {
-            if (value.code == code) {
+            if (value.code.equals(code)) {
                 return value;
             }
         }

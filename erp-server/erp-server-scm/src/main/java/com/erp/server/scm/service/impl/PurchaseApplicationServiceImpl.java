@@ -42,7 +42,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseOrderTypeEnum;
 import com.erp.model.scm.enums.PurchaseTableFlagEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -1278,7 +1277,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if(CollUtil.isNotEmpty(prohibitDetails)) {
             StringBuffer errMsg = new StringBuffer("");
             List<String> prohibitDetailIds = prohibitDetails.stream().map(PurchaseApplicationDetailEntity::getId).distinct().collect(Collectors.toList());
-            Map<String, Object> exceptionDataMap = new HashMap(){{put("purchaseApplicationDetailIds", prohibitDetailIds);}};
+            Map<String, Object> exceptionDataMap = new HashMap<>();
+            exceptionDataMap.put("purchaseApplicationDetailIds", prohibitDetailIds);
             prohibitDetails.stream().forEach(detail->{
                 PurchaseApplicationEntity entity = detailMainMap.get(detail.getId());
                 errMsg.append(StrUtil.format(ApiError.ERROR_99998.msg,entity.getCode(),detail.getSkuNo())).append("</br>");

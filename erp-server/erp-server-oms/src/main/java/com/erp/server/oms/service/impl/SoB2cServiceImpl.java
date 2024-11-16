@@ -503,10 +503,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for(Future<TabListDTO> f : futureList) {
         	try {
 				list.add(f.get());
-			} catch (InterruptedException | ExecutionException e) {
-				log.error("线程处理异常" , e);
-				throw new ServiceException("线程处理异常");
-			}
+			} catch (InterruptedException e) {
+                // 恢复线程的中断状态，确保中断标志不会被忽略
+                Thread.currentThread().interrupt();
+                log.error("线程被中断", e);
+                throw new ServiceException("线程被中断", e);
+            } catch (ExecutionException e) {
+                log.error("线程任务执行异常", e);
+                throw new ServiceException("线程任务执行异常", e.getCause());
+            } catch (ThreadDeath td) {
+                log.error("捕获到 ThreadDeath，线程终止", td);
+                throw td; // 重新抛出以允许线程正常终止
+            }
         }
         return list;
     }
@@ -851,8 +859,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SettingForecastDTO.CheckRegistrationDTO checkRegistration = new SettingForecastDTO.CheckRegistrationDTO();
             checkRegistration.setSkuNoList(skuNoList);
             checkRegistration.setDeclarePlatform(declarePlatform);
-            List<String> notSkuRegistrationList = forecastFeign.listNotRegistrationByParam(checkRegistration);
-            return notSkuRegistrationList;
+            return forecastFeign.listNotRegistrationByParam(checkRegistration);
         }
         return Collections.emptyList();
     }
@@ -865,7 +872,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public BatchResultDTO update(SoB2cDTO.UpdateDTO updateDTO) {
         SoB2cEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        isExist(old);
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -997,8 +1004,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cService.checkProductRegistrationAndUpdate(entity.getId(), "");
             }
             Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-            if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
-                soB2cService.getLogisticsCode(entity.getId(), autoGetTrackNo);
+            if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
+                soB2cService.getLogisticsCode(entity.getId(), true);
             }
         }
         //清除预报异常
@@ -3675,8 +3682,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             scarceDTO.setChildUsableQty(childVirtualUsableQty);
 
             //针对父级可用数量
-            double floor = Math.floor(childVirtualUsableQty / childrenSkuDTO.getQuantity());
-            Integer parentUsableQty = Integer.valueOf((int) floor);
+            double floor = Math.floor((double) childVirtualUsableQty / childrenSkuDTO.getQuantity());
+            Integer parentUsableQty = (int) floor;
             scarceDTO.setParentUsableQty(parentUsableQty);
 
             Integer virtualScarceQty = detailDTO.getQty() * childrenSkuDTO.getQuantity() - childVirtualUsableQty;
@@ -3987,7 +3994,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public Map<String, Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         Map<String, Boolean> resultMap = new HashMap<>();
         SoB2cEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        isExist(entity);
         if (map.isEmpty()) {
             //匹配审核规则
             handleMatchJson(id, detailList, map);
@@ -4482,7 +4489,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRES_NEW)
     public SoB2cDTO.RuleResultDTO logisticsRule(String id, Map<String, Object> map, Boolean isCheckProductRegistration) {
         SoB2cEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        isExist(entity);
         if (map.isEmpty()) {
             List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
             handleMatchJson(id, detailList, map);
@@ -4527,6 +4534,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         resultDTO.setIsRuleMatch(result);
         resultDTO.setAutoGetTrackNo(autoGetTrackNo);
         return resultDTO;
+    }
+
+    private static void isExist(SoB2cEntity entity) {
+        if(null == entity){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表");
+        }
     }
 
     /**
@@ -6066,7 +6079,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Async
     public Boolean platformWarehouseOrderHandle(String id, Map<String, Object> map) {
         SoB2cEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        isExist(entity);
         //明细信息
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
@@ -6252,7 +6265,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 //    @GlobalTransactional(rollbackFor = Exception.class)
     public SoB2cDTO.RuleResultDTO warehouseRule(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
         SoB2cEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        isExist(entity);
         if (CollectionUtils.isEmpty(detailList)) {
             detailList = soB2cDetailService.listByMainId(id);
         }
@@ -6289,8 +6302,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
-                    soB2cService.getLogisticsCode(id, autoGetTrackNo);
+                if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
+                    soB2cService.getLogisticsCode(id, true);
                 }
             }
         }
@@ -8159,8 +8172,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         resultDTO.setVirtualUsableQty(childVirtualUsableQty);
 
                         //针对父级可用数量
-                        double floor = Math.floor(childVirtualUsableQty / bomChildrenSkuDTO.getQuantity());
-                        Integer parentUsableQty = Integer.valueOf((int) floor);
+                        double floor = Math.floor((double) childVirtualUsableQty / bomChildrenSkuDTO.getQuantity());
+                        Integer parentUsableQty = (int) floor;
                         qtyList.add(parentUsableQty);
                     }
                     //如果按子级导出则添加
@@ -8438,7 +8451,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public BatchResultDTO declareRule(String id, HashMap<String, Object> map, Boolean isUpdate, Boolean isUpdatePackingWeight) {
         //已审核 配货中才会进行 申报规则执行
         SoB2cEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表"));
+        isExist(entity);
         //已存在申报信息 则不进行规则匹配
         List<SoB2cDeclareProductEntity> declareProductList = soB2cDeclareProductService.listBySoId(id);
         if (Objects.nonNull(isUpdate) && !isUpdate && CollectionUtils.isNotEmpty(declareProductList)){

@@ -24,7 +24,6 @@ import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.python.modules.itertools.product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -494,8 +493,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 if (projectTaskCount != 0) {
                     projectProgress = ((double) projectFinishTaskCount / projectTaskCount) * 100;
                 }
-                approvalProgress = Math.round(approvalProgress * 100) / 100;
-                projectProgress = Math.round(projectProgress * 100) / 100;
+                approvalProgress = (double) Math.round(approvalProgress * 100) / 100;
+                projectProgress = (double) Math.round(projectProgress * 100) / 100;
                 item.setApprovalProgress(approvalProgress);
                 item.setProjectProgress(projectProgress);
             }
@@ -508,7 +507,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LoginUser loginUser = UserContext.getDefaultLoginUser();
-        String userId = loginUser.getUid();
         List<BasicDTO> list = new ArrayList<>();
         //部门处理
         Boolean isFlag = productInfoService.handlePagingDept(params);

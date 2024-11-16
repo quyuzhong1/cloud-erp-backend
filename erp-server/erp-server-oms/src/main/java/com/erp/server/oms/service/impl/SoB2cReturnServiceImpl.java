@@ -2,25 +2,34 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.oms.dto.DictBasicDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
-import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
+import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
+import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
+import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
@@ -36,27 +45,17 @@ import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
 import com.erp.server.oms.mapper.SoB2cReturnMapper;
 import com.erp.server.oms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
 import jodd.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import javax.annotation.Resource;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.SoB2cReturnDTO;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_RETURN;
 
@@ -132,7 +131,9 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     @Override
     public Boolean update(SoB2cReturnDTO.UpdateDTO updateDTO) {
         SoB2cReturnEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单");
+        }
         SoB2cReturnEntity soB2cReturnEntity =  BeanMapperUtils.map(SoB2cReturnEntity.class, updateDTO);
 
         // 数据处理

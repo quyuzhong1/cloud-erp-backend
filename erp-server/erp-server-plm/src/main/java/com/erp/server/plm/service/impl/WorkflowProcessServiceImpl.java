@@ -39,6 +39,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case PILOT_APPLICATION:
                 //试产量产单
                 pilotApplicationApproveEnd(dto);
+                break;
             default:
                 break;
         }

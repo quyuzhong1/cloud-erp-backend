@@ -1,21 +1,20 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.PagingDTO;
-
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.sys.dto.FindUserByThirdDTO;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.UpdateUserNoticeStateDTO;
 import com.erp.model.plm.dto.UserNoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeMessageRecordEntity;
+import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.NoticeMessageRecordService;
@@ -27,8 +26,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
@@ -103,7 +100,7 @@ public class UserNoticeMessageController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更改取消的消息通知状态:id={id},状态值={state}(true=打开,false=关闭)")
     @PostMapping("/updateState")
-    public ApiResult updateState(@Validated @RequestBody UpdateUserNoticeStateDTO dto) {
+    public ApiResult<Object> updateState(@Validated @RequestBody UpdateUserNoticeStateDTO dto) {
         String fsUnionId = dto.getUnionId();
         //根据飞书的unionId 获取对应用户信息
         String userId = commonService.getUidByUnionId(ThirdConstants.FS_PLATFORM, fsUnionId);
@@ -136,7 +133,7 @@ public class UserNoticeMessageController extends BaseController {
      * @date 2022-11-14 11:10
      */
     @PostMapping("/checkBinding")
-    public ApiResult checkBinding(@RequestBody @Validated FindUserByThirdDTO dto) {
+    public ApiResult<Object> checkBinding(@RequestBody @Validated FindUserByThirdDTO dto) {
         String useId = commonService.getUidByUnionId(dto.getThirdPartyType(), dto.getThirdPartyUnionId());
         if (StringUtils.isBlank(useId)) {
             return failure(ApiError.ERROR_95056, null);
@@ -153,7 +150,7 @@ public class UserNoticeMessageController extends BaseController {
      * @date 2022-11-11 16:38
      */
     @GetMapping("/getFsUserInfo")
-    public ApiResult getFsUserInfo(String code) {
+    public ApiResult<Object> getFsUserInfo(String code) {
         Map<String, Object> fsMap = fsService.getFsUserByCode(code);
         if (fsMap != null) {
             if (fsMap.containsKey("code")) {

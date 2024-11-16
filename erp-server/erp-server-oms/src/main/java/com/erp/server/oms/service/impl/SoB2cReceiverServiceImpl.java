@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
@@ -34,7 +33,6 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -76,7 +74,9 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Override
     public Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, String mainId) {
         SoB2cReceiverEntity old = super.getById(receiverDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单买家信息表"));
+        if(null == old){
+           throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单买家信息表");
+        }
         SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
         BeanMapperUtils.copy(receiverDTO,entity);
         //处理买家信息

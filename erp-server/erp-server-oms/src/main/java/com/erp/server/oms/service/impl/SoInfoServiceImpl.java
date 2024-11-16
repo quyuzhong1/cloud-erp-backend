@@ -440,7 +440,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(ingStatus), "");
@@ -998,8 +998,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             scarceDTO.setSkuNo(childrenSkuDTO.getSkuNo());
             //针对父级可用数量
-            double floor = Math.floor(childVirtualUsableQty / quantity);
-            Integer parentUsableQty = Integer.valueOf((int) floor);
+            double floor = Math.floor((double) childVirtualUsableQty / quantity);
+            Integer parentUsableQty = (int) floor;
             scarceDTO.setParentUsableQty(parentUsableQty);
             //缺货数量
             Integer virtualScarceQty = (item.getQty() * quantity - item.getFrozenQty() * quantity - approveNoticeQty * quantity) - childVirtualUsableQty;
@@ -1434,7 +1434,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92047);
         }
 
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(approveStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus), "");
 
@@ -2319,7 +2319,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuCostProfitResult.setTaxAmount(costParam.getTaxAmount());
         skuCostProfitResult.setSaleAmount(costParam.getSaleAmount());
         // 销售金额需要减去折扣金额
-        if (Objects.nonNull(costParam.getDiscountAmount()) && costParam.getDiscountAmount().compareTo(BigDecimal.ZERO) == 1) {
+        if (Objects.nonNull(costParam.getDiscountAmount()) && costParam.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal saleAmountAfter = costParam.getSaleAmount().subtract(costParam.getDiscountAmount()).setScale(4, BigDecimal.ROUND_HALF_UP);
             costParam.setSaleAmount(saleAmountAfter);
             skuCostProfitResult.setSaleAmount(saleAmountAfter);
@@ -2337,7 +2337,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         BigDecimal saleRate;
         if (Objects.nonNull(costParam.getSaleAmount()) &&
-                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
+                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0 &&
                 !Objects.equals(costParam.getCurrency(), "CNY")) {
             saleRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), saleRate);
@@ -2444,7 +2444,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public void brushCostData(String id) {
         SoInfoEntity soInfoEntity = super.getById(id);
-        Optional.ofNullable(soInfoEntity).orElseThrow(() -> new ServiceException(ApiError.ERROR_92016));
+        if(null == soInfoEntity){
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
         if (CollUtil.isEmpty(detailList)) {
             return;
