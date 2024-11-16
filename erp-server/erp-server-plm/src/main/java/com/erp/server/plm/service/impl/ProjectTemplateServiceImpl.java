@@ -32,6 +32,8 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.collection.CollUtil.isEmpty;
+
 /**
  * <p>
  * 项目模板信息 服务实现类
@@ -87,7 +89,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
 
     @Override
     public PagingVO<ProjectTemplateDTO> paging(PagingDTO<BaseSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<BaseSearchDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         IPage<ProjectTemplateDTO> paging = baseMapper.paging(query, params);
         List<ProjectTemplateDTO> list = paging.getRecords();
@@ -103,7 +105,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             item.setProductPropertyValues(String.join(",", productPropertyValueList));
         }
 
-        return new PagingVO(paging);
+        return new PagingVO<>(paging);
     }
 
     /**
@@ -230,7 +232,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         // 模板表
         preTaskList = templatePreTaskService.getTemplatePreAndNameById(dto.getTaskId());
 
-        if (CollectionUtil.isEmpty(preTaskList)) {
+        if (isEmpty(preTaskList)) {
             return preTaskList;
         }
         preTaskList.stream().forEach(x -> {
@@ -255,11 +257,10 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
             throw new ServiceException(ApiError.ERROR_95051);
         }
         // 根据模板类型查询模板及前置任务
-        boolean result = Boolean.FALSE;
         List<PreTaskUpdateDTO> list = dto.getList();
         // 更新前置任务
         List<TemplatePreTaskEntity> updateList = list.stream().map(TemplatePreTaskEntity::new).collect(Collectors.toList());
-        result = templatePreTaskService.updateBatchById(updateList);
+        boolean result = templatePreTaskService.updateBatchById(updateList);
         if (!result) {
             throw new ServiceException(ApiError.ERROR_95151);
         }

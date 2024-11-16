@@ -14,7 +14,6 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.ProductDetailApproverEntity;
@@ -27,7 +26,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Response;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -1165,7 +1163,7 @@ public class ProductDetailController extends BaseController {
      */
     @GetMapping("/listSkuByProductId")
     public ApiResult<List<ProductDetailEntity>> listSkuByProductId(@RequestParam("productId") String productId) {
-        return success(productDetailService.queryByProductId(productId));
+        return success(productDetailService.getSkuListByProductId(productId));
     }
 
     /**

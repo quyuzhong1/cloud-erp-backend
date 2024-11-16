@@ -59,6 +59,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static cn.hutool.core.collection.CollUtil.isEmpty;
+import static cn.hutool.core.collection.CollUtil.isNotEmpty;
+import static cn.hutool.core.text.CharSequenceUtil.format;
+
 /**
  * 项目计划表(ProjectPlan)表服务实现类
  *
@@ -183,7 +187,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
 
         for (ProjectTaskEntity task : taskList) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append(userName).append(" ").append(nowTime).append(" ").append("提交 ");
             sb.append("计划开始时间  ");
             sb.append(task.getPlanStartTime()).append("  计划结束时间 ").append(task.getPlanEndTime());
@@ -455,7 +459,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //获取对应的任务
         List<ProjectTaskEntity> taskEntityList = taskService.getByTaskIds(taskIdList);
         Map<String, List<PreTaskVO>> preTaskGourpTaskIdMap = MapUtil.empty();
-        if (CollectionUtil.isNotEmpty(taskEntityList)) {
+        if (isNotEmpty(taskEntityList)) {
             preTaskGourpTaskIdMap = preTaskService.listByTaskIds(taskEntityList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList()));
         }
         for (ProjectPlanTaskEntity item : planTaskList) {
@@ -478,7 +482,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             task.setDeliveryDocsNames(String.join(",", docsNameList));
             List<String> pretaskIdList = Collections.emptyList();
             List<PreTaskVO> preTaskList = preTaskGourpTaskIdMap.get(task.getId());
-            if (CollectionUtil.isNotEmpty(preTaskList)) {
+            if (isNotEmpty(preTaskList)) {
                 pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
             }
             task.setPreTaskIdList(pretaskIdList);
@@ -519,8 +523,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-02-10 9:15
      */
     @Override
-    public PagingVO<List<SchedulePagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+    public PagingVO<SchedulePagingVO> paging(PagingDTO<SearchPagingDTO> dto) {
+        Page<SearchPagingDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         SearchPagingDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         String searchType = params.getSearchType();
@@ -533,23 +537,20 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             idList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(idList)) {
-                IPage pageData = new Page();
-                return new PagingVO(pageData);
+                return new PagingVO<>();
             }
             statusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
             statusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
         }
-        IPage pageData = baseMapper.paging(query, params, idList, statusList);
+        IPage<SchedulePagingVO> pageData = baseMapper.paging(query, params, idList, statusList);
         List<SchedulePagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData);
         }
         for (SchedulePagingVO item : list) {
             item.setStatusName(BaseStatusEnum.getName(item.getStatus()));
         }
-
-
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
 
@@ -796,7 +797,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
                 for (ProjectPlanTaskEntity task : taskList) {
                     String taskId = task.getTaskId();
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     sb.append(userName).append(" ").append(nowTime).append(" ").append("审核通过");
                     sb.append("计划开始时间 ");
                     sb.append(task.getOriginStartTime()).append("  计划结束时间").append(task.getOriginEndTime());
@@ -995,7 +996,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public ProjectTaskPlanAutoVO autoSchedule(ProjectPlanTaskDTO.AutoDTo dto) {
         List<ProjectPlanTaskDTO.AutoDateDTO> list = dto.getList();
-        if (CollectionUtil.isEmpty(list)) {
+        if (isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_1017);
         }
         List<String> taskIds = list.stream().map(ProjectPlanTaskDTO.AutoDateDTO::getId).collect(Collectors.toList());
@@ -1034,7 +1035,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         } else {
             planEntityList = projectPlanTaskService.listByPlanId(planIdList);
         }
-        if (CollectionUtil.isEmpty(planEntityList)) {
+        if (isEmpty(planEntityList)) {
             throw new ServiceException(ApiError.ERROR_95145);
         }
         // 查询任务列表
@@ -1100,7 +1101,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //阶段信息
         List<ProjectImportDTO> phaseList = list.stream().filter(obj -> MathUtil.TWO.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(phaseList)) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg, "二级")));
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1034.code, format(ApiError.ERROR_1034.msg, "二级")));
         }
         List<ProjectPhaseEntity> oldPhaseList = projectPhaseService.getByProductId(productId);
 
@@ -1123,12 +1124,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //任务信息
         List<ProjectImportDTO> taskList = list.stream().filter(obj -> MathUtil.THREE.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg, "三")));
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1034.code, format(ApiError.ERROR_1034.msg, "三")));
         }
         //任务负责人不能为空
         long chargeCount = taskList.stream().filter(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) || StringUtils.isBlank(obj.getCustomFieldValues().get("taskCharge"))).count();
         if (chargeCount > 0) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg, "二")));
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1036.code, format(ApiError.ERROR_1036.msg, "二")));
         }
         //任务交付物
         List<DocsDTO> docsList = handleDocName(taskList, productId);
@@ -1142,7 +1143,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }).distinct().collect(Collectors.toList());
         List<FindUserDTO> findUserList = sysUserFeign.listUserByUserNames(taskChargeList, UserTypeEnum.ERP.code);
         if (CollectionUtils.isEmpty(findUserList)) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1038.code, StrUtil.format(ApiError.ERROR_1038.msg, "二")));
+            throw new ServiceException(new ApiResult<>(ApiError.ERROR_1038.code, format(ApiError.ERROR_1038.msg, "二")));
         }
 
         //产品下已存在的任务
@@ -1156,7 +1157,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             //任务名称
             if (StringUtils.isBlank(projectImportDTO.getTaskName())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_1035.code, StrUtil.format(ApiError.ERROR_1035.msg, "二")));
+                throw new ServiceException(new ApiResult<>(ApiError.ERROR_1035.code, format(ApiError.ERROR_1035.msg, "二")));
             }
             //任务负责人
             Map<String, String> customFieldValues = projectImportDTO.getCustomFieldValues();
@@ -1166,7 +1167,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             for (String taskChargeName : taskChargeNameList) {
                 String chargeId = findUserList.stream().filter(obj -> obj.getUserName().equals(taskChargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
                 if (StringUtils.isBlank(chargeId)) {
-                    throw new ServiceException(new ApiResult(ApiError.ERROR_1037.code, StrUtil.format(ApiError.ERROR_1037.msg, taskChargeName)));
+                    throw new ServiceException(new ApiResult<>(ApiError.ERROR_1037.code, format(ApiError.ERROR_1037.msg, taskChargeName)));
                 }
                 chargeIds.add(chargeId);
             }
@@ -1344,7 +1345,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             return true;
         }
         if (exitList.contains(autoEntity.getId())) {
-//            errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(),"前后置任务冲突请手动排期"));
             return true;
         }
         exitList.add(autoEntity.getId());

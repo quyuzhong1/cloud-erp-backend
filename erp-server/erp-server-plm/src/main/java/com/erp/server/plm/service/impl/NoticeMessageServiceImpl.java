@@ -2333,7 +2333,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 String refUserName = refUserList.stream().filter(r -> refUserIdList.contains(r.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.joining(","));
 
                 String refMessageContent = String.format(NoticeMessageConstant.REMIND_REMARK_REF, userName, refUserName, comment);
-                Map refContentMap = getCardMessageMap(refMessageContent, projectContent, fsAppUrl);
+                Map<String, Object> refContentMap = getCardMessageMap(refMessageContent, projectContent, fsAppUrl);
                 sendRefMessage.setContentMap(refContentMap);
                 //发送消息的结果
                 Boolean sendRefResult = fsService.sendMessage(sendRefMessage);
@@ -2388,9 +2388,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
                 List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
                 String chargeId = task.getChargeId();
-                List<String> chargeIdList = new ArrayList<>();
                 if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
-                    chargeIdList = Arrays.asList(chargeId.split(","));
+                    List<String> chargeIdList = Arrays.asList(chargeId.split(","));
                     noticeUserIds.addAll(chargeIdList);
                 }
                 //排除关闭通知的人员 并去重
@@ -2803,7 +2802,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             if (StringUtils.isNotEmpty(itemPeoples)) {
                 List<String> itemPeopleList = Arrays.asList(itemPeoples.split(","));
                 //这个是产品经理
-                if (itemPeopleList.contains(NoticeItemPeopleEnum.PRODUCT_MANAGER.getFlag()) && !Objects.isNull(entity)) {
+                if (itemPeopleList.contains(NoticeItemPeopleEnum.PRODUCT_MANAGER.getFlag())) {
                     String productChargeId = entity.getChargeId();
                     if (StringUtils.isNotBlank(productChargeId)) {
                         List<String> productChargeIdList = Arrays.asList(productChargeId.split(","));

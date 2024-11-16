@@ -160,7 +160,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             //仓库名称
 
             WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(warehouseDTO)) {
+            if (org.springframework.util.ObjectUtils.isEmpty(warehouseDTO)) {
                 throw new ServiceException(ApiError.ERROR_99002);
             }
             entity.setDestWarehouseName(warehouseDTO.getName());
@@ -181,7 +181,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isNotEmpty(skuVO)) {
+            if (!org.springframework.util.ObjectUtils.isEmpty(skuVO)) {
                 entity.setProductName(skuVO.getSkuName());
                 entity.setVariantProperty(skuVO.getVariantProperty());
                 entity.setSupplierId(skuVO.getSupplierId());

@@ -92,7 +92,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
     public List<CopySourceDTO> copyTemplateRole(String templateId, String productId, String projectId) {
         List<TemplateRoleEntity> list = getByTemplateId(templateId);
 
-        List<ProjectRoleEntity> projectRoleByProductId = projectRoleService.getProjectRoleByProductId(productId);
+        List<ProjectRoleEntity> projectRoleByProductId = projectRoleService.listByProductId(productId);
 
         List<CopySourceDTO> sourceList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {

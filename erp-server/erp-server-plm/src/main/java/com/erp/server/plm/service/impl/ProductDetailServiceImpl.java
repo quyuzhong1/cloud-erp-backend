@@ -5,10 +5,8 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -118,9 +116,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static cn.hutool.core.collection.CollUtil.isEmpty;
-import static cn.hutool.core.text.CharSequenceUtil.format;
-import static cn.hutool.core.text.CharSequenceUtil.isBlank;
+import static cn.hutool.core.text.CharSequenceUtil.*;
 import static com.alibaba.excel.EasyExcelFactory.read;
+import static com.alibaba.fastjson.JSON.parseObject;
 import static com.alibaba.fastjson.JSON.toJSONString;
 
 /**
@@ -295,7 +293,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
         }
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
-        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        Page<ProductSkuDTO> query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         //标签列表
         List<String> labelIds = pagingDTO.getParams().getLabelIds();
         List<String> labelProductIds = null;
@@ -320,7 +318,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         IPage<ProductDetailShowDTO> pageData = productDetailMapper.paging(query, pagingDTO.getParams());
         List<ProductDetailShowDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData);
         }
         List<String> productIdList = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<ProjectInfoEntity> projectList = projectInfoService.getByProductIdList(productIdList);
@@ -375,7 +373,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
 
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -693,7 +691,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
         }
         //多规格产品明细信息
-        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductDetailEntity::getProductId, productId);
         queryWrapper.orderByDesc(ProductDetailEntity::getId);
         List<ProductDetailEntity> list = this.list(queryWrapper);
@@ -917,7 +915,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             for (TaskRefSkuConfigEntity skuField : refSkuFiledConfigList) {
                 String fieldJson = skuField.getFieldJson();
                 if (StringUtils.isNotBlank(fieldJson)) {
-                    Map<String, Object> fieldMap = JSONObject.parseObject(fieldJson);
+                    Map<String, Object> fieldMap = parseObject(fieldJson);
                     if (fieldMap.containsKey(flag)) {
                         List<Map<String, Object>> fieldInfoList = (List<Map<String, Object>>) fieldMap.get(flag);
                         for (Map<String, Object> fieldInfoMap : fieldInfoList) {
@@ -1495,7 +1493,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         List<String> varianList = new ArrayList<>();
         for (List<ProductPropertyModelDTO> models : result) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < models.size(); i++) {
                 sb.append(models.get(i).getAuthor());
                 if (i + 1 < models.size()) {
@@ -1505,7 +1503,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             varianList.add(sb.toString());
         }
         //过滤掉重复的变体属性
-        List<ProductDetailEntity> detailEntityList = this.queryByProductId(id);
+        List<ProductDetailEntity> detailEntityList = this.getSkuListByProductId(id);
         //把变体属性放入实体类
         List<ProductDetailEntity> list = new ArrayList<>();
         for (String req : varianList) {
@@ -1589,7 +1587,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //新增日志
         sysLogService.addSysLogByBatchSave(logs);
-        return this.queryByProductId(id);
+        return this.getSkuListByProductId(id);
     }
 
 
@@ -2358,7 +2356,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> deleteProductIds = oldProductIds.stream().filter(e -> Objects.nonNull(e) && !hasRelationProductIds.contains(e)).distinct().collect(Collectors.toList());
             productInfoService.removeByIds(deleteProductIds);
         }
-        return this.queryByProductId(newProductId);
+        return this.getSkuListByProductId(newProductId);
     }
 
     @Override
@@ -2530,7 +2528,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95086);
         }
         LoginUser loginUser = UserContext.getDefaultLoginUser();
-        LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper();
+        LambdaUpdateWrapper<ProductDetailEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.set(ProductDetailEntity::getIsChange, IsConstant.YES);
         updateWrapper.set(ProductDetailEntity::getUpdateUserId, loginUser.getUid());
         updateWrapper.set(ProductDetailEntity::getUpdateUserName, loginUser.getUserName());
@@ -3625,7 +3623,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //验证必填信息
         String str = checkRequiredDataList(entityList);
         if (StringUtils.isNotBlank(str)) {
-            throw new ServiceException(new ApiResult(1, str));
+            throw new ServiceException(new ApiResult<>(1, str));
         }
         List<String> productIds = entityList.stream().map(ProductDetailEntity::getProductId).collect(Collectors.toList());
         List<ProjectTaskEntity> taskAllList = projectTaskService.listByProductIds(productIds);
@@ -3706,7 +3704,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         //修改状态为审核中
-        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_COMMIT.getCode())
+        lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_COMMIT.getCode())
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
                 .eq(ProductDetailEntity::getId, entity.getId())
                 .update();
@@ -3774,7 +3772,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //7.删除任务关联sku 信息
         taskRefSkuConfigService.removeTaskRefSku(ids);
         //8.删除sku信息
-        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductDetailEntity::getId, ids);
         List<ProductDetailEntity> productDetailEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(productDetailEntityList)) {
@@ -3800,7 +3798,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto) {
-        dto.setUpdateFiledCode(StrUtil.toUnderlineCase(dto.getUpdateFiledCode()));
+        dto.setUpdateFiledCode(toUnderlineCase(dto.getUpdateFiledCode()));
         List<ProductDetailEntity> entityList = this.listByIds(dto.getIds());
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -4088,7 +4086,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductPackEntity> productPackList = productPackService.listBySkuIdList(skuIdList);
 
         for (ProductDetailEntity detailEntity : entityList) {
-            StringBuffer errMsg = new StringBuffer("");
+            StringBuilder errMsg = new StringBuilder("");
 
             //SPU信息
             ProductInfoEntity productInfo = productInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getProductId())).findFirst().orElse(null);
@@ -4178,7 +4176,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         handleImportSuccessList(successList, errorList, importType);
 
         if (errorList.size() > 0) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             String excelPath = "excel/productNoSpecDetail.xlsx";
             String name = "productNoSpecDetail";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);

@@ -1,6 +1,5 @@
 package com.erp.server.plm.listener;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -10,6 +9,7 @@ import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.server.plm.service.ProductDetailService;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +51,7 @@ public class ProductWarehouseLocationListener extends AnalysisEventListener<Prod
         }
 
         ProductDetailEntity entity = productDetailEntityList.stream().filter(req -> ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(req.getStatus()) && req.getSkuNo().equals(dto.getSkuNo())).findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(entity)) {
+        if (ObjectUtils.isEmpty(entity)) {
             errorMsgList.add("sku编号不存在或未审核通过！");
         }else{
             //判断重复数据
@@ -97,6 +97,6 @@ public class ProductWarehouseLocationListener extends AnalysisEventListener<Prod
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 }
