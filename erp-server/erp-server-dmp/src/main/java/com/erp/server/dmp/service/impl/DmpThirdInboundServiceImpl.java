@@ -65,7 +65,7 @@ public class DmpThirdInboundServiceImpl extends SuperServiceImpl<DmpThirdInbound
     @Override
     public Boolean update(DmpThirdInboundDTO.UpdateDTO updateDTO) {
         DmpThirdInboundEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "第三方仓库存"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "第三方仓库存"));
         DmpThirdInboundEntity dmpThirdInboundEntity =  BeanMapperUtils.map(DmpThirdInboundEntity.class, updateDTO);
 
         // 数据处理
