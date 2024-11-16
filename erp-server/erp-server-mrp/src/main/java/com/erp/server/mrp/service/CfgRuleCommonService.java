@@ -26,7 +26,7 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
     * @param updateList
     * @return
     */
-    Boolean update(List<CfgRuleCommonDTO.UpdateDTO> updateList);
+    void update(List<CfgRuleCommonDTO.UpdateDTO> updateList);
 
     /**
      * 查询详情
