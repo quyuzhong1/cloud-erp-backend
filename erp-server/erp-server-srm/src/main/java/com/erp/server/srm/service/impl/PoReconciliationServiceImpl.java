@@ -37,9 +37,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_EXPORT;
 
 /**
@@ -77,7 +75,9 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     @Override
     public Boolean update(PoReconciliationDTO.UpdateDTO updateDTO) {
         PoReconciliationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单");
+        }
         //添加上传附件url
         addMultipartFileUrl(updateDTO);
         //更新明细
@@ -197,9 +197,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
      * @param updateDTO
      */
     private void addMultipartFileUrl (PoReconciliationDTO.UpdateDTO updateDTO) {
-        if (CollectionUtils.isEmpty(updateDTO.getAttachUrlList()) || CollectionUtils.isEmpty(updateDTO.getAttachUrlList())) {
-            return;
-        }
+        if (CollectionUtils.isEmpty(updateDTO.getAttachUrlList())) return;
         Class<PoReconciliationEntity> uploadClass = PoReconciliationEntity.class;
         TableName tableName = uploadClass.getDeclaredAnnotation(TableName.class);
         //获取到表名

@@ -137,7 +137,9 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
     @Override
     public Boolean update(PoReconciliationDTO.ScmUpdateDTO updateDTO) {
         PoReconciliationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单");
+        }
         //待供方确认/待采方确认
         if (!PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_SUPPLIER_CONFIRM.getCode().equals(old.getStatus())
                 && !PoReconciliationEnum.PoReconciliationStatusEnum.TO_BE_PURCHASE_CONFIRM.getCode().equals(old.getStatus())) {
@@ -494,7 +496,7 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
      * @param updateDTO
      */
     private void addMultipartFileUrl (PoReconciliationDTO.ScmUpdateDTO updateDTO) {
-        if (CollectionUtils.isEmpty(updateDTO.getAttachUrlList()) || CollectionUtils.isEmpty(updateDTO.getAttachUrlList())) {
+        if (CollectionUtils.isEmpty(updateDTO.getAttachUrlList())) {
             return;
         }
         Class<PoReconciliationEntity> uploadClass = PoReconciliationEntity.class;
