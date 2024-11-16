@@ -54,13 +54,13 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
     @Override
     public List<AttachmentDTO.UpdateDTO> listByBusinessIds(List<String> businessIds) {
         if (CollectionUtils.isEmpty(businessIds)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(AttachmentEntity::getBusinessId, businessIds);
         List<AttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }

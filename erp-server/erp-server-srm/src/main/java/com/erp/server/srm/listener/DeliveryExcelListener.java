@@ -172,8 +172,6 @@ public class DeliveryExcelListener extends AnalysisEventListener<DeliveryOrderIm
                 Integer diffSendAndReceive = MathUtil.ZERO;
                 //退货补货数量
                 Integer returnQty = MathUtil.ZERO;
-                //无送货单收货数量
-                Integer receiveQty;
                 //有送货单的收货数量
                 Integer hasDeliveryReceiveQty = MathUtil.ZERO;
                 //收货数量(已审核的)
