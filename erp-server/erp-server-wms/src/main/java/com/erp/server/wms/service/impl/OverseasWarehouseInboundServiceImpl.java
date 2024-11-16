@@ -133,7 +133,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(addDTO.getSourceId());
-        Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
+        if (Objects.isNull(deliveryEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+        }
         List<PackingTaskEntity> packingTaskEntity = packingTaskService.listBySourceCodes(Arrays.asList(deliveryEntity.getCode(),deliveryEntity.getSourceCode()));
 
         if (CollectionUtils.isEmpty(packingTaskEntity) || !PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.get(0).getPackingStatus())) {
@@ -349,7 +351,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(old.getSourceId());
-        Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
+        if (Objects.isNull(deliveryEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+        }
 
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());
@@ -667,7 +671,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
     @Override
     public OverseasWarehouseInboundDTO.ViewDTO view(String id) {
         OverseasWarehouseInboundEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
+        if (Objects.isNull(entity)){
+            throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST);
+        }
 
         OverseasWarehouseInboundDTO.ViewDTO resultDTO = OverseasWarehouseInboundConverter.INSTANCE.entityToViewDTO(entity);
         // 入库类型名称
@@ -782,7 +788,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
 
         FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(mainEntity.getSourceId());
-        Optional.ofNullable(deliveryEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发货单"));
+        if (Objects.isNull(deliveryEntity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货单");
+        }
 
         // 查询发货目的仓平台授权
         OverseasProviderEntity providerEntity = overseasProviderWarehouseService.findPlatformByWarehouseId(deliveryEntity.getDestWarehouseId());

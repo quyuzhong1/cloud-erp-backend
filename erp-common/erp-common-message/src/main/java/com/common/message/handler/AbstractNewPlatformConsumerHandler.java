@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.slf4j.MDC;
@@ -93,6 +94,8 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
             	try {
     				Thread.sleep(1000);
     			} catch (InterruptedException e) {
+                    log.error( "线程睡眠阻塞: Interrupted!:{}", e.getMessage());
+                    Thread.currentThread().interrupt();
     			}
             }
         }

@@ -1,6 +1,7 @@
 package com.common.business.aspect;
 
 import com.common.business.annotation.DistributeLocker;
+import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.aspectj.lang.JoinPoint;
@@ -93,11 +94,12 @@ public class DistributeLockerAspect {
                 return pjp.proceed();
             } else {
                 log.warn("线程{} 获取锁失败,key={}", threadName, keys);
-                throw new RuntimeException("线程 "+threadName+" 获取锁失败,请求超时");
+                throw new ServiceException("线程 "+threadName+" 获取锁失败,请求超时");
             }
         } catch (InterruptedException e) {
             log.error("线程{} 获取锁失败", threadName);
-            throw new RuntimeException("线程 "+threadName+" 获取锁失败,请求超时",e);
+            Thread.currentThread().interrupt();
+            throw new ServiceException("线程 "+threadName+" 获取锁失败,请求超时",e);
         } finally {
             if(locked){
                 try {

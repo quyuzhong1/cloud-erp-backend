@@ -134,78 +134,6 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         return lambdaQuery().eq(OverseasWarehouseInboundDetailEntity::getMainId, mainId).list();
     }
 
-//    @Override
-//    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
-//    public BatchResultDTO manualReceived(OverseasWarehouseInboundDTO.ReceivedDTO dto) {
-//        // 查询详情
-//        OverseasWarehouseInboundDetailEntity entity = this.getById(dto.getDetailId());
-//        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST));
-//        // 校验
-//        // 查询提交的平台
-//        OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getById(entity.getMainId());
-//        Optional.ofNullable(mainEntity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
-//        // 非手动单
-//        if (CharSequenceUtil.isNotBlank(mainEntity.getDictPlatform())){
-//            String msg = CharSequenceUtil.format("【{}】已对接系统，请等待海外仓签收", mainEntity.getToWarehouseName());
-//            throw new ServiceException(msg);
-//        }
-//        if (!OverseasInstockStatusEnum.TO_BE_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus()) &&
-//                !OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode().equalsIgnoreCase(mainEntity.getInstockStatus())
-//        ){
-//            String msg = CharSequenceUtil.format("【{}】不等于待签收和部分签收，无法手动签收", mainEntity.getCode());
-//            throw new ServiceException(msg);
-//        }
-//        if (entity.getPackQty() < entity.getReceiveQty() + dto.getReceivedQty()){
-//            throw new ServiceException("当前签收数量大于剩余签收数量");
-//        }
-//
-//        entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
-//        entity.setDiffQty(entity.getDiffQty() + dto.getReceivedQty());
-//        if (Objects.equals(entity.getReceiveQty(), entity.getPackQty())){
-//            entity.setReceiveStatus("already");
-//        }
-//        // 详情更新签收数量
-//        if (!this.updateById(entity)) {
-//            throw new ServiceException("海外仓入库单详情更新失败");
-//        }
-//        // 主订单状态
-//        // 检查是否完全签收
-//        Boolean allReceive = this.checkAllReceiveByMainId(entity.getMainId());
-//        if (allReceive){
-//            mainEntity.setInstockStatus(OverseasInstockStatusEnum.FINISH.getCode());
-//        } else {
-//            mainEntity.setInstockStatus(OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode());
-//        }
-//        // 保存主表
-//        if (!overseasWarehouseInboundService.updateById(mainEntity)){
-//            throw new ServiceException("更新入库状态失败");
-//        }
-//        LoginUser userInfo = UserContext.getDefaultLoginUser();
-//        // 添加签收记录
-//        OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity(entity.getId(),
-//                userInfo.getUserName(),
-//                dto.getReceivedQty(),
-//                LocalDateTime.now(ZoneId.systemDefault()));
-//        if (!overseasWarehouseInboundReceivedService.save(receivedEntity)) {
-//            throw new ServiceException("海外仓入库单签收保存失败");
-//        }
-//        // 生成直接调拨单
-//        String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entity, receivedEntity);
-//        if (CharSequenceUtil.isNotBlank(transferOutId)) {
-//            //提交
-//            transferInfoService.submit(Collections.singletonList(transferOutId));
-//            //审核
-//            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-//            baseApproveParamDTO.setIds(Collections.singletonList(transferOutId));
-//            baseApproveParamDTO.setType(ApproveType.PASS);
-//            transferInfoService.approve(baseApproveParamDTO, Boolean.TRUE);
-//        } else {
-//            throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
-//        }
-//        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.UPDATE_STATUS);
-//    }
-
     @Override
     public List<OverseasWarehouseInboundDetailEntity> getByMainIds(List<String> mainIdList) {
         return lambdaQuery()
@@ -244,11 +172,15 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         for (OverseasWarehouseInboundDTO.ReceivedDTO dto : dtoList) {
             // 查询详情
             OverseasWarehouseInboundDetailEntity entity = this.getById(dto.getDetailId());
-            Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST));
+            if (Objects.isNull(entity)){
+                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST);
+            }
             // 校验
             // 查询提交的平台
             OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getById(entity.getMainId());
-            Optional.ofNullable(mainEntity).orElseThrow(() -> new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST));
+            if (Objects.isNull(mainEntity)){
+                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST);
+            }
             // 非手动单
             if (CharSequenceUtil.isNotBlank(mainEntity.getDictPlatform())){
                 OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByWarehouseIdWithNotDisabled(mainEntity.getToWarehouseId());

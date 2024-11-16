@@ -808,7 +808,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                             if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
                                 PurchaseOrderDetailEntity detail = new PurchaseOrderDetailEntity ();
                                 detail.setId(purchaseOrderDetailEntity.getId());
-                                detail.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                                detail.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(returnOrderDetailEntity.getReturnQty()))));
                                 list.add(detail);
                             }
 
@@ -1328,7 +1328,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                         PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
                         PurchaseOrderDetailEntity purchaseOrderDetail = new PurchaseOrderDetailEntity ();
                         purchaseOrderDetail.setId(purchaseOrderDetailEntity.getId());
-                        purchaseOrderDetail.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                        purchaseOrderDetail.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(returnOrderDetailEntity.getReturnQty()))));
                         list.add(purchaseOrderDetail);
                     });
                 }

@@ -334,17 +334,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                         exchangeRate = BigDecimal.ONE;
                     }
                     entity.setCurrencyRate(exchangeRate);
-
-                    //TODO 暂时设置为0等tms接通后补充
-                    //先计算运费收入（原币）
-//                if (Optional.ofNullable(soInfoEntity.getIsCollectShippingFee()).isPresent()) {
-//                    //运费收入（本位币）
-//                    entity.setShippingFee(soInfoEntity.getShippingFee().multiply(exchangeRate));
-//                } else {
                     //运费收入（本位币）
                     entity.setShippingFee(BigDecimal.ZERO);
-//                }
-
                     AtomicReference<BigDecimal> itemTotalCost = new AtomicReference<>(BigDecimal.ZERO);
                     AtomicReference<BigDecimal> orderTotalCost = new AtomicReference<>(BigDecimal.ZERO);
                     soDetailEntities.stream().forEach(

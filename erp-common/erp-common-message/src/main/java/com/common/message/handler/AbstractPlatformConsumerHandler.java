@@ -44,12 +44,14 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
         String redisKey = "dmp:sync:task:" + dmpSyncTaskId;
         
         int count = 1;
-        while(!redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.SECONDS)) {
+        while(Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.SECONDS))) {
         	log.warn("同步任务正在执行中：{}，重试获取锁次数：{}" , dmpSyncTaskId , count);
         	count = count + 1;
         	try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
+                log.error( "线程睡眠阻塞: Interrupted!:{}", e.getMessage());
+                Thread.currentThread().interrupt();
 			}
         }
     	try {

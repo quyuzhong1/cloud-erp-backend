@@ -16,6 +16,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -23,7 +24,9 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -92,8 +95,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 @Slf4j
 @Service
 public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopInfoEntity> implements ShopInfoService {
-
-    private static final String CLIENT_SECRET = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
 
     @Resource
     private SysDictFeign sysDictFeign;
@@ -1525,8 +1526,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     private boolean verifyHmac(String data, String hmacHeader) {
         try {
-            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKey = new SecretKeySpec(CLIENT_SECRET.getBytes(), "HmacSHA256");
+            CfgSettingEntity secret = getCfgSettingEntity(SettingEnum.OMS_SHOPIFY_SECRET_KEY);
+            CfgSettingEntity clientSecret = getCfgSettingEntity(SettingEnum.OMS_SHOPIFY_CLIENT_SECRET);
+            Mac sha256Hmac = Mac.getInstance(secret.getValue());
+            SecretKeySpec secretKey = new SecretKeySpec(clientSecret.getValue().getBytes(), secret.getValue());
             sha256Hmac.init(secretKey);
             byte[] calculatedHmac = sha256Hmac.doFinal(data.getBytes());
             String calculatedHmacBase64 = Base64.getEncoder().encodeToString(calculatedHmac);
@@ -1541,12 +1544,25 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
     }
 
+    private static CfgSettingEntity getCfgSettingEntity(SettingEnum settingEnum) {
+
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, settingEnum.getKey())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .eq(CfgSettingEntity::getType, settingEnum.getValue())
+                .list();
+        CfgSettingEntity cfgSettingEntity = list.get(0);
+        return cfgSettingEntity;
+    }
+
 
     // 验证Webhook
     private static boolean verifyWebhook(String data, String hmacHeader) throws NoSuchAlgorithmException, InvalidKeyException {
         // 使用HMAC-SHA256算法计算HMAC
-        Mac sha256Hmac = Mac.getInstance("HmacSHA256");
-        SecretKeySpec secretKey = new SecretKeySpec(CLIENT_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        CfgSettingEntity secret = getCfgSettingEntity(SettingEnum.OMS_SHOPIFY_SECRET_KEY);
+        CfgSettingEntity clientSecret = getCfgSettingEntity(SettingEnum.OMS_SHOPIFY_CLIENT_SECRET);
+        Mac sha256Hmac = Mac.getInstance(secret.getValue());
+        SecretKeySpec secretKey = new SecretKeySpec(clientSecret.getValue().getBytes(StandardCharsets.UTF_8), secret.getValue());
         sha256Hmac.init(secretKey);
         byte[] hmacBytes = sha256Hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         String calculatedHmac = Base64.getEncoder().encodeToString(hmacBytes);

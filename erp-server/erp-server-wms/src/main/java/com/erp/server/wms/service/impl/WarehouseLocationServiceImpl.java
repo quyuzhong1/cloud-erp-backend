@@ -183,7 +183,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public WarehouseLocationDTO.LocationDetailDTO findById(String id) {
         WarehouseLocationEntity warehouseLocation = super.getById(id);
-        Optional.ofNullable(warehouseLocation).orElseThrow(()->new ServiceException("仓位信息不存在"));
+        if (Objects.isNull(warehouseLocation)){
+            throw new ServiceException("仓位信息不存在");
+        }
 
         WarehouseLocationTypeEnum warehouseLocationType = WarehouseLocationTypeEnum.getByCode(warehouseLocation.getType());
 

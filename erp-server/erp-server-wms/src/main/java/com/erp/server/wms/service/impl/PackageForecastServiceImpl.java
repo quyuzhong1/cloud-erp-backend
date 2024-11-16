@@ -177,7 +177,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     @Override
     public Boolean update(PackageForecastDTO.UpdateDTO updateDTO) {
         PackageForecastEntity entity = super.getById(updateDTO.getId());
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单"));
+        if (Objects.isNull(entity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
         entity.setBillDate(updateDTO.getBillDate());
         packageForecastDetailService.update(entity, updateDTO.getDetailIdList());
         boolean save = super.updateById(entity);
@@ -848,7 +850,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //校验中转物流商和中转渠道
             for (PackageForecastDetailEntity detail : detailList) {
                 SoB2cLogisticsEntity soB2cLogisticsEntities = allSoB2cLogisticsEntities.stream().filter(v->v.getMainId().equals(detail.getSoId())).findFirst().orElse(new SoB2cLogisticsEntity());
-                if(CharSequenceUtil.isBlank(soB2cLogisticsEntities.getTransferLogisticsChannelId()) || CharSequenceUtil.isBlank(soB2cLogisticsEntities.getTransferLogisticsChannelId())){
+                if(CharSequenceUtil.isBlank(soB2cLogisticsEntities.getTransferLogisticsChannelId())){
                     errorSoList.add(detail.getSoCode());
                 }
             }

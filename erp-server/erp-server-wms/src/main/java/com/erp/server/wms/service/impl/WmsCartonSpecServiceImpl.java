@@ -236,7 +236,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         for (CfgRuleOutDTO.CfgProductPackingDetail productRule : productRuleList) {
             List<String> cannotPackingPropertyIds = productRule.getCannotPackingPropertyIds();
             List<String> canPackingPropertyIds = productRule.getCanPackingPropertyIds();
-            if (CollectionUtils.isEmpty(canPackingPropertyIds) || CollectionUtils.isEmpty(canPackingPropertyIds)){
+            if (CollectionUtils.isEmpty(canPackingPropertyIds) || CollectionUtils.isEmpty(cannotPackingPropertyIds)){
                 continue;
             }
             List<String> containIds1 = cannotPackingPropertyIds.stream().filter(propertyIds::contains).collect(Collectors.toList());

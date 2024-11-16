@@ -241,8 +241,8 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         int pickedSumQty = deliveryList.stream().mapToInt(WaveListDetailDTO.DeliveryInfoDTO::getPickedSumQty).sum();
 
         resultDTO.setCode(view.getCode());
-        resultDTO.setSkuShouldPickingQty(Long.valueOf(skuIdsCount).intValue());
-        resultDTO.setSkuPickedQty(Long.valueOf(skuIdsPickedCount).intValue());
+        resultDTO.setSkuShouldPickingQty(Math.toIntExact(skuIdsCount));
+        resultDTO.setSkuPickedQty(Math.toIntExact(skuIdsPickedCount));
         resultDTO.setGoodsShouldPickingQty(salesSumQty);
         resultDTO.setGoodsPickedQty(pickedSumQty);
 

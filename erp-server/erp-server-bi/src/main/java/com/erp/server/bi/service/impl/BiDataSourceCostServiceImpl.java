@@ -3,7 +3,6 @@ package com.erp.server.bi.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -699,8 +698,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .collect(Collectors.toMap(req -> req.getKey(), reqV -> reqV.getValue().toString()));
         Map<String, String> descSortMap = MapUtil.sortByValue(result, false);
         // 表头 SeriesVO
-        List<SeriesVO<String>> seriesList = getSeriesVOS(descSortMap);
-        return seriesList;
+        return getSeriesVOS(descSortMap);
     }
 
     @Override
@@ -778,8 +776,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 净利润
         HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>();
         // 表头 SeriesVO
-        List<SeriesVO<String>> seriesList = getDateAnalyze(profitMap, monthCostMap, monthSalesMap, netProfitMap, 12);
-        return seriesList;
+        return getDateAnalyze(profitMap, monthCostMap, monthSalesMap, netProfitMap, 12);
     }
 
     /**
@@ -946,15 +943,13 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
         // 净利润
         HashMap<Integer, BigDecimal> netProfitMap = new HashMap<>(4);
         // 表头 SeriesVO
-        List<SeriesVO<String>> seriesList = getDateAnalyze(yearMap, yearCostMap, yearSalesMap, netProfitMap, 0);
-        return seriesList;
+        return getDateAnalyze(yearMap, yearCostMap, yearSalesMap, netProfitMap, 0);
     }
 
     @Override
     @Cacheable(cacheNames = "cache:bi:getDeptCostProfitRank",keyGenerator = "myKeyGenerator")
     public List<CostProfitAnalyzeRankVO> getDeptCostProfitRank(BiFilterDTO dto) {
-        List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, DEPT_NAME, DEPT_NAME);
-        return rankResult;
+        return getCostProfitAnalyzeRankVOS(dto, DEPT_NAME, DEPT_NAME);
     }
 
     private List<CostProfitAnalyzeRankVO> getCostProfitAnalyzeRankVOS(BiFilterDTO dto, String groupName, String saleGroupName) {
@@ -1007,28 +1002,24 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     @Override
     @Cacheable(cacheNames = "cache:bi:getPlatformCostProfitRank",keyGenerator = "myKeyGenerator")
     public List<CostProfitAnalyzeRankVO> getPlatformCostProfitRank(BiFilterDTO dto) {
-        List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, PLATFORM_NAME, "source_platform");
-        return rankResult;
+        return getCostProfitAnalyzeRankVOS(dto, PLATFORM_NAME, "source_platform");
     }
 
     @Override
     @Cacheable(cacheNames = "cache:bi:getShopCostProfitRank",keyGenerator = "myKeyGenerator")
     public List<CostProfitAnalyzeRankVO> getShopCostProfitRank(BiFilterDTO dto) {
-        List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, SHOP_NAME, SHOP_NAME);
-        return rankResult;
+        return getCostProfitAnalyzeRankVOS(dto, SHOP_NAME, SHOP_NAME);
     }
 
     @Override
     @Cacheable(cacheNames = "cache:bi:getUserCostProfitRank",keyGenerator = "myKeyGenerator")
     public List<CostProfitAnalyzeRankVO> getUserCostProfitRank(BiFilterDTO dto) {
-        List<CostProfitAnalyzeRankVO> rankResult = getCostProfitAnalyzeRankVOS(dto, "charge_name", "charge_name");
-        return rankResult;
+        return getCostProfitAnalyzeRankVOS(dto, "charge_name", "charge_name");
     }
 
     @Override
     public List<DateCostVO> sumByDateAndCostType(BiFilterDTO dto, List<String> dictValues) {
-        List<DateCostVO> vo = baseMapper.sumByDateAndCostType(dto, dictValues);
-        return vo;
+        return baseMapper.sumByDateAndCostType(dto, dictValues);
     }
 
     @Override
@@ -1059,8 +1050,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
             dto.setEndTime(LocalDateTime.now().plusYears(10));
         }
 
-        List<DateCostVO> vo = baseMapper.sumByDateAndCostType(dto, dictValues);
-        return vo;
+        return baseMapper.sumByDateAndCostType(dto, dictValues);
     }
 
     private static List<SeriesVO<String>> getSeriesVOS(Map<String, String> profitMap) {

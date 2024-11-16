@@ -57,7 +57,9 @@ public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDe
     @Override
     public Boolean update(SoB2cReturnDetailDTO.UpdateDTO updateDTO) {
         SoB2cReturnDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单明细"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单明细");
+        }
         SoB2cReturnDetailEntity soB2cReturnDetailEntity =  BeanMapperUtils.map(SoB2cReturnDetailEntity.class, updateDTO);
 
         // 数据处理

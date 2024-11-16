@@ -19,6 +19,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -945,14 +946,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        List<String> srrId = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> srrId = list.stream().map(SoReturnReceiveDTO.PdaSoReceive::getId).collect(Collectors.toList());
         List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainIds(srrId);
-        List<String> detailIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> detailIds = detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailBySourceDetailIds(detailIds);
         //获取未全部入库的销售退货签收单详情id
         List<String> soReturnReceiveDetailIds = new ArrayList<>();
 
-        returnInstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        Map<String, List<SoReturnInstockDetailEntity>> collect1 = returnInstockDetailEntities.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSourceDetailId, Collectors.collectingAndThen(Collectors.toList(), m -> {
             int realQty = m.stream().mapToInt(SoReturnInstockDetailEntity::getRealQty).sum();
             SoReturnReceiveDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(detailEntity)) {
@@ -962,7 +963,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             }
             return m;
         })));
-        List<String> collect = returnInstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<String> collect = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<String> ids = detailIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
         soReturnReceiveDetailIds.addAll(ids);
 
