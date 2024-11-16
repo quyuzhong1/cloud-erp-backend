@@ -62,9 +62,11 @@
         sdnc.create_user_name as createUserName,
         sdnc.approve_user_name as approveUserName,
         sdnc.create_time as createTime,
-        sdnc.approve_time as approveTime
+        sdnc.approve_time as approveTime,
+        sdnd.picking_qty as pickedQty
         from so_delivery_notice_change sdnc
         inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id and sdncd.is_deleted = false
+        left join so_delivery_notice_detail sdnd on sdnd.id = sdncd.source_detail_id and sdnd.is_deleted = false
         where   ${params.sqlMap.default}
         and sdnc.is_deleted = false
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
