@@ -111,8 +111,8 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
         SoB2cDeclareProductEntity soB2cDeclareProductEntity = B2cOrderConverter.INSTANCE.convertDeclareProductByDto(updateDTO);
         //销售订单
         SoB2cEntity soB2cEntity = soB2cService.getById(old.getSoId());
-        if (!StrUtil.equals(soB2cEntity.getApproveStatus().getCode(), ApproveStatusEnum.APPROVE.getCode())
-            || !StrUtil.equals(soB2cEntity.getBillStatus(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) {
+        if (!CharSequenceUtil.equals(soB2cEntity.getApproveStatus().getCode(), ApproveStatusEnum.APPROVE.getCode())
+            || !CharSequenceUtil.equals(soB2cEntity.getBillStatus(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode())) {
             throw new ServiceException("仅支持已审核-配货中的订单可操作");
         }
 

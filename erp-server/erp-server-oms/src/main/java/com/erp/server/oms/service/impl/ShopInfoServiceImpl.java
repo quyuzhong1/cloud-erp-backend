@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -36,7 +37,6 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.server.oms.convert.ShopInfoConverter;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
@@ -511,7 +511,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         //负责人变更则更新物流单店铺负责人
-        if (!StrUtil.equals(oldChargeId, dto.getChargeId())) {
+        if (!CharSequenceUtil.equals(oldChargeId, dto.getChargeId())) {
             logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
         }
         return shopInfo;
@@ -562,7 +562,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         //负责人变更则更新物流单店铺负责人
-        if (!StrUtil.equals(oldChargeId, dto.getChargeId())) {
+        if (!CharSequenceUtil.equals(oldChargeId, dto.getChargeId())) {
             logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
         }
         return shopInfo;

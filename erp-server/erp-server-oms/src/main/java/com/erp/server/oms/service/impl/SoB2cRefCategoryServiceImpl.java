@@ -84,7 +84,7 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
         String oldValue = categoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
         String newValue = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
-        if (!StrUtil.equals(oldValue,newValue)) {
+        if (!CharSequenceUtil.equals(oldValue,newValue)) {
             operateLogService.addModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【B2C销售订单表】单据编辑了【分类信息】由[{}]变更为[{}]", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), oldValue, newValue), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "编辑操作");
         }
         return update;
