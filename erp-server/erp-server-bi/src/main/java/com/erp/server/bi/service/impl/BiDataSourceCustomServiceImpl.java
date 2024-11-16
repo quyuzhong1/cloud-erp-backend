@@ -116,7 +116,7 @@ public class BiDataSourceCustomServiceImpl extends ServiceImpl<BiDataSourceCusto
         try {
             read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
             List<Map<Integer, String>> list = excelListenerUtil.getDateList();
-            if (CollectionUtils.isEmpty(list) || list.size() == 0) {
+            if (CollectionUtils.isEmpty(list)) {
                 return true;
             }
             List<String> headList = excelListenerUtil.getHead();

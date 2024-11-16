@@ -372,7 +372,7 @@ public class BiTargetStaffSettingServiceImpl extends SuperServiceImpl<BiTargetSt
     public PagingVO<BiTargetStaffSettingDTO.PagingViewDTO> paging(PagingDTO<BiTargetYearDTO.PagingParamDTO> dto) {
         BiTargetYearDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
         IPage<BiTargetStaffSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params, multiplyNum);

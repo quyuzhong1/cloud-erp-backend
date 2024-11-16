@@ -18,7 +18,6 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @Description
@@ -62,7 +61,7 @@ public class BiTargetShopSettingExcelListener extends AnalysisEventListener<Targ
         BiShopInfoEntity shop = shopList.stream().
                 filter(u -> u.getName().equals(shopName)).
                 findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(shop)) {
+        if (ObjectUtil.isEmpty(shop) || shop == null) {
             errorMsgList.add("店铺不存在");
         }
         //添加错误数据
@@ -99,7 +98,7 @@ public class BiTargetShopSettingExcelListener extends AnalysisEventListener<Targ
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 
 

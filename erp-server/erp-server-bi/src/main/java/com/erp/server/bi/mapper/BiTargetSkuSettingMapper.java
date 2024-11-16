@@ -25,7 +25,7 @@ import java.util.List;
 @Mapper
 public interface BiTargetSkuSettingMapper extends BaseMapper<BiTargetSkuSettingEntity> {
 
-    IPage<BiTargetSkuSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
+    IPage<BiTargetSkuSettingDTO.PagingViewDTO> paging(Page<Object> query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
     /**
      * @description: 根据指标查询SKU目标值
      * @author Will

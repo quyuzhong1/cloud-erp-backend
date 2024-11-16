@@ -62,14 +62,14 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
 
     @Override
     public PagingVO<DmpRefundInfoDTO> paging(PagingDTO<DmpRefundInfoSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         DmpRefundInfoSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpRefundInfoDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             pageData.getRecords().forEach(obj -> obj.setRefundStatusName(RefundStatusEnum.getName(obj.getRefundStatus())));
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -84,7 +84,6 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
         List<DmpRefundInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpRefundInfoExcelDTO.class, list);
         String fileName = biOrderInfoService.getFileName("退款数据导出");
         ExcelUtil.export(fileName, "退款数据导出", excelList, DmpRefundInfoExcelDTO.class, response);
-        return;
     }
 
     @Override
@@ -104,7 +103,7 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
         try {
             read(excelFile.getInputStream(), DmpRefundInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<DmpRefundInfoImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
+            if (!list.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/dmpRefundInfo.xlsx";
                 String name = "dmpRefundInfo";

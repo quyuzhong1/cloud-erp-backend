@@ -32,7 +32,7 @@ public interface BiTargetStaffSettingMapper extends BaseMapper<BiTargetStaffSett
      */
     List<BiTargetStaffSettingDTO.ListDetailDTO> listByYear(@Param("year") Integer year);
 
-    IPage<BiTargetStaffSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
+    IPage<BiTargetStaffSettingDTO.PagingViewDTO> paging(Page<Object> query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
     /**
      * @description: 根据指标查询人员目标值
      * @author Will

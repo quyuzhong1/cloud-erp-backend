@@ -33,7 +33,7 @@ public interface SalesOrderServiceMapper  extends BaseMapper<BiOrderInfoEntity> 
      * @param settleRate
      * @return
      */
-    IPage<SkuSalesDTO.PagingSalesInfoDTO> getBySku(Page query, @Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
+    IPage<SkuSalesDTO.PagingSalesInfoDTO> getBySku(Page<Object> query, @Param("params") BiFilterDTO dto, @Param("settleRate") String settleRate);
 
     /**
      * 导出sku 销售额列表

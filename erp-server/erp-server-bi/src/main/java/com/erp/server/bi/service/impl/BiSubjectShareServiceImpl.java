@@ -156,12 +156,12 @@ public class BiSubjectShareServiceImpl extends ServiceImpl<BiSubjectShareMapper,
         //这个是 这个人是在分享的里面
         Boolean shareFlag = getShare(userId, subject.getId(), roleIdList);
         //如果在 就返回
-        if (shareFlag) {
+        if (!shareFlag) {//如果不在 那么就要看这个专题 是不是没有设置权限  就是私人的
+            if (DashboardEnum.PERSONAL.getFlag().equals(subject.getShareFlag()) && !userId.equals(subject.getCreateUserId())) {
+                throw new ServiceException(ApiError.ERROR_97006);
+            }
+        } else {
             return;
-        }
-        //如果不在 那么就要看这个专题 是不是没有设置权限  就是私人的
-        if (DashboardEnum.PERSONAL.getFlag().equals(subject.getShareFlag()) && !userId.equals(subject.getCreateUserId())) {
-            throw new ServiceException(ApiError.ERROR_97006);
         }
 
 

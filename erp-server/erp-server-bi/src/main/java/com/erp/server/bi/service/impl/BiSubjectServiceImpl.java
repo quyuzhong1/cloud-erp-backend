@@ -1,7 +1,6 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -80,11 +79,11 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public PagingVO<SubjectPagingDTO> queryByPage(PagingDTO<BaseSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
 
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<SubjectPagingDTO> pageData = baseMapper.paging(query, params);
         List<SubjectPagingDTO> list = pageData.getRecords();
         for (SubjectPagingDTO item : list) {
             String categoryName = item.getCategoryName();
@@ -97,7 +96,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         // 设置权限信息
         list.forEach(e-> e.checkAndSetShareFlagIdList(shareMap.get(e.getId())));
 
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
 
@@ -318,10 +317,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String userId = UserContext.getDefaultLoginUser().getUid();
         checkCanHandle(subject, userId);
         Boolean stateFlag = dto.getState();
-        if (stateFlag) {
-            subject.setState(BaseStateConstants.OPEN_STATE);
-        } else {
+        if (!stateFlag) {
             subject.setState(BaseStateConstants.CLOSE_STATE);
+        } else {
+            subject.setState(BaseStateConstants.OPEN_STATE);
         }
         return this.updateById(subject);
     }

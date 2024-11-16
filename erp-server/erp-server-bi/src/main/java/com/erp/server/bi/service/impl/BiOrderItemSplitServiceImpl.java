@@ -26,10 +26,10 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
 
     @Override
     public BigDecimal sumSales(List<String> orderIds, BiFilterDTO dto) {
-        QueryWrapper<BiOrderItemSplitEntity> query = new QueryWrapper();
+        QueryWrapper<BiOrderItemSplitEntity> query = new QueryWrapper<>();
 
         if (SettleMethodEnum.ORIGINAL_CURRENCY.getCode().equals(dto.getSettleMethod())) {
-            if (BiFilterDTO.validOriginalCurrency(dto)){
+            if (Boolean.TRUE.equals(BiFilterDTO.validOriginalCurrency(dto))){
                 query.select("SUM(amount_after) as sell_price");
             }else {
                 return BigDecimal.ZERO;
@@ -52,7 +52,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
 
     @Override
     public Integer countSalesVolume(List<String> orderIds, List<String> sku) {
-        QueryWrapper<BiOrderItemSplitEntity> query = new QueryWrapper();
+        QueryWrapper<BiOrderItemSplitEntity> query = new QueryWrapper<>();
         query.select("SUM(COALESCE(quantity, 0)) as quantity")
                 .in(CollectionUtils.isNotEmpty(orderIds), "order_id", orderIds)
                 .in(CollectionUtils.isNotEmpty(sku), "sku_no", sku);
@@ -62,11 +62,10 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
 
     @Override
     public Integer countOrderQuantityBySku(List<String> orderIds, List<String> sku) {
-        Integer count = lambdaQuery()
+        return lambdaQuery()
                 .in(CollectionUtils.isNotEmpty(orderIds), BiOrderItemSplitEntity::getOrderId, orderIds)
                 .in(CollectionUtils.isNotEmpty(sku), BiOrderItemSplitEntity::getSkuNo, sku)
                 .count();
-        return count;
     }
 
     @Override
@@ -84,12 +83,11 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
         if (CollectionUtils.isEmpty(orderIds)) {
             return new ArrayList<>();
         }
-        List<BiOrderItemSplitEntity> list = lambdaQuery()
+        return lambdaQuery()
                 .in(CollectionUtils.isNotEmpty(orderIds), BiOrderItemSplitEntity::getOrderId, orderIds)
                 .in(CollectionUtils.isNotEmpty(sku), BiOrderItemSplitEntity::getSkuNo, sku)
                 .eq(null != newSign, BiOrderItemSplitEntity::getNewSign, newSign)
                 .list();
-        return list;
     }
 
 }

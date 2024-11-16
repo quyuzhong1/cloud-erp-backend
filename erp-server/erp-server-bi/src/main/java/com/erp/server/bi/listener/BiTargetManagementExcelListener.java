@@ -12,7 +12,6 @@ import com.erp.model.plm.dto.BasicCategoryDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.enums.TargetProductTypeEnum;
 import com.erp.server.bi.enums.TargetTypeEnum;
 import com.erp.server.bi.service.BiTargetManagementService;
@@ -121,13 +120,13 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
                 entity.setSpuId(productInfoDTO.getId());
             }
         }
-        String errStr = "";
-        if (errorMsgList.size() > 0) {
+        StringBuilder errStr = new StringBuilder();
+        if (!errorMsgList.isEmpty()) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+                errStr.append(indexTemp).append("、").append(errorMsgList.get(i)).append("；");
             }
-            dto.setErrorMsg(errStr);
+            dto.setErrorMsg(errStr.toString());
             list.add(dto);
             return;
         }
@@ -157,6 +156,6 @@ public class BiTargetManagementExcelListener extends AnalysisEventListener<BiTar
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 }

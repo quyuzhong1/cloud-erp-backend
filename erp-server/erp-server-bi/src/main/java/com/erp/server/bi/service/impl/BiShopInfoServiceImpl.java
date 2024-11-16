@@ -1,10 +1,8 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -72,19 +70,19 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private MQProducerService mQProducerService;
+    private MQProducerService<JSONObject> mQProducerService;
 
 
     @Override
     public PagingVO<DmpShopInfoShowDTO> paging(PagingDTO<DmpShopInfoSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         DmpShopInfoSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpShopInfoShowDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             pageData.getRecords().forEach(obj -> obj.setStatusName(BiStateEnum.getName(obj.getStatus())));
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -308,12 +306,11 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
+        return list.stream()
                 .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getSite()))
                 .distinct()
                 .filter(x -> CharSequenceUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
-        return result;
     }
 
     private List<BiShopInfoEntity> getSiteShopList() {
@@ -342,7 +339,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         jsonObject.set("enableTime", enableTime);
         jsonObject.set("userId", userId);
         jsonObject.set("userName", userName);
-        if (ObjectUtils.isNotEmpty(sysUserDeptDTO)) {
+        if (ObjectUtils.isNotEmpty(sysUserDeptDTO) && sysUserDeptDTO != null) {
             jsonObject.set("deptId", sysUserDeptDTO.getDeptId());
             jsonObject.set("deptName", sysUserDeptDTO.getDeptName());
         }

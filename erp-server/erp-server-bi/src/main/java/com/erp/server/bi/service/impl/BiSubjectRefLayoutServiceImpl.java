@@ -44,12 +44,12 @@ public class BiSubjectRefLayoutServiceImpl extends ServiceImpl<BiSubjectRefLayou
                 addList.add(entity);
             }
             Boolean flag = this.saveBatch(addList);
-            if (!flag) {
+            if (Boolean.TRUE.equals(flag)) {
                 return Boolean.TRUE;
             }
         }
 
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
 

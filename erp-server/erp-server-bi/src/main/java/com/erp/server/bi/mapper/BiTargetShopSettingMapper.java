@@ -31,7 +31,7 @@ public interface BiTargetShopSettingMapper extends BaseMapper<BiTargetShopSettin
      * @param params
      * @return
      */
-    IPage<BiTargetShopSettingDTO.PagingViewDTO> paging(Page query,@Param("params") BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
+    IPage<BiTargetShopSettingDTO.PagingViewDTO> paging(Page<Object> query,@Param("params") BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
 
     List<TargetFinishDTO.ViewDTO> listTargetFinish(@Param("params")TargetFinishDTO.ParamDTO dto);
 

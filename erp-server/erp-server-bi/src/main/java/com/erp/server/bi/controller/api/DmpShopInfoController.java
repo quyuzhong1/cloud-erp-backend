@@ -75,7 +75,7 @@ public class DmpShopInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "店铺数据编辑")
     @PostMapping("/update")
-    public ApiResult updateDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
+    public ApiResult<Void> updateDmpShopInfo(@RequestBody BiShopInfoDTO dto) {
         boolean flag = this.biShopInfoService.updateDmpShopInfo(dto);
         return flag ? success() : failure();
     }

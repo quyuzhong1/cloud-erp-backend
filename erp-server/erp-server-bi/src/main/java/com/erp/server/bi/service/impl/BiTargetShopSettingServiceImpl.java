@@ -356,7 +356,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         String metrics = params.getMetrics();
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(metrics);
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<BiTargetShopSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params,multiplyNum);
         List<BiTargetShopSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));

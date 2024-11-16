@@ -64,9 +64,6 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
         BiTargetYearEntity biTargetYearEntity = new BiTargetYearEntity();
         BeanMapperUtils.copy(addDTO, biTargetYearEntity);
 
-        // 数据处理
-        handleData(biTargetYearEntity);
-
         log.info("开始新增年度目标单");
         boolean save = super.save(biTargetYearEntity);
         if (!save) {
@@ -86,8 +83,6 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
         Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "年度目标单"));
         BiTargetYearEntity biTargetYearEntity = BeanMapperUtils.map(BiTargetYearEntity.class, updateDTO);
 
-        // 数据处理
-        handleData(biTargetYearEntity);
         log.info("编辑 开始修改年度目标单数据，id：【{}】", old.getId());
         boolean save = super.updateById(biTargetYearEntity);
         if (!save) {
@@ -229,14 +224,6 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
         }
 
     }
-
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(BiTargetYearEntity biTargetYearEntity) {
-        // TODO 验证数据 & 数据赋值
-    }
-
 
     /**
      * 设置年度日期

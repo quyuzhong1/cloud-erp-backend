@@ -28,7 +28,7 @@ public interface BiSubjectMapper extends BaseMapper<BiSubjectEntity> {
 
     List<DashboardDTO> getMyCreateDashboardList(@Param("type") String type, @Param("dashboardFlag") String dashboardFlag,@Param("userId") String userId,@Param("searchKeyword") String searchKeyword);
 
-    IPage<SubjectPagingDTO> paging(Page query, @Param("params") BaseSearchDTO params);
+    IPage<SubjectPagingDTO> paging(Page<Object> query, @Param("params") BaseSearchDTO params);
 
     /**
      * @deprecated
