@@ -607,12 +607,11 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
      */
     @Override
     public Boolean delete(BiTargetShopSettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetShopSettingEntity::getShopId, dto.getShopId()).
                 eq(BiTargetShopSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetShopSettingEntity::getMetrics, dto.getMetrics()).
-                remove();
-        return result;
+                remove();;
     }
 
     /**

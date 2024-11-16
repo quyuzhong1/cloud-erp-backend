@@ -317,10 +317,10 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String userId = UserContext.getDefaultLoginUser().getUid();
         checkCanHandle(subject, userId);
         Boolean stateFlag = dto.getState();
-        if (!stateFlag) {
-            subject.setState(BaseStateConstants.CLOSE_STATE);
-        } else {
+        if (Boolean.TRUE.equals(stateFlag)) {
             subject.setState(BaseStateConstants.OPEN_STATE);
+        } else {
+            subject.setState(BaseStateConstants.CLOSE_STATE);
         }
         return this.updateById(subject);
     }

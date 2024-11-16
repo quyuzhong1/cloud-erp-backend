@@ -76,6 +76,9 @@ public class BiTargetStaffSettingExcelListener extends AnalysisEventListener<Tar
         addDTO.setMetrics(metricsEnum);
         addDTO.setMetricsName(metricsName);
         //人
+        if (user == null) {
+            return;
+        }
         addDTO.setStaffId(user.getUserId());
         addDTO.setStaffName(user.getUserName());
         //一月

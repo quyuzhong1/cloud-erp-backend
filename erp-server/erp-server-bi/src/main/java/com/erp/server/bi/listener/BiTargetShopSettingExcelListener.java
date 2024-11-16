@@ -54,7 +54,7 @@ public class BiTargetShopSettingExcelListener extends AnalysisEventListener<Targ
         }
         String metricsName = excelDTO.getMetricsName();
         Boolean isExistMetrics = metricsNameList.contains(metricsName);
-        if (!isExistMetrics) {
+        if (Boolean.FALSE.equals(isExistMetrics)) {
             errorMsgList.add("考核指标不存在");
         }
         String shopName = excelDTO.getShopName();

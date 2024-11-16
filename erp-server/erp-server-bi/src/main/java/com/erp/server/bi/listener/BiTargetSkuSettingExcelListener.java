@@ -55,7 +55,7 @@ public class BiTargetSkuSettingExcelListener extends AnalysisEventListener<Targe
         }
         String metricsName = excelDTO.getMetricsName();
         Boolean isExistMetrics = metricsNameList.contains(metricsName);
-        if (!isExistMetrics) {
+        if (Boolean.FALSE.equals(isExistMetrics)) {
             errorMsgList.add("考核指标不存在");
         }
         String skuNo = excelDTO.getSku();
@@ -64,7 +64,7 @@ public class BiTargetSkuSettingExcelListener extends AnalysisEventListener<Targe
             errorMsgList.add("sku不存在");
         }
         //添加错误数据
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
