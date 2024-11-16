@@ -143,30 +143,6 @@ public class SBase64 {
 	}
 
 	public static void main(String[] args) throws IOException {
-//		String sourceString="中华人民共和国";
-//		String base64String=stringToBase64(sourceString);
-//		String targetString=base64ToString(base64String);
-//		
-//		System.out.println("加密前:"+sourceString);
-//		System.out.println("加密后:"+base64String);
-//		System.out.println("解密后:"+targetString);
-
-
-//		String sourceFileName="d://动态短信验证码安全防护方案201507.pdf";
-//		String base64FileString=fileToBase64(sourceFileName);		
-//		System.out.println("加密文件:"+sourceFileName);
-//		System.out.println("加密后："+base64FileString);
-//		
-//		String baseOutFile="d://1.txt";
-//		writeStrToFile(base64FileString,baseOutFile);
-
-//		String targetFileName="d://动态短信验证码安全防护方案201507Base64.pdf";
-//		base64ToFile(base64FileString,targetFileName);
-//		System.out.println("解密后文件:"+targetFileName);
-
-//		System.out.println(FileUtil.txtToString(new File("D://1.txt")));
-
-		//String content=FileUtil.getContentFromFile(new File("d://base64pdf.txt"));
 		String primstr = fileToBase64("C:/Users/Administrator/Desktop/itext测试/iTextAsian.zip");
 
 		try {

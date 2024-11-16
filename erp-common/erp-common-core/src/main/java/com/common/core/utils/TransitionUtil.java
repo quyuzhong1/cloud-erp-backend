@@ -78,7 +78,7 @@ public class TransitionUtil {
         //相应的接口，需要可进行补充.....
         switch (code){
             case 15:
-                return Boolean.TRUE.equals((Boolean) original) ? 1 : 0;
+                return Boolean.TRUE.equals(original) ? 1 : 0;
             case 19:
                 return original.toString();
             case 58:

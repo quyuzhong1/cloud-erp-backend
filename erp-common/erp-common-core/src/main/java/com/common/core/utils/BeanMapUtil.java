@@ -32,7 +32,7 @@ public class BeanMapUtil {
     public static BeanMapUtil getInstance() {
         if (INSTANCE == null) {
             synchronized (BeanMapUtil.class) {
-                if (INSTANCE == null) {
+                if (null == INSTANCE) {
                     INSTANCE = new BeanMapUtil();
                     return INSTANCE;
                 }
@@ -163,7 +163,7 @@ public class BeanMapUtil {
 
     // 缓存CopyOptions（注意这个是HuTool的类，不是Cglib的）
 
-    private Map<Class, CopyOptions> cacheMap = new HashMap<>();
+    private Map<Class<?>, CopyOptions> cacheMap = new HashMap<>();
 
 
     private CopyOptions getCopyOptions(Class source) {
@@ -180,7 +180,7 @@ public class BeanMapUtil {
      * @param source
      * @return
      */
-    private Map<String, String> buildFieldMapper(Class source) {
+    private Map<String, String> buildFieldMapper(Class<?> source) {
         PropertyDescriptor[] properties = org.springframework.cglib.core.ReflectUtils.getBeanProperties(source);
         Map<String, String> map = new HashMap<>();
         for (PropertyDescriptor target : properties) {

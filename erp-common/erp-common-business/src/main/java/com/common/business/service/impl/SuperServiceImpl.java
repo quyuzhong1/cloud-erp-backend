@@ -104,11 +104,7 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
         sortList.stream().forEach(sortParamDTO -> {
             OrderItem orderItem = new OrderItem();
             orderItem.setColumn(sortParamDTO.getField());
-            if (sortParamDTO.getSort().equals("ASC")){
-                orderItem.setAsc(true);
-            }else {
-                orderItem.setAsc(false);
-            }
+            orderItem.setAsc(sortParamDTO.getSort().equals("ASC"));
             orderItems.add(orderItem);
         });
         return orderItems;

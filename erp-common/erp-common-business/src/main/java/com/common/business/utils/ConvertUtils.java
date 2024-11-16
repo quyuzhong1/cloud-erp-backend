@@ -35,6 +35,12 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ConvertUtils {
+
+    public static final String UNKNOWN = "unknown";
+
+    private ConvertUtils() {
+    }
+
     public static boolean isEmpty(Object object) {
         if (object == null) {
             return (true);
@@ -73,7 +79,7 @@ public class ConvertUtils {
         try {
             strIn = new String(strIn.getBytes(StandardCharsets.ISO_8859_1), "GBK");
         } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
+            // Auto-generated catch block
             e.printStackTrace();
         }
         return strIn;
@@ -304,13 +310,13 @@ public class ConvertUtils {
      */
     public static String getIpAddrByRequest(HttpServletRequest request) {
         String ip = request.getHeader("x-forwarded-for");
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
         }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {
             ip = request.getHeader("WL-Proxy-Client-IP");
         }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
         return ip;
@@ -560,6 +566,9 @@ public class ConvertUtils {
         return sb.toString().toLowerCase();
     }
 
+
+    private static final Random rd = new Random();
+
     /**
      * 随机数
      *
@@ -567,8 +576,7 @@ public class ConvertUtils {
      */
     public static String randomGen(int place) {
         String base = "qwertyuioplkjhgfdsazxcvbnmQAZWSXEDCRFVTGBYHNUJMIKLOP0123456789";
-        StringBuffer sb = new StringBuffer();
-        Random rd = new Random();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < place; i++) {
             sb.append(base.charAt(rd.nextInt(base.length())));
         }
