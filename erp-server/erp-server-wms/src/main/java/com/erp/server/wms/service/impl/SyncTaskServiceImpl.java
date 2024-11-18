@@ -306,7 +306,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SubcontractIssueEntity> list = subcontractIssueService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncWarehouse >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -329,7 +329,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<WarehouseEntity> list = warehouseService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncWarehouse >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -352,7 +352,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<TransferInfoEntity> list = transferInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncTransferInfo >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -375,7 +375,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<StocktakingProfitLossEntity> list = stocktakingProfitLossService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncStocktakingTaskProfitLoss >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -403,7 +403,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SoReturnInstockEntity> list = soReturnInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncSoReturnInstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -426,7 +426,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SoOutstockEntity> list = soOutstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncSoOutstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -461,7 +461,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<PoReturnEntity> list = poReturnService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoReturn >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -484,7 +484,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<WarehouseReceiveEntity> list = warehouseReceiveService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoReceive >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -507,7 +507,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<PoInstockEntity> list = poInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoInstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -530,7 +530,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<OtherInstockEntity> list = otherInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncOtherInstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -554,7 +554,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<OtherOutstockEntity> list = otherOutstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncOtherOutstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -577,7 +577,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<MachineInfoEntity> list = machineInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncMachineInfo >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {

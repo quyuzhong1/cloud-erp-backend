@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -32,10 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -122,7 +120,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
      */
     private void checkQcType(String id, QcTypeEnum qcType) {
         LambdaQueryWrapper<QcRuleEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(id)) {
+        if (CharSequenceUtil.isNotBlank(id)) {
             queryWrapper.ne(QcRuleEntity::getId, id);
         }
         queryWrapper.eq(QcRuleEntity::getQcType, qcType);
@@ -152,14 +150,14 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
         //等级
         String gradeKey = rule.getProductGradeKey();
         List<String> gradeKeyList = new ArrayList<>();
-        if (StringUtils.isNotBlank(gradeKey)) {
+        if (CharSequenceUtil.isNotBlank(gradeKey)) {
             gradeKeyList = Arrays.asList(gradeKey.split(","));
         }
         view.setProductGradeKeyList(gradeKeyList);
         //销售方式
         String saleMethod = rule.getSaleMethod();
         List<String> saleMethodList = new ArrayList<>();
-        if (StringUtils.isNotBlank(saleMethod)) {
+        if (CharSequenceUtil.isNotBlank(saleMethod)) {
             saleMethodList = Arrays.asList(saleMethod.split(","));
         }
         view.setSaleMethodList(saleMethodList);
@@ -186,10 +184,10 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     @Override
     public Boolean addAndSubmit(QcRuleDTO.AddDTO dto) {
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submit(Arrays.asList(id));
+        Boolean result = this.submit(Collections.singletonList(id));
         return result;
     }
 
@@ -284,10 +282,10 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     @Override
     public Boolean updateAndSubmit(QcRuleDTO.UpdateDTO dto) {
         String id = this.updateQcRule(dto);
-        if (org.apache.commons.lang3.StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
     }
 
 

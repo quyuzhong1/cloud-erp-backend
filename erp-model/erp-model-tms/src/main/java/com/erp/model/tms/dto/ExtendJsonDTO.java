@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -13,12 +14,14 @@ import java.math.BigDecimal;
  * @date 2023/11/6 14:55
  */
 @Data
-@NoArgsConstructor
 public class ExtendJsonDTO {
+
+    private ExtendJsonDTO() {
+    }
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class CommonDTO implements Serializable {
 
         /**
          * 最长边

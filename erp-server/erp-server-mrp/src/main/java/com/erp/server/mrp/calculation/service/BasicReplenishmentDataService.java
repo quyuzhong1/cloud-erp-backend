@@ -239,6 +239,7 @@ public class BasicReplenishmentDataService {
      *
      * @param calculationDate 计算日
      */
+    @SuppressWarnings("all")
     public void cleanHistorySalesAndInventory(LocalDate calculationDate, List<ShopInfoEntity> shopInfoList) {
         String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         //查询所有需要计算得数据

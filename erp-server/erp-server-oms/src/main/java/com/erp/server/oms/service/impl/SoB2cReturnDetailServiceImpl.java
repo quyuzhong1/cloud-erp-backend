@@ -2,26 +2,28 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
-import com.erp.server.oms.mapper.SoB2cReturnDetailMapper;
-import com.erp.server.oms.service.SoB2cReturnDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import com.jgoodies.common.bean.Bean;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
-import java.util.*;
-import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
+import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
+import com.erp.server.oms.mapper.SoB2cReturnDetailMapper;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoB2cReturnDetailService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * <p>
  * b2c退货订单明细 服务实现类
@@ -33,7 +35,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDetailMapper, SoB2cReturnDetailEntity> implements SoB2cReturnDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Transactional(rollbackFor = Exception.class)
@@ -55,7 +57,9 @@ public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDe
     @Override
     public Boolean update(SoB2cReturnDetailDTO.UpdateDTO updateDTO) {
         SoB2cReturnDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单明细"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单明细");
+        }
         SoB2cReturnDetailEntity soB2cReturnDetailEntity =  BeanMapperUtils.map(SoB2cReturnDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -69,7 +73,7 @@ public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDe
 
         // 记录主单操作日志
             log.info("编辑 开始记录b2c退货订单明细日志数据，id：【{}】", soB2cReturnDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cReturnDetailEntity.getId(), "b2c退货订单明细");
+            String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cReturnDetailEntity.getId(), "b2c退货订单明细");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, soB2cReturnDetailEntity, null, soB2cReturnDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -77,7 +81,7 @@ public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDe
 
     @Override
     public List<SoB2cReturnDetailEntity> listByMainIds(List<String> mainIds) {
-        if(CollectionUtil.isEmpty(mainIds)) {
+        if(CollUtil.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
 
@@ -86,7 +90,7 @@ public class SoB2cReturnDetailServiceImpl extends SuperServiceImpl<SoB2cReturnDe
 
     @Override
     public boolean deleteByMainIds(List<String> mainIds) {
-        if(CollectionUtil.isEmpty(mainIds)) {
+        if(CollUtil.isEmpty(mainIds)) {
             return true;
         }
         return this.lambdaUpdate().in(SoB2cReturnDetailEntity::getMainId,mainIds).remove();

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
@@ -358,7 +359,7 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
      * @date 2023-04-13 14:59
      */
     private List<String> getDeleteIds(List<QcReportDetailDTO.AddDTO> list, List<QcReportDetailEntity> dbList) {
-        List<String> ids = list.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> ids = list.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(QcReportDetailDTO.AddDTO::getId).collect(Collectors.toList());
         List<String> dbIds = dbList.stream().map(QcReportDetailEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());

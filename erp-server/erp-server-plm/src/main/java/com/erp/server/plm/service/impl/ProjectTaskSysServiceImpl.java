@@ -38,6 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.collection.CollUtil.isNotEmpty;
+
 /**
  * <p>
  * 系统任务 服务实现类
@@ -111,34 +113,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
             entity.setRoleName("");
         }
 
-        //配置表单属性
-        String fieldConfigType = dto.getFieldConfigType();
-        //生成sku
-        String createSku = TaskConstant.CREATE_SKU;
-        //填写sku
-        String fillProductInfo = TaskConstant.FILL_PRODUCT_INFO;
-        //filedjson
-        String fieldJson = dto.getFieldJson();
-        //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
-        Boolean needCheckFirst = (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
-
-        //第二种 sku 没有  并且 表单属性不为空 且为生成
-        Boolean needCheckSecond = (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
-
         //自定义审核人
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
-        Integer type = dto.getType();
-        //如果配置表单 一般任务 一定要走流程
-        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
-        //TODO 2023-03-30 暂时取消审核流程
-        //如果是一般任务 必须要有审核流程
-/*        if (needCheckFirst || needCheckSecond) {
-            if (generalTask.equals(type)) {
-                if (CollectionUtils.isEmpty(approvalList)) {
-                    throw new ServiceException(ApiError.ERROR_95078);
-                }
-            }
-        }*/
+
         if (!Objects.isNull(loginUser)) {
             entity.setCreateUserId(loginUser.getUid());
             entity.setCreateUserName(loginUser.getUserName());
@@ -175,12 +152,6 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
                         taskChargeDistributionEntity.setChargeIds(taskChargeDistributionEntity.getCharges());
-                    }
-                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(taskChargeDistributionEntity.getDistributionType())) {
-                        List<String> roleIdList = Arrays.stream(taskChargeDistributionEntity.getCharges().split(",")).collect(Collectors.toList());
-                        //查询对应模板角色下的人员
-                        //查询立项模板
-
                     }
                     if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(taskChargeDistributionEntity.getDistributionType()) && CollectionUtils.isNotEmpty(dto.getChargeIds())) {
                         //查询对应负责人的上级
@@ -239,9 +210,9 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
 
     @Override
     public PagingVO<SysTaskPagingDTO> paging(PagingDTO<SysTaskPagingSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<SysTaskPagingSearchDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         SysTaskPagingSearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<SysTaskPagingDTO> pageData = baseMapper.paging(query, params);
         List<SysTaskPagingDTO> list = pageData.getRecords();
         //获取所有的系统任务的 文档名
         List<SysTaskPagingDTO> docsNames = getSysTaskDocsNames();
@@ -271,7 +242,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         }
 
 
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     private List<ProjectTaskSysEntity> getByTaskIds(List<String> taskIds) {
@@ -346,7 +317,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
      */
     @Override
     public List<Map<String, Object>> taskList(String templateId) {
-        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProjectTaskSysEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProjectTaskSysEntity::getId, ProjectTaskSysEntity::getName);
         if (StringUtils.isNotBlank(templateId)) {
             queryWrapper.eq(ProjectTaskSysEntity::getTemplateId, templateId);
@@ -414,7 +385,7 @@ public class ProjectTaskSysServiceImpl extends ServiceImpl<ProjectTaskSysMapper,
         List<PreTaskVO> preTaskList = preTaskService.getPreTaskIdList(taskId);
         sysTaskVO.setDeliveryDocsList(taskDeliveryService.getSysTaskFinishDocs(taskId));
         List<String> pretaskIdList = Collections.emptyList();
-        if (CollectionUtil.isNotEmpty(preTaskList)) {
+        if (isNotEmpty(preTaskList)) {
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
         }
         sysTaskVO.setPreTaskIdList(pretaskIdList);

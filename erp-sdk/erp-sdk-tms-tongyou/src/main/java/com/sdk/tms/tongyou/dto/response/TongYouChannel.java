@@ -1,6 +1,5 @@
 package com.sdk.tms.tongyou.dto.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;

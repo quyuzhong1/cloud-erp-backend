@@ -41,8 +41,8 @@ public class ProjectMembersController extends BaseController {
      */
     @PostMapping("/paging")
     // @RequestPermissions("plm:project:member:paging")
-    public ApiResult<PagingVO<List<MemberPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<MemberPagingDTO> dto) {
-        PagingVO<List<MemberPagingShowDTO>> pagingVO = projectMembersService.paging(dto);
+    public ApiResult<PagingVO<MemberPagingShowDTO>> paging(@RequestBody @Validated PagingDTO<MemberPagingDTO> dto) {
+        PagingVO<MemberPagingShowDTO> pagingVO = projectMembersService.paging(dto);
         return success(pagingVO);
     }
 
@@ -54,7 +54,7 @@ public class ProjectMembersController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "保存或者修改项目成员")
     @PostMapping("/saveOrUpdate")
     //@RequestPermissions("plm:project:member:saveOrUpdate")
-    public ApiResult save(@RequestBody @Validated SaveOrUpdateProjectMemberDTO dto) {
+    public ApiResult<Object> save(@RequestBody @Validated SaveOrUpdateProjectMemberDTO dto) {
         dto.setFlag(MathUtil.ONE);
         Boolean flag = projectMembersService.saveOrUpdateMember(dto);
         return flag == true ? success() : failure();
@@ -69,7 +69,7 @@ public class ProjectMembersController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "移除成员")
     @PostMapping("/remove")
     //  @RequestPermissions("plm:project:member:remove")
-    public ApiResult remove(@RequestBody @Validated RemoveProjectMemberDTO dto) {
+    public ApiResult<Object> remove(@RequestBody @Validated RemoveProjectMemberDTO dto) {
         Boolean flag = projectMembersService.removeMembers(dto);
         return flag == true ? success() : failure();
     }

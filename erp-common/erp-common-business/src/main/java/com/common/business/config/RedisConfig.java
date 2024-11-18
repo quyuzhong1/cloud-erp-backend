@@ -1,6 +1,6 @@
 package com.common.business.config;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.support.spring.FastJsonRedisSerializer;
 import com.common.business.utils.MD5Util;
@@ -173,19 +173,19 @@ public class RedisConfig {
         if(1 == redisNodes.size()) {
             //单机
             SingleServerConfig singleServerConfig = config.useSingleServer();
-            singleServerConfig.setAddress(StrUtil.format("redis://{}:{}",redisNodes.get(0).getHost(),redisNodes.get(0).getPort()))
+            singleServerConfig.setAddress(CharSequenceUtil.format("redis://{}:{}",redisNodes.get(0).getHost(),redisNodes.get(0).getPort()))
                     .setDatabase(redisProperties.getDbIndex()).setConnectionMinimumIdleSize(10);
-            if(StrUtil.isNotEmpty(redisProperties.getPassword())) {
+            if(CharSequenceUtil.isNotEmpty(redisProperties.getPassword())) {
                 singleServerConfig.setPassword(redisProperties.getPassword());
             }
         } else {
             //集群，需包含从节点，为保证高可用，Cluster模式一个主节点有一个从节点，一般为三主三从（Cluster集群的投票容错机制要求至少半数节点认为某个节点挂了，该节点才算是挂了，当只有两个节点时是无法进行投票的，所以说至少需要3个节点）
             ClusterServersConfig clusterServersConfig = config.useClusterServers();
             clusterServersConfig.setScanInterval(5000);
-            if(StrUtil.isNotEmpty(redisProperties.getPassword())) {
+            if(CharSequenceUtil.isNotEmpty(redisProperties.getPassword())) {
                 clusterServersConfig.setPassword(redisProperties.getPassword());
             }
-            redisNodes.stream().forEach(redisNode -> clusterServersConfig.addNodeAddress(StrUtil.format("redis://{}:{}",redisNode.getHost(),redisNode.getPort())));
+            redisNodes.stream().forEach(redisNode -> clusterServersConfig.addNodeAddress(CharSequenceUtil.format("redis://{}:{}",redisNode.getHost(),redisNode.getPort())));
         }
         //看门狗的锁续期时间，默认30s，这里配置成15s
         config.setLockWatchdogTimeout(15000);

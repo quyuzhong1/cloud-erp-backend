@@ -14,9 +14,10 @@ import java.math.BigDecimal;
  * @Date 2023/4/6 17:18
  **/
 @Data
-@NoArgsConstructor
 public class PurchaseReturnOrderDetailDTO {
-
+    private PurchaseReturnOrderDetailDTO() {
+        throw new IllegalStateException("Utility PurchaseReturnOrderDetailDTO class");
+    }
     /**
      * 添加
      */

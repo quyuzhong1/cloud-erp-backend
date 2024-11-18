@@ -239,7 +239,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult<Object>authorization(Map<String, String> authMap){
         try {
             YanWenResponse<List<YanWenChannel>> yanWenResponse = yanWenService.getAllChannel(authMap);
             if (!yanWenResponse.getSuccess()) {

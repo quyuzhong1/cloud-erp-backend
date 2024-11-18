@@ -28,7 +28,7 @@ import java.util.Map;
 public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
 
-    IPage<TaskPagingShowDTO> paging(Page query,@Param("params") TaskPagingDTO params,@Param("userId") String userId);
+    IPage<TaskPagingShowDTO> paging(Page<TaskPagingDTO> query,@Param("params") TaskPagingDTO params,@Param("userId") String userId);
 
     List<TaskDTO.TaskExportDTO> waitMyFinishExport(@Param("params") TaskPagingDTO.ExportDTO params, @Param("userId")String userId);
     Page<TaskDTO.TaskExportDTO> waitMyFinishExport(@Param("page") Page<TaskDTO.TaskExportDTO> page, @Param("params") TaskPagingDTO.ExportDTO params, @Param("userId")String userId);
@@ -42,7 +42,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      *产品的全部任务列表
      * @return
      */
-    IPage<TaskPagingShowDTO> allPaging(Page query, @Param("params") TaskPagingDTO params);
+    IPage<TaskPagingShowDTO> allPaging(Page<TaskPagingDTO> query, @Param("params") TaskPagingDTO params);
 
     /**
      * 所有导出
@@ -68,7 +68,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage
      */
-    IPage<TaskPagingShowDTO> changePaging(Page query,@Param("params") TaskPagingDTO params);
+    IPage<TaskPagingShowDTO> changePaging(Page<TaskPagingDTO> query,@Param("params") TaskPagingDTO params);
 
 
     Integer allPagingCount( @Param("productId") String productId,@Param("param") String param);
@@ -96,7 +96,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     List<TaskPagingShowDTO> allChildrenList(@Param("productId") String productId);
 
-    IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("params") TaskPagingDTO params,@Param("processIdList") List<String> processIdList);
+    IPage<TaskPagingShowDTO> myApprovalPaging(Page<TaskPagingDTO> query,@Param("params") TaskPagingDTO params,@Param("processIdList") List<String> processIdList);
 
     /**
      * 待我审核
@@ -124,7 +124,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     List<TaskGroupResultDTO> taskPlanEndTimeGroup(@Param("params") TaskGroupParamDTO params, @Param("notStateList") List<Integer> notStateList);
 
-    IPage<TaskPagingShowDTO> listProductTaskBySearchCategory(Page query, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
+    IPage<TaskPagingShowDTO> listProductTaskBySearchCategory(Page<TaskSearchParamDTO> query, @Param("notStateList") List<Integer> notStateList, @Param("params") TaskSearchParamDTO params);
 
     List<ProjectTaskEntity> getExpireWarnTaskList(@Param("startTime") Date startNowDate,@Param("endTime") Date flagDateEnd ,@Param("state") Integer state);
     /**
@@ -243,7 +243,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     /**
      * 任务高级查询
      */
-    IPage<ProjectTaskDTO.SimpleViewDTO> pagingByAdvanceQuery(Page query, @Param("params") ProjectTaskDTO.PagingParamDTO params, @Param("spuNos") List<String> spuNos);
+    IPage<ProjectTaskDTO.SimpleViewDTO> pagingByAdvanceQuery(Page<ProjectTaskDTO.PagingParamDTO> query, @Param("params") ProjectTaskDTO.PagingParamDTO params, @Param("spuNos") List<String> spuNos);
 
     /**
      * 根据任务Id查询

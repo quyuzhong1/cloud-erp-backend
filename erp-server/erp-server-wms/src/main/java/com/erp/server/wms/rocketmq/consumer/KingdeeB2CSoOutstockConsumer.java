@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -65,10 +66,10 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<Object> {
             paramDTO.setResponseMsg("同步成功");
             dmpTaskFeign.updateSyncInfo(paramDTO);
         } catch (Exception e) {
-            log.error("金蝶B2C销售出库单同步失败，msg = {}", StringUtils.isBlank(e.getMessage()) ? e : e.getMessage());
+            log.error("金蝶B2C销售出库单同步失败，msg = {}", CharSequenceUtil.isBlank(e.getMessage()) ? e : e.getMessage());
             //同步失败
             paramDTO.setSyncStatus(SyncStatusEnum.FAILED_SYNC.getCode());
-            paramDTO.setResponseMsg(StringUtils.isBlank(e.getMessage()) ? ExceptionUtil.stacktraceToOneLineString(e, 10) : e.getMessage());
+            paramDTO.setResponseMsg(CharSequenceUtil.isBlank(e.getMessage()) ? ExceptionUtil.stacktraceToOneLineString(e, 10) : e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
             //错误预警
             dmpTaskFeign.sendWarnMsg(dmpSyncTaskId);

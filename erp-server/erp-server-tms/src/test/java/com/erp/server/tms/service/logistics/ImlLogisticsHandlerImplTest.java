@@ -48,7 +48,7 @@ public class ImlLogisticsHandlerImplTest {
         Map<String,String> authMap = new HashMap<>();
         authMap.put("appToken","44ac3ae1211d416a080858e57833cc14");
         authMap.put("appKey","fa0c90d7dbb434fa2160209756db677c");
-        ApiResult result = imlLogisticsHandler.authorization(authMap);
+        ApiResult<Object>result = imlLogisticsHandler.authorization(authMap);
         System.out.println(result);
     }
 }

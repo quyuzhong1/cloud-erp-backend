@@ -423,7 +423,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //相同sku去空格
             String currentSku = "";
             for (PickingListsDTO.PrintDetailView printDetailView : viewList){
-                if(StringUtils.isBlank(currentSku)){
+                if(CharSequenceUtil.isBlank(currentSku)){
                     currentSku = printDetailView.getSkuNo();
                     continue;
                 }
@@ -485,7 +485,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             PickingListsDTO.CombinationPrintDetailView view = v.get(0);
                             Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
                             view.setParentSkuQty(totalParentQty);
-                            if (StrUtil.isNotBlank(view.getChildSku())){
+                            if (CharSequenceUtil.isNotBlank(view.getChildSku())){
                                 int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
                                 view.setChildSkuQty(totalChildQty);
                             }
@@ -496,7 +496,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 String currentParentSku = "";
                 Integer parentQty = 0;
                 for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
-                    if(StringUtils.isBlank(currentParentSku)){
+                    if(CharSequenceUtil.isBlank(currentParentSku)){
                         currentParentSku = combinationPrintDetailView.getParentSku();
                         parentQty = combinationPrintDetailView.getParentSkuQty();
                         continue;
@@ -518,7 +518,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 for (SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity : soDeliveryNoticeDetailEntityList) {
                     //查询sku是否存在子SKU
                     List<BomChildrenSkuDTO> sonSkuList = null;
-                    if (StrUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
+                    if (CharSequenceUtil.isNotBlank(soDeliveryNoticeDetailEntity.getBomVersion())){
                         sonSkuList = bomChildrenSkuDTOS.stream()
                                 .filter(req -> req.getParentSkuId().equals(soDeliveryNoticeDetailEntity.getSkuId())
                                     && req.getBomVersion().equals(soDeliveryNoticeDetailEntity.getBomVersion())
@@ -561,7 +561,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             PickingListsDTO.CombinationPrintDetailView view = v.get(0);
                             Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
                             view.setParentSkuQty(totalParentQty);
-                            if (StrUtil.isNotBlank(view.getChildSku())){
+                            if (CharSequenceUtil.isNotBlank(view.getChildSku())){
                                 int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
                                 view.setChildSkuQty(totalChildQty);
                             }
@@ -572,7 +572,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 String currentParentSku = "";
                 Integer parentQty = 0;
                 for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
-                    if(StringUtils.isBlank(currentParentSku)){
+                    if(CharSequenceUtil.isBlank(currentParentSku)){
                         currentParentSku = combinationPrintDetailView.getParentSku();
                         parentQty = combinationPrintDetailView.getParentSkuQty();
                         continue;

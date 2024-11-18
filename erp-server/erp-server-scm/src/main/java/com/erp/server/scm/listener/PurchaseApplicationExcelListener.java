@@ -3,7 +3,6 @@ package com.erp.server.scm.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.utils.FieldValidUtil;
@@ -11,6 +10,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -94,7 +94,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
         } else {
             if (StringUtils.isNotBlank(importExcelDTO.getSkuNo())) {
                 SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(skuEntity)) {
+                if (org.springframework.util.ObjectUtils.isEmpty(skuEntity)) {
                     errorMsgList.add("请录入已审核SKU");
                 } else {
                     if (skuIds.contains(skuEntity.getSkuId())) {
@@ -117,7 +117,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
         } else {
             if (StringUtils.isNotBlank(importExcelDTO.getDestWarehouseName())) {
                 WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(warehouseDTO)) {
+                if (org.springframework.util.ObjectUtils.isEmpty(warehouseDTO)) {
                     errorMsgList.add("请录入已审核并且启用的仓库");
                 } else {
                     excelDTO.setDestWarehouseId(warehouseDTO.getId());
@@ -155,7 +155,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 
     public List<PurchaseApplicationImportExcelDTO> getAllList(){

@@ -1,5 +1,6 @@
 package com.erp.server.wms.query;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
@@ -22,7 +23,7 @@ public class SoReturnInstockQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("tab".equals(field)){
-            if(StringUtils.isBlank(value.toString()) || "all".equals(value.toString())){
+            if(CharSequenceUtil.isBlank(value.toString()) || "all".equals(value.toString())){
                 return this.getQueryAllSql();
             }
             if("toBeApprove".equals(value.toString())){

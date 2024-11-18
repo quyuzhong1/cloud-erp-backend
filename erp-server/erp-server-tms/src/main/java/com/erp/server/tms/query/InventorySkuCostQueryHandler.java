@@ -8,7 +8,6 @@ import java.util.Objects;
 /**
  * @author zdy
  * @ClassName InventorySkuCostQueryHandler
- * @description: TODO
  * @date 2024年08月16日
  * @version: 1.0
  */

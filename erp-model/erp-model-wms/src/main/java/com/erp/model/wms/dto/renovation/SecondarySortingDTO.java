@@ -8,7 +8,9 @@ import java.util.List;
 @Getter
 @Setter
 public class SecondarySortingDTO {
-
+    private SecondarySortingDTO() {
+        throw new IllegalStateException("Utility SecondarySortingDTO class");
+    }
 
     @Getter
     @Setter

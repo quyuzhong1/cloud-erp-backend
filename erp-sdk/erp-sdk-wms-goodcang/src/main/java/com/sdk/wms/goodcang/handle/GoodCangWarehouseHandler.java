@@ -21,6 +21,7 @@ import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -40,9 +41,9 @@ public class GoodCangWarehouseHandler extends AbstractPullThirdWarehouseHandler<
     private GoodCangService goodCangService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
-    private final String failureMsgHead = "调用谷仓获取仓库数据接口异常";
+    private static final String FAILURE_MSG_HEAD = "调用谷仓获取仓库数据接口异常";
 
     @Override
     public List<GoodCangWarehouseResp> download(JobTaskDTO data) {
@@ -58,10 +59,10 @@ public class GoodCangWarehouseHandler extends AbstractPullThirdWarehouseHandler<
 
     private void checkResponse(GoodCangResponse<?> response) {
         if (!isSuccess(response.getAsk())) {
-            log.error(failureMsgHead + response.getMessage());
+            log.error(FAILURE_MSG_HEAD + response.getMessage());
             WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(response.getMessage());
             mqProducerService.sendWarnMsg(msgInfoDTO);
-            throw new ServiceException(failureMsgHead + response.getMessage());
+            throw new ServiceException(FAILURE_MSG_HEAD + response.getMessage());
         }
     }
 
@@ -69,7 +70,7 @@ public class GoodCangWarehouseHandler extends AbstractPullThirdWarehouseHandler<
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName("调用谷仓获取仓库数据接口");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_THIRD_SDK);
-        warnMsgInfo.setTitle(failureMsgHead);
+        warnMsgInfo.setTitle(FAILURE_MSG_HEAD);
         warnMsgInfo.setTableName(this.getClass().getName());
         warnMsgInfo.setTableId("");
         warnMsgInfo.setKeyInfo(msg);

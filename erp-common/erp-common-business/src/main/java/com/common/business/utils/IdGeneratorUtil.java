@@ -1,6 +1,6 @@
 package com.common.business.utils;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.common.business.constant.RedisCacheConstants;
@@ -53,7 +53,7 @@ public class IdGeneratorUtil {
 
     private long getSnowFlakeKey() {
         // 没有应用一套序列号
-        String redisKey = StrUtil.format(RedisCacheConstants.SNOWFLAKE_KEY, applicationName);
+        String redisKey = CharSequenceUtil.format(RedisCacheConstants.SNOWFLAKE_KEY, applicationName);
         return redisUtil.incr(redisKey, 1L);
     }
 }

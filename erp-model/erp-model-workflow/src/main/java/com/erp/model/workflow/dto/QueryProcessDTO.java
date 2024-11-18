@@ -16,7 +16,7 @@ import java.io.Serializable;
 public class QueryProcessDTO implements Serializable {
 
     //流程状态
-    private Integer ProcessState;
+    private Integer processState;
 
 
     //用户id

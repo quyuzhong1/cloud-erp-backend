@@ -11,12 +11,10 @@ import com.erp.model.plm.dto.ProductRefLabelDTO;
 import com.erp.model.plm.entity.ProductRefLabelEntity;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.server.plm.mapper.ProductRefLabelMapper;
-import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductRefLabelService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +39,8 @@ public class ProductRefLabelServiceImpl extends SuperServiceImpl<ProductRefLabel
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void batchAdd(ProductRefLabelDTO.BatchAddDTO batchAddDTO) {
-        if (CollectionUtils.isEmpty(batchAddDTO.getLabelIds())) throw new ServiceException(ApiError.Default);
-        if (CollectionUtils.isEmpty(batchAddDTO.getProjectDTOs())) throw new ServiceException(ApiError.Default);
+        if (CollectionUtils.isEmpty(batchAddDTO.getLabelIds())) throw new ServiceException(ApiError.DEFAULT);
+        if (CollectionUtils.isEmpty(batchAddDTO.getProjectDTOs())) throw new ServiceException(ApiError.DEFAULT);
         List<ProductRefLabelEntity> productRefLabelEntities = new ArrayList<>();
         // 数据处理
         handleData(batchAddDTO, productRefLabelEntities);

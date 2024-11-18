@@ -4,7 +4,6 @@ import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
  * @author liuruipeng

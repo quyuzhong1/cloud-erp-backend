@@ -62,7 +62,7 @@ public class DmpInputTaskStatusRecordServiceImpl extends SuperServiceImpl<DmpInp
     @Override
     public Boolean update(DmpInputTaskStatusRecordDTO.UpdateDTO updateDTO) {
         DmpInputTaskStatusRecordEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务状态记录"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务状态记录"));
         DmpInputTaskStatusRecordEntity dmpInputTaskStatusrecordEntity =  BeanMapperUtils.map(DmpInputTaskStatusRecordEntity.class, updateDTO);
 
         // 数据处理

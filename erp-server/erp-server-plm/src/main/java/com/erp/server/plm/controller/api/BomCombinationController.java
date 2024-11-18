@@ -47,7 +47,7 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated BomCombinationDTO.AddDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated BomCombinationDTO.AddDTO dto) {
         Boolean flag = this.bomCombinationService.add(dto);
         return flag == true ? success() : failure();
     }
@@ -60,7 +60,7 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated BomCombinationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated BomCombinationDTO.UpdateDTO dto) {
         Boolean flag = this.bomCombinationService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -102,7 +102,7 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean flag = bomCombinationService.importFile(excelFile,response);
         return flag == true ? success() : failure();
     }
@@ -115,7 +115,7 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
         bomCombinationService.downloadTemplate(response);
         return success();
     }

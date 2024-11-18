@@ -10,6 +10,7 @@ import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
@@ -17,8 +18,8 @@ import java.util.Map;
 
 @Component
 @Slf4j
-public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAnnotate, IShopAuthorizeService> {
-    private static final Map<PlatformDictEnum, IShopAuthorizeService> PAY_MAP = Maps.newHashMap();
+public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAnnotate, IShopAuthorizeService<T>> {
+    private static final Map<PlatformDictEnum, IShopAuthorizeService<T>> PAY_MAP = Maps.newHashMap();
 
     @Override
     public Class<PlatformAnnotate> getAnnotation() {
@@ -26,7 +27,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
     }
 
     @Override
-    public void refresh(Map<PlatformAnnotate, IShopAuthorizeService> annotationBeanMap) {
+    public void refresh(Map<PlatformAnnotate, IShopAuthorizeService<T>> annotationBeanMap) {
         annotationBeanMap.forEach((pay, payment) -> PAY_MAP.put(pay.method(), payment));
     }
 
@@ -35,7 +36,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param dto
      */
     public static String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
-        IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.getShopAuthorizeUrl(dto);
     }
 
@@ -45,7 +46,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param response
      */
     public static Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response){
-        IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.shopAuthorize(dto, response);
     }
 
@@ -54,7 +55,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param dto
      */
     public static Boolean cleanShopAuthorize(CancelAuthorizeDTO dto) {
-        IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.cancelAuthorize(dto);
     }
 
@@ -63,7 +64,7 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      * @param dto
      */
     public static Boolean refreshShopToken(RefreshShopTokenDTO dto) {
-        IShopAuthorizeService service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
         return service.refreshToken(dto);
     }
 

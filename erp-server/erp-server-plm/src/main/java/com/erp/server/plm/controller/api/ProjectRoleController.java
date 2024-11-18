@@ -56,7 +56,7 @@ public class ProjectRoleController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "设置-项目成员-新增角色")
     @PostMapping("/save")
     //  @RequestPermissions("plm:role:save")
-    public ApiResult save(@RequestBody @Validated ProjectRoleDTO dto) {
+    public ApiResult<Object> save(@RequestBody @Validated ProjectRoleDTO dto) {
         boolean flag = projectRoleService.saveRole(dto);
         return flag == true ? success() : failure();
     }

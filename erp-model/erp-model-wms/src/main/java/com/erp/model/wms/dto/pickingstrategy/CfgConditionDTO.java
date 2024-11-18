@@ -13,7 +13,9 @@ import java.util.List;
 @Getter
 @Setter
 public class CfgConditionDTO {
-
+    private CfgConditionDTO() {
+        throw new IllegalStateException("Utility CfgConditionDTO class");
+    }
     /**
      * 详情
      */

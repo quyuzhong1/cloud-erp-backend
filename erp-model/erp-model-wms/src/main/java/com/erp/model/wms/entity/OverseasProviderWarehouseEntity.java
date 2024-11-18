@@ -7,7 +7,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -77,8 +76,6 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
 
     public static final String PLATFORM_WAREHOUSE_NAME = "platform_warehouse_name";
 
-    public static final String COUNTRY = "country";
-
     public static final String COUNTRY_NAME = "country_name";
 
     public static final String WAREHOUSE_ID = "warehouse_id";
@@ -86,8 +83,6 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
     public static final String WAREHOUSE_NAME = "warehouse_name";
 
     public static final String WAREHOUSE_CODE = "warehouse_code";
-
-    public static final String DISABLED = "disabled";
 
     @Override
     public Serializable pkVal() {

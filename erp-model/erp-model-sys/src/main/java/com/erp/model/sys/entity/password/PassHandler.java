@@ -14,6 +14,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 @Slf4j
 public class PassHandler {
 
+    private PassHandler() {
+    }
+
     /**
      * checkPass:校验密码是否一致
      *

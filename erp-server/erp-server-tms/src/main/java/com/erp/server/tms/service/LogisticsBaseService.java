@@ -11,7 +11,6 @@ import java.util.Map;
 /**
  * @author zdy
  * @ClassName LogisticsBaseService
- * @description: TODO
  * @date 2023年11月15日
  * @version: 1.0
  */

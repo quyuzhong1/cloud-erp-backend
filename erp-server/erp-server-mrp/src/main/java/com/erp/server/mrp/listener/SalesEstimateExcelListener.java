@@ -8,11 +8,11 @@ import com.common.core.utils.FieldValidUtil;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 销售预估月销导入
@@ -58,7 +58,7 @@ public class SalesEstimateExcelListener extends AnalysisEventListener<Map<Intege
         //添加数据用于判断是否为空
         allList.add(excelDTO);
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (CollectionUtils.isNotEmpty(errorMsgList)) {
             String errorMsg = FieldValidUtil.getMsgSort(errorMsgList);
             excelDTO.set("错误信息",errorMsg);
             errorList.add(excelDTO);
@@ -70,19 +70,16 @@ public class SalesEstimateExcelListener extends AnalysisEventListener<Map<Intege
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // 无需处理
     }
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> headList = map.values().stream().map(obj -> obj.toString()).collect(Collectors.toList());
-        headList.add("错误信息");
+        List<String> localHeadList = new ArrayList<>(map.values());
+        localHeadList.add("错误信息");
         map.put(map.size(),"错误信息");
         this.headMap = map;
-        this.headList = headList;
+        this.headList = localHeadList;
     }
 
-    public List<String> getHeadList() {
-        return headList;
-    }
 }

@@ -23,7 +23,6 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName LogisticsFeignController
- * @description: TODO
  * @date 2023年11月03日
  * @version: 1.0
  */

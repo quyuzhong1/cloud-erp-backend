@@ -29,8 +29,8 @@ import com.erp.server.oms.service.BankAccountService;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.SoInfoService;
+import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 
@@ -114,32 +114,11 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
     /**
      * 导入错误数据
      */
+    @Getter
     private List<B2BSoImportExcelDTO> errorList = new ArrayList<>(10);
 
 
     private final String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
-
-
-    public B2BSoExcelListener(List<WarehouseDTO.UpdateDTO> warehouseList, List<BaseIdDTO.CodeDTO> orgList,
-                              List<DictCurrencyEntity> currencyList, List<DictBasicEntity> dictBasicList,
-                              KingdeeFeign kingdeeFeign, List<SysDepartmentDTO> deptList,
-                              BankAccountService bankAccountService, CustomerInfoService customerInfoService,
-                              CustomerAddressService customerAddressService, List<SkuVO> skuList,
-                              List<FindUserDTO> userList, SoInfoService soInfoService) {
-        this.warehouseList = warehouseList;
-        this.orgList = orgList;
-        this.currencyList = currencyList;
-        this.dictBasicList = dictBasicList;
-        this.kingdeeFeign = kingdeeFeign;
-        this.deptList = deptList;
-        this.bankAccountService = bankAccountService;
-        this.customerInfoService = customerInfoService;
-        this.customerAddressService = customerAddressService;
-        this.skuList = skuList;
-        this.soInfoService = soInfoService;
-        this.userList = userList;
-
-    }
 
     /**
      * 每解析一行执行一次
@@ -169,18 +148,12 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
         List<String> errorMsgList = new ArrayList<>();
         Boolean isSoNull = Objects.isNull(addDTO);
 
-        if (isSoNull) {
+        if (Boolean.TRUE.equals(isSoNull)) {
             List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
             if (CollectionUtils.isNotEmpty(msgList)) {
                 errorMsgList.addAll(msgList);
             }
-            //存在错误数据则直接返回
-            if (errorMsgList.size() > 0) {
-                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorMap.put(no, no);
-                errorList.add(excelDTO);
-                return;
-            }
+            if (returnErrorList(excelDTO, errorMsgList, no)) return;
             addDTO = new SoInfoDTO.AddDTO();
             //要货日期
             String requireDateStr = excelDTO.getRequireDate();
@@ -238,15 +211,10 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
                 errorMsgList.add("销售员不存在");
             }
             //存在错误数据则直接返回
-            if (errorMsgList.size() > 0) {
-                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorMap.put(no, no);
-                errorList.add(excelDTO);
-                return;
-            }
+            if (returnErrorList(excelDTO, errorMsgList, no)) return;
 
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO businessOperatorDTO = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-            businessOperatorDTO.setOrgId(salesOrg.getId());
+            businessOperatorDTO.setOrgId(salesOrgId);
             businessOperatorDTO.setBusinessOperatorType(xsyCode);
             businessOperatorDTO.setUserId(sellerId);
             KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
@@ -459,7 +427,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
         addDTO.setDetailList(detailList);
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             errorMap.put(no, no);
@@ -470,6 +438,17 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
 
         map.put(no, addDTO);
 
+    }
+
+    private boolean returnErrorList(B2BSoImportExcelDTO excelDTO, List<String> errorMsgList, String no) {
+        //存在错误数据则直接返回
+        if (!errorMsgList.isEmpty()) {
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorMap.put(no, no);
+            errorList.add(excelDTO);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -490,11 +469,6 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
         }
         map.clear();
         errorMap.clear();
-    }
-
-
-    public List<B2BSoImportExcelDTO> getErrorList() {
-        return this.errorList;
     }
 
 

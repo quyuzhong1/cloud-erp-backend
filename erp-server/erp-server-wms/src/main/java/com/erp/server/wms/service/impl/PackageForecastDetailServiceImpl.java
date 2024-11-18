@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -98,7 +99,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
     public Boolean update(PackageForecastEntity entity, List<String> detailIdList) {
         String mainId = entity.getId();
         String logisticsSupplierId = entity.getLogisticsSupplierId();
-        List<String> idList = detailIdList.stream().filter(d -> StringUtils.isNotBlank(d)).collect(Collectors.toList());
+        List<String> idList = detailIdList.stream().filter(d -> CharSequenceUtil.isNotBlank(d)).collect(Collectors.toList());
         List<PackageForecastDetailEntity> dbList = this.listDbByMainId(mainId);
         //删除的信息
         List<PackageForecastDetailEntity> deleteList = dbList.stream().filter(s -> !idList.contains(s.getId())).collect(Collectors.toList());
@@ -173,7 +174,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
             item.setOutstockStatusName("未出库");
             String trackNo = item.getTrackNo();
             String transportNo = item.getTransportNo();
-            if(StringUtils.isBlank(trackNo)){
+            if(CharSequenceUtil.isBlank(trackNo)){
                 trackNo=transportNo;
             }
             item.setTrackNo(trackNo);
@@ -246,7 +247,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
                 eq(PackageForecastDetailEntity::getMainId, dto.getId()).
                 in(CollectionUtils.isNotEmpty(dto.getSoCodeList()), PackageForecastDetailEntity::getSoCode, dto.getSoCodeList()).
                 in(CollectionUtils.isNotEmpty(dto.getHandoverStatusList()), PackageForecastDetailEntity::getHandoverStatus, dto.getHandoverStatusList()).
-                like(StringUtils.isNotBlank(dto.getTrackNo()), PackageForecastDetailEntity::getTransportNo, dto.getTrackNo()).
+                like(CharSequenceUtil.isNotBlank(dto.getTrackNo()), PackageForecastDetailEntity::getTransportNo, dto.getTrackNo()).
                 list();
         List<PackageForecastDetailDTO.ViewDTO> resultList = BeanMapperUtils.copyList(PackageForecastDetailDTO.ViewDTO.class, detailList);
         List<String> soIdList = detailList.stream().map(PackageForecastDetailEntity::getSoId).collect(Collectors.toList());
@@ -266,7 +267,7 @@ public class PackageForecastDetailServiceImpl extends SuperServiceImpl<PackageFo
             item.setHandoverStatusName(handoverStatusName);
             String trackNo = item.getTrackNo();
             String transportNo = item.getTransportNo();
-            if(StringUtils.isBlank(trackNo)){
+            if(CharSequenceUtil.isBlank(trackNo)){
                 trackNo=transportNo;
             }
             item.setTrackNo(trackNo);

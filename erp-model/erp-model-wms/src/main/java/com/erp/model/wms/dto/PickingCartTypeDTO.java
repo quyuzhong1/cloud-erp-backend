@@ -48,7 +48,7 @@ public class PickingCartTypeDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class batchUpdateDTO {
+    public static class BatchUpdateDTO {
 
         /**
         * 主键id

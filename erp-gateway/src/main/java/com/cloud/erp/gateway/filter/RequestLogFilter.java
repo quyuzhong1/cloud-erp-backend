@@ -46,13 +46,13 @@ public class RequestLogFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         URI requestURI = request.getURI();
         String scheme = requestURI.getScheme();
-        GatewayContext gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
+        GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
         /*
          * not http or https scheme
          */
         if ((!HTTP_SCHEME.equalsIgnoreCase(scheme)
                 && !HTTPS_SCHEME.equals(scheme))
-                || !gatewayContext.getReadRequestData()){
+                || (null != gatewayContext && !gatewayContext.getReadRequestData())){
             return chain.filter(exchange);
         }
 
@@ -60,7 +60,7 @@ public class RequestLogFilter implements GlobalFilter, Ordered {
         exchange.getAttributes().put(START_TIME, startTime);
 
         // 当返回参数为true时，记录请求参数和返回参数
-        if (gatewayPluginProperties.getLogRequest().getEnable())
+        if (Boolean.TRUE.equals(gatewayPluginProperties.getLogRequest().getEnable()))
         {
             return chain.filter(exchange).then(Mono.fromRunnable(() -> logApiRequest(exchange)));
         }
@@ -100,7 +100,7 @@ public class RequestLogFilter implements GlobalFilter, Ordered {
         gatewayApiLog.setRequestUri(requestURI.getPath());
         gatewayApiLog.setResponseCode(String.valueOf(response.getRawStatusCode()));
 
-        GatewayContext gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
+        GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
         // 记录参数请求日志
         if (gatewayPluginProperties.getLogRequest().getRequestLog())
         {

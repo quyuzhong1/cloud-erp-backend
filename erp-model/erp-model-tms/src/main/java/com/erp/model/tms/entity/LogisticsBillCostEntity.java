@@ -189,9 +189,9 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
 
     public static final String DIFF_SHIPPING_COST = "diff_shipping_cost";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

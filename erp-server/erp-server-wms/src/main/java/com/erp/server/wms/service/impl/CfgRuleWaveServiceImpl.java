@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -67,19 +69,35 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, CfgRuleWaveEntity> implements CfgRuleWaveService {
-    @Autowired
+    public static final String DELIVERY_WAREHOUSE_ID = "deliveryWarehouseId";
+    public static final String SKU_NO = "skuNo";
+    public static final String CREATE_TIME = "createTime";
+    public static final String DELIVERY_CREATE_TIME = "deliveryCreateTime";
+    public static final String HH_MM = "HH:mm";
+    public static final String DICT_PLATFORM = "dictPlatform";
+    public static final String SHOP_ID = "shopId";
+    public static final String LOGISTICS_SUPPLIER_ID = "logisticsSupplierId";
+    public static final String LOGISTICS_CHANNEL_ID = "logisticsChannelId";
+    public static final String COUNTRY = "country";
+    public static final String LENGTH = "length";
+    public static final String WIDTH = "width";
+    public static final String HEIGHT = "height";
+    public static final String WEIGHT = "weight";
+    public static final String PICKING_TYPE = "pickingType";
+    public static final String UN_FIND_RULE_WAVE = "未找到波次规则数据";
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private CfgRuleConditionService cfgRuleConditionService;
 
-    @Autowired
+    @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
 
-    @Autowired
+    @Resource
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
 
-    @Autowired
+    @Resource
     private SoB2cFeign soB2cFeign;
 
     @Resource
@@ -122,7 +140,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         CfgRuleWaveEntity cfgRuleWaveEntity = new CfgRuleWaveEntity();
         BeanMapperUtils.copy(addDTO, cfgRuleWaveEntity);
 
-        long deliveryWarehouseCount = addDTO.getConditionList().stream().filter(obj -> StrUtil.equals(obj.getField(), "deliveryWarehouseId")).count();
+        long deliveryWarehouseCount = addDTO.getConditionList().stream().filter(obj -> CharSequenceUtil.equals(obj.getField(), DELIVERY_WAREHOUSE_ID)).count();
         if (deliveryWarehouseCount != MathUtil.ONE) {
             throw new ServiceException("规则条件【订单-发货仓库】必须设置且只能存在一条");
         }
@@ -139,7 +157,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         cfgRuleConditionService.saveRuleCondition(cfgRuleWaveEntity.getId(), addDTO.getConditionList(), RuleTypeEnum.CFG_RULE_WAVE.getCode());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "波次规则", cfgRuleWaveEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "波次规则", cfgRuleWaveEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_RULE_WAVE.getCode(), cfgRuleWaveEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(cfgRuleWaveEntity.getId(), cfgRuleWaveEntity.getId());
@@ -152,10 +170,12 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Override
     public Boolean update(CfgRuleWaveDTO.UpdateDTO updateDTO) {
         CfgRuleWaveEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则");
+        }
         CfgRuleWaveEntity cfgRuleWaveEntity = BeanMapperUtils.map(CfgRuleWaveEntity.class, updateDTO);
 
-        long deliveryWarehouseCount = updateDTO.getConditionList().stream().filter(obj -> StrUtil.equals(obj.getField(), "deliveryWarehouseId")).count();
+        long deliveryWarehouseCount = updateDTO.getConditionList().stream().filter(obj -> CharSequenceUtil.equals(obj.getField(), DELIVERY_WAREHOUSE_ID)).count();
         if (deliveryWarehouseCount != MathUtil.ONE) {
             throw new ServiceException("规则条件【订单-发货仓库】必须设置且只能存在一条");
         }
@@ -172,7 +192,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         // 记录主单操作日志
         log.info("编辑 开始记录波次规则日志数据，id：【{}】", cfgRuleWaveEntity.getId());
         handlePickingCartTypeJsonName(old);
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleWaveEntity.getId(), "波次规则");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleWaveEntity.getId(), "波次规则");
         operateLogService.addModuleOperateLogByObj(old, cfgRuleWaveEntity, ModuleTypeEnum.CFG_RULE_WAVE.getCode(), cfgRuleWaveEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -180,7 +200,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Override
     public PagingVO<CfgRuleWaveDTO.ListDTO> paging(PagingDTO<CfgRuleWaveDTO.PagingParamDTO> dto) {
         CfgRuleWaveDTO.PagingParamDTO params = dto.getParams();
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<CfgRuleWaveDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<CfgRuleWaveDTO.ListDTO> pageData = baseMapper.paging(query, params);
         // 数据处理
         fillList(pageData.getRecords());
@@ -190,24 +210,24 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
-        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次规则数据"));
+        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(UN_FIND_RULE_WAVE));
 
         String disabledName = disabled ? "禁用" : "启用";
         if (disabled.equals(entity.getDisabled())) {
-            throw new ServiceException(StrUtil.format("波次规则已【{}】，不支持再次【{}】", disabledName, disabledName));
+            throw new ServiceException(CharSequenceUtil.format("波次规则已【{}】，不支持再次【{}】", disabledName, disabledName));
         }
         lambdaUpdate().eq(CfgRuleWaveEntity::getId, id)
                 .set(CfgRuleWaveEntity::getDisabled, disabled)
                 .update(new CfgRuleWaveEntity());
-        String msg = StrUtil.format("【{}】波次规则【{}】", disabledName, entity.getName());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_RULE_WAVE.getCode(), id, StrUtil.format("{}操作", disabledName));
+        String msg = CharSequenceUtil.format("【{}】波次规则【{}】", disabledName, entity.getName());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_RULE_WAVE.getCode(), id, CharSequenceUtil.format("{}操作", disabledName));
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.UPDATE);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO delete(String id) {
-        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次规则数据"));
+        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(UN_FIND_RULE_WAVE));
 
         if (!entity.getDisabled()) {
             throw new ServiceException("仅禁用规则允许删除");
@@ -218,24 +238,24 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         super.removeById(id);
 
         //删除规则
-        cfgRuleConditionService.removeByRuleIds(Arrays.asList(id));
+        cfgRuleConditionService.removeByRuleIds(Collections.singletonList(id));
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
     }
 
     @Override
     public CfgRuleWaveDTO.ViewDTO view(String id) {
-        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次规则数据"));
+        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(UN_FIND_RULE_WAVE));
         CfgRuleWaveDTO.ViewDTO view = BeanMapperUtils.map(CfgRuleWaveDTO.ViewDTO.class, entity);
 
         //执行时间
         if (ObjectUtil.isNotEmpty(entity.getExecutionTimeJson())) {
-            List<LocalTime> executionTimeList = JSONUtil.parseArray(entity.getExecutionTimeJson()).stream().filter(obj -> ObjectUtil.isNotEmpty(obj))
-                    .map(obj -> LocalTime.parse(obj.toString(), DateTimeFormatter.ofPattern("HH:mm"))).collect(Collectors.toList());
+            List<LocalTime> executionTimeList = JSONUtil.parseArray(entity.getExecutionTimeJson()).stream().filter(ObjectUtil::isNotEmpty)
+                    .map(obj -> LocalTime.parse(obj.toString(), DateTimeFormatter.ofPattern(HH_MM))).collect(Collectors.toList());
             view.setExecutionTimeList(executionTimeList);
         }
 
         String pickingCartTypeJson = entity.getPickingCartTypeJson();
-        List<String> pickingCartTypeIdList = Arrays.stream(JSONUtil.parseArray(pickingCartTypeJson).stream().toArray(String[]::new)).collect(Collectors.toList());
+        List<String> pickingCartTypeIdList = Arrays.stream(JSONUtil.parseArray(pickingCartTypeJson).toArray(new String[0])).collect(Collectors.toList());
         view.setPickingCartTypeIdList( pickingCartTypeIdList);
 
         //查询规则条件
@@ -250,18 +270,18 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean executeRule(String id) {
-        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到波次规则数据"));
+        CfgRuleWaveEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(UN_FIND_RULE_WAVE));
 
         if (entity.getDisabled()) {
             throw new ServiceException("规则已禁用不支持执行");
         }
 
         // 查询所有规则对应的规则条件
-        List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = cfgRuleConditionService.listByRuleIds(Arrays.asList(entity.getId()),RuleTypeEnum.CFG_RULE_WAVE.getCode());
+        List<CfgRuleConditionDTO.ConditionElementDTO> conditionList = cfgRuleConditionService.listByRuleIds(Collections.singletonList(entity.getId()),RuleTypeEnum.CFG_RULE_WAVE.getCode());
 
         //查询所有待处理的发货单进行生成波次
         List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listWaitHandle();
-        if (CollectionUtil.isEmpty(soB2cDeliveryList)) {
+        if (CollUtil.isEmpty(soB2cDeliveryList)) {
             return Boolean.TRUE;
         }
         //发货明细数据
@@ -284,8 +304,8 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         List<SoB2cDeliveryEntity> compliantList = new ArrayList<>();
         for (SoB2cDeliveryEntity soB2cDeliveryEntity : soB2cDeliveryList) {
             //销售订单
-            SoB2cEntity soB2cEntity = soB2cDataDTO.getList().stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(soB2cEntity)) {
+            SoB2cEntity soB2cEntity = soB2cDataDTO.getList().stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+            if (Objects.isNull(soB2cEntity)) {
                 log.error("发货单【{}】未找到销售订单数据", soB2cDeliveryEntity.getCode());
                 continue;
             }
@@ -295,13 +315,13 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             }
 
             //发货单明细数据
-            List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getId())).collect(Collectors.toList());
-            if (CollectionUtil.isEmpty(deliveryDetailList)) {
+            List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(deliveryDetailList)) {
                 log.error("发货单【{}】未找到发货明细数据", soB2cDeliveryEntity.getCode());
                 continue;
             }
             //渠道数据
-            LogisticsChannelEntity channelEntity = list.stream().filter(obj -> StrUtil.equals(soB2cDeliveryEntity.getLogisticsChannelId(), obj.getId())).findFirst().orElse(null);
+            LogisticsChannelEntity channelEntity = list.stream().filter(obj -> CharSequenceUtil.equals(soB2cDeliveryEntity.getLogisticsChannelId(), obj.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(channelEntity)) {
                 log.error("发货单【{}】未找到渠道数据", soB2cDeliveryEntity.getCode());
                 continue;
@@ -315,12 +335,12 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
                 compliantList.add(soB2cDeliveryEntity);
             }
         }
-        if (CollectionUtil.isEmpty(compliantList)) {
+        if (CollUtil.isEmpty(compliantList)) {
             log.info("未发现需要新增的波次列表数据");
             return Boolean.TRUE;
         }
         //判断是否是同类波次
-        if (StrUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
+        if (CharSequenceUtil.equals(entity.getWaveType(),PickingWaveTypeEnum.SAME_WAVE.getCode())) {
             //同类波次分组
             Map<Object, List<SoB2cDeliveryEntity>> sameWaveMap = groupSameWave(compliantList, soB2cDeliveryDetailList);
             sameWaveMap.entrySet().stream().forEach(obj -> generatePickingWave(obj.getValue(), soB2cDeliveryDetailList, entity));
@@ -345,9 +365,9 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         for (SoB2cDeliveryEntity deliveryEntity :compliantList) {
             TreeMap<String, Integer> sameMap = new TreeMap<>();
             //发货明细
-            List<SoB2cDeliveryDetailEntity> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
+            List<SoB2cDeliveryDetailEntity> detailList = allDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), deliveryEntity.getId()))
                     .collect(Collectors.toList());
-            if (CollectionUtil.isEmpty(detailList)) {
+            if (CollUtil.isEmpty(detailList)) {
                 log.error("发货单【{}】未找到明细数据",deliveryEntity.getCode());
                 continue;
             }
@@ -361,12 +381,12 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Override
     public void autoExecuteRule(String time) {
-        if (StrUtil.isBlank(time)) {
+        if (CharSequenceUtil.isBlank(time)) {
             //当前时间
-            time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+            time = LocalTime.now().format(DateTimeFormatter.ofPattern(HH_MM));
         }
         List<CfgRuleWaveEntity> cfgRuleWaveList = baseMapper.listRuleWaveByTime(time);
-        if (CollectionUtil.isEmpty(cfgRuleWaveList)) {
+        if (CollUtil.isEmpty(cfgRuleWaveList)) {
             log.info("时间【{}】未找到符合条件的波次规则");
             return;
         }
@@ -377,7 +397,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             } catch (Exception e) {
                 CfgRuleWaveRecordDTO.AddDTO addDTO = new CfgRuleWaveRecordDTO.AddDTO();
                 addDTO.setRuleWaveId(waveEntity.getId());
-                addDTO.setExecutionTime(LocalTime.parse(time,DateTimeFormatter.ofPattern("HH:mm")));
+                addDTO.setExecutionTime(LocalTime.parse(time,DateTimeFormatter.ofPattern(HH_MM)));
                 addDTO.setReturnMsg(e.getMessage());
                 cfgRuleWaveRecordService.add(addDTO);
             }
@@ -393,7 +413,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
      * @date 2024/6/26 11:39
      */
     private void generatePickingWave(List<SoB2cDeliveryEntity> compliantList, List<SoB2cDeliveryDetailEntity> allDetailList, CfgRuleWaveEntity entity) {
-        if (CollectionUtil.isEmpty(compliantList)) {
+        if (CollUtil.isEmpty(compliantList)) {
             return;
         }
 
@@ -429,21 +449,21 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         for (SoB2cDeliveryEntity deliveryEntity : sortedList) {
 
             //发货明细商品数量合计
-            Integer detailTotalQty = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer detailTotalQty = allDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), deliveryEntity.getId())).map(SoB2cDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             if (MathUtil.compareTo(entity.getMaxQty(),MathUtil.ZERO) != MathUtil.ZERO && MathUtil.compareTo(detailTotalQty,entity.getMaxQty()) > MathUtil.ZERO) {
                 log.warn("发货单【{}】下商品数量【{}】大于波次规则商品数量【{}】",deliveryEntity.getCode(),detailTotalQty,entity.getMaxQty());
                 continue;
             }
 
             //发货明细
-            List<SoB2cDeliveryDetailEntity> detailList = allDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), deliveryEntity.getId()))
+            List<SoB2cDeliveryDetailEntity> detailList = allDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), deliveryEntity.getId()))
                     .collect(Collectors.toList());
-            if (CollectionUtil.isEmpty(detailList)) {
+            if (CollUtil.isEmpty(detailList)) {
                 log.error("发货单【{}】未找到明细数据", deliveryEntity.getCode());
                 continue;
             }
             List<String> skus = soB2cDeliveryService.generatePickingDetail(deliveryEntity, detailList,entity.getWaveType());
-            if (CollectionUtil.isNotEmpty(skus)) {
+            if (CollUtil.isNotEmpty(skus)) {
                 //生成缺货补货数据
                 generateReplenish(detailList, deliveryEntity, skus);
                 //添加波次生成的缺货异常
@@ -481,21 +501,21 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         }
         //添加波次生成的缺货异常
-        if (CollectionUtil.isNotEmpty(updateDeliveryList)) {
+        if (CollUtil.isNotEmpty(updateDeliveryList)) {
             soB2cDeliveryService.updateAbnormal(updateDeliveryList, AbnormalCauseEnum.GENERATION_WAVE);
         }
 
         //添加最后一个波次
-        if (CollectionUtil.isNotEmpty(deliveryIdList) && deliveryIdList.size() >= entity.getMinOrderQty() && MathUtil.compareTo(totalQty,entity.getMinQty()) >= MathUtil.ZERO) {
+        if (CollUtil.isNotEmpty(deliveryIdList) && deliveryIdList.size() >= entity.getMinOrderQty() && MathUtil.compareTo(totalQty,entity.getMinQty()) >= MathUtil.ZERO) {
             addDTO.setDeliveryIdList(deliveryIdList);
             resultList.add(addDTO);
         } else {
-            if (CollectionUtil.isNotEmpty(deliveryIdList)) {
+            if (CollUtil.isNotEmpty(deliveryIdList)) {
                 //回滚库存
                 soB2cDeliveryService.rollbackPickingInventory(deliveryIdList);
             }
         }
-        if (CollectionUtil.isEmpty(resultList)) {
+        if (CollUtil.isEmpty(resultList)) {
             return;
         }
 
@@ -505,7 +525,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             soB2cDeliveryService.updateDeliveryStatus(waveAddDTO.getDeliveryIdList(),SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus());
             //发货单日志
             List<Pair<String, String>> pairList = waveAddDTO.getDeliveryIdList().stream().map(obj -> new Pair<>(obj, "")).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("自动生成波次成功，波次号【{}】",add.getCode()), ModuleTypeEnum.DELIVERY_ORDER.getCode(), pairList, "自动生成波次");
+            operateLogService.batchAddModuleOperateLog(CharSequenceUtil.format("自动生成波次成功，波次号【{}】",add.getCode()), ModuleTypeEnum.DELIVERY_ORDER.getCode(), pairList, "自动生成波次");
         }
     }
 
@@ -517,7 +537,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
      * @param sameMap
      */
     private void handleSameMap ( List<SoB2cDeliveryDetailEntity> detailList, TreeMap<String, Integer> sameMap) {
-        if (CollectionUtil.isEmpty(detailList) || CollectionUtil.isNotEmpty(sameMap)) {
+        if (CollUtil.isEmpty(detailList) || CollUtil.isNotEmpty(sameMap)) {
             return;
         }
         //标记同类波次
@@ -573,86 +593,86 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
         //销售订单
         List<SoB2cEntity> list = soB2cDataDTO.getList();
-        SoB2cEntity soB2cEntity = CollectionUtil.isEmpty(list) ? null : list.stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+        SoB2cEntity soB2cEntity = CollUtil.isEmpty(list) ? null : list.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(soB2cEntity)) {
-            throw new ServiceException(StrUtil.format("发货单【{}】未找到上游销售订单", soB2cDeliveryEntity.getCode()));
+            throw new ServiceException(CharSequenceUtil.format("发货单【{}】未找到上游销售订单", soB2cDeliveryEntity.getCode()));
         }
         //销售订单物流信息
         List<SoB2cLogisticsEntity> logisticsList = soB2cDataDTO.getLogisticsList();
-        SoB2cLogisticsEntity soB2cLogisticsEntity = CollectionUtil.isEmpty(logisticsList) ? null : logisticsList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+        SoB2cLogisticsEntity soB2cLogisticsEntity = CollUtil.isEmpty(logisticsList) ? null : logisticsList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
-            throw new ServiceException(StrUtil.format("发货单【{}】未找到上游销售订单物流信息", soB2cDeliveryEntity.getCode()));
+            throw new ServiceException(CharSequenceUtil.format("发货单【{}】未找到上游销售订单物流信息", soB2cDeliveryEntity.getCode()));
         }
         //销售订单买家信息
         List<SoB2cReceiverEntity> receiverList = soB2cDataDTO.getReceiverList();
-        SoB2cReceiverEntity soB2cReceiverEntity = CollectionUtil.isEmpty(receiverList) ? null : receiverList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+        SoB2cReceiverEntity soB2cReceiverEntity = CollUtil.isEmpty(receiverList) ? null : receiverList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
         if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
-            throw new ServiceException(StrUtil.format("发货单【{}】未找到上游销售订单买家信息", soB2cDeliveryEntity.getCode()));
+            throw new ServiceException(CharSequenceUtil.format("发货单【{}】未找到上游销售订单买家信息", soB2cDeliveryEntity.getCode()));
         }
         List<Map<String, Object>> detailList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : deliveryDetailList) {
             Map<String, Object> detailMap = new HashMap<>();
             //仓库
-            detailMap.put("deliveryWarehouseId", detailEntity.getWarehouseId());
+            detailMap.put(DELIVERY_WAREHOUSE_ID, detailEntity.getWarehouseId());
             //平台
-            detailMap.put("dictPlatform", soB2cDeliveryEntity.getDictPlatform());
+            detailMap.put(DICT_PLATFORM, soB2cDeliveryEntity.getDictPlatform());
             //店铺
-            detailMap.put("shopId", soB2cDeliveryEntity.getShopId());
+            detailMap.put(SHOP_ID, soB2cDeliveryEntity.getShopId());
             //物流商
-            detailMap.put("logisticsSupplierId", channelEntity.getMainId());
+            detailMap.put(LOGISTICS_SUPPLIER_ID, channelEntity.getMainId());
             //物流渠道
-            detailMap.put("logisticsChannelId", channelEntity.getId());
+            detailMap.put(LOGISTICS_CHANNEL_ID, channelEntity.getId());
             //国家
-            detailMap.put("country", soB2cReceiverEntity.getCountry());
+            detailMap.put(COUNTRY, Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getCountry() : CharSequenceUtil.EMPTY);
             //SKU
-            detailMap.put("skuNo", detailEntity.getSkuNo());
+            detailMap.put(SKU_NO, detailEntity.getSkuNo());
             //包装尺寸长（cm）
-            detailMap.put("length", soB2cLogisticsEntity.getLength());
+            detailMap.put(LENGTH, Objects.nonNull(soB2cLogisticsEntity) ? soB2cLogisticsEntity.getLength() : CharSequenceUtil.EMPTY);
             //包装尺寸宽（cm）
-            detailMap.put("width", soB2cLogisticsEntity.getWidth());
+            detailMap.put(WIDTH, Objects.nonNull(soB2cLogisticsEntity) ? soB2cLogisticsEntity.getWidth() : CharSequenceUtil.EMPTY);
             //包装尺寸高（cm）
-            detailMap.put("height", soB2cLogisticsEntity.getHeight());
+            detailMap.put(HEIGHT, Objects.nonNull(soB2cLogisticsEntity) ? soB2cLogisticsEntity.getHeight() : CharSequenceUtil.EMPTY);
             //包装重量（g）
-            detailMap.put("weight", soB2cLogisticsEntity.getWeight());
+            detailMap.put(WEIGHT, Objects.nonNull(soB2cLogisticsEntity) ? soB2cLogisticsEntity.getWeight() : CharSequenceUtil.EMPTY);
             //订单创建时间
-            detailMap.put("createTime", soB2cLogisticsEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            detailMap.put(CREATE_TIME, Objects.nonNull(soB2cLogisticsEntity) ? soB2cLogisticsEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : null);
             //发货单-拣货类型
-            detailMap.put("pickingType", soB2cDeliveryEntity.getPickingType());
+            detailMap.put(PICKING_TYPE, soB2cDeliveryEntity.getPickingType());
             //发货单-创建时间
-            detailMap.put("deliveryCreateTime", soB2cDeliveryEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            detailMap.put(DELIVERY_CREATE_TIME, soB2cDeliveryEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             detailList.add(detailMap);
         }
         map.put("detailList", detailList);
 
 
-        Object deliveryWarehouseId = spElServer.getByField("deliveryWarehouseId", detailList);
-        map.put("deliveryWarehouseId", deliveryWarehouseId);
-        Object dictPlatform = spElServer.getByField("dictPlatform", detailList);
-        map.put("dictPlatform", dictPlatform);
-        Object shopId = spElServer.getByField("shopId", detailList);
-        map.put("shopId", shopId);
-        Object logisticsSupplierId = spElServer.getByField("logisticsSupplierId", detailList);
-        map.put("logisticsSupplierId", logisticsSupplierId);
-        Object logisticsChannelId = spElServer.getByField("logisticsChannelId", detailList);
-        map.put("logisticsChannelId", logisticsChannelId);
-        Object country = spElServer.getByField("country", detailList);
-        map.put("country", country);
-        Object skuNo = spElServer.getByField("skuNo", detailList);
-        map.put("skuNo", skuNo);
-        Object length = spElServer.getByField("length", detailList);
-        map.put("length", length);
-        Object width = spElServer.getByField("width", detailList);
-        map.put("width", width);
-        Object height = spElServer.getByField("height", detailList);
-        map.put("height", height);
-        Object weight = spElServer.getByField("weight", detailList);
-        map.put("weight", weight);
-        Object createTime = spElServer.getByField("createTime", detailList);
-        map.put("createTime", createTime);
-        Object pickingType = spElServer.getByField("pickingType", detailList);
-        map.put("pickingType", pickingType);
-        Object deliveryCreateTime = spElServer.getByField("deliveryCreateTime", detailList);
-        map.put("deliveryCreateTime", deliveryCreateTime);
+        Object deliveryWarehouseId = spElServer.getByField(DELIVERY_WAREHOUSE_ID, detailList);
+        map.put(DELIVERY_WAREHOUSE_ID, deliveryWarehouseId);
+        Object dictPlatform = spElServer.getByField(DICT_PLATFORM, detailList);
+        map.put(DICT_PLATFORM, dictPlatform);
+        Object shopId = spElServer.getByField(SHOP_ID, detailList);
+        map.put(SHOP_ID, shopId);
+        Object logisticsSupplierId = spElServer.getByField(LOGISTICS_SUPPLIER_ID, detailList);
+        map.put(LOGISTICS_SUPPLIER_ID, logisticsSupplierId);
+        Object logisticsChannelId = spElServer.getByField(LOGISTICS_CHANNEL_ID, detailList);
+        map.put(LOGISTICS_CHANNEL_ID, logisticsChannelId);
+        Object country = spElServer.getByField(COUNTRY, detailList);
+        map.put(COUNTRY, country);
+        Object skuNo = spElServer.getByField(SKU_NO, detailList);
+        map.put(SKU_NO, skuNo);
+        Object length = spElServer.getByField(LENGTH, detailList);
+        map.put(LENGTH, length);
+        Object width = spElServer.getByField(WIDTH, detailList);
+        map.put(WIDTH, width);
+        Object height = spElServer.getByField(HEIGHT, detailList);
+        map.put(HEIGHT, height);
+        Object weight = spElServer.getByField(WEIGHT, detailList);
+        map.put(WEIGHT, weight);
+        Object createTime = spElServer.getByField(CREATE_TIME, detailList);
+        map.put(CREATE_TIME, createTime);
+        Object pickingType = spElServer.getByField(PICKING_TYPE, detailList);
+        map.put(PICKING_TYPE, pickingType);
+        Object deliveryCreateTime = spElServer.getByField(DELIVERY_CREATE_TIME, detailList);
+        map.put(DELIVERY_CREATE_TIME, deliveryCreateTime);
         return map;
     }
 
@@ -683,19 +703,19 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         }
         //波次名称重复验证
         CfgRuleWaveEntity ruleWaveEntity = getByWaveName(cfgRuleWaveEntity.getName());
-        if (ObjectUtil.isNotEmpty(ruleWaveEntity) && !StrUtil.equals(cfgRuleWaveEntity.getId(), ruleWaveEntity.getId())) {
+        if (ObjectUtil.isNotEmpty(ruleWaveEntity) && !CharSequenceUtil.equals(cfgRuleWaveEntity.getId(), ruleWaveEntity.getId())) {
             throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
         }
         //拣货车类型
         cfgRuleWaveEntity.setPickingCartTypeJson(JSONUtil.toJsonStr(pickingCartTypeIdList));
         handlePickingCartTypeJsonName(cfgRuleWaveEntity);
         //自动执行
-        if (StrUtil.equals(cfgRuleWaveEntity.getExecutionType(), ExecutionTypeEnum.AUTO.getCode())) {
-            if (CollectionUtil.isEmpty(executionTimeList)) {
+        if (CharSequenceUtil.equals(cfgRuleWaveEntity.getExecutionType(), ExecutionTypeEnum.AUTO.getCode())) {
+            if (CollUtil.isEmpty(executionTimeList)) {
                 throw new ServiceException("自动执行时执行时间不能为空");
             }
-            List<String> timeList = executionTimeList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj))
-                    .map(obj -> obj.format(DateTimeFormatter.ofPattern("HH:mm"))).collect(Collectors.toList());
+            List<String> timeList = executionTimeList.stream().filter(ObjectUtil::isNotEmpty)
+                    .map(obj -> obj.format(DateTimeFormatter.ofPattern(HH_MM))).collect(Collectors.toList());
             cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.toJsonStr(timeList));
         } else {
             cfgRuleWaveEntity.setExecutionTimeJson(JSONUtil.toJsonStr(new JSONArray()));
@@ -719,7 +739,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         String pickingCartTypeJson = cfgRuleWaveEntity.getPickingCartTypeJson();
         List<String> pickingCartTypeIdList = Arrays.stream(JSONUtil.parseArray(pickingCartTypeJson).stream().toArray(String[]::new)).collect(Collectors.toList());
         List<PickingCartTypeEntity> pickingCartTypeList = pickingCartTypeService.listByIds(pickingCartTypeIdList);
-        if (CollectionUtil.isEmpty(pickingCartTypeList)) {
+        if (CollUtil.isEmpty(pickingCartTypeList)) {
             return;
         }
         List<String> nameList = pickingCartTypeList.stream().map(PickingCartTypeEntity::getName).collect(Collectors.toList());
@@ -730,7 +750,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
      * 分页数据处理
      */
     private void fillList(List<CfgRuleWaveDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         List<String> pickingCartTypeIdList = list.stream().flatMap(obj -> Stream.of(JSONUtil.parseArray(obj.getPickingCartTypeJson()).stream().toArray(String[]::new)))

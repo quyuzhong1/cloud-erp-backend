@@ -189,7 +189,7 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
 
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

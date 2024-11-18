@@ -6,8 +6,8 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
@@ -49,7 +49,7 @@ public class B2bOrderPushDmpOrderConsumer <T extends DmpSyncTaskIdDTO> extends A
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
-
+    	
     }
 
     @Override
@@ -74,7 +74,7 @@ public class B2bOrderPushDmpOrderConsumer <T extends DmpSyncTaskIdDTO> extends A
      */
     private void cleanOrderField(BiOrderInfoEntity biOrderInfoEntity, String operate) {
         if (ObjectUtil.isEmpty(biOrderInfoEntity)) {
-            throw new RuntimeException("存储的对象dmpOrderInfoEntity不能为空！");
+            throw new ServiceException("存储的对象dmpOrderInfoEntity不能为空！");
         }
         //根据操作类型进行操作
         if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {
@@ -88,10 +88,6 @@ public class B2bOrderPushDmpOrderConsumer <T extends DmpSyncTaskIdDTO> extends A
         } else if (Objects.equals(operate, SyncOperateEnum.OPERATE_INVALID.getCode())) {
             //作废 不处理
             log.info("作废状态，直接忽略同步dmp订单操作");
-//            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderByPlatformOrderId(String.valueOf(code));
-//            if (Objects.nonNull(dmpOrderInfoEntity)) {
-//                dmpOrderInfoEntity.setOrderStatus(5);
-//            }
         }
     }
 }

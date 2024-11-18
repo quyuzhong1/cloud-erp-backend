@@ -26,10 +26,16 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.ListStatusCountDTO;
+import com.erp.model.scm.dto.PurchaseChangeDTO;
+import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
+import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.dto.excel.PurchaseChangeExportExcelDTO;
 import com.erp.model.scm.entity.*;
-import com.erp.model.scm.enums.*;
+import com.erp.model.scm.enums.ExecutionStatusEnum;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastPoChangeDetailDTO;
@@ -39,9 +45,7 @@ import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.InventoryCloseRecordFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -113,20 +117,12 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Autowired
     private SyncKingdeePurchaseChangeService syncKingdeePurchaseChangeService;
 
-
-    @Autowired
-    private InventoryCloseRecordFeign inventoryCloseRecordFeign;
-
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
-    @Resource
-    private SupplierService supplierService;
-    @Resource
-    private PurchasePriceDetailService purchasePriceDetailService;
+
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());

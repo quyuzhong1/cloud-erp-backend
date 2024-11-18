@@ -52,6 +52,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param logisticsOrderVO
      * @return
      */
+    @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
         OrderRequest orderRequest = processCreateOrderData(logisticsOrderVO);
@@ -422,13 +423,8 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     responseVO.setTrackNoList(Collections.singletonList(logisticsGetLabelVO.getTrackNo()));
                     List<LogisticsPrintLabelResponse> logisticsPrintLabelResponses = new ArrayList<>();
                     if (1 == files.size()){
-                        try {
-                            responseVO.setMore(false);
-                            responseVO.setBase64(FileUtil.convertPdfUrlToBase64(files.get(0).getUrl(), files.get(0).getToken()));
-                        } catch (IOException e) {
-                            log.error("获取标签文件异常：{}", e.getMessage());
-//                            throw new RuntimeException(e);
-                        }
+                        responseVO.setMore(false);
+                        responseVO.setBase64(FileUtil.convertPdfUrlToBase64(files.get(0).getUrl(), files.get(0).getToken()));
                     }else {
                         files.forEach(printFile -> {
                             responseVO.setMore(true);
@@ -440,7 +436,6 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                                 response.setBase64(FileUtil.convertPdfUrlToBase64(printFile.getUrl(), printFile.getToken()));
                             } catch (IOException e) {
                                 log.error("获取标签文件异常：{}", e.getMessage());
-//                            throw new RuntimeException(e);
                             }
                             logisticsPrintLabelResponses.add(response);
                         });
@@ -477,12 +472,12 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         String waybillNo = "SF1040275268927";
         try {
             BaseResponse baseResponse = expressShipperService.validateWaybillNo(authMap, waybillNo);
             BaseResult baseResult = JSONUtil.toBean(baseResponse.getApiResultData(), BaseResult.class);
-            if (Objects.isNull(baseResponse) || StringUtils.isNotEmpty(baseResponse.getApiErrorMsg()) || !baseResult.isSuccess()) {
+            if (StringUtils.isNotEmpty(baseResponse.getApiErrorMsg()) || !baseResult.isSuccess()) {
                 //授权失败
                 return failure("授权失败" + baseResponse.getApiErrorMsg());
             } else {
@@ -499,6 +494,7 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param chanelQueryVO
      * @return
      */
+    @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         List<LogisticsSaleChannelEntity> entityList = new ArrayList<>();
         entityList.add(new LogisticsSaleChannelEntity().setCode("1").setPlatformChannelId("1").setAging("T4").setCnName("顺丰特快").setLogisticsPlatform(LogisticsPlatformEnum.SF_EXPRESS.getCode()));

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName ShippingDocumentRequest
- * @description: TODO
+
  * @date 2024年10月15日
  * @version: 1.0
  */

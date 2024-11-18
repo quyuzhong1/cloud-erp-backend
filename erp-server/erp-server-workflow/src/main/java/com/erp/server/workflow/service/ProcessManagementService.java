@@ -7,6 +7,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 
@@ -220,7 +221,11 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      *
      * @param dto
      */
-    void sameApproverAutoPass(ProcessManagementDTO.ApproveDTO dto, String processDefinitionId,String ProcessInstanceId);
+    void sameApproverAutoPass(ProcessManagementDTO.ApproveDTO dto, String processDefinitionId,String processInstanceId);
 
     PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(PagingDTO<ProcessManagementDTO.ExportDTO> dto);
+
+
+    void sameApproveHandler(ProcessManagementDTO.ApproveDTO dto, ProcessManagementDTO.ManagementTaskDTO managementTask, DictBasicEnum reviewSetting);
+
 }

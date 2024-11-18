@@ -100,7 +100,7 @@ public class SoReturnNoticeDetailEntity extends BaseEntity<SoReturnNoticeDetailE
 
     public static final String RETURN_REASON_DICT = "return_reason_dict";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

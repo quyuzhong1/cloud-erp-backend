@@ -55,7 +55,7 @@ public class LabelInfoController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    public ApiResult<?> update(@RequestBody @Validated List<LabelInfoDTO.UpdateDTO> list) {
+    public ApiResult<String> update(@RequestBody @Validated List<LabelInfoDTO.UpdateDTO> list) {
         labelInfoService.update(list);
         return success();
     }
@@ -70,7 +70,7 @@ public class LabelInfoController extends BaseController {
      */
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "删除标签管理")
-    public ApiResult<?> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchDelete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -100,7 +100,7 @@ public class LabelInfoController extends BaseController {
      */
     @PostMapping("/updateDisabled")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启禁用变更")
-    public ApiResult<?> updateDisabled(@RequestBody @Validated LabelInfoDTO.UpdateDisabledDTO dto) {
+    public ApiResult<List<BatchResultDTO>> updateDisabled(@RequestBody @Validated LabelInfoDTO.UpdateDisabledDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;

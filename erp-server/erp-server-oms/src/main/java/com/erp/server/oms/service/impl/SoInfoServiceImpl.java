@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -89,8 +90,8 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -107,6 +108,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -189,25 +191,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private SyncKingdeeSoService syncKingdeeSoService;
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private BankAccountService bankAccountService;
 
-    @Autowired
+    @Resource
     private OmsAttachmentService omsAttachmentService;
 
-    @Autowired
+    @Resource
     private CustomerInvoiceService customerInvoiceService;
 
-    @Autowired
+    @Resource
     private MachineInfoFeign machineInfoFeign;
 
-    @Autowired
+    @Resource
     private KingdeeReceiptConditionService kingdeeReceiptConditionService;
 
     @Resource
@@ -218,7 +220,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
-    @Autowired
+    @Resource
     private SkuMappingService skuMappingService;
 
     @Resource
@@ -438,7 +440,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(ingStatus), "");
@@ -658,7 +660,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             result.setRecords(list);
             return new PagingVO<>(result);
         }else {
-            Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+            Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
             IPage pageData = baseMapper.paging(query, params);
             List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
             if (CollectionUtils.isEmpty(list)) {
@@ -770,17 +772,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //国家
             item.setCountryName(countryMap.get(item.getCountryId()));
             //实体仓名称
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), item.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
             item.setWarehouseName(warehouseName);
 
             //存在虚拟仓库则判断是否缺货
             if (StrUtil.isNotBlank(item.getVirtualWarehouseId())) {
 
-                Integer approveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), item.getDetailId())
+                Integer approveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), item.getDetailId())
                 ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
                 //虚拟仓名称
-                String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+                String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), item.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
                 item.setVirtualWarehouseName(virtualWarehouseName);
 
                 //虚拟仓缺货按bom处理
@@ -939,10 +941,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoInfoDTO.VirtualChildScarceDTO> childScarceList = new ArrayList<>();
 
         //虚拟仓可用库存（单品赋值）
-        Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), item.getSkuId())
-                        && StrUtil.equals(obj.getVirtualWarehouseId(), item.getVirtualWarehouseId())
-                        && StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId())
-                        && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
+        Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), item.getSkuId())
+                        && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), item.getVirtualWarehouseId())
+                        && CharSequenceUtil.equals(obj.getWarehouseId(), item.getWarehouseId())
+                        && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
                 )
                 .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                 .findFirst().orElse(MathUtil.ZERO);
@@ -983,10 +985,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer quantity = childrenSkuDTO.getQuantity();
 
             //虚拟仓是否缺货
-            Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
-                            && StrUtil.equals(obj.getVirtualWarehouseId(), item.getVirtualWarehouseId())
-                            && StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId())
-                            && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
+            Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), childrenSkuDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), item.getVirtualWarehouseId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), item.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
                     )
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .findFirst().orElse(MathUtil.ZERO);
@@ -996,8 +998,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             scarceDTO.setSkuNo(childrenSkuDTO.getSkuNo());
             //针对父级可用数量
-            double floor = Math.floor(childVirtualUsableQty / quantity);
-            Integer parentUsableQty = Integer.valueOf((int) floor);
+            double floor = Math.floor((double) childVirtualUsableQty / quantity);
+            Integer parentUsableQty = (int) floor;
             scarceDTO.setParentUsableQty(parentUsableQty);
             //缺货数量
             Integer virtualScarceQty = (item.getQty() * quantity - item.getFrozenQty() * quantity - approveNoticeQty * quantity) - childVirtualUsableQty;
@@ -1432,7 +1434,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92047);
         }
 
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(approveStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus), "");
 
@@ -2317,7 +2319,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuCostProfitResult.setTaxAmount(costParam.getTaxAmount());
         skuCostProfitResult.setSaleAmount(costParam.getSaleAmount());
         // 销售金额需要减去折扣金额
-        if (Objects.nonNull(costParam.getDiscountAmount()) && costParam.getDiscountAmount().compareTo(BigDecimal.ZERO) == 1) {
+        if (Objects.nonNull(costParam.getDiscountAmount()) && costParam.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal saleAmountAfter = costParam.getSaleAmount().subtract(costParam.getDiscountAmount()).setScale(4, BigDecimal.ROUND_HALF_UP);
             costParam.setSaleAmount(saleAmountAfter);
             skuCostProfitResult.setSaleAmount(saleAmountAfter);
@@ -2335,7 +2337,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         BigDecimal saleRate;
         if (Objects.nonNull(costParam.getSaleAmount()) &&
-                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
+                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0 &&
                 !Objects.equals(costParam.getCurrency(), "CNY")) {
             saleRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), saleRate);
@@ -2442,7 +2444,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public void brushCostData(String id) {
         SoInfoEntity soInfoEntity = super.getById(id);
-        Optional.ofNullable(soInfoEntity).orElseThrow(() -> new ServiceException(ApiError.ERROR_92016));
+        if(null == soInfoEntity){
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
         List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
         if (CollUtil.isEmpty(detailList)) {
             return;
@@ -2916,7 +2920,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -3090,7 +3094,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 throw new ServiceException("销售订单为空"+soDetailEntity.getId());
             }
             if(!soInfoEntity.getApproveStatus().equals(BillApproveStatusEnum.APPROVE)){
-                throw new ServiceException(StrUtil.format("只有已审核的单据可以下推销售出库单:{}",soInfoEntity.getCode()));
+                throw new ServiceException( CharSequenceUtil.format("只有已审核的单据可以下推销售出库单:{}",soInfoEntity.getCode()));
             }
             CustomerInfoEntity customerInfo = customerInfoEntities.stream().filter(v->v.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             List<SoOutstockDetailDTO.DeliveryQtyDTO> deliveryQtyDTOList = allDeliveryQtyDTOList.stream().filter(v->v.getSoDetailId().equals(soDetailEntity.getId())).collect(Collectors.toList());
@@ -3111,7 +3115,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateSoOutstockViewDTOList = new ArrayList<>();
             for (SoInfoDTO.GenerateSoOutView soOutView : val) {
                 if(soOutView.getActualDeliveryQty() > soOutView.getWaitDeliveryQty()){
-                    batchResultDTOList.add(BatchResultDTO.fail(key,key,StrUtil.format("{}实发数量不能大于待发数量",soOutView.getSkuNo())));
+                    batchResultDTOList.add(BatchResultDTO.fail(key,key, CharSequenceUtil.format("{}实发数量不能大于待发数量",soOutView.getSkuNo())));
                     return;
                 }
                 SoOutstockDTO.GenerateSoOutstockViewDTO generateB2cDTO = SoInfoConverter.INSTANCE.soOutViewToGenerateSoOut(soOutView);
@@ -3120,7 +3124,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             try {
                 soOutstockFeign.addB2bPushDownNo(generateSoOutstockViewDTOList);
             }catch (Exception e){
-                batchResultDTOList.add(BatchResultDTO.fail(key,key,StrUtil.format("生成销售出库单失败:{}",e.getMessage())));
+                batchResultDTOList.add(BatchResultDTO.fail(key,key, CharSequenceUtil.format("生成销售出库单失败:{}",e.getMessage())));
             }
         });
 
@@ -3134,7 +3138,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92016);
         }
         if (soInfoEntity.getInvalidStatus()) {
-            throw new ServiceException(StrUtil.format("销售订单【{}】已作废不支持锁定库存",soInfoEntity.getCode()));
+            throw new ServiceException( CharSequenceUtil.format("销售订单【{}】已作废不支持锁定库存",soInfoEntity.getCode()));
         }
         SoInfoDTO.LockVirtualInventoryDTO lockVirtualInventoryDTO = handleLockVirtualInventory(soInfoEntity);
         return lockVirtualInventoryDTO;
@@ -3158,7 +3162,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92016);
         }
         if (soInfoEntity.getInvalidStatus()) {
-            throw new ServiceException(StrUtil.format("销售订单【{}】已作废不支持释放库存",soInfoEntity.getCode()));
+            throw new ServiceException( CharSequenceUtil.format("销售订单【{}】已作废不支持释放库存",soInfoEntity.getCode()));
         }
         List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
         if (CollectionUtils.isEmpty(soDetailList)) {
@@ -3648,14 +3652,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         for (String soDetailId :detailIdList) {
             //销售订单明细
-            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailId)).findFirst().orElse(null);
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailId)).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92016);
             }
 
             SoInfoDTO.BatchLockVirtualInventoryDTO batchLockDTO = new SoInfoDTO.BatchLockVirtualInventoryDTO();
             //主表信息
-            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
+            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soInfoEntity)) {
                 throw new ServiceException(ApiError.ERROR_92016);
             }
@@ -3664,40 +3668,40 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             batchLockDTO.setCode(soInfoEntity.getCode());
             batchLockDTO.setRemark(soInfoEntity.getRemark());
             //客户信息
-            String customerName = customerInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soInfoEntity.getCustomerId())).map(CustomerInfoEntity::getName).findFirst().orElse("");
+            String customerName = customerInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soInfoEntity.getCustomerId())).map(CustomerInfoEntity::getName).findFirst().orElse("");
             batchLockDTO.setCustomerName(customerName);
             batchLockDTO.setSellerName(soInfoEntity.getSellerName());
             batchLockDTO.setRequireDate(soInfoEntity.getRequireDate());
             //仓库信息
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), soInfoEntity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soInfoEntity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
             batchLockDTO.setWarehouseName(warehouseName);
             //虚拟仓库信息
-            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), soInfoEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soInfoEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             batchLockDTO.setVirtualWarehouseName(virtualWarehouseName);
             batchLockDTO.setSkuNo(soDetailEntity.getSkuNo());
             //产品名称
-            String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             batchLockDTO.setProductName(productName);
             batchLockDTO.setQty(soDetailEntity.getQty());
             batchLockDTO.setFrozenQty(soDetailEntity.getFrozenQty());
             //虚拟可用库存
             Integer virtualUsableQty = virtualInventoryQtyList.stream().filter(obj ->
-                    StrUtil.equals(obj.getVirtualWarehouseId(), soInfoEntity.getVirtualWarehouseId())
-                            && StrUtil.equals(obj.getSkuId(), soDetailEntity.getSkuId())
-                            && StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
+                    CharSequenceUtil.equals(obj.getVirtualWarehouseId(), soInfoEntity.getVirtualWarehouseId())
+                            && CharSequenceUtil.equals(obj.getSkuId(), soDetailEntity.getSkuId())
+                            && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
             ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
             batchLockDTO.setVirtualUsableQty(virtualUsableQty);
 
 
             //销售通知单
-            Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && StrUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
+            Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setTotalNoticeQty(totalNoticeQty);
 
-            Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && StrUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
-                    && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+            Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setEffectiveNoticeQty(effectiveNoticeQty);
 
@@ -3718,8 +3722,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             batchLockDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
 
             //销售出库单
-            Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+            Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
+                    && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             batchLockDTO.setOutstockQty(outstockQty);
             batchLockDTO.setUnOutstockQty(soDetailEntity.getDeliveryQty() - outstockQty);
@@ -3801,20 +3805,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //明细id
             detailDTO.setDetailId(soDetailEntity.getId());
 
-            String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             detailDTO.setProductName(productName);
 
             detailDTO.setFrozenQty(soDetailEntity.getFrozenQty());
 
             //销售通知单
-            Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && StrUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
+            Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
                     .map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             detailDTO.setTotalNoticeQty(totalNoticeQty);
 
-            Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && StrUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
-                    && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+            Integer effectiveNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
+                    && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             detailDTO.setEffectiveNoticeQty(effectiveNoticeQty);
 
@@ -3835,8 +3839,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             detailDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
 
             //销售出库单
-            Integer outstockQty = deliveryQtyList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
-                    && StrUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+            Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
+                    && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
             ).map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             detailDTO.setOutstockQty(outstockQty);
             detailDTO.setUnOutstockQty(soDetailEntity.getDeliveryQty() - outstockQty);

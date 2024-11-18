@@ -1,15 +1,12 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotBlank;
 import java.util.Arrays;
 import java.util.List;
 
@@ -93,10 +90,6 @@ public class OverseasWarehouseInboundAddressEntity extends BaseEntity<OverseasWa
     public static final String FIRST_NAME = "first_name";
 
     public static final String LAST_NAME = "last_name";
-
-    public static final String MOBILE = "mobile";
-
-    public static final String STREET = "street";
 
     /**
      * 所有ID

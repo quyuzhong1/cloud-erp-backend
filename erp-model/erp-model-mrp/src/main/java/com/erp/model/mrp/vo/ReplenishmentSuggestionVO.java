@@ -12,7 +12,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Getter
+@Setter
 public class ReplenishmentSuggestionVO {
+    /**
+     * 补货建议主表id
+     */
+    private String id;
 
     @Getter
     @Setter

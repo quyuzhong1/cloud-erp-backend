@@ -1,28 +1,22 @@
 package com.erp.server.scm.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.dto.KingdeePaymentConditionDTO;
 import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 import com.erp.server.scm.mapper.KingdeePaymentConditionMapper;
 import com.erp.server.scm.service.KingdeePaymentConditionService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.erp.server.scm.service.CommonService;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.scm.dto.KingdeePaymentConditionDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  *  服务实现类
@@ -46,12 +40,10 @@ public class KingdeePaymentConditionServiceImpl extends SuperServiceImpl<Kingdee
     @Override
     public Boolean update(KingdeePaymentConditionDTO.UpdateDTO updateDTO) {
         KingdeePaymentConditionEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        KingdeePaymentConditionEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
         KingdeePaymentConditionEntity kingdeePaymentConditionEntity =  BeanMapperUtils.map(KingdeePaymentConditionEntity.class, updateDTO);
 
-        // 数据处理
-        handleData(kingdeePaymentConditionEntity);
-        log.info("编辑 开始修改数据，单号：【{}】", old.getCode());
+        log.info("编辑 开始修改数据，单号：【{}】", oldEntity.getCode());
         boolean save = super.updateById(kingdeePaymentConditionEntity);
         if(!save) {
             throw new ServiceException("保存失败");
@@ -74,13 +66,5 @@ public class KingdeePaymentConditionServiceImpl extends SuperServiceImpl<Kingdee
             return null;
         }
         return this.lambdaQuery().eq(KingdeePaymentConditionEntity::getCode, code).last("LIMIT 1").one();
-    }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(KingdeePaymentConditionEntity kingdeePaymentConditionEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }

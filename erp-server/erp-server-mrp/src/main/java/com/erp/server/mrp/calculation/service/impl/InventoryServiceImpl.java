@@ -145,23 +145,11 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public int getOverseasUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
-        String code = String.join("+", codes);
-        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-        int overseasUsable = inventoryMapper.getOverseasUsable(replenishmentResultDTO, code, getTableName(SnapshotTableEnum.OVERSEAS_INVENTORY, calcDate));
-        replenishmentSuggestionService.listSalesBySkuId(replenishmentResultDTO.getReplenishment().getSkuId());
-        CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
-        List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> allPlatformWarehouse = warehouseResult.getOverseasWarehouseList().
-                stream().filter(v -> VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()))
-                .collect(Collectors.toList());
-
-        List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouse = warehouseResult.getOverseasWarehouseList().
-                stream().filter(v -> v.getChannelIdJson().contains(replenishmentResultDTO.getReplenishment().getShopId()))
-                .collect(Collectors.toList());
-
         return 0;
     }
 
     @Override
+    @SuppressWarnings("all")
     public int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         int qty = 0;
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
@@ -379,6 +367,17 @@ public class InventoryServiceImpl implements InventoryService {
                     .collect(Collectors.toList());
             warehouseList = warehouseResult.getLocalWarehouseList();
         }
+        return getInventory(replenishmentResultDTO, invetoryList, warehouseList);
+    }
+
+    /**
+     * 分摊
+     *
+     * @param replenishmentResultDTO 参数
+     * @param invetoryList           库存
+     * @param warehouseList          仓库
+     */
+    private int getInventory(ReplenishmentResultDTO replenishmentResultDTO, List<LocalInventoryDTO> invetoryList, List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList) {
         int inventory = 0;
         for (LocalInventoryDTO inventoryDTO : invetoryList) {
             for (CfgRuleWarehouseDTO.StrategyDetailResultDTO result : warehouseList) {

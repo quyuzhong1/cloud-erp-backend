@@ -53,7 +53,7 @@ public class DmpSplitErrorLogServiceImpl extends SuperServiceImpl<DmpSplitErrorL
     @Override
     public Boolean update(DmpSplitErrorLogDTO.UpdateDTO updateDTO) {
         DmpSplitErrorLogEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
         DmpSplitErrorLogEntity dmpSplitErrorLogEntity =  BeanMapperUtils.map(DmpSplitErrorLogEntity.class, updateDTO);
 
         // 数据处理

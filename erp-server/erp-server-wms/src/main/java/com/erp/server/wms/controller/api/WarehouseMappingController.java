@@ -62,7 +62,7 @@ public class WarehouseMappingController extends BaseController {
         menuCode = "wms:warehouseMapping:update",
         serviceClass = WarehouseMappingService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated WarehouseMappingDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated WarehouseMappingDTO.UpdateDTO dto) {
         warehouseMappingService.update(dto);
         return success();
     }

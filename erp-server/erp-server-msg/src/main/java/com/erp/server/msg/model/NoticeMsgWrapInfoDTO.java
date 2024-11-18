@@ -1,7 +1,6 @@
 package com.erp.server.msg.model;
 
 import com.erp.model.msg.enums.NoticeMessageTypeEnum;
-import com.erp.model.msg.enums.NoticeTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;

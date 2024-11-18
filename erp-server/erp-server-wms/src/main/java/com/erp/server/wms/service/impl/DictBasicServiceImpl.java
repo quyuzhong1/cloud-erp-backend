@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -98,7 +99,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
 
     private List<DictBasicEntity> listByKey(String type) {
-        if (StringUtils.isBlank(type)) {
+        if (CharSequenceUtil.isBlank(type)) {
             return Collections.emptyList();
         }
         List<DictBasicEntity> allList = this.lambdaQuery().

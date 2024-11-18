@@ -1,6 +1,6 @@
 package com.sdk.wms.antu.service;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.sdk.wms.antu.constants.AntuConstants;
 import com.sdk.wms.antu.dto.request.*;
@@ -28,12 +28,13 @@ import java.util.stream.Collectors;
 @Validated
 public class AntuService {
 
+    private final static String RECEIVE_CODE = "receiving_code";
     /**
      * 获取商品列表
      */
     public AntuResponse<List<AntuProductResp>> getSkuList(@Valid AntuGetProductReq antuProductReq){
         String response = AntuUtils.callService(AntuConstants.METHOD_GET_PRODUCT_LIST, antuProductReq);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuProductResp>>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuProductResp>>>() {}.getType());
     }
 
     /**
@@ -41,7 +42,7 @@ public class AntuService {
      */
     public AntuResponse<List<AntuWarehouseResp>> getWarehouse(AntuBaseRequest antuBaseRequest){
         String apiResponse = AntuUtils.callService(AntuConstants.METHOD_GET_WAREHOUSE,antuBaseRequest);
-        AntuResponse<List<AntuWarehouseResp>> response = JSONObject.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
+        AntuResponse<List<AntuWarehouseResp>> response = JSON.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
         if(CollectionUtils.isNotEmpty(response.getData())){
             //只要标准的仓库
             response.setData(response.getData().stream().filter(v->"0".equals(v.getWarehouseType())).collect(Collectors.toList()));
@@ -53,7 +54,7 @@ public class AntuService {
      */
     public AntuResponse<List<AntuWarehouseResp>> getTransferWarehouse(AntuBaseRequest antuBaseRequest){
         String apiResponse = AntuUtils.callService(AntuConstants.METHOD_GET_WAREHOUSE,antuBaseRequest);
-        AntuResponse<List<AntuWarehouseResp>> response = JSONObject.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
+        AntuResponse<List<AntuWarehouseResp>> response = JSON.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
         if(CollectionUtils.isNotEmpty(response.getData())){
             response.setData(response.getData().stream().filter(v->"1".equals(v.getWarehouseType())).collect(Collectors.toList()));
         }
@@ -65,7 +66,7 @@ public class AntuService {
      */
     public AntuResponse<List<AntuRegionResp>> getReceivingRegion(){
         String response = AntuUtils.callService(AntuConstants.METHOD_GET_RECEIVING_REGION,null);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuRegionResp>>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuRegionResp>>>() {}.getType());
     }
 
     /**
@@ -73,7 +74,7 @@ public class AntuService {
      */
     public AntuResponse<List<AntuInventoryResp>> getProductInventory(@Valid AntuGetInventoryReq antuGetInventoryReq){
         String response = AntuUtils.callService(AntuConstants.METHOD_GET_PRODUCT_INVENTORY,antuGetInventoryReq);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuInventoryResp>>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuInventoryResp>>>() {}.getType());
     }
     
     /**
@@ -81,7 +82,7 @@ public class AntuService {
      */
     public AntuResponse<List<AntuReceiptResp>> getReceiptBatch(@Valid AntuGetReceiptReq antuGetReceiptReq){
         String response = AntuUtils.callService(AntuConstants.METHOD_GET_RECEIPT,antuGetReceiptReq);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuReceiptResp>>>() {}.getType());
     }
 
     /**
@@ -89,7 +90,7 @@ public class AntuService {
      */
     public AntuResponse<List<AntuOutboundResp>> getOutboundBatch(AntuGetOutboundReq antuGetOutboundReq){
         String response = AntuUtils.callService(AntuConstants.GET_ORDER_LIST,antuGetOutboundReq);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuOutboundResp>>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuOutboundResp>>>() {}.getType());
     }
 
     /**
@@ -101,7 +102,7 @@ public class AntuService {
             paramsMap.put("warehouseCode",warehouseCode);
         }
         String response = AntuUtils.callService(AntuConstants.GET_SHIPPING_METHOD,paramsMap);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuLogisticsProductsResp>>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuLogisticsProductsResp>>>() {}.getType());
     }
 
     /**
@@ -109,7 +110,7 @@ public class AntuService {
      */
     public AntuResponse<String> createOutboundBill(@Valid AntuCreateOutboundReq antuCreateOutboundReq){
         String response = AntuUtils.callService(AntuConstants.METHOD_CREATE_ORDER,antuCreateOutboundReq);
-        AntuResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+        AntuResponse<String> respDto = JSON.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
         //处理返回值
         if(StringUtil.isNotBlank(respDto.getOrderCode())){
             respDto.setData(respDto.getOrderCode());
@@ -125,7 +126,7 @@ public class AntuService {
         paramsMap.put("order_code",orderCode);
         paramsMap.put("reason",reason);
         String response = AntuUtils.callService(AntuConstants.METHOD_CANCEL_ORDER,paramsMap);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
     }
 
     /**
@@ -133,10 +134,10 @@ public class AntuService {
      */
     public AntuResponse<String> createInboundBill(@Valid AntuCreateInboundReq antuGetReceiptReq){
         String response = AntuUtils.callService(AntuConstants.METHOD_CREATE_INBOUND,antuGetReceiptReq);
-        AntuResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+        AntuResponse<String> respDto = JSON.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
         //处理返回值
         if (StringUtil.isNotBlank(respDto.getData())) {
-            respDto.setData(JSONObject.parseObject(respDto.getData()).getString("receiving_code"));
+            respDto.setData(JSON.parseObject(respDto.getData()).getString(RECEIVE_CODE));
         }
         if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
             respDto.setData(respDto.getReceivingCode());
@@ -149,10 +150,10 @@ public class AntuService {
      */
     public AntuResponse<String> editInboundBill(@Valid AntuCreateInboundReq antuGetReceiptReq){
         String response = AntuUtils.callService(AntuConstants.METHOD_EDIT_INBOUND,antuGetReceiptReq);
-        AntuResponse<String> respDto = JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+        AntuResponse<String> respDto = JSON.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
         //处理返回值
         if (StringUtil.isNotBlank(respDto.getData())) {
-            respDto.setData(JSONObject.parseObject(respDto.getData()).getString("receiving_code"));
+            respDto.setData(JSON.parseObject(respDto.getData()).getString(RECEIVE_CODE));
         }
         if(StringUtil.isNotBlank(respDto.getReceivingCode()) && StringUtil.isBlank(respDto.getData())){
             respDto.setData(respDto.getReceivingCode());
@@ -168,9 +169,9 @@ public class AntuService {
      */
     public AntuResponse<String> cancelInboundBill(@Valid @NotEmpty(message = "入库单号不能为空") String receivingCode){
         Map<String,Object> paramsMap = new HashMap<>();
-        paramsMap.put("receiving_code",receivingCode);
+        paramsMap.put(RECEIVE_CODE,receivingCode);
         String response = AntuUtils.callService(AntuConstants.METHOD_CANCEL_INBOUND,paramsMap);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<String>>() {}.getType());
     }
 
     /**
@@ -179,7 +180,7 @@ public class AntuService {
     public AntuResponse<List<AntuReturnResp>> getReturnInstock(@Valid AntuGetReturnReq antuGetReturnReq){
         String response = AntuUtils.callService(AntuConstants.GET_SPECIAL_ORDERS_LIST,antuGetReturnReq);
         log.debug("安兔退货入库单:{}", response);
-        return JSONObject.parseObject(response,new TypeReference<AntuResponse<List<AntuReturnResp>>>() {}.getType());
+        return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuReturnResp>>>() {}.getType());
     }
 
 }

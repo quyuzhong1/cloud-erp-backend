@@ -1,14 +1,15 @@
 
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOtherOutStockDTO;
-import com.common.business.dto.PlatformOtherOutStockDetailDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -16,24 +17,19 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoMultiChannelEntity;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
-import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.OtherOutstockService;
-import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -42,11 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.*;
-import java.lang.reflect.Array;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -101,10 +93,10 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
     private String getTableName(String platform){
         // 亚马逊多渠道订单和B2C订单来源一致
         if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(platform)){
-            return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+            return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                     platform, BusinessTypeEnum.ORDER.getCode());
         } else {
-            return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+            return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                     platform, BusinessTypeEnum.SO_MULTI_CHANNEL.getCode());
         }
     }
@@ -174,7 +166,7 @@ public class PlatformOtherOutStockConsumerService<T extends DmpSyncTaskIdDTO> ex
         OtherOutstockDTO.AddDTO generateDTO = generateAddDTO(dto, mainEntity, shopInfo, deptDTO);
 
         // 校验sku映射关系
-        if (generateDTO.getDetailList().stream().anyMatch(e-> StringUtils.isBlank(e.getSkuId()))){
+        if (generateDTO.getDetailList().stream().anyMatch(e-> CharSequenceUtil.isBlank(e.getSkuId()))){
             log.warn("[其他出库单物消费服务]:SKU映射不存在：单号={}", dto.getPlatformCode());
             // 恢复待清洗
             MongoDBUpdateDTO mongoDBUpdateDTO = MongoDBUpdateDTO.builder()

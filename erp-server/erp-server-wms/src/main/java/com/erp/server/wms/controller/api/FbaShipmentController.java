@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,7 +45,7 @@ import java.util.List;
 @RequestMapping("/fbaShipment")
 public class FbaShipmentController extends BaseController {
 
-    @Autowired
+    @Resource
     private FbaShipmentService fbaShipmentService;
 
     @Resource
@@ -380,7 +381,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/getPacking")
     public ApiResult<List<FbaShipmentPackingDTO.ViewDTO>> getPacking(@RequestBody @Validated BaseIdDTO dto) {
-        return success(fbaShipmentPackingService.listPacking(Arrays.asList(dto.getId())));
+        return success(fbaShipmentPackingService.listPacking(Collections.singletonList(dto.getId())));
     }
 
     /**

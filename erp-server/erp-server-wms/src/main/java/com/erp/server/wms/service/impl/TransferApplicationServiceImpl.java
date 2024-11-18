@@ -2,11 +2,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
@@ -65,8 +64,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.rtfparserkit.rtf.Command.list;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_APPLICATION;
 
@@ -208,11 +205,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     public String addAndSubmit(TransferApplicationDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id));
+        this.submit(Collections.singletonList(id));
         return id;
     }
 
@@ -255,7 +252,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Override
@@ -316,9 +313,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //组织
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
-        param.setOrgIdList(Arrays.asList(viewDTO.getOutOrgId()));
+        param.setOrgIdList(Collections.singletonList(viewDTO.getOutOrgId()));
         param.setSkuIdList(skuIds);
-        param.setWarehouseIdList(Arrays.asList(viewDTO.getOutWarehouseId()));
+        param.setWarehouseIdList(Collections.singletonList(viewDTO.getOutWarehouseId()));
         //库存信息
         List<InventoryEntity> inventoryInfoList = inventoryService.listInventoryByParam(param);
 
@@ -352,7 +349,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //删除明细数据
         transferApplicationDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的调拨申请单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferApplicationEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的调拨申请单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferApplicationEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
         //删除主表数据
@@ -399,7 +396,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         approveProcess(entity, type, comment, isNeedProcess);
 
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个调拨申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个调拨申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -457,12 +454,12 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //审核通过 TODO(判断是否存在流程)
 
             //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.APPROVE.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.APPROVE.getStatus());
             //审核通过后生成拣货明细
-            generatePickingDetail(Arrays.asList(entity));
+            generatePickingDetail(Collections.singletonList(entity));
 
             //获取需要自动生成加工单的数据
-            /*List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(Arrays.asList(id));
+            /*List<TransferApplicationDetailEntity> transferApplicationDetailEntities = transferApplicationDetailService.listByMainIds(Collections.singletonList(id));
             List<String> infoIds = transferApplicationDetailEntities.stream().filter(req -> req.getIsAutoMachine().equals(Boolean.TRUE)).map(TransferApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
             List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfoList = viewGenerateMachineInfo(infoIds, Boolean.TRUE, singleApproveParamDTO.getQty());
             saveGenerateMachineInfo(viewGenerateMachineInfoList);*/
@@ -470,11 +467,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             log.info("调拨申请单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
             //中止当前审核流程
             //更新单据状态
-            updateApproveStatusForApprove(Arrays.asList(id), ApproveStatusEnum.REJECT.getStatus());
+            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        List<Pair<String, String>> pairList = Arrays.asList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个调拨申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(singleApproveParamDTO.getComment()) ? String.format(",意见：%s", singleApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "审核操作");
+        List<Pair<String, String>> pairList = Collections.singletonList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个调拨申请单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(CharSequenceUtil.isNotBlank(singleApproveParamDTO.getComment()) ? String.format(",意见：%s", singleApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "审核操作");
     }
 
 
@@ -1052,21 +1049,21 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
 
         for (TransferApplicationDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-            if (StringUtils.isBlank(productName)) {
+            if (CharSequenceUtil.isBlank(productName)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             obj.setProductName(productName);
 
             //调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
-            if (StringUtils.isBlank(transferDirectionName)) {
+            if (CharSequenceUtil.isBlank(transferDirectionName)) {
                 throw new ServiceException(ApiError.ERROR_99049);
             }
             obj.setTransferDirectionName(transferDirectionName);
@@ -1081,7 +1078,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             }
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && CharSequenceUtil.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 obj.setApproveUserName(curApprove);
             }
         }
@@ -1093,7 +1090,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     private void doOpHandleDataId(String inWarehouseId, String outWarehouseId, String applyUserId, TransferApplicationEntity entity) {
 
         //申请人
-        if (StringUtils.isNotBlank(applyUserId)) {
+        if (CharSequenceUtil.isNotBlank(applyUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(applyUserId);
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 entity.setApplyUserName(userDTO.getUserName());

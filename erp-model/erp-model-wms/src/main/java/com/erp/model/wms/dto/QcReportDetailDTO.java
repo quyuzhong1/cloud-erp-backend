@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -20,17 +21,18 @@ import java.util.List;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
 public class QcReportDetailDTO {
-
+    private QcReportDetailDTO() {
+        throw new IllegalStateException("Utility QcReportDetailDTO class");
+    }
 
     /**
      * 添加的质检报告
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
-
+    public static class AddDTO implements Serializable {
+        private static final long serialVersionUID = 1905122041950251207L;
 
         private String id;
 
@@ -70,7 +72,8 @@ public class QcReportDetailDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
 
         private String id;

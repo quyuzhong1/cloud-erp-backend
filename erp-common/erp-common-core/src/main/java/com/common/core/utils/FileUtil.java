@@ -3,6 +3,7 @@ package com.common.core.utils;
 
 import cn.hutool.core.codec.Base64;
 import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
 /**
  * 文件工具，用于读取或写入文件
  */
+@Slf4j
 public class FileUtil {
 
     /**
@@ -28,22 +30,24 @@ public class FileUtil {
      * @return
      */
     public static String readText(String filePath) {
-
-        String s;
-        StringBuffer sb = new StringBuffer();
-
+        StringBuilder sb = new StringBuilder();
+        // 使用 try-with-resources 确保资源关闭
         try {
             File f = new File(filePath);
             if (!f.exists()) {
-                f.createNewFile();
+                boolean newFile = f.createNewFile();
+                if (!newFile) {
+                    log.warn("createNewFile 文件已存在");
+                }
             }
-            BufferedReader input = new BufferedReader(new FileReader(f));
-            while ((s = input.readLine()) != null) {
-                sb.append(s);
+            try (BufferedReader input = new BufferedReader(new FileReader(f))) {
+                String line;
+                while ((line = input.readLine()) != null) {
+                    sb.append(line);
+                }
             }
-            input.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (IOException ex) {
+            log.error("文件读取失败", ex);
         }
 
         return sb.toString();
@@ -57,36 +61,28 @@ public class FileUtil {
      * @param data
      */
     public static synchronized void append(String filePath, String data) {
-
-        String s;
-        StringBuffer sb = new StringBuffer();
-
         try {
+            // 创建目录（如果不存在）
             String dirPath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
             File dir = new File(dirPath);
-
             if (!dir.exists()) {
                 dir.mkdirs();
             }
-
+            // 创建文件（如果不存在）
             File f = new File(filePath);
             if (!f.exists()) {
-                f.createNewFile();
+                boolean newFile = f.createNewFile();
+                if (!newFile) {
+                    log.warn("createNewFile 文件已存在");
+                }
             }
-            BufferedReader input = new BufferedReader(new FileReader(f));
-
-
-            while ((s = input.readLine()) != null) {
-                sb.append(s);
-                sb.append("\n");
+            // 使用 try-with-resources 进行文件写入（追加模式）
+            try (BufferedWriter output = new BufferedWriter(new FileWriter(f, true))) {
+                output.write(data);
+                output.newLine(); // 换行以保持追加内容清晰
             }
-            input.close();
-            sb.append(data);
-            BufferedWriter output = new BufferedWriter(new FileWriter(f));
-            output.write(sb.toString());
-            output.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            log.error("文件追加失败: {}", filePath, e);
         }
     }
 
@@ -97,55 +93,56 @@ public class FileUtil {
      * @param data
      */
     public static synchronized void write(String filePath, String data) {
-
-        StringBuffer sb = new StringBuffer(data);
-
         try {
-
-            //创建文件夹
+            // 创建文件夹
             String dirPath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
             File dir = new File(dirPath);
-
-            if (!dir.exists()) {
-                dir.mkdirs();
+            if (!dir.exists() && !dir.mkdirs()) {
+                log.error("创建目录失败: {}", dirPath);
+                return;
             }
 
+            // 创建文件（如果不存在）
             File f = new File(filePath);
-            if (!f.exists()) {
-                f.createNewFile();
+            if (!f.exists() && !f.createNewFile()) {
+                log.error("创建文件失败: {}", filePath);
+                return;
             }
 
-            BufferedWriter output = new BufferedWriter(new FileWriter(f));
-            output.write(sb.toString());
-            output.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            // 使用 try-with-resources 自动关闭 BufferedWriter
+            try (BufferedWriter output = new BufferedWriter(new FileWriter(f))) {
+                output.write(data);
+            }
+        } catch (IOException e) {
+            log.error("文件写入失败: {}", filePath, e);
         }
     }
 
 
 
-    public static void write(String filePath,byte[] fileBytes){
+    public static void write(String filePath, byte[] fileBytes) {
         try {
+            // 创建文件夹
             String dirPath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
             File dir = new File(dirPath);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            if (!dir.exists() && !dir.mkdirs()) {
+                log.error("创建目录失败: {}", dirPath);
+                return;
             }
-
+            // 创建文件（如果不存在）
             File f = new File(filePath);
-            if (!f.exists()) {
-                f.createNewFile();
+            if (!f.exists() && !f.createNewFile()) {
+                log.error("创建文件失败: {}", filePath);
+                return;
             }
-            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream("a.xls"));
-            bos.write(fileBytes);
-            bos.flush();
-            bos.close();
-
-        }catch (Exception e){
-
+            // 使用 try-with-resources 确保 BufferedOutputStream 自动关闭
+            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f))) {
+                bos.write(fileBytes);
+                bos.flush(); // 可选，但加上更安全
+            }
+        } catch (IOException e) {
+            log.error("写入文件失败: {}", filePath, e);
         }
-
     }
     /**
      * 读入TXT文件
@@ -167,7 +164,7 @@ public class FileUtil {
     }
 
 
-    private static Pattern humpPattern = Pattern.compile("[A-Z]");
+    private static final Pattern humpPattern = Pattern.compile("[A-Z]");
 
 
     /**
@@ -243,7 +240,7 @@ public class FileUtil {
      */
     public static Integer fileType(String fileName) {
         String postfix = getFileExtension(fileName);
-        Integer result = 0;
+        int result = 0;
         if ("bmp,jpg,jpeg,png,tif,gif,pcx,tga,exif,fpx,svg,psd,cdr,pcd,dxf,ufo,eps,ai,raw,wmf,webp,sketch".contains(postfix)) {
             result = 1;
         } else if ("vob,mpg,avi,mp4,mkv,mov".contains(postfix)) {
@@ -282,39 +279,24 @@ public class FileUtil {
     }
 
     public static void base64ToFile(String base64, String fileName, String filePath) {
-        File file = null;
-        //创建文件目录
+        // 创建文件目录
         File dir = new File(filePath);
         if (!dir.exists() && !dir.isDirectory()) {
             dir.mkdirs();
         }
-        BufferedOutputStream bos = null;
-        FileOutputStream fos = null;
-        byte[] bytes = Base64.decode(base64);
-        file = new File(filePath + "\\" + fileName);
-        try {
-            fos = new FileOutputStream(file);
-            bos = new BufferedOutputStream(fos);
-            bos.write(bytes);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (bos != null) {
-                try {
-                    bos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
 
+        // 解析 Base64 数据并创建文件
+        byte[] bytes = Base64.decode(base64); // 使用标准库的 Base64 解码
+        File file = new File(filePath + "\\" + fileName); // 更规范的路径拼接方式
+
+        // 使用 try-with-resources 自动关闭流
+        try (FileOutputStream fos = new FileOutputStream(file);
+             BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+            bos.write(bytes);
+            bos.flush(); // 确保数据完全写入文件
+        } catch (Exception e) {
+            log.error("写入文件失败: {}", file.getAbsolutePath(), e);
+        }
     }
 
     public static String convertPdfUrlToBase64(String pdfUrl) throws IOException {
@@ -327,7 +309,7 @@ public class FileUtil {
         try {
             URL url = new URL(pdfUrl);
             //打开链接
-            HttpURLConnection conn = null;;
+            HttpURLConnection conn = null;
             conn = (HttpURLConnection) url.openConnection();
             //设置请求方式为"GET"
             conn.setRequestMethod("GET");
@@ -357,7 +339,7 @@ public class FileUtil {
         try {
             URL url = new URL(pdfUrl);
             //打开链接
-            HttpURLConnection conn = null;;
+            HttpURLConnection conn = null;
             conn = (HttpURLConnection) url.openConnection();
             //设置请求方式为"GET"
             conn.setRequestMethod("GET");

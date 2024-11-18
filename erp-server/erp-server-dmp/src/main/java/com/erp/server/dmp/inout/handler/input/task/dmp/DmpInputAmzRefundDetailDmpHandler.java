@@ -1,27 +1,17 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.common.core.entity.BaseEntity;
-import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
-import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.sdk.oms.amz.spapi.model.finances.*;
-import com.erp.sdk.oms.amz.spapi.model.finances.Currency;
-import com.erp.server.dmp.service.CfgAppClientService;
-import com.erp.server.dmp.service.CfgTimezoneService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -55,7 +45,7 @@ public class DmpInputAmzRefundDetailDmpHandler extends DmpInputDoNextDmpHandler 
         Map<String, String> dmpRefundIdMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(listMaps)) {
             for (Map<String, Object> listMap : listMaps) {
-                dmpRefundIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.ID).toString());
+                dmpRefundIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
             }
         }
 

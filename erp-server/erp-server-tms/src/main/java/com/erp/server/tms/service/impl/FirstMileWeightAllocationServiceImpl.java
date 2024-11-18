@@ -1,18 +1,17 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -21,10 +20,17 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.*;
-import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.*;
+import com.erp.model.tms.enums.CostAllocationStatusEnum;
+import com.erp.model.tms.enums.ShippingFeeRuleEnum;
+import com.erp.model.tms.enums.WeightAllocationTypeEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -34,32 +40,20 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.tms.mapper.FirstMileWeightAllocationMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import com.common.core.enums.ApiError;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_ESTIMATED_BILL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_WEIGHT_ALLOCATION;
 
 /**
@@ -624,7 +618,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public void updateCalculateMonthBySourceId(String sourceId) {
-        if (!StrUtil.isBlank(sourceId)) {
+        if (!CharSequenceUtil.isBlank(sourceId)) {
             this.lambdaUpdate()
                     .set(FirstMileWeightAllocationEntity::getCalculateMonth, "")
                     .eq(FirstMileWeightAllocationEntity::getSourceId, sourceId)

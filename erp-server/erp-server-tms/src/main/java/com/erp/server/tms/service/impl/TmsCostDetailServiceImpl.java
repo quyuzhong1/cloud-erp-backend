@@ -1,8 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -42,16 +41,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapper, TmsCostDetailEntity> implements TmsCostDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private DmpTaskFeign dmpTaskFeign;
 
-    @Autowired
+    @Resource
     private LogisticsBillCostService logisticsBillCostService;
 
-    @Autowired
+    @Resource
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
 
     @Resource
@@ -196,7 +195,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         }
         return this.query()
                 .select("SUM(COALESCE(cost_value,0)) as cost_value", TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
-                .eq(TmsCostDetailEntity.TYPE, logisticsBillCostType)
+                .eq(TmsCostDetailEntity.FIELD_TYPE, logisticsBillCostType)
                 .in(TmsCostDetailEntity.MAIN_ID, logisticsBillIds)
                 .in(StringUtils.isNotBlank(sourceType), TmsCostDetailEntity.SOURCE_TYPE, sourceType)
                 .groupBy(TmsCostDetailEntity.MAIN_ID, TmsCostDetailEntity.CFG_COST_ID)
@@ -245,7 +244,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
         }
         if (ObjectUtil.isEmpty(currency)) {
             log.error("未找到【{}】数据币别,mainId = {}",dictCostAttributionEnum.getName(),mainId);
-            throw new ServiceException(StrUtil.format("未找到【{}】数据币别",dictCostAttributionEnum.getName()));
+            throw new ServiceException(CharSequenceUtil.format("未找到【{}】数据币别",dictCostAttributionEnum.getName()));
         }
 
         List<String> cfgCostIdList = list.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
@@ -265,11 +264,11 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
             //币别
             entity.setCurrency(currency);
             //更新数据无类型默认实际
-            entity.setType(StrUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
+            entity.setType(CharSequenceUtil.isBlank(entity.getType()) ? LogisticsBillCostTypeEnum.ACTUAL.getCode() : entity.getType());
 
             //主表id
-            TmsCostDetailEntity oldDetailEntity = oldDetailList.stream().filter(obj -> StrUtil.equals(obj.getCfgCostId(), entity.getCfgCostId())
-                    && StrUtil.equals(entity.getType(), obj.getType())
+            TmsCostDetailEntity oldDetailEntity = oldDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCfgCostId(), entity.getCfgCostId())
+                    && CharSequenceUtil.equals(entity.getType(), obj.getType())
             ).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(oldDetailEntity)) {
                 entity.setId(oldDetailEntity.getId());

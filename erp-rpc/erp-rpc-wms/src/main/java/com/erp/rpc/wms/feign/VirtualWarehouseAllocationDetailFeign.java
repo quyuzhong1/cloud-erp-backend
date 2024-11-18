@@ -1,7 +1,6 @@
 package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

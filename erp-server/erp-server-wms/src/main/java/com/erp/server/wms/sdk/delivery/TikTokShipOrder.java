@@ -1,6 +1,7 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -114,7 +115,7 @@ public class TikTokShipOrder extends AbstractShipOrder {
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), bodyJson, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("调用url={},入参params={}, TikTok订单发货（美国站）失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单发货（美国站）失败，返回值 responseMap={}",
+            throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, TikTok订单发货（美国站）失败，返回值 responseMap={}",
                     sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
         }
         //解析数据
@@ -122,7 +123,7 @@ public class TikTokShipOrder extends AbstractShipOrder {
         try {
             shipOrderUS = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), ShipOrderUS.class);
         } catch (Exception e) {
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单发货（美国站）返回值 responseMap={}，转换成实体错误", apiResult.getData()));
+            throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, TikTok订单发货（美国站）返回值 responseMap={}，转换成实体错误", apiResult.getData()));
         }
     }
 
@@ -147,7 +148,7 @@ public class TikTokShipOrder extends AbstractShipOrder {
             // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略
             detailEntityList =  detailEntityList.stream()
-                    .filter(e -> StringUtils.isNotBlank(e.getSourceDetailId()))
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求接口", entity.getCode());
@@ -160,7 +161,6 @@ public class TikTokShipOrder extends AbstractShipOrder {
                     sourceDetailIds.addAll(Arrays.asList(split));
                 }
             }
-            detailEntityList.stream().map(SoB2cDetailEntity::getSourceDetailId).collect(Collectors.toList());
             List<String> detailIdList = detailEntityList.stream().map(SoB2cDetailEntity::getId).collect(Collectors.toList());
 
             TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
@@ -175,9 +175,9 @@ public class TikTokShipOrder extends AbstractShipOrder {
             }
             //获取渠道标发单号
             String standardOrderType = tmsScaleChannelShipDTO.checkAndGetOrderDeliveryMarkType();
-            String trackingNumber = StrUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
+            String trackingNumber = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(),standardOrderType)
                     ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
-            if (StrUtil.isBlank(trackingNumber)) {
+            if (CharSequenceUtil.isBlank(trackingNumber)) {
                 throw new ServiceException("操作失败，渠道标发单号为空");
             }
 

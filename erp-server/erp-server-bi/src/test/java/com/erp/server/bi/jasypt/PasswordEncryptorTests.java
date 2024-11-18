@@ -8,6 +8,8 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -26,9 +28,17 @@ public class PasswordEncryptorTests {
     @Test
     public void jasyptTest() {
         // 加密
-        System.out.println(stringEncryptor.encrypt("admin@viji"));    // iEu7/GU6+IlQ634RQ89l4j5aFNklnbxnTEPxEeAmJ8VuJBT/2qDYIz3x8cTTPc70
+        String encrypted = stringEncryptor.encrypt("admin@viji");
+        System.out.println(encrypted);
+        // 你可以在这里添加加密结果的断言，假设期望的加密值是 expectedEncryptedValue
+        String expectedEncryptedValue = "iEu7/GU6+IlQ634RQ89l4j5aFNklnbxnTEPxEeAmJ8VuJBT/2qDYIz3x8cTTPc70"; // 示例预期值
+        assertEquals("加密后的值不匹配", expectedEncryptedValue, encrypted);
+
         // 解密
-        System.out.println(stringEncryptor.decrypt("iEu7/GU6+IlQ634RQ89l4j5aFNklnbxnTEPxEeAmJ8VuJBT/2qDYIz3x8cTTPc70"));    // root
+        String decrypted = stringEncryptor.decrypt(encrypted);
+        System.out.println(decrypted);
+        // 断言解密后的值是否符合预期
+        assertEquals("解密后的值不匹配", "admin@viji", decrypted);
     }
 
     /**
@@ -36,6 +46,7 @@ public class PasswordEncryptorTests {
      */
     @Test
     public void test() {
+        // 设置加密配置
         PooledPBEStringEncryptor encryptor = new PooledPBEStringEncryptor();
         SimpleStringPBEConfig config = new SimpleStringPBEConfig();
         config.setPassword("UlanZi_jaspyt_password");
@@ -47,7 +58,24 @@ public class PasswordEncryptorTests {
         config.setIvGeneratorClassName("org.jasypt.iv.RandomIvGenerator");
         config.setStringOutputType("base64");
         encryptor.setConfig(config);
-        System.out.println(encryptor.encrypt("admin@viji"));    // iEu7/GU6+IlQ634RQ89l4j5aFNklnbxnTEPxEeAmJ8VuJBT/2qDYIz3x8cTTPc70
+
+        // 加密
+        String encrypted = encryptor.encrypt("admin@viji");
+        System.out.println("Encrypted: " + encrypted);
+
+        // 断言加密后的结果不为空
+        assertNotNull("加密后的结果不应为空", encrypted);
+
+        // 你也可以根据预期的加密值来进行验证（如果已知加密值）
+        String expectedEncryptedValue = "iEu7/GU6+IlQ634RQ89l4j5aFNklnbxnTEPxEeAmJ8VuJBT/2qDYIz3x8cTTPc70"; // 示例预期值
+        assertEquals("加密后的结果不符合预期", expectedEncryptedValue, encrypted);
+
+        // 解密
+        String decrypted = encryptor.decrypt(encrypted);
+        System.out.println("Decrypted: " + decrypted);
+
+        // 断言解密后的结果是原始值
+        assertEquals("解密后的结果不符合预期", "admin@viji", decrypted);
     }
 
 }

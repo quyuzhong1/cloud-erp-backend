@@ -1,7 +1,6 @@
 package com.erp.server.msg.utils;
 
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.model.msg.enums.NoticeMessageTypeEnum;
 import com.erp.server.msg.enums.MessageChannelAppEnum;
@@ -20,7 +19,9 @@ import java.util.List;
  * @Author: zhangchunlin
  */
 public class MsgConvertUtil {
-
+    private MsgConvertUtil() {
+        throw new IllegalStateException("Utility MsgConvertUtil class");
+    }
     /**
      * 任务通知填充卡片
      * @param noticeMsgInfo

@@ -1,18 +1,15 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
@@ -20,18 +17,18 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
-import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
-import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.LogisticsChannelService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TransferDeclareDetailService;
+import com.erp.server.tms.service.TransferDeclareProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,11 +50,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferDeclareDetailMapper, TransferDeclareDetailEntity> implements TransferDeclareDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private LogisticsChannelService logisticsChannelService;
-    @Autowired
+    @Resource
     private SoB2cFeign soB2cFeign;
     @Resource
     private TransferDeclareProductService transferDeclareProductService;
@@ -186,7 +183,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
      */
     @Override
     public TransferDeclareDetailEntity getBySoId(String soId) {
-        return this.lambdaQuery().eq(TransferDeclareDetailEntity::getSoId, soId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(TransferDeclareDetailEntity::getSoId, soId).last(SqlConstants.LIMIT_1).one();
     }
 
 //    @Override
@@ -225,7 +222,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
 
         //查询渠道信息
-        if (CollectionUtil.isNotEmpty(logisticsChannelIds)) {
+        if (CollUtil.isNotEmpty(logisticsChannelIds)) {
             logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
         }
 

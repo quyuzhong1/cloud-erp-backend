@@ -19,9 +19,7 @@ public class YamlPropertySourceFactory extends YamlProcessor implements Property
 		Resource res = resource.getResource();
         setResources(res);
         Map<String, Object> result = new HashMap<>();
-        this.process((properties, map) -> {
-            result.putAll(this.getFlattenedMap(map));
-        });
+        this.process((properties, map) -> result.putAll(this.getFlattenedMap(map)));
 
         return new MapPropertySource(name == null ? getNameForResource(res) : name, result);
 	}

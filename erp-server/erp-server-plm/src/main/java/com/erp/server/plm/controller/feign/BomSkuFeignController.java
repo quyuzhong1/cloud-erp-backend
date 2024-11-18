@@ -123,7 +123,7 @@ public class BomSkuFeignController {
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
     @PostMapping("/listBomVersionBySkuNos")
-    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos) {
+    public List<ProductBomInfoDTO.SkuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos) {
         return bomSkuService.listBomVersionBySkuNos(skuNos);
     }
 

@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.CfgOperateLogFieldEntity;
 import com.erp.server.mrp.mapper.CfgOperateLogFieldMapper;
 import com.erp.server.mrp.service.CfgOperateLogFieldService;
@@ -50,7 +51,7 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
 
 
         );
-        return this.saveBatch(logFields);
+        return ApplicationContextUtils.getBean(CfgOperateLogFieldServiceImpl.class).saveBatch(logFields);
 
     }
 }

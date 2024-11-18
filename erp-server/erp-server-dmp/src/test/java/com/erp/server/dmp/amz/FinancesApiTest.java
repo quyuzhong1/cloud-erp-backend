@@ -44,7 +44,7 @@ public class FinancesApiTest {
     @Resource
     private CfgAppClientService cfgAppClientService;
 
-    private final FinancesApi api = null;
+    private final FinancesApi api = new FinancesApi(null);
 
     
     /**

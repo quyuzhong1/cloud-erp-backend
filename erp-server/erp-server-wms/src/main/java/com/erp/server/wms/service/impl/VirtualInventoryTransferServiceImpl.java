@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -38,11 +40,11 @@ import java.util.stream.Stream;
 @InventoryHandler(InventoryBizTypeEnum.TRANSFER_STOCK)
 public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventoryServiceImpl {
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
 
-    @Autowired
+    @Resource
     private RedissonClient redisson;
 
     @Override
@@ -52,7 +54,7 @@ public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventor
         for(VirtualInventoryStockDTO.StockBaseDTO baseParam : paramList) {
             if (baseParam instanceof VirtualInventoryStockDTO.TransferStockDTO) {
                 // 按照虚拟仓库+实体仓库+SKU+库存状态进行锁定
-                String lockKey = StrUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_VIRTUAL_INVENTORY_SKU.getCode(), baseParam.getVirtualWarehouseId(), baseParam.getWarehouseId(),baseParam.getSkuId());
+                String lockKey = CharSequenceUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_VIRTUAL_INVENTORY_SKU.getCode(), baseParam.getVirtualWarehouseId(), baseParam.getWarehouseId(),baseParam.getSkuId());
                 if (lockKeyList.contains(lockKey)) {
                     continue;
                 }
@@ -175,13 +177,13 @@ public class VirtualInventoryTransferServiceImpl extends AbstractVirtualInventor
             }
         } else {
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+                throw new ServiceException(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
             }
             log.info("参数未传库存状态，从配置读取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
             // 判断当前仓是入库还是出库
             transactionRuleParams = transactionRuleParams.stream().filter(r->Objects.equals(r.getWarehouseOption(), param.getWarehouseOptionEnum())).collect(Collectors.toList());
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+                throw new ServiceException(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
             }
             transactionRuleParams = transactionRuleParams.stream()
                     .sorted(Comparator.comparing(inventoryStatus -> inventoryStatus.getInventoryStatus().getCode()))

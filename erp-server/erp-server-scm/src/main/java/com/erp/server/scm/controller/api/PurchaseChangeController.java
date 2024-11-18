@@ -14,7 +14,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseChangeDetailEntity;
 import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -103,7 +102,7 @@ public class PurchaseChangeController extends BaseController {
             menuCode = "scm:purchaseChange:add",
             serviceClass = PurchaseChangeService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
         purchaseChangeService.add(dto);
         return success();
     }
@@ -122,7 +121,7 @@ public class PurchaseChangeController extends BaseController {
             menuCode = "scm:purchaseChange:update",
             serviceClass = PurchaseChangeService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
         Boolean flag = purchaseChangeService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -142,7 +141,7 @@ public class PurchaseChangeController extends BaseController {
             menuCode = "scm:purchaseChange:add",
             serviceClass = PurchaseChangeService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
+    public ApiResult<Object> addAndSubmit(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
         Boolean flag = purchaseChangeService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -161,7 +160,7 @@ public class PurchaseChangeController extends BaseController {
             menuCode = "scm:purchaseChange:update",
             serviceClass = PurchaseChangeService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
+    public ApiResult<Object> updateAndSubmit(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
         Boolean flag = purchaseChangeService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -199,7 +198,7 @@ public class PurchaseChangeController extends BaseController {
             menuCode = "scm:purchaseChange:cancelProcess",
             serviceClass = PurchaseChangeService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchaseChangeService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
@@ -218,7 +217,7 @@ public class PurchaseChangeController extends BaseController {
             menuCode = "scm:purchaseChange:invalid",
             serviceClass = PurchaseChangeService.class,
             keyIdName = "ids")
-    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<Object> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = purchaseChangeService.invalid(dto.getIds(),dto.getRemark());
         return flag == true ? success() : failure();
     }
@@ -238,7 +237,7 @@ public class PurchaseChangeController extends BaseController {
             menuCode = "scm:purchaseChange:submit",
             serviceClass = PurchaseChangeService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseChangeService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
@@ -294,7 +293,7 @@ public class PurchaseChangeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购变更单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseChangeDTO.SearchParamDTO dto) {
+    public ApiResult<Object> exportExcel(@RequestBody PurchaseChangeDTO.SearchParamDTO dto) {
         Boolean flag = purchaseChangeService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

@@ -68,13 +68,13 @@ public class QcRuleEntity extends BaseEntity<QcRuleEntity> {
 
     public static final String EXIST_REPORT = "exist_report";
 
-    public static final String DISABLED = "disabled";
+    
 
     public static final String QC_TYPE = "qc_type";
 
     public static final String PRODUCT_GRADE_KEY = "product_grade_key";
 
-    public static final String CODE = "code";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 

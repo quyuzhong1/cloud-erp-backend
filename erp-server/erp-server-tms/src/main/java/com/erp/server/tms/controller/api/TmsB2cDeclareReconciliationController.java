@@ -60,7 +60,7 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
         menuCode = "tms:tmsB2cDeclareReconciliation:update",
         serviceClass = TmsB2cDeclareReconciliationService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.UpdateDTO dto) {
         tmsB2cDeclareReconciliationService.update(dto);
         return success();
     }

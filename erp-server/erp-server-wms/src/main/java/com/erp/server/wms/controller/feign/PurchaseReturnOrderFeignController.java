@@ -97,7 +97,7 @@ public class PurchaseReturnOrderFeignController extends BaseController {
     @PostMapping("/listPoReturnByIdList")
     public List<PoReturnEntity> listPoReturnByIdList(@RequestBody List<String> poReturnIdList) {
         if (CollectionUtils.isEmpty(poReturnIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<PoReturnEntity> list = poReturnService.listByIds(poReturnIdList);
         return list;

@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
  * 单位枚举
  * @author Lambda
  * @Classname UnitEnum
- * @Description TODO
  * @Date 2023-11-13 15:01
  * @Created by yl
  */

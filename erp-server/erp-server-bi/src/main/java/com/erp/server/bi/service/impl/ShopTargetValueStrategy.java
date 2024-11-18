@@ -12,15 +12,13 @@ import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.server.bi.mapper.BiTargetYearMapper;
 import com.erp.server.bi.service.ListYearMonthValueStrategy;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-
 import javax.annotation.Resource;
 import java.util.List;
 
 /**
  * 所有的目标值
  *
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-18 14:02
  */
@@ -39,6 +37,6 @@ public class ShopTargetValueStrategy implements ListYearMonthValueStrategy {
     @Override
     public List<BiTargetYearDTO.YearMonthValueDTO> ListYearMonthValue(Integer year, String metrics,List<String> shopIdList) {
         String metricsName = MetricsEnum.getNameByCode(metrics);
-        return biTargetYearMapper.ListShopTargetValue(year, metrics,metricsName,shopIdList);
+        return biTargetYearMapper.listShopTargetValue(year, metrics,metricsName,shopIdList);
     }
 }

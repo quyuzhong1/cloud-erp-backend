@@ -1,10 +1,9 @@
 package com.erp.model.tms.entity;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -78,22 +77,22 @@ public class CfgReconciliationFieldEntity extends BaseEntity<CfgReconciliationFi
 
     public static final String ERP_FIELD = "erp_field";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     /**
      * 唯一键
      */
     public static String combineUniqueCode(String reconciliationType, String supplierId, String sourceType, String sourceId) {
-        return StrUtil.format("{}_{}_{}_{}", reconciliationType, supplierId, sourceType, sourceId);
+        return CharSequenceUtil.format("{}_{}_{}_{}", reconciliationType, supplierId, sourceType, sourceId);
     }
 
     /**
      * 当前唯一键
      */
     public String currentUniqueCode() {
-        return StrUtil.format("{}_{}_{}_{}", this.reconciliationType, this.thirdCode, this.sourceType, this.sourceId);
+        return CharSequenceUtil.format("{}_{}_{}_{}", this.reconciliationType, this.thirdCode, this.sourceType, this.sourceId);
     }
 
 

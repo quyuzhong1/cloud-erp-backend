@@ -3,6 +3,7 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,8 +22,10 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("operate_log")
+@EqualsAndHashCode(callSuper = true)
 public class OperateLogEntity extends BaseEntity<OperateLogEntity> {
 
+    private static final long serialVersionUID = -8527747169711915679L;
     /**
      * 类型
      */

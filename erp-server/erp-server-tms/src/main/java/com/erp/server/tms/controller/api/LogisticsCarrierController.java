@@ -70,7 +70,7 @@ public class LogisticsCarrierController extends BaseController {
         menuCode = "tms:logisticsCarrier:update",
         serviceClass = LogisticsCarrierService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated LogisticsCarrierDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated LogisticsCarrierDTO.UpdateDTO dto) {
         logisticsCarrierService.update(dto);
         return success();
     }
@@ -84,7 +84,7 @@ public class LogisticsCarrierController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "logisticsType") String logisticsType, HttpServletResponse response) {
+    public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "logisticsType") String logisticsType, HttpServletResponse response) {
         Boolean flag = logisticsCarrierService.importFile(excelFile,logisticsType,response);
         return flag == true ? success() : failure();
     }

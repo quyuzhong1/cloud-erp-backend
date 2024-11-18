@@ -125,19 +125,19 @@ public class StocktakingPlanEntity extends BaseEntity<StocktakingPlanEntity> {
     private LocalDateTime endTime;
 
 
-    public static final String CODE = "code";
+    
 
-    public static final String NAME = "name";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String STATUS = "status";
+    
 
-    public static final String MODE = "mode";
+    
 
     public static final String SEPARATE_RULE = "separate_rule";
 
-    public static final String TYPE = "type";
+    
 
     public static final String SUBMIT_TIME = "submit_time";
 
