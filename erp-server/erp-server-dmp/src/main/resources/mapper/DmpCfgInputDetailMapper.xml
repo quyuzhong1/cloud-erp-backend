@@ -70,6 +70,7 @@
             dbs.code,
             dcid.id,
             dcid.next_level_id,
-            dcid.main_id
+            dcid.main_id,
+            dci.bill_type
     </select>
 </mapper>
